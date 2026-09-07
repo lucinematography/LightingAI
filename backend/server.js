@@ -91,6 +91,8 @@ Nemoj izmišljati mere ili podatke koje nije moguće pouzdano utvrditi sa fotogr
   }
 });
 
+app.get('/', (req, res) => { res.sendFile(process.cwd() + '/index.html'); });
+
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => {

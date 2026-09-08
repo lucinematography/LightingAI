@@ -91,6 +91,76 @@ Nemoj izmišljati mere ili podatke koje nije moguće pouzdano utvrditi sa fotogr
   }
 });
 
+
+app.post("/api/lighting-plan", async (req, res) => {
+  try {
+    const {
+      project = "",
+      scene = "",
+      type = "",
+      look = "",
+      space = "",
+      camera = "",
+      description = "",
+      scenePhoto = "",
+      equipment = []
+    } = req.body;
+
+    const equipmentText = equipment
+      .map(e => `${e.name} x${e.qty || 1}`)
+      .join(", ");
+
+    const prompt = `You are LIGHTING AI, a professional gaffer assistant for film and studio lighting.
+
+Create a practical lighting plan using the supplied scene information and ONLY the available equipment where specific fixtures are recommended.
+
+Project: ${project}
+Scene: ${scene}
+Production type: ${type}
+Desired look: ${look}
+Space: ${space}
+Camera: ${camera}
+Scene description: ${description}
+Available equipment: ${equipmentText || "Not provided"}
+
+Return ONLY valid JSON with exactly these fields:
+{
+  "summary": "",
+  "key": "",
+  "fill": "",
+  "backlight": "",
+  "negative_fill": "",
+  "camera_notes": "",
+  "color_notes": "",
+  "safety_notes": "",
+  "equipment_list": []
+}
+
+Be practical and concise. Do not invent measurements or scene details that cannot be determined.`;
+
+    const content = [{ type: "input_text", text: prompt }];
+
+    if (scenePhoto) {
+      content.push({ type: "input_image", image_url: scenePhoto });
+    }
+
+    const response = await openai.responses.create({
+      model: "gpt-5.6-luna",
+      input: [{ role: "user", content }]
+    });
+
+    let text = response.output_text.trim();
+    text = text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+
+    const plan = JSON.parse(text);
+    res.json(plan);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Lighting plan generation failed." });
+  }
+});
+
 app.get('/', (req, res) => { res.sendFile(process.cwd() + '/index.html'); });
 
 const port = process.env.PORT || 3000;

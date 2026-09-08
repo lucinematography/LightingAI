@@ -120,6 +120,28 @@ function setLanguage(lang){
   document.getElementById('eqQty').placeholder=t.qtyPlaceholder;
   document.getElementById('addEquipmentBtn').textContent=t.addEquipment;
 
+  const categoryLabels = lang==='sr'
+    ? {
+        Light:'Rasveta',
+        Modifier:'Modifikator',
+        Grip:'Grip',
+        Power:'Napajanje',
+        Control:'Kontrola',
+        Other:'Ostalo'
+      }
+    : {
+        Light:'Light',
+        Modifier:'Modifier',
+        Grip:'Grip',
+        Power:'Power',
+        Control:'Control',
+        Other:'Other'
+      };
+
+  Array.from(document.getElementById('eqCategory').options).forEach(option=>{
+    option.textContent=categoryLabels[option.value]||option.value;
+  });
+
   document.getElementById('backendTitle').textContent=t.backendTitle;
   document.getElementById('backendUrlLabel').textContent=t.backendUrlLabel;
   document.getElementById('saveSettingsBtn').textContent=t.save;

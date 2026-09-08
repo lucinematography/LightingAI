@@ -120,6 +120,7 @@ function setLanguage(lang){
   document.getElementById('removePhotoBtn').textContent=t.removePhoto;
   document.getElementById('photoHint').textContent=t.photoHint;
   document.getElementById('analyzeSceneBtn').textContent=lang==='sr'?'✨ ANALIZIRAJ SCENU':'✨ ANALYZE SCENE';
+document.getElementById('scenePhotoPreview').alt=lang==='sr'?'Pregled fotografije scene':'Scene preview';
 
   document.getElementById('generateBtn').textContent=t.generate;
   document.querySelector('#generateBtn + .btn').textContent=t.reset;

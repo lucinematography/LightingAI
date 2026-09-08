@@ -337,8 +337,50 @@ function renderEquipment(){
 function addEquipment(){const n=document.getElementById('eqName').value.trim(),q=Math.max(1,parseInt(document.getElementById('eqQty').value||'1')),c=document.getElementById('eqCategory').value;if(!n)return;const e={id:'e'+Date.now(),name:n,qty:q,category:c};equipment.push(e);selectedIds.add(e.id);write(LS.equipment,equipment);document.getElementById('eqName').value='';renderEquipment()}
 function removeEquipment(id){equipment=equipment.filter(e=>e.id!==id);selectedIds.delete(id);write(LS.equipment,equipment);renderEquipment()}
 function selectedEquipment(){return equipment.filter(e=>selectedIds.has(e.id))}
-function offlinePlan(payload){const names=payload.equipment.map(e=>e.name.toLowerCase());const has=x=>names.some(n=>n.includes(x));let key=has('600')?'Aputure 600D kroz 4×4 diffusion, camera left oko 45°':'Najveći raspoloživi soft source, camera left oko 45°';let fill=has('reflector')?'5-in-1 reflector sa shadow strane, vrlo blag fill':'Minimalni bounce/fill sa shadow strane';let back=has('astera')?'Astera Titan iza i iznad subjekta za blag edge':'Mali kontrolisani backlight ako ga imaš';let neg=has('floppy')?'4×4 floppy sa shadow strane za negative fill':'Crni flag/tkanina za negative fill';return{mode:'Demo',summary:`${payload.look} setup za ${payload.type.toLowerCase()} kadar. Prioritet je kontrola pravca, kontrasta i odvajanja subjekta od pozadine.`,key,fill,backlight:back,negative_fill:neg,camera_notes:'Počni sa baznom ekspozicijom kamere i prilagođavaj nivoe prema waveform/false color merenju.',color_notes:payload.description.toLowerCase().includes('day')||payload.description.toLowerCase().includes('prozor')?'Drži key u daylight opsegu; practicale po potrebi ostavi toplije radi separacije.':'Uskladi CCT sa motivacijom scene i practical izvorima.',safety_notes:'Proveri napajanje, kablove, rigging i temperaturu opreme prema uputstvima proizvođača i pravilima lokacije.',equipment_list:payload.equipment.map(e=>`${e.name} ×${e.qty}`)}}
-async function generatePlan(){const btn=document.getElementById('generateBtn');const payload={project:val('projectName')||(currentLang==='sr'?'Projekat bez naziva':'Untitled Project'),scene:val('sceneName')||(currentLang==='sr'?'Scena 01':'Scene 01'),type:val('type'),look:val('look'),space:val('space'),camera:val('camera'),description:val('description'),scenePhoto:scenePhoto,equipment:selectedEquipment(),language:currentLang};if(!payload.description.trim()){alert(currentLang==='sr'?'Unesi opis scene.':'Enter a scene description.');return}btn.textContent=currentLang==='sr'?'GENERISANJE…':'GENERATING…';btn.disabled=true;document.body.classList.add('loading');let plan,mode='AI';try{const r=await fetch('/api/lighting-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw new Error('Backend '+r.status);plan=await r.json()}catch(e){console.error(e);plan=offlinePlan(payload);plan.summary+=currentLang==='sr'?' AI server nije dostupan, pa je korišćen offline plan.':' AI backend is unavailable, so the offline plan was used.';mode='Demo'}finally{btn.textContent=currentLang==='sr'?'GENERIŠI PLAN':'GENERATE PLAN';btn.disabled=false;document.body.classList.remove('loading')}plan.mode=mode;const record={id:'p'+Date.now(),createdAt:new Date().toISOString(),input:payload,plan};projects.unshift(record);renderPlan(record);renderProjects();try{write(LS.projects,projects)}catch(e){console.warn('Project storage failed:',e)}}
+function offlinePlan(payload){
+  const names=payload.equipment.map(e=>e.name.toLowerCase());
+  const has=x=>names.some(n=>n.includes(x));
+  const sr=payload.language==='sr';
+
+  const key=has('600')
+    ? (sr?'Aputure 600D kroz 4×4 difuziju, sa leve strane kamere oko 45°':'Aputure 600D through 4×4 diffusion, camera left at about 45°')
+    : (sr?'Najveći raspoloživi mekani izvor, sa leve strane kamere oko 45°':'Largest available soft source, camera left at about 45°');
+
+  const fill=has('reflector')
+    ? (sr?'5-u-1 reflektor sa strane senke, veoma blag fill':'5-in-1 reflector on the shadow side for very subtle fill')
+    : (sr?'Minimalni bounce/fill sa strane senke':'Minimal bounce/fill from the shadow side');
+
+  const back=has('astera')
+    ? (sr?'Astera Titan iza i iznad subjekta za blag rub svetla':'Astera Titan behind and above the subject for a subtle edge')
+    : (sr?'Mali kontrolisani backlight ako je dostupan':'Small controlled backlight if available');
+
+  const neg=has('floppy')
+    ? (sr?'4×4 floppy sa strane senke za negative fill':'4×4 floppy on the shadow side for negative fill')
+    : (sr?'Crni flag ili tkanina za negative fill':'Black flag or fabric for negative fill');
+
+  return{
+    mode:'Offline',
+    summary:sr
+      ? `${payload.look} postavka za ${payload.type.toLowerCase()} kadar. Prioritet je kontrola pravca, kontrasta i odvajanja subjekta od pozadine.`
+      : `${payload.look} setup for a ${payload.type.toLowerCase()} shot. Priority is control of direction, contrast and subject separation from the background.`,
+    key,
+    fill,
+    backlight:back,
+    negative_fill:neg,
+    camera_notes:sr
+      ? 'Počni sa baznom ekspozicijom kamere i prilagođavaj nivoe prema waveform/false color merenju.'
+      : 'Start with the camera base exposure and adjust lighting levels using waveform/false color monitoring.',
+    color_notes:payload.description.toLowerCase().includes('day')||payload.description.toLowerCase().includes('prozor')
+      ? (sr?'Drži glavno svetlo u daylight opsegu; practical izvore po potrebi ostavi toplije radi separacije.':'Keep the key light in the daylight range; leave practical sources warmer if needed for separation.')
+      : (sr?'Uskladi CCT sa motivacijom scene i practical izvorima.':'Match CCT to the scene motivation and practical sources.'),
+    safety_notes:sr
+      ? 'Proveri napajanje, kablove, rigging i temperaturu opreme prema uputstvima proizvođača i pravilima lokacije.'
+      : 'Check power, cables, rigging and fixture temperature according to manufacturer instructions and location safety rules.',
+    equipment_list:payload.equipment.map(e=>`${e.name} ×${e.qty}`)
+  };
+}
+
+async function generatePlan(){const btn=document.getElementById('generateBtn');const payload={project:val('projectName')||(currentLang==='sr'?'Projekat bez naziva':'Untitled Project'),scene:val('sceneName')||(currentLang==='sr'?'Scena 01':'Scene 01'),type:val('type'),look:val('look'),space:val('space'),camera:val('camera'),description:val('description'),scenePhoto:scenePhoto,equipment:selectedEquipment(),language:currentLang};if(!payload.description.trim()){alert(currentLang==='sr'?'Unesi opis scene.':'Enter a scene description.');return}btn.textContent=currentLang==='sr'?'GENERISANJE…':'GENERATING…';btn.disabled=true;document.body.classList.add('loading');let plan,mode='AI';try{const r=await fetch('/api/lighting-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw new Error('Backend '+r.status);plan=await r.json()}catch(e){console.error(e);plan=offlinePlan(payload);plan.summary+=currentLang==='sr'?' AI server nije dostupan, pa je korišćen offline plan.':' AI backend is unavailable, so the offline plan was used.';mode='Offline'}finally{btn.textContent=currentLang==='sr'?'GENERIŠI PLAN':'GENERATE PLAN';btn.disabled=false;document.body.classList.remove('loading')}plan.mode=mode;const record={id:'p'+Date.now(),createdAt:new Date().toISOString(),input:payload,plan};projects.unshift(record);renderPlan(record);renderProjects();try{write(LS.projects,projects)}catch(e){console.warn('Project storage failed:',e)}}
 function renderPlan(rec){
   const p=rec.plan,input=rec.input;
   const sr=currentLang==='sr';

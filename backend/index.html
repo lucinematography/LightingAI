@@ -9,7 +9,7 @@
 <div id="projectModal" class="modal"><div class="card"><button class="btn secondary right" id="closeModalBtn" onclick="closeModal()">CLOSE</button><h2 id="modalTitle">Project</h2><div id="modalBody"></div></div></div>
 <script>
 const DEFAULT_EQUIPMENT=[{id:'e1',name:'Aputure 600D',qty:1,category:'Light'},{id:'e2',name:'Aputure 300X',qty:1,category:'Light'},{id:'e3',name:'Astera Titan',qty:2,category:'Light'},{id:'e4',name:'4×4 Diffusion',qty:1,category:'Modifier'},{id:'e5',name:'4×4 Floppy',qty:1,category:'Control'},{id:'e6',name:'5-in-1 Reflector',qty:1,category:'Modifier'}];
-const LS={equipment:'lighting_equipment_v1',projects:'lighting_projects_v1',settings:'lighting_settings_v1'};
+const LS={equipment:'lighting_equipment_v1',projects:'lighting_projects_v1'};
 const I18N={
 sr:{
 subtitle:'Gaffer Assistant • Filmska i studijska rasveta',
@@ -256,7 +256,7 @@ async function analyzeScene(){
  }
 }
 
-let equipment=read(LS.equipment,DEFAULT_EQUIPMENT), projects=read(LS.projects,[]), settings=read(LS.settings,{backendUrl:''}), selectedIds=new Set(equipment.map(x=>x.id));
+let equipment=read(LS.equipment,DEFAULT_EQUIPMENT), projects=read(LS.projects,[]), selectedIds=new Set(equipment.map(x=>x.id));
 function read(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}function write(k,v){localStorage.setItem(k,JSON.stringify(v))}function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function formatAnalysis(text){
   const safe=esc(text||'');
@@ -513,7 +513,7 @@ async function testBackend(){
 function renderStatus(){
   document.getElementById('apiStatus').innerHTML='';
 }
-function exportData(){const data=JSON.stringify({equipment,projects,settings:{backendUrl:settings.backendUrl}},null,2);if(window.Android&&Android.saveText){Android.saveText('lighting-ai-export.json',data)}else{navigator.clipboard?.writeText(data);alert(currentLang==='sr'?'JSON je kopiran u clipboard (ako browser dozvoljava).':'JSON was copied to the clipboard (if the browser allows it).')}}function clearAll(){if(!confirm(currentLang==='sr'?'Obrisati sve projekte i opremu?':'Delete all projects and equipment?'))return;localStorage.removeItem(LS.equipment);localStorage.removeItem(LS.projects);equipment=[...DEFAULT_EQUIPMENT];projects=[];selectedIds=new Set(equipment.map(x=>x.id));write(LS.equipment,equipment);renderEquipment();renderProjects()}
+function exportData(){const data=JSON.stringify({equipment,projects},null,2);if(window.Android&&Android.saveText){Android.saveText('lighting-ai-export.json',data)}else{navigator.clipboard?.writeText(data);alert(currentLang==='sr'?'JSON je kopiran u clipboard (ako browser dozvoljava).':'JSON was copied to the clipboard (if the browser allows it).')}}function clearAll(){if(!confirm(currentLang==='sr'?'Obrisati sve projekte i opremu?':'Delete all projects and equipment?'))return;localStorage.removeItem(LS.equipment);localStorage.removeItem(LS.projects);equipment=[...DEFAULT_EQUIPMENT];projects=[];selectedIds=new Set(equipment.map(x=>x.id));write(LS.equipment,equipment);renderEquipment();renderProjects()}
 function val(id){return document.getElementById(id).value}function setval(id,v){document.getElementById(id).value=v??''}function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo(0,0)}document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
 renderEquipment();renderProjects();renderStatus();setLanguage(currentLang);
 </script></body></html>

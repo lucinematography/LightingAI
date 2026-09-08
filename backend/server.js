@@ -103,7 +103,8 @@ app.post("/api/lighting-plan", async (req, res) => {
       camera = "",
       description = "",
       scenePhoto = "",
-      equipment = []
+      equipment = [],
+      language = "sr"
     } = req.body;
 
     const equipmentText = equipment
@@ -111,6 +112,11 @@ app.post("/api/lighting-plan", async (req, res) => {
       .join(", ");
 
     const prompt = `You are LIGHTING AI, a professional gaffer assistant for film and studio lighting.
+
+IMPORTANT LANGUAGE RULE:
+${language === "en"
+  ? "Write all JSON text values in English."
+  : "Write all JSON text values in Serbian, using Latin script."}
 
 Create a practical lighting plan using the supplied scene information and ONLY the available equipment where specific fixtures are recommended.
 

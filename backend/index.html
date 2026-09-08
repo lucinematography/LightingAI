@@ -4,7 +4,7 @@
 <section id="planner" class="page active"><h1>New Lighting Plan</h1><div id="apiStatus"></div><div class="card"><div class="row"><div><label class="caption" id="labelProject">PROJECT</label><input id="projectName" placeholder="Naziv projekta"></div><div><label class="caption" id="labelScene">SCENE</label><input id="sceneName" placeholder="Scene 01"></div></div><div class="row"><div><label class="caption" id="labelType">TYPE</label><select id="type"><option>Film</option><option>Commercial</option><option>Interview</option><option>Music Video</option><option>Studio</option></select></div><div><label class="caption" id="labelLook">LOOK</label><select id="look"><option>Natural</option><option>Cinematic</option><option>Moody</option><option>High Contrast</option><option>Soft Commercial</option><option>Day for Night</option></select></div></div><div class="row"><div><label class="caption" id="labelSpace">SPACE</label><input id="space" value="6 × 5 × 3 m"></div><div><label class="caption" id="labelCamera">CAMERA</label><input id="camera" value="ARRI Alexa 35"></div></div><label class="caption" id="labelDescription">SCENE DESCRIPTION</label><textarea id="description" placeholder="Opiši kadar, prozore, pozadinu, raspoloživo prirodno svetlo i željeni izgled...">Osoba sedi za stolom pored prozora. Želim prirodan cinematic daylight, mekano svetlo sa leve strane i malo tamniju pozadinu.</textarea><div class="cameraBox"><label class="caption" id="cameraLabel">KAMERA / FOTOGRAFIJA SCENE</label><input id="scenePhotoInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleScenePhoto(event)"><div class="cameraActions"><button class="btn secondary" id="cameraBtn" type="button" onclick="document.getElementById('scenePhotoInput').click()">📷 SLIKAJ SCENU</button><button class="btn danger" id="removePhotoBtn" type="button" onclick="removeScenePhoto()" style="display:none">UKLONI</button></div><img id="scenePhotoPreview" class="photoPreview" alt="Scene preview"><button class="btn primary full" id="analyzeSceneBtn" type="button" onclick="analyzeScene()" style="margin-top:10px">✨ ANALIZIRAJ SCENU</button><div id="sceneAnalysis" style="margin-top:12px"></div><div id="photoHint" class="muted small" style="margin-top:7px">Fotografija služi kao vizuelna pomoć i čuva se uz trenutni plan na ovom uređaju.</div></div><label class="caption" id="labelAvailableEquipment">AVAILABLE EQUIPMENT</label><div id="equipmentChecks" class="chips"></div><div class="actions"><button id="generateBtn" class="btn primary" onclick="generatePlan()">GENERATE PLAN</button><button class="btn secondary" onclick="resetPlanner()">RESET</button></div></div><div id="planArea"></div></section>
 <section id="projects" class="page"><h1>Projects</h1><div id="projectsList"></div><button class="fab" onclick="newProject()">+</button></section>
 <section id="equipment" class="page"><h1>My Equipment</h1><div class="card"><div class="row"><input id="eqName" placeholder="npr. Aputure 600D"><input id="eqQty" type="number" min="1" value="1" placeholder="Qty"></div><div class="row" style="margin-top:8px"><select id="eqCategory"><option value="Light">Light</option><option value="Modifier">Modifier</option><option value="Grip">Grip</option><option value="Power">Power</option><option value="Control">Control</option><option value="Other">Other</option></select><button class="btn primary" id="addEquipmentBtn" onclick="addEquipment()">ADD EQUIPMENT</button></div></div><div id="equipmentList"></div></section>
-<section id="settings" class="page"><h1>Settings</h1><div class="card"><h3 id="backendTitle">AI backend</h3><p class="muted small">Aplikacija radi i bez interneta u Demo režimu. Za pravi AI unesi HTTPS adresu backend-a koji dobijaš iz priloženog server projekta.</p><label class="caption" id="backendUrlLabel">BACKEND URL</label><input id="backendUrl" placeholder="https://tvoj-backend.example.com"><div class="actions"><button class="btn primary" id="saveSettingsBtn" onclick="saveSettings()">SAVE</button><button class="btn secondary" id="testBackendBtn" onclick="testBackend()">TEST</button></div><div id="backendTest" style="margin-top:10px"></div></div><div class="card"><h3 id="dataTitle">Data</h3><p class="muted small">Projekti i oprema se čuvaju lokalno na telefonu.</p><div class="actions"><button class="btn secondary" id="exportBtn" onclick="exportData()">EXPORT JSON</button><button class="btn danger" id="clearAllBtn" onclick="clearAll()">CLEAR ALL</button></div></div><div class="card"><h3 id="aboutTitle">About</h3><div class="item"><b>LIGHTING AI</b><br><span class="muted small">Version 1.0 • Android MVP</span></div><div class="item small">AI predlozi su pomoć pri planiranju. Na setu proveri opterećenje strujnih krugova, rigging i bezbednost prema opremi i pravilima lokacije.</div></div></section>
+<section id="settings" class="page"><h1>Settings</h1><div class="card"><h3 id="backendTitle">AI veza</h3><p class="muted small" id="backendDescription">LIGHTING AI koristi sigurnu vezu sa AI backend serverom.</p><div class="actions"><button class="btn secondary" id="testBackendBtn" onclick="testBackend()">TESTIRAJ</button></div><div id="backendTest" style="margin-top:10px"></div></div><div class="card"><h3 id="dataTitle">Podaci</h3><p class="muted small">Projekti i oprema se čuvaju lokalno na telefonu.</p><div class="actions"><button class="btn secondary" id="exportBtn" onclick="exportData()">IZVEZI JSON</button><button class="btn danger" id="clearAllBtn" onclick="clearAll()">OBRIŠI SVE</button></div></div><div class="card"><h3 id="aboutTitle">O aplikaciji</h3><div class="item"><b>LIGHTING AI</b><br><span class="muted small" id="versionText">Verzija 1.0 • Web aplikacija</span></div><div class="item small">AI predlozi su pomoć pri planiranju. Na setu proveri opterećenje strujnih krugova, rigging i bezbednost prema opremi i pravilima lokacije.</div></div></section>
 </main><nav><button class="active" data-page="planner"><span class="icon">✦</span>Planner</button><button data-page="projects"><span class="icon">▣</span>Projects</button><button data-page="equipment"><span class="icon">▤</span>Equipment</button><button data-page="settings"><span class="icon">⚙</span>Settings</button></nav></div>
 <div id="projectModal" class="modal"><div class="card"><button class="btn secondary right" id="closeModalBtn" onclick="closeModal()">CLOSE</button><h2 id="modalTitle">Project</h2><div id="modalBody"></div></div></div>
 <script>
@@ -36,9 +36,9 @@ scenePlaceholder:'Scena 01',
 descriptionPlaceholder:'Opiši kadar, prozore, pozadinu, raspoloživo prirodno svetlo i željeni izgled...',
 addEquipment:'DODAJ OPREMU',
 qtyPlaceholder:'Količina',
-backendTitle:'AI backend',
-backendUrlLabel:'BACKEND URL',
-save:'SAČUVAJ',
+backendTitle:'AI veza',
+backendDescription:'LIGHTING AI koristi sigurnu vezu sa AI backend serverom.',
+versionText:'Verzija 1.0 • Web aplikacija',
 test:'TESTIRAJ',
 dataTitle:'Podaci',
 exportJson:'IZVEZI JSON',
@@ -71,9 +71,9 @@ scenePlaceholder:'Scene 01',
 descriptionPlaceholder:'Describe the shot, windows, background, available natural light and desired look...',
 addEquipment:'ADD EQUIPMENT',
 qtyPlaceholder:'Qty',
-backendTitle:'AI backend',
-backendUrlLabel:'BACKEND URL',
-save:'SAVE',
+backendTitle:'AI connection',
+backendDescription:'LIGHTING AI uses a secure connection to the AI backend server.',
+versionText:'Version 1.0 • Web application',
 test:'TEST',
 dataTitle:'Data',
 exportJson:'EXPORT JSON',
@@ -143,8 +143,8 @@ function setLanguage(lang){
   });
 
   document.getElementById('backendTitle').textContent=t.backendTitle;
-  document.getElementById('backendUrlLabel').textContent=t.backendUrlLabel;
-  document.getElementById('saveSettingsBtn').textContent=t.save;
+  document.getElementById('backendDescription').textContent=t.backendDescription;
+  document.getElementById('versionText').textContent=t.versionText;
   document.getElementById('testBackendBtn').textContent=t.test;
   document.getElementById('dataTitle').textContent=t.dataTitle;
   document.getElementById('exportBtn').textContent=t.exportJson;
@@ -379,9 +379,22 @@ function renderProjects(){const el=document.getElementById('projectsList');el.in
 function openProject(id){const r=projects.find(x=>x.id===id);if(!r)return;document.getElementById('modalTitle').textContent=r.input.project+' — '+r.input.scene;document.getElementById('modalBody').innerHTML=`<p>${esc(r.plan.summary)}</p>${setupItem('KEY',r.plan.key)}${setupItem('FILL',r.plan.fill)}${setupItem('BACKLIGHT',r.plan.backlight)}${setupItem('NEGATIVE FILL',r.plan.negative_fill)}<div class="actions"><button class="btn primary" onclick="loadProject('${r.id}')">EDIT / REUSE</button><button class="btn danger" onclick="deleteProject('${r.id}')">DELETE</button></div>`;document.getElementById('projectModal').classList.add('show')}
 function closeModal(){document.getElementById('projectModal').classList.remove('show')}function deleteProject(id){projects=projects.filter(x=>x.id!==id);write(LS.projects,projects);closeModal();renderProjects()}function loadProject(id){const r=projects.find(x=>x.id===id);if(!r)return;setval('projectName',r.input.project);setval('sceneName',r.input.scene);setval('type',r.input.type);setval('look',r.input.look);setval('space',r.input.space);setval('camera',r.input.camera);setval('description',r.input.description);scenePhoto=r.input.scenePhoto||'';if(scenePhoto){const img=document.getElementById('scenePhotoPreview');img.src=scenePhoto;img.style.display='block';document.getElementById('removePhotoBtn').style.display='block'}else removeScenePhoto();selectedIds=new Set((r.input.equipment||[]).map(x=>x.id));renderEquipmentChecks();closeModal();go('planner')}
 function newProject(){resetPlanner();go('planner')}function resetPlanner(){removeScenePhoto();setval('projectName','');setval('sceneName','Scene 01');setval('description','');document.getElementById('planArea').innerHTML='';selectedIds=new Set(equipment.map(x=>x.id));renderEquipmentChecks()}
-function saveSettings(){settings.backendUrl=val('backendUrl').trim().replace(/\/$/,'');write(LS.settings,settings);renderStatus();document.getElementById('backendTest').innerHTML='<div class="status ok">Sačuvano.</div>'}
-async function testBackend(){const out=document.getElementById('backendTest');out.textContent='Testing…';try{const r=await fetch('/health',{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();out.innerHTML=`<div class="status ok">Connected • ${esc(j.service||'backend')}</div>`}catch(e){out.innerHTML='<div class="status warn">Backend greška: '+esc(e.message||String(e))+'</div>'}}
-function renderStatus(){document.getElementById('apiStatus').innerHTML=settings.backendUrl?'<div class="status ok">AI mode configured • koristi backend kada je dostupan.</div>':'<div class="status warn">Demo mode • unesi backend URL u Settings za pravi AI.</div>';setval('backendUrl',settings.backendUrl||'')}
+async function testBackend(){
+  const out=document.getElementById('backendTest');
+  out.textContent=currentLang==='sr'?'Testiranje…':'Testing…';
+  try{
+    const r=await fetch('/health',{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    out.innerHTML=`<div class="status ok">${currentLang==='sr'?'Povezano':'Connected'} • ${esc(j.service||'backend')}</div>`;
+  }catch(e){
+    out.innerHTML=`<div class="status warn">${currentLang==='sr'?'Greška AI veze':'AI connection error'}: ${esc(e.message||String(e))}</div>`;
+  }
+}
+
+function renderStatus(){
+  document.getElementById('apiStatus').innerHTML='';
+}
 function exportData(){const data=JSON.stringify({equipment,projects,settings:{backendUrl:settings.backendUrl}},null,2);if(window.Android&&Android.saveText){Android.saveText('lighting-ai-export.json',data)}else{navigator.clipboard?.writeText(data);alert('JSON je kopiran u clipboard (ako browser dozvoljava).')}}function clearAll(){if(!confirm('Obrisati sve projekte i opremu?'))return;localStorage.removeItem(LS.equipment);localStorage.removeItem(LS.projects);equipment=[...DEFAULT_EQUIPMENT];projects=[];selectedIds=new Set(equipment.map(x=>x.id));write(LS.equipment,equipment);renderEquipment();renderProjects()}
 function val(id){return document.getElementById(id).value}function setval(id,v){document.getElementById(id).value=v??''}function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo(0,0)}document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
 renderEquipment();renderProjects();renderStatus();setLanguage(currentLang);

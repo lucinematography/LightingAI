@@ -21,7 +21,7 @@ cameraLabel:'KAMERA / FOTOGRAFIJA SCENE',
 cameraBtn:'📷 SLIKAJ SCENU',
 removePhoto:'UKLONI',
 photoHint:'Fotografija služi kao vizuelna pomoć i čuva se uz trenutni plan na ovom uređaju.',
-generate:'GENERISI PLAN',
+generate:'GENERIŠI PLAN',
 reset:'RESETUJ',
 labelProject:'PROJEKAT',
 labelScene:'SCENA',
@@ -220,13 +220,13 @@ async function analyzeScene(){
  const btn=document.getElementById('analyzeSceneBtn');
 
  if(!scenePhoto){
-   out.innerHTML='<div class="status warn">Prvo fotografiši scenu.</div>';
+   out.innerHTML=`<div class="status warn">${currentLang==='sr'?'Prvo fotografiši scenu.':'Capture a scene photo first.'}</div>`;
    return;
  }
 
  btn.disabled=true;
  btn.textContent=currentLang==='en'?'ANALYZING…':'ANALIZIRAM…';
- out.innerHTML='<div class="status warn">AI analizira fotografiju scene…</div>';
+ out.innerHTML=`<div class="status warn">${currentLang==='sr'?'AI analizira fotografiju scene…':'AI is analyzing the scene photo…'}</div>`;
 
  try{
    const r=await fetch('/api/analyze-scene',{
@@ -243,9 +243,9 @@ async function analyzeScene(){
    const data=await r.json();
    if(!r.ok)throw new Error(data.error||('HTTP '+r.status));
 
-   out.innerHTML='<div class="card"><h3>AI ANALIZA SCENE</h3><div>'+formatAnalysis(data.analysis||'')+'</div></div>';
+   out.innerHTML=`<div class="card"><h3>${currentLang==='sr'?'AI ANALIZA SCENE':'AI SCENE ANALYSIS'}</h3><div>${formatAnalysis(data.analysis||'')}</div></div>`;
  }catch(e){
-   out.innerHTML='<div class="status warn">AI greška: '+esc(e.message||String(e))+'</div>';
+   out.innerHTML=`<div class="status warn">${currentLang==='sr'?'AI greška':'AI error'}: ${esc(e.message||String(e))}</div>`;
  }finally{
    btn.disabled=false;
    btn.textContent=currentLang==='en'?'✨ ANALYZE SCENE':'✨ ANALIZIRAJ SCENU';

@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 import { FIXTURE_LIBRARY } from "./fixture-library.js";
+import { ACCESSORY_LIBRARY } from "./accessory-library.js";
 
 dotenv.config();
 
@@ -34,7 +35,29 @@ function formatEquipmentForAI(equipment = []) {
       fixture.ipRating && `IP: ${fixture.ipRating}`
     ].filter(Boolean).join(", ");
 
-    return `${e.name} x${e.qty || 1}${specs ? ` [${specs}]` : ""}`;
+    const accessories = ACCESSORY_LIBRARY
+      .filter(a => (a.compatibleWith || []).includes(fixture.id))
+      .map(a => {
+        const details = [
+          a.category && `type: ${a.category}`,
+          a.compatibilityStatus && `status: ${a.compatibilityStatus}`,
+          a.mount && `mount: ${a.mount}`,
+          a.beamAngleDeg &&
+            `beam: ${a.beamAngleDeg.min}-${a.beamAngleDeg.max}deg`,
+          a.gridAngleDeg && `grid: ${a.gridAngleDeg}deg`,
+          a.diffusionStops &&
+            `diffusion: ${a.diffusionStops.join('/')} stop`,
+          a.effectOnLight && `effect: ${a.effectOnLight}`
+        ].filter(Boolean).join(", ");
+
+        return `${a.manufacturer} ${a.model}${details ? ` [${details}]` : ""}`;
+      });
+
+    const accessoryText = accessories.length
+      ? ` | Compatible accessories: ${accessories.join("; ")}`
+      : "";
+
+    return `${e.name} x${e.qty || 1}${specs ? ` [${specs}]` : ""}${accessoryText}`;
   }).join("; ");
 }
 

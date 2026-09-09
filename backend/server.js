@@ -38,9 +38,21 @@ function formatEquipmentForAI(equipment = []) {
     const accessories = ACCESSORY_LIBRARY
       .filter(a => (a.compatibleWith || []).includes(fixture.id))
       .map(a => {
+        const fixtureCompatibility = a.compatibility?.[fixture.id];
+        const status =
+          fixtureCompatibility?.status ||
+          a.compatibilityStatus ||
+          "Compatible";
+
+        const conditions =
+          fixtureCompatibility?.conditions || [];
+
         const details = [
           a.category && `type: ${a.category}`,
-          a.compatibilityStatus && `status: ${a.compatibilityStatus}`,
+          `status: ${status}`,
+          `availability: ${a.includedWithFixture === true ? "INCLUDED WITH FIXTURE" : "OPTIONAL ACCESSORY"}`,
+          conditions.length &&
+            `conditions: ${conditions.join("; ")}`,
           a.mount && `mount: ${a.mount}`,
           a.beamAngleDeg &&
             `beam: ${a.beamAngleDeg.min}-${a.beamAngleDeg.max}deg`,
@@ -83,6 +95,17 @@ Analyze the supplied scene photograph for lighting planning.
 Scene description: ${description || "Not provided"}
 Available equipment: ${equipmentText || "Not provided"}
 
+EQUIPMENT AND ACCESSORY RULES:
+- When recommending a specific fixture, use only fixtures listed in Available equipment.
+- Recommend only accessories explicitly listed as compatible with that fixture.
+- Never invent an accessory, modifier, lens, reflector, softbox, cable, or compatibility relationship.
+- INCLUDED WITH FIXTURE means the accessory is supplied with that fixture.
+- OPTIONAL ACCESSORY means it is compatible but must not be assumed to be physically available unless the user confirms they have it.
+- Respect the exact compatibility status and all listed conditions.
+- If status is "Compatible but not optimized", say so when recommending it.
+- If a condition says to remove a baffle, gel holder, or other component, include that condition in the recommendation.
+- Prefer the most appropriate compatible accessory for the desired lighting result and explain briefly why.
+
 Give practical recommendations for:
 - existing/ambient light
 - key light
@@ -100,6 +123,17 @@ Analiziraj priloženu fotografiju scene radi planiranja rasvete.
 
 Opis scene: ${description || "Nije unet"}
 Dostupna oprema: ${equipmentText || "Nije uneta"}
+
+PRAVILA ZA OPREMU I ACCESSORIES:
+- Kada preporučuješ konkretno rasvetno telo, koristi samo fixture-e navedene u Dostupnoj opremi.
+- Preporuči samo accessory koji je eksplicitno naveden kao kompatibilan sa tim fixture-om.
+- Nemoj izmišljati accessory, modifier, lens, reflector, softbox, cable niti compatibility odnos.
+- INCLUDED WITH FIXTURE znači da accessory dolazi uz fixture.
+- OPTIONAL ACCESSORY znači da je kompatibilan, ali nemoj pretpostaviti da ga korisnik fizički poseduje bez njegove potvrde.
+- Poštuj tačan compatibility status i sve navedene conditions.
+- Ako je status "Compatible but not optimized", to jasno navedi kada ga preporučuješ.
+- Ako condition zahteva uklanjanje baffle-a, gel holder-a ili drugog dela, uključi taj uslov u preporuku.
+- Izaberi najprikladniji kompatibilni accessory za željeni rezultat rasvete i ukratko objasni zašto.
 
 Daj praktične preporuke za:
 - postojeće/prirodno svetlo
@@ -172,6 +206,17 @@ Space: ${space}
 Camera: ${camera}
 Scene description: ${description}
 Available equipment: ${equipmentText || "Not provided"}
+
+EQUIPMENT AND ACCESSORY RULES:
+- Use only listed available fixtures when recommending specific fixtures.
+- Use only accessories explicitly listed as compatible with each fixture.
+- Never invent accessories or compatibility relationships.
+- INCLUDED WITH FIXTURE accessories may be treated as available with that fixture.
+- OPTIONAL ACCESSORY items must not be assumed to be physically available unless confirmed by the user.
+- Respect every compatibility status and condition exactly.
+- Clearly identify "Compatible but not optimized" accessories when relevant.
+- Include required conditions such as removing an inner baffle or gel holder.
+- When an appropriate compatible accessory is available, name the exact accessory and briefly explain why it is appropriate for the requested lighting result.
 
 Return ONLY valid JSON with exactly these fields:
 {

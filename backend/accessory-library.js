@@ -443,5 +443,91 @@ export const ACCESSORY_LIBRARY = [
     ],
     effectOnLight: 'Wide directional beam for broader coverage.',
     sourceUrl: 'https://aputure.com/en-US/products/ls-1200d-pro-reflector-kit'
+  },
+{
+    id: 'aputure-ls1200d-four-light-bracket',
+    manufacturer: 'Aputure',
+    model: 'LS 1200d Four-Light Bracket',
+    category: 'Yoke',
+    compatibilityStatus: 'Designed For',
+    compatibleWith: ['aputure-ls-1200d-pro'],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Designed For',
+        conditions: []
+      }
+    },
+    includedWithFixture: false,
+    effectOnLight: 'Mounting bracket designed to combine multiple LS 1200d Pro lamp heads into a multi-light array.',
+    sourceUrl: 'https://aputure.com/EN-US/products/ls-1200d-pro'
+  },
+  {
+    id: 'aputure-ls1200d-neutrik-power-cable-6m',
+    manufacturer: 'Aputure',
+    model: 'Neutrik Power Cable for LS 1200d Pro (6m)',
+    category: 'Power',
+    compatibilityStatus: 'Designed For',
+    compatibleWith: ['aputure-ls-1200d-pro'],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Designed For',
+        conditions: []
+      }
+    },
+    includedWithFixture: true,
+    effectOnLight: 'Mains power connection cable for the LS 1200d Pro system.',
+    sourceUrl: 'https://aputure.com/EN-US/products/ls-1200d-pro'
+  },
+  {
+    id: 'aputure-7-pin-weatherproof-head-cable-7-5m',
+    manufacturer: 'Aputure',
+    model: '7-Pin Weatherproof Head Cable (7.5m)',
+    category: 'Cable',
+    compatibilityStatus: 'Compatible',
+    compatibleWith: ['aputure-ls-1200d-pro'],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: []
+      }
+    },
+    includedWithFixture: true,
+    effectOnLight: 'Weatherproof head cable connecting the LS 1200d Pro lamp head and control box.',
+    sourceUrl: 'https://aputure.com/EN-US/products/ls-1200d-pro'
+  },
+  {
+    id: 'aputure-spotlight-max-36-lens-kit',
+    manufacturer: 'Aputure',
+    model: 'Spotlight Max 36° Lens Kit',
+    category: 'Spotlight',
+    compatibilityStatus: 'Compatible',
+    compatibleWith: ['aputure-ls-1200d-pro'],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: []
+      }
+    },
+    includedWithFixture: false,
+    beamAngleDeg: { min: 36, max: 36 },
+    effectOnLight: 'Projection optic for controlled 36-degree beam shaping and precise light placement.',
+    sourceUrl: 'https://aputure.com/EN-US/products/ls-1200d-pro'
+  },
+  {
+    id: 'aputure-quick-dome-60',
+    manufacturer: 'Aputure',
+    model: 'Quick Dome 60',
+    category: 'Dome',
+    compatibilityStatus: 'Compatible',
+    compatibleWith: ['aputure-ls-1200d-pro'],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: []
+      }
+    },
+    includedWithFixture: false,
+    effectOnLight: 'Compact soft-light modifier for broad, diffused illumination.',
+    sourceUrl: 'https://aputure.com/EN-US/products/ls-1200d-pro'
   }
 ];

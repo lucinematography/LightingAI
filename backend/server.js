@@ -14,6 +14,30 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+function formatEquipmentForAI(equipment = []) {
+  return equipment.map(e => {
+    const fixture = e.fixtureId
+      ? FIXTURE_LIBRARY.find(f => f.id === e.fixtureId)
+      : null;
+
+    if (!fixture) return `${e.name} x${e.qty || 1}`;
+
+    const specs = [
+      fixture.sourceType && `source: ${fixture.sourceType}`,
+      fixture.powerDrawW && `power draw: ${fixture.powerDrawW}W`,
+      fixture.outputPowerW && `output power: ${fixture.outputPowerW}W`,
+      fixture.cctK && `CCT: ${fixture.cctK.min}-${fixture.cctK.max}K`,
+      fixture.colorMode && `color: ${fixture.colorMode}`,
+      fixture.cri && `CRI: ${fixture.cri}`,
+      fixture.tlci && `TLCI: ${fixture.tlci}`,
+      fixture.mount && `mount: ${fixture.mount}`,
+      fixture.ipRating && `IP: ${fixture.ipRating}`
+    ].filter(Boolean).join(", ");
+
+    return `${e.name} x${e.qty || 1}${specs ? ` [${specs}]` : ""}`;
+  }).join("; ");
+}
+
 app.get("/health", (req, res) => {
   res.json({ ok: true, service: "LIGHTING AI backend" });
 });
@@ -26,9 +50,7 @@ app.post("/api/analyze-scene", async (req, res) => {
       return res.status(400).json({ error: "Nedostaje fotografija scene." });
     }
 
-    const equipmentText = equipment
-      .map(e => `${e.name} x${e.qty || 1}`)
-      .join(", ");
+    const equipmentText = formatEquipmentForAI(equipment);
 
     const prompt =
       language === "en"
@@ -108,9 +130,7 @@ app.post("/api/lighting-plan", async (req, res) => {
       language = "sr"
     } = req.body;
 
-    const equipmentText = equipment
-      .map(e => `${e.name} x${e.qty || 1}`)
-      .join(", ");
+    const equipmentText = formatEquipmentForAI(equipment);
 
     const prompt = `You are LIGHTING AI, a professional gaffer assistant for film and studio lighting.
 

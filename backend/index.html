@@ -3,7 +3,7 @@
 .langbar{display:flex;gap:8px;margin-top:10px}.langbtn{border:1px solid #30343b;background:#15181d;color:#c7ccd3;border-radius:9px;padding:7px 10px;font-weight:700}.langbtn.active{background:#f5c542;color:#111;border-color:#f5c542}.cameraBox{margin-top:12px}.photoPreview{width:100%;max-height:320px;object-fit:cover;border-radius:12px;border:1px solid #30343b;margin-top:10px;display:none}.cameraActions{display:flex;gap:8px;margin-top:8px}.cameraActions .btn{flex:1}</style></head><body><div class="app"><header><div class="logo">LIGHTING <span>AI</span></div><div class="sub" id="subtitle">Gaffer Assistant • Film & Studio Lighting</div><div class="langbar"><button class="langbtn active" id="langSr" onclick="setLanguage('sr')">🇷🇸 SR</button><button class="langbtn" id="langEn" onclick="setLanguage('en')">🇬🇧 EN</button></div></header><main>
 <section id="planner" class="page active"><h1>New Lighting Plan</h1><div id="apiStatus"></div><div class="card"><div class="row"><div><label class="caption" id="labelProject">PROJECT</label><input id="projectName" placeholder="Naziv projekta"></div><div><label class="caption" id="labelScene">SCENE</label><input id="sceneName" placeholder="Scene 01"></div></div><div class="row"><div><label class="caption" id="labelType">TYPE</label><select id="type"><option value="Film">Film</option><option value="Commercial">Commercial</option><option value="Interview">Interview</option><option value="Music Video">Music Video</option><option value="Studio">Studio</option></select></div><div><label class="caption" id="labelLook">LOOK</label><select id="look"><option value="Natural">Natural</option><option value="Cinematic">Cinematic</option><option value="Moody">Moody</option><option value="High Contrast">High Contrast</option><option value="Soft Commercial">Soft Commercial</option><option value="Day for Night">Day for Night</option></select></div></div><div class="row"><div><label class="caption" id="labelSpace">SPACE</label><input id="space" value="6 × 5 × 3 m"></div><div><label class="caption" id="labelCamera">CAMERA</label><input id="camera" value="ARRI Alexa 35"></div></div><label class="caption" id="labelDescription">SCENE DESCRIPTION</label><textarea id="description" placeholder="Opiši kadar, prozore, pozadinu, raspoloživo prirodno svetlo i željeni izgled..."></textarea><div class="cameraBox"><label class="caption" id="cameraLabel">KAMERA / FOTOGRAFIJA SCENE</label><input id="scenePhotoInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleScenePhoto(event)"><input id="scenePhotoUploadInput" type="file" accept="image/*" style="display:none" onchange="handleScenePhoto(event)"><div class="cameraActions"><button class="btn secondary" id="cameraBtn" type="button" onclick="document.getElementById('scenePhotoInput').click()">📷 SLIKAJ SCENU</button><button class="btn secondary" id="uploadPhotoBtn" type="button" onclick="document.getElementById('scenePhotoUploadInput').click()">🖼️ DODAJ SLIKU</button><button class="btn danger" id="removePhotoBtn" type="button" onclick="removeScenePhoto()" style="display:none">UKLONI</button></div><img id="scenePhotoPreview" class="photoPreview" alt="Scene preview"><button class="btn primary full" id="analyzeSceneBtn" type="button" onclick="analyzeScene()" style="margin-top:10px">✨ ANALIZIRAJ SCENU</button><div id="sceneAnalysis" style="margin-top:12px"></div><div id="photoHint" class="muted small" style="margin-top:7px">Fotografija služi kao vizuelna pomoć i čuva se uz trenutni plan na ovom uređaju.</div></div><label class="caption" id="labelAvailableEquipment">AVAILABLE EQUIPMENT</label><div id="equipmentChecks" class="chips"></div><div class="actions"><button id="generateBtn" class="btn primary" onclick="generatePlan()">GENERATE PLAN</button><button class="btn secondary" onclick="resetPlanner()">RESET</button></div></div><div id="planArea"></div></section>
 <section id="projects" class="page"><h1>Projects</h1><div id="projectsList"></div><button class="fab" onclick="newProject()">+</button></section>
-<section id="equipment" class="page"><h1>My Equipment</h1><div class="card"><div class="row"><input id="eqName" placeholder="npr. Aputure 600D"><input id="eqQty" type="number" min="1" value="1" placeholder="Qty"></div><div class="row" style="margin-top:8px"><select id="eqCategory"><option value="Light">Light</option><option value="Modifier">Modifier</option><option value="Grip">Grip</option><option value="Power">Power</option><option value="Control">Control</option><option value="Other">Other</option></select><button class="btn primary" id="addEquipmentBtn" onclick="addEquipment()">ADD EQUIPMENT</button></div></div><div id="equipmentList"></div></section>
+<section id="equipment" class="page"><h1>My Equipment</h1><div class="card"><select id="fixtureSelector" style="margin-bottom:8px" onchange="selectFixture()"><option value="">Professional Fixture Library</option></select><div class="row"><input id="eqName" placeholder="npr. Aputure 600D"><input id="eqQty" type="number" min="1" value="1" placeholder="Qty"></div><div class="row" style="margin-top:8px"><select id="eqCategory"><option value="Light">Light</option><option value="Modifier">Modifier</option><option value="Grip">Grip</option><option value="Power">Power</option><option value="Control">Control</option><option value="Other">Other</option></select><button class="btn primary" id="addEquipmentBtn" onclick="addEquipment()">ADD EQUIPMENT</button></div></div><div id="equipmentList"></div></section>
 <section id="settings" class="page"><h1>Settings</h1><div class="card"><h3 id="backendTitle">AI veza</h3><p class="muted small" id="backendDescription">LIGHTING AI koristi sigurnu vezu sa AI serverom.</p><div class="actions"><button class="btn secondary" id="testBackendBtn" onclick="testBackend()">TESTIRAJ</button></div><div id="backendTest" style="margin-top:10px"></div></div><div class="card"><h3 id="dataTitle">Podaci</h3><p class="muted small" id="localDataText">Projekti i oprema se čuvaju lokalno na telefonu.</p><div class="actions"><button class="btn secondary" id="exportBtn" onclick="exportData()">IZVEZI JSON</button><button class="btn danger" id="clearAllBtn" onclick="clearAll()">OBRIŠI SVE</button></div></div><div class="card"><h3 id="aboutTitle">O aplikaciji</h3><div class="item"><b>LIGHTING AI</b><br><span class="muted small" id="versionText">Verzija 1.0 • Web aplikacija</span></div><div class="item small" id="safetyText">AI predlozi su pomoć pri planiranju. Na setu proveri opterećenje strujnih krugova, rigging i bezbednost prema opremi i pravilima lokacije.</div></div></section>
 </main><nav><button class="active" data-page="planner"><span class="icon">✦</span>Planner</button><button data-page="projects"><span class="icon">▣</span>Projects</button><button data-page="equipment"><span class="icon">▤</span>Equipment</button><button data-page="settings"><span class="icon">⚙</span>Settings</button></nav></div>
 <div id="projectModal" class="modal"><div class="card"><button class="btn secondary right" id="closeModalBtn" onclick="closeModal()">CLOSE</button><h2 id="modalTitle">Project</h2><div id="modalBody"></div></div></div>
@@ -36,6 +36,7 @@ scenePlaceholder:'Scena 01',
 descriptionPlaceholder:'Opiši kadar, prozore, pozadinu, raspoloživo prirodno svetlo i željeni izgled...',
 addEquipment:'DODAJ OPREMU',
 qtyPlaceholder:'Količina',
+fixtureLibraryPlaceholder:'Izaberi iz profesionalne biblioteke...',
     eqNamePlaceholder:'npr. Aputure 600D',
 backendTitle:'AI veza',
 backendDescription:'LIGHTING AI koristi sigurnu vezu sa AI serverom.',
@@ -74,6 +75,7 @@ scenePlaceholder:'Scene 01',
 descriptionPlaceholder:'Describe the shot, windows, background, available natural light and desired look...',
 addEquipment:'ADD EQUIPMENT',
 qtyPlaceholder:'Qty',
+fixtureLibraryPlaceholder:'Select from professional fixture library...',
     eqNamePlaceholder:'e.g. Aputure 600D',
 backendTitle:'AI connection',
 backendDescription:'LIGHTING AI uses a secure connection to the AI backend server.',
@@ -128,6 +130,7 @@ document.getElementById('scenePhotoPreview').alt=lang==='sr'?'Pregled fotografij
 
   document.getElementById('eqName').placeholder=t.eqNamePlaceholder;
   document.getElementById('eqQty').placeholder=t.qtyPlaceholder;
+  document.querySelector('#fixtureSelector option[value=""]').textContent=t.fixtureLibraryPlaceholder;
   document.getElementById('addEquipmentBtn').textContent=t.addEquipment;
 
   const categoryLabels = lang==='sr'
@@ -258,7 +261,7 @@ async function analyzeScene(){
  }
 }
 
-let equipment=read(LS.equipment,DEFAULT_EQUIPMENT), projects=read(LS.projects,[]), selectedIds=new Set(equipment.map(x=>x.id));
+let equipment=read(LS.equipment,DEFAULT_EQUIPMENT), projects=read(LS.projects,[]), selectedIds=new Set(equipment.map(x=>x.id)), fixtureLibrary=[];
 function read(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}function write(k,v){localStorage.setItem(k,JSON.stringify(v))}function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function formatAnalysis(text){
   const safe=esc(text||'');
@@ -311,6 +314,18 @@ function renderEquipmentChecks(){
   el.innerHTML=equipment.map(e=>`<label class="chip"><input type="checkbox" ${selectedIds.has(e.id)?'checked':''} onchange="toggleSelected('${e.id}',this.checked)"><span>${esc(e.name)} ×${e.qty}</span></label>`).join('');
 }
 function toggleSelected(id,on){on?selectedIds.add(id):selectedIds.delete(id)}
+function loadFixtureLibrary(){
+  fetch('/api/fixtures')
+    .then(r=>r.json())
+    .then(data=>{
+      fixtureLibrary=Array.isArray(data)?data:[];
+      const sel=document.getElementById('fixtureSelector');
+      if(!sel)return;
+      sel.innerHTML=`<option value="">${I18N[currentLang].fixtureLibraryPlaceholder}</option>`+fixtureLibrary.map(f=>`<option value="${f.id}">${esc(f.manufacturer)} ${esc(f.model)}</option>`).join('');
+    })
+    .catch(err=>console.error('Fixture library load failed',err));
+}
+
 function equipmentCategoryLabel(category){
   if(currentLang!=='sr') return category;
   const map={
@@ -336,7 +351,16 @@ function renderEquipment(){
 
   renderEquipmentChecks();
 }
-function addEquipment(){const n=document.getElementById('eqName').value.trim(),q=Math.max(1,parseInt(document.getElementById('eqQty').value||'1')),c=document.getElementById('eqCategory').value;if(!n)return;const e={id:'e'+Date.now(),name:n,qty:q,category:c};equipment.push(e);selectedIds.add(e.id);write(LS.equipment,equipment);document.getElementById('eqName').value='';renderEquipment()}
+function selectFixture(){
+  const id=document.getElementById('fixtureSelector').value;
+  if(!id)return;
+  const f=fixtureLibrary.find(x=>x.id===id);
+  if(!f)return;
+  document.getElementById('eqName').value=[f.manufacturer,f.model].filter(Boolean).join(' ');
+  document.getElementById('eqCategory').value=f.category||'Light';
+}
+
+function addEquipment(){const n=document.getElementById('eqName').value.trim(),q=Math.max(1,parseInt(document.getElementById('eqQty').value||'1')),c=document.getElementById('eqCategory').value,fixtureId=document.getElementById('fixtureSelector').value;if(!n)return;const e={id:'e'+Date.now(),name:n,qty:q,category:c};if(fixtureId)e.fixtureId=fixtureId;equipment.push(e);selectedIds.add(e.id);write(LS.equipment,equipment);document.getElementById('eqName').value='';document.getElementById('fixtureSelector').value='';renderEquipment()}
 function removeEquipment(id){equipment=equipment.filter(e=>e.id!==id);selectedIds.delete(id);write(LS.equipment,equipment);renderEquipment()}
 function selectedEquipment(){return equipment.filter(e=>selectedIds.has(e.id))}
 function offlinePlan(payload){
@@ -517,5 +541,5 @@ function renderStatus(){
 }
 function exportData(){const data=JSON.stringify({equipment,projects},null,2);if(window.Android&&Android.saveText){Android.saveText('lighting-ai-export.json',data)}else{navigator.clipboard?.writeText(data);alert(currentLang==='sr'?'JSON je kopiran u clipboard (ako browser dozvoljava).':'JSON was copied to the clipboard (if the browser allows it).')}}function clearAll(){if(!confirm(currentLang==='sr'?'Obrisati sve projekte i opremu?':'Delete all projects and equipment?'))return;localStorage.removeItem(LS.equipment);localStorage.removeItem(LS.projects);equipment=[...DEFAULT_EQUIPMENT];projects=[];selectedIds=new Set(equipment.map(x=>x.id));write(LS.equipment,equipment);renderEquipment();renderProjects()}
 function val(id){return document.getElementById(id).value}function setval(id,v){document.getElementById(id).value=v??''}function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo(0,0)}document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
-renderEquipment();renderProjects();renderStatus();setLanguage(currentLang);
+renderEquipment();renderProjects();renderStatus();setLanguage(currentLang);loadFixtureLibrary();
 </script></body></html>

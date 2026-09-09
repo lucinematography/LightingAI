@@ -15,6 +15,7 @@ export const ACCESSORY_CATEGORIES = [
   'Power',
   'Control',
   'Yoke',
+  'Bracket',
   'Other'
 ];
 

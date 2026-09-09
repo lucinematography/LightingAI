@@ -448,17 +448,21 @@ export const ACCESSORY_LIBRARY = [
     id: 'aputure-ls1200d-four-light-bracket',
     manufacturer: 'Aputure',
     model: 'LS 1200d Four-Light Bracket',
-    category: 'Yoke',
+    category: 'Bracket',
     compatibilityStatus: 'Designed For',
-    compatibleWith: ['aputure-ls-1200d-pro'],
+    compatibleWith: ['aputure-ls-1200d-pro', 'aputure-storm-1200x'],
     compatibility: {
       'aputure-ls-1200d-pro': {
+        status: 'Designed For',
+        conditions: []
+      },
+      'aputure-storm-1200x': {
         status: 'Designed For',
         conditions: []
       }
     },
     includedWithFixture: false,
-    effectOnLight: 'Mounting bracket designed to combine multiple LS 1200d Pro lamp heads into a multi-light array.',
+    effectOnLight: 'Mounting bracket designed to combine multiple compatible 1200-series lamp heads into a multi-light array.',
     sourceUrl: 'https://aputure.com/EN-US/products/ls-1200d-pro'
   },
   {
@@ -467,15 +471,19 @@ export const ACCESSORY_LIBRARY = [
     model: 'Neutrik Power Cable for LS 1200d Pro (6m)',
     category: 'Power',
     compatibilityStatus: 'Designed For',
-    compatibleWith: ['aputure-ls-1200d-pro'],
+    compatibleWith: ['aputure-ls-1200d-pro', 'aputure-storm-1200x'],
     compatibility: {
       'aputure-ls-1200d-pro': {
         status: 'Designed For',
         conditions: []
+      },
+      'aputure-storm-1200x': {
+        status: 'Compatible',
+        conditions: []
       }
     },
     includedWithFixture: true,
-    effectOnLight: 'Mains power connection cable for the LS 1200d Pro system.',
+    effectOnLight: 'Mains power connection cable for compatible Aputure high-output fixtures.',
     sourceUrl: 'https://aputure.com/EN-US/products/ls-1200d-pro'
   },
   {

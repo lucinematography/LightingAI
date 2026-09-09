@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import { FIXTURE_LIBRARY } from "./fixture-library.js";
 
 dotenv.config();
 
@@ -166,6 +167,8 @@ Be practical and concise. Do not invent measurements or scene details that canno
     res.status(500).json({ error: "Lighting plan generation failed." });
   }
 });
+
+app.get('/api/fixtures', (req, res) => { res.json(FIXTURE_LIBRARY); });
 
 app.get('/', (req, res) => { res.sendFile(process.cwd() + '/index.html'); });
 

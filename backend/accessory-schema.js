@@ -8,6 +8,7 @@ export const ACCESSORY_CATEGORIES = [
   'Lantern',
   'Grid',
   'Barn Door',
+  'Iris',
   'Diffusion',
   'Mount Adapter',
   'Cable',
@@ -23,3 +24,18 @@ export const COMPATIBILITY_STATUS = [
   'Compatible but not optimized',
   'Do Not Use'
 ];
+
+/*
+Per-product compatibility model:
+
+compatibility: {
+  'fixture-or-accessory-id': {
+    status: 'Compatible',
+    conditions: [
+      'Remove inner baffle'
+    ]
+  }
+}
+
+Legacy compatibleWith remains supported during migration.
+*/

@@ -5,10 +5,13 @@ export const ACCESSORY_LIBRARY = [
     model: 'Bowens Mount Standard Reflector',
     category: 'Reflector',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-1200d-pro"],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: []
+      }
+    },
     mount: 'Bowens Mount',
     effectOnLight: 'Directional reflector for increased control compared with bare fixture output.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
@@ -33,10 +36,7 @@ export const ACCESSORY_LIBRARY = [
     model: 'Light Dome Mini II',
     category: 'Dome',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-60d","aputure-ls-60x","aputure-ls-300x"],
     mount: 'Bowens Mount',
     effectOnLight: 'Compact soft source for controlled diffusion.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
@@ -47,10 +47,13 @@ export const ACCESSORY_LIBRARY = [
     model: 'Light Dome SE',
     category: 'Dome',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-60d","aputure-ls-60x","aputure-ls-300x","aputure-ls-1200d-pro"],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: ['Remove inner baffle']
+      }
+    },
     mount: 'Bowens Mount',
     effectOnLight: 'Circular soft source for diffused key and fill lighting.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
@@ -61,11 +64,14 @@ export const ACCESSORY_LIBRARY = [
     model: 'Light Dome II',
     category: 'Dome',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-300x","aputure-ls-1200d-pro"],
     mount: 'Bowens Mount',
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: ['Remove inner baffle and gel holder']
+      }
+    },
     effectOnLight: 'Large circular soft source for broad diffused illumination.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
   },
@@ -75,10 +81,13 @@ export const ACCESSORY_LIBRARY = [
     model: 'Light Dome 150',
     category: 'Dome',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-300x","aputure-ls-1200d-pro"],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: []
+      }
+    },
     mount: 'Bowens Mount',
     effectOnLight: 'Large 150 cm circular soft source with selectable diffusion and light-control grid.',
     diffusionStops: [1.5, 2.5],
@@ -91,10 +100,13 @@ export const ACCESSORY_LIBRARY = [
     model: 'Light OctaDome 120',
     category: 'Softbox',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-300x","aputure-ls-1200d-pro"],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: ['Remove inner baffle']
+      }
+    },
     mount: 'Bowens Mount',
     effectOnLight: 'Large octagonal soft source for broad controlled illumination.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
@@ -105,10 +117,13 @@ export const ACCESSORY_LIBRARY = [
     model: 'Light Box 60x90',
     category: 'Softbox',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-1200d-pro"],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: ['Remove inner baffle']
+      }
+    },
     mount: 'Bowens Mount',
     effectOnLight: 'Rectangular soft source for directional key or controlled fill.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
@@ -119,10 +134,13 @@ export const ACCESSORY_LIBRARY = [
     model: 'Light Box 30x120',
     category: 'Softbox',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-300x","aputure-ls-1200d-pro"],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: ['Remove inner baffle']
+      }
+    },
     mount: 'Bowens Mount',
     effectOnLight: 'Long rectangular soft source for narrow directional illumination.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
@@ -133,10 +151,13 @@ export const ACCESSORY_LIBRARY = [
     model: 'Lantern',
     category: 'Lantern',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-1200d-pro"],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible but not optimized',
+        conditions: []
+      }
+    },
     mount: 'Bowens Mount',
     effectOnLight: 'Broad omnidirectional soft source for ambient and overhead-style illumination.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
@@ -147,10 +168,13 @@ export const ACCESSORY_LIBRARY = [
     model: 'Lantern 90',
     category: 'Lantern',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-300x","aputure-ls-1200d-pro"],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: []
+      }
+    },
     mount: 'Bowens Mount',
     effectOnLight: 'Large omnidirectional soft source for broad ambient illumination.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
@@ -161,10 +185,13 @@ export const ACCESSORY_LIBRARY = [
     model: 'Space Light',
     category: 'Softbox',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-300x","aputure-ls-1200d-pro"],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible but not optimized',
+        conditions: []
+      }
+    },
     effectOnLight: 'Cylindrical overhead modifier for broad vertical illumination.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
   },
@@ -179,6 +206,12 @@ export const ACCESSORY_LIBRARY = [
       'aputure-ls-600x-pro',
       'aputure-ls-1200d-pro'
     ],
+    compatibility: {
+      'aputure-ls-1200d-pro': {
+        status: 'Compatible',
+        conditions: []
+      }
+    },
     mount: 'Bowens Mount',
     beamAngleDeg: { min: 15, max: 45 },
     photometrics: [
@@ -208,10 +241,7 @@ export const ACCESSORY_LIBRARY = [
     model: 'Spotlight Mount',
     category: 'Spotlight',
     compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-600d-pro',
-      'aputure-ls-600x-pro'
-    ],
+    compatibleWith: ["aputure-ls-600d-pro","aputure-ls-600x-pro","aputure-ls-300x"],
     effectOnLight: 'Ellipsoidal projection modifier for controlled hard-light shaping and gobo projection.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600d-pro'
   },
@@ -255,38 +285,8 @@ export const ACCESSORY_LIBRARY = [
     conditions: 'Best results with LS 60d/60x set to 15° spot mode.',
     sourceUrl: 'https://help.aputure.com/en/ls60d/accessories'
   },
-  {
-    id: 'aputure-light-dome-mini-ii-ls60',
-    manufacturer: 'Aputure',
-    model: 'Light Dome Mini II',
-    category: 'Dome',
-    compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-60d',
-      'aputure-ls-60x',
-      'aputure-ls-300x'
-    ],
-    mount: 'Bowens Mount Adapter',
-    effectOnLight: 'Compact circular soft source.',
-    conditions: 'LS 60d/60x require the LS 60 Bowens Mount Adapter.',
-    sourceUrl: 'https://help.aputure.com/en/ls60d/accessories'
-  },
-  {
-    id: 'aputure-light-dome-se-ls60',
-    manufacturer: 'Aputure',
-    model: 'Light Dome SE',
-    category: 'Dome',
-    compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-60d',
-      'aputure-ls-60x',
-      'aputure-ls-300x'
-    ],
-    mount: 'Bowens Mount Adapter',
-    effectOnLight: 'Circular diffused soft source.',
-    conditions: 'LS 60d/60x require the LS 60 Bowens Mount Adapter.',
-    sourceUrl: 'https://help.aputure.com/en/ls60d/accessories'
-  },
+  
+  
   {
     id: 'aputure-light-box-45x45',
     manufacturer: 'Aputure',
@@ -303,95 +303,13 @@ export const ACCESSORY_LIBRARY = [
     conditions: 'LS 60d/60x require the LS 60 Bowens Mount Adapter.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard'
   },
-  {
-    id: 'aputure-light-dome-ii-ls300x',
-    manufacturer: 'Aputure',
-    model: 'Light Dome II',
-    category: 'Dome',
-    compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-300x'
-    ],
-    mount: 'Bowens Mount',
-    effectOnLight: 'Large circular soft source for broad diffused illumination.',
-    sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard'
-  },
-  {
-    id: 'aputure-light-dome-150-ls300x',
-    manufacturer: 'Aputure',
-    model: 'Light Dome 150',
-    category: 'Dome',
-    compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-300x'
-    ],
-    mount: 'Bowens Mount',
-    effectOnLight: 'Large circular soft source for broad illumination.',
-    sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard'
-  },
-  {
-    id: 'aputure-light-octadome-120-ls300x',
-    manufacturer: 'Aputure',
-    model: 'Light OctaDome 120',
-    category: 'Softbox',
-    compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-300x'
-    ],
-    mount: 'Bowens Mount',
-    effectOnLight: 'Large octagonal soft source for broad controlled illumination.',
-    sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard'
-  },
-  {
-    id: 'aputure-light-box-30x120-ls300x',
-    manufacturer: 'Aputure',
-    model: 'Light Box 30x120',
-    category: 'Softbox',
-    compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-300x'
-    ],
-    mount: 'Bowens Mount',
-    effectOnLight: 'Long rectangular soft source for directional illumination.',
-    sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard'
-  },
-  {
-    id: 'aputure-lantern-90-ls300x',
-    manufacturer: 'Aputure',
-    model: 'Lantern 90',
-    category: 'Lantern',
-    compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-300x'
-    ],
-    mount: 'Bowens Mount',
-    effectOnLight: 'Omnidirectional soft source for broad ambient illumination.',
-    sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard'
-  },
-  {
-    id: 'aputure-space-light-ls300x',
-    manufacturer: 'Aputure',
-    model: 'Space Light',
-    category: 'Softbox',
-    compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-300x'
-    ],
-    effectOnLight: 'Cylindrical modifier for broad overhead-style illumination.',
-    sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard'
-  },
-  {
-    id: 'aputure-spotlight-mount-ls300x',
-    manufacturer: 'Aputure',
-    model: 'Spotlight Mount',
-    category: 'Spotlight',
-    compatibilityStatus: 'Compatible',
-    compatibleWith: [
-      'aputure-ls-300x'
-    ],
-    effectOnLight: 'Ellipsoidal projection modifier for controlled hard-light shaping and gobo projection.',
-    sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard'
-  },
+  
+  
+  
+  
+  
+  
+  
   {
     id: 'aputure-storm-1200x-cf12-fresnel',
     manufacturer: 'Aputure',

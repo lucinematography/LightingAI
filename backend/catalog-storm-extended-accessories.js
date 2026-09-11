@@ -308,6 +308,13 @@ export const STORM_EXTENDED_OVERRIDES = {
       [STORM_700X]: relation(SOURCE_700X_WIZARD, 'Designed For')
     }
   },
+  'aputure-storm-1200x-cf12-fresnel': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_400X_WIZARD, 'Compatible', [
+        'Aputure lists CF12 Fresnel as physically compatible with STORM 400x'
+      ])
+    }
+  },
   'aputure-light-dome-mini-iii': {
     compatibility: {
       [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible')

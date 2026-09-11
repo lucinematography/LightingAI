@@ -271,6 +271,7 @@ Be practical and concise. Do not invent measurements or scene details that canno
 });
 
 app.get('/api/fixtures', (req, res) => { res.json(FIXTURE_LIBRARY); });
+app.get('/api/accessories', (req, res) => { res.json(ACCESSORY_CATALOG); });
 
 app.get('/', (req, res) => { res.sendFile(process.cwd() + '/index.html'); });
 

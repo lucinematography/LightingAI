@@ -34,6 +34,8 @@ const SOURCE_XT52_POWER_CABLE =
   'https://aputure.com/en-US/products/aputure-lp-28-t455-to-bare-leads-power-input-ac-cable-1-m';
 const SOURCE_LS1200_CASE =
   'https://aputure.com/en-US/products/rolling-carrying-case-for-ls-1200d-pro';
+const SOURCE_LS600_CASE =
+  'https://aputure.com/en-US/products/rolling-carrying-case-for-ls-600d-pro';
 const SOURCE_LS1200_REFLECTOR_KIT =
   'https://aputure.com/en-US/products/ls-1200d-pro-reflector-kit';
 const SOURCE_CLAMP_ADAPTER =
@@ -225,6 +227,21 @@ export const STORM_EXTENDED_ACCESSORIES = [
     beamAngleDeg: { min: 15, max: 45 },
     effectOnLight: 'Three hyper-reflectors for narrow, medium and wide beam control on LS 1200d Pro.',
     sourceUrl: SOURCE_LS1200_REFLECTOR_KIT,
+    verifiedAt: '2026-09-11'
+  },
+  {
+    id: 'aputure-ls-600-series-rolling-carrying-case',
+    manufacturer: 'Aputure',
+    model: 'Rolling Carrying Case for LS 600d/600d Pro/600x Pro/600c Pro',
+    category: 'Other',
+    compatibilityStatus: 'Designed For',
+    compatibleWith: [LS_600D_PRO, LS_600X_PRO],
+    compatibility: {
+      [LS_600D_PRO]: relation(SOURCE_LS600_CASE, 'Designed For'),
+      [LS_600X_PRO]: relation(SOURCE_LS600_CASE, 'Designed For')
+    },
+    effectOnLight: 'Dedicated rolling protective case for the Aputure LS 600-series lamp heads and accessories.',
+    sourceUrl: 'https://aputure.com/en-US/products/rolling-carrying-case-for-ls-600d-pro',
     verifiedAt: '2026-09-11'
   },
   {

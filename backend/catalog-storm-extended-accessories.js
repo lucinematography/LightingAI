@@ -191,6 +191,37 @@ export const STORM_EXTENDED_ACCESSORIES = [
     verifiedAt: '2026-09-11'
   },
   {
+    id: 'aputure-ultra-clamp',
+    manufacturer: 'Aputure',
+    model: 'Aputure Ultra Clamp',
+    category: 'Bracket',
+    compatibilityStatus: 'Compatible',
+    compatibleWith: [STORM_CS32, STORM_XT52, STORM_700X, STORM_400X, STORM_1200X, STORM_1000C],
+    compatibility: {
+      [STORM_CS32]: relation(SOURCE_CLAMP_ADAPTER, 'Designed For', [
+        'Included with STORM CS32; its Ultra mounting plate attaches directly to the clamp'
+      ], { includedWithFixture: true }),
+      [STORM_XT52]: relation(SOURCE_CLAMP_ADAPTER, 'Compatible', [
+        'Use with the Lightning Clamp to Ultra Clamp Adapter Kit when the control box has a Lightning mounting plate'
+      ]),
+      [STORM_700X]: relation(SOURCE_CLAMP_ADAPTER, 'Compatible', [
+        'Use with the Lightning Clamp to Ultra Clamp Adapter Kit when the control box has a Lightning mounting plate'
+      ]),
+      [STORM_400X]: relation(SOURCE_CLAMP_ADAPTER, 'Compatible', [
+        'Use with the Lightning Clamp to Ultra Clamp Adapter Kit when the control box has a Lightning mounting plate'
+      ]),
+      [STORM_1200X]: relation(SOURCE_CLAMP_ADAPTER, 'Compatible', [
+        'Use with the Lightning Clamp to Ultra Clamp Adapter Kit when the control box has a Lightning mounting plate'
+      ]),
+      [STORM_1000C]: relation(SOURCE_CLAMP_ADAPTER, 'Compatible', [
+        'Use with the Lightning Clamp to Ultra Clamp Adapter Kit when the control box has a Lightning mounting plate'
+      ])
+    },
+    effectOnLight: 'Heavy-duty clamp for mounting STORM control boxes to round or square tubing; the STORM CS32 mounts directly through its Ultra plate.',
+    sourceUrl: SOURCE_CLAMP_ADAPTER,
+    verifiedAt: '2026-09-11'
+  },
+  {
     id: 'aputure-lightning-clamp-to-ultra-clamp-adapter-kit',
     manufacturer: 'Aputure',
     model: 'Lightning Clamp to Ultra Clamp Adapter Kit',
@@ -228,6 +259,14 @@ export const STORM_EXTENDED_ACCESSORIES = [
 ];
 
 export const STORM_EXTENDED_OVERRIDES = {
+  'aputure-storm-xt52-head-cable-7-5m': {
+    model: 'STORM XT52 Head Cable (7.5m)',
+    sourceUrl: 'https://aputure.com/en-US/products/storm-xt52'
+  },
+  'aputure-storm-xt52-head-cable-15m': {
+    model: 'STORM XT52 Head Cable (15m)',
+    sourceUrl: SOURCE_FAMILY
+  },
   'aputure-quick-dome-90': {
     sourceUrl: SOURCE_FAMILY,
     compatibility: {

@@ -264,6 +264,7 @@ export const STORM_COMPATIBILITY_OVERRIDES = {
   'aputure-lantern-90': {
     compatibility: {
       [STORM_1200X]: relation(SOURCE_1200X_WIZARD, 'Compatible')
+      [STORM_1000C]: relation(SOURCE_1000C_WIZARD, 'Compatible'),
     }
   },
   'aputure-spotlight-max-19-lens-kit': {
@@ -281,6 +282,7 @@ export const STORM_COMPATIBILITY_OVERRIDES = {
   'aputure-spotlight-max-50-lens-kit': {
     compatibility: {
       [STORM_1200X]: relation(SOURCE_1200X_WIZARD, 'Compatible')
+      [STORM_1000C]: relation(SOURCE_1000C_WIZARD, 'Compatible'),
     }
   },
   'aputure-space-light-90': {
@@ -320,6 +322,7 @@ export const STORM_COMPATIBILITY_OVERRIDES = {
   'aputure-quick-dome-90': {
     compatibility: {
       [STORM_1200X]: relation(SOURCE_1200X_WIZARD, 'Compatible')
+      [STORM_1000C]: relation(SOURCE_1000C_WIZARD, 'Compatible'),
     }
   },
   'aputure-lantern': {

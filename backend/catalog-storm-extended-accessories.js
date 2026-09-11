@@ -153,27 +153,6 @@ export const STORM_EXTENDED_ACCESSORIES = [
     verifiedAt: '2026-09-11'
   },
   {
-    id: 'aputure-storm-1000c-1200x-skid',
-    manufacturer: 'Aputure',
-    model: 'STORM 1000c/1200x Skid',
-    category: 'Bracket',
-    compatibilityStatus: 'Designed For',
-    compatibleWith: [STORM_1000C, STORM_1200X],
-    compatibility: {
-      [STORM_1000C]: relation(
-        'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1000c',
-        'Designed For'
-      ),
-      [STORM_1200X]: relation(
-        'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1200x',
-        'Designed For'
-      )
-    },
-    effectOnLight: 'Skid base for stable floor mounting of STORM 1000c and STORM 1200x lamp heads.',
-    sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1000c',
-    verifiedAt: '2026-09-11'
-  },
-  {
     id: 'aputure-storm-1200x-reflector-kit-case',
     manufacturer: 'Aputure',
     model: 'STORM 1200x Reflector Kit Case',

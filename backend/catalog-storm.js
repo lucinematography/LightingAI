@@ -9,6 +9,7 @@ import {
 } from './catalog-storm-extended-accessories.js';
 import { ELECTRO_STORM_FIXTURES, ELECTRO_STORM_ACCESSORIES, mergeElectroStormAccessory } from './catalog-electro-storm.js';
 import { HIGH_POWER_STORM_FIXTURES, HIGH_POWER_STORM_ACCESSORIES, mergeHighPowerStormAccessory } from './catalog-storm-high-power.js';
+import { APUTURE_EXPANSION_ACCESSORIES } from './catalog-aputure-expansion.js';
 import {
   FIXTURE_LIBRARY as BASE_FIXTURE_LIBRARY,
   ACCESSORY_CATALOG as BASE_ACCESSORY_CATALOG
@@ -426,6 +427,7 @@ export const ACCESSORY_CATALOG = [
   ...STORM_80C_ACCESSORIES.map(mergeHighPowerStormAccessory),
   ...HIGH_POWER_STORM_ACCESSORIES,
   ...ELECTRO_STORM_ACCESSORIES,
+  ...APUTURE_EXPANSION_ACCESSORIES,
   ...STORM_CINE_KIT_ACCESSORIES,
   ...STORM_COMPATIBILITY_ACCESSORIES,
   ...STORM_EXTENDED_ACCESSORIES

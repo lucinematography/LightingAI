@@ -273,6 +273,93 @@ export const STORM_EXTENDED_OVERRIDES = {
       [STORM_400X]: relation(SOURCE_400X_WIZARD, 'Designed For'),
       [STORM_700X]: relation(SOURCE_700X_WIZARD, 'Designed For')
     }
+  },
+  'aputure-light-dome-mini-iii': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-light-dome-iii': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-light-dome-se': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-light-dome-150': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-light-box-60x90': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-light-box-30x120': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-light-box-45x45': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-light-octadome-120': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-spotlight-max-19-lens-kit': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-lantern': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-f10-barn-doors': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-ls1200d-neutrik-power-cable-6m': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-space-light-90': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-sidus-one': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
+  },
+  'aputure-sidus-four': {
+    compatibility: {
+      [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible'),
+      [STORM_700X]: relation(SOURCE_FAMILY, 'Compatible')
+    }
   }
 };
 

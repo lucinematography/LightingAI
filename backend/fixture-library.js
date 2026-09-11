@@ -201,25 +201,4 @@ export const FIXTURE_LIBRARY = [
     weightKg: 3.2,
     sourceUrl: 'https://aputure.com/en-US/products/ls-300d-ii'
   },
-  {
-    id: 'arri-orbiter',
-    manufacturer: 'ARRI',
-    model: 'Orbiter',
-    category: 'Light',
-    sourceType: 'Six-color LED spotlight',
-    powerDrawW: 500,
-    outputPowerW: 400,
-    cctK: { min: 2000, max: 20000 },
-    colorMode: 'Full Color',
-    cri: 98,
-    tlci: 95,
-    beamAngleDeg: { min: 0, max: 80 },
-    mount: '28 mm Spigot (Junior Pin)',
-    control: ['On-board', 'LumenRadio CRMX', 'DMX/RDM', 'EtherCON'],
-    acInput: '100-240V AC, 50-60Hz',
-    batterySupport: '48-52V DC via 3-pin XLR',
-    ipRating: 'IP20 without Rain Cover; IP24 with Rain Cover',
-    weightKg: 11.7,
-    sourceUrl: 'https://www.arri.com/en/lighting/led-spotlights/orbiter/tech-specs'
-  },
 ];

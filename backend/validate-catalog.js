@@ -1,5 +1,4 @@
-import { FIXTURE_LIBRARY } from './fixture-library.js';
-import { ACCESSORY_CATALOG } from './accessory-catalog.js';
+import { FIXTURE_LIBRARY, ACCESSORY_CATALOG } from './catalog.js';
 import { ACCESSORY_CATEGORIES, COMPATIBILITY_STATUS } from './accessory-schema.js';
 
 const errors = [];

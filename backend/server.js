@@ -2,8 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
-import { FIXTURE_LIBRARY } from "./fixture-library.js";
-import { ACCESSORY_CATALOG } from "./accessory-catalog.js";
+import { FIXTURE_LIBRARY, ACCESSORY_CATALOG } from "./catalog.js";
 
 dotenv.config();
 

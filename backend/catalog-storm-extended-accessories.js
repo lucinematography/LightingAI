@@ -402,6 +402,15 @@ export const STORM_EXTENDED_OVERRIDES = {
       )
     }
   },
+  'aputure-ls1200d-neutrik-power-cable-6m': {
+    compatibility: {
+      [STORM_1000C]: relation(
+        'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1000c',
+        'Compatible',
+        ['Aputure lists this 6 m Neutrik Power Cable for STORM 1000c and STORM 1200x']
+      )
+    }
+  },
   'aputure-light-dome-mini-iii': {
     compatibility: {
       [STORM_400X]: relation(SOURCE_FAMILY, 'Compatible')

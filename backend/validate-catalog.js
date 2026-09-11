@@ -34,6 +34,9 @@ for (const accessory of ACCESSORY_CATALOG) {
   }
 
   for (const targetId of accessory.compatibleWith || []) {
+    if (accessory.compatibility?.[targetId]?.status === 'Do Not Use') {
+      errors.push(`${accessory.id}: prohibited product ${targetId} is listed in compatibleWith`);
+    }
     if (!allProductIds.has(targetId)) {
       errors.push(`${accessory.id}: compatibleWith references missing product ${targetId}`);
     }

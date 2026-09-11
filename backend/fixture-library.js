@@ -158,7 +158,7 @@ export const FIXTURE_LIBRARY = [
     ipRating: 'IP65',
     weightKg: 9.66,
     sourceUrl: 'https://aputure.com/en-US/products/storm-1000c'
-  }
+  },
   {
     id: 'aputure-ls-600c-pro-ii',
     manufacturer: 'Aputure',

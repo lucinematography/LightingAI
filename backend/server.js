@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
-import { FIXTURE_LIBRARY, ACCESSORY_CATALOG } from "./catalog.js";
+import { FIXTURE_LIBRARY, ACCESSORY_CATALOG } from "./catalog-storm.js";
 
 dotenv.config();
 

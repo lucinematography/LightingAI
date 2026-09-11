@@ -32,6 +32,10 @@ const SOURCE_XT52_LAMP_CASE =
   'https://aputure.com/en-US/products/flight-case-for-xt52-lamp-head';
 const SOURCE_XT52_POWER_CABLE =
   'https://aputure.com/en-US/products/aputure-lp-28-t455-to-bare-leads-power-input-ac-cable-1-m';
+const SOURCE_LS1200_CASE =
+  'https://aputure.com/en-US/products/rolling-carrying-case-for-ls-1200d-pro';
+const SOURCE_LS1200_REFLECTOR_KIT =
+  'https://aputure.com/en-US/products/ls-1200d-pro-reflector-kit';
 const SOURCE_CLAMP_ADAPTER =
   'https://help.aputure.com/en/modifiers/lightning-clamp-to-ultra-clamp-adapter-kit';
 
@@ -200,6 +204,27 @@ export const STORM_EXTENDED_ACCESSORIES = [
     beamAngleDeg: { min: 26, max: 26 },
     effectOnLight: 'Ellipsoidal projection optic for a precise 26° beam, gobo projection and controlled shaping on STORM 400x.',
     sourceUrl: SOURCE_400X_WIZARD,
+    verifiedAt: '2026-09-11'
+  },
+  {
+    id: 'aputure-ls-1200d-pro-rolling-carrying-case',
+    manufacturer: 'Aputure',
+    model: 'Rolling Carrying Case for LS 1200d Pro',
+    category: 'Other',
+    ...designedFor(SOURCE_LS1200_CASE, LS_1200D_PRO),
+    effectOnLight: 'Dedicated rolling protective case for the LS 1200d Pro lamp head and production accessories.',
+    sourceUrl: SOURCE_LS1200_CASE,
+    verifiedAt: '2026-09-11'
+  },
+  {
+    id: 'aputure-ls-1200d-pro-reflector-kit',
+    manufacturer: 'Aputure',
+    model: 'LS 1200d Pro Reflector Kit',
+    category: 'Reflector',
+    ...designedFor(SOURCE_LS1200_REFLECTOR_KIT, LS_1200D_PRO),
+    beamAngleDeg: { min: 15, max: 45 },
+    effectOnLight: 'Three hyper-reflectors for narrow, medium and wide beam control on LS 1200d Pro.',
+    sourceUrl: SOURCE_LS1200_REFLECTOR_KIT,
     verifiedAt: '2026-09-11'
   },
   {

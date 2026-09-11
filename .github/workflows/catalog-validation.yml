@@ -1,0 +1,40 @@
+name: Catalog Validation
+
+on:
+  push:
+    branches:
+      - main
+      - aputure-catalog-pass
+    paths:
+      - 'backend/fixture-library.js'
+      - 'backend/accessory-library.js'
+      - 'backend/accessory-catalog.js'
+      - 'backend/accessory-schema.js'
+      - 'backend/validate-catalog.js'
+      - 'backend/package.json'
+      - '.github/workflows/catalog-validation.yml'
+  pull_request:
+    paths:
+      - 'backend/fixture-library.js'
+      - 'backend/accessory-library.js'
+      - 'backend/accessory-catalog.js'
+      - 'backend/accessory-schema.js'
+      - 'backend/validate-catalog.js'
+      - 'backend/package.json'
+      - '.github/workflows/catalog-validation.yml'
+
+jobs:
+  validate-catalog:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate fixture and accessory catalogs
+        run: npm run validate:catalog

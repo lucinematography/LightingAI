@@ -245,6 +245,20 @@ export const STORM_EXTENDED_ACCESSORIES = [
     verifiedAt: '2026-09-11'
   },
   {
+    id: 'aputure-5-pin-male-to-female-xlr-head-cable-3m',
+    manufacturer: 'Aputure',
+    model: '5-Pin Male-to-Female XLR Head Cable (3m)',
+    category: 'Cable',
+    ...designedFor(
+      'https://aputure.com/en-US/products/aputure-5-pin-male-to-female-xlr-head-cable-3m?Size=3m',
+      LS_300X,
+      ['5-pin XLR male-to-female head cable for Light Storm 300 series lights']
+    ),
+    effectOnLight: 'Three-meter replacement head cable for connecting compatible Light Storm 300-series lamp heads and control boxes.',
+    sourceUrl: 'https://aputure.com/en-US/products/aputure-5-pin-male-to-female-xlr-head-cable-3m?Size=3m',
+    verifiedAt: '2026-09-11'
+  },
+  {
     id: 'aputure-spotlight-max-19-lens',
     manufacturer: 'Aputure',
     model: 'Spotlight Max 19° Lens',

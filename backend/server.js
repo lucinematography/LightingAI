@@ -47,12 +47,27 @@ function formatEquipmentForAI(equipment = []) {
         const conditions =
           fixtureCompatibility?.conditions || [];
 
+        const includedWithFixture =
+          fixtureCompatibility?.includedWithFixture ??
+          (a.includedWithFixture === true);
+
+        const requiresAccessoryId =
+          fixtureCompatibility?.requiresAccessoryId ||
+          a.requiresAccessoryId ||
+          null;
+
+        const requiredAccessory = requiresAccessoryId
+          ? ACCESSORY_LIBRARY.find(candidate => candidate.id === requiresAccessoryId)
+          : null;
+
         const details = [
           a.category && `type: ${a.category}`,
           `status: ${status}`,
-          `availability: ${a.includedWithFixture === true ? "INCLUDED WITH FIXTURE" : "OPTIONAL ACCESSORY"}`,
+          `availability: ${includedWithFixture ? "INCLUDED WITH FIXTURE" : "OPTIONAL ACCESSORY"}`,
           conditions.length &&
             `conditions: ${conditions.join("; ")}`,
+          requiredAccessory &&
+            `requires: ${requiredAccessory.manufacturer} ${requiredAccessory.model}`,
           a.mount && `mount: ${a.mount}`,
           a.beamAngleDeg &&
             `beam: ${a.beamAngleDeg.min}-${a.beamAngleDeg.max}deg`,

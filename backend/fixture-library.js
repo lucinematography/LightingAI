@@ -200,8 +200,8 @@ export const FIXTURE_LIBRARY = [
     batterySupport: '12-16.8V battery, 14.4V/14.8V at 15A or higher',
     weightKg: 3.2,
     sourceUrl: 'https://aputure.com/en-US/products/ls-300d-ii'
-  },,
-{
+  },
+  {
     id: 'aputure-nova-p600c',
     manufacturer: 'Aputure',
     model: 'Nova P600c',

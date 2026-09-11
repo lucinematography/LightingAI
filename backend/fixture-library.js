@@ -134,5 +134,29 @@ export const FIXTURE_LIBRARY = [
     acInput: '100-240V AC, 50/60Hz',
     ipRating: 'IP65',
     weightKg: 9.8
+  },
+  {
+    id: 'aputure-storm-1000c',
+    manufacturer: 'Aputure',
+    model: 'STORM 1000c',
+    category: 'Light',
+    sourceType: 'BLAIR-CG Full-Color LED',
+    powerDrawW: 1440,
+    outputPowerW: 1000,
+    cctK: { min: 1800, max: 20000 },
+    colorMode: 'Full Color',
+    colorGamut: '90%+ Rec.2020',
+    cri: 97,
+    tlci: 97,
+    ssi: { tungsten: 88, daylight: 86 },
+    beamAngleDeg: 67,
+    includedReflectorBeamAngleDeg: 45,
+    mount: 'ProLock Bowens Mount',
+    greenMagentaAdjustment: '±G 100% (Full ASC MITC Range)',
+    control: ['On-board', 'Sidus Link', 'Sidus Link Pro', 'DMX/RDM', 'CRMX', 'sACN', 'Art-Net'],
+    acInput: '100-240V AC, 50/60Hz',
+    ipRating: 'IP65',
+    weightKg: 9.66,
+    sourceUrl: 'https://aputure.com/en-US/products/storm-1000c'
   }
 ];

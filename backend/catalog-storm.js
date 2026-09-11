@@ -1,3 +1,4 @@
+import { HIGH_POWER_STORM_FIXTURES, HIGH_POWER_STORM_ACCESSORIES, mergeHighPowerStormAccessory } from './catalog-storm-high-power.js';
 import {
   FIXTURE_LIBRARY as BASE_FIXTURE_LIBRARY,
   ACCESSORY_CATALOG as BASE_ACCESSORY_CATALOG
@@ -405,10 +406,12 @@ function mergeAccessory(baseAccessory) {
 
 export const FIXTURE_LIBRARY = [
   ...BASE_FIXTURE_LIBRARY,
-  ...STORM_80C_FIXTURES
+  ...STORM_80C_FIXTURES,
+  ...HIGH_POWER_STORM_FIXTURES
 ];
 
 export const ACCESSORY_CATALOG = [
-  ...BASE_ACCESSORY_CATALOG.map(mergeAccessory),
-  ...STORM_80C_ACCESSORIES
+  ...BASE_ACCESSORY_CATALOG.map(mergeAccessory).map(mergeHighPowerStormAccessory),
+  ...STORM_80C_ACCESSORIES.map(mergeHighPowerStormAccessory),
+  ...HIGH_POWER_STORM_ACCESSORIES
 ];

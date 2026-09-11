@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 import { FIXTURE_LIBRARY } from "./fixture-library.js";
-import { ACCESSORY_LIBRARY } from "./accessory-library.js";
+import { ACCESSORY_CATALOG } from "./accessory-catalog.js";
 
 dotenv.config();
 
@@ -35,7 +35,7 @@ function formatEquipmentForAI(equipment = []) {
       fixture.ipRating && `IP: ${fixture.ipRating}`
     ].filter(Boolean).join(", ");
 
-    const accessories = ACCESSORY_LIBRARY
+    const accessories = ACCESSORY_CATALOG
       .filter(a => (a.compatibleWith || []).includes(fixture.id))
       .map(a => {
         const fixtureCompatibility = a.compatibility?.[fixture.id];
@@ -57,7 +57,7 @@ function formatEquipmentForAI(equipment = []) {
           null;
 
         const requiredAccessory = requiresAccessoryId
-          ? ACCESSORY_LIBRARY.find(candidate => candidate.id === requiresAccessoryId)
+          ? ACCESSORY_CATALOG.find(candidate => candidate.id === requiresAccessoryId)
           : null;
 
         const details = [
@@ -185,7 +185,6 @@ Nemoj izmišljati mere ili podatke koje nije moguće pouzdano utvrditi sa fotogr
     });
   }
 });
-
 
 app.post("/api/lighting-plan", async (req, res) => {
   try {

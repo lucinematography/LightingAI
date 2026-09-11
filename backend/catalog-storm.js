@@ -1,4 +1,8 @@
 import { STORM_CINE_KIT_ACCESSORIES, mergeStormCineKitAccessory } from './catalog-storm-cine-kits.js';
+import {
+  STORM_COMPATIBILITY_ACCESSORIES,
+  mergeStormCompatibilityAccessory
+} from './catalog-storm-compatibility-pass.js';
 import { ELECTRO_STORM_FIXTURES, ELECTRO_STORM_ACCESSORIES, mergeElectroStormAccessory } from './catalog-electro-storm.js';
 import { HIGH_POWER_STORM_FIXTURES, HIGH_POWER_STORM_ACCESSORIES, mergeHighPowerStormAccessory } from './catalog-storm-high-power.js';
 import {
@@ -418,5 +422,6 @@ export const ACCESSORY_CATALOG = [
   ...STORM_80C_ACCESSORIES.map(mergeHighPowerStormAccessory),
   ...HIGH_POWER_STORM_ACCESSORIES,
   ...ELECTRO_STORM_ACCESSORIES,
-  ...STORM_CINE_KIT_ACCESSORIES
-].map(mergeElectroStormAccessory).map(mergeStormCineKitAccessory);
+  ...STORM_CINE_KIT_ACCESSORIES,
+  ...STORM_COMPATIBILITY_ACCESSORIES
+].map(mergeElectroStormAccessory).map(mergeStormCineKitAccessory).map(mergeStormCompatibilityAccessory);

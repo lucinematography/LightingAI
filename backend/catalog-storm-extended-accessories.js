@@ -354,7 +354,52 @@ export const STORM_EXTENDED_OVERRIDES = {
     compatibility: {
       [STORM_400X]: relation(SOURCE_400X_WIZARD, 'Compatible', [
         'Aputure lists CF12 Fresnel as physically compatible with STORM 400x'
-      ])
+      ]),
+      [STORM_1000C]: relation(
+        'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1000c',
+        'Designed For'
+      )
+    }
+  },
+  'aputure-storm-1200x-15-reflector': {
+    compatibility: {
+      [STORM_1000C]: relation(
+        'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1000c',
+        'Designed For'
+      )
+    }
+  },
+  'aputure-storm-1200x-30-reflector': {
+    compatibility: {
+      [STORM_1000C]: relation(
+        'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1000c',
+        'Designed For'
+      )
+    }
+  },
+  'aputure-storm-1200x-45-reflector': {
+    compatibility: {
+      [STORM_1000C]: relation(
+        'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1000c',
+        'Designed For'
+      )
+    }
+  },
+  'aputure-storm-1200x-barn-door-adapter': {
+    compatibility: {
+      [STORM_1000C]: relation(
+        'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1000c',
+        'Designed For'
+      )
+    }
+  },
+  'aputure-cf12-barn-doors': {
+    compatibility: {
+      [STORM_1000C]: relation(
+        'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1000c',
+        'Designed For',
+        ['Requires STORM 1000c/1200x Barn Doors Adapter for direct fixture mounting']
+      )
     }
   },
   'aputure-light-dome-mini-iii': {

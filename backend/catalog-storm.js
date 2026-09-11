@@ -3,6 +3,10 @@ import {
   STORM_COMPATIBILITY_ACCESSORIES,
   mergeStormCompatibilityAccessory
 } from './catalog-storm-compatibility-pass.js';
+import {
+  STORM_EXTENDED_ACCESSORIES,
+  mergeStormExtendedAccessory
+} from './catalog-storm-extended-accessories.js';
 import { ELECTRO_STORM_FIXTURES, ELECTRO_STORM_ACCESSORIES, mergeElectroStormAccessory } from './catalog-electro-storm.js';
 import { HIGH_POWER_STORM_FIXTURES, HIGH_POWER_STORM_ACCESSORIES, mergeHighPowerStormAccessory } from './catalog-storm-high-power.js';
 import {
@@ -423,5 +427,9 @@ export const ACCESSORY_CATALOG = [
   ...HIGH_POWER_STORM_ACCESSORIES,
   ...ELECTRO_STORM_ACCESSORIES,
   ...STORM_CINE_KIT_ACCESSORIES,
-  ...STORM_COMPATIBILITY_ACCESSORIES
-].map(mergeElectroStormAccessory).map(mergeStormCineKitAccessory).map(mergeStormCompatibilityAccessory);
+  ...STORM_COMPATIBILITY_ACCESSORIES,
+  ...STORM_EXTENDED_ACCESSORIES
+].map(mergeElectroStormAccessory)
+  .map(mergeStormCineKitAccessory)
+  .map(mergeStormCompatibilityAccessory)
+  .map(mergeStormExtendedAccessory);

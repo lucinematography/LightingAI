@@ -191,6 +191,40 @@ export const STORM_EXTENDED_ACCESSORIES = [
     verifiedAt: '2026-09-11'
   },
   {
+    id: 'aputure-spotlight-mount-26-lens-kit',
+    manufacturer: 'Aputure',
+    model: 'Spotlight Mount 26° Lens Kit',
+    category: 'Spotlight',
+    ...designedFor(SOURCE_400X_WIZARD, STORM_400X),
+    mount: 'ProLock / Bowens Mount',
+    beamAngleDeg: { min: 26, max: 26 },
+    effectOnLight: 'Ellipsoidal projection optic for a precise 26° beam, gobo projection and controlled shaping on STORM 400x.',
+    sourceUrl: SOURCE_400X_WIZARD,
+    verifiedAt: '2026-09-11'
+  },
+  {
+    id: 'aputure-spotlight-max-19-lens',
+    manufacturer: 'Aputure',
+    model: 'Spotlight Max 19° Lens',
+    category: 'Lens',
+    ...designedFor(SOURCE_400X_WIZARD, STORM_400X),
+    beamAngleDeg: { min: 19, max: 19 },
+    effectOnLight: 'Replacement 19° projection lens for the Spotlight Max body.',
+    sourceUrl: SOURCE_400X_WIZARD,
+    verifiedAt: '2026-09-11'
+  },
+  {
+    id: 'aputure-cf7-fresnel-and-barn-doors-kit',
+    manufacturer: 'Aputure',
+    model: 'CF7 Fresnel and Barn Doors Kit',
+    category: 'Fresnel',
+    ...designedFor(SOURCE_400X_WIZARD, STORM_400X),
+    mount: 'ProLock Bowens Mount',
+    effectOnLight: 'Combined 7-inch Fresnel and barn-door modifier kit designed for STORM 400x beam control.',
+    sourceUrl: SOURCE_400X_WIZARD,
+    verifiedAt: '2026-09-11'
+  },
+  {
     id: 'aputure-ultra-clamp',
     manufacturer: 'Aputure',
     model: 'Aputure Ultra Clamp',

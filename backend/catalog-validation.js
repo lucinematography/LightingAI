@@ -10,7 +10,7 @@ export function validateCatalog(catalog = RUNTIME_CATALOG) {
   const duplicateIds = items => { const seen=new Set(), dup=new Set(); for(const item of items){if(!item?.id)continue;if(seen.has(item.id))dup.add(item.id);seen.add(item.id);} return [...dup]; };
 
   for (const id of duplicateIds(fixtures)) errors.push(`Duplicate fixture id: ${id}`);
-  for (const id of duplicateIds(catalog.sourceAccessoryDefinitions || accessories)) warnings.push(`Merged accessory source definition: ${id}`);
+  for (const id of duplicateIds(catalog.sourceAccessoryDefinitions || accessories)) errors.push(`Duplicate accessory source definition: ${id}`);
 
   const fixtureIds=new Set(fixtures.map(f=>f.id));
   const accessoryIds=new Set(accessories.map(a=>a.id));

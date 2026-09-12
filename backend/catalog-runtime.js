@@ -4,6 +4,7 @@ import { ADDITIONAL_ACCESSORY_LIBRARY } from './additional-accessory-library.js'
 import { SPOTLIGHT_ACCESSORY_LIBRARY } from './spotlight-accessory-library.js';
 import { SPACE_LIGHT_ACCESSORY_LIBRARY } from './space-light-accessory-library.js';
 import { STORM_80C_ADAPTED_ACCESSORY_LIBRARY } from './storm-80c-adapted-accessory-library.js';
+import { APUTURE_MOUNT_SYSTEM_LIBRARY } from './aputure-mount-system-library.js';
 import { applyAccessoryCompatibilityOverrides } from './accessory-compatibility-overrides.js';
 import { applyCatalogCompatibilityCorrections } from './catalog-compatibility-corrections.js';
 
@@ -24,7 +25,7 @@ function mergeAccessory(base, extra) {
 
 export function buildRuntimeCatalog() {
   const fixtures = clone(FIXTURE_LIBRARY);
-  const accessoryDefinitions = [...clone(ACCESSORY_LIBRARY), ...clone(ADDITIONAL_ACCESSORY_LIBRARY), ...clone(SPOTLIGHT_ACCESSORY_LIBRARY), ...clone(SPACE_LIGHT_ACCESSORY_LIBRARY), ...clone(STORM_80C_ADAPTED_ACCESSORY_LIBRARY)];
+  const accessoryDefinitions = [...clone(ACCESSORY_LIBRARY), ...clone(ADDITIONAL_ACCESSORY_LIBRARY), ...clone(SPOTLIGHT_ACCESSORY_LIBRARY), ...clone(SPACE_LIGHT_ACCESSORY_LIBRARY), ...clone(STORM_80C_ADAPTED_ACCESSORY_LIBRARY), ...clone(APUTURE_MOUNT_SYSTEM_LIBRARY)];
   const duplicateAccessoryIds = [];
   const accessoriesById = new Map();
   for (const accessory of accessoryDefinitions) {

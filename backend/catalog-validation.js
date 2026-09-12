@@ -1,17 +1,10 @@
-import { FIXTURE_LIBRARY } from './fixture-library.js';
-import { ACCESSORY_LIBRARY } from './accessory-library.js';
-import { ADDITIONAL_ACCESSORY_LIBRARY } from './additional-accessory-library.js';
+import { RUNTIME_CATALOG } from './catalog-runtime.js';
 
-// Large-batch integrity validation for the LightingAI equipment database.
-// Mirrors the server merge: additional accessories already loaded into ACCESSORY_LIBRARY
-// are not counted twice. This catches real duplicate IDs, broken links, dependency cycles
-// and malformed core specs before those errors reach the AI recommendation layer.
-export function validateCatalog() {
-  const fixtures = FIXTURE_LIBRARY;
-  const accessories = [...ACCESSORY_LIBRARY];
-  for (const accessory of ADDITIONAL_ACCESSORY_LIBRARY) {
-    if (!accessories.some(existing => existing.id === accessory.id)) accessories.push(accessory);
-  }
+// Validates the exact catalog consumed by the backend after merge + compatibility overrides.
+// Raw source definitions are also checked separately so duplicate IDs cannot be hidden by merge deduplication.
+export function validateCatalog(catalog = RUNTIME_CATALOG) {
+  const fixtures = catalog.fixtures;
+  const accessories = catalog.accessories;
   const errors = [];
   const warnings = [];
 
@@ -27,7 +20,7 @@ export function validateCatalog() {
   };
 
   for (const id of duplicateIds(fixtures)) errors.push(`Duplicate fixture id: ${id}`);
-  for (const id of duplicateIds(accessories)) errors.push(`Duplicate accessory id: ${id}`);
+  for (const id of duplicateIds(catalog.sourceAccessoryDefinitions || accessories)) errors.push(`Duplicate accessory source definition: ${id}`);
 
   const fixtureIds = new Set(fixtures.map(f => f.id));
   const accessoryIds = new Set(accessories.map(a => a.id));
@@ -59,10 +52,7 @@ export function validateCatalog() {
   const visiting = new Set();
   const visited = new Set();
   function visit(id, path = []) {
-    if (visiting.has(id)) {
-      errors.push(`Accessory dependency cycle: ${[...path, id].join(' -> ')}`);
-      return;
-    }
+    if (visiting.has(id)) { errors.push(`Accessory dependency cycle: ${[...path, id].join(' -> ')}`); return; }
     if (visited.has(id)) return;
     visiting.add(id);
     for (const next of graph.get(id) || []) visit(next, [...path, id]);
@@ -71,11 +61,5 @@ export function validateCatalog() {
   }
   for (const id of accessoryIds) visit(id);
 
-  return {
-    ok: errors.length === 0,
-    fixtureCount: fixtures.length,
-    accessoryCount: accessories.length,
-    errors: [...new Set(errors)],
-    warnings: [...new Set(warnings)]
-  };
+  return {ok:errors.length===0,fixtureCount:fixtures.length,accessoryCount:accessories.length,errors:[...new Set(errors)],warnings:[...new Set(warnings)]};
 }

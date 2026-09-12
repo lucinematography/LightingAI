@@ -1,6 +1,6 @@
 import { RUNTIME_CATALOG } from './catalog-runtime.js';
 
-const OFFICIAL_APUTURE_HOSTS = new Set(['aputure.com','www.aputure.com','help.aputure.com']);
+const OFFICIAL_APUTURE_HOSTS = new Set(['aputure.com','www.aputure.com','help.aputure.com','docs.aputure.com']);
 const GENERIC_SOURCE_PATHS = new Set(['/', '/en-us', '/en-us/', '/collections/aputure', '/en-us/collections/aputure']);
 
 function normalizePath(pathname = '/') {

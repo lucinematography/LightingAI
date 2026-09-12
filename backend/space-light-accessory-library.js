@@ -10,13 +10,10 @@ export const SPACE_LIGHT_ACCESSORY_LIBRARY = [
       'aputure-storm-400x',
       'aputure-storm-700x',
       'aputure-storm-1000c',
-      'aputure-storm-1200x',
-      'aputure-ls-600x-pro',
-      'aputure-ls-600c-pro-ii',
-      'aputure-electro-storm-xt26'
+      'aputure-storm-1200x'
     ],
     compatibilityStatus:'Compatible',
-    sourceUrl:'https://aputure.com/en-US/products/space-light-90',
-    sourceTypeLabel:'Official Aputure product page and compatibility wizard'
+    sourceUrl:'https://aputure.com/en-US/product-families/storm',
+    sourceTypeLabel:'Official Aputure STORM family compatibility table and compatibility wizard'
   }
 ];

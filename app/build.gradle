@@ -5,8 +5,8 @@ android { namespace 'com.lightingai.app'; compileSdk 35
 
     buildTypes {
         debug {
-            applicationIdSuffix '.review'
-            versionNameSuffix '-review'
+            applicationIdSuffix '.review2'
+            versionNameSuffix '-review2'
         }
     }
 }

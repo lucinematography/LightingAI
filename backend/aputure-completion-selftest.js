@@ -19,8 +19,8 @@ const requiredReachability = {
   'aputure-storm-1200x':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90'],
   'aputure-storm-cs32':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150','aputure-mount-lantern-120','aputure-mount-lantern-180'],
   'aputure-storm-xt52':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150','aputure-mount-lantern-120','aputure-mount-lantern-180'],
-  'aputure-electro-storm-cs15':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-motorized-yoke','aputure-electro-storm-reflector-20','aputure-electro-storm-reflector-35','aputure-electro-storm-reflector-50','aputure-electro-storm-flight-case','aputure-storm-parallel-beam-70','aputure-sidus-one','aputure-sidus-four'],
-  'aputure-electro-storm-xt26':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-motorized-yoke','aputure-electro-storm-reflector-20','aputure-electro-storm-reflector-35','aputure-electro-storm-reflector-50','aputure-electro-storm-flight-case','aputure-electro-storm-xt26-lp28-bates-40a-cable','aputure-storm-parallel-beam-70','aputure-sidus-one','aputure-sidus-four']
+  'aputure-electro-storm-cs15':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-motorized-yoke','aputure-electro-storm-reflector-20','aputure-electro-storm-reflector-35','aputure-electro-storm-reflector-50','aputure-electro-storm-flight-case','aputure-storm-parallel-beam-70','aputure-light-dome-150','aputure-lantern-90','aputure-spotlight-max','aputure-sidus-one','aputure-sidus-four'],
+  'aputure-electro-storm-xt26':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-motorized-yoke','aputure-electro-storm-reflector-20','aputure-electro-storm-reflector-35','aputure-electro-storm-reflector-50','aputure-electro-storm-flight-case','aputure-electro-storm-xt26-lp28-bates-40a-cable','aputure-storm-parallel-beam-70','aputure-light-dome-150','aputure-lantern-90','aputure-spotlight-max','aputure-quick-dome-90','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four']
 };
 for (const [fixtureId, ids] of Object.entries(requiredReachability)) {
   const reachable=new Set(buildAccessoryTree(fixtureId,RUNTIME_CATALOG).map(x=>x.id));
@@ -51,7 +51,10 @@ for(const f of ['aputure-storm-cs32','aputure-storm-xt52']){
 for(const f of ['aputure-electro-storm-cs15','aputure-electro-storm-xt26']){
   expectStatus('aputure-storm-parallel-beam-70',f,'Compatible');
   for(const id of ['aputure-electro-storm-f14-fresnel','aputure-electro-storm-motorized-yoke','aputure-electro-storm-reflector-20','aputure-electro-storm-reflector-35','aputure-electro-storm-reflector-50']) expectStatus(id,f,'Designed For');
+  for(const id of ['aputure-light-dome-150','aputure-lantern-90','aputure-spotlight-max']) expectStatus(id,f,'Compatible');
 }
+expectStatus('aputure-quick-dome-90','aputure-electro-storm-xt26','Compatible');
+expectStatus('aputure-space-light-90','aputure-electro-storm-xt26','Compatible');
 const f14=RUNTIME_CATALOG.accessoryById.get('aputure-electro-storm-f14-fresnel');
 if(!f14 || f14.beamAngleDeg?.min!==18 || f14.beamAngleDeg?.max!==50 || f14.weightKg!==13 || f14.diameterCm!==35) errors.push('Electro Storm F14 Fresnel specification regression');
 const motorYoke=RUNTIME_CATALOG.accessoryById.get('aputure-electro-storm-motorized-yoke');
@@ -69,7 +72,7 @@ else {
   if(spaceLight90.diameterCm!==90) errors.push('Space Light 90 diameter must be 90cm');
   for(const f of ['aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-ls-600x-pro','aputure-ls-600c-pro-ii']) if(spaceLight90.compatibility?.[f]?.status!=='Compatible') errors.push(`Space Light 90 must be Compatible with ${f}`);
 }
-const forbidden={'aputure-ls-1200d-pro':['aputure-spotlight-mount-ii'],'aputure-storm-1200x':['aputure-spotlight-mount-ii'],'aputure-storm-80c':['aputure-f10-fresnel'],'aputure-electro-storm-xt26':['aputure-space-light-90'],'aputure-storm-xt52':['aputure-electro-storm-f14-fresnel']};
+const forbidden={'aputure-ls-1200d-pro':['aputure-spotlight-mount-ii'],'aputure-storm-1200x':['aputure-spotlight-mount-ii'],'aputure-storm-80c':['aputure-f10-fresnel'],'aputure-storm-xt52':['aputure-electro-storm-f14-fresnel']};
 for(const [fixtureId,ids] of Object.entries(forbidden)){
   const reachable=new Set(buildAccessoryTree(fixtureId,RUNTIME_CATALOG).map(x=>x.id));
   for(const id of ids) if(reachable.has(id)) errors.push(`${fixtureId} must not reach ${id}`);

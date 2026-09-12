@@ -3,7 +3,7 @@
 export const ADDITIONAL_ACCESSORY_LIBRARY = [
   {
     id: 'aputure-fresnel-2x', manufacturer: 'Aputure', model: 'Fresnel 2X', category: 'Fresnel', compatibilityStatus: 'Compatible',
-    compatibleWith: ['aputure-ls-300d-ii'], mount: 'Bowens Mount', beamAngleDeg: { min: 12, max: 40 }, weightKg: 1.24,
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x'], mount: 'Bowens Mount', beamAngleDeg: { min: 12, max: 40 }, weightKg: 1.24,
     dimensionsMm: { width: 180, height: 180, depth: 141 }, effectOnLight: 'Dual-lens focusing Fresnel with adjustable 12-40 degree spot-to-flood beam.', sourceUrl: 'https://aputure.com/EN-US/products/fresnel-2x'
   },
   {
@@ -17,22 +17,42 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
   },
   {
     id: 'aputure-spotlight-max', manufacturer: 'Aputure', model: 'Spotlight Max', category: 'Spotlight', compatibilityStatus: 'Compatible',
-    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'Bowens Mount', availableLensAnglesDeg: [19, 36, 50],
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600d-pro', 'aputure-ls-600x-pro', 'aputure-ls-600c-pro-ii'], mount: 'Bowens Mount', availableLensAnglesDeg: [19, 36, 50],
     effectOnLight: 'Projection modifier for precise beam shaping and lens-based control.', sourceUrl: 'https://aputure.com/EN-US/pages/accessory-compatibility-wizard?compatModuleProduct=spotlight-max-19-lens-set'
   },
   {
     id: 'aputure-spotlight-mount-ii', manufacturer: 'Aputure', model: 'Spotlight Mount II', category: 'Spotlight', compatibilityStatus: 'Compatible',
-    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'Bowens Mount', availableLensAnglesDeg: [19, 26, 36, 50],
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600d-pro', 'aputure-ls-600x-pro', 'aputure-ls-600c-pro-ii'], mount: 'Bowens Mount', availableLensAnglesDeg: [19, 26, 36, 50],
     effectOnLight: 'Ellipsoidal projection modifier with interchangeable lenses for precise beam shaping, gobos and iris control.', sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
   },
   {
     id: 'aputure-spotlight-gobo-holder-b-size', manufacturer: 'Aputure', model: 'Spotlight Gobo Holder (B-Size)', category: 'Gobo Holder', compatibilityStatus: 'Designed For',
-    compatibleWith: ['aputure-spotlight-mount', 'aputure-spotlight-mount-ii'], mount: 'Spotlight Mount / Spotlight Mount II gobo slot',
-    effectOnLight: 'Holds B-size gobos in the Spotlight projection system for pattern projection.', sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
+    compatibleWith: ['aputure-spotlight-mount', 'aputure-spotlight-mount-ii', 'aputure-spotlight-max'], mount: 'Spotlight projection gobo slot',
+    effectOnLight: 'Holds B-size gobos in compatible Spotlight projection systems for pattern projection.', sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
   },
   {
     id: 'aputure-spotlight-gobo-kit-b-size', manufacturer: 'Aputure', model: 'Spotlight Gobo Kit (B-Size)', category: 'Gobo', compatibilityStatus: 'Designed For',
     compatibleWith: ['aputure-spotlight-gobo-holder-b-size'], mount: 'B-Size gobo holder',
     effectOnLight: 'Pattern gobos for projecting controlled breakup, window, foliage and other shapes.', sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
+  },
+  {
+    id: 'aputure-spotlight-iris', manufacturer: 'Aputure', model: 'Spotlight Iris', category: 'Iris', compatibilityStatus: 'Designed For',
+    compatibleWith: ['aputure-spotlight-mount-ii', 'aputure-spotlight-max'], mount: 'Spotlight accessory slot',
+    effectOnLight: 'Variable circular aperture for reducing and shaping the projected beam diameter.', sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
+  },
+  {
+    id: 'aputure-light-dome-mini-iii', manufacturer: 'Aputure', model: 'Light Dome Mini III', category: 'Dome', compatibilityStatus: 'Compatible',
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600d-pro', 'aputure-ls-600x-pro', 'aputure-ls-600c-pro-ii'], mount: 'Bowens Mount',
+    effectOnLight: 'Compact circular soft source with fast setup for controlled key and fill lighting.', sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600c-pro-ii'
+  },
+  {
+    id: 'aputure-light-dome-iii', manufacturer: 'Aputure', model: 'Light Dome III', category: 'Dome', compatibilityStatus: 'Compatible',
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600d-pro', 'aputure-ls-600x-pro', 'aputure-ls-600c-pro-ii'], mount: 'Bowens Mount',
+    effectOnLight: 'Large circular soft source for broad, even and controlled diffusion.', sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600c-pro-ii'
+  },
+  {
+    id: 'aputure-quick-dome-90', manufacturer: 'Aputure', model: 'Quick Dome 90', category: 'Dome', compatibilityStatus: 'Compatible',
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'Bowens Mount',
+    effectOnLight: 'Fast-deploy 90 cm soft modifier for broad controlled diffusion.', sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=ls-600c-pro-ii'
   }
 ];

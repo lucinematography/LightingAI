@@ -28,6 +28,6 @@ assert.match(html, /DESIGNED FOR/);
 assert.match(html, /COMPATIBLE/);
 assert.match(html, /UKLJUČENI/);
 assert.match(html, /18<\/b> lampi/);
-assert.match(html, /130<\/b> dodataka/);
+assert.match(html, new RegExp(`${review.accessoryCount}<\\/b> dodataka`));
 assert.ok(!html.includes('Planner</button>'), 'Review must remain isolated from the restored app UI');
 console.log(`Aputure review self-test OK: ${review.fixtureCount} fixtures, ${review.accessoryCount} runtime accessories.`);

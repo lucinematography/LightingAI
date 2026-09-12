@@ -24,6 +24,7 @@ export function applyCatalogCompatibilityCorrections(accessories) {
     addCompatibility(quickDome60, 'aputure-storm-80c', 'Compatible', { conditions: ['Requires STORM 80c Bowens Mount Adapter'], requiredAccessoryId: 'aputure-storm-80c-bowens-adapter' });
     addCompatibility(quickDome60, 'aputure-storm-400x', 'Designed For');
     addCompatibility(quickDome60, 'aputure-storm-1000c', 'Compatible');
+    addCompatibility(quickDome60, 'aputure-storm-1200x', 'Compatible');
     quickDome60.mount = quickDome60.mount || 'Bowens Mount';
     quickDome60.weightKg = 0.76;
     quickDome60.diffusionStops = [1];
@@ -62,7 +63,6 @@ export function applyCatalogCompatibilityCorrections(accessories) {
     addCompatibility(barnDoorAdapter, 'aputure-storm-1200x', 'Designed For');
   }
 
-  // Current Aputure STORM family table / Compatibility Wizard: shared 1000c + 1200x system.
   const sharedDesigned = [
     'aputure-storm-1000c-1200x-reflector-15',
     'aputure-storm-1000c-1200x-reflector-30',
@@ -72,7 +72,6 @@ export function applyCatalogCompatibilityCorrections(accessories) {
   patchMany(byId, sharedDesigned, 'aputure-storm-1000c', 'Designed For');
   patchMany(byId, sharedDesigned, 'aputure-storm-1200x', 'Designed For');
 
-  // Current official compatible Bowens modifiers for both high-output STORM fixtures.
   const sharedCompatible = [
     'aputure-light-dome-iii',
     'aputure-light-dome-se',
@@ -84,13 +83,15 @@ export function applyCatalogCompatibilityCorrections(accessories) {
     'aputure-light-box-30x120',
     'aputure-light-octadome-120',
     'aputure-lantern-90',
+    'aputure-quick-dome-60',
+    'aputure-quick-dome-90',
+    'aputure-space-light-90',
     'aputure-sidus-one',
     'aputure-sidus-four'
   ];
   patchMany(byId, sharedCompatible, 'aputure-storm-1000c', 'Compatible');
   patchMany(byId, sharedCompatible, 'aputure-storm-1200x', 'Compatible');
 
-  // Four-Light Bracket is Designed For 1200x, but the current 1000c wizard lists it Compatible.
   const fourLight = byId.get('aputure-ls1200d-four-light-bracket');
   if (fourLight) {
     addCompatibility(fourLight, 'aputure-storm-1200x', 'Designed For');

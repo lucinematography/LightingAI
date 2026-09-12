@@ -30,7 +30,19 @@ function resolveFixture(e = {}) {
   const equipmentName = normalizeEquipmentName(e.name); if (!equipmentName) return null;
   const exact = FIXTURE_LIBRARY.find(f => { const model=normalizeEquipmentName(f.model); return equipmentName===model || equipmentName===model.replace(/^ls/,"") || equipmentName===normalizeEquipmentName(`${f.manufacturer||""} ${f.model||""}`); });
   if (exact) return exact;
-  const aliases={"600d":"aputure-ls-600d","ls600d":"aputure-ls-600d","300dii":"aputure-ls-300d-ii","ls300dii":"aputure-ls-300d-ii","600cproii":"aputure-ls-600c-pro-ii","ls600cproii":"aputure-ls-600c-pro-ii","300x":"aputure-ls-300x","ls300x":"aputure-ls-300x"};
+  const aliases={
+    "60d":"aputure-ls-60d","ls60d":"aputure-ls-60d",
+    "60x":"aputure-ls-60x","ls60x":"aputure-ls-60x",
+    "300dii":"aputure-ls-300d-ii","ls300dii":"aputure-ls-300d-ii",
+    "300x":"aputure-ls-300x","ls300x":"aputure-ls-300x",
+    "600d":"aputure-ls-600d","ls600d":"aputure-ls-600d",
+    "600dpro":"aputure-ls-600d-pro","ls600dpro":"aputure-ls-600d-pro",
+    "600cproii":"aputure-ls-600c-pro-ii","ls600cproii":"aputure-ls-600c-pro-ii",
+    "600xpro":"aputure-ls-600x-pro","ls600xpro":"aputure-ls-600x-pro",
+    "1200dpro":"aputure-ls-1200d-pro","ls1200dpro":"aputure-ls-1200d-pro",
+    "storm1000c":"aputure-storm-1000c","1000c":"aputure-storm-1000c",
+    "storm1200x":"aputure-storm-1200x","1200x":"aputure-storm-1200x"
+  };
   const fixtureId=aliases[equipmentName]; return fixtureId ? FIXTURE_LIBRARY.find(f=>f.id===fixtureId)||null : null;
 }
 function formatEquipmentForAI(equipment = []) {

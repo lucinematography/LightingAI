@@ -55,7 +55,24 @@ export function applyCatalogCompatibilityCorrections(accessories) {
   if (cf12) {
     addCompatibility(cf12, 'aputure-storm-1000c', 'Designed For');
     addCompatibility(cf12, 'aputure-storm-1200x', 'Designed For');
+    addCompatibility(cf12, 'aputure-storm-400x', 'Compatible');
+    addCompatibility(cf12, 'aputure-storm-700x', 'Compatible');
   }
+
+  const bowens400Compatible = [
+    'aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max',
+    'aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-box-45x45','aputure-light-octadome-120',
+    'aputure-lantern-90','aputure-lantern','aputure-cf10-fresnel','aputure-storm-1000c-1200x-cf12-fresnel',
+    'aputure-space-light-90','aputure-sidus-one','aputure-sidus-four','aputure-neutrik-power-cable-1200-series-6m'
+  ];
+  const bowens700Compatible = [
+    'aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max',
+    'aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-lantern',
+    'aputure-storm-1000c-1200x-cf12-fresnel','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four',
+    'aputure-neutrik-power-cable-1200-series-6m'
+  ];
+  patchMany(byId, bowens400Compatible, 'aputure-storm-400x', 'Compatible');
+  patchMany(byId, bowens700Compatible, 'aputure-storm-700x', 'Compatible');
 
   const barnDoorAdapter = byId.get('aputure-storm-1000c-1200x-barn-doors-adapter');
   if (barnDoorAdapter) {
@@ -73,21 +90,10 @@ export function applyCatalogCompatibilityCorrections(accessories) {
   patchMany(byId, sharedDesigned, 'aputure-storm-1200x', 'Designed For');
 
   const sharedCompatible = [
-    'aputure-light-dome-iii',
-    'aputure-light-dome-se',
-    'aputure-light-dome-150',
-    'aputure-spotlight-max-19',
-    'aputure-spotlight-max-36',
-    'aputure-spotlight-max-50',
-    'aputure-light-box-60x90',
-    'aputure-light-box-30x120',
-    'aputure-light-octadome-120',
-    'aputure-lantern-90',
-    'aputure-quick-dome-60',
-    'aputure-quick-dome-90',
-    'aputure-space-light-90',
-    'aputure-sidus-one',
-    'aputure-sidus-four'
+    'aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max',
+    'aputure-spotlight-max-19','aputure-spotlight-max-36','aputure-spotlight-max-50','aputure-light-box-60x90',
+    'aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-quick-dome-60',
+    'aputure-quick-dome-90','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four'
   ];
   patchMany(byId, sharedCompatible, 'aputure-storm-1000c', 'Compatible');
   patchMany(byId, sharedCompatible, 'aputure-storm-1200x', 'Compatible');

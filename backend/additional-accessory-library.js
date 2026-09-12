@@ -27,12 +27,12 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
   },
   {
     id: 'aputure-spotlight-gobo-holder-b-size', manufacturer: 'Aputure', model: 'Spotlight Gobo Holder (B-Size)', category: 'Gobo Holder', compatibilityStatus: 'Designed For',
-    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'Spotlight Mount / Spotlight Mount II gobo slot', conditions: ['Requires Spotlight Mount or Spotlight Mount II'],
+    compatibleWith: ['aputure-spotlight-mount', 'aputure-spotlight-mount-ii'], mount: 'Spotlight Mount / Spotlight Mount II gobo slot',
     effectOnLight: 'Holds B-size gobos in the Spotlight projection system for pattern projection.', sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
   },
   {
     id: 'aputure-spotlight-gobo-kit-b-size', manufacturer: 'Aputure', model: 'Spotlight Gobo Kit (B-Size)', category: 'Gobo', compatibilityStatus: 'Designed For',
-    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'B-Size gobo holder', conditions: ['Requires Spotlight Mount or Spotlight Mount II and B-Size gobo holder'],
+    compatibleWith: ['aputure-spotlight-gobo-holder-b-size'], mount: 'B-Size gobo holder',
     effectOnLight: 'Pattern gobos for projecting controlled breakup, window, foliage and other shapes.', sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
   }
 ];

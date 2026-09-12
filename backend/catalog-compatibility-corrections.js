@@ -61,12 +61,10 @@ export function applyCatalogCompatibilityCorrections(accessories) {
   const bowens700Compatible = ['aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-lantern','aputure-storm-1000c-1200x-cf12-fresnel','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four','aputure-neutrik-power-cable-1200-series-6m'];
   patchMany(byId, bowens400Compatible, 'aputure-storm-400x', 'Compatible');
   patchMany(byId, bowens700Compatible, 'aputure-storm-700x', 'Compatible');
-  // Re-assert Designed For after broad Bowens compatibility patches.
   if (cf10) addCompatibility(cf10, 'aputure-storm-700x', 'Designed For');
 
   const barnDoorAdapter = byId.get('aputure-storm-1000c-1200x-barn-doors-adapter');
   if (barnDoorAdapter) { addCompatibility(barnDoorAdapter, 'aputure-storm-1000c', 'Designed For'); addCompatibility(barnDoorAdapter, 'aputure-storm-1200x', 'Designed For'); }
-
   const sharedDesigned = ['aputure-storm-1000c-1200x-reflector-15','aputure-storm-1000c-1200x-reflector-30','aputure-storm-1000c-1200x-reflector-45','aputure-storm-1000c-1200x-skid'];
   patchMany(byId, sharedDesigned, 'aputure-storm-1000c', 'Designed For');
   patchMany(byId, sharedDesigned, 'aputure-storm-1200x', 'Designed For');
@@ -74,16 +72,22 @@ export function applyCatalogCompatibilityCorrections(accessories) {
   const sharedCompatible = ['aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max','aputure-spotlight-max-19','aputure-spotlight-max-36','aputure-spotlight-max-50','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four'];
   patchMany(byId, sharedCompatible, 'aputure-storm-1000c', 'Compatible');
   patchMany(byId, sharedCompatible, 'aputure-storm-1200x', 'Compatible');
-  // Official current wizard lists the shared reflector/skid/CF12 system as Designed For both fixtures.
   if (cf12) { addCompatibility(cf12, 'aputure-storm-1000c', 'Designed For'); addCompatibility(cf12, 'aputure-storm-1200x', 'Designed For'); }
   if (barnDoorAdapter) { addCompatibility(barnDoorAdapter, 'aputure-storm-1000c', 'Designed For'); addCompatibility(barnDoorAdapter, 'aputure-storm-1200x', 'Designed For'); }
   patchMany(byId, sharedDesigned, 'aputure-storm-1000c', 'Designed For');
   patchMany(byId, sharedDesigned, 'aputure-storm-1200x', 'Designed For');
 
+  // Electro Storm CS15/XT26 have a nested Bowens mount. Aputure explicitly optimizes
+  // Light Dome 150, Lantern 90 and Spotlight Max for both fixtures; the XT26 wizard
+  // also lists Quick Dome 90 and Space Light 90 as compatible.
+  for (const fixtureId of ['aputure-electro-storm-cs15','aputure-electro-storm-xt26']) {
+    patchMany(byId, ['aputure-light-dome-150','aputure-lantern-90','aputure-spotlight-max'], fixtureId, 'Compatible');
+  }
+  patchMany(byId, ['aputure-quick-dome-90','aputure-space-light-90'], 'aputure-electro-storm-xt26', 'Compatible');
+
   const fourLight = byId.get('aputure-ls1200d-four-light-bracket');
   if (fourLight) {
     addCompatibility(fourLight, 'aputure-storm-1200x', 'Designed For');
-    // Current 1000c wizard lists this bracket only as Compatible With.
     addCompatibility(fourLight, 'aputure-storm-1000c', 'Compatible');
   }
   return accessories;

@@ -3,11 +3,15 @@ import { ACCESSORY_LIBRARY } from './accessory-library.js';
 import { ADDITIONAL_ACCESSORY_LIBRARY } from './additional-accessory-library.js';
 
 // Large-batch integrity validation for the LightingAI equipment database.
-// This catches broken IDs, duplicate records, invalid dependency links and malformed core specs
-// before those errors reach the AI recommendation layer.
+// Mirrors the server merge: additional accessories already loaded into ACCESSORY_LIBRARY
+// are not counted twice. This catches real duplicate IDs, broken links, dependency cycles
+// and malformed core specs before those errors reach the AI recommendation layer.
 export function validateCatalog() {
   const fixtures = FIXTURE_LIBRARY;
-  const accessories = [...ACCESSORY_LIBRARY, ...ADDITIONAL_ACCESSORY_LIBRARY];
+  const accessories = [...ACCESSORY_LIBRARY];
+  for (const accessory of ADDITIONAL_ACCESSORY_LIBRARY) {
+    if (!accessories.some(existing => existing.id === accessory.id)) accessories.push(accessory);
+  }
   const errors = [];
   const warnings = [];
 
@@ -51,7 +55,6 @@ export function validateCatalog() {
     if (!accessory.sourceUrl) warnings.push(`Accessory has no source URL: ${accessory.id}`);
   }
 
-  // Detect dependency cycles between accessories (A -> B -> A, etc.).
   const graph = new Map(accessories.map(a => [a.id, (a.compatibleWith || []).filter(id => accessoryIds.has(id))]));
   const visiting = new Set();
   const visited = new Set();

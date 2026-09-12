@@ -44,7 +44,15 @@ for(const id of ['aputure-mount-reflector-25','aputure-mount-reflector-35','aput
 }
 target('aputure-mount-reflector-30','aputure-storm-cs32'); target('aputure-mount-reflector-30','aputure-storm-xt52'); status('aputure-mount-reflector-30','aputure-storm-cs32','Designed For'); status('aputure-mount-reflector-30','aputure-storm-xt52','Compatible');
 assert.equal(accessory('aputure-mount-reflector-20-combo').requiredAccessoryId,'aputure-mount-reflector-25');
+assert.deepEqual(accessory('aputure-mount-reflector-20-combo').compatibility['aputure-storm-xt52'].conditions,['Requires the 25° narrow reflector plus extension tube']);
+assert.deepEqual(accessory('aputure-mount-reflector-20-combo').compatibility['aputure-storm-cs32'].conditions,['Requires the 25° narrow reflector plus extension tube']);
+assert.equal(accessory('aputure-mount-reflector-30').includedWithFixture,'aputure-storm-cs32'); assert.equal(accessory('aputure-mount-reflector-35').includedWithFixture,'aputure-storm-xt52');
 assert.equal(accessory('aputure-mount-light-dome-150').weightKg,3.20); assert.deepEqual(accessory('aputure-mount-light-dome-150').diffusionStops,[1.5,2.5]); assert.equal(accessory('aputure-mount-light-dome-150').gridAngleDeg,50); assert.equal(accessory('aputure-mount-lantern-180').weightKg,8.15);
-target('aputure-storm-cs32-head-cable-15m','aputure-storm-cs32'); target('aputure-storm-xt52-head-cable-7-5m','aputure-storm-xt52'); target('aputure-storm-xt52-head-cable-15m','aputure-storm-xt52'); target('aputure-ultra-clamp','aputure-storm-cs32'); target('aputure-quick-release-clamp','aputure-storm-xt52');
+target('aputure-storm-cs32-skid','aputure-storm-cs32'); status('aputure-storm-cs32-skid','aputure-storm-cs32','Designed For'); target('aputure-storm-xt52-skid','aputure-storm-xt52'); status('aputure-storm-xt52-skid','aputure-storm-xt52','Designed For');
+target('aputure-storm-cs32-head-cable-15m','aputure-storm-cs32'); status('aputure-storm-cs32-head-cable-15m','aputure-storm-cs32','Designed For'); assert.equal(accessory('aputure-storm-cs32-head-cable-15m').lengthM,15);
+target('aputure-storm-xt52-head-cable-7-5m','aputure-storm-xt52'); status('aputure-storm-xt52-head-cable-7-5m','aputure-storm-xt52','Designed For'); assert.equal(accessory('aputure-storm-xt52-head-cable-7-5m').lengthM,7.5);
+target('aputure-storm-xt52-head-cable-15m','aputure-storm-xt52'); status('aputure-storm-xt52-head-cable-15m','aputure-storm-xt52','Designed For'); assert.equal(accessory('aputure-storm-xt52-head-cable-15m').lengthM,15);
+target('aputure-ultra-clamp','aputure-storm-cs32'); status('aputure-ultra-clamp','aputure-storm-cs32','Designed For'); assert.equal(accessory('aputure-ultra-clamp').mount,'Control Box quick-release plate');
+target('aputure-quick-release-clamp','aputure-storm-xt52'); status('aputure-quick-release-clamp','aputure-storm-xt52','Designed For'); assert.equal(accessory('aputure-quick-release-clamp').mount,'Control Box quick-release plate');
 
-console.log(JSON.stringify({ok:true,checkedFixtures:['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52'],protectedFacts:126},null,2));
+console.log(JSON.stringify({ok:true,checkedFixtures:['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52'],protectedFacts:142},null,2));

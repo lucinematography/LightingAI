@@ -24,7 +24,8 @@ export const ACCESSORY_COMPATIBILITY_METADATA_OVERRIDES = {
     'aputure-light-dome-se': { status: 'Compatible', conditions: ['Remove inner baffle'] },
     'aputure-light-octadome-120': { status: 'Compatible', conditions: ['Remove inner baffle'] },
     'aputure-light-box-60x90': { status: 'Compatible', conditions: ['Remove inner baffle'] },
-    'aputure-light-box-30x120': { status: 'Compatible', conditions: ['Remove inner baffle'] }
+    'aputure-light-box-30x120': { status: 'Compatible', conditions: ['Remove inner baffle'] },
+    'aputure-f10-barn-doors': { status: 'Designed For', conditions: ['Requires F10 Fresnel'] }
   },
   'aputure-ls-600c-pro-ii': {
     'aputure-light-dome-mini-ii': { status: 'Compatible', conditions: ['Remove inner baffle and gel holder'] },
@@ -32,7 +33,8 @@ export const ACCESSORY_COMPATIBILITY_METADATA_OVERRIDES = {
     'aputure-light-dome-se': { status: 'Compatible', conditions: ['Remove inner baffle'] },
     'aputure-light-octadome-120': { status: 'Compatible', conditions: ['Remove inner baffle'] },
     'aputure-light-box-60x90': { status: 'Compatible', conditions: ['Remove inner baffle'] },
-    'aputure-light-box-30x120': { status: 'Compatible', conditions: ['Remove inner baffle'] }
+    'aputure-light-box-30x120': { status: 'Compatible', conditions: ['Remove inner baffle'] },
+    'aputure-f10-barn-doors': { status: 'Designed For', conditions: ['Requires F10 Fresnel'] }
   }
 };
 

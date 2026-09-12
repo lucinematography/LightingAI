@@ -9,6 +9,7 @@ import { STORM_SUPPORT_CONTROL_LIBRARY } from './storm-support-control-library.j
 import { ELECTRO_STORM_TRANSPORT_POWER_LIBRARY } from './electro-storm-transport-power-library.js';
 import { applyAccessoryCompatibilityOverrides } from './accessory-compatibility-overrides.js';
 import { applyCatalogCompatibilityCorrections } from './catalog-compatibility-corrections.js';
+import { applyElectroStormCanonicalCorrections } from './electro-storm-canonical-corrections.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function unique(values = []) { return [...new Set(values)]; }
@@ -26,8 +27,8 @@ function mergeAccessory(base, extra) {
 
 export function buildRuntimeCatalog() {
   const fixtures = clone(FIXTURE_LIBRARY);
-  // Electro Storm optical/motion records are canonical in APUTURE_MOUNT_SYSTEM_LIBRARY.
-  // Keep transport/power in its own layer, but do not import a second optical definition set.
+  // Keep one canonical source definition per accessory. Electro Storm optical facts are
+  // normalized after merge so richer verified data does not require duplicate records.
   const accessoryDefinitions = [...clone(ACCESSORY_LIBRARY), ...clone(ADDITIONAL_ACCESSORY_LIBRARY), ...clone(SPOTLIGHT_ACCESSORY_LIBRARY), ...clone(SPACE_LIGHT_ACCESSORY_LIBRARY), ...clone(STORM_80C_ADAPTED_ACCESSORY_LIBRARY), ...clone(APUTURE_MOUNT_SYSTEM_LIBRARY), ...clone(STORM_SUPPORT_CONTROL_LIBRARY), ...clone(ELECTRO_STORM_TRANSPORT_POWER_LIBRARY)];
   const duplicateAccessoryIds = [];
   const accessoriesById = new Map();
@@ -41,6 +42,7 @@ export function buildRuntimeCatalog() {
   const accessories = [...accessoriesById.values()];
   applyAccessoryCompatibilityOverrides(accessories);
   applyCatalogCompatibilityCorrections(accessories);
+  applyElectroStormCanonicalCorrections(accessories);
   return {
     fixtures,
     accessories,

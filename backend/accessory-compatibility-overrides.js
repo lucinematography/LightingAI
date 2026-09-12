@@ -1,7 +1,8 @@
+import { ACCESSORY_LIBRARY } from './accessory-library.js';
+
 // Compatibility additions for restored Aputure LS fixtures.
 // Kept separate from the large accessory library so existing records stay untouched.
 // Sources: Aputure Accessory Compatibility Sheet / Compatibility Wizard and official product pages.
-
 export const ACCESSORY_COMPATIBILITY_OVERRIDES = {
   'aputure-ls-300d-ii': [
     'aputure-bowens-standard-reflector',
@@ -62,3 +63,5 @@ export function applyAccessoryCompatibilityOverrides(accessories) {
   }
   return accessories;
 }
+
+applyAccessoryCompatibilityOverrides(ACCESSORY_LIBRARY);

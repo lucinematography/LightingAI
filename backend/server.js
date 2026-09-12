@@ -53,7 +53,7 @@ function formatEquipmentForAI(equipment = []) {
     const accessories = ACCESSORY_LIBRARY.filter(a => (a.compatibleWith || []).includes(fixture.id)).map(a => {
       const fixtureCompatibility = a.compatibility?.[fixture.id];
       const status = fixtureCompatibility?.status || a.compatibilityStatus || "Compatible";
-      const conditions = fixtureCompatibility?.conditions || [];
+      const conditions = fixtureCompatibility?.conditions || a.conditions || [];
       const details = [a.category && `type: ${a.category}`, `status: ${status}`, `availability: ${a.includedWithFixture === true ? "INCLUDED WITH FIXTURE" : "OPTIONAL ACCESSORY"}`, conditions.length && `conditions: ${conditions.join("; ")}`, a.mount && `mount: ${a.mount}`, a.beamAngleDeg && `beam: ${a.beamAngleDeg.min}-${a.beamAngleDeg.max}deg`, a.availableLensAnglesDeg && `lenses: ${a.availableLensAnglesDeg.join('/')}deg`, a.gridAngleDeg && `grid: ${a.gridAngleDeg}deg`, a.diffusionStops && `diffusion: ${a.diffusionStops.join('/')} stop`, a.effectOnLight && `effect: ${a.effectOnLight}`].filter(Boolean).join(", ");
       return `${a.manufacturer} ${a.model}${details ? ` [${details}]` : ""}`;
     });

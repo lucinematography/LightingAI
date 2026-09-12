@@ -52,6 +52,36 @@ export const ACCESSORY_COMPATIBILITY_OVERRIDES = {
   ]
 };
 
+// Verified installation conditions from Aputure's compatibility sheet.
+export const ACCESSORY_COMPATIBILITY_METADATA_OVERRIDES = {
+  'aputure-ls-600d': {
+    'aputure-light-dome-mini-ii': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle and gel holder']
+    },
+    'aputure-light-dome-ii': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle and gel holder']
+    },
+    'aputure-light-dome-se': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle']
+    },
+    'aputure-light-octadome-120': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle']
+    },
+    'aputure-light-box-60x90': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle']
+    },
+    'aputure-light-box-30x120': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle']
+    }
+  }
+};
+
 export function applyAccessoryCompatibilityOverrides(accessories) {
   for (const [fixtureId, accessoryIds] of Object.entries(ACCESSORY_COMPATIBILITY_OVERRIDES)) {
     for (const accessoryId of accessoryIds) {
@@ -61,6 +91,16 @@ export function applyAccessoryCompatibilityOverrides(accessories) {
       if (!accessory.compatibleWith.includes(fixtureId)) accessory.compatibleWith.push(fixtureId);
     }
   }
+
+  for (const [fixtureId, accessoryMetadata] of Object.entries(ACCESSORY_COMPATIBILITY_METADATA_OVERRIDES)) {
+    for (const [accessoryId, metadata] of Object.entries(accessoryMetadata)) {
+      const accessory = accessories.find(item => item.id === accessoryId);
+      if (!accessory) continue;
+      accessory.compatibility ||= {};
+      accessory.compatibility[fixtureId] = metadata;
+    }
+  }
+
   return accessories;
 }
 

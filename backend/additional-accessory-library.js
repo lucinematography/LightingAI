@@ -17,7 +17,7 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
   },
   {
     id: 'aputure-f10-barn-doors-direct', manufacturer: 'Aputure', model: 'F10 Barn Doors', category: 'Barn Doors', compatibilityStatus: 'Compatible via F10 Fresnel',
-    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'F10 Fresnel front accessory slot', conditions: ['Requires F10 Fresnel'],
+    compatibleWith: ['aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'F10 Fresnel front accessory slot', conditions: ['Requires F10 Fresnel'],
     effectOnLight: 'Four-leaf shaping accessory for the F10 Fresnel; use only when the F10 Fresnel is mounted.', sourceUrl: 'https://help.aputure.com/en/modifiers/f10-fresnel'
   },
   {

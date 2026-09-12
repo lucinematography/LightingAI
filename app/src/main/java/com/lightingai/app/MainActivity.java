@@ -19,7 +19,6 @@ public class MainActivity extends Activity {
     private WebView webView;
     private String pendingText = null;
     private static final int CREATE_FILE = 501;
-    private int navigationInset = 0;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -29,9 +28,12 @@ public class MainActivity extends Activity {
         webView = new WebView(this);
         setContentView(webView);
 
+        // Use the Android system inset only once. The HTML nav stays at bottom:0
+        // inside the padded WebView, directly above the phone navigation controls.
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
-            navigationInset = Math.max(0, insets.getSystemWindowInsetBottom());
-            applyNavigationInset();
+            int bottom = Math.max(0, insets.getSystemWindowInsetBottom());
+            int top = Math.max(0, insets.getSystemWindowInsetTop());
+            v.setPadding(0, top, 0, bottom);
             return insets;
         });
 
@@ -42,26 +44,11 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-
-        webView.setWebViewClient(new WebViewClient() {
-            @Override public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                applyNavigationInset();
-            }
-        });
+        webView.setWebViewClient(new WebViewClient());
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.loadUrl("file:///android_asset/index.html");
         webView.requestApplyInsets();
-    }
-
-    private void applyNavigationInset() {
-        if (webView == null) return;
-        final int px = navigationInset;
-        webView.post(() -> webView.evaluateJavascript(
-            "(function(){var n=document.querySelector('nav');var a=document.querySelector('.app');" +
-            "if(n){n.style.bottom='" + px + "px';n.style.zIndex='9999';}" +
-            "if(a){a.style.paddingBottom='calc(84px + " + px + "px)';}})();", null));
     }
 
     public class AndroidBridge {

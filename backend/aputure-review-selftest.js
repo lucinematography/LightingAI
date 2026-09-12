@@ -21,8 +21,13 @@ for (const fixture of review.fixtures) {
 }
 
 const html = aputureReviewHtml();
-assert.match(html, /Aputure Review/);
-assert.match(html, /Pretrazi lampu ili dodatak/);
+assert.match(html, /LightingAI · Aputure baza/);
+assert.match(html, /Pretraži lampu ili dodatak/);
+assert.match(html, /Izaberi konkretnu lampu/);
+assert.match(html, /DESIGNED FOR/);
+assert.match(html, /COMPATIBLE/);
+assert.match(html, /UKLJUČENI/);
 assert.match(html, /18<\/b> lampi/);
+assert.match(html, /130<\/b> dodataka/);
 assert.ok(!html.includes('Planner</button>'), 'Review must remain isolated from the restored app UI');
 console.log(`Aputure review self-test OK: ${review.fixtureCount} fixtures, ${review.accessoryCount} runtime accessories.`);

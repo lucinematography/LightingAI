@@ -39,18 +39,10 @@ public class MainActivity extends Activity {
             return insets;
         });
         WebSettings s = webView.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);
-        s.setDatabaseEnabled(true);
-        s.setAllowFileAccess(true);
-        s.setAllowContentAccess(true);
-        s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setDatabaseEnabled(true);
+        s.setAllowFileAccess(true); s.setAllowContentAccess(true); s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         webView.setWebViewClient(new WebViewClient() {
-            @Override public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                applyNavigationInset();
-                installCatalogView();
-            }
+            @Override public void onPageFinished(WebView view, String url) { super.onPageFinished(view, url); applyNavigationInset(); installCatalogView(); }
         });
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
@@ -61,10 +53,7 @@ public class MainActivity extends Activity {
     private void applyNavigationInset() {
         if (webView == null) return;
         final int cssPx = navigationInsetCssPx;
-        webView.post(() -> webView.evaluateJavascript(
-            "(function(){var n=document.querySelector('nav');var a=document.querySelector('.app');" +
-            "if(n){n.style.bottom='" + cssPx + "px';n.style.zIndex='9999';}" +
-            "if(a){a.style.paddingBottom='calc(84px + " + cssPx + "px)';}})();", null));
+        webView.post(() -> webView.evaluateJavascript("(function(){var n=document.querySelector('nav');var a=document.querySelector('.app');if(n){n.style.bottom='" + cssPx + "px';n.style.zIndex='9999';}if(a){a.style.paddingBottom='calc(84px + " + cssPx + "px)';}})();", null));
     }
 
     private void installCatalogView() {
@@ -81,7 +70,8 @@ public class MainActivity extends Activity {
             "var h='<div class=\\\"card\\\"><b>'+(sr?'PRETRAGA KATALOGA':'CATALOG SEARCH')+'</b><input id=\\\"catalogSearch\\\" style=\\\"margin-top:10px\\\" placeholder=\\\"'+(sr?'Pretraži proizvođača, svetla i opremu...':'Search manufacturer, fixtures and equipment...')+'\\\" value=\\\"'+esc(q)+'\\\" oninput=\\\"renderFullCatalog()\\\"></div>';" +
             "h+='<details class=\\\"card\\\" open><summary style=\\\"font-weight:900;font-size:21px;cursor:pointer;letter-spacing:.5px\\\"><span style=\\\"display:inline-block;border:1px solid currentColor;border-radius:6px;padding:3px 8px;margin-right:8px;font-size:13px\\\">APUTURE</span> Aputure <span class=\\\"muted small\\\">('+(fs.length+as.length)+')</span></summary><div style=\\\"margin-top:12px\\\">';" +
             "h+='<details class=\\\"card\\\"><summary style=\\\"font-weight:800;font-size:18px;cursor:pointer\\\">'+(sr?'RASVETNA TELA':'FIXTURES')+' ('+fs.length+')</summary><div style=\\\"margin-top:12px\\\">';fs.forEach(function(f){var on=isSelected(f.id);h+='<div style=\\\"margin-bottom:8px\\\"><button class=\\\"btn '+(on?'primary':'secondary')+'\\\" style=\\\"width:100%;text-align:left;margin:5px 0\\\" onclick=\\\"toggleCatalogItem(\\\'fixture\\\',\\\''+esc(f.id)+'\\\')\\\">'+(on?'✓ ':'＋ ')+esc(nameFixture(f))+'</button>';if(on){var own=window.catalogAccessories.filter(function(a){return accessoryMatchesFixture(a,f.id);});h+='<div style=\\\"margin:4px 0 12px 12px;padding:10px;border-left:2px solid #f5c542\\\"><div class=\\\"muted small\\\" style=\\\"margin-bottom:6px\\\">'+(sr?'DODACI ZA ':'ACCESSORIES FOR ')+esc(nameFixture(f))+' ('+own.length+')</div>';if(own.length){own.forEach(function(a){var aon=isSelected(a.id);h+='<button class=\\\"btn '+(aon?'primary':'secondary')+'\\\" style=\\\"width:100%;text-align:left;margin:4px 0\\\" onclick=\\\"toggleCatalogItem(\\\'accessory\\\',\\\''+esc(a.id)+'\\\')\\\">'+(aon?'✓ ':'＋ ')+esc(nameAccessory(a))+'</button>';});}else{h+='<div class=\\\"muted small\\\">'+(sr?'Nema dodataka u katalogu za ovaj reflektor.':'No catalog accessories for this fixture.')+'</div>';}h+='</div>';}h+='</div>';});h+='</div></details>';" +
-            "h+='<details class=\\\"card\\\"><summary style=\\\"font-weight:800;font-size:18px;cursor:pointer\\\">'+(sr?'DODATNA OPREMA':'ACCESSORIES')+' ('+as.length+')</summary><div style=\\\"margin-top:12px\\\">';as.forEach(function(a){var on=isSelected(a.id);var compat=(a.compatibleWith||[]).join(', ');h+='<div style=\\\"margin-bottom:8px\\\"><button class=\\\"btn '+(on?'primary':'secondary')+'\\\" style=\\\"width:100%;text-align:left\\\" onclick=\\\"toggleCatalogItem(\\\'accessory\\\',\\\''+esc(a.id)+'\\\')\\\">'+(on?'✓ ':'＋ ')+esc(nameAccessory(a))+'</button>'+(compat?'<div class=\\\"muted small\\\" style=\\\"padding:4px 8px\\\">'+(sr?'Kompatibilno sa: ':'Compatible with: ')+esc(compat)+'</div>':'')+'</div>';});h+='</div></details></div></details>';box.innerHTML=h;};" +
+            "h+='<details class=\\\"card\\\"><summary style=\\\"font-weight:800;font-size:18px;cursor:pointer\\\">'+(sr?'DODATNA OPREMA':'ACCESSORIES')+' ('+as.length+')</summary><div style=\\\"margin-top:12px\\\">';as.forEach(function(a){var on=isSelected(a.id);var compat=(a.compatibleWith||[]).join(', ');h+='<div style=\\\"margin-bottom:8px\\\"><button class=\\\"btn '+(on?'primary':'secondary')+'\\\" style=\\\"width:100%;text-align:left\\\" onclick=\\\"toggleCatalogItem(\\\'accessory\\\',\\\''+esc(a.id)+'\\\')\\\">'+(on?'✓ ':'＋ ')+esc(nameAccessory(a))+'</button>'+(compat?'<div class=\\\"muted small\\\" style=\\\"padding:4px 8px\\\">'+(sr?'Kompatibilno sa: ':'Compatible with: ')+esc(compat)+'</div>':'')+'</div>';});h+='</div></details></div></details>';" +
+            "h+='<details class=\\\"card\\\" style=\\\"border:1px solid #60758a;background:linear-gradient(135deg,#17212b,#253443);\\\"><summary style=\\\"font-weight:900;font-size:21px;cursor:pointer;letter-spacing:.5px;color:#b9cee0\\\"><span style=\\\"display:inline-block;border:1px solid #8da6ba;border-radius:6px;padding:3px 8px;margin-right:8px;font-size:13px;color:#d7e5f0\\\">ARRI</span> ARRI <span style=\\\"font-size:12px;opacity:.75\\\">(0)</span></summary><div style=\\\"margin-top:12px\\\"><details class=\\\"card\\\" style=\\\"background:#1d2a36;border-color:#53697d\\\"><summary style=\\\"font-weight:800;font-size:18px;cursor:pointer;color:#c8d8e5\\\">'+(sr?'RASVETNA TELA':'FIXTURES')+' (0)</summary><div class=\\\"muted small\\\" style=\\\"padding:12px 2px\\\">'+(sr?'ARRI reflektori će biti dodati ovde.':'ARRI fixtures will be added here.')+'</div></details><details class=\\\"card\\\" style=\\\"background:#1d2a36;border-color:#53697d\\\"><summary style=\\\"font-weight:800;font-size:18px;cursor:pointer;color:#c8d8e5\\\">'+(sr?'DODATNA OPREMA':'ACCESSORIES')+' (0)</summary><div class=\\\"muted small\\\" style=\\\"padding:12px 2px\\\">'+(sr?'ARRI dodaci će biti dodati ovde.':'ARRI accessories will be added here.')+'</div></details></div></details>';box.innerHTML=h;};" +
             "window.renderEquipment=function(){var checks=document.getElementById('equipmentChecks');if(checks){checks.innerHTML=window.equipment.length?window.equipment.map(function(e){return '<label class=\\\"chip\\\"><input type=\\\"checkbox\\\" value=\\\"'+esc(e.id)+'\\\" checked> '+esc(e.name)+' × '+(e.qty||1)+'</label>';}).join(''):'<div class=\\\"muted small\\\" style=\\\"grid-column:1/-1;padding:10px 0\\\">'+((window.currentLang||'sr')==='sr'?'Nema izabrane opreme. Izaberi je u katalogu Oprema.':'No equipment selected. Choose it in Equipment catalog.')+'</div>';}window.renderFullCatalog();};" +
             "window.selected=function(){return window.equipment.slice();};" +
             "Promise.all([fetch('https://lightingai.onrender.com/api/fixtures').then(function(r){return r.json();}),fetch('https://lightingai.onrender.com/api/accessories').then(function(r){return r.json();})]).then(function(v){window.catalogFixtures=Array.isArray(v[0])?v[0]:[];window.catalogAccessories=Array.isArray(v[1])?v[1]:[];window.equipment=[];renderEquipment();}).catch(function(){var box=document.getElementById('equipmentList');if(box)box.innerHTML='<div class=\\\"status warn\\\">Pravi katalog trenutno nije moguće učitati. Probaj ponovo kada postoji internet veza.</div>';});" +
@@ -91,14 +81,7 @@ public class MainActivity extends Activity {
 
     public class AndroidBridge {
         @JavascriptInterface public void saveText(String filename, String text) {
-            runOnUiThread(() -> {
-                pendingText = text;
-                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("application/json");
-                intent.putExtra(Intent.EXTRA_TITLE, filename);
-                startActivityForResult(intent, CREATE_FILE);
-            });
+            runOnUiThread(() -> { pendingText = text; Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT); intent.addCategory(Intent.CATEGORY_OPENABLE); intent.setType("application/json"); intent.putExtra(Intent.EXTRA_TITLE, filename); startActivityForResult(intent, CREATE_FILE); });
         }
     }
 
@@ -106,14 +89,10 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CREATE_FILE && resultCode == RESULT_OK && data != null && pendingText != null) {
             Uri uri = data.getData();
-            try (OutputStream out = getContentResolver().openOutputStream(uri)) {
-                if (out != null) out.write(pendingText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            } catch (Exception ignored) {}
+            try (OutputStream out = getContentResolver().openOutputStream(uri)) { if (out != null) out.write(pendingText.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception ignored) {}
             pendingText = null;
         }
     }
 
-    @Override public void onBackPressed() {
-        if (webView.canGoBack()) webView.goBack(); else super.onBackPressed();
-    }
+    @Override public void onBackPressed() { if (webView.canGoBack()) webView.goBack(); else super.onBackPressed(); }
 }

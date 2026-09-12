@@ -19,18 +19,13 @@ function patchMany(byId, ids, fixtureId, status = 'Compatible') {
 export function applyCatalogCompatibilityCorrections(accessories) {
   const byId = new Map(accessories.map(accessory => [accessory.id, accessory]));
 
-  // Current Aputure Light Storm compatibility: standard Bowens reflector and Sidus control nodes.
   const standardReflector = byId.get('aputure-bowens-standard-reflector');
   if (standardReflector) {
-    for (const fixtureId of ['aputure-ls-300d-ii','aputure-ls-300x','aputure-ls-600d','aputure-ls-600d-pro','aputure-ls-600x-pro','aputure-ls-600c-pro-ii','aputure-ls-1200d-pro']) {
-      addCompatibility(standardReflector, fixtureId, 'Compatible');
-    }
+    for (const fixtureId of ['aputure-ls-300d-ii','aputure-ls-300x','aputure-ls-600d','aputure-ls-600d-pro','aputure-ls-600x-pro','aputure-ls-600c-pro-ii','aputure-ls-1200d-pro']) addCompatibility(standardReflector, fixtureId, 'Compatible');
   }
   for (const controlId of ['aputure-sidus-one','aputure-sidus-four']) {
     const control = byId.get(controlId);
-    if (control) {
-      for (const fixtureId of ['aputure-ls-600d-pro','aputure-ls-600x-pro','aputure-ls-600c-pro-ii','aputure-ls-1200d-pro']) addCompatibility(control, fixtureId, 'Compatible');
-    }
+    if (control) for (const fixtureId of ['aputure-ls-600d-pro','aputure-ls-600x-pro','aputure-ls-600c-pro-ii','aputure-ls-1200d-pro']) addCompatibility(control, fixtureId, 'Compatible');
   }
 
   const quickDome60 = byId.get('aputure-quick-dome-60');
@@ -56,12 +51,7 @@ export function applyCatalogCompatibilityCorrections(accessories) {
 
   const spaceLight90 = byId.get('aputure-space-light-90');
   if (spaceLight90) {
-    addCompatibility(spaceLight90, 'aputure-storm-400x', 'Compatible');
-    addCompatibility(spaceLight90, 'aputure-storm-700x', 'Compatible');
-    addCompatibility(spaceLight90, 'aputure-storm-1000c', 'Designed For');
-    addCompatibility(spaceLight90, 'aputure-storm-1200x', 'Compatible');
-    addCompatibility(spaceLight90, 'aputure-ls-600x-pro', 'Compatible');
-    addCompatibility(spaceLight90, 'aputure-ls-600c-pro-ii', 'Compatible');
+    for (const fixtureId of ['aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-ls-600x-pro','aputure-ls-600c-pro-ii']) addCompatibility(spaceLight90, fixtureId, 'Compatible');
   }
 
   const cf10 = byId.get('aputure-cf10-fresnel');
@@ -78,18 +68,8 @@ export function applyCatalogCompatibilityCorrections(accessories) {
     addCompatibility(cf12, 'aputure-storm-700x', 'Compatible');
   }
 
-  const bowens400Compatible = [
-    'aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max',
-    'aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-box-45x45','aputure-light-octadome-120',
-    'aputure-lantern-90','aputure-lantern','aputure-cf10-fresnel','aputure-storm-1000c-1200x-cf12-fresnel',
-    'aputure-space-light-90','aputure-sidus-one','aputure-sidus-four','aputure-neutrik-power-cable-1200-series-6m'
-  ];
-  const bowens700Compatible = [
-    'aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max',
-    'aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-lantern',
-    'aputure-storm-1000c-1200x-cf12-fresnel','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four',
-    'aputure-neutrik-power-cable-1200-series-6m'
-  ];
+  const bowens400Compatible = ['aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-box-45x45','aputure-light-octadome-120','aputure-lantern-90','aputure-lantern','aputure-cf10-fresnel','aputure-storm-1000c-1200x-cf12-fresnel','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four','aputure-neutrik-power-cable-1200-series-6m'];
+  const bowens700Compatible = ['aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-lantern','aputure-storm-1000c-1200x-cf12-fresnel','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four','aputure-neutrik-power-cable-1200-series-6m'];
   patchMany(byId, bowens400Compatible, 'aputure-storm-400x', 'Compatible');
   patchMany(byId, bowens700Compatible, 'aputure-storm-700x', 'Compatible');
 
@@ -99,25 +79,13 @@ export function applyCatalogCompatibilityCorrections(accessories) {
     addCompatibility(barnDoorAdapter, 'aputure-storm-1200x', 'Designed For');
   }
 
-  const sharedDesigned = [
-    'aputure-storm-1000c-1200x-reflector-15',
-    'aputure-storm-1000c-1200x-reflector-30',
-    'aputure-storm-1000c-1200x-reflector-45',
-    'aputure-storm-1000c-1200x-skid'
-  ];
+  const sharedDesigned = ['aputure-storm-1000c-1200x-reflector-15','aputure-storm-1000c-1200x-reflector-30','aputure-storm-1000c-1200x-reflector-45','aputure-storm-1000c-1200x-skid'];
   patchMany(byId, sharedDesigned, 'aputure-storm-1000c', 'Designed For');
   patchMany(byId, sharedDesigned, 'aputure-storm-1200x', 'Designed For');
 
-  const sharedCompatible = [
-    'aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max',
-    'aputure-spotlight-max-19','aputure-spotlight-max-36','aputure-spotlight-max-50','aputure-light-box-60x90',
-    'aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-quick-dome-60',
-    'aputure-quick-dome-90','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four'
-  ];
+  const sharedCompatible = ['aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max','aputure-spotlight-max-19','aputure-spotlight-max-36','aputure-spotlight-max-50','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four'];
   patchMany(byId, sharedCompatible, 'aputure-storm-1000c', 'Compatible');
   patchMany(byId, sharedCompatible, 'aputure-storm-1200x', 'Compatible');
-  // Space Light 90 is explicitly listed under Designed For for STORM 1000c by Aputure.
-  if (spaceLight90) addCompatibility(spaceLight90, 'aputure-storm-1000c', 'Designed For');
 
   const fourLight = byId.get('aputure-ls1200d-four-light-bracket');
   if (fourLight) {

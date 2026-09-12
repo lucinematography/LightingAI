@@ -12,7 +12,7 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
   },
   {
     id: 'aputure-barndoors-fresnel-2x', manufacturer: 'Aputure', model: 'Aputure Barn Doors', category: 'Barn Doors', compatibilityStatus: 'Compatible',
-    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x'], mount: 'Fresnel 2X / Aputure reflector', gridAngleDeg: 30,
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x'], mount: 'Fresnel 2X / Aputure reflector', conditions: ['Requires Fresnel 2X'], gridAngleDeg: 30,
     effectOnLight: 'Four-leaf light shaping with black velvet lining, magnetic gel holder, and 30 degree honeycomb grid.', sourceUrl: 'https://aputure.com/EN-US/products/aputure-barndoors'
   },
   {

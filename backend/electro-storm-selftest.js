@@ -19,6 +19,9 @@ const cs15=new Set(buildAccessoryTree('aputure-electro-storm-cs15',RUNTIME_CATAL
 const xt26=new Set(buildAccessoryTree('aputure-electro-storm-xt26',RUNTIME_CATALOG).map(x=>x.id));
 if(!cs15.has('aputure-electro-storm-cs15-ac-cable-20a-6m')) errors.push('CS15 missing official 20A 6m AC cable');
 for(const id of ['aputure-electro-storm-xt26-ac-cable-15a-6m','aputure-electro-storm-xt26-ac-cable-40a-bare-ends','aputure-electro-storm-xt26-lp28-bates-40a-cable']) if(!xt26.has(id)) errors.push(`XT26 missing official power accessory ${id}`);
+for(const id of ['aputure-space-light-90','aputure-quick-dome-90','aputure-light-dome-150','aputure-lantern-90','aputure-spotlight-max']) if(!xt26.has(id)) errors.push(`XT26 missing official compatible Bowens accessory ${id}`);
+const spaceLight=RUNTIME_CATALOG.accessoryById.get('aputure-space-light-90');
+if(!spaceLight || spaceLight.compatibility?.['aputure-electro-storm-xt26']?.status!=='Compatible') errors.push('Space Light 90 must remain officially Compatible with Electro Storm XT26');
 const bates=RUNTIME_CATALOG.accessoryById.get('aputure-electro-storm-xt26-lp28-bates-40a-cable');
 if(!bates || bates.lengthM!==6) errors.push('XT26 LP-28 to Bates 40A cable must retain official 6m length');
 const f14=RUNTIME_CATALOG.accessoryById.get('aputure-electro-storm-f14-fresnel');

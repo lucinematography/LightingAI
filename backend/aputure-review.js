@@ -2,56 +2,19 @@ import { RUNTIME_CATALOG } from './catalog-runtime.js';
 import { buildAccessoryTree } from './accessory-graph.js';
 
 function compactFixture(f) {
-  return {
-    id: f.id,
-    manufacturer: f.manufacturer,
-    model: f.model,
-    sourceType: f.sourceType,
-    powerDrawW: f.powerDrawW,
-    outputPowerW: f.outputPowerW,
-    cctK: f.cctK,
-    colorMode: f.colorMode,
-    cri: f.cri,
-    tlci: f.tlci,
-    beamAngleDeg: f.beamAngleDeg,
-    includedReflectorBeamAngleDeg: f.includedReflectorBeamAngleDeg,
-    mount: f.mount,
-    ipRating: f.ipRating,
-    weightKg: f.weightKg,
-    sourceUrl: f.sourceUrl
-  };
+  return { id:f.id, manufacturer:f.manufacturer, model:f.model, sourceType:f.sourceType, powerDrawW:f.powerDrawW, outputPowerW:f.outputPowerW, cctK:f.cctK, colorMode:f.colorMode, cri:f.cri, tlci:f.tlci, beamAngleDeg:f.beamAngleDeg, includedReflectorBeamAngleDeg:f.includedReflectorBeamAngleDeg, mount:f.mount, ipRating:f.ipRating, weightKg:f.weightKg, sourceUrl:f.sourceUrl };
 }
-
 function compactAccessory(r) {
-  const a = RUNTIME_CATALOG.accessoryById.get(r.id) || {};
-  return {
-    id: r.id,
-    model: r.model,
-    manufacturer: r.manufacturer,
-    category: r.category,
-    status: r.status,
-    availability: r.availability,
-    conditions: r.conditions || [],
-    depth: r.depth,
-    parentIds: r.parentIds || [],
-    mount: a.mount,
-    effectOnLight: a.effectOnLight,
-    sourceUrl: a.sourceUrl
-  };
+  const a=RUNTIME_CATALOG.accessoryById.get(r.id)||{};
+  return { id:r.id, model:r.model, manufacturer:r.manufacturer, category:r.category, status:r.status, availability:r.availability, conditions:r.conditions||[], depth:r.depth, parentIds:r.parentIds||[], mount:a.mount, effectOnLight:a.effectOnLight, sourceUrl:a.sourceUrl };
 }
-
 export function aputureReviewCatalog() {
-  const fixtures = RUNTIME_CATALOG.fixtures
-    .filter(f => f.manufacturer === 'Aputure' || String(f.id).startsWith('aputure-'))
-    .map(f => ({
-      ...compactFixture(f),
-      accessories: buildAccessoryTree(f.id, RUNTIME_CATALOG).map(compactAccessory)
-    }));
-  return {
-    manufacturer: 'Aputure',
-    fixtureCount: fixtures.length,
-    accessoryCount: RUNTIME_CATALOG.accessories.length,
-    purpose: 'Human review of the verified LightingAI Aputure catalog before ARRI expansion.',
-    fixtures
-  };
+  const fixtures=RUNTIME_CATALOG.fixtures.filter(f=>f.manufacturer==='Aputure'||String(f.id).startsWith('aputure-')).map(f=>({...compactFixture(f),accessories:buildAccessoryTree(f.id,RUNTIME_CATALOG).map(compactAccessory)}));
+  return { manufacturer:'Aputure', fixtureCount:fixtures.length, accessoryCount:RUNTIME_CATALOG.accessories.length, purpose:'Human review of the verified LightingAI Aputure catalog before ARRI expansion.', fixtures };
+}
+const esc=v=>String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
+export function aputureReviewHtml() {
+  const data=aputureReviewCatalog();
+  const cards=data.fixtures.map((f,i)=>`<details class="fixture" ${i===0?'open':''}><summary><b>${esc(f.model)}</b><span>${f.accessories.length} dodataka</span></summary><div class="specs">${[['Snaga',f.powerDrawW&&f.powerDrawW+' W'],['LED izlaz',f.outputPowerW&&f.outputPowerW+' W'],['CCT',f.cctK&&f.cctK.min+'–'+f.cctK.max+' K'],['CRI',f.cri],['TLCI',f.tlci],['Mount',f.mount],['IP',f.ipRating],['Tezina',f.weightKg&&f.weightKg+' kg']].filter(x=>x[1]).map(x=>`<div><small>${esc(x[0])}</small><strong>${esc(x[1])}</strong></div>`).join('')}</div><h3>Kompatibilni dodaci</h3><div class="accessories">${f.accessories.map(a=>`<div class="acc"><div><b>${esc(a.model)}</b><small>${esc(a.category||'Accessory')} · ${esc(a.status||'Compatible')}${a.depth>1?' · zavisni nivo '+(a.depth-1):''}</small>${a.conditions.length?`<em>${esc(a.conditions.join('; '))}</em>`:''}</div>${a.sourceUrl?`<a href="${esc(a.sourceUrl)}" target="_blank" rel="noreferrer">izvor</a>`:''}</div>`).join('')||'<p>Nema dodataka.</p>'}</div>${f.sourceUrl?`<a class="source" href="${esc(f.sourceUrl)}" target="_blank" rel="noreferrer">Aputure izvor za lampu</a>`:''}</details>`).join('');
+  return `<!doctype html><html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LightingAI · Aputure Review</title><style>*{box-sizing:border-box}body{margin:0;background:#0d0f12;color:#f4f4f5;font-family:Inter,system-ui,sans-serif}main{max-width:980px;margin:auto;padding:22px}h1{margin-bottom:4px}.muted{color:#9299a3}.top{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.pill{background:#1d2229;border:1px solid #303640;border-radius:999px;padding:8px 12px}.fixture{background:#15181d;border:1px solid #2b3037;border-radius:14px;margin:10px 0;overflow:hidden}.fixture summary{cursor:pointer;padding:16px;display:flex;justify-content:space-between;gap:12px}.fixture summary span{color:#f5c542}.fixture>div,.fixture>h3,.fixture>.source{margin-left:16px;margin-right:16px}.specs{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}.specs div{background:#0f1115;border:1px solid #292e35;border-radius:10px;padding:10px}.specs small,.acc small{display:block;color:#9299a3}.accessories{margin-bottom:14px}.acc{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #292e35;padding:10px 0}.acc em{display:block;color:#e7c86d;font-size:12px;margin-top:3px}.acc a,.source{color:#f5c542;text-decoration:none}.source{display:inline-block;margin-bottom:16px}input{width:100%;padding:12px;border-radius:10px;border:1px solid #303640;background:#0f1115;color:white;margin:8px 0 12px}@media(max-width:600px){main{padding:14px}.fixture summary{font-size:14px}.acc{font-size:13px}}</style></head><body><main><h1>Aputure Review</h1><div class="muted">Pregled baze pre ARRI-ja. Postojeci LightingAI UI nije menjan.</div><div class="top"><div class="pill"><b>${data.fixtureCount}</b> lampi</div><div class="pill"><b>${data.accessoryCount}</b> dodataka u runtime katalogu</div></div><input id="q" placeholder="Pretrazi lampu ili dodatak..." oninput="filter()"><div id="cards">${cards}</div></main><script>function filter(){const q=document.getElementById('q').value.toLowerCase();document.querySelectorAll('.fixture').forEach(x=>x.style.display=x.textContent.toLowerCase().includes(q)?'block':'none')}</script></body></html>`;
 }

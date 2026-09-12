@@ -6,11 +6,15 @@ import { FIXTURE_LIBRARY } from "./fixture-library.js";
 import { ACCESSORY_LIBRARY } from "./accessory-library.js";
 import { ADDITIONAL_ACCESSORY_LIBRARY } from "./additional-accessory-library.js";
 import { applyAccessoryCompatibilityOverrides } from "./accessory-compatibility-overrides.js";
+import { validateCatalog } from "./catalog-validation.js";
 
 for (const accessory of ADDITIONAL_ACCESSORY_LIBRARY) {
   if (!ACCESSORY_LIBRARY.some(existing => existing.id === accessory.id)) ACCESSORY_LIBRARY.push(accessory);
 }
 applyAccessoryCompatibilityOverrides(ACCESSORY_LIBRARY);
+const catalogHealth = validateCatalog();
+if (!catalogHealth.ok) console.error("LIGHTING AI catalog validation errors:", catalogHealth.errors);
+if (catalogHealth.warnings.length) console.warn("LIGHTING AI catalog validation warnings:", catalogHealth.warnings);
 
 dotenv.config();
 const app = express();
@@ -69,7 +73,8 @@ function formatEquipmentForAI(equipment = []) {
   }).join("; ");
 }
 
-app.get("/health",(req,res)=>res.json({ok:true,service:"LIGHTING AI backend"}));
+app.get("/health",(req,res)=>res.json({ok:true,service:"LIGHTING AI backend",catalog:{ok:catalogHealth.ok,fixtures:catalogHealth.fixtureCount,accessories:catalogHealth.accessoryCount,errors:catalogHealth.errors.length,warnings:catalogHealth.warnings.length}}));
+app.get("/api/catalog-health",(req,res)=>res.status(catalogHealth.ok?200:500).json(catalogHealth));
 app.post("/api/analyze-scene",async(req,res)=>{try{const{image,description="",equipment=[],language="sr"}=req.body;if(!image)return res.status(400).json({error:"Nedostaje fotografija scene."});const equipmentText=formatEquipmentForAI(equipment);const prompt=language==="en"?`You are a professional film and studio lighting assistant. Analyze the supplied scene photograph. Available equipment: ${equipmentText||"Not provided"}. Scene description: ${description||"Not provided"}. Use only listed fixtures and explicitly compatible accessories. Never invent compatibility. OPTIONAL ACCESSORY must not be assumed physically available. Dependent accessories may be used only with their listed parent modifier. Respect every compatibility status and condition, including required modifier dependencies or removal of baffles/gel holders. Clearly state Compatible but not optimized when applicable. Give practical key, fill, negative fill, backlight, color, placement, exposure and safety recommendations.`:`Ti si profesionalni asistent za filmsku i studijsku rasvetu. Analiziraj fotografiju scene. Dostupna oprema: ${equipmentText||"Nije uneta"}. Opis scene: ${description||"Nije unet"}. Koristi samo navedena rasvetna tela i eksplicitno kompatibilne dodatke. Ne izmisljaj kompatibilnost. OPTIONAL ACCESSORY ne sme se pretpostaviti kao fizicki dostupan. Zavisni dodatak sme se koristiti samo uz navedeni parent modifikator. Postuj svaki status i uslov, ukljucujuci zavisnost od drugog modifikatora ili uklanjanje baffle/gel holder delova. Jasno navedi Compatible but not optimized kada vazi. Daj prakticne preporuke za key, fill, negative fill, backlight, boju, pozicije, ekspoziciju i bezbednost.`;const response=await openai.responses.create({model:"gpt-5.6-luna",input:[{role:"user",content:[{type:"input_text",text:prompt},{type:"input_image",image_url:image}]}]});res.json({analysis:response.output_text});}catch(error){console.error(error);res.status(500).json({error:"Scene analysis failed."});}});
 app.post("/api/lighting-plan",async(req,res)=>{try{const{project="",scene="",type="",look="",space="",camera="",description="",scenePhoto="",equipment=[],language="sr"}=req.body;const equipmentText=formatEquipmentForAI(equipment);const prompt=`You are LIGHTING AI, a professional gaffer assistant. ${language==="en"?"Write all JSON text values in English.":"Write all JSON text values in Serbian, Latin script."} Project: ${project}. Scene: ${scene}. Production type: ${type}. Look: ${look}. Space: ${space}. Camera: ${camera}. Description: ${description}. Available equipment: ${equipmentText||"Not provided"}. Use only listed fixtures and explicitly compatible accessories. Never invent accessories or compatibility. INCLUDED WITH FIXTURE may be treated as available; OPTIONAL ACCESSORY must not be assumed physically available. Dependent accessories may be used only with their listed parent modifier. Respect every compatibility status and condition, including dependencies and removal instructions. Return ONLY valid JSON with exactly these fields: {"summary":"","key":"","fill":"","backlight":"","negative_fill":"","camera_notes":"","color_notes":"","safety_notes":"","equipment_list":[]}.`;const content=[{type:"input_text",text:prompt}];if(scenePhoto)content.push({type:"input_image",image_url:scenePhoto});const response=await openai.responses.create({model:"gpt-5.6-luna",input:[{role:"user",content}]});let text=response.output_text.trim().replace(/^```json\s*/i,"").replace(/```$/i,"").trim();res.json(JSON.parse(text));}catch(error){console.error(error);res.status(500).json({error:"Lighting plan generation failed."});}});
 app.get('/api/fixtures',(req,res)=>res.json(FIXTURE_LIBRARY));

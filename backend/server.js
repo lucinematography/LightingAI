@@ -4,7 +4,15 @@ import dotenv from "dotenv";
 import OpenAI from "openai";
 import { FIXTURE_LIBRARY } from "./fixture-library.js";
 import { ACCESSORY_LIBRARY } from "./accessory-library.js";
+import { ADDITIONAL_ACCESSORY_LIBRARY } from "./additional-accessory-library.js";
 import "./accessory-compatibility-overrides.js";
+
+// Keep the original accessory library intact while making verified additions available everywhere.
+for (const accessory of ADDITIONAL_ACCESSORY_LIBRARY) {
+  if (!ACCESSORY_LIBRARY.some(existing => existing.id === accessory.id)) {
+    ACCESSORY_LIBRARY.push(accessory);
+  }
+}
 
 dotenv.config();
 
@@ -40,7 +48,6 @@ function resolveFixture(e = {}) {
   });
   if (exact) return exact;
 
-  // Preserve common legacy names already stored by the original app.
   const aliases = {
     "600d": "aputure-ls-600d",
     "ls600d": "aputure-ls-600d",
@@ -57,7 +64,6 @@ function resolveFixture(e = {}) {
 function formatEquipmentForAI(equipment = []) {
   return equipment.map(e => {
     const fixture = resolveFixture(e);
-
     if (!fixture) return `${e.name} x${e.qty || 1}`;
 
     const specs = [
@@ -85,6 +91,7 @@ function formatEquipmentForAI(equipment = []) {
           conditions.length && `conditions: ${conditions.join("; ")}`,
           a.mount && `mount: ${a.mount}`,
           a.beamAngleDeg && `beam: ${a.beamAngleDeg.min}-${a.beamAngleDeg.max}deg`,
+          a.availableLensAnglesDeg && `lenses: ${a.availableLensAnglesDeg.join('/')}deg`,
           a.gridAngleDeg && `grid: ${a.gridAngleDeg}deg`,
           a.diffusionStops && `diffusion: ${a.diffusionStops.join('/')} stop`,
           a.effectOnLight && `effect: ${a.effectOnLight}`

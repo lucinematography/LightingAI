@@ -26,11 +26,6 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
     effectOnLight: 'Ellipsoidal projection modifier with interchangeable lenses for precise beam shaping, gobos and iris control.', sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
   },
   {
-    id: 'aputure-spotlight-iris-b-size', manufacturer: 'Aputure', model: 'Spotlight Iris (B-Size)', category: 'Iris', compatibilityStatus: 'Designed For',
-    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'Spotlight Mount / Spotlight Mount II iris slot', conditions: ['Requires Spotlight Mount or Spotlight Mount II'],
-    effectOnLight: '18-blade iris for continuously reducing and shaping the projected beam diameter.', sourceUrl: 'https://aputure.com/EN-US/pages/accessory-compatibility-wizard?compatModuleProduct=spotlight-mount-19-lens-kit'
-  },
-  {
     id: 'aputure-spotlight-gobo-holder-b-size', manufacturer: 'Aputure', model: 'Spotlight Gobo Holder (B-Size)', category: 'Gobo Holder', compatibilityStatus: 'Designed For',
     compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'Spotlight Mount / Spotlight Mount II gobo slot', conditions: ['Requires Spotlight Mount or Spotlight Mount II'],
     effectOnLight: 'Holds B-size gobos in the Spotlight projection system for pattern projection.', sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'

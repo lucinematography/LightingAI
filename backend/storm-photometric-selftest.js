@@ -15,8 +15,8 @@ target('aputure-storm-80c-handheld-bracket','aputure-storm-80c'); target('aputur
 assert.equal(accessory('aputure-v-mount-bracket-power-bank').requiredAccessoryId,'aputure-storm-80c-handheld-bracket'); assert.equal(accessory('aputure-v-mount-bracket-power-bank').weightKg,0.1); assert.equal(accessory('aputure-super-clamp-storm-80c').maxPayloadKg,1.92);
 
 const s400=fixture('aputure-storm-400x');
-assert.equal(s400.powerDrawW,500); assert.equal(s400.outputPowerW,400); assert.deepEqual(s400.cctK,{min:2500,max:10000}); assert.equal(s400.beamAngleDeg,57); assert.equal(s400.includedReflectorBeamAngleDeg,35);
-target('aputure-cf7-fresnel','aputure-storm-400x'); assert.deepEqual(accessory('aputure-cf7-fresnel').beamAngleDeg,{min:15,max:40}); target('aputure-quick-dome-60','aputure-storm-400x'); target('aputure-quick-dome-90','aputure-storm-400x');
+assert.equal(s400.powerDrawW,500); assert.equal(s400.outputPowerW,400); assert.deepEqual(s400.cctK,{min:2500,max:10000}); assert.equal(s400.beamAngleDeg,57); assert.equal(s400.includedReflectorBeamAngleDeg,35); assert.equal(s400.ipRating,'IP65'); assert.equal(s400.weightKg,3.95);
+target('aputure-cf7-fresnel','aputure-storm-400x'); assert.deepEqual(accessory('aputure-cf7-fresnel').beamAngleDeg,{min:15,max:40}); target('aputure-quick-dome-60','aputure-storm-400x'); target('aputure-quick-dome-90','aputure-storm-400x'); status('aputure-quick-dome-60','aputure-storm-400x','Designed For'); assert.equal(accessory('aputure-quick-dome-60').weightKg,0.76); assert.deepEqual(accessory('aputure-quick-dome-60').diffusionStops,[1]); assert.equal(accessory('aputure-quick-dome-60').gridAngleDeg,40);
 
 const s700=fixture('aputure-storm-700x');
 assert.equal(s700.powerDrawW,850); assert.equal(s700.outputPowerW,700); assert.deepEqual(s700.cctK,{min:2500,max:10000}); assert.equal(s700.beamAngleDeg,58); assert.equal(s700.includedReflectorBeamAngleDeg,35);
@@ -55,4 +55,4 @@ target('aputure-storm-xt52-head-cable-15m','aputure-storm-xt52'); status('aputur
 target('aputure-ultra-clamp','aputure-storm-cs32'); status('aputure-ultra-clamp','aputure-storm-cs32','Designed For'); assert.equal(accessory('aputure-ultra-clamp').mount,'Control Box quick-release plate');
 target('aputure-quick-release-clamp','aputure-storm-xt52'); status('aputure-quick-release-clamp','aputure-storm-xt52','Designed For'); assert.equal(accessory('aputure-quick-release-clamp').mount,'Control Box quick-release plate');
 
-console.log(JSON.stringify({ok:true,checkedFixtures:['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52'],protectedFacts:142},null,2));
+console.log(JSON.stringify({ok:true,checkedFixtures:['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52'],protectedFacts:147},null,2));

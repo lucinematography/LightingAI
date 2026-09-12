@@ -10,7 +10,7 @@ function status(id,fixtureId,expected){ assert.equal(accessory(id).compatibility
 
 const s80=fixture('aputure-storm-80c');
 assert.equal(s80.powerDrawW,100); assert.equal(s80.outputPowerW,80); assert.deepEqual(s80.cctK,{min:1800,max:20000}); assert.equal(s80.beamAngleDeg,60); assert.equal(s80.includedReflectorBeamAngleDeg,35); assert.equal(s80.weightKg,1.35);
-target('aputure-cf4-fresnel','aputure-storm-80c'); target('aputure-spotlight-mini','aputure-storm-80c'); target('aputure-quick-dome-40','aputure-storm-80c');
+target('aputure-cf4-fresnel','aputure-storm-80c'); target('aputure-spotlight-mini','aputure-storm-80c'); target('aputure-quick-dome-40','aputure-storm-80c'); status('aputure-quick-dome-40','aputure-storm-80c','Designed For'); assert.equal(accessory('aputure-quick-dome-40').mount,'Mini ProLock'); assert.equal(accessory('aputure-quick-dome-40').weightKg,0.26); assert.deepEqual(accessory('aputure-quick-dome-40').diffusionStops,[1,2]); assert.equal(accessory('aputure-quick-dome-40').gridAngleDeg,40);
 target('aputure-storm-80c-handheld-bracket','aputure-storm-80c'); target('aputure-v-mount-bracket-power-bank','aputure-storm-80c'); target('aputure-super-clamp-storm-80c','aputure-storm-80c'); target('aputure-universal-magic-arm','aputure-storm-80c');
 assert.equal(accessory('aputure-v-mount-bracket-power-bank').requiredAccessoryId,'aputure-storm-80c-handheld-bracket'); assert.equal(accessory('aputure-v-mount-bracket-power-bank').weightKg,0.1); assert.equal(accessory('aputure-super-clamp-storm-80c').maxPayloadKg,1.92);
 
@@ -47,4 +47,4 @@ assert.equal(accessory('aputure-mount-reflector-20-combo').requiredAccessoryId,'
 assert.equal(accessory('aputure-mount-light-dome-150').weightKg,3.20); assert.deepEqual(accessory('aputure-mount-light-dome-150').diffusionStops,[1.5,2.5]); assert.equal(accessory('aputure-mount-light-dome-150').gridAngleDeg,50); assert.equal(accessory('aputure-mount-lantern-180').weightKg,8.15);
 target('aputure-storm-cs32-head-cable-15m','aputure-storm-cs32'); target('aputure-storm-xt52-head-cable-7-5m','aputure-storm-xt52'); target('aputure-storm-xt52-head-cable-15m','aputure-storm-xt52'); target('aputure-ultra-clamp','aputure-storm-cs32'); target('aputure-quick-release-clamp','aputure-storm-xt52');
 
-console.log(JSON.stringify({ok:true,checkedFixtures:['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52'],protectedFacts:121},null,2));
+console.log(JSON.stringify({ok:true,checkedFixtures:['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52'],protectedFacts:126},null,2));

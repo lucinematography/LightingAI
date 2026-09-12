@@ -7,6 +7,7 @@ import { STORM_80C_ADAPTED_ACCESSORY_LIBRARY } from './storm-80c-adapted-accesso
 import { APUTURE_MOUNT_SYSTEM_LIBRARY } from './aputure-mount-system-library.js';
 import { STORM_SUPPORT_CONTROL_LIBRARY } from './storm-support-control-library.js';
 import { ELECTRO_STORM_TRANSPORT_POWER_LIBRARY } from './electro-storm-transport-power-library.js';
+import { ELECTRO_STORM_OPTICAL_MOTION_LIBRARY } from './electro-storm-optical-motion-library.js';
 import { applyAccessoryCompatibilityOverrides } from './accessory-compatibility-overrides.js';
 import { applyCatalogCompatibilityCorrections } from './catalog-compatibility-corrections.js';
 
@@ -17,7 +18,6 @@ function mergeAccessory(base, extra) {
   const merged = { ...base, ...extra };
   merged.compatibleWith = unique([...(base.compatibleWith || []), ...(extra.compatibleWith || [])]);
   merged.compatibility = { ...(base.compatibility || {}), ...(extra.compatibility || {}) };
-  // Keep the canonical/base descriptive fields unless the base omitted them.
   for (const key of ['manufacturer','model','category','mount','effectOnLight','sourceUrl']) {
     if (base[key] != null) merged[key] = base[key];
   }
@@ -27,7 +27,7 @@ function mergeAccessory(base, extra) {
 
 export function buildRuntimeCatalog() {
   const fixtures = clone(FIXTURE_LIBRARY);
-  const accessoryDefinitions = [...clone(ACCESSORY_LIBRARY), ...clone(ADDITIONAL_ACCESSORY_LIBRARY), ...clone(SPOTLIGHT_ACCESSORY_LIBRARY), ...clone(SPACE_LIGHT_ACCESSORY_LIBRARY), ...clone(STORM_80C_ADAPTED_ACCESSORY_LIBRARY), ...clone(APUTURE_MOUNT_SYSTEM_LIBRARY), ...clone(STORM_SUPPORT_CONTROL_LIBRARY), ...clone(ELECTRO_STORM_TRANSPORT_POWER_LIBRARY)];
+  const accessoryDefinitions = [...clone(ACCESSORY_LIBRARY), ...clone(ADDITIONAL_ACCESSORY_LIBRARY), ...clone(SPOTLIGHT_ACCESSORY_LIBRARY), ...clone(SPACE_LIGHT_ACCESSORY_LIBRARY), ...clone(STORM_80C_ADAPTED_ACCESSORY_LIBRARY), ...clone(APUTURE_MOUNT_SYSTEM_LIBRARY), ...clone(STORM_SUPPORT_CONTROL_LIBRARY), ...clone(ELECTRO_STORM_TRANSPORT_POWER_LIBRARY), ...clone(ELECTRO_STORM_OPTICAL_MOTION_LIBRARY)];
   const duplicateAccessoryIds = [];
   const accessoriesById = new Map();
   for (const accessory of accessoryDefinitions) {

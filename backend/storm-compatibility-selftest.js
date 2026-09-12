@@ -10,37 +10,23 @@ const REQUIRED = {
   'aputure-storm-cs32': ['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-cf16-barn-doors-adapter','aputure-storm-cs32-skid','aputure-mount-reflector-30','aputure-mount-light-dome-150','aputure-mount-lantern-180','aputure-mount-lantern-120','aputure-ultra-clamp','aputure-storm-cs32-head-cable-15m','aputure-mount-reflector-20-combo','aputure-mount-reflector-25','aputure-mount-reflector-35','aputure-mount-reflector-50','aputure-sidus-one','aputure-sidus-four'],
   'aputure-storm-xt52': ['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-cf16-barn-doors-adapter','aputure-storm-xt52-skid','aputure-mount-reflector-20-combo','aputure-mount-reflector-25','aputure-mount-reflector-35','aputure-mount-reflector-50','aputure-mount-light-dome-150','aputure-mount-lantern-180','aputure-mount-lantern-120','aputure-quick-release-clamp','aputure-storm-xt52-head-cable-7-5m','aputure-storm-xt52-head-cable-15m','aputure-mount-reflector-30','aputure-sidus-one','aputure-sidus-four']
 };
-
 const errors=[]; const report={};
-for(const [fixtureId,requiredIds] of Object.entries(REQUIRED)){
-  if(!RUNTIME_CATALOG.fixtureById.has(fixtureId)){errors.push(`Missing STORM fixture: ${fixtureId}`);continue;}
-  const reachable=new Set(buildAccessoryTree(fixtureId,RUNTIME_CATALOG).map(x=>x.id));
-  const missing=requiredIds.filter(id=>!reachable.has(id));
-  report[fixtureId]={required:requiredIds.length,reachable:reachable.size,missing};
-  for(const id of missing) errors.push(`${fixtureId} cannot reach required accessory ${id}`);
-}
-
-const storm80=new Set(buildAccessoryTree('aputure-storm-80c',RUNTIME_CATALOG).map(x=>x.id));
-if(storm80.has('aputure-f10-fresnel')) errors.push('STORM 80c must not expose F10 Fresnel');
-const adapter=RUNTIME_CATALOG.accessoryById.get('aputure-storm-80c-bowens-adapter');
-if(!adapter) errors.push('Missing STORM 80c Bowens Mount Adapter');
-for(const id of ['aputure-storm-80c-adapted-light-dome-mini-iii','aputure-storm-80c-adapted-light-dome-se','aputure-storm-80c-adapted-light-box-45x45','aputure-storm-80c-adapted-lantern-26','aputure-storm-80c-adapted-quick-dome-60']){
-  const a=RUNTIME_CATALOG.accessoryById.get(id);
-  if(!a){errors.push(`Missing adapted STORM 80c accessory ${id}`);continue;}
-  if(!a.compatibleWith?.includes('aputure-storm-80c-bowens-adapter')) errors.push(`${id} must depend on STORM 80c Bowens Mount Adapter`);
-  if(a.compatibleWith?.includes('aputure-storm-80c')) errors.push(`${id} must not bypass STORM 80c Bowens Mount Adapter`);
-}
-const expectDesigned=id=>{const a=RUNTIME_CATALOG.accessoryById.get(id);if(!a)errors.push(`Missing ${id}`);else if(a.compatibility?.['aputure-storm-80c']?.status!=='Designed For' && a.compatibilityStatus!=='Designed For')errors.push(`${id} must be Designed For STORM 80c`);};
-for(const id of ['aputure-cf4-fresnel','aputure-light-dome-40','aputure-quick-dome-40','aputure-lantern-30','aputure-storm-80c-bowens-adapter','aputure-spotlight-mini']) expectDesigned(id);
-const cf4=RUNTIME_CATALOG.accessoryById.get('aputure-cf4-fresnel');
-if(!cf4 || cf4.beamAngleDeg?.min!==15 || cf4.beamAngleDeg?.max!==40 || cf4.weightKg!==0.53) errors.push('CF4 Fresnel must remain 15-40 degrees and 0.53kg');
-const ld40=RUNTIME_CATALOG.accessoryById.get('aputure-light-dome-40');
-if(!ld40 || ld40.diameterCm!==40 || ld40.weightKg!==0.28 || !ld40.diffusionStops?.includes(1) || !ld40.diffusionStops?.includes(2)) errors.push('Light Dome 40 specification regression');
-const qd40=RUNTIME_CATALOG.accessoryById.get('aputure-quick-dome-40');
-if(!qd40 || qd40.diameterCm!==40 || qd40.weightKg!==0.26 || !qd40.diffusionStops?.includes(1) || !qd40.diffusionStops?.includes(2) || qd40.gridAngleDeg!==40) errors.push('Quick Dome 40 specification regression');
-const storm1200=new Set(buildAccessoryTree('aputure-storm-1200x',RUNTIME_CATALOG).map(x=>x.id));
-if(storm1200.has('aputure-f10-fresnel')) errors.push('STORM 1200x must not expose F10 Fresnel');
-if(storm1200.has('aputure-spotlight-mount-ii')) errors.push('STORM 1200x must not expose Spotlight Mount II (800W maximum)');
-
-console.log(JSON.stringify({ok:errors.length===0,fixtures:report,protectedAccessoryLinks:Object.values(REQUIRED).reduce((n,x)=>n+x.length,0),errors},null,2));
-if(errors.length)process.exit(1);
+for(const [fixtureId,requiredIds] of Object.entries(REQUIRED)){if(!RUNTIME_CATALOG.fixtureById.has(fixtureId)){errors.push(`Missing STORM fixture: ${fixtureId}`);continue;}const reachable=new Set(buildAccessoryTree(fixtureId,RUNTIME_CATALOG).map(x=>x.id));const missing=requiredIds.filter(id=>!reachable.has(id));report[fixtureId]={required:requiredIds.length,reachable:reachable.size,missing};for(const id of missing)errors.push(`${fixtureId} cannot reach required accessory ${id}`);}
+const storm80=new Set(buildAccessoryTree('aputure-storm-80c',RUNTIME_CATALOG).map(x=>x.id));if(storm80.has('aputure-f10-fresnel'))errors.push('STORM 80c must not expose F10 Fresnel');
+const adapter=RUNTIME_CATALOG.accessoryById.get('aputure-storm-80c-bowens-adapter');if(!adapter)errors.push('Missing STORM 80c Bowens Mount Adapter');
+for(const id of ['aputure-storm-80c-adapted-light-dome-mini-iii','aputure-storm-80c-adapted-light-dome-se','aputure-storm-80c-adapted-light-box-45x45','aputure-storm-80c-adapted-lantern-26','aputure-storm-80c-adapted-quick-dome-60']){const a=RUNTIME_CATALOG.accessoryById.get(id);if(!a){errors.push(`Missing adapted STORM 80c accessory ${id}`);continue;}if(!a.compatibleWith?.includes('aputure-storm-80c-bowens-adapter'))errors.push(`${id} must depend on STORM 80c Bowens Mount Adapter`);if(a.compatibleWith?.includes('aputure-storm-80c'))errors.push(`${id} must not bypass STORM 80c Bowens Mount Adapter`);}
+const expectDesigned=(id,fixture='aputure-storm-80c')=>{const a=RUNTIME_CATALOG.accessoryById.get(id);if(!a)errors.push(`Missing ${id}`);else if(a.compatibility?.[fixture]?.status!=='Designed For' && !(a.compatibilityStatus==='Designed For'&&a.compatibleWith?.includes(fixture)))errors.push(`${id} must be Designed For ${fixture}`);};
+for(const id of ['aputure-cf4-fresnel','aputure-light-dome-40','aputure-quick-dome-40','aputure-lantern-30','aputure-storm-80c-bowens-adapter','aputure-spotlight-mini'])expectDesigned(id);
+const cf4=RUNTIME_CATALOG.accessoryById.get('aputure-cf4-fresnel');if(!cf4||cf4.beamAngleDeg?.min!==15||cf4.beamAngleDeg?.max!==40||cf4.weightKg!==0.53)errors.push('CF4 Fresnel must remain 15-40 degrees and 0.53kg');
+const ld40=RUNTIME_CATALOG.accessoryById.get('aputure-light-dome-40');if(!ld40||ld40.diameterCm!==40||ld40.weightKg!==0.28||!ld40.diffusionStops?.includes(1)||!ld40.diffusionStops?.includes(2))errors.push('Light Dome 40 specification regression');
+const qd40=RUNTIME_CATALOG.accessoryById.get('aputure-quick-dome-40');if(!qd40||qd40.diameterCm!==40||qd40.weightKg!==0.26||!qd40.diffusionStops?.includes(1)||!qd40.diffusionStops?.includes(2)||qd40.gridAngleDeg!==40)errors.push('Quick Dome 40 specification regression');
+for(const id of ['aputure-cf7-fresnel','aputure-quick-dome-60','aputure-quick-dome-90'])expectDesigned(id,'aputure-storm-400x');
+for(const id of ['aputure-cf10-fresnel','aputure-quick-dome-90'])expectDesigned(id,'aputure-storm-700x');
+const cf7=RUNTIME_CATALOG.accessoryById.get('aputure-cf7-fresnel');if(!cf7||cf7.beamAngleDeg?.min!==15||cf7.beamAngleDeg?.max!==40||cf7.weightKg!==1.35)errors.push('CF7 Fresnel specification regression');
+const cf7bd=RUNTIME_CATALOG.accessoryById.get('aputure-cf7-barn-doors');if(!cf7bd||cf7bd.weightKg!==0.95)errors.push('CF7 Barn Doors specification regression');
+const qd60=RUNTIME_CATALOG.accessoryById.get('aputure-quick-dome-60');if(!qd60||qd60.diameterCm!==60||qd60.weightKg!==0.76||!qd60.diffusionStops?.includes(1)||qd60.gridAngleDeg!==40)errors.push('Quick Dome 60 specification regression');
+const cf10=RUNTIME_CATALOG.accessoryById.get('aputure-cf10-fresnel');if(!cf10||cf10.beamAngleDeg?.min!==15||cf10.beamAngleDeg?.max!==40||cf10.weightKg!==2.45)errors.push('CF10 Fresnel specification regression');
+const cf10bd=RUNTIME_CATALOG.accessoryById.get('aputure-cf10-barn-doors');if(!cf10bd||cf10bd.weightKg!==1.40)errors.push('CF10 Barn Doors specification regression');
+const qd90=RUNTIME_CATALOG.accessoryById.get('aputure-quick-dome-90');if(!qd90||qd90.diameterCm!==90||qd90.weightKg!==1.40||!qd90.diffusionStops?.includes(1)||!qd90.diffusionStops?.includes(2)||qd90.gridAngleDeg!==40)errors.push('Quick Dome 90 specification regression');
+const storm1200=new Set(buildAccessoryTree('aputure-storm-1200x',RUNTIME_CATALOG).map(x=>x.id));if(storm1200.has('aputure-f10-fresnel'))errors.push('STORM 1200x must not expose F10 Fresnel');if(storm1200.has('aputure-spotlight-mount-ii'))errors.push('STORM 1200x must not expose Spotlight Mount II (800W maximum)');
+console.log(JSON.stringify({ok:errors.length===0,fixtures:report,protectedAccessoryLinks:Object.values(REQUIRED).reduce((n,x)=>n+x.length,0),errors},null,2));if(errors.length)process.exit(1);

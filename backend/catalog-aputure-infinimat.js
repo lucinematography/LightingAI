@@ -123,9 +123,7 @@ const DIFFUSION_ACCESSORIES = MAT_SIZES.flatMap(({ size, fixtureId, sourceUrl })
 const CLEAR_SOFTBOX_PACK_ACCESSORIES = MAT_SIZES.map(({ size, fixtureId, sourceUrl }) =>
   makeAccessory({
     id: `aputure-infinimat-clear-softbox-pack-${size}`,
-    model: size === '20x20'
-      ? 'Aputure INFINIMAT Inflatable Clear Softbox 20x20'
-      : `Aputure INFINIMAT LED & Clear Softbox Pack ${size}`,
+    model: `Aputure INFINIMAT Inflatable Clear Softbox ${size}`,
     category: 'Softbox',
     compatibleWith: [fixtureId],
     sourceUrl,
@@ -139,7 +137,7 @@ const INFINIMAT_CONTROL_BOXES = [
     id: 'aputure-infinimat-control-box-400w',
     model: 'Aputure INFINIMAT Control Box 400W',
     category: 'Control',
-    compatibleWith: MAT_ALL,
+    compatibleWith: MAT_SMALL,
     sourceUrl: FAMILY_URL,
     effectOnLight: '400W universal INFINIMAT power and control box for small-mat combinations.',
     conditions: ['Aputure documents 400W combinations for 1x2, 1x4 and 2x4 mats; stay within the 400W output limit.']
@@ -151,7 +149,7 @@ const INFINIMAT_CONTROL_BOXES = [
     compatibleWith: MAT_ALL,
     sourceUrl: FAMILY_URL,
     effectOnLight: '1,600W universal INFINIMAT power and control box for high-power mats and arrays.',
-    conditions: ['Aputure documents 1600W combinations up to five mats; use the correct high-power ports and AC power cable.']
+    conditions: ['Aputure documents combinations up to five mats within the 1600W budget. The complete 20x20 system requires four 1600W control boxes.']
   })
 ];
 
@@ -217,9 +215,9 @@ const INFINIMAT_MOUNTING_ACCESSORIES = [
     id: 'aputure-infinimat-k-mount-arm-straight-5-8',
     model: 'Aputure INFINIMAT K-Mount Arm with Straight 5/8in Pin',
     category: 'Mount Adapter',
-    compatibleWith: MAT_SMALL_PLUS_4X4,
+    compatibleWith: MAT_SMALL,
     sourceUrl: 'https://aputure.com/en-US/products/aputure-infinimat-1x2-with-clear-softbox',
-    effectOnLight: 'Straight 5/8-inch pin arm for stand mounting small and 4x4 INFINIMAT frames.',
+    effectOnLight: 'Straight 5/8-inch pin arm for stand mounting small INFINIMAT frames.',
     conditions: ['Use only with a properly supported mounting bracket.']
   }),
   makeAccessory({

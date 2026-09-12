@@ -132,15 +132,14 @@ const POWER_ACCESSORIES = [
 const PASSIVE_CONNECTORS = [
   ['3-way', 'INFINIBAR 3-Way Flat Connector (Passive)'],
   ['4-way', 'INFINIBAR 4-Way Flat Connector (Passive)'],
-  ['6-way', 'INFINIBAR 6-Way Flat Connector (Passive)'],
-  ['straight', 'INFINIBAR Straight Connector (Passive)']
+  ['6-way', 'INFINIBAR 6-Way Flat Connector (Passive)']
 ].map(([slug, model]) =>
   makeAccessory({
     id: `aputure-infinibar-${slug}-flat-connector-passive`,
     model,
     category: 'Mount Adapter',
     compatibleWith: PB_BARS,
-    effectOnLight: `Passive ${slug} connector for rigid INFINIBAR multi-bar layouts without active pixel data.`,
+    effectOnLight: `Passive ${slug} connector for rigid INFINIBAR multi-bar layouts without an electrical power link.`,
     conditions: ['Use the connector geometry that matches the intended bar layout.']
   })
 );
@@ -158,7 +157,7 @@ const ACTIVE_CONNECTORS = [
     model,
     category: 'Mount Adapter',
     compatibleWith: PB_BARS,
-    effectOnLight: `Active ${layout} connector for mechanically joining INFINIBARs while preserving pixel-aware control paths.`,
+    effectOnLight: `Active ${layout} connector for mechanically joining INFINIBARs with an electrical power link.`,
     conditions: ['Use with compatible INFINIBAR bars and the matching active connector orientation.']
   })
 );

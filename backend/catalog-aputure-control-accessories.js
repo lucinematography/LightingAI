@@ -42,7 +42,7 @@ const INFINIMAT = [
   'aputure-infinimat-8x8',
   'aputure-infinimat-20x20'
 ];
-const BATTERY_STATION = ['aputure-aputure-2-bay-battery-power-station'];
+const BATTERY_STATION = ['aputure-2-bay-battery-power-station'];
 const BATTERY_POWER_COMPATIBLE_LIGHTS = [
   'aputure-ls-600d-pro',
   'aputure-ls-600c-pro-ii',
@@ -50,7 +50,6 @@ const BATTERY_POWER_COMPATIBLE_LIGHTS = [
   'aputure-ls-300x',
   'aputure-ls-600x-pro',
   'aputure-nova-p600c',
-  'aputure-ls-600d',
   'aputure-ls-300d-ii',
   'aputure-ls-1200d-pro'
 ];
@@ -70,7 +69,7 @@ const STORM_80C_SERVICE = [
     category: 'Bracket',
     compatibleWith: STORM_80C,
     sourceUrl: 'https://aputure.com/en-US/products/locking-handle-for-storm-80c',
-    effectOnLight: 'Locking replacement handle for handheld STORM 80c operation.'
+    effectOnLight: 'Replacement locking handle for the STORM 80c.'
   }),
   makeAccessory({
     id: 'aputure-storm-80c-protection-cover',
@@ -107,14 +106,6 @@ const SIDUS_ONE_ACCESSORIES = [
     sourceUrl: 'https://aputure.com/en-US/products/sidus-one-power-cable',
     effectOnLight: '0.8-meter USB power cable for charging or powering Sidus One.'
   }),
-  makeAccessory({
-    id: 'aputure-sidus-one-usb-a-to-usb-c-cable-0-8m',
-    model: 'Sidus One USB-A to USB-C Charging Cable (0.8m)',
-    category: 'Cable',
-    compatibleWith: SIDUS_ONE,
-    sourceUrl: 'https://aputure.com/en-US/products/sidus-one',
-    effectOnLight: 'Replacement 80cm USB-A to USB-C charging cable for Sidus One.'
-  })
 ];
 
 const SIDUS_FOUR_ACCESSORIES = [
@@ -149,14 +140,6 @@ const SIDUS_FOUR_ACCESSORIES = [
     compatibleWith: SIDUS_FOUR,
     sourceUrl: 'https://aputure.com/en-US/products/sidus-four',
     effectOnLight: '3/8-inch to baby-pin receiver adapter for stand or grip mounting Sidus Four.'
-  }),
-  makeAccessory({
-    id: 'aputure-sidus-four-mounting-adapter',
-    model: 'Sidus Four Mounting Adapter',
-    category: 'Mount Adapter',
-    compatibleWith: SIDUS_FOUR,
-    sourceUrl: 'https://aputure.com/en-US/products/sidus-four',
-    effectOnLight: 'Mounting adapter for securing Sidus Four to production hardware.'
   }),
   makeAccessory({
     id: 'aputure-sidus-four-hard-case',
@@ -197,22 +180,11 @@ const BATTERY_POWER_STATION_ACCESSORIES = [
   })
 ];
 
-const INFINIMAT_CONTROL_ACCESSORIES = [
-  makeAccessory({
-    id: 'aputure-infinimat-coding-cable',
-    model: 'Aputure INFINIMAT Coding Cable',
-    category: 'Cable',
-    compatibleWith: INFINIMAT,
-    sourceUrl: 'https://aputure.com/en-US/product-families/infinimat',
-    effectOnLight: 'Service and data cable for INFINIMAT control-box firmware or maintenance workflows.',
-    conditions: ['Use only for the INFINIMAT service procedure specified by Aputure.']
-  })
-];
+// Coding cable omitted pending confirmation of its intended function and targets.
 
 export const APUTURE_CONTROL_ACCESSORIES = [
   ...STORM_80C_SERVICE,
   ...SIDUS_ONE_ACCESSORIES,
   ...SIDUS_FOUR_ACCESSORIES,
   ...BATTERY_POWER_STATION_ACCESSORIES,
-  ...INFINIMAT_CONTROL_ACCESSORIES
 ];

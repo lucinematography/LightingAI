@@ -11,12 +11,14 @@ for (const id of EXPECTED_FIXTURES) if (!RUNTIME_CATALOG.fixtureById.has(id)) er
 if (EXPECTED_FIXTURES.length !== 18) errors.push('Completion gate fixture manifest must contain exactly 18 Aputure fixtures');
 
 const requiredReachability = {
+  'aputure-ls-600x-pro':['aputure-space-light-90'],
+  'aputure-ls-600c-pro-ii':['aputure-space-light-90'],
   'aputure-ls-1200d-pro':['aputure-bowens-standard-reflector','aputure-f10-fresnel','aputure-sidus-one','aputure-sidus-four'],
   'aputure-storm-80c':['aputure-spotlight-mini','aputure-quick-dome-40'],
-  'aputure-storm-400x':['aputure-cf7-fresnel','aputure-quick-dome-60','aputure-quick-dome-90'],
-  'aputure-storm-700x':['aputure-cf10-fresnel','aputure-quick-dome-90'],
-  'aputure-storm-1000c':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90'],
-  'aputure-storm-1200x':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90'],
+  'aputure-storm-400x':['aputure-cf7-fresnel','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90'],
+  'aputure-storm-700x':['aputure-cf10-fresnel','aputure-quick-dome-90','aputure-space-light-90'],
+  'aputure-storm-1000c':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90'],
+  'aputure-storm-1200x':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90'],
   'aputure-storm-cs32':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150'],
   'aputure-storm-xt52':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150'],
   'aputure-electro-storm-cs15':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-flight-case','aputure-sidus-one','aputure-sidus-four'],
@@ -27,10 +29,19 @@ for (const [fixtureId, ids] of Object.entries(requiredReachability)) {
   for (const id of ids) if (!reachable.has(id)) errors.push(`${fixtureId} cannot reach completion-critical accessory ${id}`);
 }
 
+const spaceLight90 = RUNTIME_CATALOG.accessoryById.get('aputure-space-light-90');
+if (!spaceLight90) errors.push('Missing Space Light 90');
+else {
+  if (spaceLight90.diameterCm !== 90) errors.push('Space Light 90 diameter must be 90cm');
+  if (spaceLight90.compatibility?.['aputure-storm-1000c']?.status !== 'Designed For') errors.push('Space Light 90 must be Designed For STORM 1000c');
+  if (spaceLight90.compatibility?.['aputure-storm-1200x']?.status !== 'Compatible') errors.push('Space Light 90 must be Compatible with STORM 1200x');
+}
+
 const forbidden = {
   'aputure-ls-1200d-pro':['aputure-spotlight-mount-ii'],
   'aputure-storm-1200x':['aputure-spotlight-mount-ii'],
-  'aputure-storm-80c':['aputure-f10-fresnel']
+  'aputure-storm-80c':['aputure-f10-fresnel'],
+  'aputure-electro-storm-xt26':['aputure-space-light-90']
 };
 for (const [fixtureId, ids] of Object.entries(forbidden)) {
   const reachable=new Set(buildAccessoryTree(fixtureId,RUNTIME_CATALOG).map(x=>x.id));

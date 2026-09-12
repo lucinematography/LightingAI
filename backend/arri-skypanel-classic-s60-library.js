@@ -5,7 +5,7 @@ const SRC = 'https://www.arri.com/en/lighting/led-spotlights/discontinued/s60-c'
 const CAT = 'https://www.arri.com/resource/blob/155372/f821e2da15b191c754a8fb31e232c197/arri-lighting-americas-product-catalog-2023-en-v1-1-data.pdf';
 
 export const ARRI_SKYPANEL_CLASSIC_S60_FIXTURES = [
-  { id:S60, manufacturer:'ARRI', model:'SkyPanel S60-C', family:'SkyPanel Classic', category:'Light', sourceType:'RGBW LED Soft Light', opticalSystem:'Swappable Soft Diffusion Panel', cctK:{min:2800,max:10000}, colorMode:'RGBW', fixtureWeightKg:10.6, manualYokeWeightKg:12.6, poleOperatedWeightKg:14.1, apertureMm:{width:645,height:300}, ipRating:'IP20', pixelZones:2, externalPsu:true, sourceUrl:SRC, sourceTypeLabel:'Official ARRI SkyPanel S60-C data' }
+  { id:S60, manufacturer:'ARRI', model:'SkyPanel S60-C', family:'SkyPanel Classic', category:'Light', sourceType:'RGBW LED Soft Light', opticalSystem:'Swappable Soft Diffusion Panel', cctK:{min:2800,max:10000}, colorMode:'RGBW', fixtureWeightKg:10.6, manualYokeWeightKg:12.6, poleOperatedWeightKg:14.1, apertureMm:{width:645,height:300}, ipRating:'IP20', pixelZones:2, externalPsu:true, control:{wired:['DMX-512A','RDM','Art-Net 4','sACN','Ethernet','SkyPanel Remote via USB'],wireless:['ARRI SkyLink Receiver (external)'],usb5VForWirelessReceiver:true,builtInWirelessDMX:false}, sourceUrl:SRC, sourceTypeLabel:'Official ARRI SkyPanel S60-C data' }
 ];
 
 export const ARRI_SKYPANEL_CLASSIC_S60_ACCESSORIES = [

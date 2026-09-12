@@ -1,6 +1,7 @@
 import { FIXTURE_LIBRARY } from './fixture-library.js';
 import { ACCESSORY_LIBRARY } from './accessory-library.js';
 import { ADDITIONAL_ACCESSORY_LIBRARY } from './additional-accessory-library.js';
+import { SPOTLIGHT_ACCESSORY_LIBRARY } from './spotlight-accessory-library.js';
 import { applyAccessoryCompatibilityOverrides } from './accessory-compatibility-overrides.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
@@ -20,7 +21,7 @@ function mergeAccessory(base, extra) {
 
 export function buildRuntimeCatalog() {
   const fixtures = clone(FIXTURE_LIBRARY);
-  const accessoryDefinitions = [...clone(ACCESSORY_LIBRARY), ...clone(ADDITIONAL_ACCESSORY_LIBRARY)];
+  const accessoryDefinitions = [...clone(ACCESSORY_LIBRARY), ...clone(ADDITIONAL_ACCESSORY_LIBRARY), ...clone(SPOTLIGHT_ACCESSORY_LIBRARY)];
   const duplicateAccessoryIds = [];
   const accessoriesById = new Map();
   for (const accessory of accessoryDefinitions) {

@@ -19,6 +19,20 @@ function patchMany(byId, ids, fixtureId, status = 'Compatible') {
 export function applyCatalogCompatibilityCorrections(accessories) {
   const byId = new Map(accessories.map(accessory => [accessory.id, accessory]));
 
+  // Current Aputure Light Storm compatibility: standard Bowens reflector and Sidus control nodes.
+  const standardReflector = byId.get('aputure-bowens-standard-reflector');
+  if (standardReflector) {
+    for (const fixtureId of ['aputure-ls-300d-ii','aputure-ls-300x','aputure-ls-600d','aputure-ls-600d-pro','aputure-ls-600x-pro','aputure-ls-600c-pro-ii','aputure-ls-1200d-pro']) {
+      addCompatibility(standardReflector, fixtureId, 'Compatible');
+    }
+  }
+  for (const controlId of ['aputure-sidus-one','aputure-sidus-four']) {
+    const control = byId.get(controlId);
+    if (control) {
+      for (const fixtureId of ['aputure-ls-600d-pro','aputure-ls-600x-pro','aputure-ls-600c-pro-ii','aputure-ls-1200d-pro']) addCompatibility(control, fixtureId, 'Compatible');
+    }
+  }
+
   const quickDome60 = byId.get('aputure-quick-dome-60');
   if (quickDome60) {
     addCompatibility(quickDome60, 'aputure-storm-80c', 'Compatible', { conditions: ['Requires STORM 80c Bowens Mount Adapter'], requiredAccessoryId: 'aputure-storm-80c-bowens-adapter' });

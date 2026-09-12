@@ -10,8 +10,7 @@ for (const id of EXPECTED_FIXTURES) if (!RUNTIME_CATALOG.fixtureById.has(id)) er
 if (EXPECTED_FIXTURES.length !== 18) errors.push('Completion gate fixture manifest must contain exactly 18 Aputure fixtures');
 
 const requiredReachability = {
-  'aputure-ls-600x-pro':['aputure-space-light-90'],
-  'aputure-ls-600c-pro-ii':['aputure-space-light-90'],
+  'aputure-ls-600x-pro':['aputure-space-light-90'], 'aputure-ls-600c-pro-ii':['aputure-space-light-90'],
   'aputure-ls-1200d-pro':['aputure-bowens-standard-reflector','aputure-f10-fresnel','aputure-sidus-one','aputure-sidus-four'],
   'aputure-storm-80c':['aputure-spotlight-mini','aputure-quick-dome-40'],
   'aputure-storm-400x':['aputure-cf7-fresnel','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90'],
@@ -28,24 +27,34 @@ for (const [fixtureId, ids] of Object.entries(requiredReachability)) {
   for (const id of ids) if (!reachable.has(id)) errors.push(`${fixtureId} cannot reach completion-critical accessory ${id}`);
 }
 
-const spaceLight90 = RUNTIME_CATALOG.accessoryById.get('aputure-space-light-90');
-if (!spaceLight90) errors.push('Missing Space Light 90');
+const expectStatus=(accessoryId,fixtureId,status)=>{
+  const a=RUNTIME_CATALOG.accessoryById.get(accessoryId);
+  if(!a) errors.push(`Missing ${accessoryId}`);
+  else if(a.compatibility?.[fixtureId]?.status!==status) errors.push(`${accessoryId} must be ${status} for ${fixtureId}`);
+};
+expectStatus('aputure-quick-dome-60','aputure-storm-400x','Designed For');
+expectStatus('aputure-quick-dome-90','aputure-storm-400x','Designed For');
+expectStatus('aputure-quick-dome-90','aputure-storm-700x','Designed For');
+expectStatus('aputure-cf10-fresnel','aputure-storm-700x','Designed For');
+for(const f of ['aputure-storm-1000c','aputure-storm-1200x']){
+  expectStatus('aputure-storm-1000c-1200x-cf12-fresnel',f,'Designed For');
+  expectStatus('aputure-storm-1000c-1200x-barn-doors-adapter',f,'Designed For');
+  for(const id of ['aputure-storm-1000c-1200x-reflector-15','aputure-storm-1000c-1200x-reflector-30','aputure-storm-1000c-1200x-reflector-45','aputure-storm-1000c-1200x-skid']) expectStatus(id,f,'Designed For');
+}
+expectStatus('aputure-ls1200d-four-light-bracket','aputure-storm-1200x','Designed For');
+expectStatus('aputure-ls1200d-four-light-bracket','aputure-storm-1000c','Compatible');
+
+const spaceLight90=RUNTIME_CATALOG.accessoryById.get('aputure-space-light-90');
+if(!spaceLight90) errors.push('Missing Space Light 90');
 else {
-  if (spaceLight90.diameterCm !== 90) errors.push('Space Light 90 diameter must be 90cm');
-  for (const fixtureId of ['aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-ls-600x-pro','aputure-ls-600c-pro-ii']) {
-    if (spaceLight90.compatibility?.[fixtureId]?.status !== 'Compatible') errors.push(`Space Light 90 must be Compatible with ${fixtureId}`);
-  }
+  if(spaceLight90.diameterCm!==90) errors.push('Space Light 90 diameter must be 90cm');
+  for(const f of ['aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-ls-600x-pro','aputure-ls-600c-pro-ii']) if(spaceLight90.compatibility?.[f]?.status!=='Compatible') errors.push(`Space Light 90 must be Compatible with ${f}`);
 }
 
-const forbidden = {
-  'aputure-ls-1200d-pro':['aputure-spotlight-mount-ii'],
-  'aputure-storm-1200x':['aputure-spotlight-mount-ii'],
-  'aputure-storm-80c':['aputure-f10-fresnel'],
-  'aputure-electro-storm-xt26':['aputure-space-light-90']
-};
-for (const [fixtureId, ids] of Object.entries(forbidden)) {
+const forbidden={'aputure-ls-1200d-pro':['aputure-spotlight-mount-ii'],'aputure-storm-1200x':['aputure-spotlight-mount-ii'],'aputure-storm-80c':['aputure-f10-fresnel'],'aputure-electro-storm-xt26':['aputure-space-light-90']};
+for(const [fixtureId,ids] of Object.entries(forbidden)){
   const reachable=new Set(buildAccessoryTree(fixtureId,RUNTIME_CATALOG).map(x=>x.id));
-  for (const id of ids) if (reachable.has(id)) errors.push(`${fixtureId} must not reach ${id}`);
+  for(const id of ids) if(reachable.has(id)) errors.push(`${fixtureId} must not reach ${id}`);
 }
 console.log(JSON.stringify({ok:errors.length===0,aputureFixtures:EXPECTED_FIXTURES.length,completionCriticalLinks:Object.values(requiredReachability).reduce((n,x)=>n+x.length,0),errors},null,2));
 if(errors.length) process.exit(1);

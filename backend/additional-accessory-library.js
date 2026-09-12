@@ -49,5 +49,17 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
     availableLensAnglesDeg: [19, 36, 50],
     effectOnLight: 'Projection modifier for precise beam shaping and lens-based control.',
     sourceUrl: 'https://aputure.com/EN-US/pages/accessory-compatibility-wizard?compatModuleProduct=spotlight-max-19-lens-set'
+  },
+  {
+    id: 'aputure-spotlight-mount-ii',
+    manufacturer: 'Aputure',
+    model: 'Spotlight Mount II',
+    category: 'Spotlight',
+    compatibilityStatus: 'Compatible',
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'],
+    mount: 'Bowens Mount',
+    availableLensAnglesDeg: [19, 26, 36, 50],
+    effectOnLight: 'Ellipsoidal projection modifier with interchangeable lenses for precise beam shaping, gobos and iris control.',
+    sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
   }
 ];

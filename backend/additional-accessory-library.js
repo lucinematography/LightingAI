@@ -16,11 +16,6 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
     effectOnLight: 'Four-leaf light shaping with black velvet lining, magnetic gel holder, and 30 degree honeycomb grid.', sourceUrl: 'https://aputure.com/EN-US/products/aputure-barndoors'
   },
   {
-    id: 'aputure-f10-barn-doors-direct', manufacturer: 'Aputure', model: 'F10 Barn Doors', category: 'Barn Doors', compatibilityStatus: 'Compatible via F10 Fresnel',
-    compatibleWith: ['aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'F10 Fresnel front accessory slot', conditions: ['Requires F10 Fresnel'],
-    effectOnLight: 'Four-leaf shaping accessory for the F10 Fresnel; use only when the F10 Fresnel is mounted.', sourceUrl: 'https://help.aputure.com/en/modifiers/f10-fresnel'
-  },
-  {
     id: 'aputure-spotlight-max', manufacturer: 'Aputure', model: 'Spotlight Max', category: 'Spotlight', compatibilityStatus: 'Compatible',
     compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'], mount: 'Bowens Mount', availableLensAnglesDeg: [19, 36, 50],
     effectOnLight: 'Projection modifier for precise beam shaping and lens-based control.', sourceUrl: 'https://aputure.com/EN-US/pages/accessory-compatibility-wizard?compatModuleProduct=spotlight-max-19-lens-set'

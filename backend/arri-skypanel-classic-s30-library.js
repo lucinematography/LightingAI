@@ -2,7 +2,7 @@
 const S30 = 'arri-skypanel-s30-c';
 
 export const ARRI_SKYPANEL_CLASSIC_S30_FIXTURES = [
-  { id:S30, manufacturer:'ARRI', model:'SkyPanel S30-C', family:'SkyPanel Classic', category:'Light', sourceType:'RGBW LED Soft Light', opticalSystem:'Swappable Soft Diffusion Panel', cctK:{min:2800,max:10000}, colorMode:'RGBW', fixtureWeightKg:6.3, sourceUrl:'https://www.arri.com/en/lighting/led-panel-lights/skypanel-classic/s30-c', sourceTypeLabel:'Official ARRI SkyPanel S30-C data' }
+  { id:S30, manufacturer:'ARRI', model:'SkyPanel S30-C', family:'SkyPanel Classic', category:'Light', sourceType:'RGBW LED Soft Light', opticalSystem:'Swappable Soft Diffusion Panel', cctK:{min:2800,max:10000}, colorMode:'RGBW', fixtureWeightKg:6.3, control:['On-Board Controller','5-Pin DMX In/Through','RDM','EtherCon LAN','Art-Net','sACN','USB-A'], wiredRemoteControl:['DMX/RDM','Art-Net','sACN','Ethernet','SkyPanel Remote via USB'], wirelessControl:['SkyLink Receiver (external)'], wirelessIntegrated:false, sourceUrl:'https://www.arri.com/en/lighting/led-panel-lights/skypanel-classic/s30-c', sourceTypeLabel:'Official ARRI SkyPanel S30-C data' }
 ];
 
 export const ARRI_SKYPANEL_CLASSIC_S30_ACCESSORIES = [

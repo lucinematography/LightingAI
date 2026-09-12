@@ -12,7 +12,7 @@ if (EXPECTED_FIXTURES.length !== 18) errors.push('Completion gate fixture manife
 const requiredReachability = {
   'aputure-ls-600x-pro':['aputure-space-light-90'], 'aputure-ls-600c-pro-ii':['aputure-space-light-90'],
   'aputure-ls-1200d-pro':['aputure-bowens-standard-reflector','aputure-f10-fresnel','aputure-sidus-one','aputure-sidus-four'],
-  'aputure-storm-80c':['aputure-spotlight-mini','aputure-quick-dome-40'],
+  'aputure-storm-80c':['aputure-spotlight-mini','aputure-spotlight-mini-lens-19','aputure-spotlight-mini-lens-36','aputure-spotlight-mini-gobo-holder-m-size','aputure-spotlight-mini-gobo-kit-m-size','aputure-spotlight-mini-iris-m-size','aputure-quick-dome-40'],
   'aputure-storm-400x':['aputure-cf7-fresnel','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90'],
   'aputure-storm-700x':['aputure-cf10-fresnel','aputure-quick-dome-90','aputure-space-light-90'],
   'aputure-storm-1000c':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90'],
@@ -61,6 +61,14 @@ const motorYoke=RUNTIME_CATALOG.accessoryById.get('aputure-electro-storm-motoriz
 if(!motorYoke || motorYoke.panRangeDeg!==540 || motorYoke.tiltRangeDeg!==270 || motorYoke.weightKg!==20) errors.push('Electro Storm Motorized Yoke specification regression');
 const reflectorWeights={'aputure-electro-storm-reflector-20':3.8,'aputure-electro-storm-reflector-35':1.5,'aputure-electro-storm-reflector-50':1.2};
 for(const [id,w] of Object.entries(reflectorWeights)) if(RUNTIME_CATALOG.accessoryById.get(id)?.weightKg!==w) errors.push(`${id} weight regression`);
+
+const spotlightMini=RUNTIME_CATALOG.accessoryById.get('aputure-spotlight-mini');
+if(!spotlightMini || spotlightMini.mount!=='Mini ProLock' || spotlightMini.integratedCutterLeaves!==4 || spotlightMini.includedGobos!==10 || !spotlightMini.availableLensAnglesDeg?.includes(19) || !spotlightMini.availableLensAnglesDeg?.includes(36)) errors.push('Spotlight Mini system specification regression');
+const mini19=RUNTIME_CATALOG.accessoryById.get('aputure-spotlight-mini-lens-19');
+const mini36=RUNTIME_CATALOG.accessoryById.get('aputure-spotlight-mini-lens-36');
+if(!mini19 || mini19.beamAngleDeg?.min!==19 || mini19.beamAngleDeg?.max!==19) errors.push('Spotlight Mini 19 degree lens regression');
+if(!mini36 || mini36.beamAngleDeg?.min!==36 || mini36.beamAngleDeg?.max!==36) errors.push('Spotlight Mini 36 degree lens regression');
+if(RUNTIME_CATALOG.accessoryById.get('aputure-spotlight-mini-iris-m-size')?.irisBlades!==18) errors.push('Spotlight Mini M-size iris regression');
 
 const pb70=RUNTIME_CATALOG.accessoryById.get('aputure-storm-parallel-beam-70');
 if(!pb70 || pb70.weightKg!==10.70 || pb70.diameterCm!==70 || pb70.beamAngleDeg?.min!==5 || pb70.beamAngleDeg?.max!==5) errors.push('Parallel Beam 70 physical/beam specification regression');

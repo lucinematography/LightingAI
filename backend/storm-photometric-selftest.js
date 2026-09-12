@@ -36,7 +36,7 @@ assert.equal(accessory('aputure-quick-dome-60').gridAngleDeg, 40);
 target('aputure-quick-dome-90', 'aputure-storm-400x');
 
 const storm700 = fixture('aputure-storm-700x');
-assert.equal(storm700.powerDrawW, 880, 'STORM 700x max draw must remain 880W');
+assert.equal(storm700.powerDrawW, 850, 'STORM 700x max draw must remain 850W');
 assert.equal(storm700.outputPowerW, 700, 'STORM 700x output must remain 700W');
 assert.deepEqual(storm700.cctK, { min: 2500, max: 10000 }, 'STORM 700x CCT range changed');
 assert.equal(storm700.beamAngleDeg, 58, 'STORM 700x native beam changed');

@@ -1,0 +1,81 @@
+export const STORM_80C_ADAPTED_ACCESSORY_LIBRARY = [
+  {
+    id:'aputure-storm-80c-adapted-light-dome-mini-iii',
+    manufacturer:'Aputure',
+    model:'Light Dome Mini III via STORM 80c Bowens Mount Adapter',
+    category:'Softbox',
+    mount:'Bowens Mount via STORM 80c Bowens Mount Adapter',
+    effectOnLight:'Compact 2-foot circular soft light; requires the STORM 80c Bowens Mount Adapter',
+    compatibleWith:['aputure-storm-80c-bowens-adapter'],
+    compatibilityStatus:'Compatible',
+    conditions:['Requires STORM 80c Bowens Mount Adapter'],
+    diffusionStops:[1.5],
+    gridAngleDeg:40,
+    sourceUrl:'https://aputure.com/en-US/products/storm-80c-bowens-mount-adapter',
+    sourceTypeLabel:'Official Aputure product page'
+  },
+  {
+    id:'aputure-storm-80c-adapted-light-dome-se',
+    manufacturer:'Aputure',
+    model:'Light Dome SE via STORM 80c Bowens Mount Adapter',
+    category:'Softbox',
+    mount:'Bowens Mount via STORM 80c Bowens Mount Adapter',
+    effectOnLight:'3-foot circular soft light; requires the STORM 80c Bowens Mount Adapter',
+    compatibleWith:['aputure-storm-80c-bowens-adapter'],
+    compatibilityStatus:'Compatible',
+    conditions:['Requires STORM 80c Bowens Mount Adapter'],
+    sourceUrl:'https://aputure.com/en-US/products/storm-80c-bowens-mount-adapter',
+    sourceTypeLabel:'Official Aputure product page'
+  },
+  {
+    id:'aputure-storm-80c-adapted-light-box-45x45',
+    manufacturer:'Aputure',
+    model:'Light Box 45x45 via STORM 80c Bowens Mount Adapter',
+    category:'Softbox',
+    mount:'Bowens Mount via STORM 80c Bowens Mount Adapter',
+    effectOnLight:'45cm square soft light; requires the STORM 80c Bowens Mount Adapter',
+    compatibleWith:['aputure-storm-80c-bowens-adapter'],
+    compatibilityStatus:'Compatible',
+    conditions:['Requires STORM 80c Bowens Mount Adapter'],
+    sourceUrl:'https://aputure.com/en-US/products/storm-80c-bowens-mount-adapter',
+    sourceTypeLabel:'Official Aputure product page'
+  },
+  {
+    id:'aputure-storm-80c-adapted-lantern-26',
+    manufacturer:'Aputure',
+    model:'Aputure Lantern (26 inches) via STORM 80c Bowens Mount Adapter',
+    category:'Lantern',
+    mount:'Bowens Mount via STORM 80c Bowens Mount Adapter',
+    effectOnLight:'26-inch omnidirectional soft light; requires the STORM 80c Bowens Mount Adapter',
+    compatibleWith:['aputure-storm-80c-bowens-adapter'],
+    compatibilityStatus:'Compatible',
+    conditions:['Requires STORM 80c Bowens Mount Adapter'],
+    sourceUrl:'https://aputure.com/en-US/products/storm-80c-bowens-mount-adapter',
+    sourceTypeLabel:'Official Aputure product page'
+  },
+  {
+    id:'aputure-storm-80c-adapted-quick-dome-60',
+    manufacturer:'Aputure',
+    model:'Quick Dome 60 via STORM 80c Bowens Mount Adapter',
+    category:'Softbox',
+    mount:'Bowens Mount via STORM 80c Bowens Mount Adapter',
+    effectOnLight:'60cm quick-release soft light; requires the STORM 80c Bowens Mount Adapter',
+    compatibleWith:['aputure-storm-80c-bowens-adapter'],
+    compatibilityStatus:'Compatible',
+    conditions:['Requires STORM 80c Bowens Mount Adapter'],
+    sourceUrl:'https://aputure.com/en-US/product-families/storm',
+    sourceTypeLabel:'Official Aputure STORM compatibility table'
+  },
+  {
+    id:'aputure-storm-80c-baby-pin-adapter',
+    manufacturer:'Aputure',
+    model:'Baby Pin to Anti-Rotating 3/8in Screw Adapter',
+    category:'Rigging',
+    mount:'Anti-rotating 3/8in thread to standard baby pin',
+    effectOnLight:'Allows STORM 80c to be rigged from a standard baby pin without relying on the removable yoke',
+    compatibleWith:['aputure-storm-80c'],
+    compatibilityStatus:'Designed For',
+    sourceUrl:'https://aputure.com/en-US/products/baby-pin-to-anti-rotating-3-8in-screw-adapter',
+    sourceTypeLabel:'Official Aputure product page'
+  }
+];

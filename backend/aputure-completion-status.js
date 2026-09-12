@@ -4,11 +4,11 @@
 
 export const APUTURE_COMPLETION_STATUS = Object.freeze({
   completed: true,
-  validatedCommit: '170218c6b8c6370860981803d33a47d56a9037ad',
-  validatedWorkflowRun: 34688555040,
-  validatedWorkflowNumber: 197,
+  validatedCommit: 'fdf9ae7da2ca2c58ca02280370bd9d2fbf36c592',
+  validatedWorkflowRun: 34694655688,
+  validatedWorkflowNumber: 242,
   fixtureCount: 18,
-  accessoryCount: 130,
+  accessoryCount: 136,
   validation: Object.freeze({
     catalog: true,
     lightStorm: true,

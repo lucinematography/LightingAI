@@ -4,7 +4,7 @@ import { ACCESSORY_LIBRARY } from './accessory-library.js';
 // Sources: Aputure Accessory Compatibility Sheet / Compatibility Wizard and official product pages.
 export const ACCESSORY_COMPATIBILITY_OVERRIDES = {
   'aputure-ls-300d-ii': [
-    'aputure-bowens-standard-reflector','aputure-light-dome-mini-ii','aputure-light-dome-se','aputure-light-dome-ii','aputure-light-dome-150','aputure-light-octadome-120','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-box-45x45','aputure-lantern','aputure-lantern-90','aputure-space-light','aputure-f10-fresnel','aputure-spotlight-mount','aputure-ls-600-series-hyper-reflector'
+    'aputure-bowens-standard-reflector','aputure-light-dome-mini-ii','aputure-light-dome-se','aputure-light-dome-ii','aputure-light-dome-150','aputure-light-octadome-120','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-box-45x45','aputure-lantern','aputure-lantern-90','aputure-space-light','aputure-spotlight-mount','aputure-ls-600-series-hyper-reflector'
   ],
   'aputure-ls-600d': [
     'aputure-bowens-standard-reflector','aputure-ls-600-series-hyper-reflector','aputure-light-dome-mini-ii','aputure-light-dome-se','aputure-light-dome-ii','aputure-light-dome-150','aputure-light-octadome-120','aputure-light-box-60x90','aputure-light-box-30x120','aputure-lantern','aputure-lantern-90','aputure-space-light','aputure-f10-fresnel','aputure-spotlight-mount','aputure-f10-barn-doors'
@@ -16,10 +16,7 @@ export const ACCESSORY_COMPATIBILITY_OVERRIDES = {
 
 export const ACCESSORY_COMPATIBILITY_METADATA_OVERRIDES = {
   'aputure-ls-300d-ii': {
-    'aputure-ls-600-series-hyper-reflector': {
-      status: 'Compatible but not optimized',
-      conditions: ['Physically compatible; not optimized for LS 300d II output']
-    }
+    'aputure-ls-600-series-hyper-reflector': { status: 'Compatible but not optimized', conditions: ['Physically compatible; not optimized for LS 300d II output'] }
   },
   'aputure-ls-600d': {
     'aputure-light-dome-mini-ii': { status: 'Compatible', conditions: ['Remove inner baffle and gel holder'] },

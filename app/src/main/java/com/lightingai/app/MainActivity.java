@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
+import android.view.WindowInsets;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -22,6 +24,17 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         webView = new WebView(this);
         setContentView(webView);
+
+        // Android 15 draws apps edge-to-edge. Keep the WebView above the phone's
+        // system navigation area so LightingAI's bottom tabs remain visible and tappable.
+        webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
+            int bottom = insets.getSystemWindowInsetBottom();
+            int top = insets.getSystemWindowInsetTop();
+            v.setPadding(0, top, 0, bottom);
+            return insets;
+        });
+        webView.requestApplyInsets();
+
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);

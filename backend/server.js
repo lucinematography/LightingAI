@@ -20,13 +20,18 @@ app.use(express.json({ limit: "15mb" }));
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 function normalizeEquipmentName(value = "") { return String(value).toLowerCase().replace(/aputure/g, "").replace(/[^a-z0-9]+/g, "").trim(); }
+const FIXTURE_ALIASES = new Map();
+for (const fixture of FIXTURE_LIBRARY) {
+  const model = normalizeEquipmentName(fixture.model);
+  const manufacturerModel = normalizeEquipmentName(`${fixture.manufacturer || ''} ${fixture.model || ''}`);
+  const idAlias = normalizeEquipmentName(String(fixture.id || '').replace(/^aputure-/, ''));
+  for (const alias of new Set([model, manufacturerModel, idAlias, model.replace(/^ls/, '')])) if (alias) FIXTURE_ALIASES.set(alias, fixture.id);
+}
 function resolveFixture(e = {}) {
   if (e.fixtureId) { const byId = RUNTIME_CATALOG.fixtureById.get(e.fixtureId); if (byId) return byId; }
   const equipmentName = normalizeEquipmentName(e.name); if (!equipmentName) return null;
-  const exact = FIXTURE_LIBRARY.find(f => { const model=normalizeEquipmentName(f.model); return equipmentName===model || equipmentName===model.replace(/^ls/,"") || equipmentName===normalizeEquipmentName(`${f.manufacturer||""} ${f.model||""}`); });
-  if (exact) return exact;
-  const aliases={"60d":"aputure-ls-60d","ls60d":"aputure-ls-60d","60x":"aputure-ls-60x","ls60x":"aputure-ls-60x","300dii":"aputure-ls-300d-ii","ls300dii":"aputure-ls-300d-ii","300x":"aputure-ls-300x","ls300x":"aputure-ls-300x","600d":"aputure-ls-600d","ls600d":"aputure-ls-600d","600dpro":"aputure-ls-600d-pro","ls600dpro":"aputure-ls-600d-pro","600cproii":"aputure-ls-600c-pro-ii","ls600cproii":"aputure-ls-600c-pro-ii","600xpro":"aputure-ls-600x-pro","ls600xpro":"aputure-ls-600x-pro","1200dpro":"aputure-ls-1200d-pro","ls1200dpro":"aputure-ls-1200d-pro","storm80c":"aputure-storm-80c","80c":"aputure-storm-80c","storm400x":"aputure-storm-400x","400x":"aputure-storm-400x","storm700x":"aputure-storm-700x","700x":"aputure-storm-700x","storm1000c":"aputure-storm-1000c","1000c":"aputure-storm-1000c","storm1200x":"aputure-storm-1200x","1200x":"aputure-storm-1200x"};
-  return aliases[equipmentName] ? RUNTIME_CATALOG.fixtureById.get(aliases[equipmentName])||null : null;
+  const fixtureId = FIXTURE_ALIASES.get(equipmentName);
+  return fixtureId ? RUNTIME_CATALOG.fixtureById.get(fixtureId) || null : null;
 }
 function accessoryDetails(a, fixtureId = null) {
   const r=accessoryRecord(a,fixtureId);

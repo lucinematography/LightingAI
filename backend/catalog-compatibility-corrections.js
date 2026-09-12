@@ -5,19 +5,25 @@ function unique(values = []) { return [...new Set(values)]; }
 function addTargets(accessory, fixtureIds) {
   accessory.compatibleWith = unique([...(accessory.compatibleWith || []), ...fixtureIds]);
 }
+function addCompatibility(accessory, fixtureId, status = 'Compatible', extra = {}) {
+  addTargets(accessory, [fixtureId]);
+  accessory.compatibility = { ...(accessory.compatibility || {}), [fixtureId]: { status, conditions: [], ...extra } };
+}
+function patchMany(byId, ids, fixtureId, status = 'Compatible') {
+  for (const id of ids) {
+    const accessory = byId.get(id);
+    if (accessory) addCompatibility(accessory, fixtureId, status);
+  }
+}
 
 export function applyCatalogCompatibilityCorrections(accessories) {
   const byId = new Map(accessories.map(accessory => [accessory.id, accessory]));
 
   const quickDome60 = byId.get('aputure-quick-dome-60');
   if (quickDome60) {
-    addTargets(quickDome60, ['aputure-storm-80c','aputure-storm-400x','aputure-storm-1000c']);
-    quickDome60.compatibility = {
-      ...(quickDome60.compatibility || {}),
-      'aputure-storm-80c': { status: 'Compatible', conditions: ['Requires STORM 80c Bowens Mount Adapter'], requiredAccessoryId: 'aputure-storm-80c-bowens-adapter' },
-      'aputure-storm-400x': { status: 'Designed For', conditions: [] },
-      'aputure-storm-1000c': { status: 'Compatible', conditions: [] }
-    };
+    addCompatibility(quickDome60, 'aputure-storm-80c', 'Compatible', { conditions: ['Requires STORM 80c Bowens Mount Adapter'], requiredAccessoryId: 'aputure-storm-80c-bowens-adapter' });
+    addCompatibility(quickDome60, 'aputure-storm-400x', 'Designed For');
+    addCompatibility(quickDome60, 'aputure-storm-1000c', 'Compatible');
     quickDome60.mount = quickDome60.mount || 'Bowens Mount';
     quickDome60.weightKg = 0.76;
     quickDome60.diffusionStops = [1];
@@ -27,59 +33,68 @@ export function applyCatalogCompatibilityCorrections(accessories) {
 
   const quickDome90 = byId.get('aputure-quick-dome-90');
   if (quickDome90) {
-    addTargets(quickDome90, ['aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x']);
-    quickDome90.compatibility = {
-      ...(quickDome90.compatibility || {}),
-      'aputure-storm-400x': { status: 'Designed For', conditions: [] },
-      'aputure-storm-700x': { status: 'Designed For', conditions: [] },
-      'aputure-storm-1000c': { status: 'Compatible', conditions: [] },
-      'aputure-storm-1200x': { status: 'Compatible', conditions: [] }
-    };
+    addCompatibility(quickDome90, 'aputure-storm-400x', 'Designed For');
+    addCompatibility(quickDome90, 'aputure-storm-700x', 'Designed For');
+    addCompatibility(quickDome90, 'aputure-storm-1000c', 'Compatible');
+    addCompatibility(quickDome90, 'aputure-storm-1200x', 'Compatible');
   }
 
   const spaceLight90 = byId.get('aputure-space-light-90');
   if (spaceLight90) {
-    addTargets(spaceLight90, ['aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x']);
-    spaceLight90.compatibility = {
-      ...(spaceLight90.compatibility || {}),
-      'aputure-storm-400x': { status: 'Compatible', conditions: [] },
-      'aputure-storm-700x': { status: 'Compatible', conditions: [] },
-      'aputure-storm-1000c': { status: 'Compatible', conditions: [] },
-      'aputure-storm-1200x': { status: 'Compatible', conditions: [] }
-    };
+    for (const fixtureId of ['aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-ls-600x-pro','aputure-ls-600c-pro-ii','aputure-electro-storm-xt26']) addCompatibility(spaceLight90, fixtureId, 'Compatible');
   }
 
   const cf10 = byId.get('aputure-cf10-fresnel');
   if (cf10) {
-    addTargets(cf10, ['aputure-storm-700x','aputure-storm-400x','aputure-ls-600x-pro','aputure-ls-600c-pro-ii']);
-    cf10.compatibilityStatus = 'Compatible';
-    cf10.compatibility = {
-      ...(cf10.compatibility || {}),
-      'aputure-storm-700x': { status: 'Designed For', conditions: [] },
-      'aputure-storm-400x': { status: 'Compatible', conditions: [] },
-      'aputure-ls-600x-pro': { status: 'Compatible', conditions: [] },
-      'aputure-ls-600c-pro-ii': { status: 'Compatible', conditions: [] }
-    };
+    addCompatibility(cf10, 'aputure-storm-700x', 'Designed For');
+    for (const fixtureId of ['aputure-storm-400x','aputure-ls-600x-pro','aputure-ls-600c-pro-ii']) addCompatibility(cf10, fixtureId, 'Compatible');
   }
 
   const cf12 = byId.get('aputure-storm-1000c-1200x-cf12-fresnel') || byId.get('aputure-storm-1200x-cf12-fresnel');
   if (cf12) {
-    addTargets(cf12, ['aputure-storm-1000c','aputure-storm-1200x']);
-    cf12.compatibility = {
-      ...(cf12.compatibility || {}),
-      'aputure-storm-1000c': { status: 'Designed For', conditions: [] },
-      'aputure-storm-1200x': { status: 'Designed For', conditions: [] }
-    };
+    addCompatibility(cf12, 'aputure-storm-1000c', 'Designed For');
+    addCompatibility(cf12, 'aputure-storm-1200x', 'Designed For');
   }
 
   const barnDoorAdapter = byId.get('aputure-storm-1000c-1200x-barn-doors-adapter');
   if (barnDoorAdapter) {
-    addTargets(barnDoorAdapter, ['aputure-storm-1000c','aputure-storm-1200x']);
-    barnDoorAdapter.compatibility = {
-      ...(barnDoorAdapter.compatibility || {}),
-      'aputure-storm-1000c': { status: 'Designed For', conditions: [] },
-      'aputure-storm-1200x': { status: 'Designed For', conditions: [] }
-    };
+    addCompatibility(barnDoorAdapter, 'aputure-storm-1000c', 'Designed For');
+    addCompatibility(barnDoorAdapter, 'aputure-storm-1200x', 'Designed For');
+  }
+
+  // Current Aputure STORM family table / Compatibility Wizard: shared 1000c + 1200x system.
+  const sharedDesigned = [
+    'aputure-storm-1000c-1200x-reflector-15',
+    'aputure-storm-1000c-1200x-reflector-30',
+    'aputure-storm-1000c-1200x-reflector-45',
+    'aputure-storm-1000c-1200x-skid'
+  ];
+  patchMany(byId, sharedDesigned, 'aputure-storm-1000c', 'Designed For');
+  patchMany(byId, sharedDesigned, 'aputure-storm-1200x', 'Designed For');
+
+  // Current official compatible Bowens modifiers for both high-output STORM fixtures.
+  const sharedCompatible = [
+    'aputure-light-dome-iii',
+    'aputure-light-dome-se',
+    'aputure-light-dome-150',
+    'aputure-spotlight-max-19',
+    'aputure-spotlight-max-36',
+    'aputure-spotlight-max-50',
+    'aputure-light-box-60x90',
+    'aputure-light-box-30x120',
+    'aputure-light-octadome-120',
+    'aputure-lantern-90',
+    'aputure-sidus-one',
+    'aputure-sidus-four'
+  ];
+  patchMany(byId, sharedCompatible, 'aputure-storm-1000c', 'Compatible');
+  patchMany(byId, sharedCompatible, 'aputure-storm-1200x', 'Compatible');
+
+  // Four-Light Bracket is Designed For 1200x, but the current 1000c wizard lists it Compatible.
+  const fourLight = byId.get('aputure-ls1200d-four-light-bracket');
+  if (fourLight) {
+    addCompatibility(fourLight, 'aputure-storm-1200x', 'Designed For');
+    addCompatibility(fourLight, 'aputure-storm-1000c', 'Compatible');
   }
 
   return accessories;

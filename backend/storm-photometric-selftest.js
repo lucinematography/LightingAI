@@ -6,6 +6,7 @@ const fixtureById = RUNTIME_CATALOG.fixtureById;
 function fixture(id){ const v=fixtureById.get(id); assert.ok(v,`Missing fixture ${id}`); return v; }
 function accessory(id){ const v=byId.get(id); assert.ok(v,`Missing accessory ${id}`); return v; }
 function target(id,fixtureId){ assert.ok(accessory(id).compatibleWith?.includes(fixtureId),`${id} must target ${fixtureId}`); }
+function status(id,fixtureId,expected){ assert.equal(accessory(id).compatibility?.[fixtureId]?.status || accessory(id).compatibilityStatus,expected,`${id} status for ${fixtureId}`); }
 
 const s80=fixture('aputure-storm-80c');
 assert.equal(s80.powerDrawW,100); assert.equal(s80.outputPowerW,80); assert.deepEqual(s80.cctK,{min:1800,max:20000}); assert.equal(s80.beamAngleDeg,60); assert.equal(s80.includedReflectorBeamAngleDeg,35); assert.equal(s80.weightKg,1.35);
@@ -33,4 +34,15 @@ assert.equal(cs32.powerDrawW,3200); assert.equal(cs32.lampHeadPowerDrawW,3000); 
 const xt52=fixture('aputure-storm-xt52');
 assert.equal(xt52.powerDrawW,5600); assert.equal(xt52.standardLampHeadPowerDrawW,5200); assert.equal(xt52.extendedHeadCableMaxPowerDrawW,6000); assert.equal(xt52.lowVoltageMaxPowerDrawW,3200); assert.equal(xt52.outputPowerW,4800); assert.deepEqual(xt52.cctK,{min:2500,max:10000}); assert.equal(xt52.cri,96); assert.equal(xt52.tlci,96); assert.equal(xt52.beamAngleDeg,93); assert.equal(xt52.includedReflectorBeamAngleDeg,35); assert.deepEqual(xt52.reflectorBeamAnglesDeg,[20,25,35,50]); assert.equal(xt52.ipRating,'IP65'); assert.equal(xt52.weightKg,31.3); assert.equal(xt52.lampHeadWithoutYokeWeightKg,27.8); assert.equal(xt52.maxHeadCableLengthM,45);
 
-console.log(JSON.stringify({ok:true,checkedFixtures:['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52'],protectedFacts:76},null,2));
+for(const id of ['aputure-motorized-cf16-fresnel','aputure-cf16-barn-doors-adapter','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150','aputure-mount-lantern-120','aputure-mount-lantern-180']){
+  target(id,'aputure-storm-cs32'); target(id,'aputure-storm-xt52'); status(id,'aputure-storm-cs32','Designed For'); status(id,'aputure-storm-xt52','Designed For');
+}
+for(const id of ['aputure-mount-reflector-25','aputure-mount-reflector-35','aputure-mount-reflector-50','aputure-mount-reflector-20-combo']){
+  target(id,'aputure-storm-xt52'); target(id,'aputure-storm-cs32'); status(id,'aputure-storm-xt52','Designed For'); status(id,'aputure-storm-cs32','Compatible');
+}
+target('aputure-mount-reflector-30','aputure-storm-cs32'); target('aputure-mount-reflector-30','aputure-storm-xt52'); status('aputure-mount-reflector-30','aputure-storm-cs32','Designed For'); status('aputure-mount-reflector-30','aputure-storm-xt52','Compatible');
+assert.equal(accessory('aputure-mount-reflector-20-combo').requiredAccessoryId,'aputure-mount-reflector-25');
+assert.equal(accessory('aputure-mount-light-dome-150').weightKg,3.20); assert.deepEqual(accessory('aputure-mount-light-dome-150').diffusionStops,[1.5,2.5]); assert.equal(accessory('aputure-mount-light-dome-150').gridAngleDeg,50); assert.equal(accessory('aputure-mount-lantern-180').weightKg,8.15);
+target('aputure-storm-cs32-head-cable-15m','aputure-storm-cs32'); target('aputure-storm-xt52-head-cable-7-5m','aputure-storm-xt52'); target('aputure-storm-xt52-head-cable-15m','aputure-storm-xt52'); target('aputure-ultra-clamp','aputure-storm-cs32'); target('aputure-quick-release-clamp','aputure-storm-xt52');
+
+console.log(JSON.stringify({ok:true,checkedFixtures:['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52'],protectedFacts:113},null,2));

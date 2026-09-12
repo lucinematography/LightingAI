@@ -4,7 +4,7 @@ const SRC = 'https://www.arri.com/en/lighting/led-panel-lights/skypanel-classic/
 const CAT = 'https://www.arri.com/resource/blob/389042/3118cf5bae1816dca592dfe62ef93878/arri-lighting-americas-product-catalog-data.pdf';
 
 export const ARRI_SKYPANEL_CLASSIC_S120_FIXTURES = [
-  { id:S120, manufacturer:'ARRI', model:'SkyPanel S120-C', family:'SkyPanel Classic', category:'Light', sourceType:'RGBW LED Soft Light', opticalSystem:'Swappable Soft Diffusion Panel', cctK:{min:2800,max:10000}, colorMode:'RGBW', apertureMm:{width:1290,height:300}, beamAngleDeg:{standardDiffusion:107}, ipRating:'IP20', externalPsu:true, orientation:['Horizontal','Vertical'], sourceUrl:SRC, sourceTypeLabel:'Official ARRI SkyPanel S120-C data' }
+  { id:S120, manufacturer:'ARRI', model:'SkyPanel S120-C', family:'SkyPanel Classic', category:'Light', sourceType:'RGBW LED Soft Light', opticalSystem:'Swappable Soft Diffusion Panel', cctK:{min:2800,max:10000}, colorMode:'RGBW', apertureMm:{width:1290,height:300}, beamAngleDeg:{standardDiffusion:107}, ipRating:'IP20', externalPsu:true, orientation:['Horizontal','Vertical'], control:{wired:['DMX-512A','RDM','Art-Net 4','sACN','Ethernet','SkyPanel Remote via USB'],wireless:['ARRI SkyLink Receiver (external)'],usb5VForWirelessReceiver:true,builtInWirelessDMX:false}, sourceUrl:SRC, sourceTypeLabel:'Official ARRI SkyPanel S120-C data' }
 ];
 
 export const ARRI_SKYPANEL_CLASSIC_S120_ACCESSORIES = [

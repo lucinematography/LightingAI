@@ -11,14 +11,21 @@ const REQUIRED = {
     'aputure-quick-dome-40',
     'aputure-lantern-30',
     'aputure-storm-80c-bowens-adapter',
-    'aputure-storm-80c-light-dome-mini-iii'
+    'aputure-storm-80c-light-dome-mini-iii',
+    'aputure-spotlight-mini',
+    'aputure-spotlight-mini-lens-19',
+    'aputure-spotlight-mini-lens-36',
+    'aputure-spotlight-mini-gobo-holder-m-size',
+    'aputure-spotlight-mini-gobo-kit-m-size',
+    'aputure-spotlight-mini-iris-m-size'
   ],
   'aputure-storm-400x': [
     'aputure-storm-400x-hyper-reflector-35',
     'aputure-cf7-fresnel',
     'aputure-cf7-barn-doors',
     'aputure-quick-dome-60',
-    'aputure-quick-dome-90'
+    'aputure-quick-dome-90',
+    'aputure-spotlight-mount-ii'
   ],
   'aputure-storm-700x': [
     'aputure-storm-700x-reflector-35',
@@ -26,7 +33,8 @@ const REQUIRED = {
     'aputure-cf10-fresnel',
     'aputure-cf10-barn-doors',
     'aputure-storm-700x-skid',
-    'aputure-quick-dome-90'
+    'aputure-quick-dome-90',
+    'aputure-spotlight-mount-ii'
   ],
   'aputure-storm-1000c': [
     'aputure-storm-1000c-1200x-cf12-fresnel',
@@ -63,9 +71,10 @@ for (const [fixtureId, requiredIds] of Object.entries(REQUIRED)) {
   for (const id of missing) errors.push(`${fixtureId} cannot reach required accessory ${id}`);
 }
 
-// Explicit safety regression: F10 Fresnel must never be exposed on STORM 1200x.
+// Explicit safety regressions.
 const storm1200 = new Set(buildAccessoryTree('aputure-storm-1200x', RUNTIME_CATALOG).map(x => x.id));
 if (storm1200.has('aputure-f10-fresnel')) errors.push('STORM 1200x must not expose F10 Fresnel');
+if (storm1200.has('aputure-spotlight-mount-ii')) errors.push('STORM 1200x must not expose Spotlight Mount II (800W maximum)');
 
 console.log(JSON.stringify({ ok: errors.length === 0, fixtures: report, errors }, null, 2));
 if (errors.length) process.exit(1);

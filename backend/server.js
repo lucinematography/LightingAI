@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import OpenAI from "openai";
 import { FIXTURE_LIBRARY } from "./fixture-library.js";
 import { ACCESSORY_LIBRARY } from "./accessory-library.js";
+import "./accessory-compatibility-overrides.js";
 
 dotenv.config();
 
@@ -170,7 +171,6 @@ Nemoj izmišljati mere ili podatke koje nije moguće pouzdano utvrditi sa fotogr
     });
   }
 });
-
 
 app.post("/api/lighting-plan", async (req, res) => {
   try {

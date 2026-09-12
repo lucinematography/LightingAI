@@ -21,6 +21,10 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 function normalizeEquipmentName(value = "") {
   return String(value).toLowerCase().replace(/aputure/g, "").replace(/[^a-z0-9]+/g, "").trim();
 }
+function normalizeConditions(value) {
+  if (!value) return [];
+  return Array.isArray(value) ? value.filter(Boolean) : [String(value)];
+}
 function resolveFixture(e = {}) {
   if (e.fixtureId) { const byId = FIXTURE_LIBRARY.find(f => f.id === e.fixtureId); if (byId) return byId; }
   const equipmentName = normalizeEquipmentName(e.name); if (!equipmentName) return null;
@@ -33,7 +37,7 @@ function formatEquipmentForAI(equipment = []) {
   return equipment.map(e => {
     const fixture=resolveFixture(e); if(!fixture) return `${e.name} x${e.qty||1}`;
     const specs=[fixture.sourceType&&`source: ${fixture.sourceType}`,fixture.powerDrawW&&`power draw: ${fixture.powerDrawW}W`,fixture.outputPowerW&&`output power: ${fixture.outputPowerW}W`,fixture.cctK&&`CCT: ${fixture.cctK.min}-${fixture.cctK.max}K`,fixture.colorMode&&`color: ${fixture.colorMode}`,fixture.cri&&`CRI: ${fixture.cri}`,fixture.tlci&&`TLCI: ${fixture.tlci}`,fixture.mount&&`mount: ${fixture.mount}`,fixture.ipRating&&`IP: ${fixture.ipRating}`].filter(Boolean).join(", ");
-    const accessories=ACCESSORY_LIBRARY.filter(a=>(a.compatibleWith||[]).includes(fixture.id)).map(a=>{ const fc=a.compatibility?.[fixture.id]; const status=fc?.status||a.compatibilityStatus||"Compatible"; const conditions=fc?.conditions||a.conditions||[]; const details=[a.category&&`type: ${a.category}`,`status: ${status}`,`availability: ${a.includedWithFixture===true?"INCLUDED WITH FIXTURE":"OPTIONAL ACCESSORY"}`,conditions.length&&`conditions: ${conditions.join("; ")}`,a.mount&&`mount: ${a.mount}`,a.beamAngleDeg&&`beam: ${a.beamAngleDeg.min}-${a.beamAngleDeg.max}deg`,a.availableLensAnglesDeg&&`lenses: ${a.availableLensAnglesDeg.join('/')}deg`,a.gridAngleDeg&&`grid: ${a.gridAngleDeg}deg`,a.diffusionStops&&`diffusion: ${a.diffusionStops.join('/')} stop`,a.effectOnLight&&`effect: ${a.effectOnLight}`].filter(Boolean).join(", "); return `${a.manufacturer} ${a.model}${details?` [${details}]`:""}`; });
+    const accessories=ACCESSORY_LIBRARY.filter(a=>(a.compatibleWith||[]).includes(fixture.id)).map(a=>{ const fc=a.compatibility?.[fixture.id]; const status=fc?.status||a.compatibilityStatus||"Compatible"; const conditions=[...new Set([...normalizeConditions(a.conditions),...normalizeConditions(fc?.conditions)])]; const details=[a.category&&`type: ${a.category}`,`status: ${status}`,`availability: ${a.includedWithFixture===true?"INCLUDED WITH FIXTURE":"OPTIONAL ACCESSORY"}`,conditions.length&&`conditions: ${conditions.join("; ")}`,a.mount&&`mount: ${a.mount}`,a.beamAngleDeg&&`beam: ${a.beamAngleDeg.min}-${a.beamAngleDeg.max}deg`,a.availableLensAnglesDeg&&`lenses: ${a.availableLensAnglesDeg.join('/')}deg`,a.gridAngleDeg&&`grid: ${a.gridAngleDeg}deg`,a.diffusionStops&&`diffusion: ${a.diffusionStops.join('/')} stop`,a.effectOnLight&&`effect: ${a.effectOnLight}`].filter(Boolean).join(", "); return `${a.manufacturer} ${a.model}${details?` [${details}]`:""}`; });
     return `${e.name} x${e.qty||1}${specs?` [${specs}]`:""}${accessories.length?` | Compatible accessories: ${accessories.join("; ")}`:""}`;
   }).join("; ");
 }

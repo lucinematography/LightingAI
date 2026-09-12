@@ -34,9 +34,11 @@ export const ACCESSORY_COMPATIBILITY_OVERRIDES = {
     'aputure-lantern-90',
     'aputure-space-light',
     'aputure-f10-fresnel',
-    'aputure-spotlight-mount'
+    'aputure-spotlight-mount',
+    'aputure-f10-barn-doors'
   ],
   'aputure-ls-600c-pro-ii': [
+    'aputure-bowens-standard-reflector',
     'aputure-ls-600-series-hyper-reflector',
     'aputure-light-dome-mini-ii',
     'aputure-light-dome-se',
@@ -48,13 +50,41 @@ export const ACCESSORY_COMPATIBILITY_OVERRIDES = {
     'aputure-lantern',
     'aputure-lantern-90',
     'aputure-space-light',
-    'aputure-f10-fresnel'
+    'aputure-f10-fresnel',
+    'aputure-f10-barn-doors',
+    'aputure-spotlight-mount'
   ]
 };
 
 // Verified installation conditions from Aputure's compatibility sheet.
 export const ACCESSORY_COMPATIBILITY_METADATA_OVERRIDES = {
   'aputure-ls-600d': {
+    'aputure-light-dome-mini-ii': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle and gel holder']
+    },
+    'aputure-light-dome-ii': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle and gel holder']
+    },
+    'aputure-light-dome-se': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle']
+    },
+    'aputure-light-octadome-120': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle']
+    },
+    'aputure-light-box-60x90': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle']
+    },
+    'aputure-light-box-30x120': {
+      status: 'Compatible',
+      conditions: ['Remove inner baffle']
+    }
+  },
+  'aputure-ls-600c-pro-ii': {
     'aputure-light-dome-mini-ii': {
       status: 'Compatible',
       conditions: ['Remove inner baffle and gel holder']

@@ -56,7 +56,12 @@ export function applyCatalogCompatibilityCorrections(accessories) {
 
   const spaceLight90 = byId.get('aputure-space-light-90');
   if (spaceLight90) {
-    for (const fixtureId of ['aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-ls-600x-pro','aputure-ls-600c-pro-ii','aputure-electro-storm-xt26']) addCompatibility(spaceLight90, fixtureId, 'Compatible');
+    addCompatibility(spaceLight90, 'aputure-storm-400x', 'Compatible');
+    addCompatibility(spaceLight90, 'aputure-storm-700x', 'Compatible');
+    addCompatibility(spaceLight90, 'aputure-storm-1000c', 'Designed For');
+    addCompatibility(spaceLight90, 'aputure-storm-1200x', 'Compatible');
+    addCompatibility(spaceLight90, 'aputure-ls-600x-pro', 'Compatible');
+    addCompatibility(spaceLight90, 'aputure-ls-600c-pro-ii', 'Compatible');
   }
 
   const cf10 = byId.get('aputure-cf10-fresnel');
@@ -111,6 +116,8 @@ export function applyCatalogCompatibilityCorrections(accessories) {
   ];
   patchMany(byId, sharedCompatible, 'aputure-storm-1000c', 'Compatible');
   patchMany(byId, sharedCompatible, 'aputure-storm-1200x', 'Compatible');
+  // Space Light 90 is explicitly listed under Designed For for STORM 1000c by Aputure.
+  if (spaceLight90) addCompatibility(spaceLight90, 'aputure-storm-1000c', 'Designed For');
 
   const fourLight = byId.get('aputure-ls1200d-four-light-bracket');
   if (fourLight) {

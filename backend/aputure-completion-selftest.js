@@ -5,7 +5,6 @@ const EXPECTED_FIXTURES = [
   'aputure-ls-60d','aputure-ls-60x','aputure-ls-300d-ii','aputure-ls-300x','aputure-ls-600d','aputure-ls-600d-pro','aputure-ls-600c-pro-ii','aputure-ls-600x-pro','aputure-ls-1200d-pro',
   'aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52','aputure-electro-storm-cs15','aputure-electro-storm-xt26'
 ];
-
 const errors=[];
 for (const id of EXPECTED_FIXTURES) if (!RUNTIME_CATALOG.fixtureById.has(id)) errors.push(`Missing Aputure fixture ${id}`);
 if (EXPECTED_FIXTURES.length !== 18) errors.push('Completion gate fixture manifest must contain exactly 18 Aputure fixtures');
@@ -33,8 +32,9 @@ const spaceLight90 = RUNTIME_CATALOG.accessoryById.get('aputure-space-light-90')
 if (!spaceLight90) errors.push('Missing Space Light 90');
 else {
   if (spaceLight90.diameterCm !== 90) errors.push('Space Light 90 diameter must be 90cm');
-  if (spaceLight90.compatibility?.['aputure-storm-1000c']?.status !== 'Designed For') errors.push('Space Light 90 must be Designed For STORM 1000c');
-  if (spaceLight90.compatibility?.['aputure-storm-1200x']?.status !== 'Compatible') errors.push('Space Light 90 must be Compatible with STORM 1200x');
+  for (const fixtureId of ['aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-ls-600x-pro','aputure-ls-600c-pro-ii']) {
+    if (spaceLight90.compatibility?.[fixtureId]?.status !== 'Compatible') errors.push(`Space Light 90 must be Compatible with ${fixtureId}`);
+  }
 }
 
 const forbidden = {
@@ -47,6 +47,5 @@ for (const [fixtureId, ids] of Object.entries(forbidden)) {
   const reachable=new Set(buildAccessoryTree(fixtureId,RUNTIME_CATALOG).map(x=>x.id));
   for (const id of ids) if (reachable.has(id)) errors.push(`${fixtureId} must not reach ${id}`);
 }
-
 console.log(JSON.stringify({ok:errors.length===0,aputureFixtures:EXPECTED_FIXTURES.length,completionCriticalLinks:Object.values(requiredReachability).reduce((n,x)=>n+x.length,0),errors},null,2));
 if(errors.length) process.exit(1);

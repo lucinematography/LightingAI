@@ -17,6 +17,7 @@ public class MainActivity extends Activity {
     private String pendingText = null;
     private String pendingName = "lighting-ai-export.json";
     private static final int CREATE_FILE = 501;
+    private static final String PRODUCTION_BACKEND = "https://lightingai.onrender.com";
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -30,7 +31,22 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (url != null && url.startsWith("file:///android_asset/")) {
+                    String backend = PRODUCTION_BACKEND.replace("\\", "\\\\").replace("'", "\\'");
+                    String js = "(function(){try{" +
+                        "var key='lighting_settings_v1';" +
+                        "var cfg={};try{cfg=JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){}" +
+                        "if(!cfg.backendUrl){cfg.backendUrl='" + backend + "';localStorage.setItem(key,JSON.stringify(cfg));}" +
+                        "if(typeof settings!=='undefined'){settings.backendUrl=cfg.backendUrl;}" +
+                        "if(typeof renderStatus==='function'){renderStatus();}" +
+                        "}catch(e){}})();";
+                    view.evaluateJavascript(js, null);
+                }
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.loadUrl("file:///android_asset/index.html");

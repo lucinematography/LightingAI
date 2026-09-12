@@ -3,6 +3,7 @@ import { ACCESSORY_LIBRARY } from './accessory-library.js';
 import { ADDITIONAL_ACCESSORY_LIBRARY } from './additional-accessory-library.js';
 import { SPOTLIGHT_ACCESSORY_LIBRARY } from './spotlight-accessory-library.js';
 import { applyAccessoryCompatibilityOverrides } from './accessory-compatibility-overrides.js';
+import { applyCatalogCompatibilityCorrections } from './catalog-compatibility-corrections.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function unique(values = []) { return [...new Set(values)]; }
@@ -33,6 +34,7 @@ export function buildRuntimeCatalog() {
   }
   const accessories = [...accessoriesById.values()];
   applyAccessoryCompatibilityOverrides(accessories);
+  applyCatalogCompatibilityCorrections(accessories);
   return {
     fixtures,
     accessories,

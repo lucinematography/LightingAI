@@ -62,7 +62,11 @@ export function applyCatalogCompatibilityCorrections(accessories) {
   if (cf12) {
     addCompatibility(cf12, 'aputure-storm-1000c', 'Designed For'); addCompatibility(cf12, 'aputure-storm-1200x', 'Designed For');
     addCompatibility(cf12, 'aputure-storm-400x', 'Compatible'); addCompatibility(cf12, 'aputure-storm-700x', 'Compatible');
+    cf12.beamAngleDeg={min:15,max:45}; cf12.lensDiameterIn=12; cf12.weightKg=4.72; cf12.mount='Bowens Mount';
+    cf12.sourceUrl='https://aputure.com/EN-US/products/cf12-fresnel';
   }
+  const cf12Doors=byId.get('aputure-cf12-barn-doors');
+  if(cf12Doors){cf12Doors.scrimCompatibilityIn=13;cf12Doors.sourceUrl='https://aputure.com/EN-US/products/storm-1200x-cine-kit';}
 
   const bowens400Compatible = ['aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-box-45x45','aputure-light-octadome-120','aputure-lantern-90','aputure-lantern','aputure-cf10-fresnel','aputure-storm-1000c-1200x-cf12-fresnel','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four','aputure-neutrik-power-cable-1200-series-6m'];
   const bowens700Compatible = ['aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-lantern','aputure-storm-1000c-1200x-cf12-fresnel','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four','aputure-neutrik-power-cable-1200-series-6m'];
@@ -73,6 +77,9 @@ export function applyCatalogCompatibilityCorrections(accessories) {
   if (barnDoorAdapter) { addCompatibility(barnDoorAdapter, 'aputure-storm-1000c', 'Designed For'); addCompatibility(barnDoorAdapter, 'aputure-storm-1200x', 'Designed For'); }
   const sharedDesigned = ['aputure-storm-1000c-1200x-reflector-15','aputure-storm-1000c-1200x-reflector-30','aputure-storm-1000c-1200x-reflector-45','aputure-storm-1000c-1200x-skid'];
   patchMany(byId, sharedDesigned, 'aputure-storm-1000c', 'Designed For'); patchMany(byId, sharedDesigned, 'aputure-storm-1200x', 'Designed For');
+  for(const [id,angle] of [['aputure-storm-1000c-1200x-reflector-15',15],['aputure-storm-1000c-1200x-reflector-30',30],['aputure-storm-1000c-1200x-reflector-45',45]]){
+    const reflector=byId.get(id); if(reflector){reflector.beamAngleDeg=angle; reflector.sourceUrl=angle===45?'https://aputure.com/en-US/products/storm-1000c-1200x-45-reflector':'https://aputure.com/EN-US/products/storm-1000c-1200x-reflector-kit';}
+  }
 
   const sharedCompatible = ['aputure-light-dome-iii','aputure-light-dome-se','aputure-light-dome-150','aputure-spotlight-max','aputure-spotlight-max-19','aputure-spotlight-max-36','aputure-spotlight-max-50','aputure-light-box-60x90','aputure-light-box-30x120','aputure-light-octadome-120','aputure-lantern-90','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four'];
   patchMany(byId, sharedCompatible, 'aputure-storm-1000c', 'Compatible'); patchMany(byId, sharedCompatible, 'aputure-storm-1200x', 'Compatible');

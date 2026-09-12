@@ -65,17 +65,5 @@ export const STORM_80C_ADAPTED_ACCESSORY_LIBRARY = [
     conditions:['Requires STORM 80c Bowens Mount Adapter'],
     sourceUrl:'https://aputure.com/en-US/product-families/storm',
     sourceTypeLabel:'Official Aputure STORM compatibility table'
-  },
-  {
-    id:'aputure-storm-80c-baby-pin-adapter',
-    manufacturer:'Aputure',
-    model:'Baby Pin to Anti-Rotating 3/8in Screw Adapter',
-    category:'Rigging',
-    mount:'Anti-rotating 3/8in thread to standard baby pin',
-    effectOnLight:'Allows STORM 80c to be rigged from a standard baby pin without relying on the removable yoke',
-    compatibleWith:['aputure-storm-80c'],
-    compatibilityStatus:'Designed For',
-    sourceUrl:'https://aputure.com/en-US/products/baby-pin-to-anti-rotating-3-8in-screw-adapter',
-    sourceTypeLabel:'Official Aputure product page'
   }
 ];

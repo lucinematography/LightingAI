@@ -39,6 +39,18 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
     sourceUrl: 'https://aputure.com/EN-US/products/aputure-barndoors'
   },
   {
+    id: 'aputure-f10-barn-doors-direct',
+    manufacturer: 'Aputure',
+    model: 'F10 Barn Doors',
+    category: 'Barn Doors',
+    compatibilityStatus: 'Compatible via F10 Fresnel',
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'],
+    mount: 'F10 Fresnel front accessory slot',
+    conditions: ['Requires F10 Fresnel'],
+    effectOnLight: 'Four-leaf shaping accessory for the F10 Fresnel; use only when the F10 Fresnel is mounted.',
+    sourceUrl: 'https://help.aputure.com/en/modifiers/f10-fresnel'
+  },
+  {
     id: 'aputure-spotlight-max',
     manufacturer: 'Aputure',
     model: 'Spotlight Max',
@@ -61,5 +73,17 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
     availableLensAnglesDeg: [19, 26, 36, 50],
     effectOnLight: 'Ellipsoidal projection modifier with interchangeable lenses for precise beam shaping, gobos and iris control.',
     sourceUrl: 'https://aputure.com/en-US/products/spotlight-mount-ii-19-lens-kit'
+  },
+  {
+    id: 'aputure-spotlight-iris-b-size',
+    manufacturer: 'Aputure',
+    model: 'Spotlight Iris (B-Size)',
+    category: 'Iris',
+    compatibilityStatus: 'Designed For',
+    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x', 'aputure-ls-600d', 'aputure-ls-600c-pro-ii'],
+    mount: 'Spotlight Mount / Spotlight Mount II iris slot',
+    conditions: ['Requires Spotlight Mount or Spotlight Mount II'],
+    effectOnLight: '18-blade iris for continuously reducing and shaping the projected beam diameter.',
+    sourceUrl: 'https://aputure.com/EN-US/pages/accessory-compatibility-wizard?compatModuleProduct=spotlight-mount-19-lens-kit'
   }
 ];

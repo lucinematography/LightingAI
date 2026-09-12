@@ -3,6 +3,7 @@ package com.lightingai.app;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -18,22 +19,21 @@ public class MainActivity extends Activity {
     private WebView webView;
     private String pendingText = null;
     private static final int CREATE_FILE = 501;
+    private int navigationInset = 0;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
+
         webView = new WebView(this);
         setContentView(webView);
 
-        // Android 15 draws apps edge-to-edge. Keep the WebView above the phone's
-        // system navigation area so LightingAI's bottom tabs remain visible and tappable.
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
-            int bottom = insets.getSystemWindowInsetBottom();
-            int top = insets.getSystemWindowInsetTop();
-            v.setPadding(0, top, 0, bottom);
+            navigationInset = Math.max(0, insets.getSystemWindowInsetBottom());
+            applyNavigationInset();
             return insets;
         });
-        webView.requestApplyInsets();
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -42,10 +42,26 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        webView.setWebViewClient(new WebViewClient());
+
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                applyNavigationInset();
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.loadUrl("file:///android_asset/index.html");
+        webView.requestApplyInsets();
+    }
+
+    private void applyNavigationInset() {
+        if (webView == null) return;
+        final int px = navigationInset;
+        webView.post(() -> webView.evaluateJavascript(
+            "(function(){var n=document.querySelector('nav');var a=document.querySelector('.app');" +
+            "if(n){n.style.bottom='" + px + "px';n.style.zIndex='9999';}" +
+            "if(a){a.style.paddingBottom='calc(84px + " + px + "px)';}})();", null));
     }
 
     public class AndroidBridge {

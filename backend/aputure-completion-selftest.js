@@ -17,10 +17,10 @@ const requiredReachability = {
   'aputure-storm-700x':['aputure-cf10-fresnel','aputure-quick-dome-90','aputure-space-light-90'],
   'aputure-storm-1000c':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90'],
   'aputure-storm-1200x':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90','aputure-space-light-90'],
-  'aputure-storm-cs32':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150'],
-  'aputure-storm-xt52':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150'],
-  'aputure-electro-storm-cs15':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-flight-case','aputure-sidus-one','aputure-sidus-four'],
-  'aputure-electro-storm-xt26':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-flight-case','aputure-electro-storm-xt26-lp28-bates-40a-cable','aputure-sidus-one','aputure-sidus-four']
+  'aputure-storm-cs32':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150','aputure-mount-lantern-120','aputure-mount-lantern-180'],
+  'aputure-storm-xt52':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150','aputure-mount-lantern-120','aputure-mount-lantern-180'],
+  'aputure-electro-storm-cs15':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-flight-case','aputure-storm-parallel-beam-70','aputure-sidus-one','aputure-sidus-four'],
+  'aputure-electro-storm-xt26':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-flight-case','aputure-electro-storm-xt26-lp28-bates-40a-cable','aputure-storm-parallel-beam-70','aputure-sidus-one','aputure-sidus-four']
 };
 for (const [fixtureId, ids] of Object.entries(requiredReachability)) {
   const reachable=new Set(buildAccessoryTree(fixtureId,RUNTIME_CATALOG).map(x=>x.id));
@@ -43,6 +43,17 @@ for(const f of ['aputure-storm-1000c','aputure-storm-1200x']){
 }
 expectStatus('aputure-ls1200d-four-light-bracket','aputure-storm-1200x','Designed For');
 expectStatus('aputure-ls1200d-four-light-bracket','aputure-storm-1000c','Compatible');
+
+for(const f of ['aputure-storm-cs32','aputure-storm-xt52']){
+  expectStatus('aputure-storm-parallel-beam-70',f,'Designed For');
+  expectStatus('aputure-mount-lantern-120',f,'Designed For');
+  expectStatus('aputure-mount-lantern-180',f,'Designed For');
+}
+for(const f of ['aputure-electro-storm-cs15','aputure-electro-storm-xt26']) expectStatus('aputure-storm-parallel-beam-70',f,'Compatible');
+const pb70=RUNTIME_CATALOG.accessoryById.get('aputure-storm-parallel-beam-70');
+if(!pb70 || pb70.weightKg!==10.70 || pb70.diameterCm!==70 || pb70.beamAngleDeg?.min!==5 || pb70.beamAngleDeg?.max!==5) errors.push('Parallel Beam 70 physical/beam specification regression');
+const lantern180=RUNTIME_CATALOG.accessoryById.get('aputure-mount-lantern-180');
+if(!lantern180 || lantern180.diameterCm!==180 || lantern180.weightKg!==8.15 || lantern180.weightWithSkirtKg!==9.60) errors.push('Aputure Mount Lantern 180 specification regression');
 
 const spaceLight90=RUNTIME_CATALOG.accessoryById.get('aputure-space-light-90');
 if(!spaceLight90) errors.push('Missing Space Light 90');

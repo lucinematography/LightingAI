@@ -11,14 +11,14 @@ for (const id of EXPECTED_FIXTURES) if (!RUNTIME_CATALOG.fixtureById.has(id)) er
 if (EXPECTED_FIXTURES.length !== 18) errors.push('Completion gate fixture manifest must contain exactly 18 Aputure fixtures');
 
 const requiredReachability = {
-  'aputure-ls-1200d-pro':['aputure-ls-1200-series-7-pin-weatherproof-head-cable','aputure-sidus-one','aputure-sidus-four'],
+  'aputure-ls-1200d-pro':['aputure-bowens-standard-reflector','aputure-f10-fresnel','aputure-sidus-one','aputure-sidus-four'],
   'aputure-storm-80c':['aputure-spotlight-mini','aputure-quick-dome-40'],
   'aputure-storm-400x':['aputure-cf7-fresnel','aputure-quick-dome-60','aputure-quick-dome-90'],
   'aputure-storm-700x':['aputure-cf10-fresnel','aputure-quick-dome-90'],
-  'aputure-storm-1000c':['aputure-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90'],
-  'aputure-storm-1200x':['aputure-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90'],
-  'aputure-storm-cs32':['aputure-mount-cf16-fresnel','aputure-mount-parallel-beam-70','aputure-mount-light-dome-150'],
-  'aputure-storm-xt52':['aputure-mount-cf16-fresnel','aputure-mount-parallel-beam-70','aputure-mount-light-dome-150'],
+  'aputure-storm-1000c':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90'],
+  'aputure-storm-1200x':['aputure-storm-1000c-1200x-cf12-fresnel','aputure-quick-dome-60','aputure-quick-dome-90'],
+  'aputure-storm-cs32':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150'],
+  'aputure-storm-xt52':['aputure-motorized-cf16-fresnel','aputure-storm-parallel-beam-70','aputure-mount-light-dome-150'],
   'aputure-electro-storm-cs15':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-flight-case','aputure-sidus-one','aputure-sidus-four'],
   'aputure-electro-storm-xt26':['aputure-electro-storm-f14-fresnel','aputure-electro-storm-flight-case','aputure-electro-storm-xt26-lp28-bates-40a-cable','aputure-sidus-one','aputure-sidus-four']
 };
@@ -29,9 +29,8 @@ for (const [fixtureId, ids] of Object.entries(requiredReachability)) {
 
 const forbidden = {
   'aputure-ls-1200d-pro':['aputure-spotlight-mount-ii'],
-  'aputure-ls-600d':['aputure-ls-1200-series-7-pin-weatherproof-head-cable'],
-  'aputure-ls-600d-pro':['aputure-ls-1200-series-7-pin-weatherproof-head-cable'],
-  'aputure-ls-600x-pro':['aputure-ls-1200-series-7-pin-weatherproof-head-cable']
+  'aputure-storm-1200x':['aputure-spotlight-mount-ii'],
+  'aputure-storm-80c':['aputure-f10-fresnel']
 };
 for (const [fixtureId, ids] of Object.entries(forbidden)) {
   const reachable=new Set(buildAccessoryTree(fixtureId,RUNTIME_CATALOG).map(x=>x.id));

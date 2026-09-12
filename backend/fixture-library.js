@@ -114,6 +114,20 @@ export const FIXTURE_LIBRARY = [
     flickerFreeFps: 2000
   },
   {
+    id: 'aputure-storm-1000c',
+    manufacturer: 'Aputure',
+    model: 'STORM 1000c',
+    category: 'Light',
+    sourceType: 'BLAIR-CG Full-Spectrum LED',
+    outputPowerW: 1000,
+    cctK: { min: 1800, max: 20000 },
+    colorMode: 'Full Spectrum',
+    control: ['On-board', 'Sidus Link', 'Sidus Link Pro', 'DMX/RDM', 'CRMX', 'sACN', 'Art-Net'],
+    acInput: '100-240V AC, 50/60Hz',
+    ipRating: 'IP65',
+    sourceUrl: 'https://aputure.com/en-US/products/storm-1000c'
+  },
+  {
     id: 'aputure-storm-1200x',
     manufacturer: 'Aputure',
     model: 'STORM 1200x',

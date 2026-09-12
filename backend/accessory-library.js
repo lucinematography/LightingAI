@@ -317,8 +317,20 @@ export const ACCESSORY_LIBRARY = [
     category: 'Fresnel',
     compatibilityStatus: 'Designed For',
     compatibleWith: [
+      'aputure-storm-1000c',
       'aputure-storm-1200x'
     ],
+    compatibility: {
+      'aputure-storm-1000c': {
+        status: 'Designed For',
+        conditions: []
+      },
+      'aputure-storm-1200x': {
+        status: 'Designed For',
+        conditions: []
+      }
+    },
+    includedWithFixture: false,
     mount: 'Bowens Mount',
     effectOnLight: 'Compact Fresnel optic for controlled hard-light output.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1200x'
@@ -330,8 +342,20 @@ export const ACCESSORY_LIBRARY = [
     category: 'Reflector',
     compatibilityStatus: 'Designed For',
     compatibleWith: [
+      'aputure-storm-1000c',
       'aputure-storm-1200x'
     ],
+    compatibility: {
+      'aputure-storm-1000c': {
+        status: 'Designed For',
+        conditions: []
+      },
+      'aputure-storm-1200x': {
+        status: 'Designed For',
+        conditions: []
+      }
+    },
+    includedWithFixture: false,
     beamAngleDeg: { min: 15, max: 15 },
     effectOnLight: 'Narrow reflector for concentrated directional output.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1200x'
@@ -343,8 +367,20 @@ export const ACCESSORY_LIBRARY = [
     category: 'Reflector',
     compatibilityStatus: 'Designed For',
     compatibleWith: [
+      'aputure-storm-1000c',
       'aputure-storm-1200x'
     ],
+    compatibility: {
+      'aputure-storm-1000c': {
+        status: 'Designed For',
+        conditions: []
+      },
+      'aputure-storm-1200x': {
+        status: 'Designed For',
+        conditions: []
+      }
+    },
+    includedWithFixture: false,
     beamAngleDeg: { min: 30, max: 30 },
     effectOnLight: 'Medium-width reflector for controlled directional output.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1200x'
@@ -356,8 +392,20 @@ export const ACCESSORY_LIBRARY = [
     category: 'Reflector',
     compatibilityStatus: 'Designed For',
     compatibleWith: [
+      'aputure-storm-1000c',
       'aputure-storm-1200x'
     ],
+    compatibility: {
+      'aputure-storm-1000c': {
+        status: 'Designed For',
+        conditions: []
+      },
+      'aputure-storm-1200x': {
+        status: 'Designed For',
+        conditions: []
+      }
+    },
+    includedWithFixture: true,
     beamAngleDeg: { min: 45, max: 45 },
     effectOnLight: 'Wider reflector for broader directional output.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1200x'
@@ -369,8 +417,20 @@ export const ACCESSORY_LIBRARY = [
     category: 'Mount Adapter',
     compatibilityStatus: 'Designed For',
     compatibleWith: [
+      'aputure-storm-1000c',
       'aputure-storm-1200x'
     ],
+    compatibility: {
+      'aputure-storm-1000c': {
+        status: 'Designed For',
+        conditions: []
+      },
+      'aputure-storm-1200x': {
+        status: 'Designed For',
+        conditions: []
+      }
+    },
+    includedWithFixture: false,
     effectOnLight: 'Adapter allowing CF12 Barn Doors to mount directly to STORM 1000c/1200x.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=storm-1200x'
   },
@@ -381,10 +441,26 @@ export const ACCESSORY_LIBRARY = [
     category: 'Barn Door',
     compatibilityStatus: 'Designed For',
     compatibleWith: [
+      'aputure-storm-1200x-cf12-fresnel',
+      'aputure-storm-1000c',
       'aputure-storm-1200x'
     ],
+    compatibility: {
+      'aputure-storm-1200x-cf12-fresnel': {
+        status: 'Designed For',
+        conditions: []
+      },
+      'aputure-storm-1000c': {
+        status: 'Compatible',
+        conditions: ['Requires the STORM 1000c/1200x Barn Doors Adapter for direct fixture mounting']
+      },
+      'aputure-storm-1200x': {
+        status: 'Compatible',
+        conditions: ['Requires the STORM 1000c/1200x Barn Doors Adapter for direct fixture mounting']
+      }
+    },
+    includedWithFixture: false,
     effectOnLight: 'Beam shaping barn doors for the CF12 Fresnel.',
-    conditions: 'Requires STORM 1000c/1200x Barn Doors Adapter for direct fixture mounting.',
     sourceUrl: 'https://aputure.com/en-US/pages/accessory-compatibility-wizard?compatModuleProduct=cf12-barn-doors'
   },
 {

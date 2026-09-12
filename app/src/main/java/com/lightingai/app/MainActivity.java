@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsets;
-import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -19,22 +18,29 @@ import java.io.OutputStream;
 public class MainActivity extends Activity {
     private WebView webView;
     private String pendingText = null;
+    private int navigationInsetCssPx = 0;
     private static final int CREATE_FILE = 501;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Keep application content out of Android system bars. This makes the
-        // fixed HTML navigation sit directly above the phone navigation bar.
         getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
-        getWindow().setFlags(0, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        getWindow().getDecorView().setSystemUiVisibility(0);
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(13, 15, 18));
         setContentView(webView);
+
+        webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
+            int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
+            int topPx = Math.max(0, insets.getSystemWindowInsetTop());
+            float density = getResources().getDisplayMetrics().density;
+            navigationInsetCssPx = Math.max(0, Math.round(bottomPx / density));
+            // Top padding is native. Bottom is handled in CSS so fixed nav moves too.
+            v.setPadding(0, topPx, 0, 0);
+            applyNavigationInset();
+            return insets;
+        });
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -43,10 +49,25 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                applyNavigationInset();
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.loadUrl("file:///android_asset/index.html");
+        webView.requestApplyInsets();
+    }
+
+    private void applyNavigationInset() {
+        if (webView == null) return;
+        final int cssPx = navigationInsetCssPx;
+        webView.post(() -> webView.evaluateJavascript(
+            "(function(){var n=document.querySelector('nav');var a=document.querySelector('.app');" +
+            "if(n){n.style.bottom='" + cssPx + "px';n.style.zIndex='9999';}" +
+            "if(a){a.style.paddingBottom='calc(84px + " + cssPx + "px)';}})();", null));
     }
 
     public class AndroidBridge {

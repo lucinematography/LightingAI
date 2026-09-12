@@ -11,8 +11,8 @@ export const ADDITIONAL_ACCESSORY_LIBRARY = [
     compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x'], mount: 'Bowens Mount', effectOnLight: 'Optimized reflector for the Light Storm 300 series, concentrating the point-source output.', sourceUrl: 'https://aputure.com/en-US/collections/replacement-parts'
   },
   {
-    id: 'aputure-barndoors-fresnel-2x', manufacturer: 'Aputure', model: 'Aputure Barn Doors', category: 'Barn Doors', compatibilityStatus: 'Compatible',
-    compatibleWith: ['aputure-ls-300d-ii', 'aputure-ls-300x'], mount: 'Fresnel 2X / Aputure reflector', conditions: ['Requires Fresnel 2X'], gridAngleDeg: 30,
+    id: 'aputure-barndoors-fresnel-2x', manufacturer: 'Aputure', model: 'Aputure Barn Doors', category: 'Barn Doors', compatibilityStatus: 'Designed For',
+    compatibleWith: ['aputure-fresnel-2x'], mount: 'Fresnel 2X', gridAngleDeg: 30,
     effectOnLight: 'Four-leaf light shaping with black velvet lining, magnetic gel holder, and 30 degree honeycomb grid.', sourceUrl: 'https://aputure.com/EN-US/products/aputure-barndoors'
   },
   {

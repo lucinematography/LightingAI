@@ -1,5 +1,3 @@
-import { ACCESSORY_LIBRARY } from './accessory-library.js';
-
 // Compatibility additions for restored Aputure LS fixtures.
 // Sources: Aputure Accessory Compatibility Sheet / Compatibility Wizard and official product pages.
 export const ACCESSORY_COMPATIBILITY_OVERRIDES = {
@@ -36,7 +34,7 @@ export const ACCESSORY_COMPATIBILITY_METADATA_OVERRIDES = {
   }
 };
 
-export function applyAccessoryCompatibilityOverrides(accessories) {
+export function applyAccessoryCompatibilityOverrides(accessories = []) {
   for (const [fixtureId, accessoryIds] of Object.entries(ACCESSORY_COMPATIBILITY_OVERRIDES)) {
     for (const accessoryId of accessoryIds) {
       const accessory = accessories.find(item => item.id === accessoryId);
@@ -55,5 +53,3 @@ export function applyAccessoryCompatibilityOverrides(accessories) {
   }
   return accessories;
 }
-
-applyAccessoryCompatibilityOverrides(ACCESSORY_LIBRARY);

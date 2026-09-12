@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -23,19 +24,17 @@ public class MainActivity extends Activity {
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Keep application content out of Android system bars. This makes the
+        // fixed HTML navigation sit directly above the phone navigation bar.
+        getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
+        getWindow().setFlags(0, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        getWindow().getDecorView().setSystemUiVisibility(0);
 
         webView = new WebView(this);
+        webView.setBackgroundColor(Color.rgb(13, 15, 18));
         setContentView(webView);
-
-        // Use the Android system inset only once. The HTML nav stays at bottom:0
-        // inside the padded WebView, directly above the phone navigation controls.
-        webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
-            int bottom = Math.max(0, insets.getSystemWindowInsetBottom());
-            int top = Math.max(0, insets.getSystemWindowInsetTop());
-            v.setPadding(0, top, 0, bottom);
-            return insets;
-        });
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -48,7 +47,6 @@ public class MainActivity extends Activity {
         webView.setWebChromeClient(new WebChromeClient());
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.loadUrl("file:///android_asset/index.html");
-        webView.requestApplyInsets();
     }
 
     public class AndroidBridge {

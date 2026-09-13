@@ -26,6 +26,7 @@ export const ARRI_TRUE_BLUE_D25_ACCESSORIES=[
  {id:'arri-d25-scrim-set',manufacturer:'ARRI',model:'Set of 4 Scrims 330 mm / 13.0 in',orderCode:'L2.80980.0',category:'Scrim',compatibleWith:D25,sourceUrl:SCRIMS},
  {id:'arri-d25-scrim-full-single',manufacturer:'ARRI',model:'Scrim Full Single 330 mm / 13.0 in',orderCode:'L2.80980.A',category:'Scrim',compatibleWith:D25,sourceUrl:SCRIMS},
  {id:'arri-d25-scrim-full-double',manufacturer:'ARRI',model:'Scrim Full Double 330 mm / 13.0 in',orderCode:'L2.80980.B',category:'Scrim',compatibleWith:D25,sourceUrl:SCRIMS},
+ {id:'arri-d25-scrim-half-single',manufacturer:'ARRI',model:'Scrim Half Single 330 mm / 13.0 in',orderCode:'L2.80980.C',category:'Scrim',compatibleWith:D25,sourceUrl:SCRIMS},
  {id:'arri-d25-scrim-half-double',manufacturer:'ARRI',model:'Scrim Half Double 330 mm / 13.0 in',orderCode:'L2.80980.D',category:'Scrim',compatibleWith:D25,sourceUrl:SCRIMS},
  {id:'arri-d25-scrim-bag',manufacturer:'ARRI',model:'Scrim Bag for 330 mm / 13.0 in scrims',orderCode:'L2.88915.1',category:'Bag',compatibleWith:D25,sourceUrl:SCRIMS},
  {id:'arri-d25-speed-ring',manufacturer:'ARRI',model:'Speed Ring circular (9305), 343 mm / 13.5 in',orderCode:'L2.76247.0',category:'Speed Ring',compatibleWith:D25,sourceUrl:SOFTBOX},

@@ -1,4 +1,4 @@
-import { RUNTIME_CATALOG } from './catalog-runtime.js';
+import { buildRuntimeCatalog } from './catalog-runtime.js';
 
 const OFFICIAL_APUTURE_HOSTS = new Set(['aputure.com','www.aputure.com','help.aputure.com','docs.aputure.com']);
 const GENERIC_SOURCE_PATHS = new Set(['/', '/en-us', '/en-us/', '/collections/aputure', '/en-us/collections/aputure']);
@@ -16,7 +16,7 @@ function isOfficialAputureUrl(value) {
   }
 }
 
-export function auditCatalogSources(catalog = RUNTIME_CATALOG) {
+export function auditCatalogSources(catalog = buildRuntimeCatalog()) {
   const errors = [];
   const warnings = [];
   const sourceUsage = new Map();

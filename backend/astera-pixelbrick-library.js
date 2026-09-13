@@ -1,6 +1,7 @@
 // Astera PixelBrick PB15 battery-powered LED fixture.
 // Product specifications verified against Astera PixelBrick documentation.
 const SRC = 'https://astera-led.com/products/pixelbrick/';
+const REX_SRC = 'https://astera-led.com/es/products/runtimeextender-gold-mount-kit-of-4/';
 
 export const ASTERA_PIXELBRICK_FIXTURES = [
   {
@@ -33,4 +34,11 @@ export const ASTERA_PIXELBRICK_FIXTURES = [
   }
 ];
 
-export const ASTERA_PIXELBRICK_ACCESSORIES = [];
+const PIXELBRICK = ['astera-pixelbrick-pb15'];
+
+export const ASTERA_PIXELBRICK_ACCESSORIES = [
+  { id: 'astera-pb15-bmo', manufacturer: 'Astera', model: 'PB15-BMO BrickMount', category: 'Mounting', compatibleWith: PIXELBRICK, sourceUrl: SRC },
+  { id: 'astera-pb15-bcn', manufacturer: 'Astera', model: 'PB15-BCN BrickConnect', category: 'Mounting', compatibleWith: PIXELBRICK, sourceUrl: REX_SRC },
+  { id: 'astera-pb15-plg', manufacturer: 'Astera', model: 'PB15-PLG Waterproof Protective Cover', category: 'Protection', compatibleWith: PIXELBRICK, sourceUrl: REX_SRC },
+  { id: 'astera-ax-hcn', manufacturer: 'Astera', model: 'AX-HCN HexConnect', category: 'Mounting', compatibleWith: PIXELBRICK, sourceUrl: REX_SRC }
+];

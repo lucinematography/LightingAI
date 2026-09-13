@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
-import { RUNTIME_CATALOG } from './catalog-runtime.js';
+import { buildRuntimeCatalog } from './catalog-runtime.js';
+
+const RUNTIME_CATALOG = buildRuntimeCatalog();
+RUNTIME_CATALOG.fixtureById = new Map(RUNTIME_CATALOG.fixtures.map(x => [x.id, x]));
+RUNTIME_CATALOG.accessoryById = new Map(RUNTIME_CATALOG.accessories.map(x => [x.id, x]));
 
 const byId = RUNTIME_CATALOG.accessoryById;
 const fixtureById = RUNTIME_CATALOG.fixtureById;

@@ -24,13 +24,14 @@ export const ASTERA_TITANTUBE_FIXTURES = [
 ];
 
 const TITAN = ['astera-titantube-fp1'];
+const TITAN_AND_HELIOS = ['astera-titantube-fp1', 'astera-heliostube-fp2-btb'];
 
 export const ASTERA_TITANTUBE_ACCESSORIES = [
-  { id: 'astera-tube-floorstand', manufacturer: 'Astera', model: 'Foldable Floorstand', category: 'Stand', mount: 'M5 thread', compatibleWith: TITAN, includedWithFixture: true, sourceUrl: MANUAL },
-  { id: 'astera-tube-metal-holder', manufacturer: 'Astera', model: 'Metal Holder with Locking Pin', category: 'Mount', mount: '1/4-20 and M5 threads', compatibleWith: TITAN, includedWithFixture: true, sourceUrl: MANUAL },
-  { id: 'astera-ax1-blt', manufacturer: 'Astera', model: 'AX1-BLT Double-ended Spigot', category: 'Mount Adapter', mount: '1/4-20 to clamp', compatibleWith: TITAN, sourceUrl: MANUAL },
-  { id: 'astera-tube-wing-plate', manufacturer: 'Astera', model: 'Wing Plate', category: 'Multi-light Mount', compatibleWith: TITAN, sourceUrl: MANUAL },
-  { id: 'astera-tube-m5-eyebolt', manufacturer: 'Astera', model: 'M5 Eye Bolt', category: 'Safety / Suspension', mount: 'M5 thread', compatibleWith: TITAN, includedWithFixture: true, sourceUrl: MANUAL },
+  { id: 'astera-tube-floorstand', manufacturer: 'Astera', model: 'AX1-STD TubeStand', category: 'Stand', mount: 'M5 thread', compatibleWith: TITAN_AND_HELIOS, includedWithFixture: true, sourceUrl: MANUAL },
+  { id: 'astera-tube-metal-holder', manufacturer: 'Astera', model: 'AX1-H TubeHolder', category: 'Mount', mount: '1/4-20 and M5 threads', compatibleWith: TITAN_AND_HELIOS, includedWithFixture: true, sourceUrl: MANUAL },
+  { id: 'astera-ax1-blt', manufacturer: 'Astera', model: 'AX1-BLT Double-ended Spigot', category: 'Mount Adapter', mount: '1/4-20 to clamp', compatibleWith: TITAN_AND_HELIOS, sourceUrl: MANUAL },
+  { id: 'astera-tube-wing-plate', manufacturer: 'Astera', model: 'AX1-WP WingPlate', category: 'Multi-light Mount', compatibleWith: TITAN_AND_HELIOS, sourceUrl: MANUAL },
+  { id: 'astera-tube-m5-eyebolt', manufacturer: 'Astera', model: 'FP1-EBLT Eye Bolt', category: 'Safety / Suspension', mount: 'M5 thread', compatibleWith: TITAN_AND_HELIOS, includedWithFixture: true, sourceUrl: MANUAL },
   { id: 'astera-fp1-chr', manufacturer: 'Astera', model: 'FP1-CHR Individual Charger', category: 'Charger', compatibleWith: TITAN, sourceUrl: MANUAL },
   { id: 'astera-fp1-pwb', manufacturer: 'Astera', model: 'FP1-PWB PowerBox', category: 'Power / DMX Interface', compatibleWith: TITAN, sourceUrl: MANUAL },
   { id: 'astera-fp1-pwb-cab-5', manufacturer: 'Astera', model: 'FP1-PWB-CAB-5 Power/Data Combination Cable 5 m', category: 'Power / Data Cable', compatibleWith: TITAN, sourceUrl: MANUAL },

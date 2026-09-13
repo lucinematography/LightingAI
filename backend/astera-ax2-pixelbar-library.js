@@ -1,6 +1,7 @@
 // Astera AX2 PixelBar battery-powered linear LED fixtures.
 // Canonical specifications from Astera AX2 PixelBar datasheet.
 const SRC = 'https://device.report/m/0e05d49354ab0a17b88c19119c7db803ce0c9e24c36414278e744506af83e11f';
+const CHARGING_CASE_SRC = 'https://astera-led.com/products/charging-case-for-ax2/downloads/';
 
 export const ASTERA_AX2_PIXELBAR_FIXTURES = [
   {
@@ -47,4 +48,24 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
   }
 ];
 
-export const ASTERA_AX2_PIXELBAR_ACCESSORIES = [];
+const AX2_50 = ['astera-ax2-50-pixelbar'];
+const AX2_100 = ['astera-ax2-100-pixelbar'];
+
+export const ASTERA_AX2_PIXELBAR_ACCESSORIES = [
+  {
+    id: 'astera-ax2-50-chrcse',
+    manufacturer: 'Astera',
+    model: 'Charging Case for AX2-50',
+    category: 'Charging / Transport',
+    compatibleWith: AX2_50,
+    sourceUrl: CHARGING_CASE_SRC
+  },
+  {
+    id: 'astera-ax2-100-chrcse',
+    manufacturer: 'Astera',
+    model: 'Charging Case for AX2-100',
+    category: 'Charging / Transport',
+    compatibleWith: AX2_100,
+    sourceUrl: CHARGING_CASE_SRC
+  }
+];

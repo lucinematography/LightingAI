@@ -36,4 +36,13 @@ export const ASTERA_HYDRAPANEL_FIXTURES = [
   }
 ];
 
-export const ASTERA_HYDRAPANEL_ACCESSORIES = [];
+const HYDRAPANEL = ['astera-hydrapanel-fp6'];
+
+export const ASTERA_HYDRAPANEL_ACCESSORIES = [
+  { id: 'astera-fp6-ds-100', manufacturer: 'Astera', model: 'FP6-DS-100 DiffusorSheet 100', category: 'Diffusion', compatibleWith: HYDRAPANEL, sourceUrl: SRC },
+  { id: 'astera-fp6-sf-100', manufacturer: 'Astera', model: 'FP6-SF-100 SoftFrame 100', category: 'Diffusion', compatibleWith: HYDRAPANEL, sourceUrl: SRC },
+  { id: 'astera-fp6-int-80', manufacturer: 'Astera', model: 'FP6-INT-80 Intensifier 80', category: 'Optical Modifier', compatibleWith: HYDRAPANEL, sourceUrl: SRC },
+  { id: 'astera-fp6-egc-40', manufacturer: 'Astera', model: 'FP6-EGC-40 EggCrate 40', category: 'Light Control', compatibleWith: HYDRAPANEL, sourceUrl: SRC },
+  { id: 'astera-fp6-egc-60', manufacturer: 'Astera', model: 'FP6-EGC-60 EggCrate 60', category: 'Light Control', compatibleWith: HYDRAPANEL, sourceUrl: SRC },
+  { id: 'astera-fp6-gh', manufacturer: 'Astera', model: 'FP6-GH GelHolder', category: 'Filter Holder', compatibleWith: HYDRAPANEL, sourceUrl: SRC }
+];

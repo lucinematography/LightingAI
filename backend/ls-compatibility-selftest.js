@@ -1,5 +1,9 @@
-import { RUNTIME_CATALOG } from './catalog-runtime.js';
+import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { buildAccessoryTree } from './accessory-graph.js';
+
+const RUNTIME_CATALOG = buildRuntimeCatalog();
+RUNTIME_CATALOG.fixtureById = new Map(RUNTIME_CATALOG.fixtures.map(x => [x.id, x]));
+RUNTIME_CATALOG.accessoryById = new Map(RUNTIME_CATALOG.accessories.map(x => [x.id, x]));
 
 const REQUIRED = {
   'aputure-ls-60d': ['aputure-ls-60-softbox','aputure-spotlight-mini-zoom','aputure-light-dome-mini-ii','aputure-light-dome-se','aputure-light-box-45x45'],

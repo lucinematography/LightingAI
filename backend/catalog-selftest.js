@@ -1,6 +1,11 @@
-import { RUNTIME_CATALOG } from './catalog-runtime.js';
+import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { validateCatalog } from './catalog-validation.js';
 import { buildAccessoryTree, isBlockedCompatibilityStatus } from './accessory-graph.js';
+
+const RUNTIME_CATALOG = buildRuntimeCatalog();
+RUNTIME_CATALOG.fixtureById = new Map(RUNTIME_CATALOG.fixtures.map(x => [x.id, x]));
+RUNTIME_CATALOG.accessoryById = new Map(RUNTIME_CATALOG.accessories.map(x => [x.id, x]));
+RUNTIME_CATALOG.duplicateAccessoryIds = RUNTIME_CATALOG.integrity?.duplicateAccessoryIds || [];
 
 const failures = [];
 const report = validateCatalog(RUNTIME_CATALOG);

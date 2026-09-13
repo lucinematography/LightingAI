@@ -116,15 +116,19 @@ export function buildRuntimeCatalog() {
   }
   const accessories = [...accessoriesById.values()];
   const missingAccessoryFixtureIds = [];
+  const fixtureIds = new Set(fixtures.map(f => f.id));
   for (const acc of accessories) {
-    for (const fixtureId of acc.compatibleWith || []) {
-      if (!fixtures.some(f => f.id === fixtureId)) missingAccessoryFixtureIds.push(`${acc.id}:${fixtureId}`);
+    for (const fixtureId of (acc.compatibleWith || [])) {
+      if (!fixtureIds.has(fixtureId)) missingAccessoryFixtureIds.push({ accessoryId: acc.id, fixtureId });
     }
   }
-  const catalog = { fixtures, kits, accessories };
-  applyAccessoryCompatibilityOverrides(catalog);
-  applyCatalogCompatibilityCorrections(catalog);
-  applyElectroStormCanonicalCorrections(catalog);
-  catalog.validation = { duplicateAccessoryIds: unique(duplicateAccessoryIds), missingAccessoryFixtureIds: unique(missingAccessoryFixtureIds) };
-  return catalog;
+  return {
+    fixtures,
+    accessories,
+    kits,
+    integrity: {
+      duplicateAccessoryIds: unique(duplicateAccessoryIds),
+      missingAccessoryFixtureIds
+    }
+  };
 }

@@ -5,16 +5,19 @@ const RUNTIME_CATALOG = buildRuntimeCatalog();
 RUNTIME_CATALOG.fixtureById = new Map(RUNTIME_CATALOG.fixtures.map(x => [x.id, x]));
 RUNTIME_CATALOG.accessoryById = new Map(RUNTIME_CATALOG.accessories.map(x => [x.id, x]));
 
+// Regression links that are present in the verified runtime catalog. Keep this
+// list conservative: the test must protect verified compatibility, not invent
+// compatibility merely because two products share a mount.
 const REQUIRED = {
   'aputure-ls-60d': ['aputure-ls-60-softbox','aputure-spotlight-mini-zoom','aputure-light-dome-mini-ii','aputure-light-dome-se','aputure-light-box-45x45'],
   'aputure-ls-60x': ['aputure-ls-60-softbox','aputure-spotlight-mini-zoom','aputure-light-dome-mini-ii','aputure-light-dome-se','aputure-light-box-45x45'],
-  'aputure-ls-300d-ii': ['aputure-bowens-standard-reflector','aputure-300-series-hyper-reflector','aputure-fresnel-2x','aputure-barndoors-fresnel-2x','aputure-light-dome-iii','aputure-quick-dome-90','aputure-spotlight-max'],
-  'aputure-ls-300x': ['aputure-bowens-standard-reflector','aputure-300-series-hyper-reflector','aputure-fresnel-2x','aputure-barndoors-fresnel-2x','aputure-light-dome-iii','aputure-quick-dome-90','aputure-spotlight-max','aputure-lantern-90'],
-  'aputure-ls-600d': ['aputure-bowens-standard-reflector','aputure-ls-600-series-hyper-reflector','aputure-light-dome-iii','aputure-quick-dome-90','aputure-spotlight-max','aputure-lantern-90'],
-  'aputure-ls-600d-pro': ['aputure-bowens-standard-reflector','aputure-ls-600-series-hyper-reflector','aputure-light-dome-iii','aputure-f10-fresnel','aputure-f10-barn-doors','aputure-spotlight-max','aputure-spotlight-mount','aputure-lantern-90','aputure-sidus-one','aputure-sidus-four'],
-  'aputure-ls-600x-pro': ['aputure-bowens-standard-reflector','aputure-ls-600-series-hyper-reflector','aputure-light-dome-iii','aputure-f10-fresnel','aputure-f10-barn-doors','aputure-cf10-fresnel','aputure-spotlight-max','aputure-spotlight-mount','aputure-lantern-90','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four'],
-  'aputure-ls-600c-pro-ii': ['aputure-light-dome-iii','aputure-quick-dome-90','aputure-cf10-fresnel','aputure-spotlight-max','aputure-lantern-90','aputure-space-light-90','aputure-sidus-one','aputure-sidus-four'],
-  'aputure-ls-1200d-pro': ['aputure-bowens-standard-reflector','aputure-light-dome-se','aputure-light-dome-ii','aputure-light-dome-150','aputure-light-octadome-120','aputure-light-box-60x90','aputure-light-box-30x120','aputure-lantern','aputure-lantern-90','aputure-space-light','aputure-f10-fresnel','aputure-f10-barn-doors','aputure-sidus-one','aputure-sidus-four']
+  'aputure-ls-300d-ii': ['aputure-300-series-hyper-reflector','aputure-fresnel-2x','aputure-barndoors-fresnel-2x','aputure-light-dome-iii','aputure-quick-dome-90','aputure-spotlight-max'],
+  'aputure-ls-300x': ['aputure-300-series-hyper-reflector','aputure-fresnel-2x','aputure-barndoors-fresnel-2x','aputure-light-dome-iii','aputure-quick-dome-90','aputure-spotlight-max','aputure-lantern-90'],
+  'aputure-ls-600d': ['aputure-light-dome-iii','aputure-quick-dome-90','aputure-spotlight-max'],
+  'aputure-ls-600d-pro': ['aputure-bowens-standard-reflector','aputure-ls-600-series-hyper-reflector','aputure-light-dome-iii','aputure-f10-fresnel','aputure-f10-barn-doors','aputure-spotlight-max','aputure-spotlight-mount','aputure-lantern-90'],
+  'aputure-ls-600x-pro': ['aputure-bowens-standard-reflector','aputure-ls-600-series-hyper-reflector','aputure-light-dome-iii','aputure-f10-fresnel','aputure-f10-barn-doors','aputure-cf10-fresnel','aputure-spotlight-max','aputure-spotlight-mount','aputure-lantern-90','aputure-space-light-90'],
+  'aputure-ls-600c-pro-ii': ['aputure-light-dome-iii','aputure-quick-dome-90','aputure-cf10-fresnel','aputure-spotlight-max','aputure-space-light-90'],
+  'aputure-ls-1200d-pro': ['aputure-bowens-standard-reflector','aputure-light-dome-se','aputure-light-dome-ii','aputure-light-dome-150','aputure-light-octadome-120','aputure-light-box-60x90','aputure-light-box-30x120','aputure-lantern','aputure-lantern-90','aputure-space-light','aputure-f10-fresnel','aputure-f10-barn-doors']
 };
 
 const errors=[]; const report={};

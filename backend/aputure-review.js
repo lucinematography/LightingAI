@@ -1,5 +1,9 @@
-import { RUNTIME_CATALOG } from './catalog-runtime.js';
+import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { buildAccessoryTree } from './accessory-graph.js';
+
+const RUNTIME_CATALOG = buildRuntimeCatalog();
+RUNTIME_CATALOG.fixtureById = new Map(RUNTIME_CATALOG.fixtures.map(x => [x.id, x]));
+RUNTIME_CATALOG.accessoryById = new Map(RUNTIME_CATALOG.accessories.map(x => [x.id, x]));
 
 function compactFixture(f){return {id:f.id,manufacturer:f.manufacturer,model:f.model,sourceType:f.sourceType,powerDrawW:f.powerDrawW,outputPowerW:f.outputPowerW,cctK:f.cctK,colorMode:f.colorMode,cri:f.cri,tlci:f.tlci,beamAngleDeg:f.beamAngleDeg,includedReflectorBeamAngleDeg:f.includedReflectorBeamAngleDeg,reflectorBeamAnglesDeg:f.reflectorBeamAnglesDeg,mount:f.mount,ipRating:f.ipRating,weightKg:f.weightKg,control:f.control,sourceUrl:f.sourceUrl};}
 function compactAccessory(r){const a=RUNTIME_CATALOG.accessoryById.get(r.id)||{};return {id:r.id,model:r.model,manufacturer:r.manufacturer,category:r.category,status:r.status,availability:r.availability,conditions:r.conditions||[],depth:r.depth,parentIds:r.parentIds||[],mount:a.mount,effectOnLight:a.effectOnLight,beamAngleDeg:a.beamAngleDeg,gridAngleDeg:a.gridAngleDeg,diffusionStops:a.diffusionStops,weightKg:a.weightKg,sourceUrl:a.sourceUrl};}

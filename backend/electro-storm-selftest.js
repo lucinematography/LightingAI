@@ -1,5 +1,9 @@
-import { RUNTIME_CATALOG } from './catalog-runtime.js';
+import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { buildAccessoryTree } from './accessory-graph.js';
+
+const RUNTIME_CATALOG = buildRuntimeCatalog();
+RUNTIME_CATALOG.fixtureById = new Map(RUNTIME_CATALOG.fixtures.map(x => [x.id, x]));
+RUNTIME_CATALOG.accessoryById = new Map(RUNTIME_CATALOG.accessories.map(x => [x.id, x]));
 
 const FIXTURES=['aputure-electro-storm-cs15','aputure-electro-storm-xt26'];
 const REQUIRED=[

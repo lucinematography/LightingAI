@@ -1,8 +1,8 @@
-import { RUNTIME_CATALOG } from './catalog-runtime.js';
+import { buildRuntimeCatalog } from './catalog-runtime.js';
 
 const VALID_STATUSES = new Set(['Compatible','Designed For','Compatible but not optimized','Do Not Use']);
 
-export function validateCatalog(catalog = RUNTIME_CATALOG) {
+export function validateCatalog(catalog = buildRuntimeCatalog()) {
   const fixtures = catalog.fixtures;
   const accessories = catalog.accessories;
   const errors = [];

@@ -1,5 +1,5 @@
 // ARRI Orbiter current LED spotlight system and verified optics/accessories.
-// Official ARRI product/accessory pages and product catalog are canonical sources.
+// Official ARRI product/accessory pages and Orbiter Accessories Guide are canonical sources.
 const SRC='https://www.arri.com/en/lighting/led-spotlights/orbiter';
 const OPT='https://www.arri.com/en/lighting/led-spotlights/orbiter/accessories/optics';
 const CTRL='https://www.arri.com/en/lighting/led-spotlights/orbiter/control-connectivity';
@@ -7,10 +7,11 @@ const LC='https://www.arri.com/en/lighting/led-spotlights/orbiter/accessories/li
 const DOMES='https://www.arri.com/en/lighting/led-spotlights/orbiter/accessories/domes';
 const ACC='https://www.arri.com/en/lighting/led-spotlights/orbiter/accessories';
 const CABLES='https://www.arri.com/en/lighting/led-spotlights/orbiter/accessories/cables';
+const CASES='https://www.arri.com/en/lighting/led-spotlights/orbiter/accessories/cases-bags';
 const SAFETY='https://www.arri.com/en/lighting/led-spotlights/orbiter/accessories/protection-safety';
 
 export const ARRI_ORBITER_FIXTURES=[
- {id:'arri-orbiter',manufacturer:'ARRI',model:'Orbiter',family:'Orbiter',category:'Light',sourceType:'RGBACL six-color LED spotlight',mount:'ARRI Quick Lighting Mount (QLM)',control:{wired:['Removable Orbiter Control Panel','DMX','RDM','Art-Net','sACN','Ethernet'],wireless:['LumenRadio CRMX','Bluetooth 5.0'],builtInWirelessDMX:true},sourceUrl:SRC,controlSourceUrl:CTRL}
+ {id:'arri-orbiter',manufacturer:'ARRI',model:'Orbiter',family:'Orbiter',category:'Light',sourceType:'RGBACL six-color LED spotlight',mount:'ARRI Quick Lighting Mount (QLM)',powerDrawW:400,maxPowerW:500,batteryInput:'48-52 V DC, 3-pin XLR',ipRating:'IP20; IP24 with ARRI Rain Cover L2.0037805',control:{wired:['Removable Orbiter Control Panel','DMX','RDM','Art-Net','sACN','Ethernet'],wireless:['LumenRadio CRMX','Bluetooth 5.0'],builtInWirelessDMX:true},sourceUrl:SRC,controlSourceUrl:CTRL}
 ];
 
 const O=['arri-orbiter'];
@@ -46,8 +47,11 @@ export const ARRI_ORBITER_ACCESSORIES=[
  {id:'arri-orbiter-snoot-245',manufacturer:'ARRI',model:'Snoot 245 mm / 9.7 in',orderCode:'L2.79880.0',category:'Snoot',compatibleWith:O,sourceUrl:LC},
  {id:'arri-orbiter-projection-snoot',manufacturer:'ARRI',model:'Snoot for Orbiter Projection Optic 25° / 35°',orderCode:'L2.0033841',category:'Snoot',compatibleWith:O,sourceUrl:LC},
  {id:'arri-orbiter-gobo-holder',manufacturer:'ARRI',model:'Gobo Holder for Orbiter Projection Optic 25° / 35°',orderCode:'L2.0033843',category:'Gobo Holder',compatibleWith:O,sourceUrl:LC},
+ {id:'arri-orbiter-control-panel',manufacturer:'ARRI',model:'Orbiter Control Panel',orderCode:null,category:'Lamphead Control',compatibleWith:O,sourceUrl:ACC},
  {id:'arri-orbiter-manual-yoke',manufacturer:'ARRI',model:'Orbiter Manual Yoke with Spigot',orderCode:'L2.0034025',category:'Mounting',compatibleWith:O,sourceUrl:ACC},
  {id:'arri-orbiter-po-yoke',manufacturer:'ARRI',model:'Orbiter P.O. Yoke with Spigot',orderCode:'L2.0036642',category:'Mounting',compatibleWith:O,sourceUrl:ACC},
+ {id:'arri-orbiter-mini-friction-arm',manufacturer:'ARRI',model:'Mini Variable Friction Arm',orderCode:null,category:'Mounting',compatibleWith:O,sourceUrl:ACC},
+ {id:'arri-orbiter-super-clamp',manufacturer:'ARRI',model:'Super Clamp without Stud',orderCode:null,category:'Mounting',compatibleWith:O,sourceUrl:ACC},
  {id:'arri-orbiter-skid-silver',manufacturer:'ARRI',model:'Orbiter Skid silver',orderCode:'L2.0034272',category:'Mounting',compatibleWith:O,sourceUrl:ACC},
  {id:'arri-orbiter-skid-black',manufacturer:'ARRI',model:'Orbiter Skid black',orderCode:'L2.0039329',category:'Mounting',compatibleWith:O,sourceUrl:ACC},
  {id:'arri-orbiter-control-panel-cable-5m',manufacturer:'ARRI',model:'Cable for Control Panel 5 m / 16.4 ft',orderCode:'L2.0033799',category:'Control Cable',compatibleWith:O,sourceUrl:CABLES},
@@ -56,12 +60,15 @@ export const ARRI_ORBITER_ACCESSORIES=[
  {id:'arri-orbiter-daisy-ul',manufacturer:'ARRI',model:'Daisy Chain Cable 3 m powerCON TRUE1 TOP / UL',orderCode:'L2.0012548',category:'Power Cable',compatibleWith:O,sourceUrl:CABLES},
  {id:'arri-orbiter-daisy-japan',manufacturer:'ARRI',model:'Daisy Chain Cable 3 m powerCON TRUE1 TOP / Japan',orderCode:'L2.0012663',category:'Power Cable',compatibleWith:O,sourceUrl:CABLES},
  {id:'arri-orbiter-mains-bare-1-5m',manufacturer:'ARRI',model:'Mains Cable 1.5 m powerCON TRUE1 TOP / Bare Ends',orderCode:'L2.0001485',category:'Power Cable',compatibleWith:O,sourceUrl:CABLES},
- {id:'arri-orbiter-optics-bag',manufacturer:'ARRI',model:'Bag for Orbiter Optics',orderCode:'L2.0034624',category:'Transport',compatibleWith:O,sourceUrl:ACC},
- {id:'arri-orbiter-case',manufacturer:'ARRI',model:'Orbiter Case',orderCode:'L2.0034626',category:'Transport',compatibleWith:O,sourceUrl:ACC},
+ {id:'arri-orbiter-mains-switch-bare-3m',manufacturer:'ARRI',model:'Power Cable with Switch Bare Ends 3 m',orderCode:'L2.0024627',category:'Power Cable',compatibleWith:O,sourceUrl:CABLES},
+ {id:'arri-orbiter-control-panel-pouch',manufacturer:'ARRI',model:'Control Panel Carrying Pouch',orderCode:'L2.0033796',category:'Transport',compatibleWith:O,sourceUrl:CASES},
+ {id:'arri-orbiter-optics-bag',manufacturer:'ARRI',model:'Bag for Orbiter Optics',orderCode:'L2.0034624',category:'Transport',compatibleWith:O,sourceUrl:CASES},
+ {id:'arri-orbiter-case',manufacturer:'ARRI',model:'Orbiter Case',orderCode:'L2.0034626',category:'Transport',compatibleWith:O,sourceUrl:CASES},
  {id:'arri-orbiter-protection-cap',manufacturer:'ARRI',model:'Orbiter Protection Cap',orderCode:'L2.0034273',category:'Protection',compatibleWith:O,sourceUrl:SAFETY},
  {id:'arri-orbiter-rain-cover',manufacturer:'ARRI',model:'Orbiter Rain Cover',orderCode:'L2.0037805',category:'Protection',compatibleWith:O,sourceUrl:SAFETY},
  {id:'arri-orbiter-accessory-protection-cap',manufacturer:'ARRI',model:'Orbiter Accessories Protection Cap',orderCode:'L2.0048935',category:'Protection',compatibleWith:O,sourceUrl:SAFETY},
  {id:'arri-orbiter-safety-cable-3mm',manufacturer:'ARRI',model:'Safety Cable 3 mm',orderCode:'L2.0008899',category:'Safety',compatibleWith:O,sourceUrl:SAFETY},
  {id:'arri-orbiter-safety-cable-4mm',manufacturer:'ARRI',model:'Safety Cable 4 mm',orderCode:'L2.0020919',category:'Safety',compatibleWith:O,sourceUrl:SAFETY},
- {id:'arri-orbiter-safety-cable-5mm',manufacturer:'ARRI',model:'Safety Cable 5 mm',orderCode:'L2.0007590',category:'Safety',compatibleWith:O,sourceUrl:SAFETY}
+ {id:'arri-orbiter-safety-cable-5mm',manufacturer:'ARRI',model:'Safety Cable 5 mm',orderCode:'L2.0007590',category:'Safety',compatibleWith:O,sourceUrl:SAFETY},
+ {id:'arri-orbiter-antenna-90',manufacturer:'ARRI',model:'90° Angled Antenna',orderCode:null,category:'Control Accessory',compatibleWith:O,sourceUrl:ACC}
 ];

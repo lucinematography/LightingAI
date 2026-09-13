@@ -29,6 +29,5 @@ export const ASTERA_AX9_POWERPAR_ACCESSORIES = [
   { id: 'astera-ax9-ff', manufacturer: 'Astera', model: 'AX9-FF FloodFilter', category: 'Optical Modifier', compatibleWith: AX9, sourceUrl: ACCESSORY_SRC },
   { id: 'astera-ax9-wwf', manufacturer: 'Astera', model: 'AX9-WWF Wallwash Filter', category: 'Optical Modifier', compatibleWith: AX9, sourceUrl: ACCESSORY_SRC },
   { id: 'astera-ax-tp', manufacturer: 'Astera', model: 'AX-TP TrackPin', category: 'Mounting', compatibleWith: AX9, sourceUrl: ACCESSORY_SRC },
-  { id: 'astera-ax5-blt', manufacturer: 'Astera', model: 'AX5-BLT Bolt', category: 'Mounting', compatibleWith: AX9, sourceUrl: ACCESSORY_SRC },
   { id: 'astera-ax9-chrcse', manufacturer: 'Astera', model: 'AX9-CHRCSE Charging Case', category: 'Charging / Transport', compatibleWith: AX9, sourceUrl: ACCESSORY_SRC }
 ];

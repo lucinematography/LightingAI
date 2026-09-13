@@ -1,6 +1,7 @@
 // Astera QuikSpot battery-powered Fresnel fixture.
 // Specifications verified from Astera documentation and current product datasheet references.
 const SRC = 'https://astera-led.com/products/quikspot/';
+const ACCESSORY_SRC = SRC;
 
 export const ASTERA_QUIKSPOT_FIXTURES = [
   {
@@ -28,4 +29,13 @@ export const ASTERA_QUIKSPOT_FIXTURES = [
   }
 ];
 
-export const ASTERA_QUIKSPOT_ACCESSORIES = [];
+const QUIKSPOT = ['astera-quikspot'];
+
+export const ASTERA_QUIKSPOT_ACCESSORIES = [
+  { id: 'astera-quikspot-chrplt', manufacturer: 'Astera', model: 'AST-QUKSP-CHRPLT ChargingPlate for 8x QuikSpot', category: 'Power', compatibleWith: QUIKSPOT, sourceUrl: ACCESSORY_SRC },
+  { id: 'astera-prpbx-quikspot', manufacturer: 'Astera', model: 'AST-PRPBX PrepBox', category: 'Control', compatibleWith: QUIKSPOT, sourceUrl: ACCESSORY_SRC },
+  { id: 'astera-quikspot-bd', manufacturer: 'Astera', model: 'AST-QUKSP-BD Barndoor', category: 'Light Control', compatibleWith: QUIKSPOT, sourceUrl: ACCESSORY_SRC },
+  { id: 'astera-quikspot-flxcvr-wt-8', manufacturer: 'Astera', model: 'AST-QUKSP-FLXCVR-WT-8 FlexCover White', category: 'Light Control', compatibleWith: QUIKSPOT, sourceUrl: ACCESSORY_SRC },
+  { id: 'astera-quikspot-flxcvr-mir-8', manufacturer: 'Astera', model: 'AST-QUKSP-FLXCVR-MIR-8 FlexCover Mirror', category: 'Light Control', compatibleWith: QUIKSPOT, sourceUrl: ACCESSORY_SRC },
+  { id: 'astera-tpc-quikspot', manufacturer: 'Astera', model: 'AST-TPC TrackPin Compact', category: 'Mounting', compatibleWith: QUIKSPOT, sourceUrl: ACCESSORY_SRC }
+];

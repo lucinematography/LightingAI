@@ -35,4 +35,10 @@ export const ASTERA_HELIOSTUBE_FIXTURES = [
   }
 ];
 
-export const ASTERA_HELIOSTUBE_ACCESSORIES = [];
+const HELIOS = ['astera-heliostube-fp2-btb'];
+
+export const ASTERA_HELIOSTUBE_ACCESSORIES = [
+  { id: 'astera-fp1-sp', manufacturer: 'Astera', model: 'FP1-SP SiliconCap', category: 'Weather Protection', compatibleWith: HELIOS, includedWithFixture: true, sourceUrl: MANUAL },
+  { id: 'astera-ax1-cp', manufacturer: 'Astera', model: 'AX1-CP CrossPlate', category: 'Multi-light Mount', mount: '5/8 in baby pin', compatibleWith: HELIOS, requires: ['astera-tube-wing-plate'], sourceUrl: MANUAL },
+  { id: 'astera-fp2-hnd', manufacturer: 'Astera', model: 'FP2-HND HeliosHandle', category: 'Handheld Mount', compatibleWith: HELIOS, sourceUrl: MANUAL }
+];

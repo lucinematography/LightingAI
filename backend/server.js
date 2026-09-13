@@ -10,6 +10,7 @@ import { aputureReviewCatalog, aputureReviewHtml } from "./aputure-review.js";
 
 const FIXTURE_LIBRARY = RUNTIME_CATALOG.fixtures;
 const ACCESSORY_LIBRARY = RUNTIME_CATALOG.accessories;
+const KIT_LIBRARY = RUNTIME_CATALOG.kits || [];
 const catalogHealth = validateCatalog(RUNTIME_CATALOG);
 if (!catalogHealth.ok) console.error("LIGHTING AI catalog validation errors:", catalogHealth.errors);
 if (catalogHealth.warnings.length) console.warn("LIGHTING AI catalog validation warnings:", catalogHealth.warnings);
@@ -61,6 +62,7 @@ app.get("/api/catalog-health",(req,res)=>res.status(catalogHealth.ok?200:500).js
 app.get("/api/catalog-status",(req,res)=>res.json(catalogStatus()));
 app.get("/api/fixtures",(req,res)=>res.json(FIXTURE_LIBRARY));
 app.get("/api/accessories",(req,res)=>res.json(ACCESSORY_LIBRARY));
+app.get("/api/kits",(req,res)=>res.json(KIT_LIBRARY));
 app.get("/api/fixtures/:id/accessories",(req,res)=>{const fixture=RUNTIME_CATALOG.fixtureById.get(req.params.id);if(!fixture)return res.status(404).json({error:"Fixture not found."});res.json({fixture,accessories:accessoryTreeRecords(fixture.id)});});
 app.get("/api/review/aputure",(req,res)=>res.json(aputureReviewCatalog()));
 app.get("/review/aputure",(req,res)=>res.type('html').send(aputureReviewHtml()));

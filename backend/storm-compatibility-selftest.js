@@ -1,5 +1,9 @@
-import { RUNTIME_CATALOG } from './catalog-runtime.js';
+import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { buildAccessoryTree } from './accessory-graph.js';
+
+const RUNTIME_CATALOG = buildRuntimeCatalog();
+RUNTIME_CATALOG.fixtureById = new Map(RUNTIME_CATALOG.fixtures.map(x => [x.id, x]));
+RUNTIME_CATALOG.accessoryById = new Map(RUNTIME_CATALOG.accessories.map(x => [x.id, x]));
 
 const REQUIRED = {
   'aputure-storm-80c': ['aputure-storm-80c-hyper-reflector-35','aputure-storm-80c-mini-lantern-diffuser','aputure-cf4-fresnel','aputure-cf4-barn-doors','aputure-light-dome-40','aputure-quick-dome-40','aputure-lantern-30','aputure-storm-80c-bowens-adapter','aputure-storm-80c-light-dome-mini-iii','aputure-storm-80c-adapted-light-dome-mini-iii','aputure-storm-80c-adapted-light-dome-se','aputure-storm-80c-adapted-light-box-45x45','aputure-storm-80c-adapted-lantern-26','aputure-storm-80c-adapted-quick-dome-60','aputure-spotlight-mini','aputure-spotlight-mini-lens-19','aputure-spotlight-mini-lens-36','aputure-spotlight-mini-gobo-holder-m-size','aputure-spotlight-mini-gobo-kit-m-size','aputure-spotlight-mini-iris-m-size','aputure-storm-80c-dtap-power-cable','aputure-storm-80c-dc-extension-3m','aputure-storm-80c-baby-pin-adapter','aputure-storm-80c-handheld-bracket','aputure-v-mount-bracket-power-bank','aputure-universal-magic-arm','aputure-super-clamp-storm-80c','aputure-sidus-one','aputure-sidus-four','aputure-sidus-one-dmx-2-way-splitter'],

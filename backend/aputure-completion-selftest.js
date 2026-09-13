@@ -1,5 +1,8 @@
-import { RUNTIME_CATALOG } from './catalog-runtime.js';
+import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { buildAccessoryTree } from './accessory-graph.js';
+const RUNTIME_CATALOG = buildRuntimeCatalog();
+RUNTIME_CATALOG.fixtureById = new Map(RUNTIME_CATALOG.fixtures.map(x => [x.id, x]));
+RUNTIME_CATALOG.accessoryById = new Map(RUNTIME_CATALOG.accessories.map(x => [x.id, x]));
 const EXPECTED_FIXTURES=['aputure-ls-60d','aputure-ls-60x','aputure-ls-300d-ii','aputure-ls-300x','aputure-ls-600d','aputure-ls-600d-pro','aputure-ls-600c-pro-ii','aputure-ls-600x-pro','aputure-ls-1200d-pro','aputure-storm-80c','aputure-storm-400x','aputure-storm-700x','aputure-storm-1000c','aputure-storm-1200x','aputure-storm-cs32','aputure-storm-xt52','aputure-electro-storm-cs15','aputure-electro-storm-xt26'];
 const errors=[];for(const id of EXPECTED_FIXTURES)if(!RUNTIME_CATALOG.fixtureById.has(id))errors.push(`Missing Aputure fixture ${id}`);if(EXPECTED_FIXTURES.length!==18)errors.push('Completion gate fixture manifest must contain exactly 18 Aputure fixtures');
 const requiredReachability={

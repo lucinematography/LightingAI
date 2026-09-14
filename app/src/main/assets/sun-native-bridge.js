@@ -126,4 +126,10 @@ if(!document.getElementById('lightingai-shot-list-export-script')){
   e.src='file:///android_asset/shot-list-export.js';
   document.body.appendChild(e);
 }
+if(!document.getElementById('lightingai-lighting-cue-script')){
+  const u=document.createElement('script');
+  u.id='lightingai-lighting-cue-script';
+  u.src='file:///android_asset/lighting-cue-planner.js';
+  document.body.appendChild(u);
+}
 })();

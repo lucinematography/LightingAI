@@ -138,4 +138,10 @@ if(!document.getElementById('lightingai-lighting-cue-export-script')){
   v.src='file:///android_asset/lighting-cue-export.js';
   document.body.appendChild(v);
 }
+if(!document.getElementById('lightingai-set-sketch-beam-coverage-script')){
+  const b=document.createElement('script');
+  b.id='lightingai-set-sketch-beam-coverage-script';
+  b.src='file:///android_asset/set-sketch-beam-coverage.js';
+  document.body.appendChild(b);
+}
 })();

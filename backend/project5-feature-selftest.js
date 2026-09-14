@@ -17,6 +17,7 @@ const moduleJs = read('app/src/main/assets/ai-visual-scene-plan.js');
 const simulation = read('app/src/main/assets/ai-visual-local-simulation.js');
 const polish = read('app/src/main/assets/ai-visual-result-polish.js');
 const phoneDiagnostics = read('app/src/main/assets/ai-visual-phone-diagnostics.js');
+const phoneTest = read('app/src/main/assets/ai-visual-phone-test.js');
 const previewServer = read('backend/preview-test-server.js');
 const bootstrap = read('backend/render-bootstrap.js');
 const workflow = read('.github/workflows/build-apk.yml');
@@ -51,7 +52,18 @@ requireText(phoneDiagnostics, 'LightingAILocalLightSimulation', 'simulation diag
 requireText(phoneDiagnostics, 'LightingAIVisualResultPolish', 'result polish diagnostic missing');
 requireText(phoneDiagnostics, 'KOPIRAJ IZVEŠTAJ', 'copy diagnostics report action missing');
 requireText(phoneDiagnostics, "PREVIEW_API+'/api/visual-preview'", 'isolated preview diagnostic probe missing');
+requireText(phoneDiagnostics, "file:///android_asset/ai-visual-phone-test.js", 'guided phone test loader missing');
 forbidText(phoneDiagnostics, '/api/lighting-plan', 'phone diagnostics must never call the lighting plan API');
+
+requireText(phoneTest, 'POKRENI TEST TELEFONA', 'guided phone test button missing');
+requireText(phoneTest, 'KOPIRAJ TEST IZVEŠTAJ', 'copy phone test report action missing');
+requireText(phoneTest, 'localStorage', 'phone test results must persist per build');
+requireText(phoneTest, "STORAGE_PREFIX='lightingai:p5-phone-test:'", 'phone test build-scoped storage key missing');
+requireText(phoneTest, 'GENERIŠI AI VIZUELNI PLAN', 'AI-plan manual test step missing');
+requireText(phoneTest, 'SLIKAJ SCENU', 'camera manual test step missing');
+requireText(phoneTest, 'AI simulacija ON/OFF', 'simulation manual test step missing');
+forbidText(phoneTest, '/api/lighting-plan', 'guided phone test must never call the lighting plan API');
+forbidText(phoneTest, '/api/visual-preview', 'guided phone test must never call the visual preview API');
 
 requireText(previewServer, "environment: 'isolated-test'", 'test backend identity missing');
 requireText(previewServer, 'previewConfigured', 'test backend configured-state guard missing');
@@ -74,6 +86,7 @@ console.log(JSON.stringify({
     'conceptual-preview disclaimer',
     'result polish layer',
     'visible build identity diagnostics',
-    'phone diagnostics and copyable report'
+    'phone diagnostics and copyable report',
+    'guided build-scoped phone test checklist'
   ]
 }, null, 2));

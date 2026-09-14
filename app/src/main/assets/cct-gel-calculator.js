@@ -1,0 +1,61 @@
+(function(){
+'use strict';
+const KEY='lighting_cct_gel_v1';
+const GELS=[
+ {code:'201',name:'Full C.T. Blue',shift:-137,day:34.0,tung:35.0},
+ {code:'202',name:'Half C.T. Blue',shift:-78,day:54.9,tung:53.2},
+ {code:'203',name:'Quarter C.T. Blue',shift:-35,day:69.3,tung:70.5},
+ {code:'218',name:'Eighth C.T. Blue',shift:-18,day:81.3,tung:80.2},
+ {code:'223',name:'Eighth C.T. Orange',shift:26,day:85.2,tung:85.0},
+ {code:'206',name:'Quarter C.T. Orange',shift:64,day:79.1,tung:82.6},
+ {code:'205',name:'Half C.T. Orange',shift:109,day:70.8,tung:74.5},
+ {code:'285',name:'Three Quarter C.T. Orange',shift:124,day:61.3,tung:67.1},
+ {code:'204',name:'Full C.T. Orange',shift:159,day:55.4,tung:62.8}
+];
+const T={
+ sr:{title:'🎨 CCT / gel / boja',intro:'Pretvori temperaturu izvora u željeni CCT. LightingAI prvo računa tačnu mired korekciju, zatim predlaže najbliži provereni LEE CTO/CTB gel.',source:'IZVORNA TEMPERATURA',target:'ŽELJENA TEMPERATURA',swap:'ZAMENI',calc:'IZRAČUNAJ',required:'POTREBNA KOREKCIJA',direction:'SMER',warmer:'TOPLIJE / CTO',cooler:'HLADNIJE / CTB',none:'BEZ KOREKCIJE',gel:'NAJBLIŽI LEE GEL',result:'REZULTAT SA GELOM',loss:'GUBITAK SVETLA',residual:'PREOSTALA RAZLIKA',mired:'mired',trans:'transmisija',stops:'stop',direct:'Ako lampa ima podesivi CCT, najčistije je direktno postaviti ciljnu temperaturu bez gela.',note:'Mired korekcija je matematički proračun. Predlog gela koristi zvanične LEE mired-shift i Y transmisije; stvarni spektralni rezultat zavisi od izvora svetla i može malo odstupati.',noGel:'Nije potreban CTO/CTB gel.',approx:'približno',presets:'BRZI CILJ'},
+ en:{title:'🎨 CCT / Gel / Color',intro:'Convert a source color temperature to a target CCT. LightingAI first calculates the exact mired correction, then suggests the nearest verified LEE CTO/CTB gel.',source:'SOURCE TEMPERATURE',target:'TARGET TEMPERATURE',swap:'SWAP',calc:'CALCULATE',required:'REQUIRED CORRECTION',direction:'DIRECTION',warmer:'WARMER / CTO',cooler:'COOLER / CTB',none:'NO CORRECTION',gel:'NEAREST LEE GEL',result:'RESULT WITH GEL',loss:'LIGHT LOSS',residual:'REMAINING DIFFERENCE',mired:'mired',trans:'transmission',stops:'stop',direct:'If the fixture has tunable CCT, the cleanest option is to set the target temperature directly without gel.',note:'Mired correction is mathematical. The gel recommendation uses official LEE mired-shift and Y transmission data; the real spectral result depends on the source and may vary slightly.',noGel:'No CTO/CTB gel is required.',approx:'approx.',presets:'QUICK TARGET'}
+};
+const E=id=>document.getElementById(id),lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr',t=()=>T[lang()];
+const n=id=>Number(String(E(id)?.value||'').replace(',','.'));
+const fmt=(v,d=0)=>Number(v).toFixed(d).replace('.',lang()==='sr'?',':'.');
+function mired(k){return 1000000/k}
+function kelvin(m){return 1000000/m}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({source:n('cctGelSource'),target:n('cctGelTarget')}))}catch(e){}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
+function nearestGel(shift){return GELS.reduce((a,b)=>Math.abs(b.shift-shift)<Math.abs(a.shift-shift)?b:a,GELS[0])}
+function lossStops(trans){return -Math.log(trans/100)/Math.log(2)}
+function calculate(){
+ const source=n('cctGelSource'),target=n('cctGelTarget');
+ if(!(source>=1800&&source<=20000&&target>=1800&&target<=20000))return;
+ save();
+ const sm=mired(source),tm=mired(target),need=tm-sm;
+ E('cctGelNeed').textContent=(need>=0?'+':'')+fmt(need,1)+' '+t().mired;
+ E('cctGelDirection').textContent=Math.abs(need)<5?t().none:(need>0?t().warmer:t().cooler);
+ if(Math.abs(need)<5){
+   E('cctGelGel').innerHTML='<b>'+t().noGel+'</b>';
+   E('cctGelResult').textContent=fmt(source,0)+' K';
+   E('cctGelLoss').textContent='0 '+t().stops;
+   E('cctGelResidual').textContent=fmt(Math.abs(need),1)+' '+t().mired;
+   return;
+ }
+ const g=nearestGel(need),rm=sm+g.shift,resultK=kelvin(rm),residual=tm-rm;
+ const trans=source>=5000?g.day:g.tung,stops=lossStops(trans);
+ E('cctGelGel').innerHTML='<b>LEE '+g.code+' '+g.name+'</b><small>'+(g.shift>=0?'+':'')+g.shift+' '+t().mired+'</small>';
+ E('cctGelResult').textContent=t().approx+' '+fmt(resultK,0)+' K';
+ E('cctGelLoss').innerHTML='<b>'+fmt(stops,2)+' '+t().stops+'</b><small>'+fmt(trans,1)+'% '+t().trans+'</small>';
+ E('cctGelResidual').textContent=(residual>=0?'+':'')+fmt(residual,1)+' '+t().mired;
+}
+function setTarget(k){E('cctGelTarget').value=k;calculate()}
+function swap(){const a=E('cctGelSource').value;E('cctGelSource').value=E('cctGelTarget').value;E('cctGelTarget').value=a;calculate()}
+function translate(){if(!E('cctGelCard'))return;const x=t();[['cctGelTitle','title'],['cctGelIntro','intro'],['cctGelSourceLabel','source'],['cctGelTargetLabel','target'],['cctGelSwap','swap'],['cctGelCalc','calc'],['cctGelNeedLabel','required'],['cctGelDirectionLabel','direction'],['cctGelGelLabel','gel'],['cctGelResultLabel','result'],['cctGelLossLabel','loss'],['cctGelResidualLabel','residual'],['cctGelDirect','direct'],['cctGelNote','note'],['cctGelPresetsLabel','presets']].forEach(([id,k])=>E(id).textContent=x[k]);calculate()}
+function init(){
+ const planner=E('planner');if(!planner||E('cctGelCard'))return false;
+ const st=document.createElement('style');st.textContent='.cct-gel-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cct-gel-result{background:#0f1115;border:1px solid #30343b;border-radius:12px;padding:12px;min-height:80px}.cct-gel-result small{display:block;color:#9299a3;margin-bottom:6px}.cct-gel-result b{display:block;color:#f5c542;font-size:19px}.cct-gel-result b+small,.cct-gel-result div+small{margin-top:4px;margin-bottom:0}.cct-gel-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.cct-gel-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:7px}.cct-gel-preset{border:1px solid #30343b;background:#0f1115;color:#f4f4f5;border-radius:9px;padding:9px 4px;font-weight:700}.cct-gel-note{color:#9299a3;font-size:12px;line-height:1.45;margin-top:10px}@media(max-width:420px){.cct-gel-presets{grid-template-columns:repeat(2,1fr)}}';document.head.appendChild(st);
+ const saved=load(),card=document.createElement('div');card.id='cctGelCard';card.className='card';card.innerHTML='<h2 id="cctGelTitle" style="margin-top:0"></h2><p id="cctGelIntro" class="muted small"></p><div class="cct-gel-grid"><div><label id="cctGelSourceLabel" class="caption"></label><input id="cctGelSource" type="number" min="1800" max="20000" step="50" value="'+(saved.source||5600)+'"></div><div><label id="cctGelTargetLabel" class="caption"></label><input id="cctGelTarget" type="number" min="1800" max="20000" step="50" value="'+(saved.target||3200)+'"></div></div><label id="cctGelPresetsLabel" class="caption"></label><div class="cct-gel-presets"><button class="cct-gel-preset" data-k="3200">3200 K</button><button class="cct-gel-preset" data-k="4300">4300 K</button><button class="cct-gel-preset" data-k="5600">5600 K</button><button class="cct-gel-preset" data-k="6500">6500 K</button></div><div class="cct-gel-actions"><button id="cctGelSwap" class="btn secondary" type="button"></button><button id="cctGelCalc" class="btn primary" type="button"></button></div><div class="cct-gel-grid" style="margin-top:12px"><div class="cct-gel-result"><small id="cctGelNeedLabel"></small><b id="cctGelNeed">—</b></div><div class="cct-gel-result"><small id="cctGelDirectionLabel"></small><b id="cctGelDirection">—</b></div><div class="cct-gel-result" style="grid-column:1/-1"><small id="cctGelGelLabel"></small><div id="cctGelGel">—</div></div><div class="cct-gel-result"><small id="cctGelResultLabel"></small><b id="cctGelResult">—</b></div><div class="cct-gel-result"><small id="cctGelLossLabel"></small><div id="cctGelLoss">—</div></div><div class="cct-gel-result" style="grid-column:1/-1"><small id="cctGelResidualLabel"></small><b id="cctGelResidual">—</b></div></div><div id="cctGelDirect" class="cct-gel-note"></div><div id="cctGelNote" class="cct-gel-note"></div>';
+ const a=E('lightCalcCard')||E('powerCalcCard')||E('sceneMeasureCard')||E('apiStatus');if(a?.parentNode)a.parentNode.insertBefore(card,a.nextSibling);else planner.insertBefore(card,planner.firstChild);
+ E('cctGelSource').addEventListener('input',calculate);E('cctGelTarget').addEventListener('input',calculate);E('cctGelSwap').addEventListener('click',swap);E('cctGelCalc').addEventListener('click',calculate);card.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>setTarget(Number(b.dataset.k))));
+ const old=window.setLanguage;if(typeof old==='function')window.setLanguage=function(l){old(l);setTimeout(translate,0)};translate();return true;
+}
+let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>120)clearInterval(timer)},100);
+})();

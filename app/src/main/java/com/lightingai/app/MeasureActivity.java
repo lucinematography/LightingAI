@@ -3,6 +3,7 @@ package com.lightingai.app;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -38,6 +39,10 @@ import java.util.Locale;
 public class MeasureActivity extends Activity implements SensorEventListener {
     private static final int CAMERA_PERMISSION = 701;
     private static final int STABILITY_WINDOW = 14;
+    private static final String PREFS = "lightingai_measure";
+    private static final String PREF_CALIBRATION_OFFSET = "calibration_offset_deg";
+    private static final String PREF_CAMERA_HEIGHT = "camera_height_m";
+
     private TextureView textureView;
     private CameraDevice cameraDevice;
     private CameraCaptureSession captureSession;
@@ -52,11 +57,18 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private TextView angleText;
     private TextView qualityText;
     private TextView hintText;
+    private TextView calibrationText;
     private EditText heightInput;
+    private EditText calibrationDistanceInput;
+
+    private double rawDepressionSmooth = Double.NaN;
     private double depressionSmooth = Double.NaN;
     private double distanceM = Double.NaN;
     private double cameraHeightM = 1.50;
+    private double calibrationOffsetDeg = 0.0;
+    private boolean calibrationActive = false;
     private boolean english = false;
+
     private final double[] depressionWindow = new double[STABILITY_WINDOW];
     private int depressionCount = 0;
     private int depressionIndex = 0;
@@ -66,14 +78,25 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         english = "en".equals(getIntent().getStringExtra("lang"));
-        cameraHeightM = getIntent().getDoubleExtra("cameraHeight", 1.50);
+
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        double savedHeight = prefs.getFloat(PREF_CAMERA_HEIGHT, 1.50f);
+        cameraHeightM = getIntent().getDoubleExtra("cameraHeight", savedHeight);
+        if (prefs.contains(PREF_CALIBRATION_OFFSET)) {
+            calibrationOffsetDeg = prefs.getFloat(PREF_CALIBRATION_OFFSET, 0f);
+            calibrationActive = true;
+        }
+
         getWindow().setStatusBarColor(Color.rgb(13,15,18));
         getWindow().setNavigationBarColor(Color.rgb(13,15,18));
         buildUi();
+
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         if (rotationSensor == null) rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
-        if (rotationSensor == null && hintText != null) hintText.setText(tr("Senzor nagiba nije dostupan. Koristi WEB kameru kao rezervu.", "Tilt sensor unavailable. Use WEB camera as fallback."));
+        if (rotationSensor == null && hintText != null) {
+            hintText.setText(tr("Senzor nagiba nije dostupan. Koristi WEB kameru kao rezervu.", "Tilt sensor unavailable. Use WEB camera as fallback."));
+        }
     }
 
     private String tr(String sr, String en) { return english ? en : sr; }
@@ -81,13 +104,18 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
     private TextView makeText(String value, float sp, int color) {
         TextView v = new TextView(this);
-        v.setText(value); v.setTextSize(sp); v.setTextColor(color);
+        v.setText(value);
+        v.setTextSize(sp);
+        v.setTextColor(color);
         return v;
     }
 
     private Button makeButton(String label) {
         Button b = new Button(this);
-        b.setText(label); b.setTextColor(Color.WHITE); b.setTextSize(14); b.setAllCaps(false);
+        b.setText(label);
+        b.setTextColor(Color.WHITE);
+        b.setTextSize(14);
+        b.setAllCaps(false);
         b.setBackgroundColor(Color.rgb(37,42,49));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(52), 1f);
         lp.setMargins(dp(4), dp(4), dp(4), dp(4));
@@ -117,32 +145,97 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         top.setOrientation(LinearLayout.VERTICAL);
         top.setPadding(dp(18),dp(12),dp(18),dp(10));
         TextView title = makeText(tr("PRO MERENJE SCENE", "PRO SCENE MEASUREMENT"),21,Color.WHITE);
-        title.setTypeface(null,1); top.addView(title);
-        distanceText = makeText("— m",36,Color.rgb(245,197,66)); distanceText.setTypeface(null,1); top.addView(distanceText);
-        angleText = makeText(tr("Ciljaj podnožje objekta", "Aim at the base of the object"),13,0xffc5c9d0); top.addView(angleText);
-        qualityText = makeText("",12,0xff9da3ad); top.addView(qualityText);
+        title.setTypeface(null,1);
+        top.addView(title);
+        distanceText = makeText("— m",36,Color.rgb(245,197,66));
+        distanceText.setTypeface(null,1);
+        top.addView(distanceText);
+        angleText = makeText(tr("Ciljaj podnožje objekta", "Aim at the base of the object"),13,0xffc5c9d0);
+        top.addView(angleText);
+        qualityText = makeText("",12,0xff9da3ad);
+        top.addView(qualityText);
         root.addView(top,new FrameLayout.LayoutParams(-1,dp(132),Gravity.TOP));
 
         TextView cross = makeText("+",56,Color.rgb(245,197,66));
-        cross.setGravity(Gravity.CENTER); cross.setShadowLayer(5,0,0,Color.BLACK);
+        cross.setGravity(Gravity.CENTER);
+        cross.setShadowLayer(5,0,0,Color.BLACK);
         root.addView(cross,new FrameLayout.LayoutParams(dp(88),dp(88),Gravity.CENTER));
 
         LinearLayout panel = new LinearLayout(this);
-        panel.setOrientation(LinearLayout.VERTICAL); panel.setPadding(dp(14),dp(10),dp(14),dp(14)); panel.setBackgroundColor(0xee0d0f12);
-        hintText = makeText(tr("Nišan postavi na mesto gde objekat dodiruje ravan pod. Drži telefon mirno dok ne piše STABILNO.", "Place the crosshair where the object meets a level floor. Hold the phone still until STABLE appears."),12,0xffb0b5bd); panel.addView(hintText);
-        LinearLayout hrow = new LinearLayout(this); hrow.setGravity(Gravity.CENTER_VERTICAL);
-        TextView hl = makeText(tr("Visina kamere (m)", "Camera height (m)"),14,Color.WHITE); hrow.addView(hl,new LinearLayout.LayoutParams(0,dp(48),1f));
-        heightInput = new EditText(this); heightInput.setSingleLine(true); heightInput.setText(String.format(Locale.US,"%.2f",cameraHeightM)); heightInput.setTextColor(Color.WHITE); heightInput.setTextSize(16); heightInput.setInputType(2|8192); heightInput.setGravity(Gravity.CENTER); heightInput.setBackgroundColor(0xff20242a);
-        hrow.addView(heightInput,new LinearLayout.LayoutParams(dp(110),dp(44))); panel.addView(hrow);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(14),dp(8),dp(14),dp(12));
+        panel.setBackgroundColor(0xee0d0f12);
 
-        LinearLayout targetRow = new LinearLayout(this); targetRow.setOrientation(LinearLayout.HORIZONTAL);
-        Button actor = makeButton(tr("GLUMAC", "ACTOR")); Button wall = makeButton(tr("ZID", "WALL")); Button background = makeButton(tr("POZADINA", "BACKGROUND"));
-        actor.setOnClickListener(v -> finishMeasurement("subject")); wall.setOnClickListener(v -> finishMeasurement("wall")); background.setOnClickListener(v -> finishMeasurement("background"));
-        targetRow.addView(actor); targetRow.addView(wall); targetRow.addView(background); panel.addView(targetRow);
+        hintText = makeText(
+            tr("Nišan postavi na mesto gde objekat dodiruje ravan pod. Drži telefon mirno dok ne piše STABILNO.",
+               "Place the crosshair where the object meets a level floor. Hold the phone still until STABLE appears."),
+            12,0xffb0b5bd);
+        panel.addView(hintText);
 
-        Button cancel = makeButton(tr("Nazad bez čuvanja", "Back without saving")); cancel.setOnClickListener(v -> { setResult(RESULT_CANCELED); finish(); });
-        LinearLayout cancelRow = new LinearLayout(this); cancelRow.addView(cancel); panel.addView(cancelRow);
-        root.addView(panel,new FrameLayout.LayoutParams(-1,dp(208),Gravity.BOTTOM));
+        LinearLayout hrow = new LinearLayout(this);
+        hrow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView hl = makeText(tr("Visina kamere (m)", "Camera height (m)"),14,Color.WHITE);
+        hrow.addView(hl,new LinearLayout.LayoutParams(0,dp(46),1f));
+        heightInput = new EditText(this);
+        heightInput.setSingleLine(true);
+        heightInput.setText(String.format(Locale.US,"%.2f",cameraHeightM));
+        heightInput.setTextColor(Color.WHITE);
+        heightInput.setTextSize(16);
+        heightInput.setInputType(2|8192);
+        heightInput.setGravity(Gravity.CENTER);
+        heightInput.setBackgroundColor(0xff20242a);
+        hrow.addView(heightInput,new LinearLayout.LayoutParams(dp(110),dp(42)));
+        panel.addView(hrow);
+
+        LinearLayout calibrationRow = new LinearLayout(this);
+        calibrationRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView calibrationLabel = makeText(tr("Poznata udaljenost (m)", "Known distance (m)"),14,Color.WHITE);
+        calibrationRow.addView(calibrationLabel,new LinearLayout.LayoutParams(0,dp(46),1f));
+        calibrationDistanceInput = new EditText(this);
+        calibrationDistanceInput.setSingleLine(true);
+        calibrationDistanceInput.setText("2.00");
+        calibrationDistanceInput.setTextColor(Color.WHITE);
+        calibrationDistanceInput.setTextSize(16);
+        calibrationDistanceInput.setInputType(2|8192);
+        calibrationDistanceInput.setGravity(Gravity.CENTER);
+        calibrationDistanceInput.setBackgroundColor(0xff20242a);
+        calibrationRow.addView(calibrationDistanceInput,new LinearLayout.LayoutParams(dp(110),dp(42)));
+        panel.addView(calibrationRow);
+
+        calibrationText = makeText("",11,0xff9da3ad);
+        panel.addView(calibrationText);
+        updateCalibrationLabel();
+
+        LinearLayout calibrationButtons = new LinearLayout(this);
+        calibrationButtons.setOrientation(LinearLayout.HORIZONTAL);
+        Button calibrate = makeButton(tr("KALIBRIŠI", "CALIBRATE"));
+        Button resetCalibration = makeButton(tr("RESET KAL.", "RESET CAL."));
+        calibrate.setOnClickListener(v -> calibrateKnownDistance());
+        resetCalibration.setOnClickListener(v -> resetCalibration());
+        calibrationButtons.addView(calibrate);
+        calibrationButtons.addView(resetCalibration);
+        panel.addView(calibrationButtons);
+
+        LinearLayout targetRow = new LinearLayout(this);
+        targetRow.setOrientation(LinearLayout.HORIZONTAL);
+        Button actor = makeButton(tr("GLUMAC", "ACTOR"));
+        Button wall = makeButton(tr("ZID", "WALL"));
+        Button background = makeButton(tr("POZADINA", "BACKGROUND"));
+        actor.setOnClickListener(v -> finishMeasurement("subject"));
+        wall.setOnClickListener(v -> finishMeasurement("wall"));
+        background.setOnClickListener(v -> finishMeasurement("background"));
+        targetRow.addView(actor);
+        targetRow.addView(wall);
+        targetRow.addView(background);
+        panel.addView(targetRow);
+
+        Button cancel = makeButton(tr("Nazad bez čuvanja", "Back without saving"));
+        cancel.setOnClickListener(v -> { setResult(RESULT_CANCELED); finish(); });
+        LinearLayout cancelRow = new LinearLayout(this);
+        cancelRow.addView(cancel);
+        panel.addView(cancelRow);
+
+        root.addView(panel,new FrameLayout.LayoutParams(-1,dp(326),Gravity.BOTTOM));
         setContentView(root);
         root.requestApplyInsets();
     }
@@ -162,26 +255,32 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     }
 
     @Override protected void onPause() {
-        closeCamera(); stopCameraThread();
+        closeCamera();
+        stopCameraThread();
         if (sensorManager != null) sensorManager.unregisterListener(this);
         super.onPause();
     }
 
     private void startCameraThread() {
         if (cameraThread != null) return;
-        cameraThread = new HandlerThread("LightingAIMeasureCamera"); cameraThread.start(); cameraHandler = new Handler(cameraThread.getLooper());
+        cameraThread = new HandlerThread("LightingAIMeasureCamera");
+        cameraThread.start();
+        cameraHandler = new Handler(cameraThread.getLooper());
     }
 
     private void stopCameraThread() {
         if (cameraThread == null) return;
         cameraThread.quitSafely();
-        try { cameraThread.join(); } catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
-        cameraThread = null; cameraHandler = null;
+        try { cameraThread.join(); }
+        catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+        cameraThread = null;
+        cameraHandler = null;
     }
 
     private void openCamera() {
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION); return;
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION);
+            return;
         }
         if (cameraDevice != null) return;
         try {
@@ -190,12 +289,20 @@ public class MeasureActivity extends Activity implements SensorEventListener {
             for (String id : manager.getCameraIdList()) {
                 CameraCharacteristics c = manager.getCameraCharacteristics(id);
                 Integer facing = c.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) { chosen = id; break; }
+                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
+                    chosen = id;
+                    break;
+                }
             }
-            if (chosen == null) { hintText.setText(tr("Zadnja kamera nije pronađena.", "Rear camera not found.")); return; }
+            if (chosen == null) {
+                hintText.setText(tr("Zadnja kamera nije pronađena.", "Rear camera not found."));
+                return;
+            }
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(chosen);
-            Integer so = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION); if (so != null) sensorOrientation = so;
-            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP); if (map == null) return;
+            Integer so = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+            if (so != null) sensorOrientation = so;
+            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (map == null) return;
             previewSize = chooseSize(map.getOutputSizes(SurfaceTexture.class));
             manager.openCamera(chosen, cameraCallback, cameraHandler);
         } catch (Exception e) {
@@ -205,13 +312,17 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
     private Size chooseSize(Size[] sizes) {
         if (sizes == null || sizes.length == 0) return new Size(1280,720);
-        Size best = sizes[0]; long bestScore = Long.MAX_VALUE;
+        Size best = sizes[0];
+        long bestScore = Long.MAX_VALUE;
         for (Size s : sizes) {
             long pixels = (long)s.getWidth()*s.getHeight();
             if (pixels > 1920L*1080L) continue;
             double ratio = (double)Math.max(s.getWidth(),s.getHeight())/Math.min(s.getWidth(),s.getHeight());
             long score = Math.abs(pixels - 1280L*720L) + (long)(Math.abs(ratio - 16.0/9.0)*1000000);
-            if (score < bestScore) { bestScore = score; best = s; }
+            if (score < bestScore) {
+                bestScore = score;
+                best = s;
+            }
         }
         return best;
     }
@@ -224,20 +335,27 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
     private void createPreview() {
         try {
-            SurfaceTexture st = textureView.getSurfaceTexture(); if (st == null || cameraDevice == null || previewSize == null) return;
+            SurfaceTexture st = textureView.getSurfaceTexture();
+            if (st == null || cameraDevice == null || previewSize == null) return;
             st.setDefaultBufferSize(previewSize.getWidth(),previewSize.getHeight());
             Surface surface = new Surface(st);
-            previewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); previewBuilder.addTarget(surface);
+            previewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            previewBuilder.addTarget(surface);
             previewBuilder.set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override public void onConfigured(CameraCaptureSession session) {
                     captureSession = session;
-                    try { session.setRepeatingRequest(previewBuilder.build(),null,cameraHandler); } catch (Exception ignored) {}
+                    try { session.setRepeatingRequest(previewBuilder.build(),null,cameraHandler); }
+                    catch (Exception ignored) {}
                     runOnUiThread(() -> configureTransform(textureView.getWidth(),textureView.getHeight()));
                 }
-                @Override public void onConfigureFailed(CameraCaptureSession session) { hintText.setText(tr("Pregled kamere nije dostupan.", "Camera preview unavailable.")); }
+                @Override public void onConfigureFailed(CameraCaptureSession session) {
+                    hintText.setText(tr("Pregled kamere nije dostupan.", "Camera preview unavailable."));
+                }
             }, cameraHandler);
-        } catch (Exception e) { hintText.setText(tr("Pregled kamere nije dostupan.", "Camera preview unavailable.")); }
+        } catch (Exception e) {
+            hintText.setText(tr("Pregled kamere nije dostupan.", "Camera preview unavailable."));
+        }
     }
 
     private void configureTransform(int viewWidth, int viewHeight) {
@@ -250,24 +368,45 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         float bufferH = swapped ? previewSize.getWidth() : previewSize.getHeight();
         RectF viewRect = new RectF(0,0,viewWidth,viewHeight);
         RectF bufferRect = new RectF(0,0,bufferW,bufferH);
-        float cx = viewRect.centerX(), cy = viewRect.centerY();
+        float cx = viewRect.centerX();
+        float cy = viewRect.centerY();
         bufferRect.offset(cx-bufferRect.centerX(),cy-bufferRect.centerY());
-        Matrix matrix = new Matrix(); matrix.setRectToRect(viewRect,bufferRect,Matrix.ScaleToFit.FILL);
-        float scale = Math.max((float)viewHeight/bufferH,(float)viewWidth/bufferW); matrix.postScale(scale,scale,cx,cy); matrix.postRotate(rotation,cx,cy);
+        Matrix matrix = new Matrix();
+        matrix.setRectToRect(viewRect,bufferRect,Matrix.ScaleToFit.FILL);
+        float scale = Math.max((float)viewHeight/bufferH,(float)viewWidth/bufferW);
+        matrix.postScale(scale,scale,cx,cy);
+        matrix.postRotate(rotation,cx,cy);
         textureView.setTransform(matrix);
     }
 
     private void closeCamera() {
-        if (captureSession != null) { captureSession.close(); captureSession = null; }
-        if (cameraDevice != null) { cameraDevice.close(); cameraDevice = null; }
+        if (captureSession != null) {
+            captureSession.close();
+            captureSession = null;
+        }
+        if (cameraDevice != null) {
+            cameraDevice.close();
+            cameraDevice = null;
+        }
+    }
+
+    private void resetStability() {
+        depressionCount = 0;
+        depressionIndex = 0;
+        stabilitySpread = Double.NaN;
+        uncertaintyM = Double.NaN;
     }
 
     private void recordDepression(double value) {
         depressionWindow[depressionIndex] = value;
         depressionIndex = (depressionIndex + 1) % STABILITY_WINDOW;
         if (depressionCount < STABILITY_WINDOW) depressionCount++;
-        if (depressionCount < 2) { stabilitySpread = Double.NaN; return; }
-        double min = Double.POSITIVE_INFINITY, max = Double.NEGATIVE_INFINITY;
+        if (depressionCount < 2) {
+            stabilitySpread = Double.NaN;
+            return;
+        }
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
         for (int i = 0; i < depressionCount; i++) {
             min = Math.min(min, depressionWindow[i]);
             max = Math.max(max, depressionWindow[i]);
@@ -282,13 +421,20 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
     @Override public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType()!=Sensor.TYPE_ROTATION_VECTOR && event.sensor.getType()!=Sensor.TYPE_GAME_ROTATION_VECTOR) return;
-        float[] r = new float[9]; SensorManager.getRotationMatrixFromVector(r,event.values);
-        double worldX = -r[2], worldY = -r[5], worldZ = -r[8];
+        float[] r = new float[9];
+        SensorManager.getRotationMatrixFromVector(r,event.values);
+        double worldX = -r[2];
+        double worldY = -r[5];
+        double worldZ = -r[8];
         double horizontal = Math.sqrt(worldX*worldX + worldY*worldY);
         double rawDepression = Math.toDegrees(Math.atan2(-worldZ,horizontal));
         if (!Double.isFinite(rawDepression)) return;
-        recordDepression(rawDepression);
-        depressionSmooth = Double.isFinite(depressionSmooth) ? depressionSmooth*0.84 + rawDepression*0.16 : rawDepression;
+
+        rawDepressionSmooth = Double.isFinite(rawDepressionSmooth)
+            ? rawDepressionSmooth*0.84 + rawDepression*0.16
+            : rawDepression;
+        depressionSmooth = rawDepressionSmooth - calibrationOffsetDeg;
+        recordDepression(depressionSmooth);
         cameraHeightM = parseHeight();
         updateEstimate();
     }
@@ -325,7 +471,10 @@ public class MeasureActivity extends Activity implements SensorEventListener {
                 return;
             }
         }
-        distanceM = Double.NaN; uncertaintyM = Double.NaN; distanceText.setText("— m"); qualityText.setText("");
+        distanceM = Double.NaN;
+        uncertaintyM = Double.NaN;
+        distanceText.setText("— m");
+        qualityText.setText("");
         angleText.setText(tr("Spusti nišan ka podnožju objekta", "Lower the crosshair toward the object base"));
     }
 
@@ -334,29 +483,120 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         catch (Exception e) { return 1.50; }
     }
 
+    private double parseCalibrationDistance() {
+        try { return Double.parseDouble(calibrationDistanceInput.getText().toString().trim().replace(',','.')); }
+        catch (Exception e) { return Double.NaN; }
+    }
+
+    private void updateCalibrationLabel() {
+        if (calibrationText == null) return;
+        if (calibrationActive) {
+            calibrationText.setText(String.format(Locale.US,
+                tr("Kalibracija aktivna: korekcija %+.2f°", "Calibration active: correction %+.2f°"),
+                calibrationOffsetDeg));
+            calibrationText.setTextColor(0xffb8f0d1);
+        } else {
+            calibrationText.setText(tr("Kalibracija nije podešena. Za početak koristi poznatih 2,00 m.",
+                                       "Calibration not set. Start with a known 2.00 m distance."));
+            calibrationText.setTextColor(0xff9da3ad);
+        }
+    }
+
+    private void calibrateKnownDistance() {
+        double knownDistance = parseCalibrationDistance();
+        double height = parseHeight();
+        if (!Double.isFinite(knownDistance) || knownDistance < 0.30 || knownDistance > 50 || height < 0.20 || height > 3.5) {
+            hintText.setText(tr("Unesi stvarnu poznatu udaljenost i tačnu visinu kamere.",
+                                "Enter the real known distance and accurate camera height."));
+            return;
+        }
+        if (!Double.isFinite(rawDepressionSmooth)) {
+            hintText.setText(tr("Senzor još nema očitavanje. Sačekaj trenutak.",
+                                "The sensor has no reading yet. Wait a moment."));
+            return;
+        }
+        if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 1.5) {
+            hintText.setText(tr("Drži telefon mirno dok ne piše STABILNO, pa kalibriši.",
+                                "Hold the phone still until STABLE appears, then calibrate."));
+            return;
+        }
+
+        double expectedAngle = Math.toDegrees(Math.atan2(height, knownDistance));
+        double newOffset = rawDepressionSmooth - expectedAngle;
+        if (!Double.isFinite(newOffset) || Math.abs(newOffset) > 15) {
+            hintText.setText(tr("Kalibracija je van očekivanog opsega. Proveri udaljenost, visinu i tačku nišana.",
+                                "Calibration is outside the expected range. Check distance, height and aim point."));
+            return;
+        }
+
+        calibrationOffsetDeg = newOffset;
+        calibrationActive = true;
+        cameraHeightM = height;
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+            .putFloat(PREF_CALIBRATION_OFFSET, (float)calibrationOffsetDeg)
+            .putFloat(PREF_CAMERA_HEIGHT, (float)cameraHeightM)
+            .apply();
+
+        depressionSmooth = rawDepressionSmooth - calibrationOffsetDeg;
+        resetStability();
+        updateCalibrationLabel();
+        updateEstimate();
+        hintText.setText(String.format(Locale.US,
+            tr("Kalibracija sa %.2f m je sačuvana za ovaj telefon.",
+               "Calibration using %.2f m is saved for this phone."),
+            knownDistance));
+    }
+
+    private void resetCalibration() {
+        calibrationOffsetDeg = 0.0;
+        calibrationActive = false;
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().remove(PREF_CALIBRATION_OFFSET).apply();
+        if (Double.isFinite(rawDepressionSmooth)) depressionSmooth = rawDepressionSmooth;
+        resetStability();
+        updateCalibrationLabel();
+        updateEstimate();
+        hintText.setText(tr("Kalibracija je obrisana. Merač koristi fabričko očitavanje senzora.",
+                            "Calibration cleared. The meter is using the sensor's default reading."));
+    }
+
     private void finishMeasurement(String target) {
         if (!Double.isFinite(distanceM)) {
-            hintText.setText(tr("Nema merenja. Spusti nišan na podnožje objekta.", "No measurement. Aim at the object's floor contact point."));
+            hintText.setText(tr("Nema merenja. Spusti nišan na podnožje objekta.",
+                                "No measurement. Aim at the object's floor contact point."));
             return;
         }
         if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 2.0) {
-            hintText.setText(tr("Drži telefon mirno trenutak, pa pokušaj ponovo.", "Hold the phone still for a moment, then try again."));
+            hintText.setText(tr("Drži telefon mirno trenutak, pa pokušaj ponovo.",
+                                "Hold the phone still for a moment, then try again."));
             return;
         }
+
+        cameraHeightM = parseHeight();
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+            .putFloat(PREF_CAMERA_HEIGHT, (float)cameraHeightM)
+            .apply();
+
         Intent data = new Intent();
         data.putExtra("target",target);
         data.putExtra("distance",distanceM);
         data.putExtra("angle",depressionSmooth);
-        data.putExtra("cameraHeight",parseHeight());
+        data.putExtra("cameraHeight",cameraHeightM);
         data.putExtra("uncertainty",uncertaintyM);
-        setResult(RESULT_OK,data); finish();
+        data.putExtra("calibrated",calibrationActive);
+        data.putExtra("calibrationOffset",calibrationOffsetDeg);
+        setResult(RESULT_OK,data);
+        finish();
     }
 
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode,permissions,grantResults);
-        if (requestCode == CAMERA_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) openCamera();
-        else if (requestCode == CAMERA_PERMISSION) hintText.setText(tr("Dozvoli kameru da bi PRO merenje radilo.", "Allow camera access for PRO measurement."));
+        if (requestCode == CAMERA_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            openCamera();
+        } else if (requestCode == CAMERA_PERMISSION) {
+            hintText.setText(tr("Dozvoli kameru da bi PRO merenje radilo.",
+                                "Allow camera access for PRO measurement."));
+        }
     }
 }

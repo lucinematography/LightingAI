@@ -1,10 +1,12 @@
 package com.lightingai.app;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -12,6 +14,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
 import android.view.WindowInsets;
+import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -30,6 +33,7 @@ public class MainActivity extends Activity {
 
     private static final int CREATE_FILE = 501;
     private static final int CHOOSE_IMAGE = 502;
+    private static final int LOCATION_PERMISSION = 503;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -49,7 +53,7 @@ public class MainActivity extends Activity {
             return insets;
         });
         WebSettings s = webView.getSettings();
-        s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setDatabaseEnabled(true);
+        s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setDatabaseEnabled(true); s.setGeolocationEnabled(true);
         s.setAllowFileAccess(true); s.setAllowContentAccess(true); s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         webView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
@@ -59,6 +63,10 @@ public class MainActivity extends Activity {
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
+            @Override public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                callback.invoke(origin, hasLocationPermission(), false);
+            }
+
             @Override public boolean onShowFileChooser(
                 WebView view,
                 ValueCallback<Uri[]> filePathCallback,
@@ -77,6 +85,18 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.loadUrl("file:///android_asset/index.html");
         webView.requestApplyInsets();
+    }
+
+    private boolean hasLocationPermission() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+            checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasLocationPermission()) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION);
+        }
     }
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
@@ -149,9 +169,10 @@ public class MainActivity extends Activity {
     private void installCatalogView() {
         if (webView == null) return;
         webView.evaluateJavascript(
-            "(function(){if(document.getElementById('lightingai-catalog-script'))return;" +
-            "var s=document.createElement('script');s.id='lightingai-catalog-script';" +
-            "s.src='file:///android_asset/catalog.js';document.body.appendChild(s);})();", null);
+            "(function(){" +
+            "if(!document.getElementById('lightingai-catalog-script')){var c=document.createElement('script');c.id='lightingai-catalog-script';c.src='file:///android_asset/catalog.js';document.body.appendChild(c);}" +
+            "if(!document.getElementById('lightingai-sun-ui-script')){var s=document.createElement('script');s.id='lightingai-sun-ui-script';s.src='file:///android_asset/sun-ui.js';document.body.appendChild(s);}" +
+            "})();", null);
     }
 
     public class AndroidBridge {
@@ -164,6 +185,14 @@ public class MainActivity extends Activity {
                 intent.putExtra(Intent.EXTRA_TITLE, filename);
                 startActivityForResult(intent, CREATE_FILE);
             });
+        }
+
+        @JavascriptInterface public void requestLocationPermission() {
+            runOnUiThread(() -> MainActivity.this.requestLocationPermission());
+        }
+
+        @JavascriptInterface public boolean hasLocationPermission() {
+            return MainActivity.this.hasLocationPermission();
         }
     }
 

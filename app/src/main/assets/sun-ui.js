@@ -1,60 +1,72 @@
 (function(){
   'use strict';
+  const TXT={
+    sr:{title:'SUNCE',date:'DATUM',time:'VREME',lat:'GEOGRAFSKA ŠIRINA',lon:'GEOGRAFSKA DUŽINA',locate:'📍 MOJA LOKACIJA',calc:'IZRAČUNAJ',az:'AZIMUT',el:'VISINA SUNCA',rise:'IZLAZAK',set:'ZALAZAK',above:'IZNAD HORIZONTA',below:'ISPOD HORIZONTA',hourly:'Položaj Sunca po satima',light:'Filmsko svetlo',goldAm:'Golden hour — jutro',blueAm:'Blue hour — jutro',goldPm:'Golden hour — veče',bluePm:'Blue hour — veče',invalid:'Unesi ispravne koordinate.',local:'Proračun je lokalni i ne zahteva internet.',permission:'Odobri lokaciju telefonu, zatim ponovo pritisni MOJA LOKACIJA.',gpsMissing:'GPS nije dostupan. Koordinate možeš uneti ručno.',gpsFinding:'Tražim lokaciju…',gpsLoaded:'Lokacija je učitana.',gpsFail:'Lokacija nije dostupna. Koordinate možeš uneti ručno.',empty:'Sunce je ispod horizonta tokom izabranog dana.',nav:'SUNCE',note:'Golden/blue hour su praktične približne zone prema visini Sunca.'},
+    en:{title:'SUN',date:'DATE',time:'TIME',lat:'LATITUDE',lon:'LONGITUDE',locate:'📍 MY LOCATION',calc:'CALCULATE',az:'AZIMUTH',el:'SUN ELEVATION',rise:'SUNRISE',set:'SUNSET',above:'ABOVE HORIZON',below:'BELOW HORIZON',hourly:'Sun position by hour',light:'Filming light',goldAm:'Golden hour — morning',blueAm:'Blue hour — morning',goldPm:'Golden hour — evening',bluePm:'Blue hour — evening',invalid:'Enter valid coordinates.',local:'Calculation is local and does not require internet.',permission:'Allow location access, then press MY LOCATION again.',gpsMissing:'GPS is unavailable. You can enter coordinates manually.',gpsFinding:'Finding location…',gpsLoaded:'Location loaded.',gpsFail:'Location unavailable. You can enter coordinates manually.',empty:'The Sun stays below the horizon during the selected day.',nav:'SUN',note:'Golden/blue hour are practical approximate zones based on Sun elevation.'}
+  };
+  function language(){return localStorage.getItem('lighting_language_v1')==='en'?'en':'sr'}
+  function t(){return TXT[language()]}
   function el(id){return document.getElementById(id)}
   function pad(n){return String(n).padStart(2,'0')}
   function localDateValue(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
   function localTimeValue(d){return pad(d.getHours())+':'+pad(d.getMinutes())}
   function fmtTime(d){return d?pad(d.getHours())+':'+pad(d.getMinutes()):'—'}
+  function fmtRange(a,b){return a&&b?fmtTime(a)+'–'+fmtTime(b):'—'}
   function num(id){return Number(el(id).value)}
   function dateFromInputs(){
     const dv=el('sunDate').value, tv=el('sunTime').value||'12:00';
-    const parts=dv.split('-').map(Number), t=tv.split(':').map(Number);
-    return new Date(parts[0],parts[1]-1,parts[2],t[0]||0,t[1]||0,0,0);
+    const parts=dv.split('-').map(Number), time=tv.split(':').map(Number);
+    return new Date(parts[0],parts[1]-1,parts[2],time[0]||0,time[1]||0,0,0);
   }
-  function compass(a){const dirs=['N','NE','E','SE','S','SW','W','NW'];return dirs[Math.round((((a%360)+360)%360)/45)%8]}
+  function compass(a){
+    const dirs=language()==='sr'?['S','SI','I','JI','J','JZ','Z','SZ']:['N','NE','E','SE','S','SW','W','NW'];
+    return dirs[Math.round((((a%360)+360)%360)/45)%8];
+  }
+  function minuteOfDay(d){return d.getHours()*60+d.getMinutes()+d.getSeconds()/60}
+  function graphX(d){return 4+minuteOfDay(d)/1440*92}
+  function graphY(e){const v=Math.max(-10,Math.min(90,e));return 88-(v+10)/100*76}
+  function zoneRect(a,b,klass){if(!a||!b)return '';const x=graphX(a),w=Math.max(.3,graphX(b)-x);return '<rect x="'+x.toFixed(2)+'" y="8" width="'+w.toFixed(2)+'" height="82" class="'+klass+'" rx="1"/>'}
+  function renderGraph(points,current,windows){
+    const d=points.map((p,i)=>(i?'L':'M')+graphX(p.time).toFixed(2)+' '+graphY(p.elevation).toFixed(2)).join(' ');
+    const now=LightingAISun.position(current,num('sunLat'),num('sunLon'));
+    const x=graphX(current),y=graphY(now.elevation),horizon=graphY(0);
+    return '<svg class="sun-chart" viewBox="0 0 100 100" role="img">'+zoneRect(windows.blueMorningStart,windows.blueMorningEnd,'sun-zone-blue')+zoneRect(windows.goldenMorningStart,windows.goldenMorningEnd,'sun-zone-gold')+zoneRect(windows.goldenEveningStart,windows.goldenEveningEnd,'sun-zone-gold')+zoneRect(windows.blueEveningStart,windows.blueEveningEnd,'sun-zone-blue')+'<line x1="4" y1="'+horizon.toFixed(2)+'" x2="96" y2="'+horizon.toFixed(2)+'" class="sun-horizon"/><path d="'+d+'" class="sun-arc"/><circle cx="'+x.toFixed(2)+'" cy="'+y.toFixed(2)+'" r="2.2" class="sun-now"/><text x="4" y="98">00</text><text x="49" y="98">12</text><text x="91" y="98">24</text></svg>';
+  }
   function renderPath(points){
-    const visible=points.filter(p=>p.elevation>-6);
-    if(!visible.length)return '<div class="sun-empty">Sunce je ispod horizonta tokom izabranog dana.</div>';
+    const visible=points.filter(p=>p.elevation>-6),tx=t();
+    if(!visible.length)return '<div class="sun-empty">'+tx.empty+'</div>';
     return visible.filter((_,i)=>i%2===0).map(p=>'<div class="sun-hour"><b>'+pad(p.time.getHours())+':'+pad(p.time.getMinutes())+'</b><span>'+p.azimuth.toFixed(0)+'° '+compass(p.azimuth)+'</span><span>'+p.elevation.toFixed(1)+'°</span></div>').join('');
   }
+  function translate(){
+    if(!el('sunce'))return;
+    const tx=t();
+    el('sunTitle').textContent=tx.title;el('sunLblDate').textContent=tx.date;el('sunLblTime').textContent=tx.time;el('sunLblLat').textContent=tx.lat;el('sunLblLon').textContent=tx.lon;el('sunLocate').textContent=tx.locate;el('sunCalc').textContent=tx.calc;el('sunMetricAz').textContent=tx.az;el('sunMetricEl').textContent=tx.el;el('sunMetricRise').textContent=tx.rise;el('sunMetricSet').textContent=tx.set;el('sunLightTitle').textContent=tx.light;el('sunGoldAmLabel').textContent=tx.goldAm;el('sunBlueAmLabel').textContent=tx.blueAm;el('sunGoldPmLabel').textContent=tx.goldPm;el('sunBluePmLabel').textContent=tx.bluePm;el('sunLightNote').textContent=tx.note;el('sunHourlyTitle').textContent=tx.hourly;el('sunNavLabel').textContent=tx.nav;
+    updateSun();
+  }
   function updateSun(){
-    if(!window.LightingAISun)return;
-    const lat=num('sunLat'),lon=num('sunLon');
-    if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180){el('sunStatus').textContent='Unesi ispravne koordinate.';return}
-    const d=dateFromInputs(),p=LightingAISun.position(d,lat,lon),x=LightingAISun.crossings(d,lat,lon),path=LightingAISun.dayPath(d,lat,lon,30);
-    el('sunAz').textContent=p.azimuth.toFixed(1)+'° '+compass(p.azimuth);
-    el('sunEl').textContent=p.elevation.toFixed(1)+'°';
-    el('sunRise').textContent=fmtTime(x.sunrise);
-    el('sunSet').textContent=fmtTime(x.sunset);
-    el('sunDayState').textContent=p.elevation>=0?'IZNAD HORIZONTA':'ISPOD HORIZONTA';
-    el('sunCompassNeedle').style.transform='translate(-50%,-100%) rotate('+p.azimuth+'deg)';
-    el('sunPath').innerHTML=renderPath(path);
-    el('sunStatus').textContent='Proračun je lokalni i ne zahteva internet.';
+    if(!window.LightingAISun||!el('sunce'))return;
+    const lat=num('sunLat'),lon=num('sunLon'),tx=t();
+    if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180){el('sunStatus').textContent=tx.invalid;return}
+    const d=dateFromInputs(),p=LightingAISun.position(d,lat,lon),x=LightingAISun.crossings(d,lat,lon),windows=LightingAISun.lightWindows(d,lat,lon),path=LightingAISun.dayPath(d,lat,lon,30),graphPath=LightingAISun.dayPath(d,lat,lon,10);
+    el('sunAz').textContent=p.azimuth.toFixed(1)+'° '+compass(p.azimuth);el('sunEl').textContent=p.elevation.toFixed(1)+'°';el('sunRise').textContent=fmtTime(x.sunrise);el('sunSet').textContent=fmtTime(x.sunset);el('sunDayState').textContent=p.elevation>=0?tx.above:tx.below;el('sunCompassNeedle').style.transform='translate(-50%,-100%) rotate('+p.azimuth+'deg)';el('sunGoldAm').textContent=fmtRange(windows.goldenMorningStart,windows.goldenMorningEnd);el('sunBlueAm').textContent=fmtRange(windows.blueMorningStart,windows.blueMorningEnd);el('sunGoldPm').textContent=fmtRange(windows.goldenEveningStart,windows.goldenEveningEnd);el('sunBluePm').textContent=fmtRange(windows.blueEveningStart,windows.blueEveningEnd);el('sunGraph').innerHTML=renderGraph(graphPath,d,windows);el('sunPath').innerHTML=renderPath(path);el('sunStatus').textContent=tx.local;
   }
   function useLocation(){
-    try{
-      if(window.Android&&Android.hasLocationPermission&&!Android.hasLocationPermission()){
-        Android.requestLocationPermission();
-        el('sunStatus').textContent='Odobri lokaciju telefonu, zatim ponovo pritisni MOJA LOKACIJA.';
-        return;
-      }
-    }catch(e){}
-    if(!navigator.geolocation){el('sunStatus').textContent='GPS nije dostupan. Koordinate možeš uneti ručno.';return}
-    el('sunStatus').textContent='Tražim lokaciju…';
-    navigator.geolocation.getCurrentPosition(pos=>{
-      el('sunLat').value=pos.coords.latitude.toFixed(6);el('sunLon').value=pos.coords.longitude.toFixed(6);el('sunStatus').textContent='Lokacija je učitana.';updateSun();
-    },()=>{el('sunStatus').textContent='Lokacija nije dostupna. Koordinate možeš uneti ručno.'},{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+    const tx=t();
+    try{if(window.Android&&Android.hasLocationPermission&&!Android.hasLocationPermission()){Android.requestLocationPermission();el('sunStatus').textContent=tx.permission;return}}catch(e){}
+    if(!navigator.geolocation){el('sunStatus').textContent=tx.gpsMissing;return}
+    el('sunStatus').textContent=tx.gpsFinding;
+    navigator.geolocation.getCurrentPosition(pos=>{el('sunLat').value=pos.coords.latitude.toFixed(6);el('sunLon').value=pos.coords.longitude.toFixed(6);el('sunStatus').textContent=tx.gpsLoaded;updateSun()},()=>{el('sunStatus').textContent=tx.gpsFail},{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
   }
   function init(){
     if(el('sunce'))return;
-    const style=document.createElement('style');style.textContent='.sun-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.sun-metric{background:#0f1115;border:1px solid #30343b;border-radius:12px;padding:12px}.sun-metric b{display:block;color:#f5c542;font-size:20px;margin-top:5px}.sun-compass{width:220px;height:220px;border:1px solid #3a3f47;border-radius:50%;margin:16px auto;position:relative;background:radial-gradient(circle,#171b20 0,#0f1115 68%)}.sun-compass span{position:absolute;font-size:11px;color:#9da3ad}.sun-n{top:7px;left:50%;transform:translateX(-50%)}.sun-e{right:8px;top:50%;transform:translateY(-50%)}.sun-s{bottom:7px;left:50%;transform:translateX(-50%)}.sun-w{left:8px;top:50%;transform:translateY(-50%)}.sun-needle{position:absolute;left:50%;top:50%;width:4px;height:82px;background:#f5c542;transform-origin:50% 100%;border-radius:4px;box-shadow:0 0 16px rgba(245,197,66,.35)}.sun-center{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:50%;background:#f5c542;transform:translate(-50%,-50%)}.sun-hour{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:9px 0;border-bottom:1px solid #292d33;font-size:12px}.sun-hour span{text-align:right}.sun-empty{padding:14px;color:#9299a3}.sun-status{margin-top:10px;color:#9299a3;font-size:12px}@media(max-width:520px){.sun-grid{grid-template-columns:1fr 1fr}}';document.head.appendChild(style);
+    const style=document.createElement('style');style.textContent='.sun-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.sun-metric{background:#0f1115;border:1px solid #30343b;border-radius:12px;padding:12px}.sun-metric b{display:block;color:#f5c542;font-size:20px;margin-top:5px}.sun-compass{width:220px;height:220px;border:1px solid #3a3f47;border-radius:50%;margin:16px auto;position:relative;background:radial-gradient(circle,#171b20 0,#0f1115 68%)}.sun-compass span{position:absolute;font-size:11px;color:#9da3ad}.sun-n{top:7px;left:50%;transform:translateX(-50%)}.sun-e{right:8px;top:50%;transform:translateY(-50%)}.sun-s{bottom:7px;left:50%;transform:translateX(-50%)}.sun-w{left:8px;top:50%;transform:translateY(-50%)}.sun-needle{position:absolute;left:50%;top:50%;width:4px;height:82px;background:#f5c542;transform-origin:50% 100%;border-radius:4px;box-shadow:0 0 16px rgba(245,197,66,.35)}.sun-center{position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:50%;background:#f5c542;transform:translate(-50%,-50%)}.sun-hour{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:9px 0;border-bottom:1px solid #292d33;font-size:12px}.sun-hour span{text-align:right}.sun-empty{padding:14px;color:#9299a3}.sun-status,.sun-note{margin-top:10px;color:#9299a3;font-size:12px}.sun-light-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.sun-light{border:1px solid #30343b;border-radius:12px;padding:11px;background:#0f1115}.sun-light b{display:block;margin-top:5px}.sun-gold{border-color:#6d5921}.sun-blue{border-color:#2c4f70}.sun-chart{display:block;width:100%;height:auto;margin:10px 0 4px;background:#0f1115;border:1px solid #30343b;border-radius:12px}.sun-chart text{fill:#7f8792;font-size:4px}.sun-horizon{stroke:#59606a;stroke-width:.5;stroke-dasharray:2 2}.sun-arc{fill:none;stroke:#f5c542;stroke-width:1.2}.sun-now{fill:#fff;stroke:#f5c542;stroke-width:.8}.sun-zone-gold{fill:#f5c542;opacity:.09}.sun-zone-blue{fill:#4f96d1;opacity:.09}@media(max-width:520px){.sun-grid,.sun-light-grid{grid-template-columns:1fr 1fr}}';document.head.appendChild(style);
     const main=document.querySelector('main'),nav=document.querySelector('nav');if(!main||!nav)return;
-    const section=document.createElement('section');section.id='sunce';section.className='page';section.innerHTML='<h1>SUNCE</h1><div class="card"><div class="row"><div><label class="caption">DATUM</label><input id="sunDate" type="date"></div><div><label class="caption">VREME</label><input id="sunTime" type="time"></div></div><div class="row"><div><label class="caption">GEOGRAFSKA ŠIRINA</label><input id="sunLat" type="number" step="0.000001" value="44.7866"></div><div><label class="caption">GEOGRAFSKA DUŽINA</label><input id="sunLon" type="number" step="0.000001" value="20.4489"></div></div><div class="actions"><button id="sunLocate" class="btn secondary">📍 MOJA LOKACIJA</button><button id="sunCalc" class="btn primary">IZRAČUNAJ</button></div><div id="sunStatus" class="sun-status"></div></div><div class="card"><div class="sun-grid"><div class="sun-metric"><span>AZIMUT</span><b id="sunAz">—</b></div><div class="sun-metric"><span>VISINA SUNCA</span><b id="sunEl">—</b></div><div class="sun-metric"><span>IZLAZAK</span><b id="sunRise">—</b></div><div class="sun-metric"><span>ZALAZAK</span><b id="sunSet">—</b></div></div><div class="sun-compass"><span class="sun-n">N</span><span class="sun-e">E</span><span class="sun-s">S</span><span class="sun-w">W</span><div id="sunCompassNeedle" class="sun-needle"></div><div class="sun-center"></div></div><div style="text-align:center"><b id="sunDayState">—</b></div></div><div class="card"><h2 style="margin-top:0">Položaj Sunca po satima</h2><div id="sunPath"></div></div>';
-    main.appendChild(section);
-    nav.style.gridTemplateColumns='repeat(5,1fr)';
-    const b=document.createElement('button');b.dataset.page='sunce';b.innerHTML='☀ <span>SUNCE</span>';nav.insertBefore(b,nav.lastElementChild);
+    const section=document.createElement('section');section.id='sunce';section.className='page';section.innerHTML='<h1 id="sunTitle"></h1><div class="card"><div class="row"><div><label class="caption" id="sunLblDate"></label><input id="sunDate" type="date"></div><div><label class="caption" id="sunLblTime"></label><input id="sunTime" type="time"></div></div><div class="row"><div><label class="caption" id="sunLblLat"></label><input id="sunLat" type="number" step="0.000001" value="44.7866"></div><div><label class="caption" id="sunLblLon"></label><input id="sunLon" type="number" step="0.000001" value="20.4489"></div></div><div class="actions"><button id="sunLocate" class="btn secondary"></button><button id="sunCalc" class="btn primary"></button></div><div id="sunStatus" class="sun-status"></div></div><div class="card"><div class="sun-grid"><div class="sun-metric"><span id="sunMetricAz"></span><b id="sunAz">—</b></div><div class="sun-metric"><span id="sunMetricEl"></span><b id="sunEl">—</b></div><div class="sun-metric"><span id="sunMetricRise"></span><b id="sunRise">—</b></div><div class="sun-metric"><span id="sunMetricSet"></span><b id="sunSet">—</b></div></div><div class="sun-compass"><span class="sun-n">N</span><span class="sun-e">E</span><span class="sun-s">S</span><span class="sun-w">W</span><div id="sunCompassNeedle" class="sun-needle"></div><div class="sun-center"></div></div><div style="text-align:center"><b id="sunDayState">—</b></div><div id="sunGraph"></div></div><div class="card"><h2 id="sunLightTitle" style="margin-top:0"></h2><div class="sun-light-grid"><div class="sun-light sun-gold"><span id="sunGoldAmLabel"></span><b id="sunGoldAm">—</b></div><div class="sun-light sun-blue"><span id="sunBlueAmLabel"></span><b id="sunBlueAm">—</b></div><div class="sun-light sun-gold"><span id="sunGoldPmLabel"></span><b id="sunGoldPm">—</b></div><div class="sun-light sun-blue"><span id="sunBluePmLabel"></span><b id="sunBluePm">—</b></div></div><div id="sunLightNote" class="sun-note"></div></div><div class="card"><h2 id="sunHourlyTitle" style="margin-top:0"></h2><div id="sunPath"></div></div>';
+    main.appendChild(section);nav.style.gridTemplateColumns='repeat(5,1fr)';
+    const b=document.createElement('button');b.dataset.page='sunce';b.innerHTML='☀ <span id="sunNavLabel"></span>';nav.insertBefore(b,nav.lastElementChild);
     b.addEventListener('click',()=>{document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));section.classList.add('active');b.classList.add('active');updateSun()});
-    const now=new Date();el('sunDate').value=localDateValue(now);el('sunTime').value=localTimeValue(now);el('sunCalc').addEventListener('click',updateSun);el('sunLocate').addEventListener('click',useLocation);['sunDate','sunTime','sunLat','sunLon'].forEach(id=>el(id).addEventListener('change',updateSun));updateSun();
+    const now=new Date();el('sunDate').value=localDateValue(now);el('sunTime').value=localTimeValue(now);el('sunCalc').addEventListener('click',updateSun);el('sunLocate').addEventListener('click',useLocation);['sunDate','sunTime','sunLat','sunLon'].forEach(id=>el(id).addEventListener('change',updateSun));
+    const original=window.setLanguage;if(typeof original==='function')window.setLanguage=function(l){original(l);translate()};translate();
   }
   function loadCore(){if(window.LightingAISun){init();return}const s=document.createElement('script');s.src='file:///android_asset/sun.js';s.onload=init;document.body.appendChild(s)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadCore);else loadCore();

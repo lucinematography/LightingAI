@@ -22,19 +22,41 @@
     return {azimuth:norm(az*DEG+180),elevation:alt*DEG};
   }
   function dayPath(date,lat,lon,stepMinutes){
-    const step=Math.max(5,Number(stepMinutes)||30), out=[];
+    const step=Math.max(1,Number(stepMinutes)||30), out=[];
     const d=new Date(date); d.setHours(0,0,0,0);
-    for(let m=0;m<1440;m+=step){const t=new Date(d.getTime()+m*60000),p=position(t,lat,lon);out.push({time:t,azimuth:p.azimuth,elevation:p.elevation});}
+    for(let m=0;m<1440;m+=step){
+      const t=new Date(d.getTime()+m*60000),p=position(t,lat,lon);
+      out.push({time:t,azimuth:p.azimuth,elevation:p.elevation});
+    }
     return out;
   }
-  function crossings(date,lat,lon){
-    const pts=dayPath(date,lat,lon,5), threshold=-0.833;
-    let rise=null,set=null;
+  function crossing(date,lat,lon,threshold,direction){
+    const pts=dayPath(date,lat,lon,2);
     for(let i=1;i<pts.length;i++){
-      if(!rise&&pts[i-1].elevation<threshold&&pts[i].elevation>=threshold)rise=pts[i].time;
-      if(!set&&pts[i-1].elevation>=threshold&&pts[i].elevation<threshold)set=pts[i].time;
+      const a=pts[i-1],b=pts[i];
+      const hit=direction==='up' ? (a.elevation<threshold&&b.elevation>=threshold) : (a.elevation>=threshold&&b.elevation<threshold);
+      if(hit){
+        const span=b.elevation-a.elevation;
+        const ratio=Math.abs(span)<1e-9?0:(threshold-a.elevation)/span;
+        return new Date(a.time.getTime()+(b.time-a.time)*Math.max(0,Math.min(1,ratio)));
+      }
     }
-    return {sunrise:rise,sunset:set};
+    return null;
   }
-  global.LightingAISun={position,dayPath,crossings};
+  function crossings(date,lat,lon){
+    return {sunrise:crossing(date,lat,lon,-0.833,'up'),sunset:crossing(date,lat,lon,-0.833,'down')};
+  }
+  function lightWindows(date,lat,lon){
+    return {
+      blueMorningStart:crossing(date,lat,lon,-6,'up'),
+      blueMorningEnd:crossing(date,lat,lon,-4,'up'),
+      goldenMorningStart:crossing(date,lat,lon,-4,'up'),
+      goldenMorningEnd:crossing(date,lat,lon,6,'up'),
+      goldenEveningStart:crossing(date,lat,lon,6,'down'),
+      goldenEveningEnd:crossing(date,lat,lon,-4,'down'),
+      blueEveningStart:crossing(date,lat,lon,-4,'down'),
+      blueEveningEnd:crossing(date,lat,lon,-6,'down')
+    };
+  }
+  global.LightingAISun={position,dayPath,crossings,lightWindows};
 })(window);

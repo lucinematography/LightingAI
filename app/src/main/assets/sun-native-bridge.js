@@ -150,4 +150,10 @@ if(!document.getElementById('lightingai-beam-coverage-report-script')){
   w.src='file:///android_asset/beam-coverage-report.js';
   document.body.appendChild(w);
 }
+if(!document.getElementById('lightingai-camera-setup-snapshots-script')){
+  const a=document.createElement('script');
+  a.id='lightingai-camera-setup-snapshots-script';
+  a.src='file:///android_asset/camera-setup-snapshots.js';
+  document.body.appendChild(a);
+}
 })();

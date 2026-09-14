@@ -229,6 +229,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-light-calculator-script')){var l=document.createElement('script');l.id='lightingai-light-calculator-script';l.src='file:///android_asset/light-calculator.js';document.body.appendChild(l);}" +
             "if(!document.getElementById('lightingai-cct-gel-script')){var g=document.createElement('script');g.id='lightingai-cct-gel-script';g.src='file:///android_asset/cct-gel-calculator.js';document.body.appendChild(g);}" +
             "if(!document.getElementById('lightingai-set-sketch-script')){var q=document.createElement('script');q.id='lightingai-set-sketch-script';q.src='file:///android_asset/set-sketch.js';document.body.appendChild(q);}" +
+            "if(!document.getElementById('lightingai-set-sketch-camera-fov-script')){var f=document.createElement('script');f.id='lightingai-set-sketch-camera-fov-script';f.src='file:///android_asset/set-sketch-camera-fov.js';document.body.appendChild(f);}" +
             "})();", null);
     }
 

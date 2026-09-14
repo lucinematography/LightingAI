@@ -5,10 +5,37 @@ const isSr=()=>localStorage.getItem('lighting_language_v1')!=='en';
 function text(id,value){const e=E(id);if(e&&isSr()&&e.textContent!==value)e.textContent=value;}
 function apply(){
   if(!isSr())return;
+
   text('continuityTitle','🎬 Kontinuitet / Usklađivanje kadra');
   text('shotListTitle','🎞 Lista kadrova / Plan pokrivenosti');
   text('flickerTitle','⚡ Treperenje / Bezbedan zatvarač');
   text('cueTitle','🎚 Planer svetlosnih promena');
+
+  text('shotSetupTitle','🎥 Izveštaj scene / Postavka kadra');
+  text('dofTitle','🎥 Dubinska oštrina (DOF)');
+  text('dofCocLabel','KRUG RASEJANJA (CoC) (mm)');
+  text('dofHyperfocalLabel','HIPERFOKALNA DALJINA');
+  text('dofNearLabel','BLISKA GRANICA');
+  text('dofFarLabel','DALEKA GRANICA');
+  text('dofTotalLabel','UKUPNA DUBINSKA OŠTRINA');
+
+  text('ratioTitle','⚖️ Odnos svetla · Glavno / dopunsko / kontrasvetlo');
+  text('ratioKeyLabel','GLAVNO / KEY (lux)');
+  text('ratioFillLabel','DOPUNSKO / FILL (lux)');
+  text('ratioBackLabel','KONTRASVETLO / BACK (lux)');
+  text('ratioTargetLabel','ŽELJENA RAZLIKA GLAVNO–DOPUNSKO (stop)');
+  text('ratioDirectLabel','GLAVNO : DOPUNSKO');
+  text('ratioClassicLabel','(GLAVNO + DOPUNSKO) : DOPUNSKO');
+  text('ratioBackKeyLabel','KONTRASVETLO : GLAVNO');
+  text('ratioTargetFillLabel','DOPUNSKO ZA ŽELJENI KONTRAST');
+
+  text('lightCalcShutterLabel','UGAO ZATVARAČA');
+  text('flickerAngleLabel','UGAO ZATVARAČA');
+
+  text('cctTintIntro','Za fluorescentne, gasne i LED izvore izaberi smer korekcije i jačinu. Ovo je odvojeno od CCT-a.');
+  text('cctTintLossLabel','GUBITAK GELA ZA ZELENO/MAGENTA KOREKCIJU');
+  text('cctTintNote','Plus/Minus Green jačina nije univerzalna skala zelena/magenta na kameri. LEE navodi približne CC ekvivalente, pa LightingAI ne pretvara proizvoljnu vrednost korekcije u gel bez merenja.');
+
   text('projectBackupTitle','💾 Rezervna kopija projekta');
   text('projectBackupIntro','Sačuvaj lokalne LightingAI planerske podatke u jedan JSON fajl. Fotografije, podaci uređaja i backend/auth podešavanja nisu deo rezervne kopije.');
   text('projectBackupSave','SAČUVAJ JSON PROJEKTA');

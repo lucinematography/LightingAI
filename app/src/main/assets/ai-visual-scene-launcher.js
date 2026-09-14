@@ -6,7 +6,6 @@ var SIM_SCRIPT_ID='lightingai-ai-visual-local-simulation-script';
 var POLISH_SCRIPT_ID='lightingai-ai-visual-result-polish-script';
 var BUILD_SCRIPT_ID='lightingai-feature-build-info-script';
 var PHONE_DIAG_SCRIPT_ID='lightingai-project5-phone-diagnostics-script';
-var EQUIPMENT_HOME_SCRIPT_ID='lightingai-ai-equipment-home-script';
 var DIAG_ID='lightingai-project5-diagnostic';
 var MODULE_ID='lightingai-ai-visual-scene-plan';
 var PROD_API='https://lightingai.onrender.com';
@@ -109,7 +108,6 @@ function ensureScript(id,src,ready,next){
   script.onerror=next;
   document.body.appendChild(script);
 }
-function ensureEquipmentHome(next){ensureScript(EQUIPMENT_HOME_SCRIPT_ID,'file:///android_asset/ai-visual-equipment-home.js',function(){return !!window.LightingAIEquipmentHome;},next||function(){});}
 function ensurePhoneDiagnostics(next){ensureScript(PHONE_DIAG_SCRIPT_ID,'file:///android_asset/ai-visual-phone-diagnostics.js',function(){return !!window.LightingAIProject5Diagnostics;},next);}
 function ensurePolish(next){ensureScript(POLISH_SCRIPT_ID,'file:///android_asset/ai-visual-result-polish.js',function(){return !!window.LightingAIVisualResultPolish;},function(){ensurePhoneDiagnostics(next);});}
 function ensureSimulation(next){ensureScript(SIM_SCRIPT_ID,'file:///android_asset/ai-visual-local-simulation.js',function(){return !!window.LightingAILocalLightSimulation;},function(){ensurePolish(next);});}
@@ -141,8 +139,7 @@ function install(){
   button.onclick=openModule;
   document.body.appendChild(button);
   ensureBuildInfo(updateButton);
-  ensureEquipmentHome(function(){if(window.LightingAIEquipmentHome&&typeof window.LightingAIEquipmentHome.refresh==='function')window.LightingAIEquipmentHome.refresh();});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.9-equipment-ai-first'};
+window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.8-phone-diagnostics'};
 })();

@@ -7,7 +7,7 @@ import { validateCatalog } from "./catalog-validation.js";
 import { catalogStatus } from "./catalog-status.js";
 import { accessoryRecord, buildAccessoryTree } from "./accessory-graph.js";
 import { aputureReviewCatalog, aputureReviewHtml } from "./aputure-review.js";
-import { generateVisualPreview } from "./visual-preview.js";
+import { generateVisualPreview, VISUAL_PREVIEW_MODEL, VISUAL_PREVIEW_QUALITY } from "./visual-preview.js";
 
 const FIXTURE_LIBRARY = RUNTIME_CATALOG.fixtures;
 const ACCESSORY_LIBRARY = RUNTIME_CATALOG.accessories;
@@ -79,6 +79,7 @@ app.post("/api/lighting-plan",async(req,res)=>{try{
  let text=response.output_text.trim().replace(/^```json\s*/i,"").replace(/```$/i,"").trim();
  res.json(JSON.parse(text));
 }catch(error){console.error(error);res.status(500).json({error:"Lighting plan generation failed."});}});
+app.get("/api/visual-preview",(req,res)=>res.json({ok:true,model:VISUAL_PREVIEW_MODEL,quality:VISUAL_PREVIEW_QUALITY}));
 app.post("/api/visual-preview",async(req,res)=>{try{
  const{scenePhoto="",plan={},description="",equipment=[],language="sr"}=req.body||{};
  if(!scenePhoto)return res.status(400).json({error:"Scene photo is required."});

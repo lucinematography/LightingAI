@@ -83,6 +83,16 @@ public final class DeviceCapabilities {
 
             out.put("nativeAndroid", true);
             out.put("androidApi", Build.VERSION.SDK_INT);
+            out.put("androidRelease", Build.VERSION.RELEASE == null ? "" : Build.VERSION.RELEASE);
+            out.put("manufacturer", Build.MANUFACTURER == null ? "" : Build.MANUFACTURER);
+            out.put("model", Build.MODEL == null ? "" : Build.MODEL);
+            out.put("device", Build.DEVICE == null ? "" : Build.DEVICE);
+            try {
+                android.content.pm.PackageInfo info = pm.getPackageInfo(context.getPackageName(), 0);
+                out.put("appVersionName", info.versionName == null ? "" : info.versionName);
+                long versionCode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ? info.getLongVersionCode() : info.versionCode;
+                out.put("appVersionCode", versionCode);
+            } catch (Exception ignored) {}
             out.put("cameraAny", pm.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY));
             out.put("rearCameraCount", rearCameraCount);
             out.put("camera2Modern", modernCamera2);

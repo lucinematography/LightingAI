@@ -25,10 +25,11 @@ export const ASTERA_TITANTUBE_FIXTURES = [
 
 const TITAN = ['astera-titantube-fp1'];
 const TITAN_AND_HELIOS = ['astera-titantube-fp1', 'astera-heliostube-fp2-btb'];
-const ALL_THREE_TUBES = ['astera-titantube-fp1', 'astera-heliostube-fp2-btb', 'astera-hyperiontube-fp3'];
+const TUBE_STAND_FAMILY = [...TITAN_AND_HELIOS, 'astera-ax1-pixeltube'];
+const ALL_THREE_TUBES = ['astera-titantube-fp1', 'astera-heliostube-fp2-btb', 'astera-hyperiontube-fp3', 'astera-ax1-pixeltube'];
 
 export const ASTERA_TITANTUBE_ACCESSORIES = [
-  { id: 'astera-tube-floorstand', manufacturer: 'Astera', model: 'AX1-STD TubeStand', category: 'Stand', mount: 'M5 thread', compatibleWith: TITAN_AND_HELIOS, includedWithFixture: true, sourceUrl: MANUAL },
+  { id: 'astera-tube-floorstand', manufacturer: 'Astera', model: 'AX1-STD TubeStand', category: 'Stand', mount: 'M5 thread', compatibleWith: TUBE_STAND_FAMILY, includedWithFixture: true, sourceUrl: MANUAL },
   { id: 'astera-tube-metal-holder', manufacturer: 'Astera', model: 'AX1-H TubeHolder', category: 'Mount', mount: '1/4-20 and M5 threads', compatibleWith: ALL_THREE_TUBES, includedWithFixture: true, sourceUrl: MANUAL },
   { id: 'astera-ax1-blt', manufacturer: 'Astera', model: 'AX1-BLT Double-ended Spigot', category: 'Mount Adapter', mount: '1/4-20 to clamp', compatibleWith: ALL_THREE_TUBES, sourceUrl: MANUAL },
   { id: 'astera-tube-wing-plate', manufacturer: 'Astera', model: 'AX1-WP WingPlate', category: 'Multi-light Mount', compatibleWith: ALL_THREE_TUBES, sourceUrl: MANUAL },

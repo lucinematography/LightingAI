@@ -38,6 +38,10 @@
   function faceCamera(){const c=Number(el('sunCameraHeading')?.value);if(!Number.isFinite(c))return;el('sunSubjectHeading').value=norm(c+180).toFixed(0);update();}
   function turn(){const h=Number(el('sunSubjectHeading')?.value)||0;el('sunSubjectHeading').value=norm(h+180).toFixed(0);update();}
   function translate(){if(!el('sunSubjectCard'))return;const tx=t();el('sunSubjectTitle').textContent=tx.title;el('sunSubjectHeadingLabel').textContent=tx.heading;el('sunSubjectFaceCamera').textContent=tx.faceCamera;el('sunSubjectTurn').textContent=tx.turn;el('sunSubjectNote').textContent=tx.note;el('sunSubjectTimelineTitle').textContent=tx.timeline;el('sunSubjectTimelineNote').textContent=tx.timelineNote;update();}
+  function ensureSceneCompass(){
+    if(document.getElementById('lightingai-sun-scene-compass-runtime'))return;
+    const s=document.createElement('script');s.id='lightingai-sun-scene-compass-runtime';s.src='file:///android_asset/sun-scene-compass.js';document.head.appendChild(s);
+  }
   function init(){
     const camera=el('sunCameraCard');if(!camera||el('sunSubjectCard'))return false;
     const style=document.createElement('style');style.textContent='.sun-subject-head{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.sun-subject-value{min-width:52px;text-align:right;color:#f5c542;font-weight:900;padding-bottom:11px}.sun-subject-stage{width:184px;height:184px;border:1px solid #30343b;border-radius:50%;margin:16px auto;position:relative;background:#0f1115}.sun-subject-axis{position:absolute;left:50%;top:50%;width:4px;height:66px;background:#d8dce2;transform:translate(-50%,-100%);border-radius:4px}.sun-subject-body{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:28px}.sun-subject-sun{position:absolute;left:50%;top:50%;transform-origin:0 0;font-size:25px;margin-left:-12px;margin-top:-12px}.sun-subject-light{text-align:center;color:#f5c542;font-weight:900;margin-top:6px}.sun-subject-relation{text-align:center;font-weight:800;margin-top:6px}.sun-subject-note,.sun-subject-timeline-note{font-size:12px;color:#9299a3;margin-top:10px}.sun-subject-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.sun-subject-timeline{margin-top:10px;border-top:1px solid #292d33}.sun-subject-slot{width:100%;display:grid;grid-template-columns:96px 1fr 18px;gap:10px;align-items:center;padding:11px 0;border:0;border-bottom:1px solid #292d33;background:transparent;color:inherit;text-align:left;font:inherit;font-size:12px}.sun-subject-slot b{color:#f5c542}.sun-subject-slot:active{background:#1a1e24}.sun-subject-jump{text-align:right;color:#f5c542;font-size:20px}.sun-subject-empty{padding:12px 0;color:#9299a3;font-size:12px}@media(max-width:520px){.sun-subject-actions{grid-template-columns:1fr}}';document.head.appendChild(style);
@@ -47,7 +51,7 @@
     el('sunSubjectHeading').addEventListener('input',update);el('sunSubjectFaceCamera').addEventListener('click',faceCamera);el('sunSubjectTurn').addEventListener('click',turn);el('sunSubjectTimeline').addEventListener('click',jumpToTimeline);
     ['sunDate','sunTime','sunLat','sunLon'].forEach(id=>el(id)?.addEventListener('change',update));
     const old=window.setLanguage;if(typeof old==='function'){window.setLanguage=function(l){old(l);setTimeout(translate,0);};}
-    translate();return true;
+    translate();ensureSceneCompass();return true;
   }
   let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>120)clearInterval(timer)},100);
 })();

@@ -31,6 +31,12 @@
     s.id='lightingai-sun-shadow-tool-runtime';s.src='file:///android_asset/sun-shadow-tool.js';
     document.head.appendChild(s);
   }
+  function ensureTwilightTool(){
+    if(document.getElementById('lightingai-sun-twilight-runtime'))return;
+    const s=document.createElement('script');
+    s.id='lightingai-sun-twilight-runtime';s.src='file:///android_asset/sun-twilight.js';
+    document.head.appendChild(s);
+  }
   const compass=a=>{
     const dirs=lang()==='sr'?['S','SI','I','JI','J','JZ','Z','SZ']:['N','NE','E','SE','S','SW','W','NW'];
     return dirs[Math.round(norm(a)/45)%8];
@@ -119,5 +125,6 @@
   }
   ensureCore();
   ensureShadowTool();
+  ensureTwilightTool();
   let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>100)clearInterval(timer)},100);
 })();

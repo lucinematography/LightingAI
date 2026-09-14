@@ -47,6 +47,10 @@
     const item=items[i];el('sunLat').value=Number(item.lat).toFixed(6);el('sunLon').value=Number(item.lon).toFixed(6);
     el('sunLat').dispatchEvent(new Event('change',{bubbles:true}));el('sunLon').dispatchEvent(new Event('change',{bubbles:true}));status(item.name);
   }
+  function ensureShotPresetTool(){
+    if(document.getElementById('lightingai-sun-shot-presets-runtime'))return;
+    const s=document.createElement('script');s.id='lightingai-sun-shot-presets-runtime';s.src='file:///android_asset/sun-shot-presets.js';document.head.appendChild(s);
+  }
   function init(){
     const locate=el('sunLocate');if(!locate||el('sunSavedLocations'))return false;
     const source=locate.closest('.card');if(!source||!source.parentNode)return false;
@@ -56,7 +60,7 @@
     el('sunLocationSave').addEventListener('click',save);el('sunSavedLocationRows').addEventListener('click',rowClick);
     el('sunLocationName').addEventListener('keydown',e=>{if(e.key==='Enter')save();});
     const old=window.setLanguage;if(typeof old==='function'){window.setLanguage=function(l){old(l);setTimeout(translate,0);};}
-    translate();return true;
+    translate();ensureShotPresetTool();return true;
   }
   let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>100)clearInterval(timer)},100);
 })();

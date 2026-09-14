@@ -23,6 +23,13 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Embed Project 5 build identity
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          BUILT_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          printf 'window.LightingAIFeatureBuild={run:"%s",sha:"%s",branch:"%s",builtAt:"%s"};\n' "$GITHUB_RUN_NUMBER" "$SHORT_SHA" "$GITHUB_REF_NAME" "$BUILT_AT" > app/src/main/assets/feature-build-info.js
+
       - name: Validate complete LightingAI equipment catalog
         working-directory: backend
         run: npm run check

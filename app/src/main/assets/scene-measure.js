@@ -2,8 +2,8 @@
   'use strict';
   const KEY='lighting_scene_measurements_v1';
   const TXT={
-    sr:{title:'📏 Merenje scene kamerom',intro:'PRO režim koristi Android Camera2 i native senzor nagiba, pa radi i bez depth senzora. WEB kamera ostaje kao rezervni režim.',target:'ŠTA MERIŠ',height:'VISINA KAMERE OD PODA',pro:'OTVORI PRO MERAČ',web:'WEB KAMERA',stop:'ZAUSTAVI WEB KAMERU',measure:'SAČUVAJ WEB MERENJE',clear:'OBRIŠI MERENJA',subject:'Kamera → glumac',wall:'Kamera → zid',background:'Kamera → pozadina',angle:'Nagib',distance:'Procena udaljenosti',ready:'Uperi krstić u tačku na podu i sačuvaj merenje.',needTilt:'Spusti kameru ka podu da bi procena bila moguća.',needSensor:'WEB senzor nagiba nije dostupan. Koristi PRO merač.',cameraStarting:'Pokrećem WEB kameru…',cameraOn:'WEB kamera je spremna.',cameraOff:'WEB kamera je zaustavljena.',permission:'Odobri pristup kameri, pa će se pregled automatski pokrenuti.',denied:'Pristup kameri nije odobren.',unavailable:'WEB pregled nije dostupan na ovom telefonu/WebView-u. Koristi PRO merač.',proStarting:'Otvaram PRO merač…',proSaved:'PRO merenje je sačuvano.',measurements:'Sačuvana merenja',none:'Još nema sačuvanih merenja.',derived:'Glumac → pozadina',estimate:'PROCENA',note:'Ciljaj mesto gde objekat dodiruje ravan pod. PRO režim je pouzdaniji jer koristi native kameru i native senzor; rezultat je i dalje geometrijska procena, ne lasersko merenje.'},
-    en:{title:'📏 Camera Scene Measurement',intro:'PRO mode uses Android Camera2 and the native tilt sensor, so it works without a depth sensor. WEB camera remains as a fallback.',target:'WHAT ARE YOU MEASURING',height:'CAMERA HEIGHT ABOVE FLOOR',pro:'OPEN PRO METER',web:'WEB CAMERA',stop:'STOP WEB CAMERA',measure:'SAVE WEB MEASUREMENT',clear:'CLEAR MEASUREMENTS',subject:'Camera → actor',wall:'Camera → wall',background:'Camera → background',angle:'Tilt',distance:'Estimated distance',ready:'Aim the crosshair at the floor contact point and save the measurement.',needTilt:'Tilt the camera down toward the floor to calculate distance.',needSensor:'WEB tilt sensor is unavailable. Use the PRO meter.',cameraStarting:'Starting WEB camera…',cameraOn:'WEB camera ready.',cameraOff:'WEB camera stopped.',permission:'Allow camera access and the preview will start automatically.',denied:'Camera access was not granted.',unavailable:'WEB preview is unavailable on this phone/WebView. Use the PRO meter.',proStarting:'Opening PRO meter…',proSaved:'PRO measurement saved.',measurements:'Saved measurements',none:'No saved measurements yet.',derived:'Actor → background',estimate:'ESTIMATE',note:'Aim at the point where the object meets a level floor. PRO mode is more robust because it uses the native camera and native sensor; the result is still a geometric estimate, not laser ranging.'}
+    sr:{title:'📏 Merenje scene kamerom',intro:'PRO režim koristi Android Camera2 i native senzor nagiba, pa radi i bez depth senzora. WEB kamera ostaje kao rezervni režim.',target:'ŠTA MERIŠ',height:'VISINA KAMERE OD PODA',pro:'OTVORI PRO MERAČ',web:'WEB KAMERA',stop:'ZAUSTAVI WEB KAMERU',measure:'SAČUVAJ WEB MERENJE',clear:'OBRIŠI MERENJA',subject:'Kamera → glumac',wall:'Kamera → zid',background:'Kamera → pozadina',angle:'Nagib',distance:'Procena udaljenosti',ready:'Uperi krstić u tačku na podu i sačuvaj merenje.',needTilt:'Spusti kameru ka podu da bi procena bila moguća.',needSensor:'WEB senzor nagiba nije dostupan. Koristi PRO merač.',cameraStarting:'Pokrećem WEB kameru…',cameraOn:'WEB kamera je spremna.',cameraOff:'WEB kamera je zaustavljena.',permission:'Odobri pristup kameri, pa će se pregled automatski pokrenuti.',denied:'Pristup kameri nije odobren.',unavailable:'WEB pregled nije dostupan na ovom telefonu/WebView-u. Koristi PRO merač.',proStarting:'Otvaram PRO merač…',proSaved:'PRO merenje je sačuvano.',proFallback:'Native PRO nije dostupan na ovom uređaju. Prebacujem na WEB rezervni režim.',proNoCamera:'PRO merenje nije dostupno jer uređaj nema kompatibilnu zadnju kameru. Ostali planeri i kalkulatori rade normalno.',measurements:'Sačuvana merenja',none:'Još nema sačuvanih merenja.',derived:'Glumac → pozadina',estimate:'PROCENA',note:'Ciljaj mesto gde objekat dodiruje ravan pod. PRO režim je pouzdaniji jer koristi native kameru i native senzor; rezultat je i dalje geometrijska procena, ne lasersko merenje.'},
+    en:{title:'📏 Camera Scene Measurement',intro:'PRO mode uses Android Camera2 and the native tilt sensor, so it works without a depth sensor. WEB camera remains as a fallback.',target:'WHAT ARE YOU MEASURING',height:'CAMERA HEIGHT ABOVE FLOOR',pro:'OPEN PRO METER',web:'WEB CAMERA',stop:'STOP WEB CAMERA',measure:'SAVE WEB MEASUREMENT',clear:'CLEAR MEASUREMENTS',subject:'Camera → actor',wall:'Camera → wall',background:'Camera → background',angle:'Tilt',distance:'Estimated distance',ready:'Aim the crosshair at the floor contact point and save the measurement.',needTilt:'Tilt the camera down toward the floor to calculate distance.',needSensor:'WEB tilt sensor is unavailable. Use the PRO meter.',cameraStarting:'Starting WEB camera…',cameraOn:'WEB camera ready.',cameraOff:'WEB camera stopped.',permission:'Allow camera access and the preview will start automatically.',denied:'Camera access was not granted.',unavailable:'WEB preview is unavailable on this phone/WebView. Use the PRO meter.',proStarting:'Opening PRO meter…',proSaved:'PRO measurement saved.',proFallback:'Native PRO is unavailable on this device. Switching to the WEB fallback mode.',proNoCamera:'PRO measurement is unavailable because this device has no compatible rear camera. Other planners and calculators still work.',measurements:'Saved measurements',none:'No saved measurements yet.',derived:'Actor → background',estimate:'ESTIMATE',note:'Aim at the point where the object meets a level floor. PRO mode is more robust because it uses the native camera and native sensor; the result is still a geometric estimate, not laser ranging.'}
   };
   const E=id=>document.getElementById(id);
   const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
@@ -15,6 +15,16 @@
   function fmt(v){return Number(v).toFixed(2).replace('.',lang()==='sr'?',':'.')+' m'}
   function setStatus(text,kind){const s=E('sceneMeasureStatus');if(!s)return;s.textContent=text;s.className='scene-measure-status '+(kind||'')}
   function targetLabel(key){const x=t();return key==='subject'?x.subject:key==='wall'?x.wall:x.background}
+  function nativeCapabilities(){
+    try{
+      if(window.LightingAIDeviceCapabilities&&typeof window.LightingAIDeviceCapabilities==='object')return window.LightingAIDeviceCapabilities;
+      if(window.Android&&typeof Android.getDeviceCapabilities==='function'){
+        const parsed=JSON.parse(Android.getDeviceCapabilities()||'{}');
+        if(parsed&&typeof parsed==='object')return parsed;
+      }
+    }catch(e){}
+    return null;
+  }
   function pushMeasurement(target,distance,angle,method){
     distance=Number(distance);if(!Number.isFinite(distance)||distance<=0)return false;
     measurements.unshift({target,distance:Number(distance.toFixed(3)),angle:Number(angle),method:method||'web',time:Date.now()});
@@ -44,9 +54,15 @@
   function toggleWebCamera(){if(stream)stopWebCamera();else openWebCamera()}
   function startPro(){
     const input=E('sceneMeasureHeight');let h=Number(String(input?.value||'1.50').replace(',','.'));if(!Number.isFinite(h)||h<.3||h>3)h=1.5;
-    stopWebCamera(false);setStatus(t().proStarting,'');
+    stopWebCamera(false);
+    const caps=nativeCapabilities();
+    if(caps&&caps.nativeAndroid===true){
+      if(Number(caps.rearCameraCount)===0){setStatus(t().proNoCamera,'warn');return}
+      if(caps.nativeProAvailable===false){setStatus(t().proFallback,'warn');setTimeout(()=>openWebCamera(),350);return}
+    }
+    setStatus(t().proStarting,'');
     if(window.Android&&typeof Android.startSceneMeasure==='function'){Android.startSceneMeasure(h,lang());return}
-    setStatus(t().unavailable,'warn');openWebCamera();
+    setStatus(t().proFallback,'warn');openWebCamera();
   }
   function addWebMeasurement(){estimate();if(currentDistance===null){setStatus(sensorSeen?t().needTilt:t().needSensor,'warn');return}pushMeasurement(E('sceneMeasureTarget').value,currentDistance,90-betaSmooth,'web')}
   function clearMeasurements(){measurements=[];save();renderMeasurements()}

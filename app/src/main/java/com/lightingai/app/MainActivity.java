@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
@@ -26,7 +27,6 @@ import java.io.OutputStream;
 public class MainActivity extends Activity {
     private WebView webView;
     private String pendingText = null;
-    private int navigationInsetCssPx = 0;
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private Uri pendingCameraUri = null;
     private boolean pendingCameraCapture = false;
@@ -46,9 +46,16 @@ public class MainActivity extends Activity {
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
-            float density = getResources().getDisplayMetrics().density;
-            navigationInsetCssPx = Math.max(0, Math.round(bottomPx / density));
-            v.setPadding(0, topPx, 0, 0);
+            ViewGroup.LayoutParams rawParams = v.getLayoutParams();
+            if (rawParams instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) rawParams;
+                if (margins.topMargin != topPx || margins.bottomMargin != bottomPx) {
+                    margins.topMargin = topPx;
+                    margins.bottomMargin = bottomPx;
+                    v.setLayoutParams(margins);
+                }
+            }
+            v.setPadding(0, 0, 0, 0);
             applyNavigationInset();
             return insets;
         });
@@ -159,11 +166,14 @@ public class MainActivity extends Activity {
 
     private void applyNavigationInset() {
         if (webView == null) return;
-        final int cssPx = navigationInsetCssPx;
         webView.post(() -> webView.evaluateJavascript(
-            "(function(){var n=document.querySelector('nav');var a=document.querySelector('.app');" +
-            "if(n){n.style.bottom='" + cssPx + "px';n.style.zIndex='9999';}" +
-            "if(a){a.style.paddingBottom='calc(84px + " + cssPx + "px)';}})();", null));
+            "(function(){" +
+            "function fit(){var n=document.querySelector('nav');var a=document.querySelector('.app');if(!n||!a)return;" +
+            "n.style.bottom='0px';n.style.zIndex='9999';" +
+            "var h=Math.ceil(n.getBoundingClientRect().height||84);a.style.paddingBottom=(h+20)+'px';" +
+            "if(window.ResizeObserver&&!window.__lightingaiNavObserver){window.__lightingaiNavObserver=new ResizeObserver(fit);window.__lightingaiNavObserver.observe(n);}}" +
+            "fit();setTimeout(fit,250);setTimeout(fit,1000);" +
+            "})();", null));
     }
 
     private void installCatalogView() {

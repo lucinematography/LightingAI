@@ -6,11 +6,18 @@ const TXT={
  en:{title:'💾 Project Backup',intro:'Save local LightingAI planning data into one JSON file. Photos, device diagnostics and backend/auth settings are not part of the backup.',save:'SAVE PROJECT JSON',copy:'COPY SUMMARY',includeSun:'INCLUDE SUN / LOCATION DATA',included:'Backup includes',items:'items',saved:'Choose where to save the Project Backup file.',copied:'Backup summary copied.',fail:'Backup failed.',none:'No project data available to back up.',note:'This is export-only for now. Backup import is not enabled yet, so existing data cannot be overwritten accidentally.'}
 };
 const t=()=>TXT[lang()];
-const BLOCK=/(backend|api|token|secret|auth|device|capabilit|photo|image|uri)/i;
+const BLOCK=/(backend|api|token|secret|auth|device|diagnostic|capabilit|photo|image|uri)/i;
+const SUN_KEYS=new Set(['lightingai_sun_locations_v1','lightingai_sun_shot_presets_v1']);
 function includeSun(){return !!(E('projectBackupSun')&&E('projectBackupSun').checked)}
-function allowed(k){if(!/^lighting_/i.test(k))return false;if(k==='lighting_language_v1')return false;if(BLOCK.test(k))return false;if(!includeSun()&&/sun/i.test(k))return false;return true}
+function allowed(k){if(!/^lighting_/i.test(k)&&!SUN_KEYS.has(k))return false;if(k==='lighting_language_v1')return false;if(BLOCK.test(k))return false;if(!includeSun()&&/sun/i.test(k))return false;return true}
 function decode(v){try{return JSON.parse(v)}catch(e){return v}}
-function collect(){const storage={},keys=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k||!allowed(k))continue;const raw=localStorage.getItem(k);if(raw==null)continue;storage[k]=decode(raw);keys.push(k)}keys.sort();let selectedEquipment=null;try{if(Array.isArray(window.equipment))selectedEquipment=JSON.parse(JSON.stringify(window.equipment))}catch(e){}return {schema:'lightingai-project-backup-v1',generatedAt:new Date().toISOString(),includesSunLocationData:includeSun(),storageKeys:keys,storage:storage,runtime:{selectedEquipment:selectedEquipment},restoreSupported:false}}
+// Build an export copy; never remove fields from the stored project or live equipment.
+function exportValue(value){
+ if(Array.isArray(value))return value.map(exportValue);
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([key])=>!BLOCK.test(key)&&!/^language$/i.test(key)&&(includeSun()||!/^(sun|location|latitude|longitude|lat$|lon$|lng$|gps)/i.test(key))).map(([key,item])=>[key,exportValue(item)]));
+ return value;
+}
+function collect(){const storage={},keys=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k||!allowed(k))continue;const raw=localStorage.getItem(k);if(raw==null)continue;storage[k]=exportValue(decode(raw));keys.push(k)}keys.sort();let selectedEquipment=null;try{if(Array.isArray(window.equipment))selectedEquipment=exportValue(JSON.parse(JSON.stringify(window.equipment)))}catch(e){}return {schema:'lightingai-project-backup-v1',generatedAt:new Date().toISOString(),includesSunLocationData:includeSun(),storageKeys:keys,storage:storage,runtime:{selectedEquipment:selectedEquipment},restoreSupported:false}}
 window.LightingAIProjectBackupSnapshot=collect;
 function json(){return JSON.stringify(collect(),null,2)}
 function summary(){const b=collect(),x=t(),out=['LightingAI — Project Backup','',x.included+': '+b.storageKeys.length+' '+x.items];b.storageKeys.forEach(k=>out.push('• '+k));if(Array.isArray(b.runtime.selectedEquipment))out.push('• selectedEquipment: '+b.runtime.selectedEquipment.length);out.push('',x.note);return out.join('\n')}

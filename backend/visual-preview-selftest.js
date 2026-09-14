@@ -9,6 +9,9 @@ import {
 
 const ONE_PIXEL_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZQmcAAAAASUVORK5CYII=";
 
+assert.equal(VISUAL_PREVIEW_MODEL, "gpt-image-2.5-sunburst");
+assert.equal(VISUAL_PREVIEW_QUALITY, "low");
+
 const parsed = parseDataImage(ONE_PIXEL_PNG);
 assert.equal(parsed.mime, "image/png");
 assert.equal(parsed.extension, "png");
@@ -55,6 +58,8 @@ const result = await generateVisualPreview(mockOpenAI, {
 assert.equal(received.model, VISUAL_PREVIEW_MODEL);
 assert.equal(received.quality, VISUAL_PREVIEW_QUALITY);
 assert.ok(received.image);
+assert.equal(received.image.name, "lightingai-scene.png");
+assert.equal(received.image.type, "image/png");
 assert.match(received.prompt, /Approved lighting plan/);
 assert.equal(result.image, "data:image/png;base64,aGVsbG8=");
 assert.equal(result.model, VISUAL_PREVIEW_MODEL);

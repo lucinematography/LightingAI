@@ -132,4 +132,10 @@ if(!document.getElementById('lightingai-lighting-cue-script')){
   u.src='file:///android_asset/lighting-cue-planner.js';
   document.body.appendChild(u);
 }
+if(!document.getElementById('lightingai-lighting-cue-export-script')){
+  const v=document.createElement('script');
+  v.id='lightingai-lighting-cue-export-script';
+  v.src='file:///android_asset/lighting-cue-export.js';
+  document.body.appendChild(v);
+}
 })();

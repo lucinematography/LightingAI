@@ -1,0 +1,21 @@
+(function(){
+'use strict';
+const KEY='lighting_shot_list_v1';
+const E=id=>document.getElementById(id);
+const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
+const TXT={sr:{copy:'KOPIRAJ SHOT LIST',csv:'SAČUVAJ CSV',copied:'Shot List je kopiran.',saved:'Izaberi mesto za čuvanje CSV fajla.',fail:'Izvoz nije uspeo.',empty:'Shot List je prazan.'},en:{copy:'COPY SHOT LIST',csv:'SAVE CSV',copied:'Shot List copied.',saved:'Choose where to save the CSV file.',fail:'Export failed.',empty:'Shot List is empty.'}};
+const t=()=>TXT[lang()];
+function read(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&Array.isArray(v.rows)?v.rows:[]}catch(e){return[]}}
+function q(v){const s=String(v==null?'':v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+function statusLabel(v){const sr=lang()==='sr';return v==='done'?(sr?'SNIMLJEN':'SHOT'):v==='ready'?(sr?'SPREMAN':'READY'):(sr?'PLANIRAN':'PLANNED')}
+function typeLabel(v){const x=lang()==='sr'?{wide:'Total',medium:'Srednji',close:'Krupan',detail:'Detalj',insert:'Insert',other:'Drugo'}:{wide:'Wide',medium:'Medium',close:'Close-up',detail:'Detail',insert:'Insert',other:'Other'};return x[v]||v||''}
+function text(rows){const lines=['LightingAI — SHOT LIST',''];rows.forEach((r,i)=>{const s=r.setup||{};lines.push((i+1)+'. '+(r.name||'Shot')+' · '+typeLabel(r.type)+' · '+statusLabel(r.status));lines.push('   '+(s.sceneName||'—')+' · '+(s.focalLengthMm?s.focalLengthMm+' mm':'—')+' · '+(s.cameraToSubjectM?Number(s.cameraToSubjectM).toFixed(2)+' m':'—'));if(r.notes)lines.push('   '+r.notes)});return lines.join('\n')}
+function csv(rows){const head=['No','Shot','Type','Status','Scene','FocalLengthMm','SensorWidthMm','CameraToSubjectM','Notes'];const lines=[head.join(',')];rows.forEach((r,i)=>{const s=r.setup||{};lines.push([i+1,r.name,typeLabel(r.type),statusLabel(r.status),s.sceneName,s.focalLengthMm||'',s.sensorWidthMm||'',s.cameraToSubjectM||'',r.notes||''].map(q).join(','))});return lines.join('\n')}
+function fallbackCopy(v){const ta=document.createElement('textarea');ta.value=v;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();return ok}
+function msg(v){let e=E('shotListExportStatus');if(!e){e=document.createElement('div');e.id='shotListExportStatus';e.style.cssText='font-size:12px;color:#b8f0d1;min-height:18px;margin-top:6px';E('shotListCard')?.querySelector('div')?.appendChild(e)}if(e){e.textContent=v;setTimeout(()=>{if(e.textContent===v)e.textContent=''},2200)}}
+async function copy(){const rows=read();if(!rows.length){msg(t().empty);return}const v=text(rows);let ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(v);ok=true}}catch(e){}if(!ok)ok=fallbackCopy(v);msg(ok?t().copied:t().fail)}
+function saveCsv(){const rows=read();if(!rows.length){msg(t().empty);return}const v='\ufeff'+csv(rows),name='LightingAI_ShotList.csv';if(window.Android&&typeof Android.saveText==='function'){try{Android.saveText(name,v);msg(t().saved);return}catch(e){}}try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([v],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);msg(t().saved)}catch(e){msg(t().fail)}}
+function translate(){if(E('shotListCopy'))E('shotListCopy').textContent=t().copy;if(E('shotListCsv'))E('shotListCsv').textContent=t().csv}
+function install(){const card=E('shotListCard');if(!card||E('shotListCopy'))return false;const actions=card.querySelector('.actions');if(!actions)return false;const c=document.createElement('button');c.id='shotListCopy';c.className='btn secondary';c.type='button';const s=document.createElement('button');s.id='shotListCsv';s.className='btn secondary';s.type='button';actions.appendChild(c);actions.appendChild(s);c.addEventListener('click',copy);s.addEventListener('click',saveCsv);if(typeof window.setLanguage==='function'&&!window.__shotListExportLang){const old=window.setLanguage;window.__shotListExportLang=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}translate();return true}
+let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>120)clearInterval(timer)},100);
+})();

@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -41,6 +43,11 @@ jobs:
         if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
         working-directory: backend
         run: npm run test:project5-safety
+
+      - name: Validate Project 5 stable build 510 base
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        working-directory: backend
+        run: npm run test:project5-base
 
       - name: Validate Project Backup data and exclusions
         run: node backend/project-backup-selftest.js

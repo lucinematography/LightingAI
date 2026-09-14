@@ -72,4 +72,10 @@ if(!document.getElementById('lightingai-set-sketch-sun-script')){
   s.src='file:///android_asset/set-sketch-sun.js';
   document.body.appendChild(s);
 }
+if(!document.getElementById('lightingai-shot-setup-report-script')){
+  const r=document.createElement('script');
+  r.id='lightingai-shot-setup-report-script';
+  r.src='file:///android_asset/shot-setup-report.js';
+  document.body.appendChild(r);
+}
 })();

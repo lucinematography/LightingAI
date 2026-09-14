@@ -30,6 +30,11 @@ jobs:
       - name: Validate Android WebView JavaScript syntax
         run: find app/src/main/assets -maxdepth 1 -name '*.js' -print0 | xargs -0 -n1 node --check
 
+      - name: Validate Project 5 feature safety invariants
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        working-directory: backend
+        run: npm run test:project5-safety
+
       - name: Validate Project Backup data and exclusions
         run: node backend/project-backup-selftest.js
 

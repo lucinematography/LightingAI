@@ -1,6 +1,9 @@
 (function(){
 'use strict';
 var BUTTON_ID='lightingai-ai-visual-launcher';
+var EQUIPMENT_CARD_ID='lightingai-ai-equipment-card';
+var POWER_BODY_ID='lightingai-power-collapsible-body';
+var POWER_TOGGLE_ID='lightingai-power-collapsible-toggle';
 var SCRIPT_ID='lightingai-ai-visual-scene-plan-script';
 var SIM_SCRIPT_ID='lightingai-ai-visual-local-simulation-script';
 var POLISH_SCRIPT_ID='lightingai-ai-visual-result-polish-script';
@@ -14,6 +17,7 @@ var previewCapabilityVerified=false;
 var diagnosticRequestInFlight=false;
 function label(){return window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN';}
 function isSr(){return window.currentLang!=='en';}
+function equipmentText(){return isSr()?{title:'✦ AI VIZUELNI PLAN',desc:'Fotografija scene + dostupna rasveta + AI predlog + vizuelni preview.'}:{title:'✦ AI VISUAL PLAN',desc:'Scene photo + available lighting + AI proposal + visual preview.'};}
 function unavailableResponse(status){return {ok:false,status:status||503,json:function(){return Promise.resolve({ok:false,environment:'unverified-isolated-test'});}};}
 function isExactApi(url,path){return url===PROD_API+path||url.indexOf(PROD_API+path+'?')===0;}
 function buildInfo(){return window.LightingAIFeatureBuild||{};}
@@ -128,18 +132,36 @@ function openModule(){
   installPreviewApiRouter();
   ensureBuildInfo(function(){ensureSimulation(openPlanModule);});
 }
+function installEquipmentEntry(){
+  var page=document.getElementById('equipment');if(!page)return false;
+  var card=document.getElementById(EQUIPMENT_CARD_ID),t=equipmentText();
+  if(!card){
+    card=document.createElement('div');card.id=EQUIPMENT_CARD_ID;card.className='card';
+    card.style.cssText='border-color:#66571f;background:linear-gradient(180deg,#191b20,#13161b);padding:16px';
+    card.innerHTML='<div data-aiv-title style="font-size:20px;font-weight:900;color:#f5c542;margin-bottom:6px"></div><div data-aiv-desc class="muted small" style="line-height:1.45;margin-bottom:12px"></div>';
+    var button=document.createElement('button');button.id=BUTTON_ID;button.type='button';button.className='btn primary';button.onclick=openModule;button.style.cssText='width:100%;padding:14px;font-size:15px;font-weight:900';card.appendChild(button);
+  }
+  var title=card.querySelector('[data-aiv-title]'),desc=card.querySelector('[data-aiv-desc]');if(title)title.textContent=t.title;if(desc)desc.textContent=t.desc;
+  var pageTitle=page.querySelector('h1');if(pageTitle)pageTitle.insertAdjacentElement('afterend',card);else if(card.parentNode!==page)page.insertBefore(card,page.firstChild);
+  updateButton();return true;
+}
+function updatePowerToggle(toggle,body){var open=!body.hidden;toggle.textContent=(open?(isSr()?'ZATVORI':'CLOSE'):(isSr()?'OTVORI':'OPEN'))+(open?' ▲':' ▼');toggle.setAttribute('aria-expanded',open?'true':'false');}
+function compactPowerCard(){
+  var card=document.getElementById('powerCalculatorCard');if(!card)return false;
+  if(card.dataset.p5Compact==='1'){installEquipmentEntry();return true;}
+  var title=card.querySelector('#powerTitle')||card.querySelector('h2');if(!title)return false;
+  var header=document.createElement('div');header.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px';
+  var toggle=document.createElement('button');toggle.id=POWER_TOGGLE_ID;toggle.type='button';toggle.style.cssText='border:1px solid #3b4048;border-radius:9px;padding:8px 10px;background:#252a31;color:#fff;font-weight:800;font-size:11px;white-space:nowrap';
+  var body=document.createElement('div');body.id=POWER_BODY_ID;body.hidden=true;
+  card.insertBefore(header,card.firstChild);header.appendChild(title);title.style.margin='0';header.appendChild(toggle);
+  while(header.nextSibling)body.appendChild(header.nextSibling);card.appendChild(body);card.dataset.p5Compact='1';card.style.padding='13px 16px';
+  toggle.onclick=function(){body.hidden=!body.hidden;updatePowerToggle(toggle,body);};updatePowerToggle(toggle,body);installEquipmentEntry();return true;
+}
 function install(){
-  if(document.getElementById(BUTTON_ID))return;
-  var button=document.createElement('button');
-  button.id=BUTTON_ID;
-  button.type='button';
-  button.textContent='✦ '+label();
-  button.setAttribute('aria-label',label());
-  button.style.cssText='position:fixed;right:14px;bottom:92px;z-index:1200;border:1px solid #f5c542;border-radius:999px;padding:12px 15px;background:#191b20;color:#f5c542;font-weight:900;box-shadow:0 8px 24px rgba(0,0,0,.35)';
-  button.onclick=openModule;
-  document.body.appendChild(button);
+  try{installEquipmentEntry();}catch(e){}
   ensureBuildInfo(updateButton);
+  var tries=0,timer=setInterval(function(){tries++;try{installEquipmentEntry();if(compactPowerCard()){clearInterval(timer);return;}}catch(e){}if(tries>=80)clearInterval(timer);},125);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.8-phone-diagnostics'};
+window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'1.0-equipment-home-safe'};
 })();

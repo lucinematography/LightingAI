@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -32,6 +33,8 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private Uri pendingCameraUri = null;
     private boolean pendingCameraCapture = false;
+    private boolean pendingPhotoCapturePermission = false;
+    private boolean pendingGalleryPersistable = false;
     private NativeSunLocation nativeSunLocation;
     private NativeSunCompass nativeSunCompass;
     private boolean pendingNativeSunLocation = false;
@@ -108,8 +111,14 @@ public class MainActivity extends Activity {
                 if (pendingFileChooser != null) pendingFileChooser.onReceiveValue(null);
                 pendingFileChooser = filePathCallback;
                 pendingCameraCapture = fileChooserParams != null && fileChooserParams.isCaptureEnabled();
+                pendingGalleryPersistable = false;
 
                 if (pendingCameraCapture) {
+                    if (!hasCameraPermission()) {
+                        pendingPhotoCapturePermission = true;
+                        requestCameraPermission();
+                        return true;
+                    }
                     return openCameraForWebView();
                 }
                 return openGalleryForWebView(fileChooserParams);
@@ -212,19 +221,29 @@ public class MainActivity extends Activity {
     }
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
+        pendingGalleryPersistable = false;
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        if (params != null && params.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE) {
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        }
         try {
             startActivityForResult(intent, CHOOSE_IMAGE);
+            pendingGalleryPersistable = true;
             return true;
         } catch (ActivityNotFoundException e) {
             try {
-                Intent fallback = params != null ? params.createIntent() : new Intent(Intent.ACTION_GET_CONTENT);
-                if (fallback.getType() == null) fallback.setType("image/*");
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
                 fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                fallback.setType("image/*");
+                fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                if (params != null && params.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE) {
+                    fallback.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                }
                 startActivityForResult(fallback, CHOOSE_IMAGE);
+                pendingGalleryPersistable = false;
                 return true;
             } catch (Exception ignored) {
                 finishFileChooser(null);
@@ -234,6 +253,9 @@ public class MainActivity extends Activity {
     }
 
     private boolean openCameraForWebView() {
+        pendingPhotoCapturePermission = false;
+        pendingGalleryPersistable = false;
+        deletePendingCameraUri();
         Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         try {
             ContentValues values = new ContentValues();
@@ -246,6 +268,7 @@ public class MainActivity extends Activity {
             if (pendingCameraUri == null) throw new IllegalStateException("Could not create camera output URI");
 
             camera.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
+            camera.setClipData(ClipData.newRawUri("LightingAI scene", pendingCameraUri));
             camera.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             startActivityForResult(camera, CHOOSE_IMAGE);
             return true;
@@ -256,10 +279,22 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void persistGalleryAccess(Intent data, Uri[] result) {
+        if (!pendingGalleryPersistable || data == null || result == null) return;
+        int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        if (takeFlags == 0) takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+        for (Uri uri : result) {
+            if (uri == null) continue;
+            try { getContentResolver().takePersistableUriPermission(uri, takeFlags); } catch (Exception ignored) {}
+        }
+    }
+
     private void finishFileChooser(Uri[] result) {
         ValueCallback<Uri[]> callback = pendingFileChooser;
         pendingFileChooser = null;
         pendingCameraCapture = false;
+        pendingPhotoCapturePermission = false;
+        pendingGalleryPersistable = false;
         if (callback != null) callback.onReceiveValue(result);
     }
 
@@ -357,7 +392,13 @@ public class MainActivity extends Activity {
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_PERMISSION) {
-            notifySceneMeasureCameraPermission(hasCameraPermission());
+            boolean granted = hasCameraPermission();
+            notifySceneMeasureCameraPermission(granted);
+            if (pendingPhotoCapturePermission) {
+                pendingPhotoCapturePermission = false;
+                if (granted && pendingFileChooser != null) openCameraForWebView();
+                else finishFileChooser(null);
+            }
         } else if (requestCode == LOCATION_PERMISSION && pendingNativeSunLocation) {
             if (hasLocationPermission()) requestNativeSunLocation();
             else { pendingNativeSunLocation = false; notifyNativeSunLocationError(); }
@@ -396,6 +437,10 @@ public class MainActivity extends Activity {
                     finishFileChooser(new Uri[]{uri});
                 } else {
                     Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                    if ((result == null || result.length == 0) && data != null && data.getData() != null) {
+                        result = new Uri[]{data.getData()};
+                    }
+                    persistGalleryAccess(data, result);
                     finishFileChooser(result);
                 }
             } else {

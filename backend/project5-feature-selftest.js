@@ -20,6 +20,8 @@ const phoneDiagnostics = read('app/src/main/assets/ai-visual-phone-diagnostics.j
 const phoneTest = read('app/src/main/assets/ai-visual-phone-test.js');
 const previewServer = read('backend/preview-test-server.js');
 const bootstrap = read('backend/render-bootstrap.js');
+const stableBaseGuard = read('backend/project5-stable-base-selftest.js');
+const packageJson = read('backend/package.json');
 const workflow = read('.github/workflows/build-apk.yml');
 
 requireText(launcher, "var PROD_API='https://lightingai.onrender.com';", 'production API anchor missing');
@@ -68,9 +70,19 @@ forbidText(phoneTest, '/api/visual-preview', 'guided phone test must never call 
 requireText(previewServer, "environment: 'isolated-test'", 'test backend identity missing');
 requireText(previewServer, 'previewConfigured', 'test backend configured-state guard missing');
 requireText(bootstrap, 'LIGHTINGAI_PREVIEW_TEST', 'isolated Render bootstrap flag missing');
+
+requireText(stableBaseGuard, "const STABLE_BASE = '77462ab3cf80c48c5ca0c903486e59919a3bf747';", 'build 510 stable anchor missing from guard');
+requireText(stableBaseGuard, "git(['merge-base', '--is-ancestor', STABLE_BASE, 'HEAD'])", 'stable-base ancestry check missing');
+requireText(stableBaseGuard, "git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])", 'stable-base changed-file guard missing');
+requireText(stableBaseGuard, 'catalog.js may not delete stable build 510 code', 'catalog non-destructive guard missing');
+requireText(packageJson, '"test:project5-base":"node project5-stable-base-selftest.js"', 'stable-base npm test command missing');
+
 requireText(workflow, 'Embed Project 5 build identity', 'CI build identity step missing');
 requireText(workflow, 'GITHUB_RUN_NUMBER', 'CI run number must be embedded in test APK');
 requireText(workflow, 'feature-build-info.js', 'CI generated build metadata asset missing');
+requireText(workflow, 'fetch-depth: 0', 'CI must fetch history for stable-base verification');
+requireText(workflow, 'Validate Project 5 stable build 510 base', 'CI stable-base guard step missing');
+requireText(workflow, 'npm run test:project5-base', 'CI must execute stable-base guard');
 
 forbidText(launcher, "PREVIEW_TEST_API+'/api/lighting-plan'", 'lighting-plan must never route to isolated preview service');
 
@@ -87,6 +99,7 @@ console.log(JSON.stringify({
     'result polish layer',
     'visible build identity diagnostics',
     'phone diagnostics and copyable report',
-    'guided build-scoped phone test checklist'
+    'guided build-scoped phone test checklist',
+    'build 510 ancestry and stable-file diff guard'
   ]
 }, null, 2));

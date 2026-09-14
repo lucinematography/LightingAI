@@ -225,6 +225,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-sun-camera-script')){var k=document.createElement('script');k.id='lightingai-sun-camera-script';k.src='file:///android_asset/sun-camera.js';document.body.appendChild(k);}" +
             "if(!document.getElementById('lightingai-sun-shot-planner-script')){var p=document.createElement('script');p.id='lightingai-sun-shot-planner-script';p.src='file:///android_asset/sun-shot-planner.js';document.body.appendChild(p);}" +
             "if(!document.getElementById('lightingai-scene-measure-script')){var m=document.createElement('script');m.id='lightingai-scene-measure-script';m.src='file:///android_asset/scene-measure.js';document.body.appendChild(m);}" +
+            "if(!document.getElementById('lightingai-light-calculator-script')){var l=document.createElement('script');l.id='lightingai-light-calculator-script';l.src='file:///android_asset/light-calculator.js';document.body.appendChild(l);}" +
             "})();", null);
     }
 

@@ -70,11 +70,30 @@ if (catalogWithoutLauncher !== stableCatalog.trim()) {
   fail('catalog.js may not delete stable build 510 code or alter it beyond the isolated launcher line');
 }
 
+// Secret guard: scan changed Project 5 text files for literal credentials.
+const textFiles = changed.filter((path) => /\.(?:js|json|yml|yaml|html|md)$/i.test(path));
+for (const path of textFiles) {
+  if (path === 'backend/project5-stable-base-selftest.js') continue;
+  let content = '';
+  try {
+    content = git(['show', `HEAD:${path}`]);
+  } catch {
+    continue;
+  }
+  if (/\bsk-(?:proj-)?[A-Za-z0-9_-]{16,}\b/.test(content)) {
+    fail(`literal OpenAI API key detected in ${path}`);
+  }
+  if (/OPENAI_API_KEY\s*[:=]\s*['"][^'"]{8,}['"]/.test(content)) {
+    fail(`direct OPENAI_API_KEY value detected in ${path}; credentials must remain environment-only`);
+  }
+}
+
 console.log(JSON.stringify({
   ok: true,
   suite: 'LightingAI Project 5 stable-base guard',
   stableBase: STABLE_BASE,
   changedFiles: changed,
   catalogProtection: 'feature catalog becomes byte-identical to build 510 when the one allowed launcher line is removed',
+  secretProtection: 'changed Project 5 text files reject literal OpenAI API keys and direct OPENAI_API_KEY assignments',
   protectedByDefault: 'all files not explicitly allowlisted remain byte-for-byte on the build 510 side of the branch diff'
 }, null, 2));

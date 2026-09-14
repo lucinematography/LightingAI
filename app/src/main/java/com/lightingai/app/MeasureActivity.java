@@ -37,6 +37,7 @@ import java.util.Locale;
 
 public class MeasureActivity extends Activity implements SensorEventListener {
     private static final int CAMERA_PERMISSION = 701;
+    private static final int STABILITY_WINDOW = 14;
     private TextureView textureView;
     private CameraDevice cameraDevice;
     private CameraCaptureSession captureSession;
@@ -56,6 +57,11 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private double distanceM = Double.NaN;
     private double cameraHeightM = 1.50;
     private boolean english = false;
+    private final double[] depressionWindow = new double[STABILITY_WINDOW];
+    private int depressionCount = 0;
+    private int depressionIndex = 0;
+    private double stabilitySpread = Double.NaN;
+    private double uncertaintyM = Double.NaN;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,7 +129,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL); panel.setPadding(dp(14),dp(10),dp(14),dp(14)); panel.setBackgroundColor(0xee0d0f12);
-        hintText = makeText(tr("Nišan postavi na mesto gde objekat dodiruje ravan pod. Drži telefon mirno.", "Place the crosshair where the object meets a level floor. Hold the phone steady."),12,0xffb0b5bd); panel.addView(hintText);
+        hintText = makeText(tr("Nišan postavi na mesto gde objekat dodiruje ravan pod. Drži telefon mirno dok ne piše STABILNO.", "Place the crosshair where the object meets a level floor. Hold the phone still until STABLE appears."),12,0xffb0b5bd); panel.addView(hintText);
         LinearLayout hrow = new LinearLayout(this); hrow.setGravity(Gravity.CENTER_VERTICAL);
         TextView hl = makeText(tr("Visina kamere (m)", "Camera height (m)"),14,Color.WHITE); hrow.addView(hl,new LinearLayout.LayoutParams(0,dp(48),1f));
         heightInput = new EditText(this); heightInput.setSingleLine(true); heightInput.setText(String.format(Locale.US,"%.2f",cameraHeightM)); heightInput.setTextColor(Color.WHITE); heightInput.setTextSize(16); heightInput.setInputType(2|8192); heightInput.setGravity(Gravity.CENTER); heightInput.setBackgroundColor(0xff20242a);
@@ -256,6 +262,24 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         if (cameraDevice != null) { cameraDevice.close(); cameraDevice = null; }
     }
 
+    private void recordDepression(double value) {
+        depressionWindow[depressionIndex] = value;
+        depressionIndex = (depressionIndex + 1) % STABILITY_WINDOW;
+        if (depressionCount < STABILITY_WINDOW) depressionCount++;
+        if (depressionCount < 2) { stabilitySpread = Double.NaN; return; }
+        double min = Double.POSITIVE_INFINITY, max = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < depressionCount; i++) {
+            min = Math.min(min, depressionWindow[i]);
+            max = Math.max(max, depressionWindow[i]);
+        }
+        stabilitySpread = max - min;
+    }
+
+    private double distanceForAngle(double angle) {
+        if (!(angle > 0) || !(cameraHeightM > 0)) return Double.NaN;
+        return cameraHeightM / Math.tan(Math.toRadians(angle));
+    }
+
     @Override public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType()!=Sensor.TYPE_ROTATION_VECTOR && event.sensor.getType()!=Sensor.TYPE_GAME_ROTATION_VECTOR) return;
         float[] r = new float[9]; SensorManager.getRotationMatrixFromVector(r,event.values);
@@ -263,6 +287,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         double horizontal = Math.sqrt(worldX*worldX + worldY*worldY);
         double rawDepression = Math.toDegrees(Math.atan2(-worldZ,horizontal));
         if (!Double.isFinite(rawDepression)) return;
+        recordDepression(rawDepression);
         depressionSmooth = Double.isFinite(depressionSmooth) ? depressionSmooth*0.84 + rawDepression*0.16 : rawDepression;
         cameraHeightM = parseHeight();
         updateEstimate();
@@ -271,18 +296,36 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private void updateEstimate() {
         double d = depressionSmooth;
         if (d > 2.5 && d < 82 && cameraHeightM > 0.2) {
-            double calculated = cameraHeightM / Math.tan(Math.toRadians(d));
+            double calculated = distanceForAngle(d);
             if (Double.isFinite(calculated) && calculated > 0.15 && calculated < 100) {
                 distanceM = calculated;
+                double angleUncertainty = Double.isFinite(stabilitySpread) ? Math.max(0.35, stabilitySpread / 2.0) : 1.0;
+                double far = distanceForAngle(Math.max(2.6, d - angleUncertainty));
+                double near = distanceForAngle(Math.min(81.9, d + angleUncertainty));
+                uncertaintyM = Math.max(Math.abs(far - distanceM), Math.abs(distanceM - near));
                 distanceText.setText(String.format(Locale.US,"%.2f m",distanceM));
                 angleText.setText(String.format(Locale.US,tr("Nagib %.1f° nadole", "Down tilt %.1f°"),d));
-                boolean good = d >= 8 && d <= 60;
-                qualityText.setText(good ? tr("STABILNIJA PROCENA", "BETTER ESTIMATE") : tr("PROCENA OSETLJIVIJA NA POMERANJE", "ESTIMATE MORE SENSITIVE TO MOVEMENT"));
-                qualityText.setTextColor(good ? 0xffb8f0d1 : 0xfff5dd91);
+
+                boolean enoughSamples = depressionCount >= 8;
+                boolean stable = enoughSamples && Double.isFinite(stabilitySpread) && stabilitySpread <= 1.5;
+                boolean geometryGood = d >= 8 && d <= 60;
+                if (!enoughSamples) {
+                    qualityText.setText(tr("SAČEKAJ TRENUTAK…", "WAIT A MOMENT…"));
+                    qualityText.setTextColor(0xff9da3ad);
+                } else if (!stable) {
+                    qualityText.setText(String.format(Locale.US,tr("DRŽI MIRNO · raspon %.1f°", "HOLD STILL · spread %.1f°"),stabilitySpread));
+                    qualityText.setTextColor(0xffffb5b5);
+                } else if (geometryGood) {
+                    qualityText.setText(String.format(Locale.US,tr("STABILNO · približno ±%.2f m", "STABLE · approx ±%.2f m"),uncertaintyM));
+                    qualityText.setTextColor(0xffb8f0d1);
+                } else {
+                    qualityText.setText(String.format(Locale.US,tr("STABILNO, ali osetljiv ugao · ±%.2f m", "STABLE, but sensitive angle · ±%.2f m"),uncertaintyM));
+                    qualityText.setTextColor(0xfff5dd91);
+                }
                 return;
             }
         }
-        distanceM = Double.NaN; distanceText.setText("— m"); qualityText.setText("");
+        distanceM = Double.NaN; uncertaintyM = Double.NaN; distanceText.setText("— m"); qualityText.setText("");
         angleText.setText(tr("Spusti nišan ka podnožju objekta", "Lower the crosshair toward the object base"));
     }
 
@@ -292,8 +335,20 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     }
 
     private void finishMeasurement(String target) {
-        if (!Double.isFinite(distanceM)) { hintText.setText(tr("Nema stabilnog merenja. Spusti nišan na podnožje objekta.", "No stable measurement. Aim at the object's floor contact point.")); return; }
-        Intent data = new Intent(); data.putExtra("target",target); data.putExtra("distance",distanceM); data.putExtra("angle",depressionSmooth); data.putExtra("cameraHeight",parseHeight());
+        if (!Double.isFinite(distanceM)) {
+            hintText.setText(tr("Nema merenja. Spusti nišan na podnožje objekta.", "No measurement. Aim at the object's floor contact point."));
+            return;
+        }
+        if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 2.0) {
+            hintText.setText(tr("Drži telefon mirno trenutak, pa pokušaj ponovo.", "Hold the phone still for a moment, then try again."));
+            return;
+        }
+        Intent data = new Intent();
+        data.putExtra("target",target);
+        data.putExtra("distance",distanceM);
+        data.putExtra("angle",depressionSmooth);
+        data.putExtra("cameraHeight",parseHeight());
+        data.putExtra("uncertainty",uncertaintyM);
         setResult(RESULT_OK,data); finish();
     }
 

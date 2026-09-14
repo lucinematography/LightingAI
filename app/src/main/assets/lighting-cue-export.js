@@ -1,0 +1,31 @@
+(function(){
+'use strict';
+const KEY='lighting_cue_planner_v1';
+const SHOT_KEY='lighting_shot_list_v1';
+const E=id=>document.getElementById(id);
+const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
+const TXT={
+  sr:{copy:'KOPIRAJ CUE LISTU',csv:'SAČUVAJ CSV',copied:'Cue lista je kopirana.',saved:'Izaberi mesto za čuvanje Cue CSV fajla.',fail:'Izvoz nije uspeo.',empty:'Nema Lighting Cue stavki.',cue:'LIGHTING CUE LISTA',cues:'cue-ova',shots:'kadrova',dmx:'sa DMX vezom'},
+  en:{copy:'COPY CUE LIST',csv:'SAVE CSV',copied:'Cue list copied.',saved:'Choose where to save the Cue CSV file.',fail:'Export failed.',empty:'No Lighting Cue items.',cue:'LIGHTING CUE LIST',cues:'cues',shots:'shots',dmx:'linked to DMX'}
+};
+const t=()=>TXT[lang()];
+function parse(key,fallback){try{const v=JSON.parse(localStorage.getItem(key));return v==null?fallback:v}catch(e){return fallback}}
+function rows(){const v=parse(KEY,{rows:[]});return v&&Array.isArray(v.rows)?v.rows:[]}
+function shots(){const v=parse(SHOT_KEY,{rows:[]});return v&&Array.isArray(v.rows)?v.rows:[]}
+function shotName(id){if(!id)return'';const s=shots().find(v=>v.id===id);return s?String(s.name||''):''}
+function snapshot(){const list=rows().map((r,index)=>({index:index+1,name:String(r.name||''),shotId:r.shotId||null,shot:shotName(r.shotId),trigger:String(r.trigger||''),dmxId:r.dmxId||null,fixture:String(r.fixture||''),universe:r.universe===''||r.universe==null?null:Math.max(1,Math.round(Number(r.universe)||1)),start:r.start===''||r.start==null?null:Math.min(512,Math.max(1,Math.round(Number(r.start)||1))),dimmer:r.dimmer===''||r.dimmer==null?null:Math.min(100,Math.max(0,Math.round(Number(r.dimmer)||0))),cct:r.cct===''||r.cct==null?null:Math.round(Number(r.cct)||0),color:String(r.color||''),fade:r.fade===''||r.fade==null?null:Math.max(0,Number(r.fade)||0),notes:String(r.notes||'')}));const linkedShots=[...new Set(list.map(r=>r.shotId).filter(Boolean))];const dmxCount=list.filter(r=>r.dmxId).length;return {schema:'lightingai-lighting-cues-v1',generatedAt:new Date().toISOString(),count:list.length,shotCount:linkedShots.length,dmxLinkedCount:dmxCount,rows:list}}
+window.LightingAICueExportSnapshot=snapshot;
+function textReport(){const s=snapshot(),x=t(),out=['LightingAI — '+x.cue,''];if(!s.rows.length){out.push(x.empty);return out.join('\n')}s.rows.forEach(r=>{let line=r.index+'. '+(r.name||'Cue');if(r.shot)line+=' · '+r.shot;if(r.trigger)line+=' · '+r.trigger;out.push(line);const tech=[];if(r.fixture)tech.push(r.fixture);if(r.universe!=null)tech.push('U'+r.universe);if(r.start!=null)tech.push('A'+r.start);if(r.dimmer!=null)tech.push(r.dimmer+'%');if(r.cct)tech.push(r.cct+' K');if(r.color)tech.push(r.color);if(r.fade!=null)tech.push('fade '+r.fade+' s');if(tech.length)out.push('   '+tech.join(' · '));if(r.notes)out.push('   '+r.notes)});out.push('',s.count+' '+x.cues+' · '+s.shotCount+' '+x.shots+' · '+s.dmxLinkedCount+' '+x.dmx);return out.join('\n')}
+function q(v){const s=String(v==null?'':v);return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+function csvReport(){const s=snapshot(),head=['No','Cue','Shot','TriggerTime','Fixture','Universe','Start','DimmerPercent','CCTK','ColorGel','FadeSeconds','Notes'];const out=[head.join(',')];s.rows.forEach(r=>out.push([r.index,r.name,r.shot,r.trigger,r.fixture,r.universe==null?'':r.universe,r.start==null?'':r.start,r.dimmer==null?'':r.dimmer,r.cct||'',r.color,r.fade==null?'':r.fade,r.notes].map(q).join(',')));return '\ufeff'+out.join('\r\n')}
+function fallbackCopy(v){const ta=document.createElement('textarea');ta.value=v;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();return ok}
+function msg(v){let e=E('cueExportStatus');if(!e){e=document.createElement('div');e.id='cueExportStatus';e.style.cssText='font-size:12px;color:#b8f0d1;min-height:18px;margin-top:6px';E('cueCard')?.querySelector('div')?.appendChild(e)}if(e){e.textContent=v;setTimeout(()=>{if(e.textContent===v)e.textContent=''},2200)}}
+async function copy(){if(!rows().length){msg(t().empty);return}const v=textReport();let ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(v);ok=true}}catch(e){}if(!ok)ok=fallbackCopy(v);msg(ok?t().copied:t().fail)}
+function saveCsv(){if(!rows().length){msg(t().empty);return}const v=csvReport(),name='LightingAI_Lighting_Cues.csv';if(window.Android&&typeof Android.saveText==='function'){try{Android.saveText(name,v);msg(t().saved);return}catch(e){}}try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([v],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);msg(t().saved)}catch(e){msg(t().fail)}}
+function updateShotSetup(){const box=E('shotSetupPreview');if(!box)return;let tile=E('shotSetupCueTile');if(!tile){tile=document.createElement('div');tile.id='shotSetupCueTile';tile.innerHTML='<small>CUE</small><b>—</b>';box.appendChild(tile)}const s=snapshot(),b=tile.querySelector('b');if(!b)return;b.textContent=s.count?(s.count+' cue · '+s.dmxLinkedCount+' DMX'):'—';b.style.color='#f5c542'}
+function translate(){if(E('cueCopyList'))E('cueCopyList').textContent=t().copy;if(E('cueSaveCsv'))E('cueSaveCsv').textContent=t().csv;updateShotSetup()}
+function install(){const card=E('cueCard');if(!card)return false;if(!E('cueCopyList')){const actions=card.querySelector('.actions');if(!actions)return false;const c=document.createElement('button');c.id='cueCopyList';c.className='btn secondary';c.type='button';c.addEventListener('click',copy);actions.appendChild(c);const s=document.createElement('button');s.id='cueSaveCsv';s.className='btn secondary';s.type='button';s.addEventListener('click',saveCsv);actions.appendChild(s)}translate();return true}
+let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
+setInterval(()=>{install();updateShotSetup()},1500);
+const old=window.setLanguage;if(typeof old==='function'&&!window.__cueExportLangHook){window.__cueExportLangHook=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}
+})();

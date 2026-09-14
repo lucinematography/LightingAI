@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -34,6 +35,7 @@ public class MainActivity extends Activity {
     private static final int CREATE_FILE = 501;
     private static final int CHOOSE_IMAGE = 502;
     private static final int LOCATION_PERMISSION = 503;
+    private static final int CAMERA_PERMISSION = 504;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -74,6 +76,23 @@ public class MainActivity extends Activity {
                 callback.invoke(origin, hasLocationPermission(), false);
             }
 
+            @Override public void onPermissionRequest(PermissionRequest request) {
+                runOnUiThread(() -> {
+                    if (request == null) return;
+                    if (!hasCameraPermission()) {
+                        request.deny();
+                        return;
+                    }
+                    for (String resource : request.getResources()) {
+                        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) {
+                            request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+                            return;
+                        }
+                    }
+                    request.deny();
+                });
+            }
+
             @Override public boolean onShowFileChooser(
                 WebView view,
                 ValueCallback<Uri[]> filePathCallback,
@@ -104,6 +123,26 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasLocationPermission()) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION);
         }
+    }
+
+    private boolean hasCameraPermission() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+            checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestCameraPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasCameraPermission()) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION);
+        } else {
+            notifySceneMeasureCameraPermission(true);
+        }
+    }
+
+    private void notifySceneMeasureCameraPermission(boolean granted) {
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAISceneMeasureCameraPermission&&window.LightingAISceneMeasureCameraPermission(" + (granted ? "true" : "false") + ");",
+            null));
     }
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
@@ -184,6 +223,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-sun-ui-script')){var s=document.createElement('script');s.id='lightingai-sun-ui-script';s.src='file:///android_asset/sun-ui.js';document.body.appendChild(s);}" +
             "if(!document.getElementById('lightingai-sun-camera-script')){var k=document.createElement('script');k.id='lightingai-sun-camera-script';k.src='file:///android_asset/sun-camera.js';document.body.appendChild(k);}" +
             "if(!document.getElementById('lightingai-sun-shot-planner-script')){var p=document.createElement('script');p.id='lightingai-sun-shot-planner-script';p.src='file:///android_asset/sun-shot-planner.js';document.body.appendChild(p);}" +
+            "if(!document.getElementById('lightingai-scene-measure-script')){var m=document.createElement('script');m.id='lightingai-scene-measure-script';m.src='file:///android_asset/scene-measure.js';document.body.appendChild(m);}" +
             "})();", null);
     }
 
@@ -205,6 +245,21 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public boolean hasLocationPermission() {
             return MainActivity.this.hasLocationPermission();
+        }
+
+        @JavascriptInterface public void requestCameraPermission() {
+            runOnUiThread(() -> MainActivity.this.requestCameraPermission());
+        }
+
+        @JavascriptInterface public boolean hasCameraPermission() {
+            return MainActivity.this.hasCameraPermission();
+        }
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_PERMISSION) {
+            notifySceneMeasureCameraPermission(hasCameraPermission());
         }
     }
 

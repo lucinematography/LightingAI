@@ -47,6 +47,7 @@ public final class NativeSunLocation implements LocationListener {
 
         boolean requested = false;
         fallbackLocation = bestLastKnown();
+        running = true;
         try {
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, this, Looper.getMainLooper());
@@ -66,7 +67,6 @@ public final class NativeSunLocation implements LocationListener {
             return false;
         }
 
-        running = true;
         mainHandler.postDelayed(timeout, TIMEOUT_MS);
         if (fallbackLocation != null && System.currentTimeMillis() - fallbackLocation.getTime() <= FRESH_LAST_KNOWN_MS) {
             mainHandler.postDelayed(() -> {
@@ -102,7 +102,7 @@ public final class NativeSunLocation implements LocationListener {
     }
 
     @Override public void onLocationChanged(Location location) {
-        if (location == null) return;
+        if (!running || location == null) return;
         if (fallbackLocation == null || isBetter(location, fallbackLocation)) fallbackLocation = location;
         finishSuccess(location);
     }

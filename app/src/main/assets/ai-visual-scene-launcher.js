@@ -10,6 +10,8 @@ var previewCapabilityVerified=false;
 function label(){return window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN';}
 function unavailableResponse(status){return {ok:false,status:status||503,json:function(){return Promise.resolve({ok:false,environment:'unverified-isolated-test'});}};}
 function isExactApi(url,path){return url===PROD_API+path||url.indexOf(PROD_API+path+'?')===0;}
+function selectedLook(){var s=document.getElementById('aiv-look-preset');if(s&&s.value)return s.value;if(window.LightingAILocalLightSimulation&&typeof window.LightingAILocalLightSimulation.getPreset==='function')return window.LightingAILocalLightSimulation.getPreset();return 'Cinematic';}
+function injectLook(init){if(!init||typeof init.body!=='string')return init;try{var body=JSON.parse(init.body);if(body&&typeof body==='object'&&!Array.isArray(body)){body.look=selectedLook();var copy=Object.assign({},init);copy.body=JSON.stringify(body);return copy;}}catch(e){}return init;}
 function emitPlan(response){
   if(!response||!response.ok||!document.getElementById(MODULE_ID))return;
   try{
@@ -47,7 +49,7 @@ function installPreviewApiRouter(){
       }).catch(function(){previewCapabilityVerified=false;return unavailableResponse(503);});
     }
     if(isExactApi(url,'/api/lighting-plan')){
-      return nativeFetch(input,init).then(function(response){emitPlan(response);return response;});
+      return nativeFetch(input,injectLook(init)).then(function(response){emitPlan(response);return response;});
     }
     return nativeFetch(input,init);
   };
@@ -93,5 +95,5 @@ function install(){
   document.body.appendChild(button);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.4-local-simulation'};
+window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.5-look-presets'};
 })();

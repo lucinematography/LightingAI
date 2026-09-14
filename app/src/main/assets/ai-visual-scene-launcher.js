@@ -5,6 +5,7 @@ var SCRIPT_ID='lightingai-ai-visual-scene-plan-script';
 var SIM_SCRIPT_ID='lightingai-ai-visual-local-simulation-script';
 var POLISH_SCRIPT_ID='lightingai-ai-visual-result-polish-script';
 var BUILD_SCRIPT_ID='lightingai-feature-build-info-script';
+var PHONE_DIAG_SCRIPT_ID='lightingai-project5-phone-diagnostics-script';
 var DIAG_ID='lightingai-project5-diagnostic';
 var MODULE_ID='lightingai-ai-visual-scene-plan';
 var PROD_API='https://lightingai.onrender.com';
@@ -43,6 +44,7 @@ function renderDiagnostic(previewState){
   var b=buildInfo(),run=b.run||'?',sha=b.sha||'?',branch=b.branch||'feature',previewText=previewState==='active'?(isSr()?'AKTIVAN':'ACTIVE'):previewState==='checking'?(isSr()?'PROVERA...':'CHECKING...'):(isSr()?'ZAKLJUČAN':'LOCKED');
   var previewColor=previewState==='active'?'#8ee6a8':previewState==='checking'?'#f5dd91':'#ffb5b5';
   box.innerHTML='<b style="color:#f5c542">P5 TEST • BUILD '+String(run)+' • '+String(sha)+'</b><div style="margin-top:4px">'+(isSr()?'GRANA':'BRANCH')+': '+String(branch)+'</div><div>AI PLAN: <b style="color:#8ee6a8">'+(isSr()?'PRODUKCIJA':'PRODUCTION')+'</b></div><div>FOTO-PREVIEW: <b style="color:'+previewColor+'">'+previewText+'</b></div>';
+  if(window.LightingAIProject5Diagnostics&&typeof window.LightingAIProject5Diagnostics.mount==='function')window.LightingAIProject5Diagnostics.mount();
 }
 function updateDiagnostic(){
   renderDiagnostic('checking');
@@ -106,9 +108,10 @@ function ensureScript(id,src,ready,next){
   script.onerror=next;
   document.body.appendChild(script);
 }
-function ensurePolish(next){ensureScript(POLISH_SCRIPT_ID,'file:///android_asset/ai-visual-result-polish.js',function(){return !!window.LightingAIVisualResultPolish;},next);}
+function ensurePhoneDiagnostics(next){ensureScript(PHONE_DIAG_SCRIPT_ID,'file:///android_asset/ai-visual-phone-diagnostics.js',function(){return !!window.LightingAIProject5Diagnostics;},next);}
+function ensurePolish(next){ensureScript(POLISH_SCRIPT_ID,'file:///android_asset/ai-visual-result-polish.js',function(){return !!window.LightingAIVisualResultPolish;},function(){ensurePhoneDiagnostics(next);});}
 function ensureSimulation(next){ensureScript(SIM_SCRIPT_ID,'file:///android_asset/ai-visual-local-simulation.js',function(){return !!window.LightingAILocalLightSimulation;},function(){ensurePolish(next);});}
-function opened(){setTimeout(updateDiagnostic,0);setTimeout(updateDiagnostic,900);}
+function opened(){setTimeout(updateDiagnostic,0);setTimeout(updateDiagnostic,900);setTimeout(function(){if(window.LightingAIProject5Diagnostics&&typeof window.LightingAIProject5Diagnostics.mount==='function')window.LightingAIProject5Diagnostics.mount();},1000);}
 function openPlanModule(){
   if(window.LightingAIVisualScenePlan&&typeof window.LightingAIVisualScenePlan.open==='function'){
     window.LightingAIVisualScenePlan.open();opened();return;
@@ -138,5 +141,5 @@ function install(){
   ensureBuildInfo(updateButton);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.7-build-diagnostics'};
+window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.8-phone-diagnostics'};
 })();

@@ -36,6 +36,7 @@ public class MainActivity extends Activity {
     private static final int CHOOSE_IMAGE = 502;
     private static final int LOCATION_PERMISSION = 503;
     private static final int CAMERA_PERMISSION = 504;
+    private static final int MEASURE_SCENE = 505;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -254,6 +255,15 @@ public class MainActivity extends Activity {
         @JavascriptInterface public boolean hasCameraPermission() {
             return MainActivity.this.hasCameraPermission();
         }
+
+        @JavascriptInterface public void startSceneMeasure(double cameraHeight, String language) {
+            runOnUiThread(() -> {
+                Intent intent = new Intent(MainActivity.this, MeasureActivity.class);
+                intent.putExtra("cameraHeight", cameraHeight);
+                intent.putExtra("lang", "en".equals(language) ? "en" : "sr");
+                startActivityForResult(intent, MEASURE_SCENE);
+            });
+        }
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -265,6 +275,22 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == MEASURE_SCENE) {
+            if (resultCode == RESULT_OK && data != null && webView != null) {
+                String target = data.getStringExtra("target");
+                double distance = data.getDoubleExtra("distance", Double.NaN);
+                double angle = data.getDoubleExtra("angle", Double.NaN);
+                double cameraHeight = data.getDoubleExtra("cameraHeight", 1.50);
+                if (target != null) {
+                    String safeTarget = target.replace("'", "");
+                    webView.post(() -> webView.evaluateJavascript(
+                        "window.LightingAISceneMeasureNativeResult&&window.LightingAISceneMeasureNativeResult('" + safeTarget + "'," + distance + "," + angle + "," + cameraHeight + ");",
+                        null));
+                }
+            }
+            return;
+        }
 
         if (requestCode == CHOOSE_IMAGE) {
             if (resultCode == RESULT_OK) {

@@ -102,4 +102,10 @@ if(!document.getElementById('lightingai-dof-planner-script')){
   o.src='file:///android_asset/dof-planner.js';
   document.body.appendChild(o);
 }
+if(!document.getElementById('lightingai-flicker-shutter-script')){
+  const f=document.createElement('script');
+  f.id='lightingai-flicker-shutter-script';
+  f.src='file:///android_asset/flicker-shutter-planner.js';
+  document.body.appendChild(f);
+}
 })();

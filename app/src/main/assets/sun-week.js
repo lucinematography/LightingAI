@@ -50,6 +50,12 @@
     const input=el('sunDate');if(!input)return;
     input.value=b.dataset.date;input.dispatchEvent(new Event('change',{bubbles:true}));
   }
+  function ensureLocations(){
+    if(document.getElementById('lightingai-sun-locations-runtime'))return;
+    const s=document.createElement('script');
+    s.id='lightingai-sun-locations-runtime';s.src='file:///android_asset/sun-locations.js';
+    document.head.appendChild(s);
+  }
   function init(){
     const tw=el('sunTwilightCard')||el('sunShotPlanner');if(!tw||el('sunWeekCard'))return false;
     const style=document.createElement('style');style.textContent='.sun-week-note{font-size:12px;color:#9299a3;margin-bottom:10px}.sun-week-row{width:100%;display:grid;grid-template-columns:1.1fr repeat(5,1fr) auto;gap:8px;align-items:center;text-align:left;background:transparent;border:0;border-bottom:1px solid #292d33;padding:11px 0;color:inherit;font:inherit}.sun-week-row:active{background:#1a1e24}.sun-week-row span{min-width:0}.sun-week-row small{display:block;color:#9299a3;font-size:9px;line-height:1.2}.sun-week-row b{display:block;font-size:11px;margin-top:3px;white-space:nowrap}.sun-week-date b{color:#f5c542;font-size:12px}.sun-week-row em{font-style:normal;color:#f5c542;font-size:10px;font-weight:800}@media(max-width:720px){.sun-week-row{grid-template-columns:1.2fr 1.35fr 1.35fr;gap:6px}.sun-week-row span:nth-child(4),.sun-week-row span:nth-child(5),.sun-week-row span:nth-child(6){display:none}.sun-week-row b{font-size:10px}.sun-week-row em{grid-column:3;text-align:right}}';document.head.appendChild(style);
@@ -59,5 +65,6 @@
     const old=window.setLanguage;if(typeof old==='function'){window.setLanguage=function(l){old(l);setTimeout(translate,0);};}
     translate();return true;
   }
+  ensureLocations();
   let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>100)clearInterval(timer)},100);
 })();

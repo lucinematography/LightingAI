@@ -108,4 +108,10 @@ if(!document.getElementById('lightingai-flicker-shutter-script')){
   f.src='file:///android_asset/flicker-shutter-planner.js';
   document.body.appendChild(f);
 }
+if(!document.getElementById('lightingai-continuity-match-script')){
+  const c=document.createElement('script');
+  c.id='lightingai-continuity-match-script';
+  c.src='file:///android_asset/continuity-match-shot.js';
+  document.body.appendChild(c);
+}
 })();

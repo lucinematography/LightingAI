@@ -2,25 +2,28 @@
   'use strict';
   const KEY='lightingai_sun_shot_presets_v1';
   const TXT={
-    sr:{title:'Sačuvani planovi kadra',note:'Sačuvaj trenutni SUNCE plan: lokaciju, datum, vreme, pravac kamere, željeno svetlo i visinu objekta.',name:'NAZIV PLANA',placeholder:'npr. Scena 12 - kontra',save:'SAČUVAJ PLAN',empty:'Još nema sačuvanih planova.',apply:'PRIMENI PLAN',remove:'OBRIŠI',needName:'Unesi naziv plana.',invalid:'Plan nema ispravne podatke.',saved:'Plan je sačuvan.',camera:'kamera',height:'visina'},
-    en:{title:'Saved shot plans',note:'Save the current SUN plan: location, date, time, camera direction, desired light and object height.',name:'PLAN NAME',placeholder:'e.g. Scene 12 - backlight',save:'SAVE PLAN',empty:'No saved plans yet.',apply:'APPLY PLAN',remove:'DELETE',needName:'Enter a plan name.',invalid:'Plan data is invalid.',saved:'Plan saved.',camera:'camera',height:'height'}
+    sr:{title:'Sačuvani planovi kadra',note:'Sačuvaj trenutni SUNCE plan: lokaciju, datum, vreme, pravac kamere i subjekta, željeno svetlo i visinu objekta.',name:'NAZIV PLANA',placeholder:'npr. Scena 12 - kontra',save:'SAČUVAJ PLAN',empty:'Još nema sačuvanih planova.',apply:'PRIMENI PLAN',remove:'OBRIŠI',needName:'Unesi naziv plana.',invalid:'Plan nema ispravne podatke.',saved:'Plan je sačuvan.',camera:'kamera',subject:'subjekat',height:'visina'},
+    en:{title:'Saved shot plans',note:'Save the current SUN plan: location, date, time, camera and subject direction, desired light and object height.',name:'PLAN NAME',placeholder:'e.g. Scene 12 - backlight',save:'SAVE PLAN',empty:'No saved plans yet.',apply:'APPLY PLAN',remove:'DELETE',needName:'Enter a plan name.',invalid:'Plan data is invalid.',saved:'Plan saved.',camera:'camera',subject:'subject',height:'height'}
   };
   const el=id=>document.getElementById(id);
   const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
   const t=()=>TXT[lang()];
+  const norm=a=>(a%360+360)%360;
   function read(){try{const x=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
   function write(x){localStorage.setItem(KEY,JSON.stringify(x));}
   function current(){
+    const heading=Number(el('sunCameraHeading')?.value);
     return {
       name:'',
       lat:Number(el('sunLat')?.value),lon:Number(el('sunLon')?.value),
       date:el('sunDate')?.value||'',time:el('sunTime')?.value||'',
-      heading:Number(el('sunCameraHeading')?.value),
+      heading,
+      subject:Number(el('sunSubjectHeading')?.value ?? norm(heading+180)),
       light:el('sunShotDesired')?.value||'backlight',
       height:Number(el('sunObjectHeight')?.value||1.8)
     };
   }
-  function valid(p){return Number.isFinite(p.lat)&&p.lat>=-90&&p.lat<=90&&Number.isFinite(p.lon)&&p.lon>=-180&&p.lon<=180&&/^\d{4}-\d{2}-\d{2}$/.test(p.date)&&/^\d{2}:\d{2}$/.test(p.time)&&Number.isFinite(p.heading)&&p.heading>=0&&p.heading<=359.9&&Number.isFinite(p.height)&&p.height>0}
+  function valid(p){return Number.isFinite(p.lat)&&p.lat>=-90&&p.lat<=90&&Number.isFinite(p.lon)&&p.lon>=-180&&p.lon<=180&&/^\d{4}-\d{2}-\d{2}$/.test(p.date)&&/^\d{2}:\d{2}$/.test(p.time)&&Number.isFinite(p.heading)&&p.heading>=0&&p.heading<=359.9&&(p.subject===undefined||(Number.isFinite(Number(p.subject))&&Number(p.subject)>=0&&Number(p.subject)<=359.9))&&Number.isFinite(p.height)&&p.height>0}
   function status(msg){const s=el('sunPresetStatus');if(s)s.textContent=msg||'';}
   function lightLabel(k){
     const sr={backlight:'KONTRA',threeQuarter:'3/4',sidelight:'BOČNO',frontlight:'FRONTALNO'},en={backlight:'BACKLIGHT',threeQuarter:'3/4',sidelight:'SIDE',frontlight:'FRONT'};
@@ -34,7 +37,8 @@
       const info=document.createElement('div');info.className='sun-preset-info';
       const b=document.createElement('b');b.textContent=p.name;
       const s1=document.createElement('small');s1.textContent=p.date+' · '+p.time+' · '+lightLabel(p.light);
-      const s2=document.createElement('small');s2.textContent=Number(p.lat).toFixed(5)+', '+Number(p.lon).toFixed(5)+' · '+tx.camera+' '+Math.round(Number(p.heading))+'° · '+tx.height+' '+Number(p.height).toFixed(2)+' m';
+      const subject=Number.isFinite(Number(p.subject))?Number(p.subject):norm(Number(p.heading)+180);
+      const s2=document.createElement('small');s2.textContent=Number(p.lat).toFixed(5)+', '+Number(p.lon).toFixed(5)+' · '+tx.camera+' '+Math.round(Number(p.heading))+'° · '+tx.subject+' '+Math.round(subject)+'° · '+tx.height+' '+Number(p.height).toFixed(2)+' m';
       info.appendChild(b);info.appendChild(s1);info.appendChild(s2);
       const actions=document.createElement('div');actions.className='sun-preset-actions';
       const use=document.createElement('button');use.type='button';use.className='sun-preset-use';use.dataset.index=String(index);use.textContent=tx.apply;
@@ -53,10 +57,11 @@
     if(!valid(p)){status(t().invalid);return}
     el('sunLat').value=Number(p.lat).toFixed(6);el('sunLon').value=Number(p.lon).toFixed(6);el('sunDate').value=p.date;el('sunTime').value=p.time;
     if(el('sunCameraHeading'))el('sunCameraHeading').value=Number(p.heading).toFixed(0);
+    const subject=Number.isFinite(Number(p.subject))?Number(p.subject):norm(Number(p.heading)+180);if(el('sunSubjectHeading'))el('sunSubjectHeading').value=subject.toFixed(0);
     if(el('sunShotDesired'))el('sunShotDesired').value=p.light||'backlight';
     if(el('sunObjectHeight'))el('sunObjectHeight').value=Number(p.height).toFixed(2);
     ['sunLat','sunLon','sunDate','sunTime'].forEach(id=>el(id)?.dispatchEvent(new Event('change',{bubbles:true})));
-    el('sunCameraHeading')?.dispatchEvent(new Event('input',{bubbles:true}));el('sunShotDesired')?.dispatchEvent(new Event('change',{bubbles:true}));el('sunObjectHeight')?.dispatchEvent(new Event('input',{bubbles:true}));status(p.name);
+    el('sunCameraHeading')?.dispatchEvent(new Event('input',{bubbles:true}));el('sunSubjectHeading')?.dispatchEvent(new Event('input',{bubbles:true}));el('sunShotDesired')?.dispatchEvent(new Event('change',{bubbles:true}));el('sunObjectHeight')?.dispatchEvent(new Event('input',{bubbles:true}));status(p.name);
   }
   function rowClick(ev){
     const use=ev.target.closest('.sun-preset-use[data-index]'),del=ev.target.closest('.sun-preset-delete[data-index]');if(!use&&!del)return;
@@ -74,6 +79,10 @@
     if(document.getElementById('lightingai-sun-time-scrubber-runtime'))return;
     const s=document.createElement('script');s.id='lightingai-sun-time-scrubber-runtime';s.src='file:///android_asset/sun-time-scrubber.js';document.head.appendChild(s);
   }
-  ensureTimeScrubber();
+  function ensureSubjectTool(){
+    if(document.getElementById('lightingai-sun-subject-runtime'))return;
+    const s=document.createElement('script');s.id='lightingai-sun-subject-runtime';s.src='file:///android_asset/sun-subject.js';document.head.appendChild(s);
+  }
+  ensureTimeScrubber();ensureSubjectTool();
   let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>120)clearInterval(timer)},100);
 })();

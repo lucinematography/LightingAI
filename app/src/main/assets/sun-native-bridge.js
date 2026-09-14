@@ -65,4 +65,11 @@ document.addEventListener('click',ev=>{
     try{Android.stopNativeSunCompass()}catch(e){}
   }
 },true);
+
+if(!document.getElementById('lightingai-set-sketch-sun-script')){
+  const s=document.createElement('script');
+  s.id='lightingai-set-sketch-sun-script';
+  s.src='file:///android_asset/set-sketch-sun.js';
+  document.body.appendChild(s);
+}
 })();

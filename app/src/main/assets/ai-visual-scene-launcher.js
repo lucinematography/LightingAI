@@ -2,8 +2,25 @@
 'use strict';
 var BUTTON_ID='lightingai-ai-visual-launcher';
 var SCRIPT_ID='lightingai-ai-visual-scene-plan-script';
+var PROD_API='https://lightingai.onrender.com';
+var PREVIEW_TEST_API='https://lightingai-ai-preview-test.onrender.com';
 function label(){return window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN';}
+function installPreviewApiRouter(){
+  if(window.__lightingAIVisualPreviewFetchRouter)return;
+  var nativeFetch=window.fetch.bind(window);
+  window.fetch=function(input,init){
+    var url=typeof input==='string'?input:(input&&input.url?String(input.url):'');
+    if(url===PROD_API+'/api/visual-preview'||url.indexOf(PROD_API+'/api/visual-preview?')===0){
+      var routed=url.replace(PROD_API,PREVIEW_TEST_API);
+      if(typeof input==='string')return nativeFetch(routed,init);
+      try{return nativeFetch(new Request(routed,input),init);}catch(e){return nativeFetch(routed,init);}
+    }
+    return nativeFetch(input,init);
+  };
+  window.__lightingAIVisualPreviewFetchRouter={testApi:PREVIEW_TEST_API};
+}
 function openModule(){
+  installPreviewApiRouter();
   if(window.LightingAIVisualScenePlan&&typeof window.LightingAIVisualScenePlan.open==='function'){
     window.LightingAIVisualScenePlan.open();
     return;
@@ -28,5 +45,5 @@ function install(){
   document.body.appendChild(button);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.1'};
+window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.2-test-preview-router'};
 })();

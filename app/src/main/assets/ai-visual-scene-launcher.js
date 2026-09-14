@@ -3,6 +3,7 @@
 var BUTTON_ID='lightingai-ai-visual-launcher';
 var SCRIPT_ID='lightingai-ai-visual-scene-plan-script';
 var SIM_SCRIPT_ID='lightingai-ai-visual-local-simulation-script';
+var POLISH_SCRIPT_ID='lightingai-ai-visual-result-polish-script';
 var MODULE_ID='lightingai-ai-visual-scene-plan';
 var PROD_API='https://lightingai.onrender.com';
 var PREVIEW_TEST_API='https://lightingai-ai-preview-test.onrender.com';
@@ -55,17 +56,19 @@ function installPreviewApiRouter(){
   };
   window.__lightingAIVisualPreviewFetchRouter={testApi:PREVIEW_TEST_API,isVerified:function(){return previewCapabilityVerified;}};
 }
-function ensureSimulation(next){
-  if(window.LightingAILocalLightSimulation){next();return;}
-  var existing=document.getElementById(SIM_SCRIPT_ID);
-  if(existing){existing.addEventListener('load',next,{once:true});return;}
+function ensureScript(id,src,ready,next){
+  if(ready()){next();return;}
+  var existing=document.getElementById(id);
+  if(existing){existing.addEventListener('load',next,{once:true});existing.addEventListener('error',next,{once:true});return;}
   var script=document.createElement('script');
-  script.id=SIM_SCRIPT_ID;
-  script.src='file:///android_asset/ai-visual-local-simulation.js';
+  script.id=id;
+  script.src=src;
   script.onload=next;
   script.onerror=next;
   document.body.appendChild(script);
 }
+function ensurePolish(next){ensureScript(POLISH_SCRIPT_ID,'file:///android_asset/ai-visual-result-polish.js',function(){return !!window.LightingAIVisualResultPolish;},next);}
+function ensureSimulation(next){ensureScript(SIM_SCRIPT_ID,'file:///android_asset/ai-visual-local-simulation.js',function(){return !!window.LightingAILocalLightSimulation;},function(){ensurePolish(next);});}
 function openPlanModule(){
   if(window.LightingAIVisualScenePlan&&typeof window.LightingAIVisualScenePlan.open==='function'){
     window.LightingAIVisualScenePlan.open();
@@ -95,5 +98,5 @@ function install(){
   document.body.appendChild(button);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.5-look-presets'};
+window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.6-result-polish'};
 })();

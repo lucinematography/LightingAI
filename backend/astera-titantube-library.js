@@ -24,6 +24,7 @@ export const ASTERA_TITANTUBE_FIXTURES = [
 ];
 
 const TITAN = ['astera-titantube-fp1'];
+const TITAN_AND_LUNABULB = [...TITAN, 'astera-lunabulb-fp7-e26', 'astera-lunabulb-fp7-e27', 'astera-lunabulb-fp7-b22'];
 const TITAN_AND_HELIOS = ['astera-titantube-fp1', 'astera-heliostube-fp2-btb'];
 const TUBE_STAND_FAMILY = [...TITAN_AND_HELIOS, 'astera-ax1-pixeltube'];
 const ALL_THREE_TUBES = ['astera-titantube-fp1', 'astera-heliostube-fp2-btb', 'astera-hyperiontube-fp3', 'astera-ax1-pixeltube'];
@@ -34,7 +35,7 @@ export const ASTERA_TITANTUBE_ACCESSORIES = [
   { id: 'astera-ax1-blt', manufacturer: 'Astera', model: 'AX1-BLT Double-ended Spigot', category: 'Mount Adapter', mount: '1/4-20 to clamp', compatibleWith: ALL_THREE_TUBES, sourceUrl: MANUAL },
   { id: 'astera-tube-wing-plate', manufacturer: 'Astera', model: 'AX1-WP WingPlate', category: 'Multi-light Mount', compatibleWith: ALL_THREE_TUBES, sourceUrl: MANUAL },
   { id: 'astera-tube-m5-eyebolt', manufacturer: 'Astera', model: 'FP1-EBLT Eye Bolt', category: 'Safety / Suspension', mount: 'M5 thread', compatibleWith: ALL_THREE_TUBES, includedWithFixture: true, sourceUrl: MANUAL },
-  { id: 'astera-fp1-chr', manufacturer: 'Astera', model: 'FP1-CHR Individual Charger', category: 'Charger', compatibleWith: TITAN, sourceUrl: MANUAL },
+  { id: 'astera-fp1-chr', manufacturer: 'Astera', model: 'FP1-CHR Individual Charger', category: 'Charger', compatibleWith: TITAN_AND_LUNABULB, sourceUrl: MANUAL },
   { id: 'astera-fp1-pwb', manufacturer: 'Astera', model: 'FP1-PWB PowerBox', category: 'Power / DMX Interface', compatibleWith: TITAN, sourceUrl: MANUAL },
   { id: 'astera-fp1-pwb-cab-5', manufacturer: 'Astera', model: 'FP1-PWB-CAB-5 Power/Data Combination Cable 5 m', category: 'Power / Data Cable', compatibleWith: TITAN, sourceUrl: MANUAL },
   { id: 'astera-fp1-pwb-cab-10', manufacturer: 'Astera', model: 'FP1-PWB-CAB-10 Power/Data Combination Cable 10 m', category: 'Power / Data Cable', compatibleWith: TITAN, sourceUrl: MANUAL },

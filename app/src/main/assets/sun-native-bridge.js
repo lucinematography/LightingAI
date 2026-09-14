@@ -156,4 +156,10 @@ if(!document.getElementById('lightingai-camera-setup-snapshots-script')){
   a.src='file:///android_asset/camera-setup-snapshots.js';
   document.body.appendChild(a);
 }
+if(!document.getElementById('lightingai-camera-setup-report-script')){
+  const z=document.createElement('script');
+  z.id='lightingai-camera-setup-report-script';
+  z.src='file:///android_asset/camera-setup-report.js';
+  document.body.appendChild(z);
+}
 })();

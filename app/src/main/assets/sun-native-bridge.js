@@ -78,4 +78,10 @@ if(!document.getElementById('lightingai-shot-setup-report-script')){
   r.src='file:///android_asset/shot-setup-report.js';
   document.body.appendChild(r);
 }
+if(!document.getElementById('lightingai-lighting-ratio-script')){
+  const q=document.createElement('script');
+  q.id='lightingai-lighting-ratio-script';
+  q.src='file:///android_asset/lighting-ratio.js';
+  document.body.appendChild(q);
+}
 })();

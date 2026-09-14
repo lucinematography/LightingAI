@@ -7,6 +7,7 @@ import { validateCatalog } from "./catalog-validation.js";
 import { catalogStatus } from "./catalog-status.js";
 import { accessoryRecord, buildAccessoryTree } from "./accessory-graph.js";
 import { aputureReviewCatalog, aputureReviewHtml } from "./aputure-review.js";
+import { generateVisualPreview } from "./visual-preview.js";
 
 const FIXTURE_LIBRARY = RUNTIME_CATALOG.fixtures;
 const ACCESSORY_LIBRARY = RUNTIME_CATALOG.accessories;
@@ -78,5 +79,17 @@ app.post("/api/lighting-plan",async(req,res)=>{try{
  let text=response.output_text.trim().replace(/^```json\s*/i,"").replace(/```$/i,"").trim();
  res.json(JSON.parse(text));
 }catch(error){console.error(error);res.status(500).json({error:"Lighting plan generation failed."});}});
+app.post("/api/visual-preview",async(req,res)=>{try{
+ const{scenePhoto="",plan={},description="",equipment=[],language="sr"}=req.body||{};
+ if(!scenePhoto)return res.status(400).json({error:"Scene photo is required."});
+ if(!plan||typeof plan!=="object"||Array.isArray(plan))return res.status(400).json({error:"Lighting plan is required."});
+ const preview=await generateVisualPreview(openai,{scenePhoto,plan,description,equipment,language});
+ res.json(preview);
+}catch(error){
+ console.error("Visual preview generation failed:",error);
+ const message=String(error?.message||"");
+ const status=/unsupported|empty|too large|data URL/i.test(message)?400:500;
+ res.status(status).json({error:"Visual preview generation failed."});
+}});
 app.get('/',(req,res)=>res.sendFile(process.cwd()+'/index.html'));
 const port=process.env.PORT||3000;app.listen(port,()=>console.log(`LIGHTING AI backend running on port ${port}`));

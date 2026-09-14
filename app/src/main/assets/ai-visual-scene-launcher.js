@@ -4,7 +4,9 @@ var BUTTON_ID='lightingai-ai-visual-launcher';
 var SCRIPT_ID='lightingai-ai-visual-scene-plan-script';
 var PROD_API='https://lightingai.onrender.com';
 var PREVIEW_TEST_API='https://lightingai-ai-preview-test.onrender.com';
+var previewCapabilityVerified=false;
 function label(){return window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN';}
+function unavailableResponse(status){return {ok:false,status:status||503,json:function(){return Promise.resolve({ok:false,environment:'unverified-isolated-test'});}};}
 function installPreviewApiRouter(){
   if(window.__lightingAIVisualPreviewFetchRouter)return;
   var nativeFetch=window.fetch.bind(window);
@@ -12,12 +14,29 @@ function installPreviewApiRouter(){
     var url=typeof input==='string'?input:(input&&input.url?String(input.url):'');
     if(url===PROD_API+'/api/visual-preview'||url.indexOf(PROD_API+'/api/visual-preview?')===0){
       var routed=url.replace(PROD_API,PREVIEW_TEST_API);
-      if(typeof input==='string')return nativeFetch(routed,init);
-      try{return nativeFetch(new Request(routed,input),init);}catch(e){return nativeFetch(routed,init);}
+      var method=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();
+      if(method!=='GET'&&!previewCapabilityVerified)return Promise.resolve(unavailableResponse(503));
+      var requestPromise;
+      if(typeof input==='string')requestPromise=nativeFetch(routed,init);
+      else{try{requestPromise=nativeFetch(new Request(routed,input),init);}catch(e){requestPromise=nativeFetch(routed,init);}}
+      if(method!=='GET')return requestPromise;
+      return requestPromise.then(function(response){
+        if(!response||!response.ok){previewCapabilityVerified=false;return response||unavailableResponse(503);}
+        var copy;
+        try{copy=response.clone();}catch(e){previewCapabilityVerified=false;return unavailableResponse(503);}
+        return copy.json().then(function(data){
+          if(data&&data.ok===true&&data.environment==='isolated-test'){
+            previewCapabilityVerified=true;
+            return response;
+          }
+          previewCapabilityVerified=false;
+          return unavailableResponse(200);
+        }).catch(function(){previewCapabilityVerified=false;return unavailableResponse(503);});
+      }).catch(function(){previewCapabilityVerified=false;return unavailableResponse(503);});
     }
     return nativeFetch(input,init);
   };
-  window.__lightingAIVisualPreviewFetchRouter={testApi:PREVIEW_TEST_API};
+  window.__lightingAIVisualPreviewFetchRouter={testApi:PREVIEW_TEST_API,isVerified:function(){return previewCapabilityVerified;}};
 }
 function openModule(){
   installPreviewApiRouter();
@@ -45,5 +64,5 @@ function install(){
   document.body.appendChild(button);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.2-test-preview-router'};
+window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.3-verified-test-preview-router'};
 })();

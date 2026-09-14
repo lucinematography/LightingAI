@@ -228,6 +228,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-power-calculator-script')){var w=document.createElement('script');w.id='lightingai-power-calculator-script';w.src='file:///android_asset/power-calculator.js';document.body.appendChild(w);}" +
             "if(!document.getElementById('lightingai-light-calculator-script')){var l=document.createElement('script');l.id='lightingai-light-calculator-script';l.src='file:///android_asset/light-calculator.js';document.body.appendChild(l);}" +
             "if(!document.getElementById('lightingai-cct-gel-script')){var g=document.createElement('script');g.id='lightingai-cct-gel-script';g.src='file:///android_asset/cct-gel-calculator.js';document.body.appendChild(g);}" +
+            "if(!document.getElementById('lightingai-set-sketch-script')){var q=document.createElement('script');q.id='lightingai-set-sketch-script';q.src='file:///android_asset/set-sketch.js';document.body.appendChild(q);}" +
             "})();", null);
     }
 

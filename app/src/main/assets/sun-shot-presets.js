@@ -70,5 +70,10 @@
     loc.parentNode.insertBefore(card,loc.nextSibling);el('sunPresetSave').addEventListener('click',save);el('sunPresetRows').addEventListener('click',rowClick);el('sunPresetName').addEventListener('keydown',e=>{if(e.key==='Enter')save();});
     const old=window.setLanguage;if(typeof old==='function'){window.setLanguage=function(l){old(l);setTimeout(translate,0);};}translate();return true;
   }
+  function ensureTimeScrubber(){
+    if(document.getElementById('lightingai-sun-time-scrubber-runtime'))return;
+    const s=document.createElement('script');s.id='lightingai-sun-time-scrubber-runtime';s.src='file:///android_asset/sun-time-scrubber.js';document.head.appendChild(s);
+  }
+  ensureTimeScrubber();
   let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>120)clearInterval(timer)},100);
 })();

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -10,6 +11,9 @@ const requireText = (text, needle, label) => {
 };
 const forbidText = (text, needle, label) => {
   if (text.includes(needle)) throw new Error(`Project 5 safety check failed: ${label}`);
+};
+const assert = (condition, label) => {
+  if (!condition) throw new Error(`Project 5 runtime routing check failed: ${label}`);
 };
 
 const launcher = read('app/src/main/assets/ai-visual-scene-launcher.js');
@@ -86,6 +90,91 @@ requireText(workflow, 'npm run test:project5-base', 'CI must execute stable-base
 
 forbidText(launcher, "PREVIEW_TEST_API+'/api/lighting-plan'", 'lighting-plan must never route to isolated preview service');
 
+// Runtime routing contract. Execute the real launcher with a fake DOM/network layer.
+const calls = [];
+const PROD_API = 'https://lightingai.onrender.com';
+const PREVIEW_TEST_API = 'https://lightingai-ai-preview-test.onrender.com';
+const fakeNativeFetch = async (input, init) => {
+  const url = typeof input === 'string' ? input : String(input?.url || '');
+  calls.push({ url, init: init ? { ...init } : undefined });
+  if (url === PREVIEW_TEST_API + '/api/visual-preview') {
+    return new Response(JSON.stringify({ ok: true, environment: 'isolated-test' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
+};
+const runtimeWindow = {
+  fetch: fakeNativeFetch,
+  currentLang: 'sr',
+  LightingAIFeatureBuild: { run: 'test', sha: 'runtime', branch: 'feature/ai-visual-scene-plan' },
+  LightingAILocalLightSimulation: { getPreset: () => 'Moody' },
+  LightingAIVisualResultPolish: {},
+  LightingAIProject5Diagnostics: {},
+  LightingAIVisualScenePlan: { open: () => {} },
+};
+const runtimeDocument = {
+  readyState: 'loading',
+  addEventListener: () => {},
+  getElementById: () => null,
+  body: { appendChild: () => {} },
+};
+const context = {
+  window: runtimeWindow,
+  document: runtimeDocument,
+  console,
+  Response,
+  Request,
+  Promise,
+  JSON,
+  Object,
+  String,
+  Array,
+  setTimeout: () => 0,
+  clearTimeout: () => {},
+};
+vm.runInNewContext(launcher, context, { filename: 'ai-visual-scene-launcher.js' });
+runtimeWindow.LightingAIVisualSceneLauncher.open();
+
+calls.length = 0;
+await runtimeWindow.fetch('https://example.com/untouched', { method: 'GET' });
+assert(calls.length === 1 && calls[0].url === 'https://example.com/untouched', 'unrelated fetch must pass through unchanged');
+
+calls.length = 0;
+await runtimeWindow.fetch(PROD_API + '/api/lighting-plan', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ scenePhoto: 'data:image/jpeg;base64,AA==' }),
+});
+assert(calls.length === 1 && calls[0].url === PROD_API + '/api/lighting-plan', 'lighting-plan must remain on production API');
+const routedPlanBody = JSON.parse(calls[0].init.body);
+assert(routedPlanBody.look === 'Moody', 'selected look preset must be injected into lighting-plan payload');
+
+calls.length = 0;
+const blocked = await runtimeWindow.fetch(PROD_API + '/api/visual-preview', {
+  method: 'POST',
+  body: JSON.stringify({ scenePhoto: 'data:image/jpeg;base64,AA==' }),
+});
+assert(blocked && blocked.ok === false && blocked.status === 503, 'preview POST must fail closed before capability verification');
+assert(calls.length === 0, 'blocked preview POST must not reach any network endpoint');
+
+calls.length = 0;
+const capability = await runtimeWindow.fetch(PROD_API + '/api/visual-preview', { method: 'GET' });
+assert(capability.ok === true, 'verified preview capability GET must succeed');
+assert(calls.length === 1 && calls[0].url === PREVIEW_TEST_API + '/api/visual-preview', 'preview capability GET must route only to isolated test backend');
+assert(runtimeWindow.__lightingAIVisualPreviewFetchRouter.isVerified() === true, 'isolated-test identity must set verified capability state');
+
+calls.length = 0;
+await runtimeWindow.fetch(PROD_API + '/api/visual-preview', {
+  method: 'POST',
+  body: JSON.stringify({ scenePhoto: 'data:image/jpeg;base64,AA==' }),
+});
+assert(calls.length === 1 && calls[0].url === PREVIEW_TEST_API + '/api/visual-preview', 'verified preview POST must route to isolated test backend');
+
 console.log(JSON.stringify({
   ok: true,
   suite: 'LightingAI Project 5 feature safety',
@@ -93,6 +182,9 @@ console.log(JSON.stringify({
     'stable production lighting-plan route',
     'isolated real-photo preview route',
     'fail-closed preview POST guard',
+    'runtime pass-through for unrelated fetch calls',
+    'runtime preset injection into production lighting-plan',
+    'runtime isolated-test identity verification before preview POST',
     'camera capture',
     'look presets and intensity control',
     'conceptual-preview disclaimer',

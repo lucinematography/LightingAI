@@ -75,6 +75,46 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug
 
+      - name: Verify packaged Project 5 APK
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/debug/app-debug.apk'
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          REQUIRED=(
+            'assets/ai-visual-scene-launcher.js'
+            'assets/ai-visual-scene-plan.js'
+            'assets/ai-visual-local-simulation.js'
+            'assets/ai-visual-result-polish.js'
+            'assets/ai-visual-phone-diagnostics.js'
+            'assets/ai-visual-phone-test.js'
+            'assets/feature-build-info.js'
+            'assets/catalog.js'
+          )
+
+          test -s "$APK"
+          for asset in "${REQUIRED[@]}"; do
+            unzip -Z1 "$APK" | grep -Fxq "$asset" || { echo "Missing packaged asset: $asset"; exit 1; }
+            cmp -s <(unzip -p "$APK" "$asset") "app/src/main/$asset" || { echo "Packaged asset differs from source: $asset"; exit 1; }
+          done
+
+          INFO="$(unzip -p "$APK" assets/feature-build-info.js)"
+          grep -Fq "run:\"$GITHUB_RUN_NUMBER\"" <<<"$INFO" || { echo 'Packaged build number mismatch'; exit 1; }
+          grep -Fq "sha:\"$SHORT_SHA\"" <<<"$INFO" || { echo 'Packaged commit SHA mismatch'; exit 1; }
+
+          CATALOG="$(unzip -p "$APK" assets/catalog.js)"
+          test "$(grep -oF 'file:///android_asset/ai-visual-scene-launcher.js' <<<"$CATALOG" | wc -l)" -eq 1 || { echo 'Packaged catalog launcher count is not exactly one'; exit 1; }
+
+          for asset in "${REQUIRED[@]}"; do
+            if unzip -p "$APK" "$asset" | grep -aEq 'sk-[A-Za-z0-9_-]{20,}'; then
+              echo "Potential OpenAI API secret found inside packaged asset: $asset"
+              exit 1
+            fi
+          done
+
+          echo "Packaged Project 5 APK verified: BUILD $GITHUB_RUN_NUMBER / $SHORT_SHA"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

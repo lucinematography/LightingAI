@@ -18,6 +18,7 @@ const simulation = read('app/src/main/assets/ai-visual-local-simulation.js');
 const polish = read('app/src/main/assets/ai-visual-result-polish.js');
 const previewServer = read('backend/preview-test-server.js');
 const bootstrap = read('backend/render-bootstrap.js');
+const workflow = read('.github/workflows/build-apk.yml');
 
 requireText(launcher, "var PROD_API='https://lightingai.onrender.com';", 'production API anchor missing');
 requireText(launcher, "var PREVIEW_TEST_API='https://lightingai-ai-preview-test.onrender.com';", 'isolated preview API missing');
@@ -26,6 +27,9 @@ requireText(launcher, "method!=='GET'&&!previewCapabilityVerified", 'unverified 
 requireText(launcher, "'/api/lighting-plan'", 'lighting-plan routing hook missing');
 requireText(launcher, "file:///android_asset/ai-visual-local-simulation.js", 'local simulation loader missing');
 requireText(launcher, "file:///android_asset/ai-visual-result-polish.js", 'result polish loader missing');
+requireText(launcher, "file:///android_asset/feature-build-info.js", 'embedded build identity loader missing');
+requireText(launcher, 'P5 TEST • BUILD ', 'visible Project 5 build diagnostic missing');
+requireText(launcher, 'LightingAIFeatureBuild', 'feature build metadata hook missing');
 
 requireText(moduleJs, "var API_BASE='https://lightingai.onrender.com';", 'AI plan must keep production API base');
 requireText(moduleJs, "capture=\"environment\"", 'direct scene camera capture missing');
@@ -41,6 +45,9 @@ requireText(polish, 'KOPIRAJ AI PLAN', 'copy-plan action missing');
 requireText(previewServer, "environment: 'isolated-test'", 'test backend identity missing');
 requireText(previewServer, 'previewConfigured', 'test backend configured-state guard missing');
 requireText(bootstrap, 'LIGHTINGAI_PREVIEW_TEST', 'isolated Render bootstrap flag missing');
+requireText(workflow, 'Embed Project 5 build identity', 'CI build identity step missing');
+requireText(workflow, 'GITHUB_RUN_NUMBER', 'CI run number must be embedded in test APK');
+requireText(workflow, 'feature-build-info.js', 'CI generated build metadata asset missing');
 
 forbidText(launcher, "PREVIEW_TEST_API+'/api/lighting-plan'", 'lighting-plan must never route to isolated preview service');
 
@@ -54,6 +61,7 @@ console.log(JSON.stringify({
     'camera capture',
     'look presets and intensity control',
     'conceptual-preview disclaimer',
-    'result polish layer'
+    'result polish layer',
+    'visible build identity diagnostics'
   ]
 }, null, 2));

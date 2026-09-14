@@ -8,6 +8,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,6 +32,9 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private Uri pendingCameraUri = null;
     private boolean pendingCameraCapture = false;
+    private NativeSunLocation nativeSunLocation;
+    private NativeSunCompass nativeSunCompass;
+    private boolean pendingNativeSunLocation = false;
 
     private static final int CREATE_FILE = 501;
     private static final int CHOOSE_IMAGE = 502;
@@ -46,6 +50,8 @@ public class MainActivity extends Activity {
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(13, 15, 18));
         setContentView(webView);
+        nativeSunLocation = new NativeSunLocation(this);
+        nativeSunCompass = new NativeSunCompass(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -124,6 +130,65 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasLocationPermission()) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION);
         }
+    }
+
+    private void requestNativeSunLocation() {
+        if (!hasLocationPermission()) {
+            pendingNativeSunLocation = true;
+            requestLocationPermission();
+            return;
+        }
+        pendingNativeSunLocation = false;
+        if (nativeSunLocation == null) nativeSunLocation = new NativeSunLocation(this);
+        nativeSunLocation.request(new NativeSunLocation.Callback() {
+            @Override public void onLocation(Location location) {
+                if (location == null) { notifyNativeSunLocationError(); return; }
+                double accuracy = location.hasAccuracy() ? location.getAccuracy() : Double.NaN;
+                notifyNativeSunLocation(location.getLatitude(), location.getLongitude(), accuracy);
+            }
+            @Override public void onFailure() { notifyNativeSunLocationError(); }
+        });
+    }
+
+    private void notifyNativeSunLocation(double lat, double lon, double accuracy) {
+        if (webView == null) return;
+        String accuracyJs = Double.isFinite(accuracy) ? Double.toString(accuracy) : "NaN";
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAINativeSunLocation&&window.LightingAINativeSunLocation(" + lat + "," + lon + "," + accuracyJs + ");",
+            null));
+    }
+
+    private void notifyNativeSunLocationError() {
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAINativeSunLocationError&&window.LightingAINativeSunLocationError();", null));
+    }
+
+    private void startNativeSunCompass() {
+        if (nativeSunCompass == null) nativeSunCompass = new NativeSunCompass(this);
+        boolean started = nativeSunCompass.start(new NativeSunCompass.Callback() {
+            @Override public void onHeading(double headingDeg) { notifyNativeSunCompassHeading(headingDeg); }
+            @Override public void onUnavailable() { notifyNativeSunCompassStatus(false); }
+        });
+        if (started) notifyNativeSunCompassStatus(true);
+    }
+
+    private void stopNativeSunCompass() {
+        if (nativeSunCompass != null) nativeSunCompass.stop();
+    }
+
+    private void notifyNativeSunCompassHeading(double headingDeg) {
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAINativeSunCompassHeading&&window.LightingAINativeSunCompassHeading(" + headingDeg + ");",
+            null));
+    }
+
+    private void notifyNativeSunCompassStatus(boolean available) {
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAINativeSunCompassStatus&&window.LightingAINativeSunCompassStatus(" + (available ? "true" : "false") + ");",
+            null));
     }
 
     private boolean hasCameraPermission() {
@@ -231,6 +296,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-set-sketch-script')){var q=document.createElement('script');q.id='lightingai-set-sketch-script';q.src='file:///android_asset/set-sketch.js';document.body.appendChild(q);}" +
             "if(!document.getElementById('lightingai-set-sketch-camera-fov-script')){var f=document.createElement('script');f.id='lightingai-set-sketch-camera-fov-script';f.src='file:///android_asset/set-sketch-camera-fov.js';document.body.appendChild(f);}" +
             "if(!document.getElementById('lightingai-device-capabilities-script')){var d=document.createElement('script');d.id='lightingai-device-capabilities-script';d.src='file:///android_asset/device-capabilities.js';document.body.appendChild(d);}" +
+            "if(!document.getElementById('lightingai-sun-native-bridge-script')){var n=document.createElement('script');n.id='lightingai-sun-native-bridge-script';n.src='file:///android_asset/sun-native-bridge.js';document.body.appendChild(n);}" +
             "})();", null);
     }
 
@@ -252,6 +318,18 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public boolean hasLocationPermission() {
             return MainActivity.this.hasLocationPermission();
+        }
+
+        @JavascriptInterface public void requestNativeSunLocation() {
+            runOnUiThread(() -> MainActivity.this.requestNativeSunLocation());
+        }
+
+        @JavascriptInterface public void startNativeSunCompass() {
+            runOnUiThread(() -> MainActivity.this.startNativeSunCompass());
+        }
+
+        @JavascriptInterface public void stopNativeSunCompass() {
+            runOnUiThread(() -> MainActivity.this.stopNativeSunCompass());
         }
 
         @JavascriptInterface public void requestCameraPermission() {
@@ -280,7 +358,15 @@ public class MainActivity extends Activity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == CAMERA_PERMISSION) {
             notifySceneMeasureCameraPermission(hasCameraPermission());
+        } else if (requestCode == LOCATION_PERMISSION && pendingNativeSunLocation) {
+            if (hasLocationPermission()) requestNativeSunLocation();
+            else { pendingNativeSunLocation = false; notifyNativeSunLocationError(); }
         }
+    }
+
+    @Override protected void onPause() {
+        stopNativeSunCompass();
+        super.onPause();
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -330,6 +416,8 @@ public class MainActivity extends Activity {
 
     @Override protected void onDestroy() {
         if (pendingFileChooser != null) finishFileChooser(null);
+        if (nativeSunCompass != null) nativeSunCompass.stop();
+        if (nativeSunLocation != null) nativeSunLocation.cancel();
         super.onDestroy();
     }
 

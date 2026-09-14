@@ -89,7 +89,6 @@ jobs:
             'assets/ai-visual-result-polish.js'
             'assets/ai-visual-phone-diagnostics.js'
             'assets/ai-visual-phone-test.js'
-            'assets/ai-visual-equipment-home.js'
             'assets/feature-build-info.js'
             'assets/catalog.js'
           )

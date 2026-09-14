@@ -8,6 +8,21 @@
   const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
   const t=()=>TXT[lang()];
   const norm=a=>(a%360+360)%360;
+  function refreshSunModules(){
+    setTimeout(()=>{
+      el('sunTime')?.dispatchEvent(new Event('change',{bubbles:true}));
+      el('sunCameraHeading')?.dispatchEvent(new Event('input',{bubbles:true}));
+      render();
+    },0);
+  }
+  function ensureCore(){
+    if(window.LightingAISun){refreshSunModules();return;}
+    const existing=document.getElementById('lightingai-sun-core-runtime');
+    if(existing){existing.addEventListener('load',refreshSunModules,{once:true});return;}
+    const core=document.createElement('script');
+    core.id='lightingai-sun-core-runtime';core.src='file:///android_asset/sun.js';core.onload=refreshSunModules;
+    document.head.appendChild(core);
+  }
   const compass=a=>{
     const dirs=lang()==='sr'?['S','SI','I','JI','J','JZ','Z','SZ']:['N','NE','E','SE','S','SW','W','NW'];
     return dirs[Math.round(norm(a)/45)%8];
@@ -30,7 +45,7 @@
     const p=LightingAISun.position(inputDate(),lat,lon),tx=t(),host=el('sunShotRecommendations');
     if(p.elevation<=0){host.innerHTML='<div class="sun-shot-empty">'+tx.below+'</div>';return;}
     const key=el('sunShotDesired').value;
-    host.innerHTML=headingsFor(key,p.azimuth).map((x,i)=>'<button type="button" class="sun-shot-choice" data-heading="'+x.heading.toFixed(1)+'"><span class="sun-shot-choice-label">'+(x.side?tx[x.side]:tx.recommended)+'</span><b>'+x.heading.toFixed(0)+'° '+compass(x.heading)+'</b><span class="sun-shot-apply">'+tx.apply+' ›</span></button>').join('');
+    host.innerHTML=headingsFor(key,p.azimuth).map(x=>'<button type="button" class="sun-shot-choice" data-heading="'+x.heading.toFixed(1)+'"><span class="sun-shot-choice-label">'+(x.side?tx[x.side]:tx.recommended)+'</span><b>'+x.heading.toFixed(0)+'° '+compass(x.heading)+'</b><span class="sun-shot-apply">'+tx.apply+' ›</span></button>').join('');
   }
   function translate(){
     if(!el('sunShotPlanner'))return;
@@ -54,5 +69,6 @@
     const old=window.setLanguage;if(typeof old==='function'){window.setLanguage=function(l){old(l);setTimeout(translate,0);};}
     translate();return true;
   }
+  ensureCore();
   let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>100)clearInterval(timer)},100);
 })();

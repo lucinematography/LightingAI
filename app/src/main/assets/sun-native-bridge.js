@@ -96,4 +96,10 @@ if(!document.getElementById('lightingai-dmx-export-script')){
   x.src='file:///android_asset/dmx-export.js';
   document.body.appendChild(x);
 }
+if(!document.getElementById('lightingai-dof-planner-script')){
+  const o=document.createElement('script');
+  o.id='lightingai-dof-planner-script';
+  o.src='file:///android_asset/dof-planner.js';
+  document.body.appendChild(o);
+}
 })();

@@ -58,5 +58,17 @@
       blueEveningEnd:crossing(date,lat,lon,-6,'down')
     };
   }
-  global.LightingAISun={position,dayPath,crossings,lightWindows};
+  function dailySummary(date,lat,lon){
+    const pts=dayPath(date,lat,lon,2);
+    let best=pts[0];
+    for(const p of pts)if(p.elevation>best.elevation)best=p;
+    return {solarNoon:best.time,maxElevation:best.elevation};
+  }
+  function shadow(date,lat,lon){
+    const p=position(date,lat,lon),azimuth=norm(p.azimuth+180);
+    if(p.elevation<=0)return {azimuth,lengthRatio:null};
+    const ratio=1/Math.tan(p.elevation*RAD);
+    return {azimuth,lengthRatio:ratio};
+  }
+  global.LightingAISun={position,dayPath,crossings,lightWindows,dailySummary,shadow};
 })(window);

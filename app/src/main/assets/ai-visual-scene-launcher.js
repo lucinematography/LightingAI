@@ -2,17 +2,29 @@
 'use strict';
 var BUTTON_ID='lightingai-ai-visual-launcher';
 var SCRIPT_ID='lightingai-ai-visual-scene-plan-script';
+var SIM_SCRIPT_ID='lightingai-ai-visual-local-simulation-script';
+var MODULE_ID='lightingai-ai-visual-scene-plan';
 var PROD_API='https://lightingai.onrender.com';
 var PREVIEW_TEST_API='https://lightingai-ai-preview-test.onrender.com';
 var previewCapabilityVerified=false;
 function label(){return window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN';}
 function unavailableResponse(status){return {ok:false,status:status||503,json:function(){return Promise.resolve({ok:false,environment:'unverified-isolated-test'});}};}
+function isExactApi(url,path){return url===PROD_API+path||url.indexOf(PROD_API+path+'?')===0;}
+function emitPlan(response){
+  if(!response||!response.ok||!document.getElementById(MODULE_ID))return;
+  try{
+    response.clone().json().then(function(data){
+      window.__lightingAIVisualLastPlan=data;
+      try{window.dispatchEvent(new CustomEvent('lightingai-visual-plan-ready',{detail:data}));}catch(e){}
+    }).catch(function(){});
+  }catch(e){}
+}
 function installPreviewApiRouter(){
   if(window.__lightingAIVisualPreviewFetchRouter)return;
   var nativeFetch=window.fetch.bind(window);
   window.fetch=function(input,init){
     var url=typeof input==='string'?input:(input&&input.url?String(input.url):'');
-    if(url===PROD_API+'/api/visual-preview'||url.indexOf(PROD_API+'/api/visual-preview?')===0){
+    if(isExactApi(url,'/api/visual-preview')){
       var routed=url.replace(PROD_API,PREVIEW_TEST_API);
       var method=String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();
       if(method!=='GET'&&!previewCapabilityVerified)return Promise.resolve(unavailableResponse(503));
@@ -34,23 +46,40 @@ function installPreviewApiRouter(){
         }).catch(function(){previewCapabilityVerified=false;return unavailableResponse(503);});
       }).catch(function(){previewCapabilityVerified=false;return unavailableResponse(503);});
     }
+    if(isExactApi(url,'/api/lighting-plan')){
+      return nativeFetch(input,init).then(function(response){emitPlan(response);return response;});
+    }
     return nativeFetch(input,init);
   };
   window.__lightingAIVisualPreviewFetchRouter={testApi:PREVIEW_TEST_API,isVerified:function(){return previewCapabilityVerified;}};
 }
-function openModule(){
-  installPreviewApiRouter();
+function ensureSimulation(next){
+  if(window.LightingAILocalLightSimulation){next();return;}
+  var existing=document.getElementById(SIM_SCRIPT_ID);
+  if(existing){existing.addEventListener('load',next,{once:true});return;}
+  var script=document.createElement('script');
+  script.id=SIM_SCRIPT_ID;
+  script.src='file:///android_asset/ai-visual-local-simulation.js';
+  script.onload=next;
+  script.onerror=next;
+  document.body.appendChild(script);
+}
+function openPlanModule(){
   if(window.LightingAIVisualScenePlan&&typeof window.LightingAIVisualScenePlan.open==='function'){
     window.LightingAIVisualScenePlan.open();
     return;
   }
   var existing=document.getElementById(SCRIPT_ID);
-  if(existing){existing.addEventListener('load',openModule,{once:true});return;}
+  if(existing){existing.addEventListener('load',openPlanModule,{once:true});return;}
   var script=document.createElement('script');
   script.id=SCRIPT_ID;
   script.src='file:///android_asset/ai-visual-scene-plan.js';
-  script.onload=openModule;
+  script.onload=openPlanModule;
   document.body.appendChild(script);
+}
+function openModule(){
+  installPreviewApiRouter();
+  ensureSimulation(openPlanModule);
 }
 function install(){
   if(document.getElementById(BUTTON_ID))return;
@@ -64,5 +93,5 @@ function install(){
   document.body.appendChild(button);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
-window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.3-verified-test-preview-router'};
+window.LightingAIVisualSceneLauncher={open:openModule,install:install,version:'0.4-local-simulation'};
 })();

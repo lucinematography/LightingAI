@@ -36,11 +36,12 @@ export const ASTERA_AX7_SPOTLITE_FIXTURES = [
 ];
 
 const AX7 = ['astera-ax7-spotlite'];
+const AX7_AND_AX10 = [...AX7, 'astera-ax10-spotmax'];
 
 export const ASTERA_AX7_SPOTLITE_ACCESSORIES = [
-  { id: 'astera-ax7-flood-diffuser', manufacturer: 'Astera', model: 'AX7 32° Flood Diffuser', category: 'Light Control', compatibleWith: AX7, includedWithFixture: true, sourceUrl: SRC },
-  { id: 'astera-ax7-wallwash-diffuser', manufacturer: 'Astera', model: 'AX7 17° × 46° Wallwash Diffuser', category: 'Light Control', compatibleWith: AX7, includedWithFixture: true, sourceUrl: SRC },
+  { id: 'astera-ax7-flood-diffuser', manufacturer: 'Astera', model: 'AX10-DDSK 32° Flood Diffuser', category: 'Light Control', compatibleWith: AX7_AND_AX10, includedWithFixture: true, sourceUrl: SRC },
+  { id: 'astera-ax7-wallwash-diffuser', manufacturer: 'Astera', model: 'AX10-WWDSK 17° × 46° Wallwash Diffuser', category: 'Light Control', compatibleWith: AX7_AND_AX10, includedWithFixture: true, sourceUrl: SRC },
   { id: 'astera-ax7-charging-case-4', manufacturer: 'Astera', model: 'AX7 Charging Case for 4 fixtures', category: 'Charging / Transport', compatibleWith: AX7, sourceUrl: SRC },
   { id: 'astera-ax7-charging-case-8', manufacturer: 'Astera', model: 'AX7 Charging Case for 8 fixtures', category: 'Charging / Transport', compatibleWith: AX7, sourceUrl: SRC },
-  { id: 'astera-ax10-blt-ax7', manufacturer: 'Astera', model: 'AX10-BLT SuperBolt', category: 'Mounting', compatibleWith: AX7, sourceUrl: SRC }
+  { id: 'astera-ax10-blt-ax7', manufacturer: 'Astera', model: 'AX10-BLT SuperBolt', category: 'Mounting', compatibleWith: AX7_AND_AX10, sourceUrl: SRC }
 ];

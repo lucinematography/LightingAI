@@ -34,6 +34,7 @@ public class MainActivity extends Activity {
     private static final int CREATE_FILE = 501;
     private static final int CHOOSE_IMAGE = 502;
     private static final int LOCATION_PERMISSION = 503;
+    private static final int MEASURE_SCENE = 504;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -74,18 +75,11 @@ public class MainActivity extends Activity {
                 callback.invoke(origin, hasLocationPermission(), false);
             }
 
-            @Override public boolean onShowFileChooser(
-                WebView view,
-                ValueCallback<Uri[]> filePathCallback,
-                FileChooserParams fileChooserParams
-            ) {
+            @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
                 if (pendingFileChooser != null) pendingFileChooser.onReceiveValue(null);
                 pendingFileChooser = filePathCallback;
                 pendingCameraCapture = fileChooserParams != null && fileChooserParams.isCaptureEnabled();
-
-                if (pendingCameraCapture) {
-                    return openCameraForWebView();
-                }
+                if (pendingCameraCapture) return openCameraForWebView();
                 return openGalleryForWebView(fileChooserParams);
             }
         });
@@ -95,154 +89,80 @@ public class MainActivity extends Activity {
     }
 
     private boolean hasLocationPermission() {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
-            checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestLocationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasLocationPermission()) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION);
-        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasLocationPermission()) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_PERMISSION);
     }
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("image/*");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        try {
-            startActivityForResult(intent, CHOOSE_IMAGE);
-            return true;
-        } catch (ActivityNotFoundException e) {
-            try {
-                Intent fallback = params != null ? params.createIntent() : new Intent(Intent.ACTION_GET_CONTENT);
-                if (fallback.getType() == null) fallback.setType("image/*");
-                fallback.addCategory(Intent.CATEGORY_OPENABLE);
-                startActivityForResult(fallback, CHOOSE_IMAGE);
-                return true;
-            } catch (Exception ignored) {
-                finishFileChooser(null);
-                return false;
-            }
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT); intent.addCategory(Intent.CATEGORY_OPENABLE); intent.setType("image/*"); intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try { startActivityForResult(intent, CHOOSE_IMAGE); return true; }
+        catch (ActivityNotFoundException e) {
+            try { Intent fallback = params != null ? params.createIntent() : new Intent(Intent.ACTION_GET_CONTENT); if (fallback.getType() == null) fallback.setType("image/*"); fallback.addCategory(Intent.CATEGORY_OPENABLE); startActivityForResult(fallback, CHOOSE_IMAGE); return true; }
+            catch (Exception ignored) { finishFileChooser(null); return false; }
         }
     }
 
     private boolean openCameraForWebView() {
         Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         try {
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.Images.Media.DISPLAY_NAME, "LightingAI_scene_" + System.currentTimeMillis() + ".jpg");
-            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/LightingAI");
-            }
+            ContentValues values = new ContentValues(); values.put(MediaStore.Images.Media.DISPLAY_NAME, "LightingAI_scene_" + System.currentTimeMillis() + ".jpg"); values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/LightingAI");
             pendingCameraUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
             if (pendingCameraUri == null) throw new IllegalStateException("Could not create camera output URI");
-
-            camera.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
-            camera.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            startActivityForResult(camera, CHOOSE_IMAGE);
-            return true;
-        } catch (Exception e) {
-            deletePendingCameraUri();
-            finishFileChooser(null);
-            return false;
-        }
+            camera.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri); camera.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION); startActivityForResult(camera, CHOOSE_IMAGE); return true;
+        } catch (Exception e) { deletePendingCameraUri(); finishFileChooser(null); return false; }
     }
 
-    private void finishFileChooser(Uri[] result) {
-        ValueCallback<Uri[]> callback = pendingFileChooser;
-        pendingFileChooser = null;
-        pendingCameraCapture = false;
-        if (callback != null) callback.onReceiveValue(result);
-    }
-
-    private void deletePendingCameraUri() {
-        if (pendingCameraUri == null) return;
-        try { getContentResolver().delete(pendingCameraUri, null, null); } catch (Exception ignored) {}
-        pendingCameraUri = null;
-    }
+    private void finishFileChooser(Uri[] result) { ValueCallback<Uri[]> callback = pendingFileChooser; pendingFileChooser = null; pendingCameraCapture = false; if (callback != null) callback.onReceiveValue(result); }
+    private void deletePendingCameraUri() { if (pendingCameraUri == null) return; try { getContentResolver().delete(pendingCameraUri, null, null); } catch (Exception ignored) {} pendingCameraUri = null; }
 
     private void applyNavigationInset() {
         if (webView == null) return;
-        webView.post(() -> webView.evaluateJavascript(
-            "(function(){" +
-            "function fit(){var n=document.querySelector('nav');var a=document.querySelector('.app');if(!n||!a)return;" +
-            "n.style.bottom='0px';n.style.zIndex='9999';" +
-            "var h=Math.ceil(n.getBoundingClientRect().height||84);a.style.paddingBottom=(h+20)+'px';" +
-            "if(window.ResizeObserver&&!window.__lightingaiNavObserver){window.__lightingaiNavObserver=new ResizeObserver(fit);window.__lightingaiNavObserver.observe(n);}}" +
-            "fit();setTimeout(fit,250);setTimeout(fit,1000);" +
-            "})();", null));
+        webView.post(() -> webView.evaluateJavascript("(function(){function fit(){var n=document.querySelector('nav');var a=document.querySelector('.app');if(!n||!a)return;n.style.bottom='0px';n.style.zIndex='9999';var h=Math.ceil(n.getBoundingClientRect().height||84);a.style.paddingBottom=(h+20)+'px';if(window.ResizeObserver&&!window.__lightingaiNavObserver){window.__lightingaiNavObserver=new ResizeObserver(fit);window.__lightingaiNavObserver.observe(n);}}fit();setTimeout(fit,250);setTimeout(fit,1000);})();", null));
     }
 
     private void installCatalogView() {
         if (webView == null) return;
-        webView.evaluateJavascript(
-            "(function(){" +
+        webView.evaluateJavascript("(function(){" +
             "if(!document.getElementById('lightingai-catalog-script')){var c=document.createElement('script');c.id='lightingai-catalog-script';c.src='file:///android_asset/catalog.js';document.body.appendChild(c);}" +
             "if(!document.getElementById('lightingai-sun-ui-script')){var s=document.createElement('script');s.id='lightingai-sun-ui-script';s.src='file:///android_asset/sun-ui.js';document.body.appendChild(s);}" +
             "if(!document.getElementById('lightingai-sun-camera-script')){var k=document.createElement('script');k.id='lightingai-sun-camera-script';k.src='file:///android_asset/sun-camera.js';document.body.appendChild(k);}" +
             "if(!document.getElementById('lightingai-sun-shot-planner-script')){var p=document.createElement('script');p.id='lightingai-sun-shot-planner-script';p.src='file:///android_asset/sun-shot-planner.js';document.body.appendChild(p);}" +
+            "if(!document.getElementById('lightingai-measure-script')){var m=document.createElement('script');m.id='lightingai-measure-script';m.src='file:///android_asset/measure.js';document.body.appendChild(m);}" +
             "})();", null);
     }
 
     public class AndroidBridge {
-        @JavascriptInterface public void saveText(String filename, String text) {
-            runOnUiThread(() -> {
-                pendingText = text;
-                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("application/json");
-                intent.putExtra(Intent.EXTRA_TITLE, filename);
-                startActivityForResult(intent, CREATE_FILE);
-            });
-        }
-
-        @JavascriptInterface public void requestLocationPermission() {
-            runOnUiThread(() -> MainActivity.this.requestLocationPermission());
-        }
-
-        @JavascriptInterface public boolean hasLocationPermission() {
-            return MainActivity.this.hasLocationPermission();
-        }
+        @JavascriptInterface public void saveText(String filename, String text) { runOnUiThread(() -> { pendingText = text; Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT); intent.addCategory(Intent.CATEGORY_OPENABLE); intent.setType("application/json"); intent.putExtra(Intent.EXTRA_TITLE, filename); startActivityForResult(intent, CREATE_FILE); }); }
+        @JavascriptInterface public void requestLocationPermission() { runOnUiThread(() -> MainActivity.this.requestLocationPermission()); }
+        @JavascriptInterface public boolean hasLocationPermission() { return MainActivity.this.hasLocationPermission(); }
+        @JavascriptInterface public void startSceneMeasure(double cameraHeight) { runOnUiThread(() -> { Intent intent = new Intent(MainActivity.this, MeasureActivity.class); intent.putExtra("cameraHeight", cameraHeight); startActivityForResult(intent, MEASURE_SCENE); }); }
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == CHOOSE_IMAGE) {
-            if (resultCode == RESULT_OK) {
-                if (pendingCameraCapture && pendingCameraUri != null) {
-                    Uri uri = pendingCameraUri;
-                    pendingCameraUri = null;
-                    finishFileChooser(new Uri[]{uri});
-                } else {
-                    Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-                    finishFileChooser(result);
-                }
-            } else {
-                deletePendingCameraUri();
-                finishFileChooser(null);
+        if (requestCode == MEASURE_SCENE) {
+            if (resultCode == RESULT_OK && data != null) {
+                String target = data.getStringExtra("target"); double distance = data.getDoubleExtra("distance", Double.NaN); double angle = data.getDoubleExtra("angle", Double.NaN); double height = data.getDoubleExtra("cameraHeight", 1.50);
+                if (target != null && webView != null) { String safeTarget = target.replace("'", ""); webView.post(() -> webView.evaluateJavascript("window.LightingAIMeasure&&LightingAIMeasure.receive('" + safeTarget + "'," + distance + "," + angle + "," + height + ");", null)); }
             }
             return;
         }
-
+        if (requestCode == CHOOSE_IMAGE) {
+            if (resultCode == RESULT_OK) {
+                if (pendingCameraCapture && pendingCameraUri != null) { Uri uri = pendingCameraUri; pendingCameraUri = null; finishFileChooser(new Uri[]{uri}); }
+                else { Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data); finishFileChooser(result); }
+            } else { deletePendingCameraUri(); finishFileChooser(null); }
+            return;
+        }
         if (requestCode == CREATE_FILE && resultCode == RESULT_OK && data != null && pendingText != null) {
-            Uri uri = data.getData();
-            try (OutputStream out = getContentResolver().openOutputStream(uri)) {
-                if (out != null) out.write(pendingText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            } catch (Exception ignored) {}
-            pendingText = null;
+            Uri uri = data.getData(); try (OutputStream out = getContentResolver().openOutputStream(uri)) { if (out != null) out.write(pendingText.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception ignored) {} pendingText = null;
         }
     }
 
-    @Override protected void onDestroy() {
-        if (pendingFileChooser != null) finishFileChooser(null);
-        super.onDestroy();
-    }
-
-    @Override public void onBackPressed() {
-        if (webView.canGoBack()) webView.goBack(); else super.onBackPressed();
-    }
+    @Override protected void onDestroy() { if (pendingFileChooser != null) finishFileChooser(null); super.onDestroy(); }
+    @Override public void onBackPressed() { if (webView.canGoBack()) webView.goBack(); else super.onBackPressed(); }
 }

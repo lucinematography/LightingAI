@@ -84,4 +84,10 @@ if(!document.getElementById('lightingai-lighting-ratio-script')){
   q.src='file:///android_asset/lighting-ratio.js';
   document.body.appendChild(q);
 }
+if(!document.getElementById('lightingai-dmx-patch-script')){
+  const d=document.createElement('script');
+  d.id='lightingai-dmx-patch-script';
+  d.src='file:///android_asset/dmx-patch-planner.js';
+  document.body.appendChild(d);
+}
 })();

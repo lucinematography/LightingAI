@@ -168,4 +168,10 @@ if(!document.getElementById('lightingai-project-backup-export-script')){
   p.src='file:///android_asset/project-backup-export.js';
   document.body.appendChild(p);
 }
+if(!document.getElementById('lightingai-sr-ui-polish-script')){
+  const i=document.createElement('script');
+  i.id='lightingai-sr-ui-polish-script';
+  i.src='file:///android_asset/sr-ui-polish.js';
+  document.body.appendChild(i);
+}
 })();

@@ -230,6 +230,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-cct-gel-script')){var g=document.createElement('script');g.id='lightingai-cct-gel-script';g.src='file:///android_asset/cct-gel-calculator.js';document.body.appendChild(g);}" +
             "if(!document.getElementById('lightingai-set-sketch-script')){var q=document.createElement('script');q.id='lightingai-set-sketch-script';q.src='file:///android_asset/set-sketch.js';document.body.appendChild(q);}" +
             "if(!document.getElementById('lightingai-set-sketch-camera-fov-script')){var f=document.createElement('script');f.id='lightingai-set-sketch-camera-fov-script';f.src='file:///android_asset/set-sketch-camera-fov.js';document.body.appendChild(f);}" +
+            "if(!document.getElementById('lightingai-device-capabilities-script')){var d=document.createElement('script');d.id='lightingai-device-capabilities-script';d.src='file:///android_asset/device-capabilities.js';document.body.appendChild(d);}" +
             "})();", null);
     }
 
@@ -259,6 +260,10 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public boolean hasCameraPermission() {
             return MainActivity.this.hasCameraPermission();
+        }
+
+        @JavascriptInterface public String getDeviceCapabilities() {
+            return DeviceCapabilities.toJson(MainActivity.this);
         }
 
         @JavascriptInterface public void startSceneMeasure(double cameraHeight, String language) {

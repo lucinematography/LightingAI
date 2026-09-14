@@ -114,4 +114,10 @@ if(!document.getElementById('lightingai-continuity-match-script')){
   c.src='file:///android_asset/continuity-match-shot.js';
   document.body.appendChild(c);
 }
+if(!document.getElementById('lightingai-shot-list-script')){
+  const l=document.createElement('script');
+  l.id='lightingai-shot-list-script';
+  l.src='file:///android_asset/shot-list-planner.js';
+  document.body.appendChild(l);
+}
 })();

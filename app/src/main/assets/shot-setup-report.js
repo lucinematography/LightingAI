@@ -1,0 +1,67 @@
+(function(){
+'use strict';
+const SET_KEY='lighting_set_sketch_v1';
+const MEASURE_KEY='lighting_scene_measurements_v1';
+const POWER_KEY='lighting_power_calculator_v1';
+const SUN_CFG_KEY='lighting_set_sketch_sun_v1';
+const NOTES_KEY='lighting_shot_setup_notes_v1';
+const E=id=>document.getElementById(id);
+const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
+const TXT={
+ sr:{title:'🎥 Izveštaj scene / Shot Setup',intro:'Jedan lokalni tehnički paket za aktivnu scenu: kamera, objektiv, PRO distance, svetla, napajanje, SUNCE i ekspozicija. Podaci se ne šalju na internet.',notes:'BELEŠKE SCENE',refresh:'OSVEŽI PREGLED',copy:'KOPIRAJ TEKST',save:'SAČUVAJ JSON',copied:'Izveštaj je kopiran.',saved:'Izaberi mesto za čuvanje JSON izveštaja.',copyFail:'Kopiranje nije uspelo.',scene:'SCENA',set:'SET',camera:'KAMERA',measure:'PRO MERENJA',lights:'RASVETA',power:'STRUJA',sun:'SUNCE',exposure:'EKSPOZICIJA',none:'nema podataka',objects:'elemenata',fixtures:'rasvetnih tela',native:'native',manual:'ručno',generated:'Generisano'},
+ en:{title:'🎥 Scene Report / Shot Setup',intro:'One local technical package for the active scene: camera, lens, PRO distances, lights, power, SUN and exposure. Data is not sent to the internet.',notes:'SCENE NOTES',refresh:'REFRESH PREVIEW',copy:'COPY TEXT',save:'SAVE JSON',copied:'Report copied.',saved:'Choose where to save the JSON report.',copyFail:'Copy failed.',scene:'SCENE',set:'SET',camera:'CAMERA',measure:'PRO MEASUREMENTS',lights:'LIGHTING',power:'POWER',sun:'SUN',exposure:'EXPOSURE',none:'no data',objects:'objects',fixtures:'fixtures',native:'native',manual:'manual',generated:'Generated'}
+};
+const t=()=>TXT[lang()];
+const norm=a=>(Number(a)%360+360)%360;
+function parse(key,fallback){try{const v=JSON.parse(localStorage.getItem(key));return v==null?fallback:v}catch(e){return fallback}}
+function num(v){const n=Number(String(v==null?'':v).replace(',','.'));return Number.isFinite(n)?n:null}
+function text(id){const el=E(id);return el?String(el.value!=null?el.value:el.textContent||'').trim():''}
+function activeScene(){const s=parse(SET_KEY,null);if(!s||!Array.isArray(s.scenes)||!s.scenes.length)return null;return s.scenes.find(x=>x.id===s.activeId)||s.scenes[0]}
+function sceneNotes(sceneId){const all=parse(NOTES_KEY,{});return String((sceneId&&all[sceneId])||'')}
+function saveNotes(sceneId,value){if(!sceneId)return;const all=parse(NOTES_KEY,{});all[sceneId]=String(value||'');localStorage.setItem(NOTES_KEY,JSON.stringify(all))}
+function latestMeasurement(target){const a=parse(MEASURE_KEY,[]);if(!Array.isArray(a))return null;const m=a.find(x=>x&&x.target===target&&Number.isFinite(Number(x.distance))&&Number(x.distance)>0);if(!m)return null;return {target,method:m.method||'unknown',distanceM:Number(m.distance),angleDeg:Number.isFinite(Number(m.angle))?Number(m.angle):null,cameraHeightM:Number.isFinite(Number(m.cameraHeight))?Number(m.cameraHeight):null,calibrationOffsetDeg:Number.isFinite(Number(m.calibrationOffset))?Number(m.calibrationOffset):null,createdAt:m.createdAt||m.timestamp||null}}
+function measurements(){return ['subject','wall','background'].map(latestMeasurement).filter(Boolean)}
+function equipment(){
+ const fs=Array.isArray(window.catalogFixtures)?window.catalogFixtures:[],sel=Array.isArray(window.equipment)?window.equipment:[];
+ return sel.map(e=>{const f=fs.find(x=>x.id===e.id||x.id===e.fixtureId);if(!f)return null;return {id:f.id,name:((f.manufacturer||'')+' '+(f.model||f.id)).trim(),qty:Math.max(1,Math.round(Number(e.qty)||1)),powerDrawW:Number.isFinite(Number(f.powerDrawW))?Number(f.powerDrawW):null,beamAngleDeg:f.beamAngleDeg??f.includedReflectorBeamAngleDeg??null}}).filter(Boolean);
+}
+function powerData(eq){
+ const p=Object.assign({voltage:230,branch:16,batteryWh:1000,efficiency:85,qty:{}},parse(POWER_KEY,{}));let totalW=0,unknown=0;
+ eq.forEach(i=>{const q=Math.max(0,Math.round(Number(p.qty&&p.qty[i.id]!=null?p.qty[i.id]:i.qty)||0));i.powerQty=q;if(Number.isFinite(i.powerDrawW))totalW+=i.powerDrawW*q;else if(q>0)unknown+=q});
+ const voltage=Number(p.voltage)||230,branch=Number(p.branch)||16,planning=voltage*branch*0.8;
+ return {voltageV:voltage,circuitA:branch,totalW,currentA:voltage>0?totalW/voltage:null,planningLimitW:planning,circuitsNeeded:totalW>0&&planning>0?Math.ceil(totalW/planning):0,batteryWh:Number(p.batteryWh)||null,batteryEfficiencyPct:Number(p.efficiency)||null,estimatedRuntimeH:totalW>0&&Number(p.batteryWh)>0?(Number(p.batteryWh)*(Number(p.efficiency||85)/100))/totalW:null,unknownFixtureCount:unknown};
+}
+function sunData(scene){
+ const lat=num(text('sunLat')),lon=num(text('sunLon')),date=text('sunDate'),time=text('sunTime')||'12:00';let position=null;
+ if(lat!=null&&lon!=null&&window.LightingAISun&&date){try{const d=date.split('-').map(Number),tm=time.split(':').map(Number),when=new Date(d[0],d[1]-1,d[2],tm[0]||0,tm[1]||0,0,0),p=LightingAISun.position(when,lat,lon);if(p&&Number.isFinite(p.azimuth)&&Number.isFinite(p.elevation))position={azimuthDeg:norm(p.azimuth),elevationDeg:Number(p.elevation),shadowAzimuthDeg:norm(p.azimuth+180)}}catch(e){}}
+ const cfg=parse(SUN_CFG_KEY,{}),sc=scene&&cfg[scene.id]||{};
+ return {date:date||null,time:time||null,latitude:lat,longitude:lon,sketchNorthDeg:Number.isFinite(Number(sc.northDeg))?norm(sc.northDeg):0,overlayVisible:sc.visible!==false,position};
+}
+function exposureData(){
+ const source=E('lightCalcSource'),opt=source&&source.options[source.selectedIndex];
+ return {source:opt?opt.textContent.trim():null,distanceM:num(text('lightCalcDistance')),manualLux:num(text('lightCalcManualLux')),iso:num(text('lightCalcIso')),fps:num(text('lightCalcFps')),shutterAngleDeg:num(text('lightCalcShutter')),ndStops:num(text('lightCalcNd')),targetAperture:num(text('lightCalcTargetAperture')),estimatedLux:(E('lightCalcLux')?.textContent||'').trim()||null,estimatedAperture:(E('lightCalcAperture')?.textContent||'').trim()||null,targetResult:(E('lightCalcTargetResult')?.textContent||'').trim()||null};
+}
+function sceneData(scene){
+ if(!scene)return null;
+ return {id:scene.id,name:scene.name||null,widthM:Number(scene.roomW)||null,lengthM:Number(scene.roomH)||null,objects:(scene.objects||[]).map(o=>({type:o.type,label:o.label||null,xM:Number(o.x),yM:Number(o.y),directionDeg:Number(o.rot)||0,fixtureId:o.fixtureId||null,beamAngleDeg:Number.isFinite(Number(o.beamAngleDeg))?Number(o.beamAngleDeg):null,focalLengthMm:o.type==='camera'?(Number(o.focalLengthMm)||35):null,sensorWidthMm:o.type==='camera'?(Number(o.sensorWidthMm)||36):null}))};
+}
+function report(){const scene=activeScene(),eq=equipment();return {schema:'lightingai-shot-setup-v1',generatedAt:new Date().toISOString(),language:lang(),scene:sceneData(scene),notes:sceneNotes(scene&&scene.id),measurements:measurements(),equipment:eq,power:powerData(eq),sun:sunData(scene),exposure:exposureData()}}
+function f(v,d=2){return Number.isFinite(Number(v))?Number(v).toFixed(d):'—'}
+function reportText(r){const x=t(),lines=['LightingAI — SHOT SETUP',x.generated+': '+new Date(r.generatedAt).toLocaleString(), ''];
+ if(r.scene){lines.push(x.scene+': '+(r.scene.name||'—'),x.set+': '+f(r.scene.widthM,1)+' × '+f(r.scene.lengthM,1)+' m · '+r.scene.objects.length+' '+x.objects);r.scene.objects.filter(o=>o.type==='camera').forEach((c,i)=>lines.push(x.camera+' '+(i+1)+': '+(c.label||'—')+' · '+f(c.focalLengthMm,0)+' mm · sensor '+f(c.sensorWidthMm,1)+' mm · x '+f(c.xM)+' m / y '+f(c.yM)+' m · '+f(c.directionDeg,0)+'°'));}
+ lines.push('',x.measure+':');if(r.measurements.length)r.measurements.forEach(m=>lines.push('- '+m.target+': '+f(m.distanceM)+' m · '+(m.method||'—')));else lines.push('- '+x.none);
+ lines.push('',x.lights+':');if(r.equipment.length)r.equipment.forEach(i=>lines.push('- '+i.name+' ×'+i.qty+(Number.isFinite(i.powerDrawW)?' · '+i.powerDrawW+' W':'') ));else lines.push('- '+x.none);
+ lines.push('',x.power+': '+f(r.power.totalW,0)+' W · '+f(r.power.currentA,2)+' A @ '+f(r.power.voltageV,0)+' V · circuits '+(r.power.circuitsNeeded||'—'));
+ if(r.sun.position)lines.push('',x.sun+': '+(r.sun.date||'—')+' '+(r.sun.time||'—')+' · az '+f(r.sun.position.azimuthDeg,0)+'° · el '+f(r.sun.position.elevationDeg,1)+'° · shadow '+f(r.sun.position.shadowAzimuthDeg,0)+'° · sketch N '+f(r.sun.sketchNorthDeg,0)+'°');
+ const ex=r.exposure;if(ex.iso||ex.fps)lines.push('',x.exposure+': '+(ex.source||'—')+' · ISO '+(ex.iso||'—')+' · '+(ex.fps||'—')+' fps · '+(ex.shutterAngleDeg||'—')+'° · ND '+(ex.ndStops||0)+' · '+(ex.estimatedAperture||'—'));
+ if(r.notes)lines.push('','NOTES / BELEŠKE:',r.notes);return lines.join('\n')}
+function filename(scene){const base=String(scene&&scene.name||'scene').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,50)||'scene';return 'LightingAI_ShotSetup_'+base+'.json'}
+function copyFallback(value){const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();return ok}
+async function copyReport(){const value=reportText(report());let ok=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(value);ok=true}}catch(e){}if(!ok)ok=copyFallback(value);status(ok?t().copied:t().copyFail)}
+function saveReport(){const r=report(),value=JSON.stringify(r,null,2),name=filename(r.scene);if(window.Android&&typeof Android.saveText==='function'){try{Android.saveText(name,value);status(t().saved);return}catch(e){}}try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([value],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);status(t().saved)}catch(e){status(t().copyFail)}}
+function status(s){const el=E('shotSetupStatus');if(el){el.textContent=s;setTimeout(()=>{if(el.textContent===s)el.textContent=''},2600)}}
+function refresh(){const box=E('shotSetupPreview'),notes=E('shotSetupNotes');if(!box)return;const r=report(),x=t(),cams=r.scene?r.scene.objects.filter(o=>o.type==='camera').length:0;box.innerHTML='<div><small>'+x.scene+'</small><b>'+(r.scene?.name||'—')+'</b></div><div><small>'+x.camera+'</small><b>'+cams+'</b></div><div><small>'+x.measure+'</small><b>'+r.measurements.length+'</b></div><div><small>'+x.lights+'</small><b>'+r.equipment.length+'</b></div><div><small>'+x.power+'</small><b>'+f(r.power.totalW,0)+' W</b></div><div><small>'+x.sun+'</small><b>'+(r.sun.position?(f(r.sun.position.azimuthDeg,0)+'° / '+f(r.sun.position.elevationDeg,1)+'°'):'—')+'</b></div>';if(notes&&document.activeElement!==notes)notes.value=r.notes||''}
+function translate(){if(!E('shotSetupCard'))return;const x=t();E('shotSetupTitle').textContent=x.title;E('shotSetupIntro').textContent=x.intro;E('shotSetupNotesLabel').textContent=x.notes;E('shotSetupRefresh').textContent=x.refresh;E('shotSetupCopy').textContent=x.copy;E('shotSetupSave').textContent=x.save;refresh()}
+function init(){const planner=E('planner');if(!planner||E('shotSetupCard'))return false;const st=document.createElement('style');st.id='shotSetupStyle';st.textContent='.shot-setup-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.shot-setup-preview>div{background:#0f1115;border:1px solid #30343b;border-radius:10px;padding:9px}.shot-setup-preview small{display:block;color:#9299a3;font-size:10px}.shot-setup-preview b{display:block;color:#f5c542;margin-top:3px;font-size:13px}.shot-setup-status{min-height:18px;color:#b8f0d1;font-size:12px;margin-top:6px}.shot-setup-card textarea{min-height:90px;resize:vertical}@media(max-width:520px){.shot-setup-preview{grid-template-columns:1fr 1fr}}';document.head.appendChild(st);const card=document.createElement('details');card.id='shotSetupCard';card.className='card shot-setup-card';card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="shotSetupTitle"></span></summary><div style="margin-top:12px"><p id="shotSetupIntro" class="muted small"></p><div id="shotSetupPreview" class="shot-setup-preview"></div><label id="shotSetupNotesLabel" class="caption"></label><textarea id="shotSetupNotes" placeholder="..."></textarea><div class="actions"><button id="shotSetupRefresh" class="btn secondary" type="button"></button><button id="shotSetupCopy" class="btn secondary" type="button"></button><button id="shotSetupSave" class="btn primary" type="button"></button></div><div id="shotSetupStatus" class="shot-setup-status"></div></div>';const sketch=E('setSketchCard');if(sketch&&sketch.parentNode)sketch.parentNode.insertBefore(card,sketch.nextSibling);else planner.appendChild(card);E('shotSetupRefresh').addEventListener('click',refresh);E('shotSetupCopy').addEventListener('click',copyReport);E('shotSetupSave').addEventListener('click',saveReport);E('shotSetupNotes').addEventListener('input',ev=>{const s=activeScene();if(s)saveNotes(s.id,ev.target.value)});card.addEventListener('toggle',()=>{if(card.open)refresh()});const old=window.setLanguage;if(typeof old==='function'&&!window.__shotSetupLangHook){window.__shotSetupLangHook=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}translate();setInterval(()=>{if(card.open)refresh()},2000);return true}
+let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>160)clearInterval(timer)},100);
+})();

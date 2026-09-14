@@ -90,4 +90,10 @@ if(!document.getElementById('lightingai-dmx-patch-script')){
   d.src='file:///android_asset/dmx-patch-planner.js';
   document.body.appendChild(d);
 }
+if(!document.getElementById('lightingai-dmx-export-script')){
+  const x=document.createElement('script');
+  x.id='lightingai-dmx-export-script';
+  x.src='file:///android_asset/dmx-export.js';
+  document.body.appendChild(x);
+}
 })();

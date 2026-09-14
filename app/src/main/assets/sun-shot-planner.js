@@ -25,6 +25,12 @@
     core.id='lightingai-sun-core-runtime';core.src='file:///android_asset/sun.js';core.onload=refreshSunModules;
     document.head.appendChild(core);
   }
+  function ensureShadowTool(){
+    if(document.getElementById('lightingai-sun-shadow-tool-runtime'))return;
+    const s=document.createElement('script');
+    s.id='lightingai-sun-shadow-tool-runtime';s.src='file:///android_asset/sun-shadow-tool.js';
+    document.head.appendChild(s);
+  }
   const compass=a=>{
     const dirs=lang()==='sr'?['S','SI','I','JI','J','JZ','Z','SZ']:['N','NE','E','SE','S','SW','W','NW'];
     return dirs[Math.round(norm(a)/45)%8];
@@ -112,5 +118,6 @@
     translate();return true;
   }
   ensureCore();
+  ensureShadowTool();
   let tries=0;const timer=setInterval(()=>{tries++;if(init()||tries>100)clearInterval(timer)},100);
 })();

@@ -120,4 +120,10 @@ if(!document.getElementById('lightingai-shot-list-script')){
   l.src='file:///android_asset/shot-list-planner.js';
   document.body.appendChild(l);
 }
+if(!document.getElementById('lightingai-shot-list-export-script')){
+  const e=document.createElement('script');
+  e.id='lightingai-shot-list-export-script';
+  e.src='file:///android_asset/shot-list-export.js';
+  document.body.appendChild(e);
+}
 })();

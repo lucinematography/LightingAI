@@ -59,7 +59,10 @@ public final class NativeSunCompass implements SensorEventListener {
         }
 
         running = ok;
-        if (!ok) return unavailable();
+        if (!ok) {
+            sensorManager.unregisterListener(this);
+            return unavailable();
+        }
         return true;
     }
 

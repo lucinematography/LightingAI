@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Size;
+import android.util.SizeF;
 import android.view.Gravity;
 import android.view.Surface;
 import android.view.TextureView;
@@ -50,8 +51,14 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private Handler cameraHandler;
     private Size previewSize;
     private int sensorOrientation = 90;
+    private int[] availableAfModes = new int[0];
+
     private SensorManager sensorManager;
-    private Sensor rotationSensor;
+    private Sensor tiltSensor;
+    private boolean fallbackTiltSensor = false;
+    private final float[] fallbackGravity = new float[3];
+    private boolean fallbackGravityReady = false;
+
     private TextView distanceText;
     private TextView angleText;
     private TextView qualityText;
@@ -78,14 +85,36 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         getWindow().setStatusBarColor(Color.rgb(13,15,18));
         getWindow().setNavigationBarColor(Color.rgb(13,15,18));
         buildUi();
+
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
-        if (rotationSensor == null) rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
-        if (rotationSensor == null && hintText != null) hintText.setText(tr("Senzor nagiba nije dostupan. Koristi WEB kameru kao rezervu.", "Tilt sensor unavailable. Use WEB camera as fallback."));
+        chooseTiltSensor();
+        if (tiltSensor == null) {
+            setHint(tr("Senzor nagiba nije dostupan. Koristi WEB kameru kao rezervu.", "Tilt sensor unavailable. Use WEB camera as fallback."));
+        } else if (fallbackTiltSensor) {
+            setHint(tr("Koristi se kompatibilni rezervni senzor nagiba. Za najbolju tačnost uradi kalibraciju poznatim rastojanjem.", "Using a compatible fallback tilt sensor. For best accuracy, calibrate with a known distance."));
+        }
     }
 
     private String tr(String sr, String en) { return english ? en : sr; }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
+
+    private void setHint(String text) {
+        runOnUiThread(() -> { if (hintText != null) hintText.setText(text); });
+    }
+
+    private void chooseTiltSensor() {
+        if (sensorManager == null) return;
+        tiltSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        if (tiltSensor == null) tiltSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
+        if (tiltSensor == null) {
+            tiltSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+            fallbackTiltSensor = tiltSensor != null;
+        }
+        if (tiltSensor == null) {
+            tiltSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            fallbackTiltSensor = tiltSensor != null;
+        }
+    }
 
     private TextView makeText(String value, float sp, int color) {
         TextView v = new TextView(this);
@@ -191,7 +220,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     @Override protected void onResume() {
         super.onResume();
         startCameraThread();
-        if (rotationSensor != null) sensorManager.registerListener(this, rotationSensor, SensorManager.SENSOR_DELAY_GAME);
+        if (tiltSensor != null && sensorManager != null) sensorManager.registerListener(this, tiltSensor, SensorManager.SENSOR_DELAY_GAME);
         if (textureView != null && textureView.isAvailable()) openCamera();
     }
 
@@ -213,6 +242,50 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         cameraThread = null; cameraHandler = null;
     }
 
+    private static boolean containsMode(int[] modes, int value) {
+        if (modes == null) return false;
+        for (int mode : modes) if (mode == value) return true;
+        return false;
+    }
+
+    private String chooseBackCamera(CameraManager manager) throws Exception {
+        String bestId = null;
+        double bestScore = -Double.MAX_VALUE;
+        for (String id : manager.getCameraIdList()) {
+            CameraCharacteristics c = manager.getCameraCharacteristics(id);
+            Integer facing = c.get(CameraCharacteristics.LENS_FACING);
+            if (facing == null || facing != CameraCharacteristics.LENS_FACING_BACK) continue;
+
+            StreamConfigurationMap map = c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            Size[] outputs = map == null ? null : map.getOutputSizes(SurfaceTexture.class);
+            if (outputs == null || outputs.length == 0) continue;
+
+            double score = 0;
+            int[] afModes = c.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
+            if (containsMode(afModes, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) score += 10000;
+            else if (containsMode(afModes, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) score += 7000;
+            else if (containsMode(afModes, CaptureRequest.CONTROL_AF_MODE_AUTO)) score += 3000;
+
+            SizeF physical = c.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+            if (physical != null && physical.getWidth() > 0 && physical.getHeight() > 0) {
+                score += physical.getWidth() * physical.getHeight() * 100.0;
+                float[] focals = c.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+                if (focals != null && focals.length > 0) {
+                    float shortest = focals[0];
+                    for (float f : focals) shortest = Math.min(shortest, f);
+                    double equivalent = 36.0 * shortest / physical.getWidth();
+                    score += Math.max(0.0, 12000.0 - Math.abs(equivalent - 28.0) * 600.0);
+                }
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestId = id;
+            }
+        }
+        return bestId;
+    }
+
     private void openCamera() {
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION); return;
@@ -220,26 +293,26 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         if (cameraDevice != null) return;
         try {
             CameraManager manager = (CameraManager)getSystemService(CAMERA_SERVICE);
-            String chosen = null;
-            for (String id : manager.getCameraIdList()) {
-                CameraCharacteristics c = manager.getCameraCharacteristics(id);
-                Integer facing = c.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) { chosen = id; break; }
-            }
-            if (chosen == null) { hintText.setText(tr("Zadnja kamera nije pronađena.", "Rear camera not found.")); return; }
+            String chosen = chooseBackCamera(manager);
+            if (chosen == null) { setHint(tr("Kompatibilna zadnja kamera nije pronađena.", "No compatible rear camera found.")); return; }
+
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(chosen);
             Integer so = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION); if (so != null) sensorOrientation = so;
-            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP); if (map == null) return;
+            int[] af = characteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
+            availableAfModes = af == null ? new int[0] : af;
+            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (map == null) { setHint(tr("Ovaj modul kamere ne daje kompatibilan pregled.", "This camera module does not provide a compatible preview.")); return; }
             previewSize = chooseSize(map.getOutputSizes(SurfaceTexture.class));
+            if (previewSize == null) { setHint(tr("Nema podržane veličine pregleda kamere.", "No supported camera preview size.")); return; }
             manager.openCamera(chosen, cameraCallback, cameraHandler);
         } catch (Exception e) {
-            hintText.setText(tr("Kamera nije dostupna.", "Camera unavailable."));
+            setHint(tr("Kamera nije dostupna.", "Camera unavailable."));
         }
     }
 
     private Size chooseSize(Size[] sizes) {
-        if (sizes == null || sizes.length == 0) return new Size(1280,720);
-        Size best = sizes[0]; long bestScore = Long.MAX_VALUE;
+        if (sizes == null || sizes.length == 0) return null;
+        Size best = null; long bestScore = Long.MAX_VALUE;
         for (Size s : sizes) {
             long pixels = (long)s.getWidth()*s.getHeight();
             if (pixels > 1920L*1080L) continue;
@@ -247,13 +320,21 @@ public class MeasureActivity extends Activity implements SensorEventListener {
             long score = Math.abs(pixels - 1280L*720L) + (long)(Math.abs(ratio - 16.0/9.0)*1000000);
             if (score < bestScore) { bestScore = score; best = s; }
         }
+        if (best != null) return best;
+
+        best = sizes[0];
+        long smallest = (long)best.getWidth()*best.getHeight();
+        for (Size s : sizes) {
+            long pixels = (long)s.getWidth()*s.getHeight();
+            if (pixels < smallest) { smallest = pixels; best = s; }
+        }
         return best;
     }
 
     private final CameraDevice.StateCallback cameraCallback = new CameraDevice.StateCallback() {
         @Override public void onOpened(CameraDevice camera) { cameraDevice = camera; createPreview(); }
-        @Override public void onDisconnected(CameraDevice camera) { camera.close(); cameraDevice = null; }
-        @Override public void onError(CameraDevice camera, int error) { camera.close(); cameraDevice = null; }
+        @Override public void onDisconnected(CameraDevice camera) { camera.close(); cameraDevice = null; setHint(tr("Kamera je prekinuta.", "Camera disconnected.")); }
+        @Override public void onError(CameraDevice camera, int error) { camera.close(); cameraDevice = null; setHint(tr("Greška kamere. Pokušaj ponovo.", "Camera error. Try again.")); }
     };
 
     private void createPreview() {
@@ -262,16 +343,21 @@ public class MeasureActivity extends Activity implements SensorEventListener {
             st.setDefaultBufferSize(previewSize.getWidth(),previewSize.getHeight());
             Surface surface = new Surface(st);
             previewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); previewBuilder.addTarget(surface);
-            previewBuilder.set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            if (containsMode(availableAfModes, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) {
+                previewBuilder.set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            } else if (containsMode(availableAfModes, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
+                previewBuilder.set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
+            }
             cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override public void onConfigured(CameraCaptureSession session) {
                     captureSession = session;
-                    try { session.setRepeatingRequest(previewBuilder.build(),null,cameraHandler); } catch (Exception ignored) {}
+                    try { session.setRepeatingRequest(previewBuilder.build(),null,cameraHandler); }
+                    catch (Exception e) { setHint(tr("Pregled kamere nije mogao da se pokrene.", "Camera preview could not start.")); }
                     runOnUiThread(() -> configureTransform(textureView.getWidth(),textureView.getHeight()));
                 }
-                @Override public void onConfigureFailed(CameraCaptureSession session) { hintText.setText(tr("Pregled kamere nije dostupan.", "Camera preview unavailable.")); }
+                @Override public void onConfigureFailed(CameraCaptureSession session) { setHint(tr("Pregled kamere nije dostupan.", "Camera preview unavailable.")); }
             }, cameraHandler);
-        } catch (Exception e) { hintText.setText(tr("Pregled kamere nije dostupan.", "Camera preview unavailable.")); }
+        } catch (Exception e) { setHint(tr("Pregled kamere nije dostupan.", "Camera preview unavailable.")); }
     }
 
     private void configureTransform(int viewWidth, int viewHeight) {
@@ -314,17 +400,42 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         return cameraHeightM / Math.tan(Math.toRadians(angle));
     }
 
-    @Override public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType()!=Sensor.TYPE_ROTATION_VECTOR && event.sensor.getType()!=Sensor.TYPE_GAME_ROTATION_VECTOR) return;
-        float[] r = new float[9]; SensorManager.getRotationMatrixFromVector(r,event.values);
-        double worldX = -r[2], worldY = -r[5], worldZ = -r[8];
-        double horizontal = Math.sqrt(worldX*worldX + worldY*worldY);
-        double rawDepression = Math.toDegrees(Math.atan2(-worldZ,horizontal));
+    private void acceptDepression(double rawDepression) {
         if (!Double.isFinite(rawDepression)) return;
         recordDepression(rawDepression);
         depressionSmooth = Double.isFinite(depressionSmooth) ? depressionSmooth*0.84 + rawDepression*0.16 : rawDepression;
         cameraHeightM = parseHeight();
         updateEstimate();
+    }
+
+    @Override public void onSensorChanged(SensorEvent event) {
+        int type = event.sensor.getType();
+        if (type == Sensor.TYPE_ROTATION_VECTOR || type == Sensor.TYPE_GAME_ROTATION_VECTOR) {
+            float[] r = new float[9]; SensorManager.getRotationMatrixFromVector(r,event.values);
+            double worldX = -r[2], worldY = -r[5], worldZ = -r[8];
+            double horizontal = Math.sqrt(worldX*worldX + worldY*worldY);
+            acceptDepression(Math.toDegrees(Math.atan2(-worldZ,horizontal)));
+            return;
+        }
+
+        if (type == Sensor.TYPE_GRAVITY || type == Sensor.TYPE_ACCELEROMETER) {
+            if (event.values.length < 3) return;
+            if (type == Sensor.TYPE_ACCELEROMETER) {
+                if (!fallbackGravityReady) {
+                    fallbackGravity[0]=event.values[0]; fallbackGravity[1]=event.values[1]; fallbackGravity[2]=event.values[2];
+                    fallbackGravityReady = true;
+                } else {
+                    fallbackGravity[0]=fallbackGravity[0]*0.85f+event.values[0]*0.15f;
+                    fallbackGravity[1]=fallbackGravity[1]*0.85f+event.values[1]*0.15f;
+                    fallbackGravity[2]=fallbackGravity[2]*0.85f+event.values[2]*0.15f;
+                }
+            } else {
+                fallbackGravity[0]=event.values[0]; fallbackGravity[1]=event.values[1]; fallbackGravity[2]=event.values[2];
+                fallbackGravityReady = true;
+            }
+            double horizontal = Math.hypot(fallbackGravity[0], fallbackGravity[1]);
+            acceptDepression(Math.toDegrees(Math.atan2(fallbackGravity[2], horizontal)));
+        }
     }
 
     private void updateEstimate() {
@@ -379,7 +490,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
             calibrationText.setText(tr("Kalibracija: fabrička (0,00°). Za veću tačnost koristi poznato rastojanje.", "Calibration: default (0.00°). Use a known distance for better accuracy."));
             calibrationText.setTextColor(0xff9da3ad);
         } else {
-            calibrationText.setText(String.format(Locale.US,tr("Kalibracija telefona: korekcija %+1.2f°", "Phone calibration: correction %+1.2f°"),angleCalibrationDeg));
+            calibrationText.setText(String.format(Locale.US,tr("Kalibracija uređaja: korekcija %+1.2f°", "Device calibration: correction %+1.2f°"),angleCalibrationDeg));
             calibrationText.setTextColor(0xffb8f0d1);
         }
     }
@@ -388,24 +499,24 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         cameraHeightM = parseHeight();
         double known = parseKnownDistance();
         if (!(known >= 0.30 && known <= 50.0) || !(cameraHeightM >= 0.30 && cameraHeightM <= 3.0)) {
-            hintText.setText(tr("Unesi tačnu visinu kamere i poznato rastojanje 0,30–50 m.", "Enter the exact camera height and a known distance of 0.30–50 m."));
+            setHint(tr("Unesi tačnu visinu kamere i poznato rastojanje 0,30–50 m.", "Enter the exact camera height and a known distance of 0.30–50 m."));
             return;
         }
         if (!Double.isFinite(depressionSmooth) || depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 1.5) {
-            hintText.setText(tr("Za kalibraciju drži telefon mirno dok ne piše STABILNO.", "For calibration, hold the phone still until STABLE appears."));
+            setHint(tr("Za kalibraciju drži uređaj mirno dok ne piše STABILNO.", "For calibration, hold the device still until STABLE appears."));
             return;
         }
         double expectedAngle = Math.toDegrees(Math.atan2(cameraHeightM, known));
         double offset = expectedAngle - depressionSmooth;
         if (!Double.isFinite(offset) || Math.abs(offset) > 15.0) {
-            hintText.setText(tr("Kalibracija je van očekivanog opsega. Proveri visinu kamere, poznato rastojanje i nišan.", "Calibration is outside the expected range. Check camera height, known distance and crosshair."));
+            setHint(tr("Kalibracija je van očekivanog opsega. Proveri visinu kamere, poznato rastojanje i nišan.", "Calibration is outside the expected range. Check camera height, known distance and crosshair."));
             return;
         }
         angleCalibrationDeg = offset;
         getSharedPreferences(PREFS, MODE_PRIVATE).edit().putFloat(PREF_ANGLE_OFFSET, (float)angleCalibrationDeg).apply();
         showCalibrationStatus();
         updateEstimate();
-        hintText.setText(tr("Kalibracija sačuvana za ovaj telefon. Sada meri ostale tačke normalno.", "Calibration saved for this phone. You can now measure other points normally."));
+        setHint(tr("Kalibracija je sačuvana za ovaj uređaj. Sada meri ostale tačke normalno.", "Calibration saved for this device. You can now measure other points normally."));
     }
 
     private void resetCalibration() {
@@ -414,16 +525,16 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         prefs.edit().remove(PREF_ANGLE_OFFSET).apply();
         showCalibrationStatus();
         updateEstimate();
-        hintText.setText(tr("Kalibracija je vraćena na fabričku vrednost.", "Calibration reset to the default value."));
+        setHint(tr("Kalibracija je vraćena na fabričku vrednost.", "Calibration reset to the default value."));
     }
 
     private void finishMeasurement(String target) {
         if (!Double.isFinite(distanceM)) {
-            hintText.setText(tr("Nema merenja. Spusti nišan na podnožje objekta.", "No measurement. Aim at the object's floor contact point."));
+            setHint(tr("Nema merenja. Spusti nišan na podnožje objekta.", "No measurement. Aim at the object's floor contact point."));
             return;
         }
         if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 2.0) {
-            hintText.setText(tr("Drži telefon mirno trenutak, pa pokušaj ponovo.", "Hold the phone still for a moment, then try again."));
+            setHint(tr("Drži uređaj mirno trenutak, pa pokušaj ponovo.", "Hold the device still for a moment, then try again."));
             return;
         }
         Intent data = new Intent();
@@ -433,6 +544,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         data.putExtra("cameraHeight",parseHeight());
         data.putExtra("uncertainty",uncertaintyM);
         data.putExtra("calibrationOffset",angleCalibrationDeg);
+        data.putExtra("sensorFallback",fallbackTiltSensor);
         setResult(RESULT_OK,data); finish();
     }
 
@@ -441,6 +553,6 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode,permissions,grantResults);
         if (requestCode == CAMERA_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) openCamera();
-        else if (requestCode == CAMERA_PERMISSION) hintText.setText(tr("Dozvoli kameru da bi PRO merenje radilo.", "Allow camera access for PRO measurement."));
+        else if (requestCode == CAMERA_PERMISSION) setHint(tr("Dozvoli kameru da bi PRO merenje radilo.", "Allow camera access for PRO measurement."));
     }
 }

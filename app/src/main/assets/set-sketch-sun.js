@@ -70,6 +70,13 @@ function renderReadout(){
 }
 function install(){
   const stage=E('setSketchStage'),svg=E('setSketchSvg');if(!stage||!svg)return false;
+  // On a brand-new install Set Sketch has a valid in-memory default scene before
+  // it has ever written that scene to localStorage. SUN/FOV/coverage extensions
+  // read localStorage, so persist the default once through the existing Save path.
+  if(!activeScene()){
+    const save=E('setSketchSave');
+    if(save)save.click();
+  }
   if(!E('setSketchSunStyle')){
     const st=document.createElement('style');st.id='setSketchSunStyle';st.textContent='.set-sketch-sun-tools{margin:10px 0 4px;padding:10px;background:#10141a;border:1px solid #30343b;border-radius:12px}.set-sketch-sun-tools h4{margin:0 0 8px}.set-sketch-sun-grid{display:grid;grid-template-columns:1fr 120px 1fr 1fr;gap:8px;align-items:end}.set-sketch-sun-check{display:flex;gap:8px;align-items:center;padding:10px;background:#0f1115;border:1px solid #30343b;border-radius:10px;font-size:11px;color:#c7cbd1}.set-sketch-sun-check input{width:auto}.set-sketch-sun-grid label{font-size:11px;color:#9299a3}.set-sketch-sun-tools .set-readout{min-height:55px}@media(max-width:620px){.set-sketch-sun-grid{grid-template-columns:1fr 1fr}.set-sketch-sun-check{grid-column:1/-1}}';document.head.appendChild(st);
   }

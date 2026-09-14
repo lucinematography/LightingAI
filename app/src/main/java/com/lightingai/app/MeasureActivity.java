@@ -3,6 +3,7 @@ package com.lightingai.app;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -38,6 +39,9 @@ import java.util.Locale;
 public class MeasureActivity extends Activity implements SensorEventListener {
     private static final int CAMERA_PERMISSION = 701;
     private static final int STABILITY_WINDOW = 14;
+    private static final String PREFS = "lighting_measure_calibration";
+    private static final String PREF_ANGLE_OFFSET = "angle_offset_deg";
+
     private TextureView textureView;
     private CameraDevice cameraDevice;
     private CameraCaptureSession captureSession;
@@ -52,10 +56,13 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private TextView angleText;
     private TextView qualityText;
     private TextView hintText;
+    private TextView calibrationText;
     private EditText heightInput;
+    private EditText knownDistanceInput;
     private double depressionSmooth = Double.NaN;
     private double distanceM = Double.NaN;
     private double cameraHeightM = 1.50;
+    private double angleCalibrationDeg = 0.0;
     private boolean english = false;
     private final double[] depressionWindow = new double[STABILITY_WINDOW];
     private int depressionCount = 0;
@@ -67,6 +74,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         super.onCreate(savedInstanceState);
         english = "en".equals(getIntent().getStringExtra("lang"));
         cameraHeightM = getIntent().getDoubleExtra("cameraHeight", 1.50);
+        angleCalibrationDeg = getSharedPreferences(PREFS, MODE_PRIVATE).getFloat(PREF_ANGLE_OFFSET, 0f);
         getWindow().setStatusBarColor(Color.rgb(13,15,18));
         getWindow().setNavigationBarColor(Color.rgb(13,15,18));
         buildUi();
@@ -93,6 +101,19 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         lp.setMargins(dp(4), dp(4), dp(4), dp(4));
         b.setLayoutParams(lp);
         return b;
+    }
+
+    private EditText makeNumberInput(String value) {
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setText(value);
+        input.setTextColor(Color.WHITE);
+        input.setHintTextColor(0xff747b85);
+        input.setTextSize(16);
+        input.setInputType(2|8192);
+        input.setGravity(Gravity.CENTER);
+        input.setBackgroundColor(0xff20242a);
+        return input;
     }
 
     private void buildUi() {
@@ -128,12 +149,25 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         root.addView(cross,new FrameLayout.LayoutParams(dp(88),dp(88),Gravity.CENTER));
 
         LinearLayout panel = new LinearLayout(this);
-        panel.setOrientation(LinearLayout.VERTICAL); panel.setPadding(dp(14),dp(10),dp(14),dp(14)); panel.setBackgroundColor(0xee0d0f12);
+        panel.setOrientation(LinearLayout.VERTICAL); panel.setPadding(dp(14),dp(8),dp(14),dp(12)); panel.setBackgroundColor(0xee0d0f12);
         hintText = makeText(tr("Nišan postavi na mesto gde objekat dodiruje ravan pod. Drži telefon mirno dok ne piše STABILNO.", "Place the crosshair where the object meets a level floor. Hold the phone still until STABLE appears."),12,0xffb0b5bd); panel.addView(hintText);
+
         LinearLayout hrow = new LinearLayout(this); hrow.setGravity(Gravity.CENTER_VERTICAL);
-        TextView hl = makeText(tr("Visina kamere (m)", "Camera height (m)"),14,Color.WHITE); hrow.addView(hl,new LinearLayout.LayoutParams(0,dp(48),1f));
-        heightInput = new EditText(this); heightInput.setSingleLine(true); heightInput.setText(String.format(Locale.US,"%.2f",cameraHeightM)); heightInput.setTextColor(Color.WHITE); heightInput.setTextSize(16); heightInput.setInputType(2|8192); heightInput.setGravity(Gravity.CENTER); heightInput.setBackgroundColor(0xff20242a);
-        hrow.addView(heightInput,new LinearLayout.LayoutParams(dp(110),dp(44))); panel.addView(hrow);
+        TextView hl = makeText(tr("Visina kamere (m)", "Camera height (m)"),14,Color.WHITE); hrow.addView(hl,new LinearLayout.LayoutParams(0,dp(46),1f));
+        heightInput = makeNumberInput(String.format(Locale.US,"%.2f",cameraHeightM));
+        hrow.addView(heightInput,new LinearLayout.LayoutParams(dp(110),dp(42))); panel.addView(hrow);
+
+        calibrationText = makeText("",11,0xff9da3ad); panel.addView(calibrationText);
+        LinearLayout calRow = new LinearLayout(this); calRow.setGravity(Gravity.CENTER_VERTICAL);
+        knownDistanceInput = makeNumberInput("2.00");
+        knownDistanceInput.setHint(tr("Poznato rastojanje (m)", "Known distance (m)"));
+        calRow.addView(knownDistanceInput,new LinearLayout.LayoutParams(0,dp(46),1f));
+        Button calibrate = makeButton(tr("KALIBRIŠI", "CALIBRATE")); calibrate.setTextSize(12);
+        Button resetCalibration = makeButton(tr("RESET KAL.", "RESET CAL.")); resetCalibration.setTextSize(12);
+        calibrate.setOnClickListener(v -> calibrateAngle());
+        resetCalibration.setOnClickListener(v -> resetCalibration());
+        calRow.addView(calibrate); calRow.addView(resetCalibration); panel.addView(calRow);
+        showCalibrationStatus();
 
         LinearLayout targetRow = new LinearLayout(this); targetRow.setOrientation(LinearLayout.HORIZONTAL);
         Button actor = makeButton(tr("GLUMAC", "ACTOR")); Button wall = makeButton(tr("ZID", "WALL")); Button background = makeButton(tr("POZADINA", "BACKGROUND"));
@@ -142,7 +176,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
         Button cancel = makeButton(tr("Nazad bez čuvanja", "Back without saving")); cancel.setOnClickListener(v -> { setResult(RESULT_CANCELED); finish(); });
         LinearLayout cancelRow = new LinearLayout(this); cancelRow.addView(cancel); panel.addView(cancelRow);
-        root.addView(panel,new FrameLayout.LayoutParams(-1,dp(208),Gravity.BOTTOM));
+        root.addView(panel,new FrameLayout.LayoutParams(-1,dp(286),Gravity.BOTTOM));
         setContentView(root);
         root.requestApplyInsets();
     }
@@ -294,7 +328,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     }
 
     private void updateEstimate() {
-        double d = depressionSmooth;
+        double d = depressionSmooth + angleCalibrationDeg;
         if (d > 2.5 && d < 82 && cameraHeightM > 0.2) {
             double calculated = distanceForAngle(d);
             if (Double.isFinite(calculated) && calculated > 0.15 && calculated < 100) {
@@ -334,6 +368,55 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         catch (Exception e) { return 1.50; }
     }
 
+    private double parseKnownDistance() {
+        try { return Double.parseDouble(knownDistanceInput.getText().toString().trim().replace(',','.')); }
+        catch (Exception e) { return Double.NaN; }
+    }
+
+    private void showCalibrationStatus() {
+        if (calibrationText == null) return;
+        if (Math.abs(angleCalibrationDeg) < 0.01) {
+            calibrationText.setText(tr("Kalibracija: fabrička (0,00°). Za veću tačnost koristi poznato rastojanje.", "Calibration: default (0.00°). Use a known distance for better accuracy."));
+            calibrationText.setTextColor(0xff9da3ad);
+        } else {
+            calibrationText.setText(String.format(Locale.US,tr("Kalibracija telefona: korekcija %+1.2f°", "Phone calibration: correction %+1.2f°"),angleCalibrationDeg));
+            calibrationText.setTextColor(0xffb8f0d1);
+        }
+    }
+
+    private void calibrateAngle() {
+        cameraHeightM = parseHeight();
+        double known = parseKnownDistance();
+        if (!(known >= 0.30 && known <= 50.0) || !(cameraHeightM >= 0.30 && cameraHeightM <= 3.0)) {
+            hintText.setText(tr("Unesi tačnu visinu kamere i poznato rastojanje 0,30–50 m.", "Enter the exact camera height and a known distance of 0.30–50 m."));
+            return;
+        }
+        if (!Double.isFinite(depressionSmooth) || depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 1.5) {
+            hintText.setText(tr("Za kalibraciju drži telefon mirno dok ne piše STABILNO.", "For calibration, hold the phone still until STABLE appears."));
+            return;
+        }
+        double expectedAngle = Math.toDegrees(Math.atan2(cameraHeightM, known));
+        double offset = expectedAngle - depressionSmooth;
+        if (!Double.isFinite(offset) || Math.abs(offset) > 15.0) {
+            hintText.setText(tr("Kalibracija je van očekivanog opsega. Proveri visinu kamere, poznato rastojanje i nišan.", "Calibration is outside the expected range. Check camera height, known distance and crosshair."));
+            return;
+        }
+        angleCalibrationDeg = offset;
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putFloat(PREF_ANGLE_OFFSET, (float)angleCalibrationDeg).apply();
+        showCalibrationStatus();
+        updateEstimate();
+        hintText.setText(tr("Kalibracija sačuvana za ovaj telefon. Sada meri ostale tačke normalno.", "Calibration saved for this phone. You can now measure other points normally."));
+    }
+
+    private void resetCalibration() {
+        angleCalibrationDeg = 0.0;
+        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        prefs.edit().remove(PREF_ANGLE_OFFSET).apply();
+        showCalibrationStatus();
+        updateEstimate();
+        hintText.setText(tr("Kalibracija je vraćena na fabričku vrednost.", "Calibration reset to the default value."));
+    }
+
     private void finishMeasurement(String target) {
         if (!Double.isFinite(distanceM)) {
             hintText.setText(tr("Nema merenja. Spusti nišan na podnožje objekta.", "No measurement. Aim at the object's floor contact point."));
@@ -346,9 +429,10 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         Intent data = new Intent();
         data.putExtra("target",target);
         data.putExtra("distance",distanceM);
-        data.putExtra("angle",depressionSmooth);
+        data.putExtra("angle",depressionSmooth + angleCalibrationDeg);
         data.putExtra("cameraHeight",parseHeight());
         data.putExtra("uncertainty",uncertaintyM);
+        data.putExtra("calibrationOffset",angleCalibrationDeg);
         setResult(RESULT_OK,data); finish();
     }
 

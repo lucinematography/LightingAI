@@ -1,17 +1,20 @@
 import fs from 'node:fs/promises';
 
 const runtimePath = new URL('./catalog-runtime.js', import.meta.url);
-const serverPath = new URL('./server.js', import.meta.url);
 const generatedRuntimePath = new URL('./catalog-runtime-render.js', import.meta.url);
-const generatedServerPath = new URL('./server-render.js', import.meta.url);
 
 const runtimeSource = await fs.readFile(runtimePath, 'utf8');
-const exportShim = `\n\n// Render compatibility export generated at startup.\nconst __renderRuntimeCatalog = buildRuntimeCatalog();\n__renderRuntimeCatalog.fixtureById = new Map(__renderRuntimeCatalog.fixtures.map((item) => [item.id, item]));\n__renderRuntimeCatalog.accessoryById = new Map(__renderRuntimeCatalog.accessories.map((item) => [item.id, item]));\nexport const RUNTIME_CATALOG = __renderRuntimeCatalog;\n`;
+const exportShim = `\n\n// Render compatibility export generated at startup.\nconst __renderRuntimeCatalog = buildRuntimeCatalog();\n__renderRuntimeCatalog.fixtureById = new Map(__renderRuntimeCatalog.fixtures.map((item) => [item.id, item]));\n__renderRuntimeCatalog.accessoryById = new Map(__renderRuntimeCatalog.accessories.map((item) => [item.id, item]));\n__renderRuntimeCatalog.duplicateAccessoryIds = __renderRuntimeCatalog.integrity?.duplicateAccessoryIds || [];\n__renderRuntimeCatalog.missingAccessoryFixtureIds = __renderRuntimeCatalog.integrity?.missingAccessoryFixtureIds || [];\nexport const RUNTIME_CATALOG = __renderRuntimeCatalog;\n`;
 await fs.writeFile(generatedRuntimePath, runtimeSource + exportShim, 'utf8');
 
-const serverSource = await fs.readFile(serverPath, 'utf8');
-const generatedServer = serverSource.replace('./catalog-runtime.js', './catalog-runtime-render.js');
-if (generatedServer === serverSource) throw new Error('Render bootstrap could not patch catalog runtime import');
-await fs.writeFile(generatedServerPath, generatedServer, 'utf8');
+for (const file of ['server.js', 'catalog-status.js']) {
+  const sourcePath = new URL(`./${file}`, import.meta.url);
+  const outputName = file.replace('.js', '-render.js');
+  const outputPath = new URL(`./${outputName}`, import.meta.url);
+  const source = await fs.readFile(sourcePath, 'utf8');
+  const patched = source.replaceAll('./catalog-runtime.js', './catalog-runtime-render.js')
+    .replaceAll('./catalog-status.js', './catalog-status-render.js');
+  await fs.writeFile(outputPath, patched, 'utf8');
+}
 
 await import('./server-render.js');

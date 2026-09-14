@@ -144,4 +144,10 @@ if(!document.getElementById('lightingai-set-sketch-beam-coverage-script')){
   b.src='file:///android_asset/set-sketch-beam-coverage.js';
   document.body.appendChild(b);
 }
+if(!document.getElementById('lightingai-beam-coverage-report-script')){
+  const w=document.createElement('script');
+  w.id='lightingai-beam-coverage-report-script';
+  w.src='file:///android_asset/beam-coverage-report.js';
+  document.body.appendChild(w);
+}
 })();

@@ -20,6 +20,11 @@ const launcher = read('app/src/main/assets/ai-visual-scene-launcher.js');
 const moduleJs = read('app/src/main/assets/ai-visual-scene-plan.js');
 const simulation = read('app/src/main/assets/ai-visual-local-simulation.js');
 const polish = read('app/src/main/assets/ai-visual-result-polish.js');
+const imageActions = read('app/src/main/assets/ai-visual-image-actions.js');
+const imageBridge = read('app/src/main/java/com/lightingai/app/AIVisualImageBridge.java');
+const imageProvider = read('app/src/main/java/com/lightingai/app/AIVisualImageProvider.java');
+const mainActivity = read('app/src/main/java/com/lightingai/app/MainActivity.java');
+const manifest = read('app/src/main/AndroidManifest.xml');
 const phoneDiagnostics = read('app/src/main/assets/ai-visual-phone-diagnostics.js');
 const phoneTest = read('app/src/main/assets/ai-visual-phone-test.js');
 const previewServer = read('backend/preview-test-server.js');
@@ -38,6 +43,7 @@ requireText(launcher, 'activeApi:function(){return previewActiveApi;}', 'active 
 requireText(launcher, "'/api/lighting-plan'", 'lighting-plan routing hook missing');
 requireText(launcher, "file:///android_asset/ai-visual-local-simulation.js", 'local simulation loader missing');
 requireText(launcher, "file:///android_asset/ai-visual-result-polish.js", 'result polish loader missing');
+requireText(launcher, "file:///android_asset/ai-visual-image-actions.js", 'image action loader missing');
 requireText(launcher, "file:///android_asset/ai-visual-phone-diagnostics.js", 'phone diagnostics loader missing');
 requireText(launcher, "file:///android_asset/feature-build-info.js", 'embedded build identity loader missing');
 requireText(launcher, 'P5 TEST • BUILD ', 'visible Project 5 build diagnostic missing');
@@ -53,6 +59,21 @@ for (const preset of ['Natural','Cinematic','Moody','High Contrast','Soft Commer
 requireText(simulation, 'max="150"', 'simulation intensity maximum must remain 150%');
 requireText(simulation, 'Nije fotometrijsko merenje', 'conceptual simulation disclaimer missing');
 requireText(polish, 'KOPIRAJ AI PLAN', 'copy-plan action missing');
+for (const action of ['SAČUVAJ AI FOTO-PREVIEW','PODELI AI FOTO-PREVIEW','SAČUVAJ PRE / POSLE','PODELI PRE / POSLE']) {
+  requireText(imageActions, action, `image action missing: ${action}`);
+}
+requireText(imageActions, "canvas.toDataURL('image/jpeg',.92)", 'before/after export must create one JPEG image');
+requireText(imageActions, "drawCover(ctx,original", 'before/after export must contain original scene');
+requireText(imageActions, "drawCover(ctx,ai", 'before/after export must contain AI preview');
+requireText(imageActions, "window.LightingAIImages", 'native image bridge hook missing');
+requireText(imageBridge, '@JavascriptInterface public void saveImage', 'native save-image action missing');
+requireText(imageBridge, '@JavascriptInterface public void shareImage', 'native share-image action missing');
+requireText(imageBridge, 'Environment.DIRECTORY_PICTURES + "/LightingAI"', 'saved images must use Pictures/LightingAI');
+requireText(imageBridge, 'MAX_IMAGE_BYTES = 20 * 1024 * 1024', 'native image bridge must enforce a size limit');
+requireText(imageProvider, 'ParcelFileDescriptor.MODE_READ_ONLY', 'shared image provider must remain read-only');
+requireText(imageProvider, 'file.getParentFile().equals(root)', 'shared image provider must reject path traversal');
+requireText(mainActivity, 'new AIVisualImageBridge(this), "LightingAIImages"', 'native image bridge registration missing');
+requireText(manifest, 'android:name=".AIVisualImageProvider"', 'AI image share provider missing');
 
 requireText(phoneDiagnostics, 'OTVORI DIJAGNOSTIKU', 'phone diagnostics button missing');
 requireText(phoneDiagnostics, "getAttribute('capture')", 'camera diagnostic missing');
@@ -124,6 +145,7 @@ const runtimeWindow = {
   LightingAIFeatureBuild: { run: 'test', sha: 'runtime', branch: 'feature/ai-visual-scene-plan' },
   LightingAILocalLightSimulation: { getPreset: () => 'Moody' },
   LightingAIVisualResultPolish: {},
+  LightingAIVisualImageActions: {},
   LightingAIProject5Diagnostics: {},
   LightingAIVisualScenePlan: { open: () => {} },
 };
@@ -188,6 +210,45 @@ await runtimeWindow.fetch(PROD_API + '/api/visual-preview', {
 });
 assert(calls.length === 1 && calls[0].url === PREVIEW_TEST_API + '/api/visual-preview', 'verified preview POST must use the active fallback endpoint');
 
+// Execute the real image action layer with a small fake canvas. This verifies that
+// PRE/POSLE becomes one JPEG and that both source images are rendered into it.
+const canvasDraws = [];
+const fakeCanvasContext = {
+  fillStyle: '', font: '', textBaseline: '',
+  fillRect: () => {}, save: () => {}, restore: () => {}, beginPath: () => {}, rect: () => {}, clip: () => {},
+  drawImage: (...args) => canvasDraws.push(args),
+  measureText: (value) => ({ width: String(value).length * 10 }),
+  fillText: () => {},
+};
+const fakeCanvas = { width: 0, height: 0, getContext: () => fakeCanvasContext, toDataURL: (type, quality) => `data:${type};quality=${quality}` };
+class FakeImage {
+  constructor() { this.naturalWidth = 1600; this.naturalHeight = 900; this.width = 1600; this.height = 900; }
+  set src(value) { this._src = value; if (this.onload) this.onload(); }
+  get src() { return this._src; }
+}
+const imageActionWindow = { currentLang: 'sr', fetch: null };
+const imageActionDocument = {
+  getElementById: () => null,
+  createElement: (tag) => tag === 'canvas' ? fakeCanvas : ({ style: {}, dataset: {}, appendChild: () => {}, remove: () => {}, click: () => {} }),
+  addEventListener: () => {},
+  body: { appendChild: () => {} },
+};
+vm.runInNewContext(imageActions, {
+  window: imageActionWindow,
+  document: imageActionDocument,
+  navigator: {},
+  Image: FakeImage,
+  Promise,
+  Date,
+  String,
+  Number,
+  Math,
+  setTimeout: () => 0,
+}, { filename: 'ai-visual-image-actions.js' });
+const composed = await imageActionWindow.LightingAIVisualImageActions.buildBeforeAfterDataUrl('data:image/jpeg;base64,AA==', 'data:image/jpeg;base64,BB==');
+assert(composed === 'data:image/jpeg;quality=0.92', 'before/after export must return one high-quality JPEG');
+assert(canvasDraws.length === 2, 'before/after export must draw original and AI images exactly once');
+
 console.log(JSON.stringify({
   ok: true,
   suite: 'LightingAI Project 5 feature safety',
@@ -206,6 +267,7 @@ console.log(JSON.stringify({
     'visible build identity diagnostics',
     'phone diagnostics and copyable report',
     'guided build-scoped phone test checklist',
+    'native save/share actions and one-image before/after composition',
     'build 510 ancestry and stable-file diff guard'
   ]
 }, null, 2));

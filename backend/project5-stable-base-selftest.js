@@ -30,6 +30,10 @@ const changed = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
 const exactAllowed = new Set([
   '.github/workflows/build-apk.yml',
   'app/src/main/assets/catalog.js',
+  'app/src/main/AndroidManifest.xml',
+  'app/src/main/java/com/lightingai/app/AIVisualImageBridge.java',
+  'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
+  'app/src/main/java/com/lightingai/app/MainActivity.java',
   'backend/package.json',
   'backend/preview-test-server.js',
   'backend/project5-feature-selftest.js',
@@ -68,6 +72,31 @@ const catalogWithoutLauncher = currentLines
 
 if (catalogWithoutLauncher !== stableCatalog.trim()) {
   fail('catalog.js may not delete stable build 510 code or alter it beyond the isolated launcher line');
+}
+
+const mainActivityPath = 'app/src/main/java/com/lightingai/app/MainActivity.java';
+const imageBridgeLine = '        webView.addJavascriptInterface(new AIVisualImageBridge(this), "LightingAIImages");';
+const imageCallbackBlock = `
+    void notifyAIVisualImageResult(String quotedAction, boolean ok) {
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIVisualImageResult&&window.LightingAIVisualImageResult(" + quotedAction + "," + (ok ? "true" : "false") + ");",
+            null));
+    }
+`;
+const stableMainActivity = git(['show', `${STABLE_BASE}:${mainActivityPath}`]);
+const currentMainActivity = git(['show', `HEAD:${mainActivityPath}`]);
+const mainWithoutImageBridge = currentMainActivity.replace(imageBridgeLine + '\n', '').replace(imageCallbackBlock, '');
+if (mainWithoutImageBridge.trim() !== stableMainActivity.trim()) {
+  fail('MainActivity may only add the isolated AI image bridge and result callback');
+}
+
+const manifestPath = 'app/src/main/AndroidManifest.xml';
+const imageProviderLine = '        <provider android:name=".AIVisualImageProvider" android:authorities="${applicationId}.ai.preview" android:exported="false" android:grantUriPermissions="true"/>';
+const stableManifest = git(['show', `${STABLE_BASE}:${manifestPath}`]);
+const currentManifest = git(['show', `HEAD:${manifestPath}`]);
+if (currentManifest.replace(imageProviderLine + '\n', '').trim() !== stableManifest.trim()) {
+  fail('AndroidManifest may only add the isolated AI image sharing provider');
 }
 
 // Secret guard: scan changed Project 5 text files for literal credentials.

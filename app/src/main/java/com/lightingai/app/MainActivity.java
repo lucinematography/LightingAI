@@ -125,6 +125,7 @@ public class MainActivity extends Activity {
             }
         });
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
+        webView.addJavascriptInterface(new AIVisualImageBridge(this), "LightingAIImages");
         webView.loadUrl("file:///android_asset/index.html");
         webView.requestApplyInsets();
     }
@@ -217,6 +218,13 @@ public class MainActivity extends Activity {
         if (webView == null) return;
         webView.post(() -> webView.evaluateJavascript(
             "window.LightingAISceneMeasureCameraPermission&&window.LightingAISceneMeasureCameraPermission(" + (granted ? "true" : "false") + ");",
+            null));
+    }
+
+    void notifyAIVisualImageResult(String quotedAction, boolean ok) {
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIVisualImageResult&&window.LightingAIVisualImageResult(" + quotedAction + "," + (ok ? "true" : "false") + ");",
             null));
     }
 

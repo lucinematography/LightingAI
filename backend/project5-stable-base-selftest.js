@@ -34,6 +34,7 @@ const exactAllowed = new Set([
   'app/src/main/java/com/lightingai/app/AIVisualImageBridge.java',
   'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
   'app/src/main/java/com/lightingai/app/MainActivity.java',
+  'app/src/main/java/com/lightingai/app/MeasureActivity.java',
   'backend/package.json',
   'backend/preview-test-server.js',
   'backend/project5-feature-selftest.js',
@@ -97,6 +98,18 @@ const stableManifest = git(['show', `${STABLE_BASE}:${manifestPath}`]);
 const currentManifest = git(['show', `HEAD:${manifestPath}`]);
 if (currentManifest.replace(imageProviderLine + '\n', '').trim() !== stableManifest.trim()) {
   fail('AndroidManifest may only add the isolated AI image sharing provider');
+}
+
+const measureActivityPath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
+const measureActivity = git(['show', `HEAD:${measureActivityPath}`]);
+for (const marker of [
+  'private boolean cameraOpening = false;',
+  'startCameraThread();',
+  'if (cameraDevice != null || cameraOpening) return;',
+  'cameraOpening = true;',
+  'cameraOpening = false;'
+]) {
+  if (!measureActivity.includes(marker)) fail(`PRO camera lifecycle protection missing: ${marker}`);
 }
 
 // Secret guard: scan changed Project 5 text files for literal credentials.

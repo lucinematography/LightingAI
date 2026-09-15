@@ -39,6 +39,21 @@ jobs:
       - name: Validate Android WebView JavaScript syntax
         run: find app/src/main/assets -maxdepth 1 -name '*.js' -print0 | xargs -0 -n1 node --check
 
+      - name: Guard Project 5 Equipment layout
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE='app/src/main/assets/ai-visual-scene-launcher.js'
+          grep -Fq "document.getElementById('equipment')" "$FILE" || { echo 'AI visual plan is no longer anchored to Equipment page'; exit 1; }
+          grep -Fq "document.getElementById('powerCalculatorCard')" "$FILE" || { echo 'Power calculator compact target missing'; exit 1; }
+          grep -Fq "body.hidden=true" "$FILE" || { echo 'Power calculator must default to collapsed'; exit 1; }
+          grep -Fq "version:'1.0-equipment-home-safe'" "$FILE" || { echo 'Safe Equipment layout version marker missing'; exit 1; }
+          if grep -Fq 'MutationObserver' "$FILE"; then echo 'Global DOM observer is forbidden after build 558 regression'; exit 1; fi
+          if grep -Fq 'position:fixed' "$FILE"; then echo 'Floating AI launcher is forbidden; AI plan belongs on Equipment page'; exit 1; fi
+          if grep -Fq 'data-page' "$FILE"; then echo 'Project 5 launcher must not modify page navigation'; exit 1; fi
+          echo 'Project 5 Equipment layout guard passed'
+
       - name: Validate Project 5 feature safety invariants
         if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
         working-directory: backend

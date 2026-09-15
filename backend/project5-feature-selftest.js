@@ -77,13 +77,15 @@ requireText(imageProvider, 'file.getParentFile().equals(root)', 'shared image pr
 requireText(mainActivity, 'new AIVisualImageBridge(this), "LightingAIImages"', 'native image bridge registration missing');
 requireText(manifest, 'android:name=".AIVisualImageProvider"', 'AI image share provider missing');
 
-for (const action of ['SVETLIJE','TAMNIJE','TOPLIJE','HLADNIJE','MEKŠE','VIŠE KONTRASTA','NAPRAVI MOJU VERZIJU']) {
+for (const action of ['SVETLIJE','TAMNIJE','TOPLIJE','HLADNIJE','MEKŠE','VIŠE KONTRASTA','NAPRAVI MOJU VERZIJU','VRATI PRETHODNU AI VERZIJU']) {
   requireText(refinements, action, `preview refinement missing: ${action}`);
 }
 requireText(refinements, "button.click()", 'preview refinement must reuse the tested preview action');
 requireText(refinements, "cleanDescription", 'preview refinement must replace the previous refinement instead of accumulating it');
 requireText(refinements, 'Svaka korekcija pravi novu verziju od početne fotografije.', 'preview refinement must explain its original-photo starting point');
 requireText(refinements, 'Ako želiš više promena zajedno', 'preview refinement must explain how to combine changes');
+requireText(refinements, "pendingPreviousSrc=preview&&preview.src||''", 'preview refinement must retain the currently visible AI result before generating');
+requireText(refinements, 'previousPreviewSrc=pendingPreviousSrc', 'preview history must activate only after the new AI image loads');
 forbidText(refinements, '/api/visual-preview', 'refinement controls must not create a second preview network route');
 
 requireText(phoneDiagnostics, 'OTVORI DIJAGNOSTIKU', 'phone diagnostics button missing');

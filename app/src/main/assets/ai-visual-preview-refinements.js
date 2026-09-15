@@ -2,7 +2,10 @@
 'use strict';
 var ROOT_ID='lightingai-ai-preview-refinements';
 var CUSTOM_ID='lightingai-ai-preview-refinement-custom';
+var PREVIOUS_ID='lightingai-ai-preview-previous';
 var NOTE_PREFIX='[AI KOREKCIJA: ';
+var previousPreviewSrc='';
+var pendingPreviousSrc='';
 var presets=[
  {sr:'SVETLIJE',en:'BRIGHTER',instructionSr:'Napravi osvetljenje svetlijim, ali sačuvaj detalje u svetlim delovima.',instructionEn:'Make the lighting brighter while preserving highlight detail.'},
  {sr:'TAMNIJE',en:'DARKER',instructionSr:'Napravi scenu tamnijom i atmosferičnijom, bez gubitka važnih detalja.',instructionEn:'Make the scene darker and moodier without losing important detail.'},
@@ -13,9 +16,11 @@ var presets=[
 ];
 function isSr(){return window.currentLang!=='en';}
 function cleanDescription(value){return String(value||'').replace(/\n?\[AI KOREKCIJA: [^\]]*\]\s*$/i,'').trim();}
+function updatePreviousButton(){var b=document.getElementById(PREVIOUS_ID);if(!b)return;b.disabled=!previousPreviewSrc;b.style.opacity=previousPreviewSrc?'1':'.45';}
 function applyRefinement(instruction){
- var desc=document.getElementById('aiv-desc'),button=document.getElementById('aiv-real-preview-btn');
+ var desc=document.getElementById('aiv-desc'),button=document.getElementById('aiv-real-preview-btn'),preview=document.getElementById('aiv-real-preview-img');
  if(!desc||!button||button.disabled)return false;
+ pendingPreviousSrc=preview&&preview.src||'';
  desc.value=cleanDescription(desc.value)+(cleanDescription(desc.value)?'\n':'')+NOTE_PREFIX+instruction+']';
  var status=document.getElementById('aiv-real-preview-status');if(status)status.textContent=isSr()?'Pripremam novu AI verziju...':'Preparing a new AI version...';
  button.click();return true;
@@ -30,10 +35,11 @@ function install(){
  var grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px';presets.forEach(function(p){grid.appendChild(button(isSr()?p.sr:p.en,isSr()?p.instructionSr:p.instructionEn));});box.appendChild(grid);
  var custom=document.createElement('textarea');custom.id=CUSTOM_ID;custom.placeholder=isSr()?'Druga korekcija, npr. „jači rim sa leve strane“':'Custom refinement, e.g. “stronger rim from camera left”';custom.style.cssText='width:100%;min-height:64px;margin-top:9px;background:#15181d;border:1px solid #343a43;color:#fff;border-radius:9px;padding:9px';box.appendChild(custom);
  var customButton=button(isSr()?'NAPRAVI MOJU VERZIJU':'CREATE MY VERSION','');customButton.style.marginTop='7px';customButton.style.width='100%';customButton.onclick=function(){var v=custom.value.trim();if(v)applyRefinement(v);};box.appendChild(customButton);
- anchor.insertAdjacentElement('afterend',box);return true;
+ var previousButton=button(isSr()?'VRATI PRETHODNU AI VERZIJU':'RESTORE PREVIOUS AI VERSION','');previousButton.id=PREVIOUS_ID;previousButton.style.marginTop='7px';previousButton.style.width='100%';previousButton.onclick=function(){var p=document.getElementById('aiv-real-preview-img');if(!p||!previousPreviewSrc)return;var current=p.src;p.src=previousPreviewSrc;previousPreviewSrc=current;var status=document.getElementById('aiv-real-preview-status');if(status)status.textContent=isSr()?'Prikazana je prethodna AI verzija.':'Previous AI version restored.';updatePreviousButton();};box.appendChild(previousButton);
+ anchor.insertAdjacentElement('afterend',box);updatePreviousButton();return true;
 }
 document.addEventListener('click',function(ev){if(ev.target&&ev.target.closest&&ev.target.closest('#lightingai-ai-visual-launcher')){setTimeout(install,250);setTimeout(install,800);}},false);
-document.addEventListener('load',function(ev){if(ev.target&&ev.target.id==='aiv-real-preview-img')setTimeout(install,0);},true);
+document.addEventListener('load',function(ev){if(ev.target&&ev.target.id==='aiv-real-preview-img'){if(pendingPreviousSrc&&ev.target.src!==pendingPreviousSrc){previousPreviewSrc=pendingPreviousSrc;pendingPreviousSrc='';updatePreviousButton();}setTimeout(install,0);}},true);
 var tries=0,timer=setInterval(function(){tries++;if(install()||tries>=80)clearInterval(timer);},125);
-window.LightingAIVisualPreviewRefinements={install:install,apply:applyRefinement,cleanDescription:cleanDescription,version:'1.0-safe-refinement-actions'};
+window.LightingAIVisualPreviewRefinements={install:install,apply:applyRefinement,cleanDescription:cleanDescription,version:'1.1-previous-preview'};
 })();

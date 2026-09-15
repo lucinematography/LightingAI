@@ -8,6 +8,7 @@ var SCRIPT_ID='lightingai-ai-visual-scene-plan-script';
 var SIM_SCRIPT_ID='lightingai-ai-visual-local-simulation-script';
 var POLISH_SCRIPT_ID='lightingai-ai-visual-result-polish-script';
 var IMAGE_ACTIONS_SCRIPT_ID='lightingai-ai-visual-image-actions-script';
+var REFINEMENTS_SCRIPT_ID='lightingai-ai-preview-refinements-script';
 var BUILD_SCRIPT_ID='lightingai-feature-build-info-script';
 var PHONE_DIAG_SCRIPT_ID='lightingai-project5-phone-diagnostics-script';
 var DIAG_ID='lightingai-project5-diagnostic';
@@ -122,8 +123,9 @@ function ensureScript(id,src,ready,next){
   document.body.appendChild(script);
 }
 function ensurePhoneDiagnostics(next){ensureScript(PHONE_DIAG_SCRIPT_ID,'file:///android_asset/ai-visual-phone-diagnostics.js',function(){return !!window.LightingAIProject5Diagnostics;},next);}
+function ensureRefinements(next){ensureScript(REFINEMENTS_SCRIPT_ID,'file:///android_asset/ai-visual-preview-refinements.js',function(){return !!window.LightingAIVisualPreviewRefinements;},next);}
 function ensureImageActions(next){ensureScript(IMAGE_ACTIONS_SCRIPT_ID,'file:///android_asset/ai-visual-image-actions.js',function(){return !!window.LightingAIVisualImageActions;},next);}
-function ensurePolish(next){ensureScript(POLISH_SCRIPT_ID,'file:///android_asset/ai-visual-result-polish.js',function(){return !!window.LightingAIVisualResultPolish;},function(){ensureImageActions(function(){ensurePhoneDiagnostics(next);});});}
+function ensurePolish(next){ensureScript(POLISH_SCRIPT_ID,'file:///android_asset/ai-visual-result-polish.js',function(){return !!window.LightingAIVisualResultPolish;},function(){ensureImageActions(function(){ensureRefinements(function(){ensurePhoneDiagnostics(next);});});});}
 function ensureSimulation(next){ensureScript(SIM_SCRIPT_ID,'file:///android_asset/ai-visual-local-simulation.js',function(){return !!window.LightingAILocalLightSimulation;},function(){ensurePolish(next);});}
 function opened(){setTimeout(updateDiagnostic,0);setTimeout(updateDiagnostic,900);setTimeout(function(){if(window.LightingAIProject5Diagnostics&&typeof window.LightingAIProject5Diagnostics.mount==='function')window.LightingAIProject5Diagnostics.mount();},1000);}
 function openPlanModule(){

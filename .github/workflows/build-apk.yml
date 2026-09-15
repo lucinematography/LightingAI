@@ -89,6 +89,7 @@ jobs:
             'assets/ai-visual-local-simulation.js'
             'assets/ai-visual-result-polish.js'
             'assets/ai-visual-image-actions.js'
+            'assets/ai-visual-preview-refinements.js'
             'assets/ai-visual-phone-diagnostics.js'
             'assets/ai-visual-phone-test.js'
             'assets/feature-build-info.js'

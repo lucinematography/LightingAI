@@ -21,6 +21,7 @@ const moduleJs = read('app/src/main/assets/ai-visual-scene-plan.js');
 const simulation = read('app/src/main/assets/ai-visual-local-simulation.js');
 const polish = read('app/src/main/assets/ai-visual-result-polish.js');
 const imageActions = read('app/src/main/assets/ai-visual-image-actions.js');
+const refinements = read('app/src/main/assets/ai-visual-preview-refinements.js');
 const imageBridge = read('app/src/main/java/com/lightingai/app/AIVisualImageBridge.java');
 const imageProvider = read('app/src/main/java/com/lightingai/app/AIVisualImageProvider.java');
 const mainActivity = read('app/src/main/java/com/lightingai/app/MainActivity.java');
@@ -44,6 +45,7 @@ requireText(launcher, "'/api/lighting-plan'", 'lighting-plan routing hook missin
 requireText(launcher, "file:///android_asset/ai-visual-local-simulation.js", 'local simulation loader missing');
 requireText(launcher, "file:///android_asset/ai-visual-result-polish.js", 'result polish loader missing');
 requireText(launcher, "file:///android_asset/ai-visual-image-actions.js", 'image action loader missing');
+requireText(launcher, "file:///android_asset/ai-visual-preview-refinements.js", 'preview refinement loader missing');
 requireText(launcher, "file:///android_asset/ai-visual-phone-diagnostics.js", 'phone diagnostics loader missing');
 requireText(launcher, "file:///android_asset/feature-build-info.js", 'embedded build identity loader missing');
 requireText(launcher, 'P5 TEST • BUILD ', 'visible Project 5 build diagnostic missing');
@@ -74,6 +76,13 @@ requireText(imageProvider, 'ParcelFileDescriptor.MODE_READ_ONLY', 'shared image 
 requireText(imageProvider, 'file.getParentFile().equals(root)', 'shared image provider must reject path traversal');
 requireText(mainActivity, 'new AIVisualImageBridge(this), "LightingAIImages"', 'native image bridge registration missing');
 requireText(manifest, 'android:name=".AIVisualImageProvider"', 'AI image share provider missing');
+
+for (const action of ['SVETLIJE','TAMNIJE','TOPLIJE','HLADNIJE','MEKŠE','VIŠE KONTRASTA','NAPRAVI MOJU VERZIJU']) {
+  requireText(refinements, action, `preview refinement missing: ${action}`);
+}
+requireText(refinements, "button.click()", 'preview refinement must reuse the tested preview action');
+requireText(refinements, "cleanDescription", 'preview refinement must replace the previous refinement instead of accumulating it');
+forbidText(refinements, '/api/visual-preview', 'refinement controls must not create a second preview network route');
 
 requireText(phoneDiagnostics, 'OTVORI DIJAGNOSTIKU', 'phone diagnostics button missing');
 requireText(phoneDiagnostics, "getAttribute('capture')", 'camera diagnostic missing');
@@ -146,6 +155,7 @@ const runtimeWindow = {
   LightingAILocalLightSimulation: { getPreset: () => 'Moody' },
   LightingAIVisualResultPolish: {},
   LightingAIVisualImageActions: {},
+  LightingAIVisualPreviewRefinements: {},
   LightingAIProject5Diagnostics: {},
   LightingAIVisualScenePlan: { open: () => {} },
 };
@@ -268,6 +278,7 @@ console.log(JSON.stringify({
     'phone diagnostics and copyable report',
     'guided build-scoped phone test checklist',
     'native save/share actions and one-image before/after composition',
+    'isolated AI preview refinement controls that reuse the tested preview action',
     'build 510 ancestry and stable-file diff guard'
   ]
 }, null, 2));

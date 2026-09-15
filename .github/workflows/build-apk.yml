@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feature/ai-visual-scene-plan" ]
 
 jobs:
   validate-and-build:
@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -23,12 +25,44 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Embed Project 5 build identity
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          BUILT_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          printf 'window.LightingAIFeatureBuild={run:"%s",sha:"%s",branch:"%s",builtAt:"%s"};\n' "$GITHUB_RUN_NUMBER" "$SHORT_SHA" "$GITHUB_REF_NAME" "$BUILT_AT" > app/src/main/assets/feature-build-info.js
+
       - name: Validate complete LightingAI equipment catalog
         working-directory: backend
         run: npm run check
 
       - name: Validate Android WebView JavaScript syntax
         run: find app/src/main/assets -maxdepth 1 -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Guard Project 5 Equipment layout
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE='app/src/main/assets/ai-visual-scene-launcher.js'
+          grep -Fq "document.getElementById('equipment')" "$FILE" || { echo 'AI visual plan is no longer anchored to Equipment page'; exit 1; }
+          grep -Fq "document.getElementById('powerCalculatorCard')" "$FILE" || { echo 'Power calculator compact target missing'; exit 1; }
+          grep -Fq "body.hidden=true" "$FILE" || { echo 'Power calculator must default to collapsed'; exit 1; }
+          grep -Fq "version:'1.0-equipment-home-safe'" "$FILE" || { echo 'Safe Equipment layout version marker missing'; exit 1; }
+          if grep -Fq 'MutationObserver' "$FILE"; then echo 'Global DOM observer is forbidden after build 558 regression'; exit 1; fi
+          if grep -Fq 'position:fixed' "$FILE"; then echo 'Floating AI launcher is forbidden; AI plan belongs on Equipment page'; exit 1; fi
+          if grep -Fq 'data-page' "$FILE"; then echo 'Project 5 launcher must not modify page navigation'; exit 1; fi
+          echo 'Project 5 Equipment layout guard passed'
+
+      - name: Validate Project 5 feature safety invariants
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        working-directory: backend
+        run: npm run test:project5-safety
+
+      - name: Validate Project 5 stable build 510 base
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        working-directory: backend
+        run: npm run test:project5-base
 
       - name: Validate Project Backup data and exclusions
         run: node backend/project-backup-selftest.js
@@ -46,6 +80,46 @@ jobs:
 
       - name: Build debug APK
         run: gradle assembleDebug
+
+      - name: Verify packaged Project 5 APK
+        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/debug/app-debug.apk'
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          REQUIRED=(
+            'assets/ai-visual-scene-launcher.js'
+            'assets/ai-visual-scene-plan.js'
+            'assets/ai-visual-local-simulation.js'
+            'assets/ai-visual-result-polish.js'
+            'assets/ai-visual-phone-diagnostics.js'
+            'assets/ai-visual-phone-test.js'
+            'assets/feature-build-info.js'
+            'assets/catalog.js'
+          )
+
+          test -s "$APK"
+          for asset in "${REQUIRED[@]}"; do
+            unzip -Z1 "$APK" | grep -Fxq "$asset" || { echo "Missing packaged asset: $asset"; exit 1; }
+            cmp -s <(unzip -p "$APK" "$asset") "app/src/main/$asset" || { echo "Packaged asset differs from source: $asset"; exit 1; }
+          done
+
+          INFO="$(unzip -p "$APK" assets/feature-build-info.js)"
+          grep -Fq "run:\"$GITHUB_RUN_NUMBER\"" <<<"$INFO" || { echo 'Packaged build number mismatch'; exit 1; }
+          grep -Fq "sha:\"$SHORT_SHA\"" <<<"$INFO" || { echo 'Packaged commit SHA mismatch'; exit 1; }
+
+          CATALOG="$(unzip -p "$APK" assets/catalog.js)"
+          test "$(grep -oF 'file:///android_asset/ai-visual-scene-launcher.js' <<<"$CATALOG" | wc -l)" -eq 1 || { echo 'Packaged catalog launcher count is not exactly one'; exit 1; }
+
+          for asset in "${REQUIRED[@]}"; do
+            if unzip -p "$APK" "$asset" | grep -aEq 'sk-[A-Za-z0-9_-]{20,}'; then
+              echo "Potential OpenAI API secret found inside packaged asset: $asset"
+              exit 1
+            fi
+          done
+
+          echo "Packaged Project 5 APK verified: BUILD $GITHUB_RUN_NUMBER / $SHORT_SHA"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

@@ -368,7 +368,10 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         if (previewSize == null || textureView == null || viewWidth == 0 || viewHeight == 0) return;
         int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
         int displayDegrees = displayRotation == Surface.ROTATION_90 ? 90 : displayRotation == Surface.ROTATION_180 ? 180 : displayRotation == Surface.ROTATION_270 ? 270 : 0;
-        int rotation = (sensorOrientation - displayDegrees + 360) % 360;
+        // TextureView needs the inverse of the camera-sensor rotation. Using the
+        // sensor rotation directly turns a portrait preview sideways on devices
+        // such as the Redmi Note 12.
+        int rotation = (displayDegrees - sensorOrientation + 360) % 360;
         boolean swapped = rotation == 90 || rotation == 270;
         float bufferW = swapped ? previewSize.getHeight() : previewSize.getWidth();
         float bufferH = swapped ? previewSize.getWidth() : previewSize.getHeight();

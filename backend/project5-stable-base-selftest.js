@@ -108,7 +108,7 @@ for (const marker of [
   'if (cameraDevice != null || cameraOpening) return;',
   'cameraOpening = true;',
   'cameraOpening = false;',
-  'int rotation = (displayDegrees - sensorOrientation + 360) % 360;'
+  'textureView.setTransform(new Matrix());'
 ]) {
   if (!measureActivity.includes(marker)) fail(`PRO camera lifecycle protection missing: ${marker}`);
 }

@@ -366,22 +366,10 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
     private void configureTransform(int viewWidth, int viewHeight) {
         if (previewSize == null || textureView == null || viewWidth == 0 || viewHeight == 0) return;
-        int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
-        int displayDegrees = displayRotation == Surface.ROTATION_90 ? 90 : displayRotation == Surface.ROTATION_180 ? 180 : displayRotation == Surface.ROTATION_270 ? 270 : 0;
-        // TextureView needs the inverse of the camera-sensor rotation. Using the
-        // sensor rotation directly turns a portrait preview sideways on devices
-        // such as the Redmi Note 12.
-        int rotation = (displayDegrees - sensorOrientation + 360) % 360;
-        boolean swapped = rotation == 90 || rotation == 270;
-        float bufferW = swapped ? previewSize.getHeight() : previewSize.getWidth();
-        float bufferH = swapped ? previewSize.getWidth() : previewSize.getHeight();
-        RectF viewRect = new RectF(0,0,viewWidth,viewHeight);
-        RectF bufferRect = new RectF(0,0,bufferW,bufferH);
-        float cx = viewRect.centerX(), cy = viewRect.centerY();
-        bufferRect.offset(cx-bufferRect.centerX(),cy-bufferRect.centerY());
-        Matrix matrix = new Matrix(); matrix.setRectToRect(viewRect,bufferRect,Matrix.ScaleToFit.FILL);
-        float scale = Math.max((float)viewHeight/bufferH,(float)viewWidth/bufferW); matrix.postScale(scale,scale,cx,cy); matrix.postRotate(rotation,cx,cy);
-        textureView.setTransform(matrix);
+        // The Redmi Note 12 camera pipeline already supplies an upright portrait
+        // TextureView stream. Applying the sensor angle here rotates that correct
+        // stream sideways, so keep the native camera transform unchanged.
+        textureView.setTransform(new Matrix());
     }
 
     private void closeCamera() {
@@ -530,37 +518,3 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private void resetCalibration() {
         angleCalibrationDeg = 0.0;
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        prefs.edit().remove(PREF_ANGLE_OFFSET).apply();
-        showCalibrationStatus();
-        updateEstimate();
-        setHint(tr("Kalibracija je vraćena na fabričku vrednost.", "Calibration reset to the default value."));
-    }
-
-    private void finishMeasurement(String target) {
-        if (!Double.isFinite(distanceM)) {
-            setHint(tr("Nema merenja. Spusti nišan na podnožje objekta.", "No measurement. Aim at the object's floor contact point."));
-            return;
-        }
-        if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 2.0) {
-            setHint(tr("Drži uređaj mirno trenutak, pa pokušaj ponovo.", "Hold the device still for a moment, then try again."));
-            return;
-        }
-        Intent data = new Intent();
-        data.putExtra("target",target);
-        data.putExtra("distance",distanceM);
-        data.putExtra("angle",depressionSmooth + angleCalibrationDeg);
-        data.putExtra("cameraHeight",parseHeight());
-        data.putExtra("uncertainty",uncertaintyM);
-        data.putExtra("calibrationOffset",angleCalibrationDeg);
-        data.putExtra("sensorFallback",fallbackTiltSensor);
-        setResult(RESULT_OK,data); finish();
-    }
-
-    @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-
-    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode,permissions,grantResults);
-        if (requestCode == CAMERA_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) openCamera();
-        else if (requestCode == CAMERA_PERMISSION) setHint(tr("Dozvoli kameru da bi PRO merenje radilo.", "Allow camera access for PRO measurement."));
-    }
-}

@@ -82,6 +82,8 @@ for (const action of ['SVETLIJE','TAMNIJE','TOPLIJE','HLADNIJE','MEKŠE','VIŠE 
 }
 requireText(refinements, "button.click()", 'preview refinement must reuse the tested preview action');
 requireText(refinements, "cleanDescription", 'preview refinement must replace the previous refinement instead of accumulating it');
+requireText(refinements, 'Svaka korekcija pravi novu verziju od početne fotografije.', 'preview refinement must explain its original-photo starting point');
+requireText(refinements, 'Ako želiš više promena zajedno', 'preview refinement must explain how to combine changes');
 forbidText(refinements, '/api/visual-preview', 'refinement controls must not create a second preview network route');
 
 requireText(phoneDiagnostics, 'OTVORI DIJAGNOSTIKU', 'phone diagnostics button missing');

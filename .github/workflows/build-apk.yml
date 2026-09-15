@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "feature/ai-visual-scene-plan", "feature/ai-preview-refinements", "fix/pro-measure-camera-startup" ]
+    branches: [ "main", "feature/ai-visual-scene-plan", "feature/ai-preview-refinements", "fix/pro-measure-camera-startup", "feature/planner-measurements-ai-bridge" ]
 
 jobs:
   validate-and-build:

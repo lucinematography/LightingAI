@@ -518,3 +518,37 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private void resetCalibration() {
         angleCalibrationDeg = 0.0;
         SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        prefs.edit().remove(PREF_ANGLE_OFFSET).apply();
+        showCalibrationStatus();
+        updateEstimate();
+        setHint(tr("Kalibracija je vraćena na fabričku vrednost.", "Calibration reset to the default value."));
+    }
+
+    private void finishMeasurement(String target) {
+        if (!Double.isFinite(distanceM)) {
+            setHint(tr("Nema merenja. Spusti nišan na podnožje objekta.", "No measurement. Aim at the object's floor contact point."));
+            return;
+        }
+        if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 2.0) {
+            setHint(tr("Drži uređaj mirno trenutak, pa pokušaj ponovo.", "Hold the device still for a moment, then try again."));
+            return;
+        }
+        Intent data = new Intent();
+        data.putExtra("target",target);
+        data.putExtra("distance",distanceM);
+        data.putExtra("angle",depressionSmooth + angleCalibrationDeg);
+        data.putExtra("cameraHeight",parseHeight());
+        data.putExtra("uncertainty",uncertaintyM);
+        data.putExtra("calibrationOffset",angleCalibrationDeg);
+        data.putExtra("sensorFallback",fallbackTiltSensor);
+        setResult(RESULT_OK,data); finish();
+    }
+
+    @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode,permissions,grantResults);
+        if (requestCode == CAMERA_PERMISSION && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) openCamera();
+        else if (requestCode == CAMERA_PERMISSION) setHint(tr("Dozvoli kameru da bi PRO merenje radilo.", "Allow camera access for PRO measurement."));
+    }
+}

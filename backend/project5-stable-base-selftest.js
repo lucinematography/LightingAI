@@ -30,6 +30,7 @@ const changed = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
 const exactAllowed = new Set([
   '.github/workflows/build-apk.yml',
   'app/src/main/assets/catalog.js',
+  'app/src/main/assets/scene-measure.js',
   'app/src/main/AndroidManifest.xml',
   'app/src/main/java/com/lightingai/app/AIVisualImageBridge.java',
   'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
@@ -111,6 +112,15 @@ for (const marker of [
   'textureView.setTransform(new Matrix());'
 ]) {
   if (!measureActivity.includes(marker)) fail(`PRO camera lifecycle protection missing: ${marker}`);
+}
+
+const sceneMeasurePath = 'app/src/main/assets/scene-measure.js';
+const sceneMeasure = git(['show', `HEAD:${sceneMeasurePath}`]);
+for (const marker of [
+  "E('sceneMeasureTarget').value=target;",
+  "card.scrollIntoView({behavior:'smooth',block:'start'})"
+]) {
+  if (!sceneMeasure.includes(marker)) fail(`PRO measurement return guidance missing: ${marker}`);
 }
 
 // Secret guard: scan changed Project 5 text files for literal credentials.

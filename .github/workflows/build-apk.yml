@@ -26,7 +26,6 @@ jobs:
         run: npm ci
 
       - name: Embed Project 5 build identity
-        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
         run: |
           SHORT_SHA="${GITHUB_SHA:0:7}"
           BUILT_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
@@ -40,7 +39,6 @@ jobs:
         run: find app/src/main/assets -maxdepth 1 -name '*.js' -print0 | xargs -0 -n1 node --check
 
       - name: Guard Project 5 Equipment layout
-        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
         shell: bash
         run: |
           set -euo pipefail
@@ -55,12 +53,10 @@ jobs:
           echo 'Project 5 Equipment layout guard passed'
 
       - name: Validate Project 5 feature safety invariants
-        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
         working-directory: backend
         run: npm run test:project5-safety
 
       - name: Validate Project 5 stable build 510 base
-        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
         working-directory: backend
         run: npm run test:project5-base
 
@@ -82,7 +78,6 @@ jobs:
         run: gradle assembleDebug
 
       - name: Verify packaged Project 5 APK
-        if: github.ref == 'refs/heads/feature/ai-visual-scene-plan'
         shell: bash
         run: |
           set -euo pipefail

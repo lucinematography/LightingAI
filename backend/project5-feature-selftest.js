@@ -29,9 +29,12 @@ const packageJson = read('backend/package.json');
 const workflow = read('.github/workflows/build-apk.yml');
 
 requireText(launcher, "var PROD_API='https://lightingai.onrender.com';", 'production API anchor missing');
-requireText(launcher, "var PREVIEW_TEST_API='https://lightingai-ai-preview-test.onrender.com';", 'isolated preview API missing');
-requireText(launcher, "data.environment==='isolated-test'", 'preview capability must require isolated-test identity');
-requireText(launcher, "method!=='GET'&&!previewCapabilityVerified", 'unverified preview POST must remain blocked');
+requireText(launcher, "var PREVIEW_TEST_API='https://lightingai-ai-preview-test.onrender.com';", 'isolated preview fallback API missing');
+requireText(launcher, 'previewGet(nativeFetch,PROD_API)', 'production preview must be probed first');
+requireText(launcher, 'previewGet(nativeFetch,PREVIEW_TEST_API)', 'isolated preview fallback probe missing');
+requireText(launcher, "data.environment==='isolated-test'", 'isolated fallback must require isolated-test identity');
+requireText(launcher, "if(!previewCapabilityVerified||!previewActiveApi)", 'unverified preview POST must remain blocked');
+requireText(launcher, 'activeApi:function(){return previewActiveApi;}', 'active preview endpoint diagnostic hook missing');
 requireText(launcher, "'/api/lighting-plan'", 'lighting-plan routing hook missing');
 requireText(launcher, "file:///android_asset/ai-visual-local-simulation.js", 'local simulation loader missing');
 requireText(launcher, "file:///android_asset/ai-visual-result-polish.js", 'result polish loader missing');
@@ -57,7 +60,7 @@ requireText(phoneDiagnostics, "getAttribute('accept')", 'gallery diagnostic miss
 requireText(phoneDiagnostics, 'LightingAILocalLightSimulation', 'simulation diagnostic missing');
 requireText(phoneDiagnostics, 'LightingAIVisualResultPolish', 'result polish diagnostic missing');
 requireText(phoneDiagnostics, 'KOPIRAJ IZVEŠTAJ', 'copy diagnostics report action missing');
-requireText(phoneDiagnostics, "PREVIEW_API+'/api/visual-preview'", 'isolated preview diagnostic probe missing');
+requireText(phoneDiagnostics, "PREVIEW_API+'/api/visual-preview'", 'preview diagnostic probe missing');
 requireText(phoneDiagnostics, "file:///android_asset/ai-visual-phone-test.js", 'guided phone test loader missing');
 forbidText(phoneDiagnostics, '/api/lighting-plan', 'phone diagnostics must never call the lighting plan API');
 
@@ -87,6 +90,7 @@ requireText(workflow, 'feature-build-info.js', 'CI generated build metadata asse
 requireText(workflow, 'fetch-depth: 0', 'CI must fetch history for stable-base verification');
 requireText(workflow, 'Validate Project 5 stable build 510 base', 'CI stable-base guard step missing');
 requireText(workflow, 'npm run test:project5-base', 'CI must execute stable-base guard');
+forbidText(workflow, 'Probe isolated AI preview backend', 'temporary isolated preview CI probe must be removed before release candidate');
 
 forbidText(launcher, "PREVIEW_TEST_API+'/api/lighting-plan'", 'lighting-plan must never route to isolated preview service');
 
@@ -97,6 +101,12 @@ const PREVIEW_TEST_API = 'https://lightingai-ai-preview-test.onrender.com';
 const fakeNativeFetch = async (input, init) => {
   const url = typeof input === 'string' ? input : String(input?.url || '');
   calls.push({ url, init: init ? { ...init } : undefined });
+  if (url === PROD_API + '/api/visual-preview') {
+    return new Response(JSON.stringify({ ok: false, error: 'not deployed yet' }), {
+      status: 404,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
   if (url === PREVIEW_TEST_API + '/api/visual-preview') {
     return new Response(JSON.stringify({ ok: true, environment: 'isolated-test' }), {
       status: 200,
@@ -164,27 +174,31 @@ assert(calls.length === 0, 'blocked preview POST must not reach any network endp
 
 calls.length = 0;
 const capability = await runtimeWindow.fetch(PROD_API + '/api/visual-preview', { method: 'GET' });
-assert(capability.ok === true, 'verified preview capability GET must succeed');
-assert(calls.length === 1 && calls[0].url === PREVIEW_TEST_API + '/api/visual-preview', 'preview capability GET must route only to isolated test backend');
-assert(runtimeWindow.__lightingAIVisualPreviewFetchRouter.isVerified() === true, 'isolated-test identity must set verified capability state');
+assert(capability.ok === true, 'preview capability GET must succeed through production-first fallback');
+assert(calls.length === 2, 'preview capability GET must try production then isolated fallback');
+assert(calls[0].url === PROD_API + '/api/visual-preview', 'production preview endpoint must be probed first');
+assert(calls[1].url === PREVIEW_TEST_API + '/api/visual-preview', 'isolated preview backend must be second-line fallback');
+assert(runtimeWindow.__lightingAIVisualPreviewFetchRouter.isVerified() === true, 'verified fallback must set capability state');
+assert(runtimeWindow.__lightingAIVisualPreviewFetchRouter.activeApi() === PREVIEW_TEST_API, 'fallback test endpoint must become active only when production is unavailable');
 
 calls.length = 0;
 await runtimeWindow.fetch(PROD_API + '/api/visual-preview', {
   method: 'POST',
   body: JSON.stringify({ scenePhoto: 'data:image/jpeg;base64,AA==' }),
 });
-assert(calls.length === 1 && calls[0].url === PREVIEW_TEST_API + '/api/visual-preview', 'verified preview POST must route to isolated test backend');
+assert(calls.length === 1 && calls[0].url === PREVIEW_TEST_API + '/api/visual-preview', 'verified preview POST must use the active fallback endpoint');
 
 console.log(JSON.stringify({
   ok: true,
   suite: 'LightingAI Project 5 feature safety',
   protected: [
     'stable production lighting-plan route',
-    'isolated real-photo preview route',
+    'production-first real-photo preview routing',
+    'isolated preview fallback only when production is unavailable',
     'fail-closed preview POST guard',
     'runtime pass-through for unrelated fetch calls',
     'runtime preset injection into production lighting-plan',
-    'runtime isolated-test identity verification before preview POST',
+    'runtime fallback identity verification before preview POST',
     'camera capture',
     'look presets and intensity control',
     'conceptual-preview disclaimer',

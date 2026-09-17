@@ -85,13 +85,15 @@ requireText(manifest, 'android:name=".AIVisualImageProvider"', 'AI image share p
 for (const action of ['SVETLIJE','TAMNIJE','TOPLIJE','HLADNIJE','MEKŠE','VIŠE KONTRASTA','NAPRAVI MOJU VERZIJU','VRATI PRETHODNU AI VERZIJU']) {
   requireText(refinements, action, `preview refinement missing: ${action}`);
 }
-requireText(refinements, "button.click()", 'preview refinement must reuse the tested preview action');
-requireText(refinements, "cleanDescription", 'preview refinement must replace the previous refinement instead of accumulating it');
-requireText(refinements, 'Svaka korekcija pravi novu verziju od početne fotografije.', 'preview refinement must explain its original-photo starting point');
-requireText(refinements, 'Ako želiš više promena zajedno', 'preview refinement must explain how to combine changes');
-requireText(refinements, "pendingPreviousSrc=preview&&preview.src||''", 'preview refinement must retain the currently visible AI result before generating');
-requireText(refinements, 'previousPreviewSrc=pendingPreviousSrc', 'preview history must activate only after the new AI image loads');
-forbidText(refinements, '/api/visual-preview', 'refinement controls must not create a second preview network route');
+requireText(refinements, 'compactPreviewSource', 'preview refinement must compact the current AI image before upload');
+requireText(refinements, 'var max=1024', 'preview refinement source must be bounded to 1024px');
+requireText(refinements, "canvas.toDataURL('image/jpeg',0.82)", 'preview refinement source must use compact JPEG encoding');
+requireText(refinements, "API_BASE+'/api/visual-preview?refinement=1'", 'preview refinement must use the guarded visual-preview route');
+requireText(refinements, 'previousPreviewSrc=source', 'preview refinement must retain the currently visible AI result before replacing it');
+requireText(refinements, 'Prethodna verzija je sačuvana.', 'failed refinement must preserve the previous AI image');
+requireText(refinements, "version:'1.2-compact-direct-refinement'", 'compact refinement version marker missing');
+requireText(phoneDiagnostics, 'REFINEMENT_TIMEOUT_MS=180000', 'AI refinement timeout must be explicitly bounded');
+requireText(phoneDiagnostics, "urlOf(input).indexOf('refinement=1')>=0?REFINEMENT_TIMEOUT_MS:PREVIEW_TIMEOUT_MS", 'refinement requests must use their dedicated timeout');
 
 requireText(phoneDiagnostics, 'OTVORI DIJAGNOSTIKU', 'phone diagnostics button missing');
 requireText(phoneDiagnostics, "getAttribute('capture')", 'camera diagnostic missing');
@@ -288,7 +290,7 @@ console.log(JSON.stringify({
     'phone diagnostics and copyable report',
     'guided build-scoped phone test checklist',
     'native save/share actions and one-image before/after composition',
-    'isolated AI preview refinement controls that reuse the tested preview action',
+    'compact AI preview refinements with bounded source size, preserved history and dedicated timeout',
     'build 510 ancestry and stable-file diff guard'
   ]
 }, null, 2));

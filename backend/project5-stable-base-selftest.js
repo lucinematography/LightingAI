@@ -24,8 +24,14 @@ for (const [label, sha] of [
   }
 }
 
+// Keep this explicit historical check because Project 5 safety verifies the build-510 contract textually.
+try {
+  git(['merge-base', '--is-ancestor', STABLE_BASE, 'HEAD']);
+} catch {
+  fail('feature branch no longer descends from the stable build 510 anchor');
+}
+
 for (const [label, sha] of [
-  ['stable build 510', STABLE_BASE],
   ['phone-tested build 655', PHONE_TESTED_BASE],
   ['Project 5.3 main build 665', PROJECT54_BASE]
 ]) {

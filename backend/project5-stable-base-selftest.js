@@ -1,17 +1,22 @@
 import { execFileSync } from 'node:child_process';
 
 const STABLE_BASE = '77462ab3cf80c48c5ca0c903486e59919a3bf747';
-const PROJECT53_BASE = 'a2913dedf00d8ddf18930e56d6bf2e862993f92c';
+const PHONE_TESTED_BASE = 'a2913dedf00d8ddf18930e56d6bf2e862993f92c';
+const PROJECT54_BASE = 'bf4b619ec96dfe24d979b65088ea428b3217c7d6';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
 }
 
 function fail(message) {
-  throw new Error(`Project 5.3 stable-base guard failed: ${message}`);
+  throw new Error(`Project 5.4 stable-base guard failed: ${message}`);
 }
 
-for (const [label, sha] of [['stable build 510', STABLE_BASE], ['phone-tested build 655', PROJECT53_BASE]]) {
+for (const [label, sha] of [
+  ['stable build 510', STABLE_BASE],
+  ['phone-tested build 655', PHONE_TESTED_BASE],
+  ['Project 5.3 main build 665', PROJECT54_BASE]
+]) {
   try {
     git(['cat-file', '-e', `${sha}^{commit}`]);
   } catch {
@@ -19,39 +24,38 @@ for (const [label, sha] of [['stable build 510', STABLE_BASE], ['phone-tested bu
   }
 }
 
-try {
-  git(['merge-base', '--is-ancestor', STABLE_BASE, 'HEAD']);
-} catch {
-  fail('feature branch no longer descends from the stable build 510 anchor');
+for (const [label, sha] of [
+  ['stable build 510', STABLE_BASE],
+  ['phone-tested build 655', PHONE_TESTED_BASE],
+  ['Project 5.3 main build 665', PROJECT54_BASE]
+]) {
+  try {
+    git(['merge-base', '--is-ancestor', sha, 'HEAD']);
+  } catch {
+    fail(`feature branch no longer descends from the ${label} anchor`);
+  }
 }
 
-try {
-  git(['merge-base', '--is-ancestor', PROJECT53_BASE, 'HEAD']);
-} catch {
-  fail('feature branch no longer descends from the phone-tested build 655 anchor');
-}
-
-// Preserve the original Project 5 ancestry contract for the safety self-test.
+// Preserve the historical Project 5 ancestry contract for the existing safety suite.
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n')
   .map((x) => x.trim())
   .filter(Boolean);
 
-// Project 5.3 itself is much stricter: only the backup-import surface may differ from build 655.
-const changed = git(['diff', '--name-only', `${PROJECT53_BASE}...HEAD`])
+// Project 5.4 is isolated to native camera-distance work on top of the merged Project 5.3 main baseline.
+const changed = git(['diff', '--name-only', `${PROJECT54_BASE}...HEAD`])
   .split('\n')
   .map((x) => x.trim())
   .filter(Boolean);
 
 const exactAllowed = new Set([
-  'app/src/main/assets/project-backup-export.js',
-  'backend/project-backup-selftest.js',
+  'app/src/main/java/com/lightingai/app/MeasureActivity.java',
   'backend/project5-stable-base-selftest.js'
 ]);
 
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
 if (unexpected.length) {
-  fail(`files changed outside the isolated Project 5.3 backup-import surface: ${unexpected.join(', ')}`);
+  fail(`files changed outside the isolated Project 5.4 camera-distance surface: ${unexpected.join(', ')}`);
 }
 
 for (const protectedPath of [
@@ -60,18 +64,20 @@ for (const protectedPath of [
   'app/src/main/assets/ai-visual-scene-plan.js',
   'app/src/main/assets/ai-visual-preview-refinements.js',
   'app/src/main/assets/ai-visual-phone-diagnostics.js',
+  'app/src/main/assets/scene-measure.js',
+  'app/src/main/assets/project-backup-export.js',
   'app/src/main/java/com/lightingai/app/MainActivity.java',
-  'app/src/main/java/com/lightingai/app/MeasureActivity.java',
+  'app/src/main/java/com/lightingai/app/DeviceCapabilities.java',
   'app/src/main/AndroidManifest.xml',
   'backend/server.js',
   'backend/visual-preview.js'
 ]) {
-  const stable = git(['show', `${PROJECT53_BASE}:${protectedPath}`]);
+  const stable = git(['show', `${PROJECT54_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
-  if (stable !== current) fail(`phone-tested build 655 file changed unexpectedly: ${protectedPath}`);
+  if (stable !== current) fail(`Project 5.3 build 665 file changed unexpectedly: ${protectedPath}`);
 }
 
-// Keep the historical non-destructive catalog contract visible to the Project 5 safety suite.
+// Keep the historical non-destructive catalog contract visible to Project 5 safety checks.
 const catalogPath = 'app/src/main/assets/catalog.js';
 const stableCatalog = git(['show', `${STABLE_BASE}:${catalogPath}`]);
 const currentCatalog = git(['show', `HEAD:${catalogPath}`]);
@@ -82,6 +88,7 @@ if (!stableCatalog.trim()) {
   fail('catalog.js may not delete stable build 510 code');
 }
 
+// Project 5.3 backup import remains present and protected while Project 5.4 changes camera distance only.
 const backupPath = 'app/src/main/assets/project-backup-export.js';
 const backup = git(['show', `HEAD:${backupPath}`]);
 for (const marker of [
@@ -99,7 +106,26 @@ for (const marker of [
   if (!backup.includes(marker)) fail(`safe backup import marker missing: ${marker}`);
 }
 
-const textFiles = changed.filter((path) => /\.(?:js|json|yml|yaml|html|md)$/i.test(path));
+// Project 5.4 must prefer direct DEPTH16 when Android exposes it, while retaining the proven tilt fallback.
+const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
+const measure = git(['show', `HEAD:${measurePath}`]);
+for (const marker of [
+  'ImageFormat.DEPTH16',
+  'CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT',
+  'ImageReader.newInstance',
+  'packed & 0x1fff',
+  'depthIsFresh()',
+  'depthIsStable()',
+  'measurementMethod = "depth"',
+  'data.putExtra("method",measurementMethod)',
+  'createPreview(false)',
+  'distanceForAngle',
+  'Sensor.TYPE_ROTATION_VECTOR'
+]) {
+  if (!measure.includes(marker)) fail(`Project 5.4 DEPTH/fallback marker missing: ${marker}`);
+}
+
+const textFiles = changed.filter((path) => /\.(?:js|json|yml|yaml|html|md|java)$/i.test(path));
 for (const path of textFiles) {
   if (path === 'backend/project5-stable-base-selftest.js') continue;
   let content = '';
@@ -110,12 +136,13 @@ for (const path of textFiles) {
 
 console.log(JSON.stringify({
   ok: true,
-  suite: 'LightingAI Project 5.3 stable-base guard',
+  suite: 'LightingAI Project 5.4 stable-base guard',
   legacyStableBase: STABLE_BASE,
-  project53Base: PROJECT53_BASE,
-  stableBuild: 655,
+  phoneTestedBase: PHONE_TESTED_BASE,
+  project54Base: PROJECT54_BASE,
+  stableBuilds: [510, 655, 665],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'catalog, AI visual flow, Android camera/gallery, Planner measurement, SUNCE and backend remain byte-for-byte on the phone-tested build 655 side',
-  featureSurface: 'Project Backup safe two-step import only'
+  protectedByDefault: 'catalog, AI visual flow, Planner bridge, Project Backup, MainActivity, device capabilities, SUNCE and backend remain byte-for-byte on the merged build 665 baseline',
+  featureSurface: 'Camera distance: DEPTH16 when supported, tilt geometry fallback otherwise'
 }, null, 2));

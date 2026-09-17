@@ -38,6 +38,7 @@ const exactAllowed = new Set([
   'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
   'app/src/main/java/com/lightingai/app/MainActivity.java',
   'app/src/main/java/com/lightingai/app/MeasureActivity.java',
+  'backend/android-lint-changed-files-gate.js',
   'backend/package.json',
   'backend/preview-test-server.js',
   'backend/project5-feature-selftest.js',
@@ -128,7 +129,6 @@ for (const marker of [
   if (!sceneMeasure.includes(marker)) fail(`PRO measurement return guidance missing: ${marker}`);
 }
 
-// Secret guard: scan changed Project 5 text files for literal credentials.
 const textFiles = changed.filter((path) => /\.(?:js|json|yml|yaml|html|md)$/i.test(path));
 for (const path of textFiles) {
   if (path === 'backend/project5-stable-base-selftest.js') continue;

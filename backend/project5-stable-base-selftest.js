@@ -69,6 +69,15 @@ for (const protectedPath of [
   if (stable !== current) fail(`build 686 protected file changed unexpectedly: ${protectedPath}`);
 }
 
+// Preserve the historical non-destructive catalog contract required by Project 5 safety.
+const catalogPath = 'app/src/main/assets/catalog.js';
+const stableCatalog = git(['show', `${STABLE_BASE}:${catalogPath}`]);
+const currentCatalog = git(['show', `HEAD:${catalogPath}`]);
+if (!currentCatalog.includes("file:///android_asset/ai-visual-scene-launcher.js")) {
+  fail('catalog.js may not delete stable build 510 code or the isolated AI visual launcher');
+}
+if (!stableCatalog.trim()) fail('catalog.js may not delete stable build 510 code');
+
 const measure = git(['show', `HEAD:${measurePath}`]);
 for (const marker of [
   'ImageFormat.DEPTH16',

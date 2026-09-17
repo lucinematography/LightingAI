@@ -49,6 +49,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private static final int CAMERA_PERMISSION = 701;
     private static final int STABILITY_WINDOW = 14;
     private static final int DEPTH_WINDOW = 10;
+    private static final double MIN_RELIABLE_FALLBACK_ANGLE_DEG = 8.0;
     private static final String PREFS = "lighting_measure_calibration";
     private static final String PREF_ANGLE_OFFSET = "angle_offset_deg";
 
@@ -649,6 +650,15 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
         measurementMethod = "tilt";
         double d = depressionSmooth + angleCalibrationDeg;
+        if (d > 2.5 && d < MIN_RELIABLE_FALLBACK_ANGLE_DEG && cameraHeightM > 0.2) {
+            distanceM = Double.NaN;
+            uncertaintyM = Double.NaN;
+            distanceText.setText("— m");
+            angleText.setText(String.format(Locale.US,tr("Nagib %.1f° nadole", "Down tilt %.1f°"),d));
+            qualityText.setText(tr("PREMALI UGAO · spusti nišan ka podnožju ili priđi bliže", "ANGLE TOO SHALLOW · lower the crosshair to the base or move closer"));
+            qualityText.setTextColor(0xffffb5b5);
+            return;
+        }
         if (d > 2.5 && d < 82 && cameraHeightM > 0.2) {
             double calculated = distanceForAngle(d);
             if (Double.isFinite(calculated) && calculated > 0.15 && calculated < 100) {
@@ -662,7 +672,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
                 boolean enoughSamples = depressionCount >= 8;
                 boolean stable = enoughSamples && Double.isFinite(stabilitySpread) && stabilitySpread <= 1.5;
-                boolean geometryGood = d >= 8 && d <= 60;
+                boolean geometryGood = d >= MIN_RELIABLE_FALLBACK_ANGLE_DEG && d <= 60;
                 if (!enoughSamples) {
                     qualityText.setText(tr("SAČEKAJ TRENUTAK…", "WAIT A MOMENT…"));
                     qualityText.setTextColor(0xff9da3ad);
@@ -739,7 +749,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
     private void finishMeasurement(String target) {
         if (!Double.isFinite(distanceM)) {
-            setHint(tr("Nema merenja. Ako nema DEPTH-a, spusti nišan na podnožje objekta.", "No measurement. If DEPTH is unavailable, aim at the object's floor contact point."));
+            setHint(tr("Nema pouzdanog merenja. Ako nema DEPTH-a, spusti nišan na podnožje objekta i koristi ugao od najmanje 8°.", "No reliable measurement. If DEPTH is unavailable, aim at the object's floor contact point and use at least an 8° downward angle."));
             return;
         }
         if ("depth".equals(measurementMethod)) {
@@ -747,9 +757,16 @@ public class MeasureActivity extends Activity implements SensorEventListener {
                 setHint(tr("Sačekaj da DEPTH merenje postane STABILNO, pa pokušaj ponovo.", "Wait for the DEPTH measurement to become STABLE, then try again."));
                 return;
             }
-        } else if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 2.0) {
-            setHint(tr("Drži uređaj mirno trenutak, pa pokušaj ponovo.", "Hold the device still for a moment, then try again."));
-            return;
+        } else {
+            double fallbackAngle = depressionSmooth + angleCalibrationDeg;
+            if (!Double.isFinite(fallbackAngle) || fallbackAngle < MIN_RELIABLE_FALLBACK_ANGLE_DEG) {
+                setHint(tr("Fallback ugao je premali za pouzdano merenje. Spusti nišan ka podnožju ili priđi bliže.", "The fallback angle is too shallow for a reliable measurement. Lower the crosshair to the base or move closer."));
+                return;
+            }
+            if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 2.0) {
+                setHint(tr("Drži uređaj mirno trenutak, pa pokušaj ponovo.", "Hold the device still for a moment, then try again."));
+                return;
+            }
         }
         Intent data = new Intent();
         data.putExtra("target",target);

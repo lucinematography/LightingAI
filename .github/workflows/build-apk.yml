@@ -2,12 +2,17 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
   push:
-    branches: [ "main", "feature/ai-visual-scene-plan", "feature/ai-preview-refinements" ]
+    branches: [ "main", "feature/**", "fix/**", "chore/**" ]
 
 jobs:
   validate-and-build:
     runs-on: ubuntu-latest
+    concurrency:
+      group: lightingai-android-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+      cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,6 +29,10 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: npm ci
+
+      - name: Audit backend dependencies for high/critical vulnerabilities
+        working-directory: backend
+        run: npm run audit:dependencies
 
       - name: Embed Project 5 build identity
         run: |
@@ -60,6 +69,10 @@ jobs:
         working-directory: backend
         run: npm run test:project5-base
 
+      - name: Validate Project 5.2 release gate
+        working-directory: backend
+        run: npm run test:project52-release
+
       - name: Validate Project Backup data and exclusions
         run: node backend/project-backup-selftest.js
 
@@ -73,6 +86,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      - name: Collect Android lint report
+        continue-on-error: true
+        run: gradle lintDebug
+
+      - name: Enforce Android lint on changed app files
+        working-directory: backend
+        run: node android-lint-changed-files-gate.js
+
+      - name: Android unit tests
+        run: gradle testDebugUnitTest
 
       - name: Build debug APK
         run: gradle assembleDebug
@@ -123,3 +147,4 @@ jobs:
         with:
           name: LightingAI-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

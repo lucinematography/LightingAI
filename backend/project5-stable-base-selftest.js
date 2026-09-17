@@ -28,6 +28,8 @@ const changed = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .filter(Boolean);
 
 const exactAllowed = new Set([
+  '.github/dependabot.yml',
+  '.github/pull_request_template.md',
   '.github/workflows/build-apk.yml',
   'app/src/main/assets/catalog.js',
   'app/src/main/assets/scene-measure.js',
@@ -36,14 +38,18 @@ const exactAllowed = new Set([
   'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
   'app/src/main/java/com/lightingai/app/MainActivity.java',
   'app/src/main/java/com/lightingai/app/MeasureActivity.java',
+  'backend/android-lint-changed-files-gate.js',
   'backend/package.json',
   'backend/preview-test-server.js',
   'backend/project5-feature-selftest.js',
   'backend/project5-stable-base-selftest.js',
+  'backend/project52-release-gate-selftest.js',
   'backend/render-bootstrap.js',
   'backend/server.js',
   'backend/visual-preview-selftest.js',
-  'backend/visual-preview.js'
+  'backend/visual-preview.js',
+  'docs/PROJECT_5_2_FINAL_CHECKLIST.md',
+  'docs/PROJECT_5_2_GOLDEN_SCENE.md'
 ]);
 
 function allowed(path) {
@@ -123,7 +129,6 @@ for (const marker of [
   if (!sceneMeasure.includes(marker)) fail(`PRO measurement return guidance missing: ${marker}`);
 }
 
-// Secret guard: scan changed Project 5 text files for literal credentials.
 const textFiles = changed.filter((path) => /\.(?:js|json|yml|yaml|html|md)$/i.test(path));
 for (const path of textFiles) {
   if (path === 'backend/project5-stable-base-selftest.js') continue;

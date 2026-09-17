@@ -15,9 +15,13 @@ var DIAG_ID='lightingai-project5-diagnostic';
 var MODULE_ID='lightingai-ai-visual-scene-plan';
 var PROD_API='https://lightingai.onrender.com';
 var PREVIEW_TEST_API='https://lightingai-ai-preview-test.onrender.com';
+var PLAN_TIMEOUT_MS=55000;
 var previewCapabilityVerified=false;
 var previewActiveApi='';
 var diagnosticRequestInFlight=false;
+var currentPreviewState='checking';
+var planDiagnosticText='';
+var planDiagnosticError=false;
 function label(){return window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN';}
 function isSr(){return window.currentLang!=='en';}
 function equipmentText(){return isSr()?{title:'✦ AI VIZUELNI PLAN',desc:'Fotografija scene + dostupna rasveta + AI predlog + vizuelni preview.'}:{title:'✦ AI VISUAL PLAN',desc:'Scene photo + available lighting + AI proposal + visual preview.'};}
@@ -47,12 +51,15 @@ function diagnosticShell(){
   return box;
 }
 function renderDiagnostic(previewState){
+  currentPreviewState=previewState||currentPreviewState;
   var box=diagnosticShell();if(!box)return;
-  var b=buildInfo(),run=b.run||'?',sha=b.sha||'?',branch=b.branch||'feature',previewText=previewState==='active'?(isSr()?'AKTIVAN':'ACTIVE'):previewState==='checking'?(isSr()?'PROVERA...':'CHECKING...'):(isSr()?'ZAKLJUČAN':'LOCKED');
-  var previewColor=previewState==='active'?'#8ee6a8':previewState==='checking'?'#f5dd91':'#ffb5b5';
-  box.innerHTML='<b style="color:#f5c542">P5 TEST • BUILD '+String(run)+' • '+String(sha)+'</b><div style="margin-top:4px">'+(isSr()?'GRANA':'BRANCH')+': '+String(branch)+'</div><div>AI PLAN: <b style="color:#8ee6a8">'+(isSr()?'PRODUKCIJA':'PRODUCTION')+'</b></div><div>FOTO-PREVIEW: <b style="color:'+previewColor+'">'+previewText+'</b></div>';
+  var b=buildInfo(),run=b.run||'?',sha=b.sha||'?',branch=b.branch||'feature',previewText=currentPreviewState==='active'?(isSr()?'AKTIVAN':'ACTIVE'):currentPreviewState==='checking'?(isSr()?'PROVERA...':'CHECKING...'):(isSr()?'ZAKLJUČAN':'LOCKED');
+  var previewColor=currentPreviewState==='active'?'#8ee6a8':currentPreviewState==='checking'?'#f5dd91':'#ffb5b5';
+  var planDiag=planDiagnosticText?'<div style="margin-top:5px;color:'+(planDiagnosticError?'#ffb5b5':'#f5dd91')+'">'+planDiagnosticText+'</div>':'';
+  box.innerHTML='<b style="color:#f5c542">P5 TEST • BUILD '+String(run)+' • '+String(sha)+'</b><div style="margin-top:4px">'+(isSr()?'GRANA':'BRANCH')+': '+String(branch)+'</div><div>AI PLAN: <b style="color:#8ee6a8">'+(isSr()?'PRODUKCIJA':'PRODUCTION')+'</b> • timeout '+Math.round(PLAN_TIMEOUT_MS/1000)+' s</div><div>FOTO-PREVIEW: <b style="color:'+previewColor+'">'+previewText+'</b></div>'+planDiag;
   if(window.LightingAIProject5Diagnostics&&typeof window.LightingAIProject5Diagnostics.mount==='function')window.LightingAIProject5Diagnostics.mount();
 }
+function setPlanDiagnostic(text,error){planDiagnosticText=text;planDiagnosticError=!!error;renderDiagnostic(currentPreviewState);}
 function updateDiagnostic(){
   renderDiagnostic('checking');
   if(diagnosticRequestInFlight)return;
@@ -69,6 +76,24 @@ function emitPlan(response){
       try{window.dispatchEvent(new CustomEvent('lightingai-visual-plan-ready',{detail:data}));}catch(e){}
     }).catch(function(){});
   }catch(e){}
+}
+function diagnosticPlanRequest(nativeFetch,input,init){
+  var started=Date.now(),controller=typeof AbortController!=='undefined'?new AbortController():null,timeoutId=null,requestInit=injectLook(init)||{};
+  var diagnosticId='phone-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);
+  try{if(typeof requestInit.body==='string'){var body=JSON.parse(requestInit.body);body.diagnosticId=diagnosticId;requestInit=Object.assign({},requestInit,{body:JSON.stringify(body)});}}catch(e){}
+  if(controller){requestInit=Object.assign({},requestInit,{signal:controller.signal});timeoutId=setTimeout(function(){controller.abort();},PLAN_TIMEOUT_MS);}
+  setPlanDiagnostic((isSr()?'AI zahtev poslat produkciji':'AI request sent to production')+' • '+diagnosticId,false);
+  return nativeFetch(input,requestInit).then(function(response){
+    if(timeoutId)clearTimeout(timeoutId);
+    var elapsed=Date.now()-started;
+    setPlanDiagnostic((isSr()?'Produkcija odgovorila za ':'Production responded in ')+(elapsed/1000).toFixed(1)+' s • HTTP '+response.status+' • '+diagnosticId,!response.ok);
+    emitPlan(response);return response;
+  }).catch(function(error){
+    if(timeoutId)clearTimeout(timeoutId);
+    var elapsed=Date.now()-started,aborted=error&&String(error.name)==='AbortError';
+    setPlanDiagnostic((aborted?(isSr()?'TIMEOUT: produkcija nije odgovorila za ':'TIMEOUT: production did not respond in '):(isSr()?'MREŽNA GREŠKA posle ':'NETWORK ERROR after '))+(elapsed/1000).toFixed(1)+' s • '+diagnosticId,true);
+    throw error;
+  });
 }
 function previewGet(nativeFetch,api){
   return nativeFetch(api+'/api/visual-preview',{cache:'no-store'}).then(function(response){
@@ -104,12 +129,10 @@ function installPreviewApiRouter(){
       if(!previewCapabilityVerified||!previewActiveApi)return Promise.resolve(unavailableResponse(503));
       return previewRequest(nativeFetch,previewActiveApi,input,init);
     }
-    if(isExactApi(url,'/api/lighting-plan')){
-      return nativeFetch(input,injectLook(init)).then(function(response){emitPlan(response);return response;});
-    }
+    if(isExactApi(url,'/api/lighting-plan'))return diagnosticPlanRequest(nativeFetch,input,init);
     return nativeFetch(input,init);
   };
-  window.__lightingAIVisualPreviewFetchRouter={productionApi:PROD_API,testApi:PREVIEW_TEST_API,isVerified:function(){return previewCapabilityVerified;},activeApi:function(){return previewActiveApi;}};
+  window.__lightingAIVisualPreviewFetchRouter={productionApi:PROD_API,testApi:PREVIEW_TEST_API,planTimeoutMs:PLAN_TIMEOUT_MS,isVerified:function(){return previewCapabilityVerified;},activeApi:function(){return previewActiveApi;}};
 }
 function ensureScript(id,src,ready,next){
   if(ready()){next();return;}

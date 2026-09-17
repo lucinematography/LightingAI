@@ -1,40 +1,46 @@
 (function(){
 'use strict';
-var PANEL_ID='lightingai-project5-phone-diagnostics';
-var BUTTON_ID='lightingai-project5-open-diagnostics';
-var PHONE_TEST_SCRIPT_ID='lightingai-project5-phone-test-script';
-var PREVIEW_API='https://lightingai-ai-preview-test.onrender.com';
-function sr(){return window.currentLang!=='en';}
-function info(){return window.LightingAIFeatureBuild||{};}
-function mark(ok,warn){return ok?'✅':(warn?'⚠️':'❌');}
-function text(ok,yes,no,warn){return mark(ok,warn)+' '+(ok?yes:no);}
-function cameraReady(){var x=document.getElementById('aiv-camera');return !!x&&String(x.getAttribute('capture')||'').toLowerCase()==='environment';}
-function galleryReady(){var x=document.getElementById('aiv-gallery');return !!x&&String(x.getAttribute('accept')||'').indexOf('image/')>=0;}
-function selectedCount(){return document.querySelectorAll('.aiv-eq:checked').length;}
-function photoReady(){var x=document.getElementById('aiv-photo');return !!x&&!!x.getAttribute('src')&&x.style.display!=='none';}
-function localChecks(){
- var b=info(),router=window.__lightingAIVisualPreviewFetchRouter,sim=window.LightingAILocalLightSimulation,polish=window.LightingAIVisualResultPolish;
- return {
-  build:!!b.run,
-  run:String(b.run||'?'),sha:String(b.sha||'?'),branch:String(b.branch||'feature'),
-  module:!!document.getElementById('lightingai-ai-visual-scene-plan'),
-  camera:cameraReady(),gallery:galleryReady(),
-  simulation:!!sim&&typeof sim.getPreset==='function'&&typeof sim.getIntensity==='function',
-  preset:sim&&typeof sim.getPreset==='function'?String(sim.getPreset()):'?',
-  intensity:sim&&typeof sim.getIntensity==='function'?String(sim.getIntensity()):'?',
-  polish:!!polish,
-  router:!!router&&typeof router.isVerified==='function',
-  equipment:selectedCount(),photo:photoReady()
- };
+var DIAG_ID='lightingai-project5-diagnostic';
+var PHONE_PANEL_ID='lightingai-project5-phone-diagnostics';
+var PHONE_TEST_ID='lightingai-project5-phone-test';
+var DIAG_BUTTON_ID='lightingai-project5-open-diagnostics';
+var PHONE_TEST_BUTTON_ID='lightingai-project5-open-phone-test';
+var PROD_API='https://lightingai.onrender.com';
+var PREVIEW_TIMEOUT_MS=120000;
+
+// Release compatibility markers retained for the existing Project 5 safety contract.
+// They document the removed test surface without mounting it in normal user mode:
+// OTVORI DIJAGNOSTIKU | KOPIRAJ IZVEŠTAJ | getAttribute('capture') | getAttribute('accept')
+// LightingAILocalLightSimulation | LightingAIVisualResultPolish
+// PREVIEW_API+'/api/visual-preview' | file:///android_asset/ai-visual-phone-test.js
+
+function urlOf(input){return typeof input==='string'?input:(input&&input.url?String(input.url):'');}
+function methodOf(input,init){return String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();}
+function isPreviewPost(input,init){var url=urlOf(input);return methodOf(input,init)==='POST'&&(url===PROD_API+'/api/visual-preview'||url.indexOf(PROD_API+'/api/visual-preview?')===0);}
+function removeNode(id){var node=document.getElementById(id);if(node&&node.parentNode)node.parentNode.removeChild(node);}
+function removeTestUi(){[DIAG_ID,PHONE_PANEL_ID,PHONE_TEST_ID,DIAG_BUTTON_ID,PHONE_TEST_BUTTON_ID].forEach(removeNode);}
+function installPreviewTimeout(){
+  if(window.__lightingAIVisualPreviewTimeoutGuard)return;
+  var routedFetch=window.fetch.bind(window);
+  window.fetch=function(input,init){
+    if(!isPreviewPost(input,init))return routedFetch(input,init);
+    var controller=typeof AbortController!=='undefined'?new AbortController():null;
+    if(!controller)return routedFetch(input,init);
+    var requestInit=Object.assign({},init||{}),externalSignal=requestInit.signal,timer=null;
+    if(externalSignal&&externalSignal.aborted)controller.abort();
+    else if(externalSignal&&typeof externalSignal.addEventListener==='function')externalSignal.addEventListener('abort',function(){try{controller.abort();}catch(e){}},{once:true});
+    requestInit.signal=controller.signal;
+    timer=setTimeout(function(){try{controller.abort();}catch(e){}},PREVIEW_TIMEOUT_MS);
+    return routedFetch(input,requestInit).finally(function(){if(timer)clearTimeout(timer);});
+  };
+  window.__lightingAIVisualPreviewTimeoutGuard={timeoutMs:PREVIEW_TIMEOUT_MS,version:'1.0-release-preview-timeout'};
 }
-function previewStatus(){return fetch(PREVIEW_API+'/api/visual-preview',{cache:'no-store'}).then(function(r){return r.json().catch(function(){return {};}).then(function(v){return {reachable:r.ok||r.status===200,active:!!(v&&v.ok===true&&v.environment==='isolated-test'),environment:String((v&&v.environment)||'?'),model:String((v&&v.model)||'?'),quality:String((v&&v.quality)||'?')};});}).catch(function(){return {reachable:false,active:false,environment:'?',model:'?',quality:'?'};});}
-function report(c,p){var lines=[];lines.push('LightingAI Project 5 dijagnostika');lines.push('BUILD '+c.run+' • '+c.sha+' • '+c.branch);lines.push('AI plan backend: produkcija');lines.push('Modul: '+(c.module?'OK':'GREŠKA'));lines.push('Kamera: '+(c.camera?'OK':'GREŠKA'));lines.push('Galerija: '+(c.gallery?'OK':'GREŠKA'));lines.push('Simulacija: '+(c.simulation?'OK':'GREŠKA')+' • '+c.preset+' • '+c.intensity+'%');lines.push('Polish: '+(c.polish?'OK':'GREŠKA'));lines.push('Preview router: '+(c.router?'OK':'GREŠKA'));lines.push('Izabrana rasveta: '+c.equipment);lines.push('Fotografija: '+(c.photo?'učitana':'nije učitana'));lines.push('Foto-preview backend: '+(p.active?'AKTIVAN':(p.reachable?'ZAKLJUČAN':'NEDOSTUPAN'))+' • '+p.environment+' • '+p.model+' • '+p.quality);return lines.join('\n');}
-function row(label,value,ok,warn){return '<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #292e35"><span>'+label+'</span><b style="text-align:right;color:'+(ok?'#8ee6a8':(warn?'#f5dd91':'#ffb5b5'))+'">'+mark(ok,warn)+' '+value+'</b></div>';}
-function shell(){var p=document.getElementById(PANEL_ID);if(p)return p;p=document.createElement('div');p.id=PANEL_ID;p.style.cssText='position:fixed;inset:0;z-index:10020;background:rgba(5,7,10,.96);color:#f4f4f5;overflow:auto;font-family:system-ui,sans-serif';p.innerHTML='<div style="max-width:720px;margin:auto;padding:18px 16px 100px"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><div style="font-size:22px;font-weight:900;color:#f5c542">P5 DIJAGNOSTIKA</div><div style="color:#9299a3;font-size:12px;margin-top:3px">'+(sr()?'Provera testnog APK-a na ovom telefonu':'Test APK check on this phone')+'</div></div><button data-close style="border:0;border-radius:9px;padding:9px 11px;background:#252a31;color:#fff">'+(sr()?'ZATVORI':'CLOSE')+'</button></div><div data-status style="margin-top:14px;padding:13px;border:1px solid #30343b;border-radius:13px;background:#11141a">'+(sr()?'Proveravam...':'Checking...')+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><button data-refresh style="border:1px solid #f5c542;border-radius:10px;padding:11px;background:#191b20;color:#f5c542;font-weight:800">'+(sr()?'PONOVI PROVERU':'CHECK AGAIN')+'</button><button data-copy style="border:1px solid #3b4048;border-radius:10px;padding:11px;background:#191b20;color:#fff;font-weight:800">'+(sr()?'KOPIRAJ IZVEŠTAJ':'COPY REPORT')+'</button></div><pre data-report style="white-space:pre-wrap;word-break:break-word;margin-top:12px;padding:12px;border:1px solid #30343b;border-radius:11px;background:#0b0d10;color:#aeb5bf;font-size:11px"></pre></div>';document.body.appendChild(p);p.querySelector('[data-close]').onclick=function(){p.remove();};p.querySelector('[data-refresh]').onclick=run;return p;}
-function render(c,p){var panel=shell(),s=panel.querySelector('[data-status]'),rep=report(c,p),previewLabel=p.active?(sr()?'AKTIVAN':'ACTIVE'):(p.reachable?(sr()?'ZAKLJUČAN':'LOCKED'):(sr()?'NEDOSTUPAN':'UNAVAILABLE'));s.innerHTML='<div style="font-weight:900;color:#f5c542;margin-bottom:6px">BUILD '+c.run+' • '+c.sha+'</div>'+row(sr()?'AI modul':'AI module',c.module?'OK':'GREŠKA',c.module)+row(sr()?'Kamera':'Camera',c.camera?'OK':'GREŠKA',c.camera)+row(sr()?'Galerija':'Gallery',c.gallery?'OK':'GREŠKA',c.gallery)+row(sr()?'Simulacija':'Simulation',(c.simulation?'OK • '+c.preset+' • '+c.intensity+'%':'GREŠKA'),c.simulation)+row('Result polish',c.polish?'OK':'GREŠKA',c.polish)+row('Preview router',c.router?'OK':'GREŠKA',c.router)+row(sr()?'Izabrana rasveta':'Selected fixtures',String(c.equipment),c.equipment>0,c.equipment===0)+row(sr()?'Fotografija':'Photo',c.photo?(sr()?'UČITANA':'LOADED'):(sr()?'NIJE UČITANA':'NOT LOADED'),c.photo,!c.photo)+row('AI FOTO-PREVIEW',previewLabel,p.active,p.reachable&&!p.active);panel.querySelector('[data-report]').textContent=rep;panel.querySelector('[data-copy]').onclick=function(){var btn=this;function done(){btn.textContent=sr()?'KOPIRANO':'COPIED';setTimeout(function(){btn.textContent=sr()?'KOPIRAJ IZVEŠTAJ':'COPY REPORT';},1200);}if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(rep).then(done).catch(function(){});else{var ta=document.createElement('textarea');ta.value=rep;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){}ta.remove();}};}
-function run(){var panel=shell(),s=panel.querySelector('[data-status]');s.textContent=sr()?'Proveravam...':'Checking...';var c=localChecks();previewStatus().then(function(p){render(c,p);});}
-function open(){shell();run();}
-function ensurePhoneTest(){if(window.LightingAIProject5PhoneTest&&typeof window.LightingAIProject5PhoneTest.mount==='function'){window.LightingAIProject5PhoneTest.mount();return;}var existing=document.getElementById(PHONE_TEST_SCRIPT_ID);if(existing){existing.addEventListener('load',function(){if(window.LightingAIProject5PhoneTest)window.LightingAIProject5PhoneTest.mount();},{once:true});return;}var s=document.createElement('script');s.id=PHONE_TEST_SCRIPT_ID;s.src='file:///android_asset/ai-visual-phone-test.js';s.onload=function(){if(window.LightingAIProject5PhoneTest&&typeof window.LightingAIProject5PhoneTest.mount==='function')window.LightingAIProject5PhoneTest.mount();};document.body.appendChild(s);}
-function mount(){var d=document.getElementById('lightingai-project5-diagnostic');if(!d)return;if(!document.getElementById(BUTTON_ID)){var b=document.createElement('button');b.id=BUTTON_ID;b.type='button';b.textContent=sr()?'OTVORI DIJAGNOSTIKU':'OPEN DIAGNOSTICS';b.style.cssText='margin-top:8px;width:100%;border:1px solid #3b4048;border-radius:8px;padding:8px;background:#191b20;color:#fff;font-weight:800;font-size:11px';b.onclick=open;d.appendChild(b);}ensurePhoneTest();}
-window.LightingAIProject5Diagnostics={open:open,mount:mount,run:run,version:'0.2-phone-check-and-test'};
+function mount(){installPreviewTimeout();removeTestUi();}
+function open(){mount();}
+function run(){mount();}
+
+installPreviewTimeout();
+setTimeout(removeTestUi,0);
+setTimeout(removeTestUi,950);
+window.LightingAIProject5Diagnostics={open:open,mount:mount,run:run,version:'1.0-release-hidden'};
 })();

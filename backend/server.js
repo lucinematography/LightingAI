@@ -77,7 +77,13 @@ app.post("/api/lighting-plan",async(req,res)=>{try{
  if(scenePhoto)content.push({type:"input_image",image_url:scenePhoto});
  const response=await openai.responses.create({model:"gpt-5.6-luna",input:[{role:"user",content}]});
  let text=response.output_text.trim().replace(/^```json\s*/i,"").replace(/```$/i,"").trim();
- res.json(JSON.parse(text));
+ const plan=JSON.parse(text);
+ if(camera){
+   const prefix=language==="en"?`Planner measurements: ${camera}.`:`Merenja iz Planera: ${camera}.`;
+   const existing=String(plan.camera_notes||"").trim();
+   plan.camera_notes=existing.startsWith(prefix)?existing:`${prefix}${existing?` ${existing}`:""}`;
+ }
+ res.json(plan);
 }catch(error){console.error(error);res.status(500).json({error:"Lighting plan generation failed."});}});
 app.get("/api/visual-preview",(req,res)=>res.json({ok:true,model:VISUAL_PREVIEW_MODEL,quality:VISUAL_PREVIEW_QUALITY}));
 app.post("/api/visual-preview",async(req,res)=>{try{

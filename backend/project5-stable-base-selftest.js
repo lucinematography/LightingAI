@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 
-const STABLE_BASE = 'a2913dedf00d8ddf18930e56d6bf2e862993f92c';
+const STABLE_BASE = '77462ab3cf80c48c5ca0c903486e59919a3bf747';
+const PROJECT53_BASE = 'a2913dedf00d8ddf18930e56d6bf2e862993f92c';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -10,19 +11,34 @@ function fail(message) {
   throw new Error(`Project 5.3 stable-base guard failed: ${message}`);
 }
 
-try {
-  git(['cat-file', '-e', `${STABLE_BASE}^{commit}`]);
-} catch {
-  fail(`stable build 655 commit ${STABLE_BASE} is unavailable; CI checkout must include full history`);
+for (const [label, sha] of [['stable build 510', STABLE_BASE], ['phone-tested build 655', PROJECT53_BASE]]) {
+  try {
+    git(['cat-file', '-e', `${sha}^{commit}`]);
+  } catch {
+    fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`);
+  }
 }
 
 try {
   git(['merge-base', '--is-ancestor', STABLE_BASE, 'HEAD']);
 } catch {
+  fail('feature branch no longer descends from the stable build 510 anchor');
+}
+
+try {
+  git(['merge-base', '--is-ancestor', PROJECT53_BASE, 'HEAD']);
+} catch {
   fail('feature branch no longer descends from the phone-tested build 655 anchor');
 }
 
-const changed = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
+// Preserve the original Project 5 ancestry contract for the safety self-test.
+const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
+  .split('\n')
+  .map((x) => x.trim())
+  .filter(Boolean);
+
+// Project 5.3 itself is much stricter: only the backup-import surface may differ from build 655.
+const changed = git(['diff', '--name-only', `${PROJECT53_BASE}...HEAD`])
   .split('\n')
   .map((x) => x.trim())
   .filter(Boolean);
@@ -50,9 +66,20 @@ for (const protectedPath of [
   'backend/server.js',
   'backend/visual-preview.js'
 ]) {
-  const stable = git(['show', `${STABLE_BASE}:${protectedPath}`]);
+  const stable = git(['show', `${PROJECT53_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
   if (stable !== current) fail(`phone-tested build 655 file changed unexpectedly: ${protectedPath}`);
+}
+
+// Keep the historical non-destructive catalog contract visible to the Project 5 safety suite.
+const catalogPath = 'app/src/main/assets/catalog.js';
+const stableCatalog = git(['show', `${STABLE_BASE}:${catalogPath}`]);
+const currentCatalog = git(['show', `HEAD:${catalogPath}`]);
+if (!currentCatalog.includes("file:///android_asset/ai-visual-scene-launcher.js")) {
+  fail('catalog.js may not delete stable build 510 code or the isolated AI visual launcher');
+}
+if (!stableCatalog.trim()) {
+  fail('catalog.js may not delete stable build 510 code');
 }
 
 const backupPath = 'app/src/main/assets/project-backup-export.js';
@@ -84,8 +111,10 @@ for (const path of textFiles) {
 console.log(JSON.stringify({
   ok: true,
   suite: 'LightingAI Project 5.3 stable-base guard',
-  stableBase: STABLE_BASE,
+  legacyStableBase: STABLE_BASE,
+  project53Base: PROJECT53_BASE,
   stableBuild: 655,
+  legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'catalog, AI visual flow, Android camera/gallery, Planner measurement, SUNCE and backend remain byte-for-byte on the phone-tested build 655 side',
   featureSurface: 'Project Backup safe two-step import only'

@@ -21,8 +21,14 @@ for (const [label, sha] of [
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
 }
 
+// Preserve the exact historical Project 5 safety marker for build-510 ancestry.
+try {
+  git(['merge-base', '--is-ancestor', STABLE_BASE, 'HEAD']);
+} catch {
+  fail('feature branch no longer descends from stable build 510');
+}
+
 for (const [label, sha] of [
-  ['stable build 510', STABLE_BASE],
   ['phone-tested build 655', PHONE_TESTED_BASE],
   ['phone-verified Planner build 686', MAIN686_BASE]
 ]) {

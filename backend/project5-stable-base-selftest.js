@@ -42,13 +42,11 @@ for (const [label, sha] of [
   }
 }
 
-// Preserve the historical Project 5 ancestry contract for the existing safety suite.
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n')
   .map((x) => x.trim())
   .filter(Boolean);
 
-// Project 5.4 is isolated to native camera-distance work on top of the merged Project 5.3 main baseline.
 const changed = git(['diff', '--name-only', `${PROJECT54_BASE}...HEAD`])
   .split('\n')
   .map((x) => x.trim())
@@ -56,16 +54,16 @@ const changed = git(['diff', '--name-only', `${PROJECT54_BASE}...HEAD`])
 
 const exactAllowed = new Set([
   'app/src/main/java/com/lightingai/app/MeasureActivity.java',
+  'app/src/main/assets/catalog.js',
   'backend/project5-stable-base-selftest.js'
 ]);
 
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
 if (unexpected.length) {
-  fail(`files changed outside the isolated Project 5.4 camera-distance surface: ${unexpected.join(', ')}`);
+  fail(`files changed outside the isolated Project 5.4 camera-distance/catalog-retry surface: ${unexpected.join(', ')}`);
 }
 
 for (const protectedPath of [
-  'app/src/main/assets/catalog.js',
   'app/src/main/assets/ai-visual-scene-launcher.js',
   'app/src/main/assets/ai-visual-scene-plan.js',
   'app/src/main/assets/ai-visual-preview-refinements.js',
@@ -83,7 +81,6 @@ for (const protectedPath of [
   if (stable !== current) fail(`Project 5.3 build 665 file changed unexpectedly: ${protectedPath}`);
 }
 
-// Keep the historical non-destructive catalog contract visible to Project 5 safety checks.
 const catalogPath = 'app/src/main/assets/catalog.js';
 const stableCatalog = git(['show', `${STABLE_BASE}:${catalogPath}`]);
 const currentCatalog = git(['show', `HEAD:${catalogPath}`]);
@@ -93,8 +90,16 @@ if (!currentCatalog.includes("file:///android_asset/ai-visual-scene-launcher.js"
 if (!stableCatalog.trim()) {
   fail('catalog.js may not delete stable build 510 code');
 }
+for (const marker of [
+  'window.loadLightingAICatalog=function(attempt)',
+  "fetch(url,{cache:'no-store'})",
+  'setTimeout(function(){window.loadLightingAICatalog(attempt+1);},delay)',
+  'PONOVO UČITAJ KATALOG',
+  "window.addEventListener('online'"
+]) {
+  if (!currentCatalog.includes(marker)) fail(`catalog retry marker missing: ${marker}`);
+}
 
-// Project 5.3 backup import remains present and protected while Project 5.4 changes camera distance only.
 const backupPath = 'app/src/main/assets/project-backup-export.js';
 const backup = git(['show', `HEAD:${backupPath}`]);
 for (const marker of [
@@ -112,7 +117,6 @@ for (const marker of [
   if (!backup.includes(marker)) fail(`safe backup import marker missing: ${marker}`);
 }
 
-// Project 5.4 must prefer direct DEPTH16 when Android exposes it, while retaining the proven tilt fallback.
 const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
 const measure = git(['show', `HEAD:${measurePath}`]);
 for (const marker of [
@@ -149,6 +153,6 @@ console.log(JSON.stringify({
   stableBuilds: [510, 655, 665],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'catalog, AI visual flow, Planner bridge, Project Backup, MainActivity, device capabilities, SUNCE and backend remain byte-for-byte on the merged build 665 baseline',
-  featureSurface: 'Camera distance: DEPTH16 when supported, tilt geometry fallback otherwise'
+  protectedByDefault: 'AI visual flow, Planner bridge, Project Backup, MainActivity, device capabilities, SUNCE and backend remain byte-for-byte on the merged build 665 baseline',
+  featureSurface: 'Camera distance: DEPTH16 when supported, tilt geometry fallback otherwise; equipment catalog adds bounded retry for Render cold starts'
 }, null, 2));

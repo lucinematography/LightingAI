@@ -6,9 +6,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
+import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -19,9 +20,12 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.Image;
+import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.util.Size;
 import android.util.SizeF;
 import android.view.Gravity;
@@ -34,12 +38,17 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 public class MeasureActivity extends Activity implements SensorEventListener {
     private static final int CAMERA_PERMISSION = 701;
     private static final int STABILITY_WINDOW = 14;
+    private static final int DEPTH_WINDOW = 10;
     private static final String PREFS = "lighting_measure_calibration";
     private static final String PREF_ANGLE_OFFSET = "angle_offset_deg";
 
@@ -50,9 +59,12 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private HandlerThread cameraThread;
     private Handler cameraHandler;
     private Size previewSize;
+    private Size depthSize;
+    private ImageReader depthReader;
     private int sensorOrientation = 90;
     private int[] availableAfModes = new int[0];
     private boolean cameraOpening = false;
+    private boolean depthSessionActive = false;
 
     private SensorManager sensorManager;
     private Sensor tiltSensor;
@@ -77,6 +89,15 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private int depressionIndex = 0;
     private double stabilitySpread = Double.NaN;
     private double uncertaintyM = Double.NaN;
+    private String measurementMethod = "tilt";
+
+    private final double[] depthWindow = new double[DEPTH_WINDOW];
+    private volatile int depthCount = 0;
+    private int depthIndex = 0;
+    private volatile double depthDistanceM = Double.NaN;
+    private volatile double depthTemporalSpreadM = Double.NaN;
+    private volatile double depthUncertaintyM = Double.NaN;
+    private volatile long depthUpdatedAtMs = 0L;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,9 +112,9 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         chooseTiltSensor();
         if (tiltSensor == null) {
-            setHint(tr("Senzor nagiba nije dostupan. Koristi WEB kameru kao rezervu.", "Tilt sensor unavailable. Use WEB camera as fallback."));
+            setHint(tr("Senzor nagiba nije dostupan. Ako telefon ima DEPTH kameru koristiće se direktna dubina; inače koristi WEB rezervu.", "Tilt sensor unavailable. If the phone has a DEPTH camera, direct depth will be used; otherwise use the WEB fallback."));
         } else if (fallbackTiltSensor) {
-            setHint(tr("Koristi se kompatibilni rezervni senzor nagiba. Za najbolju tačnost uradi kalibraciju poznatim rastojanjem.", "Using a compatible fallback tilt sensor. For best accuracy, calibrate with a known distance."));
+            setHint(tr("Koristi se kompatibilni rezervni senzor nagiba. Ako DEPTH nije dostupan, za najbolju tačnost uradi kalibraciju poznatim rastojanjem.", "Using a compatible fallback tilt sensor. If DEPTH is unavailable, calibrate with a known distance for best accuracy."));
         }
     }
 
@@ -169,9 +190,9 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         top.setOrientation(LinearLayout.VERTICAL);
         top.setPadding(dp(18),dp(12),dp(18),dp(10));
         TextView title = makeText(tr("PRO MERENJE SCENE", "PRO SCENE MEASUREMENT"),21,Color.WHITE);
-        title.setTypeface(null,1); top.addView(title);
-        distanceText = makeText("— m",36,Color.rgb(245,197,66)); distanceText.setTypeface(null,1); top.addView(distanceText);
-        angleText = makeText(tr("Ciljaj podnožje objekta", "Aim at the base of the object"),13,0xffc5c9d0); top.addView(angleText);
+        title.setTypeface(null,Typeface.BOLD); top.addView(title);
+        distanceText = makeText("— m",36,Color.rgb(245,197,66)); distanceText.setTypeface(null,Typeface.BOLD); top.addView(distanceText);
+        angleText = makeText(tr("Ciljaj glumca ili podnožje objekta", "Aim at the actor or the object's base"),13,0xffc5c9d0); top.addView(angleText);
         qualityText = makeText("",12,0xff9da3ad); top.addView(qualityText);
         root.addView(top,new FrameLayout.LayoutParams(-1,dp(132),Gravity.TOP));
 
@@ -181,7 +202,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL); panel.setPadding(dp(14),dp(8),dp(14),dp(12)); panel.setBackgroundColor(0xee0d0f12);
-        hintText = makeText(tr("Nišan postavi na mesto gde objekat dodiruje ravan pod. Drži telefon mirno dok ne piše STABILNO.", "Place the crosshair where the object meets a level floor. Hold the phone still until STABLE appears."),12,0xffb0b5bd); panel.addView(hintText);
+        hintText = makeText(tr("Ako telefon podržava DEPTH, nišan stavi direktno na glumca/objekat. Bez DEPTH-a ciljaj mesto gde objekat dodiruje ravan pod i drži telefon mirno.", "If the phone supports DEPTH, aim directly at the actor/object. Without DEPTH, aim where the object meets a level floor and hold the phone still."),12,0xffb0b5bd); panel.addView(hintText);
 
         LinearLayout hrow = new LinearLayout(this); hrow.setGravity(Gravity.CENTER_VERTICAL);
         TextView hl = makeText(tr("Visina kamere (m)", "Camera height (m)"),14,Color.WHITE); hrow.addView(hl,new LinearLayout.LayoutParams(0,dp(46),1f));
@@ -250,6 +271,32 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         return false;
     }
 
+    private static boolean hasDepthOutput(CameraCharacteristics c) {
+        int[] capabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+        if (capabilities == null) return false;
+        for (int capability : capabilities) {
+            if (capability == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) return true;
+        }
+        return false;
+    }
+
+    private Size chooseDepthSize(StreamConfigurationMap map) {
+        if (map == null) return null;
+        Size[] sizes;
+        try { sizes = map.getOutputSizes(ImageFormat.DEPTH16); }
+        catch (Exception e) { return null; }
+        if (sizes == null || sizes.length == 0) return null;
+        Size best = sizes[0];
+        long target = 320L * 240L;
+        long bestScore = Math.abs((long)best.getWidth()*best.getHeight() - target);
+        for (Size s : sizes) {
+            long pixels = (long)s.getWidth()*s.getHeight();
+            long score = Math.abs(pixels - target);
+            if (score < bestScore) { best = s; bestScore = score; }
+        }
+        return best;
+    }
+
     private String chooseBackCamera(CameraManager manager) throws Exception {
         String bestId = null;
         double bestScore = -Double.MAX_VALUE;
@@ -263,6 +310,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
             if (outputs == null || outputs.length == 0) continue;
 
             double score = 0;
+            if (hasDepthOutput(c) && chooseDepthSize(map) != null) score += 30000;
             int[] afModes = c.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES);
             if (containsMode(afModes, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) score += 10000;
             else if (containsMode(afModes, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) score += 7000;
@@ -305,7 +353,9 @@ public class MeasureActivity extends Activity implements SensorEventListener {
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             if (map == null) { setHint(tr("Ovaj modul kamere ne daje kompatibilan pregled.", "This camera module does not provide a compatible preview.")); return; }
             previewSize = chooseSize(map.getOutputSizes(SurfaceTexture.class));
+            depthSize = hasDepthOutput(characteristics) ? chooseDepthSize(map) : null;
             if (previewSize == null) { setHint(tr("Nema podržane veličine pregleda kamere.", "No supported camera preview size.")); return; }
+            resetDepthEstimate();
             cameraOpening = true;
             manager.openCamera(chosen, cameraCallback, cameraHandler);
         } catch (Exception e) {
@@ -341,27 +391,170 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         @Override public void onError(CameraDevice camera, int error) { cameraOpening = false; camera.close(); cameraDevice = null; setHint(tr("Greška kamere. Pokušaj ponovo.", "Camera error. Try again.")); }
     };
 
-    private void createPreview() {
+    private void createPreview() { createPreview(depthSize != null); }
+
+    private void createPreview(boolean tryDepth) {
         try {
             SurfaceTexture st = textureView.getSurfaceTexture(); if (st == null || cameraDevice == null || previewSize == null) return;
             st.setDefaultBufferSize(previewSize.getWidth(),previewSize.getHeight());
             Surface surface = new Surface(st);
-            previewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW); previewBuilder.addTarget(surface);
+            previewBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            previewBuilder.addTarget(surface);
+            List<Surface> outputs = new ArrayList<>();
+            outputs.add(surface);
+
+            if (tryDepth && depthSize != null) {
+                prepareDepthReader();
+                if (depthReader != null) {
+                    Surface depthSurface = depthReader.getSurface();
+                    previewBuilder.addTarget(depthSurface);
+                    outputs.add(depthSurface);
+                } else {
+                    tryDepth = false;
+                }
+            }
+
             if (containsMode(availableAfModes, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)) {
                 previewBuilder.set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             } else if (containsMode(availableAfModes, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)) {
                 previewBuilder.set(CaptureRequest.CONTROL_AF_MODE,CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO);
             }
-            cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
+
+            final boolean requestedDepth = tryDepth;
+            cameraDevice.createCaptureSession(outputs, new CameraCaptureSession.StateCallback() {
                 @Override public void onConfigured(CameraCaptureSession session) {
                     captureSession = session;
+                    depthSessionActive = requestedDepth && depthReader != null;
                     try { session.setRepeatingRequest(previewBuilder.build(),null,cameraHandler); }
                     catch (Exception e) { setHint(tr("Pregled kamere nije mogao da se pokrene.", "Camera preview could not start.")); }
+                    if (depthSessionActive) {
+                        setHint(tr("DEPTH je aktivan: nišan stavi direktno na glumca ili objekat i sačekaj STABILNO.", "DEPTH is active: aim directly at the actor or object and wait for STABLE."));
+                    }
                     runOnUiThread(() -> configureTransform(textureView.getWidth(),textureView.getHeight()));
                 }
-                @Override public void onConfigureFailed(CameraCaptureSession session) { setHint(tr("Pregled kamere nije dostupan.", "Camera preview unavailable.")); }
+                @Override public void onConfigureFailed(CameraCaptureSession session) {
+                    if (requestedDepth) {
+                        depthSessionActive = false;
+                        closeDepthReader();
+                        depthSize = null;
+                        setHint(tr("DEPTH nije mogao da se pokrene; nastavljam bezbedno sa merenjem preko nagiba.", "DEPTH could not start; safely continuing with tilt-based measurement."));
+                        createPreview(false);
+                    } else {
+                        setHint(tr("Pregled kamere nije dostupan.", "Camera preview unavailable."));
+                    }
+                }
             }, cameraHandler);
-        } catch (Exception e) { setHint(tr("Pregled kamere nije dostupan.", "Camera preview unavailable.")); }
+        } catch (Exception e) {
+            if (tryDepth) {
+                depthSessionActive = false;
+                closeDepthReader();
+                depthSize = null;
+                createPreview(false);
+            } else {
+                setHint(tr("Pregled kamere nije dostupan.", "Camera preview unavailable."));
+            }
+        }
+    }
+
+    private void prepareDepthReader() {
+        closeDepthReader();
+        if (depthSize == null) return;
+        try {
+            depthReader = ImageReader.newInstance(depthSize.getWidth(), depthSize.getHeight(), ImageFormat.DEPTH16, 2);
+            depthReader.setOnImageAvailableListener(this::onDepthImageAvailable, cameraHandler);
+        } catch (Exception e) {
+            depthReader = null;
+        }
+    }
+
+    private void onDepthImageAvailable(ImageReader reader) {
+        Image image = null;
+        try {
+            image = reader.acquireLatestImage();
+            if (image != null) acceptDepthImage(image);
+        } catch (Exception ignored) {
+        } finally {
+            if (image != null) image.close();
+        }
+    }
+
+    private void acceptDepthImage(Image image) {
+        if (image.getFormat() != ImageFormat.DEPTH16 || image.getPlanes().length == 0) return;
+        Image.Plane plane = image.getPlanes()[0];
+        ByteBuffer buffer = plane.getBuffer().duplicate().order(ByteOrder.nativeOrder());
+        int rowStride = plane.getRowStride();
+        int pixelStride = plane.getPixelStride();
+        int width = image.getWidth(), height = image.getHeight();
+        if (width < 3 || height < 3 || pixelStride < 2) return;
+
+        int cx = width / 2, cy = height / 2;
+        int radius = Math.max(2, Math.min(6, Math.min(width,height) / 30));
+        double[] values = new double[(radius*2+1)*(radius*2+1)];
+        int count = 0;
+        for (int y = Math.max(0,cy-radius); y <= Math.min(height-1,cy+radius); y++) {
+            for (int x = Math.max(0,cx-radius); x <= Math.min(width-1,cx+radius); x++) {
+                int offset = y * rowStride + x * pixelStride;
+                if (offset < 0 || offset + 1 >= buffer.limit()) continue;
+                int packed = buffer.getShort(offset) & 0xffff;
+                int depthMm = packed & 0x1fff;
+                int confidence = (packed >> 13) & 0x7;
+                if (depthMm <= 0 || confidence == 1) continue;
+                double meters = depthMm / 1000.0;
+                if (meters < 0.15 || meters > 8.191) continue;
+                values[count++] = meters;
+            }
+        }
+        if (count < 5) return;
+        Arrays.sort(values,0,count);
+        double median = values[count/2];
+        double q1 = values[Math.max(0,count/4)];
+        double q3 = values[Math.min(count-1,(count*3)/4)];
+        double spatial = Math.max(0.03,(q3-q1)/2.0);
+        recordDepth(median, spatial);
+    }
+
+    private void recordDepth(double value, double spatialUncertainty) {
+        depthWindow[depthIndex] = value;
+        depthIndex = (depthIndex + 1) % DEPTH_WINDOW;
+        if (depthCount < DEPTH_WINDOW) depthCount++;
+        double min = Double.POSITIVE_INFINITY, max = Double.NEGATIVE_INFINITY;
+        for (int i=0;i<depthCount;i++) {
+            min = Math.min(min,depthWindow[i]);
+            max = Math.max(max,depthWindow[i]);
+        }
+        depthTemporalSpreadM = depthCount >= 2 ? max-min : Double.NaN;
+        depthDistanceM = Double.isFinite(depthDistanceM) ? depthDistanceM*0.65 + value*0.35 : value;
+        double temporal = Double.isFinite(depthTemporalSpreadM) ? depthTemporalSpreadM/2.0 : 0.10;
+        depthUncertaintyM = Math.max(spatialUncertainty,temporal);
+        depthUpdatedAtMs = SystemClock.elapsedRealtime();
+        runOnUiThread(this::updateEstimate);
+    }
+
+    private boolean depthIsFresh() {
+        return depthSessionActive && Double.isFinite(depthDistanceM) && depthDistanceM > 0 &&
+            SystemClock.elapsedRealtime() - depthUpdatedAtMs <= 1000L;
+    }
+
+    private boolean depthIsStable() {
+        if (!depthIsFresh() || depthCount < 4 || !Double.isFinite(depthTemporalSpreadM)) return false;
+        return depthTemporalSpreadM <= Math.max(0.15, depthDistanceM * 0.08);
+    }
+
+    private void resetDepthEstimate() {
+        depthSessionActive = false;
+        depthCount = 0;
+        depthIndex = 0;
+        depthDistanceM = Double.NaN;
+        depthTemporalSpreadM = Double.NaN;
+        depthUncertaintyM = Double.NaN;
+        depthUpdatedAtMs = 0L;
+    }
+
+    private void closeDepthReader() {
+        if (depthReader != null) {
+            try { depthReader.close(); } catch (Exception ignored) {}
+            depthReader = null;
+        }
     }
 
     private void configureTransform(int viewWidth, int viewHeight) {
@@ -374,8 +567,11 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
     private void closeCamera() {
         cameraOpening = false;
+        depthSessionActive = false;
         if (captureSession != null) { captureSession.close(); captureSession = null; }
         if (cameraDevice != null) { cameraDevice.close(); cameraDevice = null; }
+        closeDepthReader();
+        resetDepthEstimate();
     }
 
     private void recordDepression(double value) {
@@ -435,6 +631,23 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     }
 
     private void updateEstimate() {
+        if (depthIsFresh()) {
+            measurementMethod = "depth";
+            distanceM = depthDistanceM;
+            uncertaintyM = depthUncertaintyM;
+            distanceText.setText(String.format(Locale.US,"%.2f m",distanceM));
+            angleText.setText(tr("Direktna DEPTH udaljenost", "Direct DEPTH distance"));
+            if (depthIsStable()) {
+                qualityText.setText(String.format(Locale.US,tr("DEPTH · STABILNO · približno ±%.2f m", "DEPTH · STABLE · approx ±%.2f m"),uncertaintyM));
+                qualityText.setTextColor(0xffb8f0d1);
+            } else {
+                qualityText.setText(tr("DEPTH · SAČEKAJ TRENUTAK…", "DEPTH · WAIT A MOMENT…"));
+                qualityText.setTextColor(0xff9da3ad);
+            }
+            return;
+        }
+
+        measurementMethod = "tilt";
         double d = depressionSmooth + angleCalibrationDeg;
         if (d > 2.5 && d < 82 && cameraHeightM > 0.2) {
             double calculated = distanceForAngle(d);
@@ -483,7 +696,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private void showCalibrationStatus() {
         if (calibrationText == null) return;
         if (Math.abs(angleCalibrationDeg) < 0.01) {
-            calibrationText.setText(tr("Kalibracija: fabrička (0,00°). Za veću tačnost koristi poznato rastojanje.", "Calibration: default (0.00°). Use a known distance for better accuracy."));
+            calibrationText.setText(tr("Kalibracija: fabrička (0,00°). Za veću tačnost fallback merenja koristi poznato rastojanje.", "Calibration: default (0.00°). For more accurate fallback measurement, use a known distance."));
             calibrationText.setTextColor(0xff9da3ad);
         } else {
             calibrationText.setText(String.format(Locale.US,tr("Kalibracija uređaja: korekcija %+1.2f°", "Device calibration: correction %+1.2f°"),angleCalibrationDeg));
@@ -499,7 +712,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
             return;
         }
         if (!Double.isFinite(depressionSmooth) || depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 1.5) {
-            setHint(tr("Za kalibraciju drži uređaj mirno dok ne piše STABILNO.", "For calibration, hold the device still until STABLE appears."));
+            setHint(tr("Za kalibraciju fallback merenja drži uređaj mirno dok ne piše STABILNO.", "For fallback calibration, hold the device still until STABLE appears."));
             return;
         }
         double expectedAngle = Math.toDegrees(Math.atan2(cameraHeightM, known));
@@ -512,7 +725,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         getSharedPreferences(PREFS, MODE_PRIVATE).edit().putFloat(PREF_ANGLE_OFFSET, (float)angleCalibrationDeg).apply();
         showCalibrationStatus();
         updateEstimate();
-        setHint(tr("Kalibracija je sačuvana za ovaj uređaj. Sada meri ostale tačke normalno.", "Calibration saved for this device. You can now measure other points normally."));
+        setHint(tr("Kalibracija je sačuvana za ovaj uređaj. Koristiće se kada DEPTH nije dostupan.", "Calibration saved for this device. It will be used when DEPTH is unavailable."));
     }
 
     private void resetCalibration() {
@@ -521,24 +734,30 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         prefs.edit().remove(PREF_ANGLE_OFFSET).apply();
         showCalibrationStatus();
         updateEstimate();
-        setHint(tr("Kalibracija je vraćena na fabričku vrednost.", "Calibration reset to the default value."));
+        setHint(tr("Kalibracija fallback merenja je vraćena na fabričku vrednost.", "Fallback calibration reset to the default value."));
     }
 
     private void finishMeasurement(String target) {
         if (!Double.isFinite(distanceM)) {
-            setHint(tr("Nema merenja. Spusti nišan na podnožje objekta.", "No measurement. Aim at the object's floor contact point."));
+            setHint(tr("Nema merenja. Ako nema DEPTH-a, spusti nišan na podnožje objekta.", "No measurement. If DEPTH is unavailable, aim at the object's floor contact point."));
             return;
         }
-        if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 2.0) {
+        if ("depth".equals(measurementMethod)) {
+            if (!depthIsStable()) {
+                setHint(tr("Sačekaj da DEPTH merenje postane STABILNO, pa pokušaj ponovo.", "Wait for the DEPTH measurement to become STABLE, then try again."));
+                return;
+            }
+        } else if (depressionCount < 8 || !Double.isFinite(stabilitySpread) || stabilitySpread > 2.0) {
             setHint(tr("Drži uređaj mirno trenutak, pa pokušaj ponovo.", "Hold the device still for a moment, then try again."));
             return;
         }
         Intent data = new Intent();
         data.putExtra("target",target);
         data.putExtra("distance",distanceM);
-        data.putExtra("angle",depressionSmooth + angleCalibrationDeg);
+        data.putExtra("angle",Double.isFinite(depressionSmooth) ? depressionSmooth + angleCalibrationDeg : Double.NaN);
         data.putExtra("cameraHeight",parseHeight());
         data.putExtra("uncertainty",uncertaintyM);
+        data.putExtra("method",measurementMethod);
         data.putExtra("calibrationOffset",angleCalibrationDeg);
         data.putExtra("sensorFallback",fallbackTiltSensor);
         setResult(RESULT_OK,data); finish();

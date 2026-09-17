@@ -11,7 +11,7 @@ jobs:
   validate-and-build:
     runs-on: ubuntu-latest
     concurrency:
-      group: lightingai-android-${{ github.workflow }}-${{ github.ref }}
+      group: lightingai-android-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
       cancel-in-progress: true
     steps:
       - name: Checkout
@@ -87,8 +87,13 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Android lint
+      - name: Collect Android lint report
+        continue-on-error: true
         run: gradle lintDebug
+
+      - name: Enforce Android lint on changed app files
+        working-directory: backend
+        run: node android-lint-changed-files-gate.js
 
       - name: Android unit tests
         run: gradle testDebugUnitTest

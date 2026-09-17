@@ -30,6 +30,10 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Audit backend dependencies for high/critical vulnerabilities
+        working-directory: backend
+        run: npm run audit:dependencies
+
       - name: Embed Project 5 build identity
         run: |
           SHORT_SHA="${GITHUB_SHA:0:7}"

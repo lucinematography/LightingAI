@@ -104,7 +104,8 @@ const importFile = {
   runtime:{selectedEquipment:[{id:'astera-titan',name:'TitanTube',qty:3,photo:'blocked'}]}
 };
 const beforeStage = JSON.stringify([...stored]);
-const staged = context.LightingAIProjectBackupImport.stageText(JSON.stringify(importFile));
+// Values returned from vm.runInContext belong to another JS realm; normalize them before strict structural assertions.
+const staged = JSON.parse(JSON.stringify(context.LightingAIProjectBackupImport.stageText(JSON.stringify(importFile))));
 assert.deepEqual(staged.storageKeys, ['lighting_projects_v1','lighting_set_sketch_v1']);
 assert.equal(Object.hasOwn(staged.storage,'lighting_language_v1'), false);
 assert.equal(Object.hasOwn(staged.storage,'lighting_backend_v1'), false);

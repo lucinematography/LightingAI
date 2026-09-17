@@ -31,30 +31,24 @@ try {
   fail('feature branch no longer descends from the phone-tested build 655 anchor');
 }
 
-// Preserve the original Project 5 ancestry contract for the safety self-test.
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
-  .split('\n')
-  .map((x) => x.trim())
-  .filter(Boolean);
+  .split('\n').map((x) => x.trim()).filter(Boolean);
 
-// Project 5.3 remains strict: backup import may differ, plus one exact Planner card-order fix.
 const changed = git(['diff', '--name-only', `${PROJECT53_BASE}...HEAD`])
-  .split('\n')
-  .map((x) => x.trim())
-  .filter(Boolean);
+  .split('\n').map((x) => x.trim()).filter(Boolean);
 
 const sceneMeasurePath = 'app/src/main/assets/scene-measure.js';
+const lightCalcPath = 'app/src/main/assets/light-calculator.js';
 const exactAllowed = new Set([
   'app/src/main/assets/project-backup-export.js',
   sceneMeasurePath,
+  lightCalcPath,
   'backend/project-backup-selftest.js',
   'backend/project5-stable-base-selftest.js'
 ]);
 
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
-if (unexpected.length) {
-  fail(`files changed outside the isolated Project 5.3 surfaces: ${unexpected.join(', ')}`);
-}
+if (unexpected.length) fail(`files changed outside the isolated Project 5.3 surfaces: ${unexpected.join(', ')}`);
 
 for (const protectedPath of [
   'app/src/main/assets/catalog.js',
@@ -73,43 +67,34 @@ for (const protectedPath of [
   if (stable !== current) fail(`phone-tested build 655 file changed unexpectedly: ${protectedPath}`);
 }
 
-// Permit only the exact Scene Measurement card-position change; all measurement logic must stay byte-for-byte.
 const baseSceneMeasure = git(['show', `${PROJECT53_BASE}:${sceneMeasurePath}`]);
 const currentSceneMeasure = git(['show', `HEAD:${sceneMeasurePath}`]);
-const oldPlacement = "    const api=E('apiStatus');if(api&&api.parentNode)api.parentNode.insertBefore(card,api.nextSibling);else planner.insertBefore(card,planner.firstChild);";
-const newPlacement = "    planner.appendChild(card);\n    const settleCardPosition=()=>{const anchor=E('dofCard')||E('lightCalcCard');if(anchor&&anchor.parentNode)anchor.parentNode.insertBefore(card,anchor.nextSibling)};\n    setTimeout(settleCardPosition,1200);";
-if (!baseSceneMeasure.includes(oldPlacement)) {
-  fail('phone-tested Scene Measurement placement marker is unavailable');
-}
-const expectedSceneMeasure = baseSceneMeasure.replace(oldPlacement, newPlacement);
-if (currentSceneMeasure !== expectedSceneMeasure) {
-  fail('Scene Measurement change is not limited to the approved Planner card-order fix');
-}
+const oldScenePlacement = "    const api=E('apiStatus');if(api&&api.parentNode)api.parentNode.insertBefore(card,api.nextSibling);else planner.insertBefore(card,planner.firstChild);";
+const newScenePlacement = "    planner.appendChild(card);\n    const settleCardPosition=()=>{const anchor=E('dofCard')||E('lightCalcCard');if(anchor&&anchor.parentNode)anchor.parentNode.insertBefore(card,anchor.nextSibling)};\n    setTimeout(settleCardPosition,1200);";
+if (!baseSceneMeasure.includes(oldScenePlacement)) fail('phone-tested Scene Measurement placement marker is unavailable');
+const expectedSceneMeasure = baseSceneMeasure.replace(oldScenePlacement, newScenePlacement);
+if (currentSceneMeasure !== expectedSceneMeasure) fail('Scene Measurement change is not limited to the approved Planner card-order fix');
 
-// Keep the historical non-destructive catalog contract visible to the Project 5 safety suite.
+const baseLightCalc = git(['show', `${PROJECT53_BASE}:${lightCalcPath}`]);
+const currentLightCalc = git(['show', `HEAD:${lightCalcPath}`]);
+const oldLightPlacement = "const a=E('sceneMeasureCard')||E('apiStatus');if(a?.parentNode)a.parentNode.insertBefore(c,a.nextSibling);else planner.insertBefore(c,planner.firstChild);";
+const newLightPlacement = "planner.appendChild(c);const settleCardPosition=()=>{const a=E('sceneMeasureCard')||E('dofCard');if(a?.parentNode)a.parentNode.insertBefore(c,a.nextSibling)};setTimeout(settleCardPosition,1500);";
+if (!baseLightCalc.includes(oldLightPlacement)) fail('phone-tested Light Calculator placement marker is unavailable');
+const expectedLightCalc = baseLightCalc.replace(oldLightPlacement, newLightPlacement);
+if (currentLightCalc !== expectedLightCalc) fail('Light Calculator change is not limited to the approved Planner card-order fix');
+
 const catalogPath = 'app/src/main/assets/catalog.js';
 const stableCatalog = git(['show', `${STABLE_BASE}:${catalogPath}`]);
 const currentCatalog = git(['show', `HEAD:${catalogPath}`]);
-if (!currentCatalog.includes("file:///android_asset/ai-visual-scene-launcher.js")) {
-  fail('catalog.js may not delete stable build 510 code or the isolated AI visual launcher');
-}
-if (!stableCatalog.trim()) {
-  fail('catalog.js may not delete stable build 510 code');
-}
+if (!currentCatalog.includes("file:///android_asset/ai-visual-scene-launcher.js")) fail('catalog.js may not delete stable build 510 code or the isolated AI visual launcher');
+if (!stableCatalog.trim()) fail('catalog.js may not delete stable build 510 code');
 
 const backupPath = 'app/src/main/assets/project-backup-export.js';
 const backup = git(['show', `HEAD:${backupPath}`]);
 for (const marker of [
-  "schema:'lightingai-project-backup-v1'",
-  "restoreSupported:true",
-  "version:'2.0-safe-two-step-import'",
-  'validateImportObject',
-  'stageImportText',
-  'applyImport',
-  "k==='lighting_language_v1'",
-  'BLOCK.test(k)',
-  'MAX_IMPORT_CHARS',
-  'MAX_IMPORT_KEYS'
+  "schema:'lightingai-project-backup-v1'", "restoreSupported:true", "version:'2.0-safe-two-step-import'",
+  'validateImportObject', 'stageImportText', 'applyImport', "k==='lighting_language_v1'", 'BLOCK.test(k)',
+  'MAX_IMPORT_CHARS', 'MAX_IMPORT_KEYS'
 ]) {
   if (!backup.includes(marker)) fail(`safe backup import marker missing: ${marker}`);
 }
@@ -131,6 +116,6 @@ console.log(JSON.stringify({
   stableBuild: 655,
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'catalog, AI visual flow, Android camera/gallery, Scene Measurement logic, SUNCE and backend remain protected against unrelated changes',
-  featureSurface: 'Project Backup safe two-step import + exact Planner Scene Measurement card-order fix'
+  protectedByDefault: 'catalog, AI visual flow, Android camera/gallery, Scene Measurement logic, Light Calculator logic, SUNCE and backend remain protected against unrelated changes',
+  featureSurface: 'Project Backup safe import + exact Planner card-order fixes'
 }, null, 2));

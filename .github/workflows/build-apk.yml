@@ -2,12 +2,17 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
   push:
-    branches: [ "main", "feature/ai-visual-scene-plan", "feature/ai-preview-refinements" ]
+    branches: [ "main", "feature/**", "fix/**", "chore/**" ]
 
 jobs:
   validate-and-build:
     runs-on: ubuntu-latest
+    concurrency:
+      group: lightingai-android-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,6 +65,10 @@ jobs:
         working-directory: backend
         run: npm run test:project5-base
 
+      - name: Validate Project 5.2 release gate
+        working-directory: backend
+        run: npm run test:project52-release
+
       - name: Validate Project Backup data and exclusions
         run: node backend/project-backup-selftest.js
 
@@ -73,6 +82,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      - name: Android lint
+        run: gradle lintDebug
+
+      - name: Android unit tests
+        run: gradle testDebugUnitTest
 
       - name: Build debug APK
         run: gradle assembleDebug
@@ -123,3 +138,4 @@ jobs:
         with:
           name: LightingAI-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

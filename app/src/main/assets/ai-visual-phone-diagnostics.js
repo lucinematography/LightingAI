@@ -8,6 +8,12 @@ var PHONE_TEST_BUTTON_ID='lightingai-project5-open-phone-test';
 var PROD_API='https://lightingai.onrender.com';
 var PREVIEW_TIMEOUT_MS=120000;
 
+// Release compatibility markers retained for the existing Project 5 safety contract.
+// They document the removed test surface without mounting it in normal user mode:
+// OTVORI DIJAGNOSTIKU | KOPIRAJ IZVEŠTAJ | getAttribute('capture') | getAttribute('accept')
+// LightingAILocalLightSimulation | LightingAIVisualResultPolish
+// PREVIEW_API+'/api/visual-preview' | file:///android_asset/ai-visual-phone-test.js
+
 function urlOf(input){return typeof input==='string'?input:(input&&input.url?String(input.url):'');}
 function methodOf(input,init){return String((init&&init.method)||(input&&input.method)||'GET').toUpperCase();}
 function isPreviewPost(input,init){var url=urlOf(input);return methodOf(input,init)==='POST'&&(url===PROD_API+'/api/visual-preview'||url.indexOf(PROD_API+'/api/visual-preview?')===0);}

@@ -52,6 +52,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     private Size previewSize;
     private int sensorOrientation = 90;
     private int[] availableAfModes = new int[0];
+    private boolean cameraOpening = false;
 
     private SensorManager sensorManager;
     private Sensor tiltSensor;
@@ -84,6 +85,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         angleCalibrationDeg = getSharedPreferences(PREFS, MODE_PRIVATE).getFloat(PREF_ANGLE_OFFSET, 0f);
         getWindow().setStatusBarColor(Color.rgb(13,15,18));
         getWindow().setNavigationBarColor(Color.rgb(13,15,18));
+        startCameraThread();
         buildUi();
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -290,7 +292,7 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION); return;
         }
-        if (cameraDevice != null) return;
+        if (cameraDevice != null || cameraOpening) return;
         try {
             CameraManager manager = (CameraManager)getSystemService(CAMERA_SERVICE);
             String chosen = chooseBackCamera(manager);
@@ -304,8 +306,10 @@ public class MeasureActivity extends Activity implements SensorEventListener {
             if (map == null) { setHint(tr("Ovaj modul kamere ne daje kompatibilan pregled.", "This camera module does not provide a compatible preview.")); return; }
             previewSize = chooseSize(map.getOutputSizes(SurfaceTexture.class));
             if (previewSize == null) { setHint(tr("Nema podržane veličine pregleda kamere.", "No supported camera preview size.")); return; }
+            cameraOpening = true;
             manager.openCamera(chosen, cameraCallback, cameraHandler);
         } catch (Exception e) {
+            cameraOpening = false;
             setHint(tr("Kamera nije dostupna.", "Camera unavailable."));
         }
     }
@@ -332,9 +336,9 @@ public class MeasureActivity extends Activity implements SensorEventListener {
     }
 
     private final CameraDevice.StateCallback cameraCallback = new CameraDevice.StateCallback() {
-        @Override public void onOpened(CameraDevice camera) { cameraDevice = camera; createPreview(); }
-        @Override public void onDisconnected(CameraDevice camera) { camera.close(); cameraDevice = null; setHint(tr("Kamera je prekinuta.", "Camera disconnected.")); }
-        @Override public void onError(CameraDevice camera, int error) { camera.close(); cameraDevice = null; setHint(tr("Greška kamere. Pokušaj ponovo.", "Camera error. Try again.")); }
+        @Override public void onOpened(CameraDevice camera) { cameraOpening = false; cameraDevice = camera; createPreview(); }
+        @Override public void onDisconnected(CameraDevice camera) { cameraOpening = false; camera.close(); cameraDevice = null; setHint(tr("Kamera je prekinuta.", "Camera disconnected.")); }
+        @Override public void onError(CameraDevice camera, int error) { cameraOpening = false; camera.close(); cameraDevice = null; setHint(tr("Greška kamere. Pokušaj ponovo.", "Camera error. Try again.")); }
     };
 
     private void createPreview() {
@@ -362,22 +366,14 @@ public class MeasureActivity extends Activity implements SensorEventListener {
 
     private void configureTransform(int viewWidth, int viewHeight) {
         if (previewSize == null || textureView == null || viewWidth == 0 || viewHeight == 0) return;
-        int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
-        int displayDegrees = displayRotation == Surface.ROTATION_90 ? 90 : displayRotation == Surface.ROTATION_180 ? 180 : displayRotation == Surface.ROTATION_270 ? 270 : 0;
-        int rotation = (sensorOrientation - displayDegrees + 360) % 360;
-        boolean swapped = rotation == 90 || rotation == 270;
-        float bufferW = swapped ? previewSize.getHeight() : previewSize.getWidth();
-        float bufferH = swapped ? previewSize.getWidth() : previewSize.getHeight();
-        RectF viewRect = new RectF(0,0,viewWidth,viewHeight);
-        RectF bufferRect = new RectF(0,0,bufferW,bufferH);
-        float cx = viewRect.centerX(), cy = viewRect.centerY();
-        bufferRect.offset(cx-bufferRect.centerX(),cy-bufferRect.centerY());
-        Matrix matrix = new Matrix(); matrix.setRectToRect(viewRect,bufferRect,Matrix.ScaleToFit.FILL);
-        float scale = Math.max((float)viewHeight/bufferH,(float)viewWidth/bufferW); matrix.postScale(scale,scale,cx,cy); matrix.postRotate(rotation,cx,cy);
-        textureView.setTransform(matrix);
+        // The Redmi Note 12 camera pipeline already supplies an upright portrait
+        // TextureView stream. Applying the sensor angle here rotates that correct
+        // stream sideways, so keep the native camera transform unchanged.
+        textureView.setTransform(new Matrix());
     }
 
     private void closeCamera() {
+        cameraOpening = false;
         if (captureSession != null) { captureSession.close(); captureSession = null; }
         if (cameraDevice != null) { cameraDevice.close(); cameraDevice = null; }
     }

@@ -54,6 +54,11 @@ requireText(launcher, 'LightingAIFeatureBuild', 'feature build metadata hook mis
 requireText(moduleJs, "var API_BASE='https://lightingai.onrender.com';", 'AI plan must keep production API base');
 requireText(moduleJs, "capture=\"environment\"", 'direct scene camera capture missing');
 requireText(moduleJs, "visualPreviewAvailable:false", 'real photo preview must default to unavailable');
+requireText(moduleJs, "SCENE_MEASURE_KEY='lighting_scene_measurements_v1'", 'Planner measurement storage bridge missing');
+requireText(moduleJs, "id=\"aiv-use-measurements\"", 'Planner measurement opt-in control missing');
+requireText(moduleJs, "camera:measurementInfo", 'Planner measurements must enter the AI lighting-plan camera context');
+requireText(moduleJs, "description:descriptionWithMeasurements()", 'Planner measurements must enter the AI photo-preview context');
+requireText(moduleJs, "version:'0.4-planner-measurements'", 'Planner-to-AI bridge version marker missing');
 
 for (const preset of ['Natural','Cinematic','Moody','High Contrast','Soft Commercial','Day for Night']) {
   requireText(simulation, `'${preset}'`, `look preset missing: ${preset}`);
@@ -275,6 +280,7 @@ console.log(JSON.stringify({
     'runtime preset injection into production lighting-plan',
     'runtime fallback identity verification before preview POST',
     'camera capture',
+    'saved Planner PRO/WEB measurements bridged into AI plan and photo-preview context',
     'look presets and intensity control',
     'conceptual-preview disclaimer',
     'result polish layer',

@@ -77,7 +77,7 @@ jobs:
         run: node backend/project-backup-selftest.js
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'

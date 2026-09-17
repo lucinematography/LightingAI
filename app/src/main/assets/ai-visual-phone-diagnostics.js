@@ -44,5 +44,5 @@ function run(){mount();}
 installPreviewTimeout();
 setTimeout(removeTestUi,0);
 setTimeout(removeTestUi,950);
-window.LightingAIProject5Diagnostics={open:open,mount:mount,run:run,version:'1.1-release-hidden'};
+window.LightingAIProject5Diagnostics={open:open,mount:mount,run:run,version:'1.0-release-hidden'};
 })();

@@ -37,21 +37,23 @@ const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .map((x) => x.trim())
   .filter(Boolean);
 
-// Project 5.3 itself is much stricter: only the backup-import surface may differ from build 655.
+// Project 5.3 remains strict: backup import may differ, plus one exact Planner card-order fix.
 const changed = git(['diff', '--name-only', `${PROJECT53_BASE}...HEAD`])
   .split('\n')
   .map((x) => x.trim())
   .filter(Boolean);
 
+const sceneMeasurePath = 'app/src/main/assets/scene-measure.js';
 const exactAllowed = new Set([
   'app/src/main/assets/project-backup-export.js',
+  sceneMeasurePath,
   'backend/project-backup-selftest.js',
   'backend/project5-stable-base-selftest.js'
 ]);
 
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
 if (unexpected.length) {
-  fail(`files changed outside the isolated Project 5.3 backup-import surface: ${unexpected.join(', ')}`);
+  fail(`files changed outside the isolated Project 5.3 surfaces: ${unexpected.join(', ')}`);
 }
 
 for (const protectedPath of [
@@ -69,6 +71,19 @@ for (const protectedPath of [
   const stable = git(['show', `${PROJECT53_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
   if (stable !== current) fail(`phone-tested build 655 file changed unexpectedly: ${protectedPath}`);
+}
+
+// Permit only the exact Scene Measurement card-position change; all measurement logic must stay byte-for-byte.
+const baseSceneMeasure = git(['show', `${PROJECT53_BASE}:${sceneMeasurePath}`]);
+const currentSceneMeasure = git(['show', `HEAD:${sceneMeasurePath}`]);
+const oldPlacement = "    const api=E('apiStatus');if(api&&api.parentNode)api.parentNode.insertBefore(card,api.nextSibling);else planner.insertBefore(card,planner.firstChild);";
+const newPlacement = "    planner.appendChild(card);\n    const settleCardPosition=()=>{const anchor=E('dofCard')||E('lightCalcCard');if(anchor&&anchor.parentNode)anchor.parentNode.insertBefore(card,anchor.nextSibling)};\n    setTimeout(settleCardPosition,1200);";
+if (!baseSceneMeasure.includes(oldPlacement)) {
+  fail('phone-tested Scene Measurement placement marker is unavailable');
+}
+const expectedSceneMeasure = baseSceneMeasure.replace(oldPlacement, newPlacement);
+if (currentSceneMeasure !== expectedSceneMeasure) {
+  fail('Scene Measurement change is not limited to the approved Planner card-order fix');
 }
 
 // Keep the historical non-destructive catalog contract visible to the Project 5 safety suite.
@@ -116,6 +131,6 @@ console.log(JSON.stringify({
   stableBuild: 655,
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'catalog, AI visual flow, Android camera/gallery, Planner measurement, SUNCE and backend remain byte-for-byte on the phone-tested build 655 side',
-  featureSurface: 'Project Backup safe two-step import only'
+  protectedByDefault: 'catalog, AI visual flow, Android camera/gallery, Scene Measurement logic, SUNCE and backend remain protected against unrelated changes',
+  featureSurface: 'Project Backup safe two-step import + exact Planner Scene Measurement card-order fix'
 }, null, 2));

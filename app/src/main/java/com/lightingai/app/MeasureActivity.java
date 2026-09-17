@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
+import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -189,8 +190,8 @@ public class MeasureActivity extends Activity implements SensorEventListener {
         top.setOrientation(LinearLayout.VERTICAL);
         top.setPadding(dp(18),dp(12),dp(18),dp(10));
         TextView title = makeText(tr("PRO MERENJE SCENE", "PRO SCENE MEASUREMENT"),21,Color.WHITE);
-        title.setTypeface(null,1); top.addView(title);
-        distanceText = makeText("— m",36,Color.rgb(245,197,66)); distanceText.setTypeface(null,1); top.addView(distanceText);
+        title.setTypeface(null,Typeface.BOLD); top.addView(title);
+        distanceText = makeText("— m",36,Color.rgb(245,197,66)); distanceText.setTypeface(null,Typeface.BOLD); top.addView(distanceText);
         angleText = makeText(tr("Ciljaj glumca ili podnožje objekta", "Aim at the actor or the object's base"),13,0xffc5c9d0); top.addView(angleText);
         qualityText = makeText("",12,0xff9da3ad); top.addView(qualityText);
         root.addView(top,new FrameLayout.LayoutParams(-1,dp(132),Gravity.TOP));

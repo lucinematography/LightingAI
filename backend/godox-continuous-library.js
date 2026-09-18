@@ -5,6 +5,8 @@ const LA600='https://www.godox.com/product-e/LITEMONS/LA600R-LA600Bi.html';
 const KNOWLED_CATALOG='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const F200BI='https://www.godox.com/Downloads/KNOWLED_F200Bi.pdf';
 const TP='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
+const MG1200BI='https://www.godox.com/Downloads/KNOWLED_MG1200Bi.pdf';
+const MG_CATALOG='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
   return {
@@ -33,7 +35,9 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-f600bi','F600Bi','KNOWLED Flexible LED Mat',2700,8500,600,'IP65',KNOWLED_CATALOG,'Bi-Color',{formFactor:'Flexible LED Mat',cri:96,tlci:96,control:['DMX','2.4G Remote','Bluetooth/App']}),
   fixture('godox-tp2r','TP2R','KNOWLED Pixel Tube',2000,10000,null,null,TP,'RGBWW',{formFactor:'2 ft Pixel Tube',cri:96,tlci:96,pixelZones:16,control:['DMX','CRMX','RDM','Bluetooth/App','2.4G Remote','On-board'],battery:'Built-in rechargeable'}),
   fixture('godox-tp4r','TP4R','KNOWLED Pixel Tube',2000,10000,null,null,TP,'RGBWW',{formFactor:'4 ft Pixel Tube',cri:96,tlci:96,pixelZones:32,control:['DMX','CRMX','RDM','Bluetooth/App','2.4G Remote','On-board'],battery:'Built-in rechargeable'}),
-  fixture('godox-tp8r','TP8R','KNOWLED Pixel Tube',2000,10000,null,null,TP,'RGBWW',{formFactor:'8 ft Pixel Tube',cri:96,tlci:96,pixelZones:64,control:['DMX','CRMX','RDM','Bluetooth/App','2.4G Remote','On-board'],battery:'Built-in rechargeable'})
+  fixture('godox-tp8r','TP8R','KNOWLED Pixel Tube',2000,10000,null,null,TP,'RGBWW',{formFactor:'8 ft Pixel Tube',cri:96,tlci:96,pixelZones:64,control:['DMX','CRMX','RDM','Bluetooth/App','2.4G Remote','On-board'],battery:'Built-in rechargeable'}),
+  fixture('godox-mg1200bi','MG1200Bi','KNOWLED MG',2800,6500,1200,'IP65',MG1200BI,'Bi-Color',{mount:'G-Mount',cri:96,tlci:96,control:['DMX','RDM','CRMX','Ethernet Art-Net/sACN','Bluetooth/App','2.4G Remote','On-board']}),
+  fixture('godox-mg2400bi','MG2400Bi','KNOWLED MG',2800,6500,2600,'IP65',MG_CATALOG,'Bi-Color',{mount:'G-Mount',cri:96,tlci:96,control:['DMX','RDM','CRMX','Ethernet Art-Net/sACN','Bluetooth/App','2.4G Remote','On-board']})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -42,6 +46,7 @@ const knowledPanels=['godox-p600r-hard','godox-p1200r-hard'];
 const flexibleBi=['godox-f200bi','godox-f400bi','godox-f600bi'];
 const tpSeries=['godox-tp2r','godox-tp4r','godox-tp8r'];
 const tp24=['godox-tp2r','godox-tp4r'];
+const mgBi=['godox-mg1200bi','godox-mg2400bi'];
 
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
   return {
@@ -85,5 +90,12 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-dmx-c1','DMX-C1 DMX Adapter Cable','Control Cable',tpSeries,TP),
   acc('godox-tp-a2r-a4r-a8r','TP-A2R / TP-A4R / TP-A8R One-for-Two Adapter','Power',tpSeries,TP),
   acc('godox-tp-dc5','TP-DC5 5m DC Cable','Power Cable',tpSeries,TP),
-  acc('godox-dt-c1','DT-C1 D-TAP to DC Male Connector Cable','Power Cable',tpSeries,TP)
+  acc('godox-dt-c1','DT-C1 D-TAP to DC Male Connector Cable','Power Cable',tpSeries,TP),
+  acc('godox-gr45','GR45 Reflector','Reflector',mgBi,MG_CATALOG,'Provides a 45-degree high-output beam for the G-Mount MG system.'),
+  acc('godox-gf14','GF14 Fresnel Lens','Fresnel',mgBi,MG_CATALOG,'Adds adjustable focusing for long-throw cinematic use.'),
+  acc('godox-gf14b','GF14 Barndoors','Barn Door',mgBi,MG_CATALOG,'Controls spill and shapes the Fresnel beam.'),
+  acc('godox-gs34','GS34 Softbox','Softbox',mgBi,MG_CATALOG,'Creates a large soft source from the MG head.'),
+  acc('godox-gs34-grid','GS34 Grid','Grid',mgBi,MG_CATALOG,'Reduces spill and increases directionality with the GS34 softbox.'),
+  acc('godox-gl4','GL4 Lantern Softbox','Lantern',mgBi,MG_CATALOG,'Creates broad omnidirectional soft light for set and overhead use.'),
+  acc('godox-gobo-gmount','G-Mount Projection/Gobo Attachment','Projection',mgBi,MG_CATALOG,'Enables projection shaping and pattern work from the MG system.')
 ];

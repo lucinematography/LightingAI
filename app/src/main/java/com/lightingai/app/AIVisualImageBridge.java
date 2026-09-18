@@ -206,7 +206,7 @@ public final class AIVisualImageBridge {
                 drawImage(payload.optString("scenePhoto", ""), sr ? "ORIGINALNA FOTOGRAFIJA SCENE" : "ORIGINAL SCENE PHOTO");
                 drawImage(payload.optString("aiPreview", ""), sr ? "AI FOTO-PREVIEW" : "AI PHOTO PREVIEW");
 
-                drawPlannerSetSketch(payload.optJSONObject("setSketch"));
+                drawPlannerSetSketch(payload.optJSONObject("setSketch"), payload.optJSONObject("technical"));
 
                 JSONObject planJson = payload.optJSONObject("plan");
                 if (planJson == null) planJson = new JSONObject();
@@ -224,6 +224,7 @@ public final class AIVisualImageBridge {
                 planSection(planJson, "negative_fill", sr ? "NEGATIVNI FILL" : "NEGATIVE FILL");
                 planSection(planJson, "camera_notes", sr ? "KAMERA" : "CAMERA");
                 planSection(planJson, "color_notes", sr ? "BOJA / CCT / GEL" : "COLOR / CCT / GEL");
+                planSection(planJson, "sun_notes", sr ? "SUNCE / PRIRODNO SVETLO" : "SUN / NATURAL LIGHT");
                 planSection(planJson, "safety_notes", sr ? "BEZBEDNOST" : "SAFETY");
 
                 JSONArray planEquipment = planJson.optJSONArray("equipment_list");
@@ -271,8 +272,18 @@ public final class AIVisualImageBridge {
             if (sun != null && sun.length() > 0) {
                 section(sr ? "SUNCE / LOKACIJA" : "SUN / LOCATION");
                 String line = (sr ? "Datum: " : "Date: ") + sun.optString("date", "-") + " " + sun.optString("time", "") +
-                    " | lat " + sun.optString("lat", "-") + " | lon " + sun.optString("lon", "-");
+                    " | lat " + sun.optString("lat", "-") + " | lon " + sun.optString("lon", "-") +
+                    " | az " + (sun.has("azimuthDeg") ? String.format(Locale.US, "%.1f", sun.optDouble("azimuthDeg")) + "°" : "-") +
+                    " | el " + (sun.has("elevationDeg") ? String.format(Locale.US, "%.1f", sun.optDouble("elevationDeg")) + "°" : "-");
                 paragraph(line, 10f, false);
+                if (sun.has("shadowAzimuthDeg")) {
+                    paragraph((sr ? "Senka: " : "Shadow: ") + String.format(Locale.US, "%.1f°", sun.optDouble("shadowAzimuthDeg")) +
+                        (sun.isNull("shadowLengthRatio") ? "" : " | " + String.format(Locale.US, "%.2fx", sun.optDouble("shadowLengthRatio"))), 10f, false);
+                }
+                String windows = (sr ? "Izlazak/Zalazak: " : "Sunrise/Sunset: ") + sun.optString("sunrise", "-") + " / " + sun.optString("sunset", "-") +
+                    " | Golden: " + sun.optString("goldenMorning", "-") + " / " + sun.optString("goldenEvening", "-") +
+                    " | Blue: " + sun.optString("blueMorning", "-") + " / " + sun.optString("blueEvening", "-");
+                paragraph(windows, 9.6f, false);
             }
 
             JSONObject dmx = technical.optJSONObject("dmx");
@@ -295,7 +306,7 @@ public final class AIVisualImageBridge {
             }
         }
 
-        private void drawPlannerSetSketch(JSONObject sketch) {
+        private void drawPlannerSetSketch(JSONObject sketch, JSONObject technical) {
             if (sketch == null) return;
             JSONArray scenes = sketch.optJSONArray("scenes");
             if (scenes == null || scenes.length() == 0) return;
@@ -343,6 +354,27 @@ public final class AIVisualImageBridge {
             for (int gy = 1; gy < gridY; gy++) {
                 float yy = mapTop + (float) (gy / roomH) * mapH;
                 canvas.drawLine(mapLeft, yy, mapLeft + mapW, yy, grid);
+            }
+
+            JSONObject sun = technical == null ? null : technical.optJSONObject("sun");
+            if (sun != null && sun.optBoolean("aboveHorizon", false) && sun.has("azimuthDeg")) {
+                double screenAz = ((sun.optDouble("sketchNorthDeg", 0.0) + sun.optDouble("azimuthDeg", 0.0)) % 360.0 + 360.0) % 360.0;
+                double rad = Math.toRadians(screenAz);
+                float dx = (float) Math.sin(rad);
+                float dy = (float) -Math.cos(rad);
+                float centerX = mapLeft + mapW * 0.5f;
+                float centerY = mapTop + mapH * 0.5f;
+                float radius = Math.min(mapW, mapH) * 0.40f;
+                float sunX = centerX + dx * radius;
+                float sunY = centerY + dy * radius;
+                Paint sunLine = paint(ACCENT, Paint.Style.STROKE, 2.0f);
+                canvas.drawLine(sunX, sunY, centerX, centerY, sunLine);
+                Paint sunDisk = paint(Color.rgb(245, 197, 66), Paint.Style.FILL, 1f);
+                canvas.drawCircle(sunX, sunY, 10f, sunDisk);
+                Paint sunLabel = textPaint(8f, true, INK);
+                sunLabel.setTextAlign(Paint.Align.CENTER);
+                canvas.drawText("SUN", sunX, sunY + 2.8f, sunLabel);
+                sunLabel.setTextAlign(Paint.Align.LEFT);
             }
 
             if (objects != null) {

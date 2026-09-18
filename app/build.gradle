@@ -1,12 +1,41 @@
 plugins { id 'com.android.application' }
 
+def releaseVersionCode = (project.findProperty('releaseVersionCode') ?: '13') as Integer
+def releaseVersionName = String.valueOf(project.findProperty('releaseVersionName') ?: '2.1')
+def releaseStoreFile = System.getenv('LIGHTINGAI_KEYSTORE_PATH')
+def releaseStorePassword = System.getenv('LIGHTINGAI_KEYSTORE_PASSWORD')
+def releaseKeyAlias = System.getenv('LIGHTINGAI_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('LIGHTINGAI_KEY_PASSWORD')
+def hasReleaseSigning = [releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword].every { it != null && !it.trim().isEmpty() }
+
 android { namespace 'com.lightingai.app'; compileSdk 35
-    defaultConfig { applicationId 'com.lightingai.app'; minSdk 26; targetSdk 35; versionCode 13; versionName '2.1' }
+    defaultConfig {
+        applicationId 'com.lightingai.app'
+        minSdk 26
+        targetSdk 35
+        versionCode releaseVersionCode
+        versionName releaseVersionName
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
 
     buildTypes {
         debug {
             applicationIdSuffix '.review13'
             versionNameSuffix '-review13'
+        }
+        release {
+            minifyEnabled false
+            if (hasReleaseSigning) signingConfig signingConfigs.release
         }
     }
 }

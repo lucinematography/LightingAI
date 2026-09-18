@@ -7,6 +7,8 @@ const F200BI='https://www.godox.com/Downloads/KNOWLED_F200Bi.pdf';
 const TP='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const MG1200BI='https://www.godox.com/Downloads/KNOWLED_MG1200Bi.pdf';
 const MG_CATALOG='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
+const MG1200R='https://www.godox.com/static/upload/file/20241212/1733996030483415.pdf';
+const MG2400R='https://www.godox.com/Downloads/KNOWLED_MG2400R.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
   return {
@@ -37,7 +39,9 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-tp4r','TP4R','KNOWLED Pixel Tube',2000,10000,null,null,TP,'RGBWW',{formFactor:'4 ft Pixel Tube',cri:96,tlci:96,pixelZones:32,control:['DMX','CRMX','RDM','Bluetooth/App','2.4G Remote','On-board'],battery:'Built-in rechargeable'}),
   fixture('godox-tp8r','TP8R','KNOWLED Pixel Tube',2000,10000,null,null,TP,'RGBWW',{formFactor:'8 ft Pixel Tube',cri:96,tlci:96,pixelZones:64,control:['DMX','CRMX','RDM','Bluetooth/App','2.4G Remote','On-board'],battery:'Built-in rechargeable'}),
   fixture('godox-mg1200bi','MG1200Bi','KNOWLED MG',2800,6500,1200,'IP65',MG1200BI,'Bi-Color',{mount:'G-Mount',cri:96,tlci:96,control:['DMX','RDM','CRMX','Ethernet Art-Net/sACN','Bluetooth/App','2.4G Remote','On-board']}),
-  fixture('godox-mg2400bi','MG2400Bi','KNOWLED MG',2800,6500,2600,'IP65',MG_CATALOG,'Bi-Color',{mount:'G-Mount',cri:96,tlci:96,control:['DMX','RDM','CRMX','Ethernet Art-Net/sACN','Bluetooth/App','2.4G Remote','On-board']})
+  fixture('godox-mg2400bi','MG2400Bi','KNOWLED MG',2800,6500,2600,'IP65',MG_CATALOG,'Bi-Color',{mount:'G-Mount',cri:96,tlci:96,control:['DMX','RDM','CRMX','Ethernet Art-Net/sACN','Bluetooth/App','2.4G Remote','On-board']}),
+  fixture('godox-mg1200r','MG1200R','KNOWLED MG',1800,10000,1600,'IP54',MG1200R,'Full Color',{mount:'G-Mount',cri:96,tlci:95,control:['DMX','RDM','CRMX','Ethernet Art-Net/sACN','Bluetooth/App','On-board']}),
+  fixture('godox-mg2400r','MG2400R','KNOWLED MG',1800,10000,2650,'IP54',MG2400R,'Full Color',{mount:'G-Mount',cri:96,tlci:95,control:['DMX','RDM','CRMX','Ethernet Art-Net/sACN','Bluetooth/App','On-board']})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -47,6 +51,8 @@ const flexibleBi=['godox-f200bi','godox-f400bi','godox-f600bi'];
 const tpSeries=['godox-tp2r','godox-tp4r','godox-tp8r'];
 const tp24=['godox-tp2r','godox-tp4r'];
 const mgBi=['godox-mg1200bi','godox-mg2400bi'];
+const mgFull=['godox-mg1200r','godox-mg2400r'];
+const mgAll=[...mgBi,...mgFull];
 
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
   return {
@@ -97,5 +103,9 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-gs34','GS34 Softbox','Softbox',mgBi,MG_CATALOG,'Creates a large soft source from the MG head.'),
   acc('godox-gs34-grid','GS34 Grid','Grid',mgBi,MG_CATALOG,'Reduces spill and increases directionality with the GS34 softbox.'),
   acc('godox-gl4','GL4 Lantern Softbox','Lantern',mgBi,MG_CATALOG,'Creates broad omnidirectional soft light for set and overhead use.'),
-  acc('godox-gobo-gmount','G-Mount Projection/Gobo Attachment','Projection',mgBi,MG_CATALOG,'Enables projection shaping and pattern work from the MG system.')
+  acc('godox-gobo-gmount','G-Mount Projection/Gobo Attachment','Projection',mgAll,MG_CATALOG,'Enables projection shaping and pattern work from the MG system.'),
+  acc('godox-gr15','GR15 Reflector','Reflector',mgFull,MG_CATALOG,'Creates a narrow high-output beam for long-throw MG full-color setups.'),
+  acc('godox-gr30','GR30 Reflector','Reflector',mgFull,MG_CATALOG,'Provides a medium reflector option for MG full-color heads.'),
+  acc('godox-mg-full-color-gmount-fresnel','G-Mount Fresnel for MG Full-Color','Fresnel',mgFull,MG_CATALOG,'Adds adjustable focusing to MG1200R and MG2400R.'),
+  acc('godox-mg-full-color-barndoors','G-Mount Fresnel Barndoors','Barn Door',mgFull,MG_CATALOG,'Shapes and cuts the focused MG full-color beam.')
 ];

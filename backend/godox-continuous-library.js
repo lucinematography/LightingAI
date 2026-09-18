@@ -19,6 +19,7 @@ const C_CREATIVE='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalog
 const LA150_300='https://godox.com/product-c/LA150R-LA200R-LA300R-LA300Bi.html';
 const LP_SERIES='https://www.godox.com/product-b/LP-Series.html';
 const LC_SERIES='https://www.godox.com/product-c/LC500R-LC500Bi.html';
+const LDX_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 const TL_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
@@ -84,7 +85,11 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-lp600bi','LP600Bi','LITEMONS LP',2800,6500,60,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'NP-F optional'}),
   fixture('godox-lp1200bi','LP1200Bi','LITEMONS LP',2800,6500,120,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'V-mount optional'}),
   fixture('godox-lc500r','LC500R','Light Stick',2500,8500,23,null,LC_SERIES,'RGBWW',{formFactor:'Handheld Light Stick',cri:96,tlci:98,control:['2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
-  fixture('godox-lc500bi','LC500Bi','Light Stick',2800,6500,23,null,LC_SERIES,'Bi-Color',{formFactor:'Handheld Light Stick',cri:96,tlci:98,control:['2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'})
+  fixture('godox-lc500bi','LC500Bi','Light Stick',2800,6500,23,null,LC_SERIES,'Bi-Color',{formFactor:'Handheld Light Stick',cri:96,tlci:98,control:['2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
+  fixture('godox-ldx50r','LDX50R','LDX Panel',2500,10000,63,null,LDX_SERIES,'RGBWW',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
+  fixture('godox-ldx100r','LDX100R','LDX Panel',2500,10000,118,null,LDX_SERIES,'RGBWW',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
+  fixture('godox-ldx50bi','LDX50Bi','LDX Panel',2800,6500,65,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
+  fixture('godox-ldx100bi','LDX100Bi','LDX Panel',2800,6500,120,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -108,6 +113,7 @@ const lpSmall=['godox-lp400r','godox-lp600r','godox-lp400bi','godox-lp600bi'];
 const lp1200=['godox-lp1200r','godox-lp1200bi'];
 const lpAll=[...lpSmall,...lp1200];
 const lcSeries=['godox-lc500r','godox-lc500bi'];
+const ldxAll=['godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi'];
 const tl30=['godox-tl30'];
 const tl60plus=['godox-tl60','godox-tl120','godox-tl180'];
 const tlAll=['godox-tl30',...tl60plus];
@@ -216,5 +222,9 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-lc-barndoors','LC Series 2-Leaf Barndoors','Barn Door',lcSeries,LC_SERIES,'Adds simple spill control to the handheld light stick.'),
   acc('godox-lc-handle','LC Series Handgrip','Mounting',lcSeries,LC_SERIES,'Improves handheld use and mounting flexibility.'),
   acc('godox-lc-charger','LC Series Charger','Charging',lcSeries,LC_SERIES,'Charges the built-in battery between setups.'),
-  acc('godox-lc-carry-bag','LC Series Carry Bag','Transport',lcSeries,LC_SERIES,'Protects the light stick and accessories in transport.')
+  acc('godox-lc-carry-bag','LC Series Carry Bag','Transport',lcSeries,LC_SERIES,'Protects the light stick and accessories in transport.'),
+  acc('godox-ldx-barndoors','LDX Series Barndoors','Barn Door',ldxAll,LDX_SERIES,'Shapes and limits spill from the LDX panel output.'),
+  acc('godox-ldx-softbox','LDX Series Softbox','Softbox',ldxAll,LDX_SERIES,'Softens the LDX panel output for close and interview work.'),
+  acc('godox-ldx-grid','LDX Series Grid','Grid',ldxAll,LDX_SERIES,'Adds directional control and reduces spill.'),
+  acc('godox-rc-a6ii-ldx','RC-A6II Remote Control','Remote Control',ldxAll,LDX_SERIES,'Provides compatible 2.4GHz remote operation for the LDX series.')
 ];

@@ -424,7 +424,11 @@ public class MainActivity extends Activity {
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "en".equals(language) ? "Describe the DP lighting request" : "Izgovori zahtev DP-a za rasvetu");
+        boolean sceneDescription = "aiv-desc".equals(target);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
+            sceneDescription
+                ? ("en".equals(language) ? "Describe the scene look" : "Opiši izgled scene")
+                : ("en".equals(language) ? "Describe the DP lighting request" : "Izgovori zahtev DP-a za rasvetu"));
         pendingVoiceTarget = target;
         try {
             startActivityForResult(intent, SPEECH_INPUT);

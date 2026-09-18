@@ -3,6 +3,7 @@
 const KNOWLED='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const LA600='https://www.godox.com/product-e/LITEMONS/LA600R-LA600Bi.html';
 const KNOWLED_CATALOG='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
+const F200BI='https://www.godox.com/Downloads/KNOWLED_F200Bi.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
   return {
@@ -25,12 +26,16 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-la600r','LA600R','LITEMONS LA',1800,10000,null,null,LA600,'Full Color',{mount:'Flat Bowens',control:['DMX','Bluetooth/App','CRMX via TimoLink RX']}),
   fixture('godox-la600bi','LA600Bi','LITEMONS LA',2800,6500,null,null,LA600,'Bi-Color',{mount:'Flat Bowens',control:['DMX','Bluetooth/App','CRMX via TimoLink RX']}),
   fixture('godox-p600r-hard','P600R Hard','KNOWLED Panel',1800,10000,650,null,KNOWLED_CATALOG,'Full Color',{formFactor:'1x1 LED Panel',cri:96,tlci:96,control:['DMX','CRMX','App','On-board']}),
-  fixture('godox-p1200r-hard','P1200R Hard','KNOWLED Panel',1800,10000,1200,null,KNOWLED_CATALOG,'Full Color',{formFactor:'2x1 LED Panel',cri:96,tlci:96,control:['DMX','CRMX','App','On-board']})
+  fixture('godox-p1200r-hard','P1200R Hard','KNOWLED Panel',1800,10000,1200,null,KNOWLED_CATALOG,'Full Color',{formFactor:'2x1 LED Panel',cri:96,tlci:96,control:['DMX','CRMX','App','On-board']}),
+  fixture('godox-f200bi','F200Bi','KNOWLED Flexible LED Mat',2700,8500,200,'IP65',F200BI,'Bi-Color',{formFactor:'Flexible LED Mat',cri:96,tlci:96,control:['DMX','2.4G Remote','Bluetooth/App']}),
+  fixture('godox-f400bi','F400Bi','KNOWLED Flexible LED Mat',2700,8500,400,'IP65',KNOWLED_CATALOG,'Bi-Color',{formFactor:'Flexible LED Mat',cri:96,tlci:96,control:['DMX','2.4G Remote','Bluetooth/App']}),
+  fixture('godox-f600bi','F600Bi','KNOWLED Flexible LED Mat',2700,8500,600,'IP65',KNOWLED_CATALOG,'Bi-Color',{formFactor:'Flexible LED Mat',cri:96,tlci:96,control:['DMX','2.4G Remote','Bluetooth/App']})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
 const allSix=[...mSeries,'godox-la600r','godox-la600bi'];
 const knowledPanels=['godox-p600r-hard','godox-p1200r-hard'];
+const flexibleBi=['godox-f200bi','godox-f400bi','godox-f600bi'];
 
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
   return {
@@ -49,5 +54,17 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-sb-fw-120-octa','SB-FW-120 Octa Softbox','Softbox',mSeries,KNOWLED,'Creates a large soft source with controlled spill.'),
   acc('godox-qr-p-parabolic-softbox','QR-P Parabolic Softbox','Softbox',mSeries,KNOWLED,'Softens the source while retaining directional control.'),
   acc('godox-p-hard-diffusion-panel','P600R/P1200R Hard Diffusion Panel','Diffusion',knowledPanels,KNOWLED_CATALOG,'Switches the hard panel output toward a softer field.'),
-  acc('godox-p-hard-light-control','P600R/P1200R Hard Light Control Accessory','Light Control',knowledPanels,KNOWLED_CATALOG,'Supports controlled shaping of the panel output.')
+  acc('godox-p-hard-light-control','P600R/P1200R Hard Light Control Accessory','Light Control',knowledPanels,KNOWLED_CATALOG,'Supports controlled shaping of the panel output.'),
+  acc('godox-fs200-softbox-grid','FS200 Softbox with Grid','Softbox',['godox-f200bi'],KNOWLED_CATALOG,'Softens the flexible mat output and the grid limits spill.'),
+  acc('godox-fs400-softbox-grid','FS400 Softbox with Grid','Softbox',['godox-f400bi'],KNOWLED_CATALOG,'Softens the flexible mat output and the grid limits spill.'),
+  acc('godox-fs600-softbox-grid','FS600 Softbox with Grid','Softbox',['godox-f600bi'],KNOWLED_CATALOG,'Softens the flexible mat output and the grid limits spill.'),
+  acc('godox-fp200-pancake-lantern','FP200 Pancake Lantern','Lantern',['godox-f200bi'],KNOWLED_CATALOG,'Creates a broad soft field for overhead and close-location use.'),
+  acc('godox-fp400-pancake-lantern','FP400 Pancake Lantern','Lantern',['godox-f400bi'],KNOWLED_CATALOG,'Creates a broad soft field for overhead and close-location use.'),
+  acc('godox-fp600-pancake-lantern','FP600 Pancake Lantern','Lantern',['godox-f600bi'],KNOWLED_CATALOG,'Creates a broad soft field for overhead and close-location use.'),
+  acc('godox-ff200-flag-frame','FF200 Flag Frame','Light Control',['godox-f200bi'],KNOWLED_CATALOG,'Adds a rigid flagging frame for shaping the F200Bi field.'),
+  acc('godox-f-dc5a','F-DC5A 5m DC Cable','Power Cable',['godox-f200bi'],KNOWLED_CATALOG),
+  acc('godox-f-dc5b','F-DC5B 5m DC Cable','Power Cable',['godox-f400bi'],KNOWLED_CATALOG),
+  acc('godox-f-dc5c','F-DC5C 5m DC Cable','Power Cable',['godox-f600bi'],KNOWLED_CATALOG),
+  acc('godox-rc-a6ii','RC-A6II Remote Control','Remote Control',flexibleBi,KNOWLED_CATALOG),
+  acc('godox-rc-r9ii','RC-R9II Remote Control','Remote Control',flexibleBi,KNOWLED_CATALOG)
 ];

@@ -22,6 +22,7 @@ const LC_SERIES='https://www.godox.com/product-c/LC500R-LC500Bi.html';
 const LC_MINI_SERIES='https://godox.com/product-a/LED-LC500mini.html';
 const LC1000_SERIES='https://www.godox.com/product-b/LED/LC1000Bi-LC1000R.html';
 const LDX_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
+const LDP_SERIES='https://godox.com/product-d/2387.html';
 const ML100_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 const SL60II='https://www.godox.com/product-a/SL60II.html';
 const SL100='https://godox.com/product-d/SL100D-SL100Bi.html';
@@ -100,6 +101,10 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-ldx100r','LDX100R','LDX Panel',2500,10000,118,null,LDX_SERIES,'RGBWW',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
   fixture('godox-ldx50bi','LDX50Bi','LDX Panel',2800,6500,65,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
   fixture('godox-ldx100bi','LDX100Bi','LDX Panel',2800,6500,120,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
+  fixture('godox-ldp8d','LDP8D','LDP Panel',5600,5600,10,null,LDP_SERIES,'Daylight',{formFactor:'Compact LED Panel',control:['On-board'],powerSupply:'DC / NP-F battery'}),
+  fixture('godox-ldp18d','LDP18D','LDP Panel',5600,5600,21,null,LDP_SERIES,'Daylight',{formFactor:'LED Panel',control:['On-board'],powerSupply:'DC / NP-F battery'}),
+  fixture('godox-ldp8bi','LDP8Bi','LDP Panel',2800,6500,10,null,LDP_SERIES,'Bi-Color',{formFactor:'Compact LED Panel',control:['On-board'],powerSupply:'DC / NP-F battery'}),
+  fixture('godox-ldp18bi','LDP18Bi','LDP Panel',2800,6500,22,null,LDP_SERIES,'Bi-Color',{formFactor:'LED Panel',control:['On-board'],powerSupply:'DC / NP-F battery'}),
   fixture('godox-ml100bi','ML100Bi','ML Portable COB',2800,6500,110,null,ML100_SERIES,'Bi-Color',{mount:'Godox Mount',formFactor:'Portable COB',cri:96,tlci:97,control:['Bluetooth/App','On-board'],powerSupply:'DC / USB-C power bank / V-mount battery'}),
   fixture('godox-ml100r','ML100R','ML Portable COB',1800,10000,110,null,ML100_SERIES,'Full Color',{mount:'Godox Mount',formFactor:'Portable COB',cri:95,tlci:95,control:['Bluetooth/App','On-board'],powerSupply:'DC / mobile battery options'}),
   fixture('godox-sl60iid','SL60IID','SL COB',5600,5600,70,null,SL60II,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
@@ -138,6 +143,7 @@ const lcSeries=['godox-lc500r','godox-lc500bi'];
 const lcMini=['godox-lc500mini','godox-lc500rmini'];
 const lc1000=['godox-lc1000bi','godox-lc1000r'];
 const ldxAll=['godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi'];
+const ldpAll=['godox-ldp8d','godox-ldp18d','godox-ldp8bi','godox-ldp18bi'];
 const ml100=['godox-ml100bi','godox-ml100r'];
 const slCob=['godox-sl60iid','godox-sl60iibi','godox-sl100d','godox-sl100bi','godox-sl150iii','godox-sl200iii','godox-sl300iii','godox-sl150iiibi','godox-sl200iiibi','godox-sl300iiibi'];
 const tl30=['godox-tl30'];
@@ -257,6 +263,8 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-ldx-softbox','LDX Series Softbox','Softbox',ldxAll,LDX_SERIES,'Softens the LDX panel output for close and interview work.'),
   acc('godox-ldx-grid','LDX Series Grid','Grid',ldxAll,LDX_SERIES,'Adds directional control and reduces spill.'),
   acc('godox-rc-a6ii-ldx','RC-A6II Remote Control','Remote Control',ldxAll,LDX_SERIES,'Provides compatible 2.4GHz remote operation for the LDX series.'),
+  acc('godox-ldp-npf-power','NP-F Battery Power Option','Power',ldpAll,LDP_SERIES,'Provides portable NP-F battery operation for the LDP panel family.'),
+  acc('godox-ldp-dc-power','LDP DC Power Supply','Power',ldpAll,LDP_SERIES,'Provides continuous DC power for studio and desktop use.'),
   acc('godox-ml-l15','ML-L15 Lens Reflector 15°','Reflector',ml100,ML100_SERIES,'Creates a tighter, higher-intensity beam from the ML100 system.'),
   acc('godox-ml-l36','ML-L36 Lens Reflector 36°','Reflector',ml100,ML100_SERIES,'Provides a wider lens-reflector beam for general key and fill work.'),
   acc('godox-ml-bowens-adapter','ML Bowens Mount Adapter','Mounting',ml100,ML100_SERIES,'Expands the compact Godox-mount light to standard Bowens modifiers.'),

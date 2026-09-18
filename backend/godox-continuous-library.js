@@ -19,6 +19,8 @@ const C_CREATIVE='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalog
 const LA150_300='https://godox.com/product-c/LA150R-LA200R-LA300R-LA300Bi.html';
 const LP_SERIES='https://www.godox.com/product-b/LP-Series.html';
 const LC_SERIES='https://www.godox.com/product-c/LC500R-LC500Bi.html';
+const LC_MINI_SERIES='https://godox.com/product-a/LED-LC500mini.html';
+const LC1000_SERIES='https://www.godox.com/product-b/LED/LC1000Bi-LC1000R.html';
 const LDX_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 const ML100_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 const SL60II='https://www.godox.com/product-a/SL60II.html';
@@ -90,6 +92,10 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-lp1200bi','LP1200Bi','LITEMONS LP',2800,6500,120,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'V-mount optional'}),
   fixture('godox-lc500r','LC500R','Light Stick',2500,8500,23,null,LC_SERIES,'RGBWW',{formFactor:'Handheld Light Stick',cri:96,tlci:98,control:['2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
   fixture('godox-lc500bi','LC500Bi','Light Stick',2800,6500,23,null,LC_SERIES,'Bi-Color',{formFactor:'Handheld Light Stick',cri:96,tlci:98,control:['2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
+  fixture('godox-lc500mini','LC500 mini','Light Stick',2500,8500,20,null,LC_MINI_SERIES,'Bi-Color',{formFactor:'Compact Handheld Light Stick',cri:95,tlci:96,control:['Bluetooth/App','On-board'],battery:'Replaceable battery grip'}),
+  fixture('godox-lc500rmini','LC500R mini','Light Stick',2500,8500,20,null,LC_MINI_SERIES,'RGBWW',{formFactor:'Compact Handheld Light Stick',cri:95,tlci:96,control:['Bluetooth/App','On-board'],battery:'Replaceable battery grip'}),
+  fixture('godox-lc1000bi','LC1000Bi','Light Stick',2500,8500,100,null,LC1000_SERIES,'Bi-Color',{formFactor:'High-output Handheld Light Stick',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'Built-in 72.6Wh lithium battery'}),
+  fixture('godox-lc1000r','LC1000R','Light Stick',2500,8500,100,null,LC1000_SERIES,'RGBWW',{formFactor:'High-output Handheld Light Stick',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'Built-in 72.36Wh lithium battery'}),
   fixture('godox-ldx50r','LDX50R','LDX Panel',2500,10000,63,null,LDX_SERIES,'RGBWW',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
   fixture('godox-ldx100r','LDX100R','LDX Panel',2500,10000,118,null,LDX_SERIES,'RGBWW',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
   fixture('godox-ldx50bi','LDX50Bi','LDX Panel',2800,6500,65,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
@@ -129,6 +135,8 @@ const lpSmall=['godox-lp400r','godox-lp600r','godox-lp400bi','godox-lp600bi'];
 const lp1200=['godox-lp1200r','godox-lp1200bi'];
 const lpAll=[...lpSmall,...lp1200];
 const lcSeries=['godox-lc500r','godox-lc500bi'];
+const lcMini=['godox-lc500mini','godox-lc500rmini'];
+const lc1000=['godox-lc1000bi','godox-lc1000r'];
 const ldxAll=['godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi'];
 const ml100=['godox-ml100bi','godox-ml100r'];
 const slCob=['godox-sl60iid','godox-sl60iibi','godox-sl100d','godox-sl100bi','godox-sl150iii','godox-sl200iii','godox-sl300iii','godox-sl150iiibi','godox-sl200iiibi','godox-sl300iiibi'];
@@ -241,6 +249,10 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-lc-handle','LC Series Handgrip','Mounting',lcSeries,LC_SERIES,'Improves handheld use and mounting flexibility.'),
   acc('godox-lc-charger','LC Series Charger','Charging',lcSeries,LC_SERIES,'Charges the built-in battery between setups.'),
   acc('godox-lc-carry-bag','LC Series Carry Bag','Transport',lcSeries,LC_SERIES,'Protects the light stick and accessories in transport.'),
+  acc('godox-lc-d01','LC-D01 Diffuser','Diffusion',lcMini,LC_MINI_SERIES,'Softens LC500 mini and LC500R mini output for close portrait and practical work.'),
+  acc('godox-bg01','BG01 Battery Grip','Power',lcMini,LC_MINI_SERIES,'Replaceable battery handle for longer handheld runtime.'),
+  acc('godox-lc1000-usbc','USB-C 100W Charging Cable','Charging',lc1000,LC1000_SERIES,'Supports high-power USB-C charging for the LC1000 series.'),
+  acc('godox-lc1000-dc','LC1000 DC Adapter','Power',lc1000,LC1000_SERIES,'Provides continuous DC power for studio operation.'),
   acc('godox-ldx-barndoors','LDX Series Barndoors','Barn Door',ldxAll,LDX_SERIES,'Shapes and limits spill from the LDX panel output.'),
   acc('godox-ldx-softbox','LDX Series Softbox','Softbox',ldxAll,LDX_SERIES,'Softens the LDX panel output for close and interview work.'),
   acc('godox-ldx-grid','LDX Series Grid','Grid',ldxAll,LDX_SERIES,'Adds directional control and reduces spill.'),

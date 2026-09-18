@@ -1,8 +1,6 @@
 // De Sisti Super LED F4.7 family.
-// Initial verified family for the De Sisti catalog expansion.
-// Product and accessory data are sourced from official De Sisti product / datasheet pages.
-const SRC = 'https://desisti.it/';
-const FAMILY_SRC = 'https://desisti.it/?s=Super+LED+F4.7';
+// Verified from the official De Sisti LED Fresnel Series catalog.
+const SRC = 'https://www.desisti.it/wp-content/uploads/LED-Fresnel-Catalog-web.pdf';
 
 export const DESISTI_SUPER_LED_F47_FIXTURES = [
   {
@@ -12,11 +10,15 @@ export const DESISTI_SUPER_LED_F47_FIXTURES = [
     family: 'Super LED F4.7',
     category: 'Light',
     sourceType: 'LED Fresnel',
-    colorMode: 'Tungsten',
+    powerDrawW: 60,
     cctK: { min: 3200, max: 3200 },
-    mount: 'Fresnel fixture',
-    control: ['On-board dimming', 'DMX'],
-    sourceUrl: FAMILY_SRC
+    colorMode: 'Tungsten',
+    cri: 97,
+    tlci: 96,
+    beamAngleDeg: { min: 12, max: 54 },
+    lensDiameterMm: 120,
+    control: ['DMX', 'On-board dimming'],
+    sourceUrl: SRC
   },
   {
     id: 'desisti-super-led-f47-d',
@@ -25,11 +27,15 @@ export const DESISTI_SUPER_LED_F47_FIXTURES = [
     family: 'Super LED F4.7',
     category: 'Light',
     sourceType: 'LED Fresnel',
-    colorMode: 'Daylight',
+    powerDrawW: 60,
     cctK: { min: 5600, max: 5600 },
-    mount: 'Fresnel fixture',
-    control: ['On-board dimming', 'DMX'],
-    sourceUrl: FAMILY_SRC
+    colorMode: 'Daylight',
+    cri: 96,
+    tlci: 97,
+    beamAngleDeg: { min: 12, max: 54 },
+    lensDiameterMm: 120,
+    control: ['DMX', 'On-board dimming'],
+    sourceUrl: SRC
   },
   {
     id: 'desisti-super-led-f47-vw',
@@ -37,23 +43,16 @@ export const DESISTI_SUPER_LED_F47_FIXTURES = [
     model: 'Super LED F4.7 Vari-White',
     family: 'Super LED F4.7',
     category: 'Light',
-    sourceType: 'Variable White LED Fresnel',
+    sourceType: 'Vari-White LED Fresnel',
+    powerDrawW: 60,
+    cctK: { min: 2800, max: 6600 },
     colorMode: 'Vari-White',
-    mount: 'Fresnel fixture',
-    control: ['On-board dimming', 'DMX'],
-    sourceUrl: FAMILY_SRC
-  },
-  {
-    id: 'desisti-super-led-f47-vwc',
-    manufacturer: 'De Sisti',
-    model: 'Super LED F4.7 Vari-White + Color',
-    family: 'Super LED F4.7',
-    category: 'Light',
-    sourceType: 'Variable White + Color LED Fresnel',
-    colorMode: 'Vari-White + Color',
-    mount: 'Fresnel fixture',
-    control: ['On-board dimming', 'DMX'],
-    sourceUrl: FAMILY_SRC
+    cri: 95,
+    tlci: 96,
+    beamAngleDeg: { min: 12, max: 54 },
+    lensDiameterMm: 120,
+    control: ['DMX', 'On-board dimming'],
+    sourceUrl: SRC
   }
 ];
 
@@ -61,49 +60,59 @@ const ALL = DESISTI_SUPER_LED_F47_FIXTURES.map(x => x.id);
 
 export const DESISTI_SUPER_LED_F47_ACCESSORIES = [
   {
-    id: 'desisti-f47-four-leaf-barndoor',
+    id: 'desisti-f47-colorframe',
     manufacturer: 'De Sisti',
-    model: 'F4.7 Four Leaf Rotating Barndoor',
-    category: 'Barn Door',
-    compatibilityStatus: 'Designed For',
-    compatibleWith: ALL,
-    effectOnLight: 'Four-leaf rotating light-control accessory for shaping Fresnel spill.',
-    sourceUrl: SRC
-  },
-  {
-    id: 'desisti-f47-filter-frame',
-    manufacturer: 'De Sisti',
-    model: 'F4.7 Filter Frame',
+    model: 'F4.7 Colorframe',
     category: 'Filter Frame',
     compatibilityStatus: 'Designed For',
     compatibleWith: ALL,
-    effectOnLight: 'Frame for gel, diffusion or color media used with the F4.7 Fresnel family.',
+    effectOnLight: 'Holds color or diffusion media in front of the Fresnel.',
     sourceUrl: SRC
   },
   {
     id: 'desisti-f47-scrim-set',
     manufacturer: 'De Sisti',
-    model: 'F4.7 Scrim Set',
+    model: 'F4.7 Set of Scrims',
     category: 'Scrim Set',
     compatibilityStatus: 'Designed For',
     compatibleWith: ALL,
-    effectOnLight: 'Wire scrim set for output reduction while preserving Fresnel beam character.',
+    effectOnLight: 'Wire scrims reduce output while preserving Fresnel beam character.',
     sourceUrl: SRC
   },
   {
-    id: 'desisti-f47-safety-mesh',
+    id: 'desisti-f47-8-leaf-barndoor',
     manufacturer: 'De Sisti',
-    model: 'F4.7 Safety Mesh',
-    category: 'Safety',
+    model: 'F4.7 8 Leaf Barndoor',
+    category: 'Barn Door',
+    compatibilityStatus: 'Designed For',
+    compatibleWith: ALL,
+    effectOnLight: 'Eight-leaf beam shaping and spill control.',
+    sourceUrl: SRC
+  },
+  {
+    id: 'desisti-f47-4-leaf-barndoor',
+    manufacturer: 'De Sisti',
+    model: 'F4.7 4 Leaf Barndoor',
+    category: 'Barn Door',
+    compatibilityStatus: 'Designed For',
+    compatibleWith: ALL,
+    effectOnLight: 'Four-leaf beam shaping and spill control.',
+    sourceUrl: SRC
+  },
+  {
+    id: 'desisti-f47-three-light-soft-case',
+    manufacturer: 'De Sisti',
+    model: 'Soft Case for Three Super LED F4.7',
+    category: 'Transport',
     compatibilityStatus: 'Designed For',
     compatibleWith: ALL,
     sourceUrl: SRC
   },
   {
-    id: 'desisti-f47-spigot',
+    id: 'desisti-f47-reinforced-moulded-case',
     manufacturer: 'De Sisti',
-    model: 'F4.7 Stand Spigot',
-    category: 'Mounting',
+    model: 'Reinforced Moulded Polyethylene Kit Case',
+    category: 'Transport',
     compatibilityStatus: 'Designed For',
     compatibleWith: ALL,
     sourceUrl: SRC

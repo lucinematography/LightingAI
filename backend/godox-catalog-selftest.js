@@ -20,6 +20,11 @@ const expected=[
   'godox-tl30','godox-tl60','godox-tl120','godox-tl180'
 ];
 const failures=[];
+const duplicateFixtureIds=fixtures.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
+const duplicateAccessoryIds=accessories.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
+if(duplicateFixtureIds.length) failures.push('Duplicate Godox fixture IDs: '+[...new Set(duplicateFixtureIds)].join(', '));
+if(duplicateAccessoryIds.length) failures.push('Duplicate Godox accessory IDs: '+[...new Set(duplicateAccessoryIds)].join(', '));
+if(fixtures.length!==expected.length) failures.push(`Unexpected Godox fixture count: ${fixtures.length}; expected ${expected.length}`);
 for(const id of expected) if(!ids.has(id)) failures.push('Missing required Godox fixture: '+id);
 for(const f of fixtures){
   if(!/^https:\/\/(?:www\.)?godox\.com\//i.test(f.sourceUrl||'')) failures.push('Non-official Godox fixture source: '+f.id);
@@ -28,6 +33,7 @@ for(const f of fixtures){
 }
 for(const a of accessories){
   if(!/^https:\/\/(?:www\.)?godox\.com\//i.test(a.sourceUrl||'')) failures.push('Non-official Godox accessory source: '+a.id);
+  if(!(a.compatibleWith||[]).length) failures.push('Godox accessory without compatibility targets: '+a.id);
 }
 for(const broken of catalog.integrity?.missingAccessoryFixtureIds||[]){
   if(String(broken.accessoryId||'').startsWith('godox-')) failures.push('Broken Godox compatibility link: '+broken.accessoryId+' -> '+broken.fixtureId);

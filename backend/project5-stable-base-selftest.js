@@ -8,6 +8,7 @@ const PROJECT55_DP_BASE = 'a79fdeca7db3ddf0c153589b58639a84b5b65628';
 const PROJECT55_BACKUP_BASE = '64e8d99ee15f94a34da35fcd1eb9f416372ba36c';
 const PROJECT55_VOICE_BASE = '3e61ba6bbebf381c3b376af090aa385ac7e7d332';
 const PROJECT56_PDF_BASE = '6c4e2a644d2ff55dc7cf1e005a7c5d1892c6d0b1';
+const PROJECT57_MULTI_BASE = '48f497e26f882b2ff618667832dcb938e4750ba9';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -25,7 +26,8 @@ for (const [label, sha] of [
   ['Project 5.5 DP main build 713', PROJECT55_DP_BASE],
   ['Project 5.5 backup Downloads main build 721', PROJECT55_BACKUP_BASE],
   ['Project 5.5 DP voice main build 727', PROJECT55_VOICE_BASE],
-  ['Project 5.6 professional PDF main build 739', PROJECT56_PDF_BASE]
+  ['Project 5.6 professional PDF main build 739', PROJECT56_PDF_BASE],
+  ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE]
 ]) {
   try { git(['cat-file', '-e', `${sha}^{commit}`]); }
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
@@ -45,7 +47,8 @@ for (const [label, sha] of [
   ['Project 5.5 DP main build 713', PROJECT55_DP_BASE],
   ['Project 5.5 backup Downloads main build 721', PROJECT55_BACKUP_BASE],
   ['Project 5.5 DP voice main build 727', PROJECT55_VOICE_BASE],
-  ['Project 5.6 professional PDF main build 739', PROJECT56_PDF_BASE]
+  ['Project 5.6 professional PDF main build 739', PROJECT56_PDF_BASE],
+  ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE]
 ]) {
   try { git(['merge-base', '--is-ancestor', sha, 'HEAD']); }
   catch { fail(`feature branch no longer descends from ${label}`); }
@@ -53,7 +56,7 @@ for (const [label, sha] of [
 
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
-const changed = git(['diff', '--name-only', `${PROJECT56_PDF_BASE}...HEAD`])
+const changed = git(['diff', '--name-only', `${PROJECT57_MULTI_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
 
 const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
@@ -84,9 +87,9 @@ for (const protectedPath of [
   'app/src/main/AndroidManifest.xml',
   'backend/visual-preview.js'
 ]) {
-  const stable = git(['show', `${PROJECT56_PDF_BASE}:${protectedPath}`]);
+  const stable = git(['show', `${PROJECT57_MULTI_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
-  if (stable !== current) fail(`build 739 protected file changed unexpectedly: ${protectedPath}`);
+  if (stable !== current) fail(`build 746 protected file changed unexpectedly: ${protectedPath}`);
 }
 
 // Preserve the historical non-destructive catalog contract required by Project 5 safety.
@@ -135,7 +138,11 @@ for (const marker of [
   'subjects:subjectLayout',
   'function setSketchSubjects()',
   'subjectNodes=subjects.map',
-  "multiSubjectVersion:'0.8-multi-subject-ai'"
+  "multiSubjectVersion:'0.8-multi-subject-ai'",
+  'id="aiv-use-sun"',
+  'function activeSunContext()',
+  'sun:sunContext||undefined',
+  "sunIntegrationVersion:'0.9-sun-ai'"
 ]) {
   if (!aiPlan.includes(marker)) fail(`DP request marker missing: ${marker}`);
 }
@@ -175,6 +182,8 @@ for (const marker of [
   'SKICA SETA IZ PLANERA',
   'subjectPoints',
   'GLUMCI / SUBJEKTI',
+  'SUNCE / PRIRODNO SVETLO',
+  'double screenAz =',
   'notifyPdfResult'
 ]) {
   if (!imageBridge.includes(marker)) fail(`professional PDF marker missing: ${marker}`);
@@ -186,7 +195,9 @@ for (const marker of [
   'authoritative subject layout from the Planner Set Sketch',
   'lighting_diagram.subjects=normalizedSubjects',
   'validSubjectIds',
-  '"targets":["S1"]'
+  '"targets":["S1"]',
+  'Natural Sun context from LightingAI',
+  '"sun_notes":""'
 ]) {
   if (!server.includes(marker)) fail(`multi-subject backend marker missing: ${marker}`);
 }
@@ -210,9 +221,10 @@ console.log(JSON.stringify({
   dpVoiceBase: PROJECT55_BACKUP_BASE,
   professionalPdfBase: PROJECT55_VOICE_BASE,
   multiSubjectBase: PROJECT56_PDF_BASE,
-  stableBuilds: [510, 655, 686, 701, 713, 721, 727, 739],
+  sunAiBase: PROJECT57_MULTI_BASE,
+  stableBuilds: [510, 655, 686, 701, 713, 721, 727, 739, 746],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'build 739 PDF/voice/backup/Planner/catalog/SUNCE and phone-tested build 701 camera measurement remain protected; only AI multi-subject plan UI, PDF AI map, lighting-plan backend and this guard may change',
-  featureSurface: 'Project 5.7 multiple actors from Planner Set Sketch drive AI lighting targets, setup map, preview context and professional PDF'
+  protectedByDefault: 'build 746 multi-subject/PDF/voice/backup/Planner/catalog and phone-tested build 701 camera measurement remain protected; only AI SUN context UI, PDF SUN rendering, lighting-plan SUN prompt and this guard may change',
+  featureSurface: 'Project 5.8 SUNCE drives AI natural-light planning, photo-preview context and professional PDF with computed solar data and set-sketch sun direction'
 }, null, 2));

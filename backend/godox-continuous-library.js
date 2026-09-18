@@ -10,6 +10,7 @@ const MG_CATALOG='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalog
 const MG1200R='https://www.godox.com/static/upload/file/20241212/1733996030483415.pdf';
 const MG2400R='https://www.godox.com/Downloads/KNOWLED_MG2400R.pdf';
 const MS60='https://www.godox.com/Downloads/KNOWLED_MS60R.pdf';
+const M200_M300='https://www.godox.com/static/upload/file/20230608/1686187077668652.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
   return {
@@ -44,7 +45,11 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-mg1200r','MG1200R','KNOWLED MG',1800,10000,1600,'IP54',MG1200R,'Full Color',{mount:'G-Mount',cri:96,tlci:95,control:['DMX','RDM','CRMX','Ethernet Art-Net/sACN','Bluetooth/App','On-board']}),
   fixture('godox-mg2400r','MG2400R','KNOWLED MG',1800,10000,2650,'IP54',MG2400R,'Full Color',{mount:'G-Mount',cri:96,tlci:95,control:['DMX','RDM','CRMX','Ethernet Art-Net/sACN','Bluetooth/App','On-board']}),
   fixture('godox-ms60bi','MS60Bi','KNOWLED MS',2800,6500,60,null,MS60,'Bi-Color',{mount:'Godox Magnetic',cri:97,tlci:98,control:['DMX','RDM','CRMX','Bluetooth/App'],battery:'Removable fast-charging battery'}),
-  fixture('godox-ms60r','MS60R','KNOWLED MS',1800,10000,60,null,MS60,'Full Color',{mount:'Godox Magnetic',cri:95,tlci:95,control:['DMX','RDM','CRMX','Bluetooth/App'],battery:'Removable fast-charging battery'})
+  fixture('godox-ms60r','MS60R','KNOWLED MS',1800,10000,60,null,MS60,'Full Color',{mount:'Godox Magnetic',cri:95,tlci:95,control:['DMX','RDM','CRMX','Bluetooth/App'],battery:'Removable fast-charging battery'}),
+  fixture('godox-m200d','M200D','KNOWLED M',5600,5600,230,null,M200_M300,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']}),
+  fixture('godox-m300d','M300D','KNOWLED M',5600,5600,330,null,M200_M300,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']}),
+  fixture('godox-m200bi','M200Bi','KNOWLED M',2800,6500,230,null,M200_M300,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']}),
+  fixture('godox-m300bi','M300Bi','KNOWLED M',2800,6500,360,null,M200_M300,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -57,6 +62,7 @@ const mgBi=['godox-mg1200bi','godox-mg2400bi'];
 const mgFull=['godox-mg1200r','godox-mg2400r'];
 const mgAll=[...mgBi,...mgFull];
 const ms60=['godox-ms60bi','godox-ms60r'];
+const m200m300=['godox-m200d','godox-m300d','godox-m200bi','godox-m300bi'];
 
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
   return {
@@ -118,5 +124,11 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-ms60-sd15','SD15 Collapsible Diffusion Dome','Diffusion',ms60,MS60,'Collapsible diffusion dome for broad soft output.'),
   acc('godox-ms60-sp1','SP1 Parabolic Softbox','Softbox',ms60,MS60,'Compact parabolic softbox for MS60 kits.'),
   acc('godox-ms60-ss11','SS11 Rectangular Softbox','Softbox',ms60,MS60,'Compact rectangular softbox for MS60 kits.'),
-  acc('godox-ms60-dmx-c2','DMX-C2 DMX Adapter Cable','Control Cable',ms60,MS60,'DMX adapter cable listed for the MS60 optical/control ecosystem.')
+  acc('godox-ms60-dmx-c2','DMX-C2 DMX Adapter Cable','Control Cable',ms60,MS60,'DMX adapter cable listed for the MS60 optical/control ecosystem.'),
+  acc('godox-rft19','RFT-19 Bowens-mount Reflector','Reflector',m200m300,M200_M300,'Standard reflector supplied with the M200D/M300D/M200Bi/M300Bi system.'),
+  acc('godox-fls8','FLS8 Fresnel Lens','Fresnel',m200m300,KNOWLED_CATALOG,'10-40 degree variable Fresnel for the majority of Godox Bowens-mount LED fixtures.'),
+  acc('godox-fls10','FLS10 Fresnel Lens','Fresnel',m200m300,KNOWLED_CATALOG,'10-35 degree Fresnel compatible with Godox Bowens-mount LED fixtures.'),
+  acc('godox-lb01','LB-01 8-leaf Barndoors','Barn Door',m200m300,KNOWLED_CATALOG,'Shapes the beam when used with FLS8.'),
+  acc('godox-lb02','LB-02 8-leaf Barndoors','Barn Door',m200m300,KNOWLED_CATALOG,'Shapes the beam when used with FLS10.'),
+  acc('godox-rc-a6-m200m300','RC-A6 Remote Control','Remote Control',m200m300,M200_M300,'2.4GHz remote control option listed for the M200/M300 series.')
 ];

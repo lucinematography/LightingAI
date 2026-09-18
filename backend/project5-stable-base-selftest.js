@@ -82,6 +82,8 @@ const exactAllowed = new Set([
   'app/src/main/assets/index.html',
   'app/src/main/assets/sun-native-bridge.js',
   'app/src/main/assets/planner-layout-lock.js',
+  'backend/catalog-runtime.js',
+  'backend/desisti-super-led-f47-library.js',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -269,5 +271,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Project 5.12 stable Planner layout: dynamic Planner cards are locked to one deterministic order on every clean install and reload'
+  featureSurface: 'Project 5 catalog expansion: add verified De Sisti manufacturer folder plus isolated fixture/accessory libraries without changing Planner layout or existing catalog data'
 }, null, 2));

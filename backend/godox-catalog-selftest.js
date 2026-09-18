@@ -13,7 +13,8 @@ const expected=[
   'godox-f100r','godox-f200r','godox-f200sr','godox-f400r','godox-f800r',
   'godox-c5r','godox-c7r','godox-c10r','godox-la150r','godox-la200r','godox-la300r','godox-la300bi',
   'godox-lp400r','godox-lp600r','godox-lp1200r','godox-lp400bi','godox-lp600bi','godox-lp1200bi',
-  'godox-lc500r','godox-lc500bi','godox-lc500mini','godox-lc500rmini','godox-lc1000bi','godox-lc1000r','godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi',
+  'godox-lc500r','godox-lc500bi','godox-lc500mini','godox-lc500rmini','godox-lc1000bi','godox-lc1000r',
+  'godox-ldp8d','godox-ldp18d','godox-ldp8bi','godox-ldp18bi','godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi',
   'godox-ml100bi','godox-ml100r',
   'godox-sl60iid','godox-sl60iibi','godox-sl100d','godox-sl100bi','godox-sl150iii','godox-sl200iii','godox-sl300iii','godox-sl150iiibi','godox-sl200iiibi','godox-sl300iiibi',
   'godox-tl30','godox-tl60','godox-tl120','godox-tl180'

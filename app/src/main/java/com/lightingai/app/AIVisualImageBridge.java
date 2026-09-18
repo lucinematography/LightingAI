@@ -225,6 +225,7 @@ public final class AIVisualImageBridge {
                 planSection(planJson, "camera_notes", sr ? "KAMERA" : "CAMERA");
                 planSection(planJson, "color_notes", sr ? "BOJA / CCT / GEL" : "COLOR / CCT / GEL");
                 planSection(planJson, "sun_notes", sr ? "SUNCE / PRIRODNO SVETLO" : "SUN / NATURAL LIGHT");
+                planSection(planJson, "dmx_notes", sr ? "DMX / KONTROLA" : "DMX / CONTROL");
                 planSection(planJson, "safety_notes", sr ? "BEZBEDNOST" : "SAFETY");
 
                 JSONArray planEquipment = planJson.optJSONArray("equipment_list");
@@ -290,6 +291,9 @@ public final class AIVisualImageBridge {
             JSONArray rows = dmx == null ? null : dmx.optJSONArray("rows");
             if (rows != null && rows.length() > 0) {
                 section(sr ? "DMX PATCH" : "DMX PATCH");
+                if (dmx.optInt("warningCount", 0) > 0) {
+                    paragraph((sr ? "Upozorenja u patch-u: " : "Patch warnings: ") + dmx.optInt("warningCount", 0), 9.8f, true);
+                }
                 for (int i = 0; i < rows.length(); i++) {
                     JSONObject row = rows.optJSONObject(i);
                     if (row == null) continue;

@@ -16,6 +16,7 @@ const P600R='https://www.godox.com/Downloads/KNOWLED_P600R.pdf';
 const F100_200R='https://www.godox.com/Downloads/KNOWLED_F100R_F200R_F200SR.pdf';
 const KNOWLED_FULL_COLOR_MATS='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const C_CREATIVE='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
+const LA150_300='https://godox.com/product-c/LA150R-LA200R-LA300R-LA300Bi.html';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
   return {
@@ -64,7 +65,11 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-f800r','F800R','KNOWLED Flexible LED Mat',1800,10000,900,'IP54',KNOWLED_FULL_COLOR_MATS,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:97,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App']}),
   fixture('godox-c5r','C5R','KNOWLED Creative Light',2500,8500,5,null,C_CREATIVE,'RGBWW',{formFactor:'Pocket Creative Light',cri:96,tlci:97,control:['On-board','Bluetooth/App'],battery:'Built-in 3000mAh rechargeable'}),
   fixture('godox-c7r','C7R','KNOWLED Creative Bulb',2000,10000,7,null,C_CREATIVE,'RGBWW',{formFactor:'E26/E27 Creative Bulb',cri:96,tlci:97,control:['On-board','Bluetooth/App'],battery:'Built-in rechargeable'}),
-  fixture('godox-c10r','C10R','KNOWLED Creative Bulb',2000,10000,10,null,C_CREATIVE,'RGBWW',{formFactor:'E26/E27 Creative Bulb',cri:96,tlci:97,control:['On-board','Bluetooth/App'],powerSupply:'AC lamp socket / USB-C DC'})
+  fixture('godox-c10r','C10R','KNOWLED Creative Bulb',2000,10000,10,null,C_CREATIVE,'RGBWW',{formFactor:'E26/E27 Creative Bulb',cri:96,tlci:97,control:['On-board','Bluetooth/App'],powerSupply:'AC lamp socket / USB-C DC'}),
+  fixture('godox-la150r','LA150R','LITEMONS LA',1800,10000,165,null,LA150_300,'Full Color',{mount:'Bowens',cri:95,tlci:94,control:['Bluetooth/App','On-board']}),
+  fixture('godox-la200r','LA200R','LITEMONS LA',1800,10000,220,null,LA150_300,'Full Color',{mount:'Bowens',cri:95,tlci:94,control:['Bluetooth/App','On-board']}),
+  fixture('godox-la300r','LA300R','LITEMONS LA',1800,10000,330,null,LA150_300,'Full Color',{mount:'Bowens',cri:95,tlci:94,control:['DMX via DMX-TRS1','Bluetooth/App','On-board']}),
+  fixture('godox-la300bi','LA300Bi','LITEMONS LA',2800,6500,330,null,LA150_300,'Bi-Color',{mount:'Bowens',cri:95,tlci:94,control:['DMX via DMX-TRS1','Bluetooth/App','On-board']})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -82,6 +87,8 @@ const p300r=['godox-p300r'];
 const p600r=['godox-p600r'];
 const fullColorMats=['godox-f100r','godox-f200r','godox-f200sr','godox-f400r','godox-f800r'];
 const cCreative=['godox-c5r','godox-c7r','godox-c10r'];
+const la150300=['godox-la150r','godox-la200r','godox-la300r','godox-la300bi'];
+const la300=['godox-la300r','godox-la300bi'];
 
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
   return {
@@ -165,5 +172,9 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-c5r-diffuser','C5R Collapsible Diffuser','Diffusion',['godox-c5r'],C_CREATIVE,'Softens the pocket light output for close practical and accent work.'),
   acc('godox-c5r-charging-kit','C5R 8-Light Charging Kit','Charging', ['godox-c5r'], C_CREATIVE,'Stores and charges multiple C5R units for production use.'),
   acc('godox-c7r-charging-kit','C7R 8-Light Charging Kit','Charging',['godox-c7r'],C_CREATIVE,'Charges and transports multiple C7R creative bulbs.'),
-  acc('godox-c-creative-usbc','USB-C Power/Charging Cable','Power Cable',cCreative,C_CREATIVE,'Provides USB-C power or charging where supported.')
+  acc('godox-c-creative-usbc','USB-C Power/Charging Cable','Power Cable',cCreative,C_CREATIVE,'Provides USB-C power or charging where supported.'),
+  acc('godox-dbp-v','DBP-V Dual Battery Plate','Power',la150300,LA150_300,'Enables V-mount battery operation for mobile lighting setups.'),
+  acc('godox-dmx-trs1','DMX-TRS1 Adapter Cable','Control Cable',la300,LA150_300,'Adds wired DMX control to updated LA300R and LA300Bi units.'),
+  acc('godox-la-bowens-softbox','Bowens Mount Softbox','Softbox',la150300,LA150_300,'Softens the source with standard Bowens-mount modifiers.'),
+  acc('godox-qr-p-la','QR-P Parabolic Softbox','Softbox',la150300,LA150_300,'Provides a soft directional source using Bowens mount.')
 ];

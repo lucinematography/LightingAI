@@ -11,6 +11,7 @@ const PROJECT56_PDF_BASE = '6c4e2a644d2ff55dc7cf1e005a7c5d1892c6d0b1';
 const PROJECT57_MULTI_BASE = '48f497e26f882b2ff618667832dcb938e4750ba9';
 const PROJECT58_SUN_BASE = '0c13256a49160ba5c48fd3aa92c406f834f7e531';
 const PROJECT59_DMX_BASE = '3d112dd60da64fc66b42e61072ff2f012dfb6995';
+const PROJECT510_QA_BASE = '5bf13f433454c048a7e87cf515e19aa92d8199ba';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -31,7 +32,8 @@ for (const [label, sha] of [
   ['Project 5.6 professional PDF main build 739', PROJECT56_PDF_BASE],
   ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE],
   ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE],
-  ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE]
+  ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE],
+  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE]
 ]) {
   try { git(['cat-file', '-e', `${sha}^{commit}`]); }
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
@@ -54,7 +56,8 @@ for (const [label, sha] of [
   ['Project 5.6 professional PDF main build 739', PROJECT56_PDF_BASE],
   ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE],
   ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE],
-  ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE]
+  ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE],
+  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE]
 ]) {
   try { git(['merge-base', '--is-ancestor', sha, 'HEAD']); }
   catch { fail(`feature branch no longer descends from ${label}`); }
@@ -62,7 +65,7 @@ for (const [label, sha] of [
 
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
-const changed = git(['diff', '--name-only', `${PROJECT59_DMX_BASE}...HEAD`])
+const changed = git(['diff', '--name-only', `${PROJECT510_QA_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
 
 const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
@@ -73,6 +76,9 @@ const imageBridgePath = 'app/src/main/java/com/lightingai/app/AIVisualImageBridg
 const serverPath = 'backend/server.js';
 const exactAllowed = new Set([
   aiPlanPath,
+  mainActivityPath,
+  'app/build.gradle',
+  '.github/workflows/release-apk.yml',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -91,9 +97,9 @@ for (const protectedPath of [
   'app/src/main/AndroidManifest.xml',
   'backend/visual-preview.js'
 ]) {
-  const stable = git(['show', `${PROJECT59_DMX_BASE}:${protectedPath}`]);
+  const stable = git(['show', `${PROJECT510_QA_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
-  if (stable !== current) fail(`build 762 protected file changed unexpectedly: ${protectedPath}`);
+  if (stable !== current) fail(`build 767 protected file changed unexpectedly: ${protectedPath}`);
 }
 
 // Preserve the historical non-destructive catalog contract required by Project 5 safety.
@@ -151,7 +157,10 @@ for (const marker of [
   'function activeDmxContext()',
   'dmx:dmxContext||undefined',
   "dmxIntegrationVersion:'1.0-dmx-ai'",
-  'function latestMeasurementByTarget(items,target){for(var i=0;i<items.length;i++)'
+  'function latestMeasurementByTarget(items,target){for(var i=0;i<items.length;i++)',
+  'id="aiv-desc-voice"',
+  "Android.startSpeechInput(currentLanguage(),'aiv-desc')",
+  "sceneVoiceVersion:'1.1-scene-voice'"
 ]) {
   if (!aiPlan.includes(marker)) fail(`DP request marker missing: ${marker}`);
 }
@@ -175,6 +184,8 @@ for (const marker of [
   '@JavascriptInterface public void startSpeechInput',
   'window.LightingAIVoiceInputResult',
   'SPEECH_INPUT = 506',
+  'boolean sceneDescription = "aiv-desc".equals(target);',
+  'Opiši izgled scene',
   'notifyAIVisualPdfResult'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
@@ -237,9 +248,10 @@ console.log(JSON.stringify({
   sunAiBase: PROJECT57_MULTI_BASE,
   dmxAiBase: PROJECT58_SUN_BASE,
   finalQaBase: PROJECT59_DMX_BASE,
-  stableBuilds: [510, 655, 686, 701, 713, 721, 727, 739, 746, 753, 762],
+  releasePrepBase: PROJECT510_QA_BASE,
+  stableBuilds: [510, 655, 686, 701, 713, 721, 727, 739, 746, 753, 762, 767],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'build 762 final feature set remains protected; only AI measurement selection and this guard may change during final QA',
-  featureSurface: 'Final QA: AI Visual Plan must use the newest Planner measurement, matching Planner storage order'
+  protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
+  featureSurface: 'Project 5.10 final release prep: voice scene description plus stable signed release pipeline without changing debug QA identity'
 }, null, 2));

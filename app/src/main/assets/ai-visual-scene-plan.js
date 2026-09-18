@@ -77,7 +77,7 @@ function sunContextText(sun){
 function activeDmxContext(){
  var raw=readLocal(DMX_KEY,{rows:[]}),rows=raw&&Array.isArray(raw.rows)?raw.rows:[],used={},warnings=0;
  var normalized=rows.slice(0,128).map(function(r,i){
-  var universe=Math.max(1,Math.round(Number(r&&r.universe)||1)),start=Math.max(1,Math.min(512,Math.round(Number(r&&r.start)||1))),channels=Math.max(0,Math.min(512,Math.round(Number(r&&r.channels)||0)),end=channels?start+channels-1:null,flags=[];
+  var universe=Math.max(1,Math.round(Number(r&&r.universe)||1)),start=Math.max(1,Math.min(512,Math.round(Number(r&&r.start)||1))),channels=Math.max(0,Math.min(512,Math.round(Number(r&&r.channels)||0))),end=channels?start+channels-1:null,flags=[];
   if(!channels)flags.push('missing_channels');
   if(end!=null&&end>512)flags.push('overflow');
   if(channels>0&&end<=512){for(var ch=start;ch<=end;ch++){var key=universe+':'+ch;if(used[key]){flags.push('overlap');break;}used[key]=true;}}

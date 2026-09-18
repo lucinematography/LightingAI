@@ -4,6 +4,14 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Typeface;
+import android.graphics.pdf.PdfDocument;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -198,6 +206,8 @@ public final class AIVisualImageBridge {
                 drawImage(payload.optString("scenePhoto", ""), sr ? "ORIGINALNA FOTOGRAFIJA SCENE" : "ORIGINAL SCENE PHOTO");
                 drawImage(payload.optString("aiPreview", ""), sr ? "AI FOTO-PREVIEW" : "AI PHOTO PREVIEW");
 
+                drawPlannerSetSketch(payload.optJSONObject("setSketch"));
+
                 JSONObject planJson = payload.optJSONObject("plan");
                 if (planJson == null) planJson = new JSONObject();
 
@@ -281,6 +291,130 @@ public final class AIVisualImageBridge {
                         " | " + channels + " ch" +
                         (row.optString("mode", "").isEmpty() ? "" : " | " + row.optString("mode"));
                     paragraph(line, 9.5f, false);
+                }
+            }
+        }
+
+        private void drawPlannerSetSketch(JSONObject sketch) {
+            if (sketch == null) return;
+            JSONArray scenes = sketch.optJSONArray("scenes");
+            if (scenes == null || scenes.length() == 0) return;
+            String activeId = sketch.optString("activeId", "");
+            JSONObject scene = null;
+            for (int i = 0; i < scenes.length(); i++) {
+                JSONObject candidate = scenes.optJSONObject(i);
+                if (candidate == null) continue;
+                if (scene == null) scene = candidate;
+                if (!activeId.isEmpty() && activeId.equals(candidate.optString("id", ""))) {
+                    scene = candidate;
+                    break;
+                }
+            }
+            if (scene == null) return;
+
+            double roomW = Math.max(0.5, scene.optDouble("roomW", 10.0));
+            double roomH = Math.max(0.5, scene.optDouble("roomH", 8.0));
+            JSONArray objects = scene.optJSONArray("objects");
+
+            newPage();
+            title(sr ? "SKICA SETA IZ PLANERA" : "PLANNER SET SKETCH");
+            String sceneName = scene.optString("name", sr ? "Scena" : "Scene");
+            small(sceneName + " | " + String.format(Locale.US, "%.1f x %.1f m", roomW, roomH), MUTED);
+
+            float mapTop = y + 12f;
+            float mapLeft = MARGIN;
+            float mapW = CONTENT_W;
+            float mapH = Math.min(500f, mapW * (float) Math.min(1.20, Math.max(0.55, roomH / roomW)));
+            if (mapH < 300f) mapH = 300f;
+            ensure(mapH + 36f);
+
+            Paint fill = paint(Color.rgb(247, 248, 250), Paint.Style.FILL, 1f);
+            Paint border = paint(Color.rgb(150, 156, 165), Paint.Style.STROKE, 1.1f);
+            canvas.drawRoundRect(new RectF(mapLeft, mapTop, mapLeft + mapW, mapTop + mapH), 8f, 8f, fill);
+            canvas.drawRoundRect(new RectF(mapLeft, mapTop, mapLeft + mapW, mapTop + mapH), 8f, 8f, border);
+
+            Paint grid = paint(Color.rgb(220, 223, 228), Paint.Style.STROKE, 0.55f);
+            int gridX = (int) Math.min(50, Math.floor(roomW));
+            int gridY = (int) Math.min(50, Math.floor(roomH));
+            for (int gx = 1; gx < gridX; gx++) {
+                float x = mapLeft + (float) (gx / roomW) * mapW;
+                canvas.drawLine(x, mapTop, x, mapTop + mapH, grid);
+            }
+            for (int gy = 1; gy < gridY; gy++) {
+                float yy = mapTop + (float) (gy / roomH) * mapH;
+                canvas.drawLine(mapLeft, yy, mapLeft + mapW, yy, grid);
+            }
+
+            if (objects != null) {
+                Paint direction = paint(Color.rgb(145, 116, 30), Paint.Style.STROKE, 1.2f);
+                Paint cameraDirection = paint(Color.rgb(70, 145, 205), Paint.Style.STROKE, 1.2f);
+                Paint wallPaint = paint(Color.rgb(100, 107, 116), Paint.Style.STROKE, 4.2f);
+                Paint backgroundPaint = paint(Color.rgb(125, 92, 176), Paint.Style.STROKE, 4.2f);
+                Paint labelPaint = textPaint(7.8f, true, INK);
+                labelPaint.setTextAlign(Paint.Align.CENTER);
+
+                for (int i = 0; i < objects.length(); i++) {
+                    JSONObject o = objects.optJSONObject(i);
+                    if (o == null) continue;
+                    String type = o.optString("type", "object");
+                    String label = o.optString("label", type);
+                    double ox = Math.max(0, Math.min(roomW, o.optDouble("x", roomW / 2.0)));
+                    double oy = Math.max(0, Math.min(roomH, o.optDouble("y", roomH / 2.0)));
+                    double rot = o.optDouble("rot", 0.0);
+                    float px = mapLeft + (float) (ox / roomW) * mapW;
+                    float py = mapTop + (float) (oy / roomH) * mapH;
+                    double rad = Math.toRadians(rot);
+                    float dx = (float) Math.sin(rad);
+                    float dy = (float) -Math.cos(rad);
+
+                    if ("wall".equals(type) || "background".equals(type)) {
+                        float half = 26f;
+                        float pxv = -dy;
+                        float pyv = dx;
+                        Paint wp = "background".equals(type) ? backgroundPaint : wallPaint;
+                        canvas.drawLine(px - pxv * half, py - pyv * half, px + pxv * half, py + pyv * half, wp);
+                    } else if ("camera".equals(type)) {
+                        Paint cam = paint(Color.rgb(72, 78, 86), Paint.Style.FILL, 1f);
+                        canvas.drawRect(px - 10f, py - 7f, px + 10f, py + 7f, cam);
+                        canvas.drawLine(px, py, px + dx * 38f, py + dy * 38f, cameraDirection);
+                    } else if ("subject".equals(type)) {
+                        Paint person = paint(Color.rgb(70, 74, 82), Paint.Style.FILL, 1f);
+                        canvas.drawCircle(px, py, 9f, person);
+                        canvas.drawLine(px, py + 9f, px, py + 25f, wallPaint);
+                    } else if ("light".equals(type)) {
+                        Paint lamp = paint(ACCENT, Paint.Style.FILL, 1f);
+                        canvas.drawCircle(px, py, 9f, lamp);
+                        canvas.drawLine(px, py, px + dx * 44f, py + dy * 44f, direction);
+                    } else {
+                        Paint other = paint(Color.rgb(95, 101, 109), Paint.Style.FILL, 1f);
+                        canvas.drawCircle(px, py, 7f, other);
+                    }
+
+                    String safeLabel = label.length() > 28 ? label.substring(0, 28) : label;
+                    canvas.drawText(safeLabel, px, py + 18f, labelPaint);
+                }
+                labelPaint.setTextAlign(Paint.Align.LEFT);
+            }
+
+            y = mapTop + mapH + 18f;
+            if (objects != null && objects.length() > 0) {
+                section(sr ? "ELEMENTI SKICE" : "SKETCH ELEMENTS");
+                for (int i = 0; i < objects.length(); i++) {
+                    JSONObject o = objects.optJSONObject(i);
+                    if (o == null) continue;
+                    String type = o.optString("type", "object");
+                    String label = o.optString("label", type);
+                    String line = "- " + label + " | " + type +
+                        " | x " + String.format(Locale.US, "%.2f", o.optDouble("x", 0)) + " m" +
+                        " | y " + String.format(Locale.US, "%.2f", o.optDouble("y", 0)) + " m" +
+                        " | " + String.format(Locale.US, "%.0f", o.optDouble("rot", 0)) + " deg";
+                    if ("light".equals(type) && !o.optString("fixtureId", "").isEmpty()) {
+                        line += " | " + o.optString("fixtureId");
+                    }
+                    if ("light".equals(type) && o.has("beamAngleDeg")) {
+                        line += " | beam " + String.format(Locale.US, "%.1f", o.optDouble("beamAngleDeg", 0)) + " deg";
+                    }
+                    paragraph(line, 9f, false);
                 }
             }
         }

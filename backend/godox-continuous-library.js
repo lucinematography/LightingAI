@@ -17,6 +17,7 @@ const F100_200R='https://www.godox.com/Downloads/KNOWLED_F100R_F200R_F200SR.pdf'
 const KNOWLED_FULL_COLOR_MATS='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const C_CREATIVE='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const LA150_300='https://godox.com/product-c/LA150R-LA200R-LA300R-LA300Bi.html';
+const TL_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
   return {
@@ -69,7 +70,11 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-la150r','LA150R','LITEMONS LA',1800,10000,165,null,LA150_300,'Full Color',{mount:'Bowens',cri:95,tlci:94,control:['Bluetooth/App','On-board']}),
   fixture('godox-la200r','LA200R','LITEMONS LA',1800,10000,220,null,LA150_300,'Full Color',{mount:'Bowens',cri:95,tlci:94,control:['Bluetooth/App','On-board']}),
   fixture('godox-la300r','LA300R','LITEMONS LA',1800,10000,330,null,LA150_300,'Full Color',{mount:'Bowens',cri:95,tlci:94,control:['DMX via DMX-TRS1','Bluetooth/App','On-board']}),
-  fixture('godox-la300bi','LA300Bi','LITEMONS LA',2800,6500,330,null,LA150_300,'Bi-Color',{mount:'Bowens',cri:95,tlci:94,control:['DMX via DMX-TRS1','Bluetooth/App','On-board']})
+  fixture('godox-la300bi','LA300Bi','LITEMONS LA',2800,6500,330,null,LA150_300,'Bi-Color',{mount:'Bowens',cri:95,tlci:94,control:['DMX via DMX-TRS1','Bluetooth/App','On-board']}),
+  fixture('godox-tl30','TL30','RGBWW Tube Light',2700,6500,8,null,TL_SERIES,'RGBWW',{formFactor:'30cm Tube Light',cri:97,tlci:99,control:['Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
+  fixture('godox-tl60','TL60','RGBWW Tube Light',2700,6500,18,null,TL_SERIES,'RGBWW',{formFactor:'75cm Tube Light',cri:96,tlci:98,control:['DMX','2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
+  fixture('godox-tl120','TL120','RGBWW Tube Light',2700,6500,30,null,TL_SERIES,'RGBWW',{formFactor:'117cm Tube Light',cri:96,tlci:98,control:['DMX','2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
+  fixture('godox-tl180','TL180','RGBWW Tube Light',2700,6500,55,null,TL_SERIES,'RGBWW',{formFactor:'180cm Tube Light',cri:96,tlci:98,control:['DMX','2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -89,6 +94,9 @@ const fullColorMats=['godox-f100r','godox-f200r','godox-f200sr','godox-f400r','g
 const cCreative=['godox-c5r','godox-c7r','godox-c10r'];
 const la150300=['godox-la150r','godox-la200r','godox-la300r','godox-la300bi'];
 const la300=['godox-la300r','godox-la300bi'];
+const tl30=['godox-tl30'];
+const tl60plus=['godox-tl60','godox-tl120','godox-tl180'];
+const tlAll=['godox-tl30',...tl60plus];
 
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
   return {
@@ -176,5 +184,15 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-dbp-v','DBP-V Dual Battery Plate','Power',la150300,LA150_300,'Enables V-mount battery operation for mobile lighting setups.'),
   acc('godox-dmx-trs1','DMX-TRS1 Adapter Cable','Control Cable',la300,LA150_300,'Adds wired DMX control to updated LA300R and LA300Bi units.'),
   acc('godox-la-bowens-softbox','Bowens Mount Softbox','Softbox',la150300,LA150_300,'Softens the source with standard Bowens-mount modifiers.'),
-  acc('godox-qr-p-la','QR-P Parabolic Softbox','Softbox',la150300,LA150_300,'Provides a soft directional source using Bowens mount.')
+  acc('godox-qr-p-la','QR-P Parabolic Softbox','Softbox',la150300,LA150_300,'Provides a soft directional source using Bowens mount.'),
+  acc('godox-tl-g30','TL-G30 Grid','Grid',tl30,TL_SERIES,'Controls spill from TL30 and keeps the tube output directional.'),
+  acc('godox-tl-c2','TL-C2 Retaining Clip','Mounting',tl30,TL_SERIES),
+  acc('godox-tl-m2','TL-M2 Two-Light Coupler','Mounting',tl30,TL_SERIES),
+  acc('godox-tl-m8','TL-M8 Eight-Light Coupler','Mounting',tl30,TL_SERIES),
+  acc('godox-tl-w30','TL-W30 Waterproof Bag','Protection',tl30,TL_SERIES,'Allows protected TL30 use in wet environments.'),
+  acc('godox-rc-r9-tl','RC-R9 Remote Control','Remote Control',tl60plus,TL_SERIES,'Provides 2.4GHz wireless control for TL60/TL120/TL180.'),
+  acc('godox-tl-c120','TL-C120 RJ45 to 5-Pin XLR Cable','Control Cable',tl60plus,TL_SERIES,'Connects the TL tube series to standard 5-pin DMX control.'),
+  acc('godox-tl-retaining-clip','TL Series Retaining Clip','Mounting',tl60plus,TL_SERIES),
+  acc('godox-tl-wire-rope','TL Series Wire Rope','Mounting',tl60plus,TL_SERIES),
+  acc('godox-tl-carrying-kit','TL Series Multi-Light Carrying Kit','Transport',tlAll,TL_SERIES,'Supports grouped transport and production deployment of multiple TL fixtures.')
 ];

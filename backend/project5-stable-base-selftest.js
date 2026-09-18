@@ -103,6 +103,7 @@ const exactAllowed = new Set([
   'backend/godox-catalog-selftest.js',
   'backend/aladdin-mosaic-library.js',
   'backend/aladdin-fabric-lite-library.js',
+  'backend/aladdin-bi-flex-library.js',
   'backend/aladdin-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'

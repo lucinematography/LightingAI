@@ -3,7 +3,10 @@
 const CAT='https://www.desisti.it/tungsten-quartz-halogen-fresnels/';
 const MAGIS='https://www.desisti.it/magis/';
 const L1='https://www.desisti.it/leonardo-1kw/';
+const L2='https://www.desisti.it/leonardo-2kw/';
+const LM='https://www.desisti.it/leonardo-multipower/';
 const L5='https://www.desisti.it/leonardo-5kw/';
+const LP='https://www.desisti.it/leonardo-piccolo-10-12kw/';
 const SUPER20='https://www.desisti.it/super-leo-20-24kw/';
 
 function tungstenFixture(id,model,powerW,lensDiameterMm,sourceUrl,extra={}){
@@ -21,10 +24,10 @@ export const DESISTI_TUNGSTEN_FIXTURES=[
   tungstenFixture('desisti-magis-500','Magis 500 W',500,null,MAGIS),
   tungstenFixture('desisti-magis-650','Magis 650 W',650,null,MAGIS),
   tungstenFixture('desisti-leonardo-1kw','Leonardo 1 kW',1000,null,L1),
-  tungstenFixture('desisti-leonardo-2kw','Leonardo 2 kW',2000,null,CAT),
-  tungstenFixture('desisti-leonardo-multipower','Leonardo Multipower',2500,null,CAT),
+  tungstenFixture('desisti-leonardo-2kw','Leonardo 2 kW',2000,250,L2,{weightKg:12,ipRating:'IP22'}),
+  tungstenFixture('desisti-leonardo-multipower','Leonardo Multipower',2500,250,LM,{weightKg:12,ipRating:'IP22',lampPowerOptionsW:[650,1000,1200,2000,2500]}),
   tungstenFixture('desisti-leonardo-5kw','Leonardo 5 kW',5000,300,L5,{ipRating:'IP22'}),
-  tungstenFixture('desisti-leonardo-piccolo-10-12kw','Leonardo Piccolo 10-12 kW',12000,null,CAT),
+  tungstenFixture('desisti-leonardo-piccolo-10-12kw','Leonardo Piccolo 10-12 kW',12000,350,LP,{weightKg:26.5,ipRating:'IP22',lampPowerOptionsW:[10000,12000]}),
   tungstenFixture('desisti-super-leo-10-12kw','Super Leo 10-12 kW',12000,null,CAT,{control:['Manual','Local/remote dimmer']}),
   tungstenFixture('desisti-super-leo-20-24kw','Super Leo 20-24 kW',24000,null,SUPER20,{control:['Built-in dimmer','Local/remote']})
 ];

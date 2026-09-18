@@ -80,6 +80,8 @@ const exactAllowed = new Set([
   'app/build.gradle',
   '.github/workflows/release-apk.yml',
   'app/src/main/assets/index.html',
+  'app/src/main/assets/sun-native-bridge.js',
+  'app/src/main/assets/planner-layout-lock.js',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -175,6 +177,19 @@ for (const marker of [
   if (!backupExport.includes(marker)) fail(`backup Downloads marker missing: ${marker}`);
 }
 
+const plannerLayout = git(['show', 'HEAD:app/src/main/assets/planner-layout-lock.js']);
+for (const marker of [
+  "const VERSION='1.0-stable-planner-layout'",
+  "'setSketchCard'",
+  "'sceneMeasureCard'",
+  "'projectBackupCard'",
+  'window.LightingAIPlannerLayout'
+]) {
+  if (!plannerLayout.includes(marker)) fail(`planner layout lock marker missing: ${marker}`);
+}
+const sunNativeBridge = git(['show', 'HEAD:app/src/main/assets/sun-native-bridge.js']);
+if (!sunNativeBridge.includes("file:///android_asset/planner-layout-lock.js")) fail('stable Planner layout loader missing');
+
 const mainActivity = git(['show', `HEAD:${mainActivityPath}`]);
 for (const marker of [
   'MediaStore.Downloads.EXTERNAL_CONTENT_URI',
@@ -254,5 +269,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Project 5.11 final QA polish: every button gives immediate pressed-state feedback on touch without changing planner logic'
+  featureSurface: 'Project 5.12 stable Planner layout: dynamic Planner cards are locked to one deterministic order on every clean install and reload'
 }, null, 2));

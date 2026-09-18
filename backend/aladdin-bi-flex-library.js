@@ -47,5 +47,8 @@ export const ALADDIN_BI_FLEX_ACCESSORIES=[
   acc('aladdin-bi-flex-legacy-diffuser','BI-FLEX Diffuser','Diffusion',legacy,BI_FLEX_SPEC,'Softens BI-FLEX panel output.'),
   acc('aladdin-bi-flex-legacy-extension','BI-FLEX Extension Cable','Power Cable',legacy,BI_FLEX_SPEC),
   acc('aladdin-bi-flex-legacy-frame','BI-FLEX Frame','Frame',legacy,BI_FLEX_SPEC,'Adds rigid support for the flexible panel.'),
-  acc('aladdin-bi-flex-legacy-grid','BI-FLEX Grid','Grid',legacy,BI_FLEX_SPEC,'Controls spill from the BI-FLEX panel.')
+  acc('aladdin-bi-flex-legacy-grid','BI-FLEX Grid','Grid',legacy,BI_FLEX_SPEC,'Controls spill from the BI-FLEX panel.'),
+  acc('aladdin-bi-flex-4-4x4-frame','BI-FLEX 4 4x4 Frame','Frame',['aladdin-bi-flex-4'],BI_FLEX_SPEC,'Combines four BI-FLEX 4 panels into a large 4x4-foot soft-light configuration.'),
+  acc('aladdin-bi-flex-4-4x4-diffusion','BI-FLEX 4 4x4 Diffusion','Diffusion',['aladdin-bi-flex-4'],BI_FLEX_SPEC,'Creates an even large-area soft source for the 4x4 frame configuration.'),
+  acc('aladdin-bi-flex-4-4x4-grid','BI-FLEX 4 4x4 Grid','Grid',['aladdin-bi-flex-4'],BI_FLEX_SPEC,'Controls spill from the assembled 4x4 BI-FLEX source.')
 ];

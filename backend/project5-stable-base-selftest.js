@@ -86,6 +86,7 @@ const exactAllowed = new Set([
   'backend/catalog-runtime.js',
   'backend/desisti-super-led-f47-library.js',
   'backend/desisti-led-fresnel-series-library.js',
+  'backend/desisti-piccoletto-library.js',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -272,5 +273,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Project 5 catalog expansion: complete verified De Sisti Super LED Fresnel families and accessories without changing Planner layout or existing manufacturer data'
+  featureSurface: 'Project 5 catalog expansion: add verified De Sisti Piccoletto family and accessories without changing Planner layout or existing manufacturer data'
 }, null, 2));

@@ -32,6 +32,7 @@ const expected=[
   'desisti-muse-polymnia','desisti-muse-erato','desisti-muse-euterpe','desisti-muse-talia',
   'desisti-muse-aurea','desisti-muse-aurea-small',
   'desisti-magis-300','desisti-magis-500','desisti-magis-650','desisti-leonardo-1kw','desisti-leonardo-2kw','desisti-leonardo-multipower','desisti-leonardo-5kw','desisti-leonardo-piccolo-10-12kw','desisti-super-leo-10-12kw','desisti-super-leo-20-24kw',
+  'desisti-botticelli-1kw','desisti-botticelli-2kw','desisti-botticelli-5kw','desisti-renoir-300','desisti-renoir-500','desisti-renoir-650','desisti-renoir-2kw','desisti-renoir-5kw',
   'desisti-rembrandt-piccolo-200','desisti-rembrandt-piccolo-575','desisti-rembrandt-piccolo-1200','desisti-rembrandt-1-2-2-5kw','desisti-rembrandt-2-5-4kw','desisti-rembrandt-piccolo-6kw','desisti-rembrandt-6-12kw','desisti-rembrandt-12-18kw',
   'desisti-remington-575','desisti-remington-1200','desisti-remington-2-5-4kw','desisti-remington-6kw','desisti-remington-6-12kw'
 ];

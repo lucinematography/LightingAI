@@ -14,6 +14,7 @@ const expected=[
   'godox-c5r','godox-c7r','godox-c10r','godox-la150r','godox-la200r','godox-la300r','godox-la300bi',
   'godox-lp400r','godox-lp600r','godox-lp1200r','godox-lp400bi','godox-lp600bi','godox-lp1200bi',
   'godox-lc500r','godox-lc500bi','godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi',
+  'godox-ml100bi','godox-ml100r',
   'godox-tl30','godox-tl60','godox-tl120','godox-tl180'
 ];
 const failures=[];

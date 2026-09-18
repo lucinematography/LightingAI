@@ -20,6 +20,7 @@ const LA150_300='https://godox.com/product-c/LA150R-LA200R-LA300R-LA300Bi.html';
 const LP_SERIES='https://www.godox.com/product-b/LP-Series.html';
 const LC_SERIES='https://www.godox.com/product-c/LC500R-LC500Bi.html';
 const LDX_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
+const ML100_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 const TL_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
@@ -89,7 +90,9 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-ldx50r','LDX50R','LDX Panel',2500,10000,63,null,LDX_SERIES,'RGBWW',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
   fixture('godox-ldx100r','LDX100R','LDX Panel',2500,10000,118,null,LDX_SERIES,'RGBWW',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
   fixture('godox-ldx50bi','LDX50Bi','LDX Panel',2800,6500,65,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
-  fixture('godox-ldx100bi','LDX100Bi','LDX Panel',2800,6500,120,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']})
+  fixture('godox-ldx100bi','LDX100Bi','LDX Panel',2800,6500,120,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
+  fixture('godox-ml100bi','ML100Bi','ML Portable COB',2800,6500,110,null,ML100_SERIES,'Bi-Color',{mount:'Godox Mount',formFactor:'Portable COB',cri:96,tlci:97,control:['Bluetooth/App','On-board'],powerSupply:'DC / USB-C power bank / V-mount battery'}),
+  fixture('godox-ml100r','ML100R','ML Portable COB',1800,10000,110,null,ML100_SERIES,'Full Color',{mount:'Godox Mount',formFactor:'Portable COB',cri:95,tlci:95,control:['Bluetooth/App','On-board'],powerSupply:'DC / mobile battery options'})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -114,6 +117,7 @@ const lp1200=['godox-lp1200r','godox-lp1200bi'];
 const lpAll=[...lpSmall,...lp1200];
 const lcSeries=['godox-lc500r','godox-lc500bi'];
 const ldxAll=['godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi'];
+const ml100=['godox-ml100bi','godox-ml100r'];
 const tl30=['godox-tl30'];
 const tl60plus=['godox-tl60','godox-tl120','godox-tl180'];
 const tlAll=['godox-tl30',...tl60plus];
@@ -226,5 +230,11 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-ldx-barndoors','LDX Series Barndoors','Barn Door',ldxAll,LDX_SERIES,'Shapes and limits spill from the LDX panel output.'),
   acc('godox-ldx-softbox','LDX Series Softbox','Softbox',ldxAll,LDX_SERIES,'Softens the LDX panel output for close and interview work.'),
   acc('godox-ldx-grid','LDX Series Grid','Grid',ldxAll,LDX_SERIES,'Adds directional control and reduces spill.'),
-  acc('godox-rc-a6ii-ldx','RC-A6II Remote Control','Remote Control',ldxAll,LDX_SERIES,'Provides compatible 2.4GHz remote operation for the LDX series.')
+  acc('godox-rc-a6ii-ldx','RC-A6II Remote Control','Remote Control',ldxAll,LDX_SERIES,'Provides compatible 2.4GHz remote operation for the LDX series.'),
+  acc('godox-ml-l15','ML-L15 Lens Reflector 15°','Reflector',ml100,ML100_SERIES,'Creates a tighter, higher-intensity beam from the ML100 system.'),
+  acc('godox-ml-l36','ML-L36 Lens Reflector 36°','Reflector',ml100,ML100_SERIES,'Provides a wider lens-reflector beam for general key and fill work.'),
+  acc('godox-ml-bowens-adapter','ML Bowens Mount Adapter','Mounting',ml100,ML100_SERIES,'Expands the compact Godox-mount light to standard Bowens modifiers.'),
+  acc('godox-ak-b02','AK-B02 V-Mount Battery Accessory Kit','Power',['godox-ml100bi'],ML100_SERIES,'Supports mobile V-mount battery operation for ML100Bi.'),
+  acc('godox-bg02','BG02 Battery Grip','Power',['godox-ml100r'],ML100_SERIES,'Provides a compact mobile power option for ML100R.'),
+  acc('godox-ml-air-soft-tube','ML100R Air Soft Tube','Diffusion',['godox-ml100r'],ML100_SERIES,'Creates a larger diffused source while staying portable.')
 ];

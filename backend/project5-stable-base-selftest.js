@@ -79,6 +79,7 @@ const exactAllowed = new Set([
   mainActivityPath,
   'app/build.gradle',
   '.github/workflows/release-apk.yml',
+  'app/src/main/assets/index.html',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -253,5 +254,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Project 5.10 final release prep: voice scene description plus stable signed release pipeline without changing debug QA identity'
+  featureSurface: 'Project 5.11 final QA polish: every button gives immediate pressed-state feedback on touch without changing planner logic'
 }, null, 2));

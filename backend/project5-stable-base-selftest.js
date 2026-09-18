@@ -6,6 +6,7 @@ const MAIN686_BASE = '9fb1cb24cabf41d45baed2fb6e9cf6c4a737f1a7';
 const PROJECT54_PHONE_BASE = '3827f81400ff8abd1e83e6b8e416f8ee628fce94';
 const PROJECT55_DP_BASE = 'a79fdeca7db3ddf0c153589b58639a84b5b65628';
 const PROJECT55_BACKUP_BASE = '64e8d99ee15f94a34da35fcd1eb9f416372ba36c';
+const PROJECT55_VOICE_BASE = '3e61ba6bbebf381c3b376af090aa385ac7e7d332';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -21,7 +22,8 @@ for (const [label, sha] of [
   ['phone-verified Planner build 686', MAIN686_BASE],
   ['phone-tested Project 5.4 build 701', PROJECT54_PHONE_BASE],
   ['Project 5.5 DP main build 713', PROJECT55_DP_BASE],
-  ['Project 5.5 backup Downloads main build 721', PROJECT55_BACKUP_BASE]
+  ['Project 5.5 backup Downloads main build 721', PROJECT55_BACKUP_BASE],
+  ['Project 5.5 DP voice main build 727', PROJECT55_VOICE_BASE]
 ]) {
   try { git(['cat-file', '-e', `${sha}^{commit}`]); }
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
@@ -39,7 +41,8 @@ for (const [label, sha] of [
   ['phone-verified Planner build 686', MAIN686_BASE],
   ['phone-tested Project 5.4 build 701', PROJECT54_PHONE_BASE],
   ['Project 5.5 DP main build 713', PROJECT55_DP_BASE],
-  ['Project 5.5 backup Downloads main build 721', PROJECT55_BACKUP_BASE]
+  ['Project 5.5 backup Downloads main build 721', PROJECT55_BACKUP_BASE],
+  ['Project 5.5 DP voice main build 727', PROJECT55_VOICE_BASE]
 ]) {
   try { git(['merge-base', '--is-ancestor', sha, 'HEAD']); }
   catch { fail(`feature branch no longer descends from ${label}`); }
@@ -47,16 +50,18 @@ for (const [label, sha] of [
 
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
-const changed = git(['diff', '--name-only', `${PROJECT55_BACKUP_BASE}...HEAD`])
+const changed = git(['diff', '--name-only', `${PROJECT55_VOICE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
 
 const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
 const aiPlanPath = 'app/src/main/assets/ai-visual-scene-plan.js';
 const backupPath = 'app/src/main/assets/project-backup-export.js';
 const mainActivityPath = 'app/src/main/java/com/lightingai/app/MainActivity.java';
+const imageBridgePath = 'app/src/main/java/com/lightingai/app/AIVisualImageBridge.java';
 const exactAllowed = new Set([
   aiPlanPath,
   mainActivityPath,
+  imageBridgePath,
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -70,14 +75,15 @@ for (const protectedPath of [
   'app/src/main/assets/ai-visual-scene-launcher.js',
   'app/src/main/assets/ai-visual-preview-refinements.js',
   'app/src/main/assets/ai-visual-phone-diagnostics.js',
+  'app/src/main/assets/ai-visual-image-actions.js',
   'app/src/main/java/com/lightingai/app/DeviceCapabilities.java',
   'app/src/main/AndroidManifest.xml',
   'backend/server.js',
   'backend/visual-preview.js'
 ]) {
-  const stable = git(['show', `${PROJECT55_BACKUP_BASE}:${protectedPath}`]);
+  const stable = git(['show', `${PROJECT55_VOICE_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
-  if (stable !== current) fail(`build 721 protected file changed unexpectedly: ${protectedPath}`);
+  if (stable !== current) fail(`build 727 protected file changed unexpectedly: ${protectedPath}`);
 }
 
 // Preserve the historical non-destructive catalog contract required by Project 5 safety.
@@ -118,7 +124,11 @@ for (const marker of [
   'id="aiv-dp-voice"',
   'Android.startSpeechInput',
   'window.LightingAIVoiceInputResult',
-  "voiceInputVersion:'0.6-dp-voice'"
+  "voiceInputVersion:'0.6-dp-voice'",
+  'id="aiv-pdf-export"',
+  'LightingAIImages.savePlanPdf',
+  "pdfExportVersion:'0.7-professional-pdf'",
+  "setSketch:readLocal('lighting_set_sketch_v1',{})"
 ]) {
   if (!aiPlan.includes(marker)) fail(`DP request marker missing: ${marker}`);
 }
@@ -141,9 +151,24 @@ for (const marker of [
   'RecognizerIntent.ACTION_RECOGNIZE_SPEECH',
   '@JavascriptInterface public void startSpeechInput',
   'window.LightingAIVoiceInputResult',
-  'SPEECH_INPUT = 506'
+  'SPEECH_INPUT = 506',
+  'notifyAIVisualPdfResult'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
+}
+
+const imageBridge = git(['show', `HEAD:${imageBridgePath}`]);
+for (const marker of [
+  '@JavascriptInterface public void savePlanPdf',
+  'MediaStore.Downloads.EXTERNAL_CONTENT_URI',
+  'PdfDocument',
+  'AI PREDLOG POSTAVKE RASVETE',
+  'drawSetupMap',
+  'drawPlannerSetSketch',
+  'SKICA SETA IZ PLANERA',
+  'notifyPdfResult'
+]) {
+  if (!imageBridge.includes(marker)) fail(`professional PDF marker missing: ${marker}`);
 }
 
 for (const path of changed.filter((p) => /\.(?:js|json|yml|yaml|html|md|java)$/i.test(p))) {
@@ -163,9 +188,10 @@ console.log(JSON.stringify({
   project55Base: PROJECT54_PHONE_BASE,
   backupDownloadsBase: PROJECT55_DP_BASE,
   dpVoiceBase: PROJECT55_BACKUP_BASE,
-  stableBuilds: [510, 655, 686, 701, 713, 721],
+  professionalPdfBase: PROJECT55_VOICE_BASE,
+  stableBuilds: [510, 655, 686, 701, 713, 721, 727],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'build 721 backup/Planner/catalog/SUNCE/backend and phone-tested build 701 camera measurement remain protected; only AI visual DP voice UI, MainActivity speech bridge and this guard may change',
-  featureSurface: 'Project 5.5 native Serbian/English voice input appends recognized speech into the DP request field'
+  protectedByDefault: 'build 727 voice/backup/Planner/catalog/SUNCE/backend and phone-tested build 701 camera measurement remain protected; only AI visual PDF UI, PDF bridge callback, native PDF renderer and this guard may change',
+  featureSurface: 'Project 5.6 professional AI lighting-plan PDF with photos, AI setup map, full Planner set sketch, AI proposal and technical scene data saved to Downloads'
 }, null, 2));

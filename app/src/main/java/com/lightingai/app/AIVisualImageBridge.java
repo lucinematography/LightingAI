@@ -4,6 +4,14 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Typeface;
+import android.graphics.pdf.PdfDocument;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -12,10 +20,14 @@ import android.provider.MediaStore;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public final class AIVisualImageBridge {
@@ -66,6 +78,615 @@ public final class AIVisualImageBridge {
                 notifyResult("share", false);
             }
         }, "LightingAI-image-share").start();
+    }
+
+    @JavascriptInterface public void savePlanPdf(String filename, String payloadJson) {
+        new Thread(() -> {
+            String safeName = safePdfFilename(filename);
+            try {
+                byte[] pdfBytes = renderPlanPdf(payloadJson);
+                savePdfToDownloads(safeName, pdfBytes);
+                notifyPdfResult(true, safeName);
+            } catch (Exception error) {
+                notifyPdfResult(false, safeName);
+            }
+        }, "LightingAI-pdf-save").start();
+    }
+
+    private String safePdfFilename(String requested) {
+        String base = requested == null ? "LightingAI_AI_Plan" : requested.replaceAll("[^A-Za-z0-9._-]", "_");
+        if (base.length() > 90) base = base.substring(0, 90);
+        base = base.replaceFirst("(?i)\\.pdf$", "");
+        if (base.isEmpty()) base = "LightingAI_AI_Plan";
+        return base + ".pdf";
+    }
+
+    private void savePdfToDownloads(String filename, byte[] bytes) throws Exception {
+        if (bytes == null || bytes.length == 0) throw new IllegalArgumentException("Empty PDF");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, filename);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+            values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+            Uri uri = activity.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) throw new IllegalStateException("Downloads unavailable");
+            try {
+                try (OutputStream stream = activity.getContentResolver().openOutputStream(uri, "w")) {
+                    if (stream == null) throw new IllegalStateException("PDF output unavailable");
+                    stream.write(bytes);
+                }
+                ContentValues ready = new ContentValues();
+                ready.put(MediaStore.MediaColumns.IS_PENDING, 0);
+                activity.getContentResolver().update(uri, ready, null, null);
+            } catch (Exception error) {
+                activity.getContentResolver().delete(uri, null, null);
+                throw error;
+            }
+            return;
+        }
+        File downloads = activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        if (downloads == null) throw new IllegalStateException("Downloads unavailable");
+        File output = new File(downloads, filename);
+        try (OutputStream stream = new FileOutputStream(output, false)) { stream.write(bytes); }
+        MediaScannerConnection.scanFile(activity, new String[]{output.getAbsolutePath()}, new String[]{"application/pdf"}, null);
+    }
+
+    private byte[] renderPlanPdf(String payloadJson) throws Exception {
+        JSONObject payload = new JSONObject(payloadJson == null ? "{}" : payloadJson);
+        return new PlanPdfRenderer(payload).render();
+    }
+
+    private void notifyPdfResult(boolean ok, String filename) {
+        activity.runOnUiThread(() -> {
+            if (ok) Toast.makeText(activity, "LightingAI: PDF je sačuvan u Preuzimanja", Toast.LENGTH_LONG).show();
+            if (activity instanceof MainActivity) {
+                ((MainActivity) activity).notifyAIVisualPdfResult(JSONObject.quote(filename), ok);
+            }
+        });
+    }
+
+    private static final class PlanPdfRenderer {
+        private static final int PAGE_W = 595;
+        private static final int PAGE_H = 842;
+        private static final float MARGIN = 38f;
+        private static final float CONTENT_W = PAGE_W - MARGIN * 2f;
+        private static final int ACCENT = Color.rgb(190, 148, 28);
+        private static final int INK = Color.rgb(29, 31, 35);
+        private static final int MUTED = Color.rgb(100, 105, 113);
+        private static final int PANEL = Color.rgb(244, 245, 247);
+
+        private final JSONObject payload;
+        private final boolean sr;
+        private final PdfDocument document = new PdfDocument();
+        private PdfDocument.Page page;
+        private Canvas canvas;
+        private float y;
+        private int pageNumber = 0;
+
+        PlanPdfRenderer(JSONObject payload) {
+            this.payload = payload;
+            this.sr = !"en".equals(payload.optString("language", "sr"));
+        }
+
+        byte[] render() throws Exception {
+            try {
+                newPage();
+                title(sr ? "AI PREDLOG POSTAVKE RASVETE" : "AI LIGHTING SETUP PROPOSAL");
+                small(sr ? "Profesionalni LightingAI izvoz" : "Professional LightingAI export", MUTED);
+                gap(8);
+
+                section(sr ? "ZAHTEV DP-a" : "DP REQUEST");
+                paragraph(payload.optString("dpRequest", ""), 11f, false);
+                section(sr ? "CILJ / OPIS SCENE" : "SCENE GOAL / DESCRIPTION");
+                paragraph(payload.optString("description", ""), 11f, false);
+                String measurements = payload.optString("measurements", "");
+                if (!measurements.isEmpty()) {
+                    section(sr ? "MERENJA IZ PLANERA" : "PLANNER MEASUREMENTS");
+                    paragraph(measurements, 10.5f, false);
+                }
+
+                JSONArray equipment = payload.optJSONArray("equipment");
+                section(sr ? "IZABRANA RASVETA" : "SELECTED LIGHTING");
+                if (equipment == null || equipment.length() == 0) {
+                    paragraph(sr ? "Nema izabrane opreme." : "No selected equipment.", 10.5f, false);
+                } else {
+                    for (int i = 0; i < equipment.length(); i++) {
+                        JSONObject item = equipment.optJSONObject(i);
+                        if (item == null) continue;
+                        String line = "- " + item.optString("name", item.optString("id", "Fixture")) +
+                            " x" + Math.max(1, item.optInt("qty", 1));
+                        if (item.has("powerDrawW")) line += " | " + item.optInt("powerDrawW", 0) + " W";
+                        JSONObject cct = item.optJSONObject("cctK");
+                        if (cct != null) line += " | CCT " + cct.optInt("min", 0) + "-" + cct.optInt("max", 0) + " K";
+                        paragraph(line, 10f, false);
+                    }
+                }
+
+                drawImage(payload.optString("scenePhoto", ""), sr ? "ORIGINALNA FOTOGRAFIJA SCENE" : "ORIGINAL SCENE PHOTO");
+                drawImage(payload.optString("aiPreview", ""), sr ? "AI FOTO-PREVIEW" : "AI PHOTO PREVIEW");
+
+                drawPlannerSetSketch(payload.optJSONObject("setSketch"));
+
+                JSONObject planJson = payload.optJSONObject("plan");
+                if (planJson == null) planJson = new JSONObject();
+
+                newPage();
+                title(sr ? "MAPA POSTAVKE" : "SETUP MAP");
+                drawSetupMap(planJson);
+
+                newPage();
+                title(sr ? "AI PREDLOG RASVETE" : "AI LIGHTING PROPOSAL");
+                planSection(planJson, "summary", sr ? "SAŽETAK" : "SUMMARY");
+                planSection(planJson, "key", sr ? "GLAVNO SVETLO / KEY" : "KEY LIGHT");
+                planSection(planJson, "fill", sr ? "FILL SVETLO" : "FILL LIGHT");
+                planSection(planJson, "backlight", sr ? "KONTRA / POZADINSKO" : "BACKLIGHT");
+                planSection(planJson, "negative_fill", sr ? "NEGATIVNI FILL" : "NEGATIVE FILL");
+                planSection(planJson, "camera_notes", sr ? "KAMERA" : "CAMERA");
+                planSection(planJson, "color_notes", sr ? "BOJA / CCT / GEL" : "COLOR / CCT / GEL");
+                planSection(planJson, "safety_notes", sr ? "BEZBEDNOST" : "SAFETY");
+
+                JSONArray planEquipment = planJson.optJSONArray("equipment_list");
+                if (planEquipment != null && planEquipment.length() > 0) {
+                    section(sr ? "OPREMA U AI PLANU" : "EQUIPMENT IN AI PLAN");
+                    for (int i = 0; i < planEquipment.length(); i++) {
+                        Object value = planEquipment.opt(i);
+                        paragraph("- " + String.valueOf(value), 10f, false);
+                    }
+                }
+
+                drawTechnical(payload.optJSONObject("technical"));
+
+                finishPage();
+                ByteArrayOutputStream output = new ByteArrayOutputStream();
+                document.writeTo(output);
+                return output.toByteArray();
+            } finally {
+                try { document.close(); } catch (Exception ignored) {}
+            }
+        }
+
+        private void drawTechnical(JSONObject technical) {
+            if (technical == null) return;
+            newPage();
+            title(sr ? "TEHNIČKI PODACI SCENE" : "SCENE TECHNICAL DATA");
+
+            JSONObject power = technical.optJSONObject("power");
+            if (power != null && power.length() > 0) {
+                section(sr ? "NAPAJANJE" : "POWER");
+                paragraph((sr ? "Napon: " : "Voltage: ") + power.optString("voltage", "230") + " V | " +
+                    (sr ? "grana: " : "branch: ") + power.optString("branch", "16") + " A | " +
+                    (sr ? "baterija: " : "battery: ") + power.optString("batteryWh", "1000") + " Wh", 10f, false);
+            }
+
+            JSONObject cct = technical.optJSONObject("cctGel");
+            if (cct != null && cct.length() > 0) {
+                section(sr ? "CCT / GEL" : "CCT / GEL");
+                paragraph((sr ? "Izvor: " : "Source: ") + cct.optString("source", "-") + " K | " +
+                    (sr ? "cilj: " : "target: ") + cct.optString("target", "-") + " K | " +
+                    (sr ? "tint: " : "tint: ") + cct.optString("tintMode", "-") + " / " + cct.optString("tintStrength", "-"), 10f, false);
+            }
+
+            JSONObject sun = technical.optJSONObject("sun");
+            if (sun != null && sun.length() > 0) {
+                section(sr ? "SUNCE / LOKACIJA" : "SUN / LOCATION");
+                String line = (sr ? "Datum: " : "Date: ") + sun.optString("date", "-") + " " + sun.optString("time", "") +
+                    " | lat " + sun.optString("lat", "-") + " | lon " + sun.optString("lon", "-");
+                paragraph(line, 10f, false);
+            }
+
+            JSONObject dmx = technical.optJSONObject("dmx");
+            JSONArray rows = dmx == null ? null : dmx.optJSONArray("rows");
+            if (rows != null && rows.length() > 0) {
+                section(sr ? "DMX PATCH" : "DMX PATCH");
+                for (int i = 0; i < rows.length(); i++) {
+                    JSONObject row = rows.optJSONObject(i);
+                    if (row == null) continue;
+                    int start = row.optInt("start", 1);
+                    int channels = row.optInt("channels", 0);
+                    int end = channels > 0 ? start + channels - 1 : start;
+                    String line = "- " + row.optString("name", "DMX") +
+                        " | U" + row.optInt("universe", 1) +
+                        " | " + start + "-" + end +
+                        " | " + channels + " ch" +
+                        (row.optString("mode", "").isEmpty() ? "" : " | " + row.optString("mode"));
+                    paragraph(line, 9.5f, false);
+                }
+            }
+        }
+
+        private void drawPlannerSetSketch(JSONObject sketch) {
+            if (sketch == null) return;
+            JSONArray scenes = sketch.optJSONArray("scenes");
+            if (scenes == null || scenes.length() == 0) return;
+            String activeId = sketch.optString("activeId", "");
+            JSONObject scene = null;
+            for (int i = 0; i < scenes.length(); i++) {
+                JSONObject candidate = scenes.optJSONObject(i);
+                if (candidate == null) continue;
+                if (scene == null) scene = candidate;
+                if (!activeId.isEmpty() && activeId.equals(candidate.optString("id", ""))) {
+                    scene = candidate;
+                    break;
+                }
+            }
+            if (scene == null) return;
+
+            double roomW = Math.max(0.5, scene.optDouble("roomW", 10.0));
+            double roomH = Math.max(0.5, scene.optDouble("roomH", 8.0));
+            JSONArray objects = scene.optJSONArray("objects");
+
+            newPage();
+            title(sr ? "SKICA SETA IZ PLANERA" : "PLANNER SET SKETCH");
+            String sceneName = scene.optString("name", sr ? "Scena" : "Scene");
+            small(sceneName + " | " + String.format(Locale.US, "%.1f x %.1f m", roomW, roomH), MUTED);
+
+            float mapTop = y + 12f;
+            float mapLeft = MARGIN;
+            float mapW = CONTENT_W;
+            float mapH = Math.min(500f, mapW * (float) Math.min(1.20, Math.max(0.55, roomH / roomW)));
+            if (mapH < 300f) mapH = 300f;
+            ensure(mapH + 36f);
+
+            Paint fill = paint(Color.rgb(247, 248, 250), Paint.Style.FILL, 1f);
+            Paint border = paint(Color.rgb(150, 156, 165), Paint.Style.STROKE, 1.1f);
+            canvas.drawRoundRect(new RectF(mapLeft, mapTop, mapLeft + mapW, mapTop + mapH), 8f, 8f, fill);
+            canvas.drawRoundRect(new RectF(mapLeft, mapTop, mapLeft + mapW, mapTop + mapH), 8f, 8f, border);
+
+            Paint grid = paint(Color.rgb(220, 223, 228), Paint.Style.STROKE, 0.55f);
+            int gridX = (int) Math.min(50, Math.floor(roomW));
+            int gridY = (int) Math.min(50, Math.floor(roomH));
+            for (int gx = 1; gx < gridX; gx++) {
+                float x = mapLeft + (float) (gx / roomW) * mapW;
+                canvas.drawLine(x, mapTop, x, mapTop + mapH, grid);
+            }
+            for (int gy = 1; gy < gridY; gy++) {
+                float yy = mapTop + (float) (gy / roomH) * mapH;
+                canvas.drawLine(mapLeft, yy, mapLeft + mapW, yy, grid);
+            }
+
+            if (objects != null) {
+                Paint direction = paint(Color.rgb(145, 116, 30), Paint.Style.STROKE, 1.2f);
+                Paint cameraDirection = paint(Color.rgb(70, 145, 205), Paint.Style.STROKE, 1.2f);
+                Paint wallPaint = paint(Color.rgb(100, 107, 116), Paint.Style.STROKE, 4.2f);
+                Paint backgroundPaint = paint(Color.rgb(125, 92, 176), Paint.Style.STROKE, 4.2f);
+                Paint labelPaint = textPaint(7.8f, true, INK);
+                labelPaint.setTextAlign(Paint.Align.CENTER);
+
+                for (int i = 0; i < objects.length(); i++) {
+                    JSONObject o = objects.optJSONObject(i);
+                    if (o == null) continue;
+                    String type = o.optString("type", "object");
+                    String label = o.optString("label", type);
+                    double ox = Math.max(0, Math.min(roomW, o.optDouble("x", roomW / 2.0)));
+                    double oy = Math.max(0, Math.min(roomH, o.optDouble("y", roomH / 2.0)));
+                    double rot = o.optDouble("rot", 0.0);
+                    float px = mapLeft + (float) (ox / roomW) * mapW;
+                    float py = mapTop + (float) (oy / roomH) * mapH;
+                    double rad = Math.toRadians(rot);
+                    float dx = (float) Math.sin(rad);
+                    float dy = (float) -Math.cos(rad);
+
+                    if ("wall".equals(type) || "background".equals(type)) {
+                        float half = 26f;
+                        float pxv = -dy;
+                        float pyv = dx;
+                        Paint wp = "background".equals(type) ? backgroundPaint : wallPaint;
+                        canvas.drawLine(px - pxv * half, py - pyv * half, px + pxv * half, py + pyv * half, wp);
+                    } else if ("camera".equals(type)) {
+                        Paint cam = paint(Color.rgb(72, 78, 86), Paint.Style.FILL, 1f);
+                        canvas.drawRect(px - 10f, py - 7f, px + 10f, py + 7f, cam);
+                        canvas.drawLine(px, py, px + dx * 38f, py + dy * 38f, cameraDirection);
+                    } else if ("subject".equals(type)) {
+                        Paint person = paint(Color.rgb(70, 74, 82), Paint.Style.FILL, 1f);
+                        canvas.drawCircle(px, py, 9f, person);
+                        canvas.drawLine(px, py + 9f, px, py + 25f, wallPaint);
+                    } else if ("light".equals(type)) {
+                        Paint lamp = paint(ACCENT, Paint.Style.FILL, 1f);
+                        canvas.drawCircle(px, py, 9f, lamp);
+                        canvas.drawLine(px, py, px + dx * 44f, py + dy * 44f, direction);
+                    } else {
+                        Paint other = paint(Color.rgb(95, 101, 109), Paint.Style.FILL, 1f);
+                        canvas.drawCircle(px, py, 7f, other);
+                    }
+
+                    String safeLabel = label.length() > 28 ? label.substring(0, 28) : label;
+                    canvas.drawText(safeLabel, px, py + 18f, labelPaint);
+                }
+                labelPaint.setTextAlign(Paint.Align.LEFT);
+            }
+
+            y = mapTop + mapH + 18f;
+            if (objects != null && objects.length() > 0) {
+                section(sr ? "ELEMENTI SKICE" : "SKETCH ELEMENTS");
+                for (int i = 0; i < objects.length(); i++) {
+                    JSONObject o = objects.optJSONObject(i);
+                    if (o == null) continue;
+                    String type = o.optString("type", "object");
+                    String label = o.optString("label", type);
+                    String line = "- " + label + " | " + type +
+                        " | x " + String.format(Locale.US, "%.2f", o.optDouble("x", 0)) + " m" +
+                        " | y " + String.format(Locale.US, "%.2f", o.optDouble("y", 0)) + " m" +
+                        " | " + String.format(Locale.US, "%.0f", o.optDouble("rot", 0)) + " deg";
+                    if ("light".equals(type) && !o.optString("fixtureId", "").isEmpty()) {
+                        line += " | " + o.optString("fixtureId");
+                    }
+                    if ("light".equals(type) && o.has("beamAngleDeg")) {
+                        line += " | beam " + String.format(Locale.US, "%.1f", o.optDouble("beamAngleDeg", 0)) + " deg";
+                    }
+                    paragraph(line, 9f, false);
+                }
+            }
+        }
+
+        private void drawSetupMap(JSONObject planJson) {
+            JSONObject diagram = planJson.optJSONObject("lighting_diagram");
+            JSONArray lights = diagram == null ? null : diagram.optJSONArray("lights");
+            float mapH = 420f;
+            ensure(mapH + 28f);
+            float left = MARGIN;
+            float top = y + 8f;
+            Paint fill = paint(PANEL, Paint.Style.FILL, 1f);
+            Paint border = paint(Color.rgb(180, 184, 191), Paint.Style.STROKE, 1.2f);
+            canvas.drawRoundRect(new RectF(left, top, left + CONTENT_W, top + mapH), 10f, 10f, fill);
+            canvas.drawRoundRect(new RectF(left, top, left + CONTENT_W, top + mapH), 10f, 10f, border);
+
+            float sx = left + CONTENT_W * 0.50f;
+            float sy = top + mapH * 0.50f;
+            node(sx, sy, 16f, Color.rgb(55, 59, 65), sr ? "SUBJEKAT" : "SUBJECT", Color.WHITE);
+
+            float cx = left + CONTENT_W * 0.50f;
+            float cy = top + mapH * 0.90f;
+            node(cx, cy, 15f, Color.rgb(85, 89, 95), sr ? "KAMERA" : "CAMERA", Color.WHITE);
+
+            if (lights != null) {
+                Paint ray = paint(Color.rgb(145, 116, 30), Paint.Style.STROKE, 1.2f);
+                for (int i = 0; i < lights.length(); i++) {
+                    JSONObject light = lights.optJSONObject(i);
+                    if (light == null) continue;
+                    float x = (float) Math.max(5, Math.min(95, light.optDouble("x", 50)));
+                    float yy = (float) Math.max(5, Math.min(95, light.optDouble("y", 50)));
+                    float px = left + CONTENT_W * x / 100f;
+                    float py = top + mapH * yy / 100f;
+                    canvas.drawLine(px, py, sx, sy, ray);
+                    String id = light.optString("id", "L" + (i + 1));
+                    node(px, py, 14f, ACCENT, id, Color.rgb(25, 25, 25));
+                }
+            }
+            y = top + mapH + 18f;
+
+            if (lights != null && lights.length() > 0) {
+                section(sr ? "LEGENDA RASVETE" : "LIGHTING LEGEND");
+                for (int i = 0; i < lights.length(); i++) {
+                    JSONObject light = lights.optJSONObject(i);
+                    if (light == null) continue;
+                    String line = light.optString("id", "L" + (i + 1)) + " - " +
+                        light.optString("fixture", "") +
+                        (light.optString("role", "").isEmpty() ? "" : " | " + light.optString("role")) +
+                        (light.optString("direction", "").isEmpty() ? "" : " | " + light.optString("direction"));
+                    paragraph(line, 9.6f, false);
+                    JSONArray accessories = light.optJSONArray("accessories");
+                    if (accessories != null && accessories.length() > 0) {
+                        List<String> names = new ArrayList<>();
+                        for (int a = 0; a < accessories.length(); a++) names.add(String.valueOf(accessories.opt(a)));
+                        paragraph((sr ? "Dodaci: " : "Accessories: ") + join(names, ", "), 9f, false);
+                    }
+                }
+            }
+        }
+
+        private void node(float x, float yy, float radius, int color, String label, int textColor) {
+            Paint p = paint(color, Paint.Style.FILL, 1f);
+            canvas.drawCircle(x, yy, radius, p);
+            Paint t = textPaint(7.8f, true, textColor);
+            t.setTextAlign(Paint.Align.CENTER);
+            canvas.drawText(label, x, yy + 2.7f, t);
+            t.setTextAlign(Paint.Align.LEFT);
+        }
+
+        private void planSection(JSONObject planJson, String key, String label) {
+            Object value = planJson.opt(key);
+            if (value == null || JSONObject.NULL.equals(value)) return;
+            String rendered;
+            if (value instanceof JSONArray) {
+                JSONArray a = (JSONArray) value;
+                List<String> items = new ArrayList<>();
+                for (int i = 0; i < a.length(); i++) items.add("- " + String.valueOf(a.opt(i)));
+                rendered = join(items, "\n");
+            } else if (value instanceof JSONObject) {
+                JSONObject o = (JSONObject) value;
+                List<String> items = new ArrayList<>();
+                JSONArray names = o.names();
+                if (names != null) for (int i = 0; i < names.length(); i++) {
+                    String name = names.optString(i);
+                    items.add(name + ": " + String.valueOf(o.opt(name)));
+                }
+                rendered = join(items, " | ");
+            } else {
+                rendered = String.valueOf(value);
+            }
+            if (rendered.trim().isEmpty()) return;
+            section(label);
+            paragraph(rendered, 10.4f, false);
+        }
+
+        private void drawImage(String dataUrl, String label) {
+            Bitmap bitmap = decodeBitmap(dataUrl);
+            if (bitmap == null) return;
+            try {
+                section(label);
+                float maxH = 300f;
+                float scale = Math.min(CONTENT_W / bitmap.getWidth(), maxH / bitmap.getHeight());
+                float w = Math.max(1f, bitmap.getWidth() * scale);
+                float h = Math.max(1f, bitmap.getHeight() * scale);
+                ensure(h + 16f);
+                float left = MARGIN + (CONTENT_W - w) / 2f;
+                canvas.drawBitmap(bitmap, null, new RectF(left, y, left + w, y + h), paint(Color.WHITE, Paint.Style.FILL, 1f));
+                y += h + 14f;
+            } finally {
+                bitmap.recycle();
+            }
+        }
+
+        private Bitmap decodeBitmap(String dataUrl) {
+            try {
+                if (dataUrl == null || !dataUrl.startsWith("data:image/")) return null;
+                int comma = dataUrl.indexOf(',');
+                if (comma < 0) return null;
+                byte[] bytes = Base64.decode(dataUrl.substring(comma + 1), Base64.DEFAULT);
+                if (bytes.length == 0 || bytes.length > MAX_IMAGE_BYTES) return null;
+                BitmapFactory.Options bounds = new BitmapFactory.Options();
+                bounds.inJustDecodeBounds = true;
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.length, bounds);
+                int sample = 1;
+                while (bounds.outWidth / sample > 1800 || bounds.outHeight / sample > 1800) sample *= 2;
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = sample;
+                return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+
+        private void newPage() {
+            finishPage();
+            pageNumber++;
+            page = document.startPage(new PdfDocument.PageInfo.Builder(PAGE_W, PAGE_H, pageNumber).create());
+            canvas = page.getCanvas();
+            canvas.drawColor(Color.WHITE);
+            Paint brand = textPaint(10f, true, INK);
+            canvas.drawText("LIGHTINGAI", MARGIN, 28f, brand);
+            Paint line = paint(ACCENT, Paint.Style.FILL, 1f);
+            canvas.drawRect(MARGIN, 34f, PAGE_W - MARGIN, 36f, line);
+            y = 58f;
+        }
+
+        private void finishPage() {
+            if (page == null) return;
+            Paint footer = textPaint(8.5f, false, MUTED);
+            canvas.drawText((sr ? "Strana " : "Page ") + pageNumber, PAGE_W - MARGIN - 44f, PAGE_H - 20f, footer);
+            document.finishPage(page);
+            page = null;
+            canvas = null;
+        }
+
+        private void title(String value) {
+            ensure(38f);
+            Paint p = textPaint(20f, true, INK);
+            canvas.drawText(value, MARGIN, y, p);
+            y += 28f;
+        }
+
+        private void section(String value) {
+            ensure(34f);
+            y += 8f;
+            Paint bar = paint(ACCENT, Paint.Style.FILL, 1f);
+            canvas.drawRect(MARGIN, y - 12f, MARGIN + 4f, y + 9f, bar);
+            Paint p = textPaint(12f, true, INK);
+            canvas.drawText(value, MARGIN + 12f, y + 4f, p);
+            y += 18f;
+        }
+
+        private void paragraph(String value, float size, boolean bold) {
+            String text = value == null ? "" : value.trim();
+            if (text.isEmpty()) {
+                small(sr ? "Nema podataka." : "No data.", MUTED);
+                return;
+            }
+            Paint p = textPaint(size, bold, INK);
+            String[] paragraphs = text.replace("\r", "").split("\n", -1);
+            float lineHeight = size * 1.48f;
+            for (String part : paragraphs) {
+                if (part.trim().isEmpty()) {
+                    gap(lineHeight * 0.6f);
+                    continue;
+                }
+                List<String> lines = wrap(part.trim(), p, CONTENT_W);
+                for (String line : lines) {
+                    ensure(lineHeight + 2f);
+                    canvas.drawText(line, MARGIN, y, p);
+                    y += lineHeight;
+                }
+            }
+            y += 3f;
+        }
+
+        private void small(String value, int color) {
+            ensure(16f);
+            Paint p = textPaint(9.5f, false, color);
+            canvas.drawText(value == null ? "" : value, MARGIN, y, p);
+            y += 14f;
+        }
+
+        private void gap(float amount) {
+            ensure(amount);
+            y += amount;
+        }
+
+        private void ensure(float required) {
+            if (page == null) newPage();
+            if (y + required > PAGE_H - 42f) newPage();
+        }
+
+        private Paint paint(int color, Paint.Style style, float stroke) {
+            Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+            p.setColor(color);
+            p.setStyle(style);
+            p.setStrokeWidth(stroke);
+            return p;
+        }
+
+        private Paint textPaint(float size, boolean bold, int color) {
+            Paint p = paint(color, Paint.Style.FILL, 1f);
+            p.setTextSize(size);
+            p.setTypeface(Typeface.create("sans-serif", bold ? Typeface.BOLD : Typeface.NORMAL));
+            return p;
+        }
+
+        private List<String> wrap(String value, Paint paint, float width) {
+            List<String> out = new ArrayList<>();
+            String[] words = value.split("\\s+");
+            StringBuilder line = new StringBuilder();
+            for (String word : words) {
+                if (word.isEmpty()) continue;
+                String candidate = line.length() == 0 ? word : line + " " + word;
+                if (paint.measureText(candidate) <= width) {
+                    line.setLength(0);
+                    line.append(candidate);
+                } else {
+                    if (line.length() > 0) out.add(line.toString());
+                    if (paint.measureText(word) <= width) {
+                        line.setLength(0);
+                        line.append(word);
+                    } else {
+                        StringBuilder chunk = new StringBuilder();
+                        for (int i = 0; i < word.length(); i++) {
+                            char ch = word.charAt(i);
+                            String next = chunk.toString() + ch;
+                            if (paint.measureText(next) > width && chunk.length() > 0) {
+                                out.add(chunk.toString());
+                                chunk.setLength(0);
+                            }
+                            chunk.append(ch);
+                        }
+                        line.setLength(0);
+                        line.append(chunk);
+                    }
+                }
+            }
+            if (line.length() > 0) out.add(line.toString());
+            if (out.isEmpty()) out.add("");
+            return out;
+        }
+
+        private static String join(List<String> values, String separator) {
+            StringBuilder out = new StringBuilder();
+            for (String value : values) {
+                if (out.length() > 0) out.append(separator);
+                out.append(value);
+            }
+            return out.toString();
+        }
     }
 
     private void saveToPictures(String filename, ImageData image) throws Exception {

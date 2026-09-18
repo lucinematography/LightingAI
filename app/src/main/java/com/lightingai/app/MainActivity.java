@@ -235,6 +235,13 @@ public class MainActivity extends Activity {
             null));
     }
 
+    void notifyAIVisualPdfResult(String quotedFilename, boolean ok) {
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIPdfExportResult&&window.LightingAIPdfExportResult(" + (ok ? "true" : "false") + "," + quotedFilename + ");",
+            null));
+    }
+
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
         pendingGalleryPersistable = false;
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);

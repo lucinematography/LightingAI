@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 const STABLE_BASE = '77462ab3cf80c48c5ca0c903486e59919a3bf747';
 const PHONE_TESTED_BASE = 'a2913dedf00d8ddf18930e56d6bf2e862993f92c';
 const MAIN686_BASE = '9fb1cb24cabf41d45baed2fb6e9cf6c4a737f1a7';
+const PROJECT54_PHONE_BASE = '3827f81400ff8abd1e83e6b8e416f8ee628fce94';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -15,7 +16,8 @@ function fail(message) {
 for (const [label, sha] of [
   ['stable build 510', STABLE_BASE],
   ['phone-tested build 655', PHONE_TESTED_BASE],
-  ['phone-verified Planner build 686', MAIN686_BASE]
+  ['phone-verified Planner build 686', MAIN686_BASE],
+  ['phone-tested Project 5.4 build 701', PROJECT54_PHONE_BASE]
 ]) {
   try { git(['cat-file', '-e', `${sha}^{commit}`]); }
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
@@ -30,7 +32,8 @@ try {
 
 for (const [label, sha] of [
   ['phone-tested build 655', PHONE_TESTED_BASE],
-  ['phone-verified Planner build 686', MAIN686_BASE]
+  ['phone-verified Planner build 686', MAIN686_BASE],
+  ['phone-tested Project 5.4 build 701', PROJECT54_PHONE_BASE]
 ]) {
   try { git(['merge-base', '--is-ancestor', sha, 'HEAD']); }
   catch { fail(`feature branch no longer descends from ${label}`); }
@@ -38,12 +41,13 @@ for (const [label, sha] of [
 
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
-const changed = git(['diff', '--name-only', `${MAIN686_BASE}...HEAD`])
+const changed = git(['diff', '--name-only', `${PROJECT54_PHONE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
 
 const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
+const aiPlanPath = 'app/src/main/assets/ai-visual-scene-plan.js';
 const exactAllowed = new Set([
-  measurePath,
+  aiPlanPath,
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -55,7 +59,6 @@ for (const protectedPath of [
   'app/src/main/assets/light-calculator.js',
   'app/src/main/assets/project-backup-export.js',
   'app/src/main/assets/ai-visual-scene-launcher.js',
-  'app/src/main/assets/ai-visual-scene-plan.js',
   'app/src/main/assets/ai-visual-preview-refinements.js',
   'app/src/main/assets/ai-visual-phone-diagnostics.js',
   'app/src/main/java/com/lightingai/app/MainActivity.java',
@@ -64,9 +67,9 @@ for (const protectedPath of [
   'backend/server.js',
   'backend/visual-preview.js'
 ]) {
-  const stable = git(['show', `${MAIN686_BASE}:${protectedPath}`]);
+  const stable = git(['show', `${PROJECT54_PHONE_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
-  if (stable !== current) fail(`build 686 protected file changed unexpectedly: ${protectedPath}`);
+  if (stable !== current) fail(`build 701 protected file changed unexpectedly: ${protectedPath}`);
 }
 
 // Preserve the historical non-destructive catalog contract required by Project 5 safety.
@@ -78,7 +81,9 @@ if (!currentCatalog.includes("file:///android_asset/ai-visual-scene-launcher.js"
 }
 if (!stableCatalog.trim()) fail('catalog.js may not delete stable build 510 code');
 
+const stableMeasure = git(['show', `${PROJECT54_PHONE_BASE}:${measurePath}`]);
 const measure = git(['show', `HEAD:${measurePath}`]);
+if (stableMeasure !== measure) fail('phone-tested Project 5.4 camera measurement changed unexpectedly');
 for (const marker of [
   'ImageFormat.DEPTH16',
   'CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT',
@@ -109,9 +114,10 @@ console.log(JSON.stringify({
   legacyStableBase: STABLE_BASE,
   phoneTestedBase: PHONE_TESTED_BASE,
   project54Base: MAIN686_BASE,
-  stableBuilds: [510, 655, 686],
+  project55Base: PROJECT54_PHONE_BASE,
+  stableBuilds: [510, 655, 686, 701],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'phone-verified Planner order, catalog, AI visual flow, backup, MainActivity, SUNCE and backend remain byte-for-byte on build 686',
-  featureSurface: 'Camera distance: DEPTH16 when supported, tilt geometry fallback otherwise'
+  protectedByDefault: 'phone-tested build 701 camera measurement, Planner order, catalog, backup, MainActivity, SUNCE, backend and all non-target AI visual files remain byte-for-byte',
+  featureSurface: 'Project 5.5 DP request field feeding the existing AI visual plan and photo-preview context'
 }, null, 2));

@@ -9,7 +9,8 @@ const expected=[
   'godox-la600r','godox-la600bi','godox-p600r-hard','godox-p1200r-hard',
   'godox-f200bi','godox-f400bi','godox-f600bi','godox-tp2r','godox-tp4r','godox-tp8r',
   'godox-mg1200bi','godox-mg2400bi','godox-mg1200r','godox-mg2400r','godox-ms60bi','godox-ms60r',
-  'godox-m200d','godox-m300d','godox-m200bi','godox-m300bi','godox-p300r','godox-p600r'
+  'godox-m200d','godox-m300d','godox-m200bi','godox-m300bi','godox-p300r','godox-p600r',
+  'godox-f100r','godox-f200r','godox-f200sr','godox-f400r','godox-f800r'
 ];
 const failures=[];
 for(const id of expected) if(!ids.has(id)) failures.push('Missing required Godox fixture: '+id);

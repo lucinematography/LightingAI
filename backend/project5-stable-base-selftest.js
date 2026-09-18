@@ -101,6 +101,8 @@ const exactAllowed = new Set([
   'backend/desisti-catalog-selftest.js',
   'backend/godox-continuous-library.js',
   'backend/godox-catalog-selftest.js',
+  'backend/aladdin-mosaic-library.js',
+  'backend/aladdin-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'
 ]);
@@ -288,5 +290,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Project 5 catalog expansion: add Godox continuous-light catalog and brand folder without changing Planner layout'
+  featureSurface: 'Project 5 catalog expansion: add Godox and Aladdin continuous-light catalogs and brand folders without changing Planner layout'
 }, null, 2));

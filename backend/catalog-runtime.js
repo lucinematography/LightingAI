@@ -85,6 +85,7 @@ import { DESISTI_HMI_FIXTURES, DESISTI_HMI_ACCESSORIES } from './desisti-hmi-lib
 import { DESISTI_CONVENTIONAL_EXTRA_FIXTURES, DESISTI_CONVENTIONAL_EXTRA_ACCESSORIES } from './desisti-conventional-extra-library.js';
 import { GODOX_CONTINUOUS_FIXTURES, GODOX_CONTINUOUS_ACCESSORIES } from './godox-continuous-library.js';
 import { ALADDIN_MOSAIC_FIXTURES, ALADDIN_MOSAIC_ACCESSORIES } from './aladdin-mosaic-library.js';
+import { ALADDIN_FABRIC_LITE_FIXTURES, ALADDIN_FABRIC_LITE_ACCESSORIES } from './aladdin-fabric-lite-library.js';
 import { applyAccessoryCompatibilityOverrides } from './accessory-compatibility-overrides.js';
 import { applyCatalogCompatibilityCorrections } from './catalog-compatibility-corrections.js';
 import { applyElectroStormCanonicalCorrections } from './electro-storm-canonical-corrections.js';
@@ -138,6 +139,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(DESISTI_CONVENTIONAL_EXTRA_FIXTURES));
   fixtures.push(...clone(GODOX_CONTINUOUS_FIXTURES));
   fixtures.push(...clone(ALADDIN_MOSAIC_FIXTURES));
+  fixtures.push(...clone(ALADDIN_FABRIC_LITE_FIXTURES));
   const kits = [...clone(ARRI_SKYPANEL_KITS), ...clone(ARRI_TUNGSTEN_KITS)];
   const accessoryDefinitions = [...clone(ACCESSORY_LIBRARY), ...clone(ADDITIONAL_ACCESSORY_LIBRARY), ...clone(SPOTLIGHT_ACCESSORY_LIBRARY), ...clone(SPACE_LIGHT_ACCESSORY_LIBRARY), ...clone(STORM_80C_ADAPTED_ACCESSORY_LIBRARY), ...clone(APUTURE_MOUNT_SYSTEM_LIBRARY), ...clone(STORM_SUPPORT_CONTROL_LIBRARY), ...clone(ELECTRO_STORM_TRANSPORT_POWER_LIBRARY), ...clone(ELECTRO_STORM_SYSTEM_ACCESSORY_LIBRARY), ...clone(ARRI_SKYPANEL_X_ACCESSORIES), ...clone(ARRI_SKYPANEL_PRO_ACCESSORIES), ...clone(ARRI_SKYPANEL_CLASSIC_S30_ACCESSORIES), ...clone(ARRI_SKYPANEL_CLASSIC_S60_ACCESSORIES), ...clone(ARRI_SKYPANEL_CLASSIC_S120_ACCESSORIES), ...clone(ARRI_SKYPANEL_CLASSIC_S360_ACCESSORIES), ...clone(ARRI_SKYPANEL_DISCONTINUED_ACCESSORIES), ...clone(ARRI_L_SERIES_PLUS_ACCESSORIES), ...clone(ARRI_ORBITER_ACCESSORIES), ...clone(ARRI_L_SERIES_C_DISCONTINUED_ACCESSORIES), ...clone(ARRI_L_SERIES_DT_TT_DISCONTINUED_ACCESSORIES), ...clone(ARRI_CASTER_SERIES_DISCONTINUED_ACCESSORIES), ...clone(ARRI_M_SERIES_M8_ACCESSORIES), ...clone(ARRI_M_SERIES_M18_ACCESSORIES), ...clone(ARRI_M_SERIES_M40_ACCESSORIES), ...clone(ARRI_M_SERIES_M90_ACCESSORIES), ...clone(ARRI_M_SERIES_ARRIMAX_18_12_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_D5_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_D12_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_D25_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_D40_ACCESSORIES), ...clone(ARRI_DAYLIGHT_18_12_ACCESSORIES), ...clone(ARRI_ARRISUN_DISCONTINUED_ACCESSORIES), ...clone(ARRI_ARRISUN_EVENT_DISCONTINUED_ACCESSORIES), ...clone(ARRI_COMPACT_THEATER_DISCONTINUED_ACCESSORIES), ...clone(ARRI_COMPACT_DISCONTINUED_ACCESSORIES), ...clone(ARRI_ARRILUX_DISCONTINUED_ACCESSORIES), ...clone(ARRI_X_SERIES_DISCONTINUED_ACCESSORIES), ...clone(ARRI_ARRILITE_PLUS_ACCESSORIES), ...clone(ARRI_JUNIOR_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_T1_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_T2_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_T5_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_ST1_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_ST2_3_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_ST5_ACCESSORIES), ...clone(ARRI_TRUE_BLUE_ST_THEATER_ACCESSORIES), ...clone(ARRI_STUDIO_T_ACCESSORIES), ...clone(ARRI_TUNGSTEN_DISCONTINUED_ACCESSORIES)];
   accessoryDefinitions.push(...clone(ASTERA_TITANTUBE_ACCESSORIES));
@@ -176,6 +178,7 @@ export function buildRuntimeCatalog() {
   accessoryDefinitions.push(...clone(DESISTI_CONVENTIONAL_EXTRA_ACCESSORIES));
   accessoryDefinitions.push(...clone(GODOX_CONTINUOUS_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_MOSAIC_ACCESSORIES));
+  accessoryDefinitions.push(...clone(ALADDIN_FABRIC_LITE_ACCESSORIES));
   const duplicateAccessoryIds = [];
   const accessoriesById = new Map();
   for (const acc of accessoryDefinitions) {

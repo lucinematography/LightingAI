@@ -3,7 +3,7 @@ import { buildRuntimeCatalog } from './catalog-runtime.js';
 const catalog=buildRuntimeCatalog();
 const fixtures=catalog.fixtures.filter(x=>x.manufacturer==='Aladdin');
 const accessories=catalog.accessories.filter(x=>x.manufacturer==='Aladdin');
-const expected=['aladdin-mosaic-2x4','aladdin-mosaic-4x4','aladdin-mosaic-3x6'];
+const expected=['aladdin-mosaic-2x4','aladdin-mosaic-4x4','aladdin-mosaic-3x6','aladdin-fabric-lite-20','aladdin-fabric-lite-35'];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];
 for(const id of expected) if(!ids.has(id)) failures.push('Missing required Aladdin fixture: '+id);

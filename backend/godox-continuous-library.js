@@ -15,6 +15,7 @@ const P300R='https://www.godox.com/Downloads/KNOWLED_P300R.pdf';
 const P600R='https://www.godox.com/Downloads/KNOWLED_P600R.pdf';
 const F100_200R='https://www.godox.com/Downloads/KNOWLED_F100R_F200R_F200SR.pdf';
 const KNOWLED_FULL_COLOR_MATS='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
+const C_CREATIVE='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
   return {
@@ -60,7 +61,10 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-f200r','F200R','KNOWLED Flexible LED Mat',1800,10000,250,'IP54',F100_200R,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:98,control:['DMX512','RDM','CRMX','Bluetooth/App']}),
   fixture('godox-f200sr','F200SR','KNOWLED Flexible LED Mat',1800,10000,250,'IP54',F100_200R,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:98,control:['DMX512','RDM','CRMX','Bluetooth/App']}),
   fixture('godox-f400r','F400R','KNOWLED Flexible LED Mat',1800,10000,460,'IP54',KNOWLED_FULL_COLOR_MATS,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:97,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App']}),
-  fixture('godox-f800r','F800R','KNOWLED Flexible LED Mat',1800,10000,900,'IP54',KNOWLED_FULL_COLOR_MATS,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:97,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App']})
+  fixture('godox-f800r','F800R','KNOWLED Flexible LED Mat',1800,10000,900,'IP54',KNOWLED_FULL_COLOR_MATS,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:97,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App']}),
+  fixture('godox-c5r','C5R','KNOWLED Creative Light',2500,8500,5,null,C_CREATIVE,'RGBWW',{formFactor:'Pocket Creative Light',cri:96,tlci:97,control:['On-board','Bluetooth/App'],battery:'Built-in 3000mAh rechargeable'}),
+  fixture('godox-c7r','C7R','KNOWLED Creative Bulb',2000,10000,7,null,C_CREATIVE,'RGBWW',{formFactor:'E26/E27 Creative Bulb',cri:96,tlci:97,control:['On-board','Bluetooth/App'],battery:'Built-in rechargeable'}),
+  fixture('godox-c10r','C10R','KNOWLED Creative Bulb',2000,10000,10,null,C_CREATIVE,'RGBWW',{formFactor:'E26/E27 Creative Bulb',cri:96,tlci:97,control:['On-board','Bluetooth/App'],powerSupply:'AC lamp socket / USB-C DC'})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -77,6 +81,7 @@ const m200m300=['godox-m200d','godox-m300d','godox-m200bi','godox-m300bi'];
 const p300r=['godox-p300r'];
 const p600r=['godox-p600r'];
 const fullColorMats=['godox-f100r','godox-f200r','godox-f200sr','godox-f400r','godox-f800r'];
+const cCreative=['godox-c5r','godox-c7r','godox-c10r'];
 
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
   return {
@@ -156,5 +161,9 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-fa-full-color','FA100/FA200/FA200S/FA400/FA800 Air Softbox Kit','Softbox',fullColorMats,KNOWLED_FULL_COLOR_MATS,'Inflatable softbox family matched to the full-color flexible mats.'),
   acc('godox-fp-full-color','FP200/FP400/FP600 Pancake Lantern','Lantern',['godox-f200r','godox-f400r','godox-f800r'],KNOWLED_FULL_COLOR_MATS,'Creates a broad soft field for overhead and location lighting.'),
   acc('godox-f-dc-full-color','F-DC5D/F-DC5E/F-DC10E DC Cable','Power Cable',fullColorMats,KNOWLED_FULL_COLOR_MATS,'Official extension cabling for the full-color flexible mat family.'),
-  acc('godox-f-softbox-skirt','SS-FS100/200/200S/400/800 Softbox Skirt','Light Control',fullColorMats,KNOWLED_FULL_COLOR_MATS,'Controls spill from the matching K1 softbox kits.')
+  acc('godox-f-softbox-skirt','SS-FS100/200/200S/400/800 Softbox Skirt','Light Control',fullColorMats,KNOWLED_FULL_COLOR_MATS,'Controls spill from the matching K1 softbox kits.'),
+  acc('godox-c5r-diffuser','C5R Collapsible Diffuser','Diffusion',['godox-c5r'],C_CREATIVE,'Softens the pocket light output for close practical and accent work.'),
+  acc('godox-c5r-charging-kit','C5R 8-Light Charging Kit','Charging', ['godox-c5r'], C_CREATIVE,'Stores and charges multiple C5R units for production use.'),
+  acc('godox-c7r-charging-kit','C7R 8-Light Charging Kit','Charging',['godox-c7r'],C_CREATIVE,'Charges and transports multiple C7R creative bulbs.'),
+  acc('godox-c-creative-usbc','USB-C Power/Charging Cable','Power Cable',cCreative,C_CREATIVE,'Provides USB-C power or charging where supported.')
 ];

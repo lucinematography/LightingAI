@@ -422,6 +422,19 @@ public final class AIVisualImageBridge {
         private void drawSetupMap(JSONObject planJson) {
             JSONObject diagram = planJson.optJSONObject("lighting_diagram");
             JSONArray lights = diagram == null ? null : diagram.optJSONArray("lights");
+            JSONArray subjects = diagram == null ? null : diagram.optJSONArray("subjects");
+            if (subjects == null || subjects.length() == 0) {
+                subjects = new JSONArray();
+                JSONObject fallback = new JSONObject();
+                try {
+                    fallback.put("id", "S1");
+                    fallback.put("label", sr ? "Glumac" : "Subject");
+                    fallback.put("x", 50);
+                    fallback.put("y", 50);
+                    subjects.put(fallback);
+                } catch (Exception ignored) {}
+            }
+
             float mapH = 420f;
             ensure(mapH + 28f);
             float left = MARGIN;
@@ -431,9 +444,22 @@ public final class AIVisualImageBridge {
             canvas.drawRoundRect(new RectF(left, top, left + CONTENT_W, top + mapH), 10f, 10f, fill);
             canvas.drawRoundRect(new RectF(left, top, left + CONTENT_W, top + mapH), 10f, 10f, border);
 
-            float sx = left + CONTENT_W * 0.50f;
-            float sy = top + mapH * 0.50f;
-            node(sx, sy, 16f, Color.rgb(55, 59, 65), sr ? "SUBJEKAT" : "SUBJECT", Color.WHITE);
+            java.util.Map<String, float[]> subjectPoints = new java.util.HashMap<>();
+            for (int i = 0; i < subjects.length(); i++) {
+                JSONObject subject = subjects.optJSONObject(i);
+                if (subject == null) continue;
+                String id = subject.optString("id", "S" + (i + 1));
+                float x = (float) Math.max(5, Math.min(95, subject.optDouble("x", 50)));
+                float yy = (float) Math.max(5, Math.min(95, subject.optDouble("y", 50)));
+                float px = left + CONTENT_W * x / 100f;
+                float py = top + mapH * yy / 100f;
+                subjectPoints.put(id, new float[]{px, py});
+                node(px, py, 13f, Color.rgb(55, 59, 65), id, Color.WHITE);
+                Paint label = textPaint(7.2f, false, INK);
+                label.setTextAlign(Paint.Align.CENTER);
+                canvas.drawText(subject.optString("label", id), px, py + 24f, label);
+                label.setTextAlign(Paint.Align.LEFT);
+            }
 
             float cx = left + CONTENT_W * 0.50f;
             float cy = top + mapH * 0.90f;
@@ -448,21 +474,48 @@ public final class AIVisualImageBridge {
                     float yy = (float) Math.max(5, Math.min(95, light.optDouble("y", 50)));
                     float px = left + CONTENT_W * x / 100f;
                     float py = top + mapH * yy / 100f;
-                    canvas.drawLine(px, py, sx, sy, ray);
+                    JSONArray targets = light.optJSONArray("targets");
+                    boolean drewTarget = false;
+                    if (targets != null) {
+                        for (int t = 0; t < targets.length(); t++) {
+                            float[] point = subjectPoints.get(targets.optString(t, ""));
+                            if (point == null) continue;
+                            canvas.drawLine(px, py, point[0], point[1], ray);
+                            drewTarget = true;
+                        }
+                    }
+                    if (!drewTarget) {
+                        for (float[] point : subjectPoints.values()) canvas.drawLine(px, py, point[0], point[1], ray);
+                    }
                     String id = light.optString("id", "L" + (i + 1));
                     node(px, py, 14f, ACCENT, id, Color.rgb(25, 25, 25));
                 }
             }
             y = top + mapH + 18f;
 
+            section(sr ? "GLUMCI / SUBJEKTI" : "ACTORS / SUBJECTS");
+            for (int i = 0; i < subjects.length(); i++) {
+                JSONObject subject = subjects.optJSONObject(i);
+                if (subject == null) continue;
+                String line = subject.optString("id", "S" + (i + 1)) + " - " +
+                    subject.optString("label", sr ? "Glumac" : "Subject") +
+                    " | x " + String.format(Locale.US, "%.1f", subject.optDouble("x", 50)) +
+                    " | y " + String.format(Locale.US, "%.1f", subject.optDouble("y", 50));
+                paragraph(line, 9.4f, false);
+            }
+
             if (lights != null && lights.length() > 0) {
                 section(sr ? "LEGENDA RASVETE" : "LIGHTING LEGEND");
                 for (int i = 0; i < lights.length(); i++) {
                     JSONObject light = lights.optJSONObject(i);
                     if (light == null) continue;
+                    JSONArray targets = light.optJSONArray("targets");
+                    List<String> targetNames = new ArrayList<>();
+                    if (targets != null) for (int t = 0; t < targets.length(); t++) targetNames.add(targets.optString(t));
                     String line = light.optString("id", "L" + (i + 1)) + " - " +
                         light.optString("fixture", "") +
                         (light.optString("role", "").isEmpty() ? "" : " | " + light.optString("role")) +
+                        (targetNames.isEmpty() ? "" : " | " + (sr ? "cilj " : "targets ") + join(targetNames, ", ")) +
                         (light.optString("direction", "").isEmpty() ? "" : " | " + light.optString("direction"));
                     paragraph(line, 9.6f, false);
                     JSONArray accessories = light.optJSONArray("accessories");

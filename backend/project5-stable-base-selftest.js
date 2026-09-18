@@ -95,6 +95,7 @@ const exactAllowed = new Set([
   'backend/desisti-softled-vwc-library.js',
   'backend/desisti-muses-library.js',
   'backend/desisti-tungsten-library.js',
+  'backend/desisti-tungsten-soft-broad-library.js',
   'backend/desisti-hmi-library.js',
   'backend/desisti-catalog-selftest.js',
   'backend/package.json',

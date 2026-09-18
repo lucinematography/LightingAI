@@ -30,13 +30,16 @@ const expected=[
   'desisti-softled-4-vwc','desisti-softled-8-vwc','desisti-softled-12-vwc','desisti-softled-2xl-vwc','desisti-softled-8xl-vwc',
   'desisti-muse-melpomene','desisti-muse-tersicore','desisti-muse-clio','desisti-muse-clio-medium',
   'desisti-muse-polymnia','desisti-muse-erato','desisti-muse-euterpe','desisti-muse-talia',
-  'desisti-muse-aurea','desisti-muse-aurea-small'
+  'desisti-muse-aurea','desisti-muse-aurea-small',
+  'desisti-magis-300','desisti-magis-500','desisti-magis-650','desisti-leonardo-1kw','desisti-leonardo-2kw','desisti-leonardo-multipower','desisti-leonardo-5kw','desisti-leonardo-piccolo-10-12kw','desisti-super-leo-10-12kw','desisti-super-leo-20-24kw',
+  'desisti-rembrandt-200w-mk2','desisti-rembrandt-575w-mk2','desisti-rembrandt-piccolo-1200w','desisti-rembrandt-1-2-2-5kw','desisti-rembrandt-2-5-4kw','desisti-rembrandt-piccolo-6kw','desisti-rembrandt-piccolo-6-12kw-mk2','desisti-rembrandt-12-18kw-mk2',
+  'desisti-remington-575w','desisti-remington-1200w','desisti-remington-2-5-4kw','desisti-remington-6kw','desisti-remington-6-12kw'
 ];
 
 const failures=[];
 for(const id of expected) if(!fixtureIds.has(id)) failures.push('Missing required De Sisti fixture: '+id);
 if(fixtures.length<expected.length) failures.push('De Sisti fixture count below locked baseline: '+fixtures.length+' < '+expected.length);
-if(accessories.length<150) failures.push('De Sisti accessory count below locked baseline: '+accessories.length+' < 150');
+if(accessories.length<175) failures.push('De Sisti accessory count below locked baseline: '+accessories.length+' < 175');
 
 for(const f of fixtures){
   if(!/^https:\/\/(?:www\.)?desisti\.it\//i.test(f.sourceUrl||'')) failures.push('Non-official De Sisti fixture source: '+f.id);

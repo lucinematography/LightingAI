@@ -17,6 +17,7 @@ const F100_200R='https://www.godox.com/Downloads/KNOWLED_F100R_F200R_F200SR.pdf'
 const KNOWLED_FULL_COLOR_MATS='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const C_CREATIVE='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const LA150_300='https://godox.com/product-c/LA150R-LA200R-LA300R-LA300Bi.html';
+const LP_SERIES='https://www.godox.com/product-b/LP-Series.html';
 const TL_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
@@ -94,6 +95,9 @@ const fullColorMats=['godox-f100r','godox-f200r','godox-f200sr','godox-f400r','g
 const cCreative=['godox-c5r','godox-c7r','godox-c10r'];
 const la150300=['godox-la150r','godox-la200r','godox-la300r','godox-la300bi'];
 const la300=['godox-la300r','godox-la300bi'];
+const lpSmall=['godox-lp400r','godox-lp600r','godox-lp400bi','godox-lp600bi'];
+const lp1200=['godox-lp1200r','godox-lp1200bi'];
+const lpAll=[...lpSmall,...lp1200];
 const tl30=['godox-tl30'];
 const tl60plus=['godox-tl60','godox-tl120','godox-tl180'];
 const tlAll=['godox-tl30',...tl60plus];

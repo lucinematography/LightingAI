@@ -88,6 +88,7 @@ const exactAllowed = new Set([
   'backend/desisti-led-fresnel-series-library.js',
   'backend/desisti-piccoletto-library.js',
   'backend/desisti-softled-library.js',
+  'backend/desisti-giotto-led-library.js',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -274,5 +275,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Project 5 catalog expansion: add verified De Sisti Soft LED families and accessories without changing Planner layout or existing manufacturer data'
+  featureSurface: 'Project 5 catalog expansion: add verified De Sisti Giotto Linear LED cyclorama family and accessories without changing Planner layout or existing manufacturer data'
 }, null, 2));

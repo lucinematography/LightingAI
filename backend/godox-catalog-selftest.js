@@ -6,7 +6,8 @@ const accessories=catalog.accessories.filter(x=>x.manufacturer==='Godox');
 const ids=new Set(fixtures.map(x=>x.id));
 const expected=[
   'godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro',
-  'godox-la600r','godox-la600bi','godox-p600r-hard','godox-p1200r-hard'
+  'godox-la600r','godox-la600bi','godox-p600r-hard','godox-p1200r-hard',
+  'godox-f200bi','godox-f400bi','godox-f600bi'
 ];
 const failures=[];
 for(const id of expected) if(!ids.has(id)) failures.push('Missing required Godox fixture: '+id);

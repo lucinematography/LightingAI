@@ -10,6 +10,7 @@ const PROJECT55_VOICE_BASE = '3e61ba6bbebf381c3b376af090aa385ac7e7d332';
 const PROJECT56_PDF_BASE = '6c4e2a644d2ff55dc7cf1e005a7c5d1892c6d0b1';
 const PROJECT57_MULTI_BASE = '48f497e26f882b2ff618667832dcb938e4750ba9';
 const PROJECT58_SUN_BASE = '0c13256a49160ba5c48fd3aa92c406f834f7e531';
+const PROJECT59_DMX_BASE = '3d112dd60da64fc66b42e61072ff2f012dfb6995';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -29,7 +30,8 @@ for (const [label, sha] of [
   ['Project 5.5 DP voice main build 727', PROJECT55_VOICE_BASE],
   ['Project 5.6 professional PDF main build 739', PROJECT56_PDF_BASE],
   ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE],
-  ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE]
+  ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE],
+  ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE]
 ]) {
   try { git(['cat-file', '-e', `${sha}^{commit}`]); }
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
@@ -51,7 +53,8 @@ for (const [label, sha] of [
   ['Project 5.5 DP voice main build 727', PROJECT55_VOICE_BASE],
   ['Project 5.6 professional PDF main build 739', PROJECT56_PDF_BASE],
   ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE],
-  ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE]
+  ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE],
+  ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE]
 ]) {
   try { git(['merge-base', '--is-ancestor', sha, 'HEAD']); }
   catch { fail(`feature branch no longer descends from ${label}`); }
@@ -59,7 +62,7 @@ for (const [label, sha] of [
 
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
-const changed = git(['diff', '--name-only', `${PROJECT58_SUN_BASE}...HEAD`])
+const changed = git(['diff', '--name-only', `${PROJECT59_DMX_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
 
 const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
@@ -70,8 +73,6 @@ const imageBridgePath = 'app/src/main/java/com/lightingai/app/AIVisualImageBridg
 const serverPath = 'backend/server.js';
 const exactAllowed = new Set([
   aiPlanPath,
-  imageBridgePath,
-  serverPath,
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -90,9 +91,9 @@ for (const protectedPath of [
   'app/src/main/AndroidManifest.xml',
   'backend/visual-preview.js'
 ]) {
-  const stable = git(['show', `${PROJECT58_SUN_BASE}:${protectedPath}`]);
+  const stable = git(['show', `${PROJECT59_DMX_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
-  if (stable !== current) fail(`build 753 protected file changed unexpectedly: ${protectedPath}`);
+  if (stable !== current) fail(`build 762 protected file changed unexpectedly: ${protectedPath}`);
 }
 
 // Preserve the historical non-destructive catalog contract required by Project 5 safety.
@@ -149,7 +150,8 @@ for (const marker of [
   'id="aiv-use-dmx"',
   'function activeDmxContext()',
   'dmx:dmxContext||undefined',
-  "dmxIntegrationVersion:'1.0-dmx-ai'"
+  "dmxIntegrationVersion:'1.0-dmx-ai'",
+  'function latestMeasurementByTarget(items,target){for(var i=0;i<items.length;i++)'
 ]) {
   if (!aiPlan.includes(marker)) fail(`DP request marker missing: ${marker}`);
 }
@@ -234,9 +236,10 @@ console.log(JSON.stringify({
   multiSubjectBase: PROJECT56_PDF_BASE,
   sunAiBase: PROJECT57_MULTI_BASE,
   dmxAiBase: PROJECT58_SUN_BASE,
-  stableBuilds: [510, 655, 686, 701, 713, 721, 727, 739, 746, 753],
+  finalQaBase: PROJECT59_DMX_BASE,
+  stableBuilds: [510, 655, 686, 701, 713, 721, 727, 739, 746, 753, 762],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'build 753 SUNCE/multi-subject/PDF/voice/backup/Planner/catalog and phone-tested build 701 camera measurement remain protected; only AI DMX context UI, PDF DMX notes, lighting-plan DMX prompt and this guard may change',
-  featureSurface: 'Project 5.9 DMX patch drives AI control notes and professional PDF while preserving exact Universe/address/mode data and surfacing patch warnings'
+  protectedByDefault: 'build 762 final feature set remains protected; only AI measurement selection and this guard may change during final QA',
+  featureSurface: 'Final QA: AI Visual Plan must use the newest Planner measurement, matching Planner storage order'
 }, null, 2));

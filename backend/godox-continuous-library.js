@@ -21,6 +21,9 @@ const LP_SERIES='https://www.godox.com/product-b/LP-Series.html';
 const LC_SERIES='https://www.godox.com/product-c/LC500R-LC500Bi.html';
 const LDX_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 const ML100_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
+const SL60II='https://www.godox.com/product-a/SL60II.html';
+const SL100='https://godox.com/product-d/SL100D-SL100Bi.html';
+const SL_SERIES='https://www.godox.com/product-d/SLIII.html';
 const TL_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
@@ -92,7 +95,17 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-ldx50bi','LDX50Bi','LDX Panel',2800,6500,65,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
   fixture('godox-ldx100bi','LDX100Bi','LDX Panel',2800,6500,120,null,LDX_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['2.4G Remote','Bluetooth/App','DMX512','On-board']}),
   fixture('godox-ml100bi','ML100Bi','ML Portable COB',2800,6500,110,null,ML100_SERIES,'Bi-Color',{mount:'Godox Mount',formFactor:'Portable COB',cri:96,tlci:97,control:['Bluetooth/App','On-board'],powerSupply:'DC / USB-C power bank / V-mount battery'}),
-  fixture('godox-ml100r','ML100R','ML Portable COB',1800,10000,110,null,ML100_SERIES,'Full Color',{mount:'Godox Mount',formFactor:'Portable COB',cri:95,tlci:95,control:['Bluetooth/App','On-board'],powerSupply:'DC / mobile battery options'})
+  fixture('godox-ml100r','ML100R','ML Portable COB',1800,10000,110,null,ML100_SERIES,'Full Color',{mount:'Godox Mount',formFactor:'Portable COB',cri:95,tlci:95,control:['Bluetooth/App','On-board'],powerSupply:'DC / mobile battery options'}),
+  fixture('godox-sl60iid','SL60IID','SL COB',5600,5600,70,null,SL60II,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
+  fixture('godox-sl60iibi','SL60IIBi','SL COB',2800,6500,75,null,SL60II,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
+  fixture('godox-sl100d','SL100D','SL COB',5600,5600,100,null,SL100,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
+  fixture('godox-sl100bi','SL100Bi','SL COB',2800,6500,100,null,SL100,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
+  fixture('godox-sl150iii','SL150III','SL COB',5600,5600,160,null,SL_SERIES,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
+  fixture('godox-sl200iii','SL200III','SL COB',5600,5600,215,null,SL_SERIES,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
+  fixture('godox-sl300iii','SL300III','SL COB',5600,5600,330,null,SL_SERIES,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
+  fixture('godox-sl150iiibi','SL150IIIBi','SL COB',2800,6500,160,null,SL_SERIES,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
+  fixture('godox-sl200iiibi','SL200IIIBi','SL COB',2800,6500,215,null,SL_SERIES,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']}),
+  fixture('godox-sl300iiibi','SL300IIIBi','SL COB',2800,6500,330,null,SL_SERIES,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['2.4G Remote','Bluetooth/App','On-board']})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -118,6 +131,7 @@ const lpAll=[...lpSmall,...lp1200];
 const lcSeries=['godox-lc500r','godox-lc500bi'];
 const ldxAll=['godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi'];
 const ml100=['godox-ml100bi','godox-ml100r'];
+const slCob=['godox-sl60iid','godox-sl60iibi','godox-sl100d','godox-sl100bi','godox-sl150iii','godox-sl200iii','godox-sl300iii','godox-sl150iiibi','godox-sl200iiibi','godox-sl300iiibi'];
 const tl30=['godox-tl30'];
 const tl60plus=['godox-tl60','godox-tl120','godox-tl180'];
 const tlAll=['godox-tl30',...tl60plus];
@@ -236,5 +250,9 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-ml-bowens-adapter','ML Bowens Mount Adapter','Mounting',ml100,ML100_SERIES,'Expands the compact Godox-mount light to standard Bowens modifiers.'),
   acc('godox-ak-b02','AK-B02 V-Mount Battery Accessory Kit','Power',['godox-ml100bi'],ML100_SERIES,'Supports mobile V-mount battery operation for ML100Bi.'),
   acc('godox-bg02','BG02 Battery Grip','Power',['godox-ml100r'],ML100_SERIES,'Provides a compact mobile power option for ML100R.'),
-  acc('godox-ml-air-soft-tube','ML100R Air Soft Tube','Diffusion',['godox-ml100r'],ML100_SERIES,'Creates a larger diffused source while staying portable.')
+  acc('godox-ml-air-soft-tube','ML100R Air Soft Tube','Diffusion',['godox-ml100r'],ML100_SERIES,'Creates a larger diffused source while staying portable.'),
+  acc('godox-sl-standard-reflector','Bowens Standard Reflector','Reflector',slCob,SL_SERIES,'Provides the standard hard reflector beam for the SL COB family.'),
+  acc('godox-sl-qr-p','QR-P70/P90/P120 Parabolic Softbox','Softbox',slCob,SL_SERIES,'Creates a soft directional source using Bowens mount.'),
+  acc('godox-sl-cs-d','CS-50D/65D/85D Lantern Softbox','Lantern',slCob,SL_SERIES,'Creates broad omnidirectional soft light for room and overhead setups.'),
+  acc('godox-sl-bowens-softbox','Bowens Mount Softbox','Softbox',slCob,SL_SERIES,'Adds general-purpose diffusion with broad Bowens compatibility.')
 ];

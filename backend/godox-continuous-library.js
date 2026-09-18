@@ -18,6 +18,7 @@ const KNOWLED_FULL_COLOR_MATS='https://www.godox.com/Downloads/Godox_KNOWLED_Lig
 const C_CREATIVE='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const LA150_300='https://godox.com/product-c/LA150R-LA200R-LA300R-LA300Bi.html';
 const LP_SERIES='https://www.godox.com/product-b/LP-Series.html';
+const LC_SERIES='https://www.godox.com/product-c/LC500R-LC500Bi.html';
 const TL_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
@@ -81,7 +82,9 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-lp1200r','LP1200R','LITEMONS LP',1800,10000,120,null,LP_SERIES,'Full Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'V-mount optional'}),
   fixture('godox-lp400bi','LP400Bi','LITEMONS LP',2800,6500,36,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'NP-F optional'}),
   fixture('godox-lp600bi','LP600Bi','LITEMONS LP',2800,6500,60,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'NP-F optional'}),
-  fixture('godox-lp1200bi','LP1200Bi','LITEMONS LP',2800,6500,120,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'V-mount optional'})
+  fixture('godox-lp1200bi','LP1200Bi','LITEMONS LP',2800,6500,120,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'V-mount optional'}),
+  fixture('godox-lc500r','LC500R','Light Stick',2500,8500,23,null,LC_SERIES,'RGBWW',{formFactor:'Handheld Light Stick',cri:96,tlci:98,control:['2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
+  fixture('godox-lc500bi','LC500Bi','Light Stick',2800,6500,23,null,LC_SERIES,'Bi-Color',{formFactor:'Handheld Light Stick',cri:96,tlci:98,control:['2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -104,6 +107,7 @@ const la300=['godox-la300r','godox-la300bi'];
 const lpSmall=['godox-lp400r','godox-lp600r','godox-lp400bi','godox-lp600bi'];
 const lp1200=['godox-lp1200r','godox-lp1200bi'];
 const lpAll=[...lpSmall,...lp1200];
+const lcSeries=['godox-lc500r','godox-lc500bi'];
 const tl30=['godox-tl30'];
 const tl60plus=['godox-tl60','godox-tl120','godox-tl180'];
 const tlAll=['godox-tl30',...tl60plus];
@@ -208,5 +212,9 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-lp-barndoors','LP Series Detachable 4-Leaf Barndoors','Barn Door',lpAll,LP_SERIES,'Shapes and cuts spill from the LP panel output.'),
   acc('godox-lp-npf-power','NP-F Battery Power Option','Power',lpSmall,LP_SERIES,'Provides portable battery operation for LP400 and LP600 models.'),
   acc('godox-lp-vmount-power','V-Mount Battery Power Option','Power',lp1200,LP_SERIES,'Provides portable battery operation for LP1200 models.'),
-  acc('godox-lp-carry-case','LP Series Carry Case','Transport',lpAll,LP_SERIES,'Protects and transports LP fixtures and kit accessories.')
+  acc('godox-lp-carry-case','LP Series Carry Case','Transport',lpAll,LP_SERIES,'Protects and transports LP fixtures and kit accessories.'),
+  acc('godox-lc-barndoors','LC Series 2-Leaf Barndoors','Barn Door',lcSeries,LC_SERIES,'Adds simple spill control to the handheld light stick.'),
+  acc('godox-lc-handle','LC Series Handgrip','Mounting',lcSeries,LC_SERIES,'Improves handheld use and mounting flexibility.'),
+  acc('godox-lc-charger','LC Series Charger','Charging',lcSeries,LC_SERIES,'Charges the built-in battery between setups.'),
+  acc('godox-lc-carry-bag','LC Series Carry Bag','Transport',lcSeries,LC_SERIES,'Protects the light stick and accessories in transport.')
 ];

@@ -106,6 +106,7 @@ const exactAllowed = new Set([
   'backend/aladdin-bi-flex-library.js',
   'backend/aladdin-all-in-library.js',
   'backend/aladdin-base-lite-library.js',
+  'backend/aladdin-onboard-library.js',
   'backend/aladdin-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'

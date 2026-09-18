@@ -94,6 +94,9 @@ const exactAllowed = new Set([
   'backend/desisti-lite-series-library.js',
   'backend/desisti-softled-vwc-library.js',
   'backend/desisti-muses-library.js',
+  'backend/desisti-tungsten-library.js',
+  'backend/desisti-tungsten-soft-broad-library.js',
+  'backend/desisti-hmi-library.js',
   'backend/desisti-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'
@@ -282,5 +285,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Project 5 catalog expansion: lock verified De Sisti fixture/accessory completeness in CI without changing Planner layout'
+  featureSurface: 'Project 5 catalog expansion: add verified conventional De Sisti tungsten Fresnels and daylight HMI Fresnel/PAR fixtures with accessories without changing Planner layout'
 }, null, 2));

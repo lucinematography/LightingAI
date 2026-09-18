@@ -13,7 +13,7 @@ function clamp(v,min,max){v=Number(v);return Number.isFinite(v)?Math.max(min,Mat
 function availableEquipment(){if(typeof window.selected==='function'){try{return window.selected()||[];}catch(e){}}return Array.isArray(window.equipment)?window.equipment.slice():[];}
 function currentLanguage(){return window.currentLang==='en'?'en':'sr';}
 function sceneMeasurements(){try{var value=JSON.parse(localStorage.getItem(SCENE_MEASURE_KEY)||'[]');return Array.isArray(value)?value.filter(function(x){return x&&Number.isFinite(Number(x.distance))&&Number(x.distance)>0;}):[];}catch(e){return[];}}
-function latestMeasurementByTarget(items,target){for(var i=items.length-1;i>=0;i--){if(items[i]&&items[i].target===target)return items[i];}return null;}
+function latestMeasurementByTarget(items,target){for(var i=0;i<items.length;i++){if(items[i]&&items[i].target===target)return items[i];}return null;}
 function measurementContext(items){
  var labels=currentLanguage()==='sr'?{subject:'Kamera do glumca',wall:'Kamera do zida',background:'Kamera do pozadine',derived:'Glumac do pozadine',estimate:'geometrijska procena'}:{subject:'Camera to actor',wall:'Camera to wall',background:'Camera to background',derived:'Actor to background',estimate:'geometric estimate'};
  var latest=['subject','wall','background'].map(function(target){return latestMeasurementByTarget(items,target);}).filter(Boolean),parts=latest.map(function(x){return labels[x.target]+': '+Number(x.distance).toFixed(2)+' m'+(x.method==='native'?' (PRO)':' (WEB)');});

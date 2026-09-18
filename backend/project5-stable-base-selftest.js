@@ -100,6 +100,17 @@ for (const marker of [
   if (!measure.includes(marker)) fail(`DEPTH/fallback marker missing: ${marker}`);
 }
 
+const aiPlan = git(['show', `HEAD:${aiPlanPath}`]);
+for (const marker of [
+  "dpRequest:'ZAHTEV DP-a / TRAŽENA RASVETA'",
+  'id="aiv-dp-request"',
+  "'Obavezan zahtev DP-a: '",
+  'description:descriptionWithMeasurements()',
+  "dpRequestVersion:'0.5-dp-request'"
+]) {
+  if (!aiPlan.includes(marker)) fail(`DP request marker missing: ${marker}`);
+}
+
 for (const path of changed.filter((p) => /\.(?:js|json|yml|yaml|html|md|java)$/i.test(p))) {
   if (path === 'backend/project5-stable-base-selftest.js') continue;
   let content = '';

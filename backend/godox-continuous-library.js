@@ -11,6 +11,8 @@ const MG1200R='https://www.godox.com/static/upload/file/20241212/173399603048341
 const MG2400R='https://www.godox.com/Downloads/KNOWLED_MG2400R.pdf';
 const MS60='https://www.godox.com/Downloads/KNOWLED_MS60R.pdf';
 const M200_M300='https://www.godox.com/static/upload/file/20230608/1686187077668652.pdf';
+const P300R='https://www.godox.com/Downloads/KNOWLED_P300R.pdf';
+const P600R='https://www.godox.com/Downloads/KNOWLED_P600R.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
   return {
@@ -49,7 +51,9 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-m200d','M200D','KNOWLED M',5600,5600,230,null,M200_M300,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']}),
   fixture('godox-m300d','M300D','KNOWLED M',5600,5600,330,null,M200_M300,'Daylight',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']}),
   fixture('godox-m200bi','M200Bi','KNOWLED M',2800,6500,230,null,M200_M300,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']}),
-  fixture('godox-m300bi','M300Bi','KNOWLED M',2800,6500,360,null,M200_M300,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']})
+  fixture('godox-m300bi','M300Bi','KNOWLED M',2800,6500,360,null,M200_M300,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']}),
+  fixture('godox-p300r','P300R','KNOWLED Panel',1800,10000,350,null,P300R,'Full Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App','On-board']}),
+  fixture('godox-p600r','P600R','KNOWLED Panel',1800,10000,700,null,P600R,'Full Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App','On-board']})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -63,6 +67,8 @@ const mgFull=['godox-mg1200r','godox-mg2400r'];
 const mgAll=[...mgBi,...mgFull];
 const ms60=['godox-ms60bi','godox-ms60r'];
 const m200m300=['godox-m200d','godox-m300d','godox-m200bi','godox-m300bi'];
+const p300r=['godox-p300r'];
+const p600r=['godox-p600r'];
 
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
   return {
@@ -130,5 +136,13 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-fls10','FLS10 Fresnel Lens','Fresnel',m200m300,KNOWLED_CATALOG,'10-35 degree Fresnel compatible with Godox Bowens-mount LED fixtures.'),
   acc('godox-lb01','LB-01 8-leaf Barndoors','Barn Door',m200m300,KNOWLED_CATALOG,'Shapes the beam when used with FLS8.'),
   acc('godox-lb02','LB-02 8-leaf Barndoors','Barn Door',m200m300,KNOWLED_CATALOG,'Shapes the beam when used with FLS10.'),
-  acc('godox-rc-a6-m200m300','RC-A6 Remote Control','Remote Control',m200m300,M200_M300,'2.4GHz remote control option listed for the M200/M300 series.')
+  acc('godox-rc-a6-m200m300','RC-A6 Remote Control','Remote Control',m200m300,M200_M300,'2.4GHz remote control option listed for the M200/M300 series.'),
+  acc('godox-p300rh30','P300RH30 Honeycomb 30°','Grid',p300r,P300R,'Narrows spill and increases directional control.'),
+  acc('godox-p300rb4','P300RB4 Barndoor','Barn Door',p300r,P300R,'Shapes and cuts the P300R beam.'),
+  acc('godox-p300rs33','P300RS33 Softbox 3x3 + Grid','Softbox',p300r,P300R,'Creates a larger soft source with directional grid control.'),
+  acc('godox-p300r04','P300R04 Octa 4ft + Grid','Softbox',p300r,P300R,'Provides broad soft output from the P300R.'),
+  acc('godox-p600rh30','P600RH30 Honeycomb 30°','Grid',p600r,P600R,'Narrows spill and increases directional control.'),
+  acc('godox-p600rb4','P600RB4 Barndoor','Barn Door',p600r,P600R,'Shapes and cuts the P600R beam.'),
+  acc('godox-p600rs34','P600RS34 Softbox 3x4 + Grid','Softbox',p600r,P600R,'Creates a large soft field with grid control.'),
+  acc('godox-p600r05','P600R05 Octa 5ft + Grid','Softbox',p600r,P600R,'Creates a large octagonal soft source for the P600R.')
 ];

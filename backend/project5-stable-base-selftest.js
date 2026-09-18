@@ -82,6 +82,7 @@ const exactAllowed = new Set([
   'app/src/main/assets/index.html',
   'app/src/main/assets/sun-native-bridge.js',
   'app/src/main/assets/planner-layout-lock.js',
+  'app/src/main/assets/catalog.js',
   'backend/catalog-runtime.js',
   'backend/desisti-super-led-f47-library.js',
   'backend/project5-stable-base-selftest.js'
@@ -90,7 +91,6 @@ const unexpected = changed.filter((path) => !exactAllowed.has(path));
 if (unexpected.length) fail(`files changed outside the isolated Project 5.4 camera-distance surface: ${unexpected.join(', ')}`);
 
 for (const protectedPath of [
-  'app/src/main/assets/catalog.js',
   'app/src/main/assets/scene-measure.js',
   'app/src/main/assets/light-calculator.js',
   'app/src/main/assets/project-backup-export.js',

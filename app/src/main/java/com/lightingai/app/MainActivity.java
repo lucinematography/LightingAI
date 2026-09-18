@@ -13,6 +13,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
 import android.view.ViewGroup;
@@ -343,16 +344,58 @@ public class MainActivity extends Activity {
             "})();", null);
     }
 
+    private void openCreateDocumentFallback(String filename, String text) {
+        pendingText = text;
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType(filename != null && filename.toLowerCase(java.util.Locale.US).endsWith(".json") ? "application/json" : "text/plain");
+        intent.putExtra(Intent.EXTRA_TITLE, filename);
+        startActivityForResult(intent, CREATE_FILE);
+    }
+
+    private boolean saveTextDirectlyToDownloads(String filename, String text) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false;
+        Uri uri = null;
+        try {
+            String safeName = (filename == null || filename.trim().isEmpty()) ? ("LightingAI_" + System.currentTimeMillis() + ".txt") : filename.trim();
+            String mime = safeName.toLowerCase(java.util.Locale.US).endsWith(".json") ? "application/json" : "text/plain";
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, safeName);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+            values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+            uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) return false;
+            try (OutputStream out = getContentResolver().openOutputStream(uri, "w")) {
+                if (out == null) throw new IllegalStateException("Could not open Downloads output stream");
+                out.write((text == null ? "" : text).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                out.flush();
+            }
+            ContentValues done = new ContentValues();
+            done.put(MediaStore.MediaColumns.IS_PENDING, 0);
+            getContentResolver().update(uri, done, null, null);
+            final String savedName = safeName;
+            runOnUiThread(() -> Toast.makeText(MainActivity.this, "LightingAI: sačuvano u Preuzimanja / Downloads\n" + savedName, Toast.LENGTH_LONG).show());
+            return true;
+        } catch (Exception e) {
+            if (uri != null) {
+                try { getContentResolver().delete(uri, null, null); } catch (Exception ignored) {}
+            }
+            return false;
+        }
+    }
+
     public class AndroidBridge {
         @JavascriptInterface public void saveText(String filename, String text) {
-            runOnUiThread(() -> {
-                pendingText = text;
-                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("application/json");
-                intent.putExtra(Intent.EXTRA_TITLE, filename);
-                startActivityForResult(intent, CREATE_FILE);
-            });
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                new Thread(() -> {
+                    if (!saveTextDirectlyToDownloads(filename, text)) {
+                        runOnUiThread(() -> openCreateDocumentFallback(filename, text));
+                    }
+                }, "LightingAI-DownloadsSave").start();
+                return;
+            }
+            runOnUiThread(() -> openCreateDocumentFallback(filename, text));
         }
 
         @JavascriptInterface public void requestLocationPermission() {

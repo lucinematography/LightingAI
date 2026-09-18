@@ -13,6 +13,8 @@ const MS60='https://www.godox.com/Downloads/KNOWLED_MS60R.pdf';
 const M200_M300='https://www.godox.com/static/upload/file/20230608/1686187077668652.pdf';
 const P300R='https://www.godox.com/Downloads/KNOWLED_P300R.pdf';
 const P600R='https://www.godox.com/Downloads/KNOWLED_P600R.pdf';
+const F100_200R='https://www.godox.com/Downloads/KNOWLED_F100R_F200R_F200SR.pdf';
+const KNOWLED_FULL_COLOR_MATS='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
   return {
@@ -53,7 +55,12 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-m200bi','M200Bi','KNOWLED M',2800,6500,230,null,M200_M300,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']}),
   fixture('godox-m300bi','M300Bi','KNOWLED M',2800,6500,360,null,M200_M300,'Bi-Color',{mount:'Bowens',cri:96,tlci:97,control:['DMX512','2.4G Remote','Bluetooth/App']}),
   fixture('godox-p300r','P300R','KNOWLED Panel',1800,10000,350,null,P300R,'Full Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App','On-board']}),
-  fixture('godox-p600r','P600R','KNOWLED Panel',1800,10000,700,null,P600R,'Full Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App','On-board']})
+  fixture('godox-p600r','P600R','KNOWLED Panel',1800,10000,700,null,P600R,'Full Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App','On-board']}),
+  fixture('godox-f100r','F100R','KNOWLED Flexible LED Mat',1800,10000,130,'IP54',F100_200R,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:98,control:['DMX512','RDM','CRMX','Bluetooth/App']}),
+  fixture('godox-f200r','F200R','KNOWLED Flexible LED Mat',1800,10000,250,'IP54',F100_200R,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:98,control:['DMX512','RDM','CRMX','Bluetooth/App']}),
+  fixture('godox-f200sr','F200SR','KNOWLED Flexible LED Mat',1800,10000,250,'IP54',F100_200R,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:98,control:['DMX512','RDM','CRMX','Bluetooth/App']}),
+  fixture('godox-f400r','F400R','KNOWLED Flexible LED Mat',1800,10000,460,'IP54',KNOWLED_FULL_COLOR_MATS,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:97,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App']}),
+  fixture('godox-f800r','F800R','KNOWLED Flexible LED Mat',1800,10000,900,'IP54',KNOWLED_FULL_COLOR_MATS,'Full Color',{formFactor:'Flexible LED Mat',cri:96,tlci:97,control:['DMX512','RDM','CRMX','Art-Net/sACN','Bluetooth/App']})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -69,6 +76,7 @@ const ms60=['godox-ms60bi','godox-ms60r'];
 const m200m300=['godox-m200d','godox-m300d','godox-m200bi','godox-m300bi'];
 const p300r=['godox-p300r'];
 const p600r=['godox-p600r'];
+const fullColorMats=['godox-f100r','godox-f200r','godox-f200sr','godox-f400r','godox-f800r'];
 
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
   return {
@@ -144,5 +152,9 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-p600rh30','P600RH30 Honeycomb 30°','Grid',p600r,P600R,'Narrows spill and increases directional control.'),
   acc('godox-p600rb4','P600RB4 Barndoor','Barn Door',p600r,P600R,'Shapes and cuts the P600R beam.'),
   acc('godox-p600rs34','P600RS34 Softbox 3x4 + Grid','Softbox',p600r,P600R,'Creates a large soft field with grid control.'),
-  acc('godox-p600r05','P600R05 Octa 5ft + Grid','Softbox',p600r,P600R,'Creates a large octagonal soft source for the P600R.')
+  acc('godox-p600r05','P600R05 Octa 5ft + Grid','Softbox',p600r,P600R,'Creates a large octagonal soft source for the P600R.'),
+  acc('godox-fa-full-color','FA100/FA200/FA200S/FA400/FA800 Air Softbox Kit','Softbox',fullColorMats,KNOWLED_FULL_COLOR_MATS,'Inflatable softbox family matched to the full-color flexible mats.'),
+  acc('godox-fp-full-color','FP200/FP400/FP600 Pancake Lantern','Lantern',['godox-f200r','godox-f400r','godox-f800r'],KNOWLED_FULL_COLOR_MATS,'Creates a broad soft field for overhead and location lighting.'),
+  acc('godox-f-dc-full-color','F-DC5D/F-DC5E/F-DC10E DC Cable','Power Cable',fullColorMats,KNOWLED_FULL_COLOR_MATS,'Official extension cabling for the full-color flexible mat family.'),
+  acc('godox-f-softbox-skirt','SS-FS100/200/200S/400/800 Softbox Skirt','Light Control',fullColorMats,KNOWLED_FULL_COLOR_MATS,'Controls spill from the matching K1 softbox kits.')
 ];

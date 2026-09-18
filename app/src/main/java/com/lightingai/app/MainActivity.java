@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.speech.RecognizerIntent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -27,7 +28,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+import org.json.JSONObject;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -40,12 +43,14 @@ public class MainActivity extends Activity {
     private NativeSunLocation nativeSunLocation;
     private NativeSunCompass nativeSunCompass;
     private boolean pendingNativeSunLocation = false;
+    private String pendingVoiceTarget = null;
 
     private static final int CREATE_FILE = 501;
     private static final int CHOOSE_IMAGE = 502;
     private static final int LOCATION_PERMISSION = 503;
     private static final int CAMERA_PERMISSION = 504;
     private static final int MEASURE_SCENE = 505;
+    private static final int SPEECH_INPUT = 506;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -386,6 +391,45 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void notifyVoiceInputResult(String targetId, String text) {
+        if (webView == null) return;
+        final String targetJs = JSONObject.quote(targetId == null ? "aiv-dp-request" : targetId);
+        final String textJs = JSONObject.quote(text == null ? "" : text);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIVoiceInputResult&&window.LightingAIVoiceInputResult(" + targetJs + "," + textJs + ");",
+            null));
+    }
+
+    private void notifyVoiceInputError(String targetId, String code) {
+        if (webView == null) return;
+        final String targetJs = JSONObject.quote(targetId == null ? "aiv-dp-request" : targetId);
+        final String codeJs = JSONObject.quote(code == null ? "error" : code);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIVoiceInputError&&window.LightingAIVoiceInputError(" + targetJs + "," + codeJs + ");",
+            null));
+    }
+
+    private void startSpeechInput(String language, String targetId) {
+        String target = (targetId == null || targetId.trim().isEmpty()) ? "aiv-dp-request" : targetId.trim();
+        String locale = "en".equals(language) ? "en-US" : "sr-RS";
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "en".equals(language) ? "Describe the DP lighting request" : "Izgovori zahtev DP-a za rasvetu");
+        pendingVoiceTarget = target;
+        try {
+            startActivityForResult(intent, SPEECH_INPUT);
+        } catch (ActivityNotFoundException e) {
+            pendingVoiceTarget = null;
+            notifyVoiceInputError(target, "unavailable");
+        } catch (Exception e) {
+            pendingVoiceTarget = null;
+            notifyVoiceInputError(target, "error");
+        }
+    }
+
     public class AndroidBridge {
         @JavascriptInterface public void saveText(String filename, String text) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -439,6 +483,10 @@ public class MainActivity extends Activity {
                 startActivityForResult(intent, MEASURE_SCENE);
             });
         }
+
+        @JavascriptInterface public void startSpeechInput(String language, String targetId) {
+            runOnUiThread(() -> MainActivity.this.startSpeechInput("en".equals(language) ? "en" : "sr", targetId));
+        }
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -464,6 +512,22 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SPEECH_INPUT) {
+            String target = pendingVoiceTarget;
+            pendingVoiceTarget = null;
+            if (resultCode == RESULT_OK && data != null) {
+                ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                if (results != null && !results.isEmpty() && results.get(0) != null && !results.get(0).trim().isEmpty()) {
+                    notifyVoiceInputResult(target, results.get(0).trim());
+                } else {
+                    notifyVoiceInputError(target, "empty");
+                }
+            } else {
+                notifyVoiceInputError(target, "cancelled");
+            }
+            return;
+        }
 
         if (requestCode == MEASURE_SCENE) {
             if (resultCode == RESULT_OK && data != null && webView != null) {

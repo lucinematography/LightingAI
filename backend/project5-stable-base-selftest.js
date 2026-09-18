@@ -5,6 +5,7 @@ const PHONE_TESTED_BASE = 'a2913dedf00d8ddf18930e56d6bf2e862993f92c';
 const MAIN686_BASE = '9fb1cb24cabf41d45baed2fb6e9cf6c4a737f1a7';
 const PROJECT54_PHONE_BASE = '3827f81400ff8abd1e83e6b8e416f8ee628fce94';
 const PROJECT55_DP_BASE = 'a79fdeca7db3ddf0c153589b58639a84b5b65628';
+const PROJECT55_BACKUP_BASE = '64e8d99ee15f94a34da35fcd1eb9f416372ba36c';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -19,7 +20,8 @@ for (const [label, sha] of [
   ['phone-tested build 655', PHONE_TESTED_BASE],
   ['phone-verified Planner build 686', MAIN686_BASE],
   ['phone-tested Project 5.4 build 701', PROJECT54_PHONE_BASE],
-  ['Project 5.5 DP main build 713', PROJECT55_DP_BASE]
+  ['Project 5.5 DP main build 713', PROJECT55_DP_BASE],
+  ['Project 5.5 backup Downloads main build 721', PROJECT55_BACKUP_BASE]
 ]) {
   try { git(['cat-file', '-e', `${sha}^{commit}`]); }
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
@@ -36,7 +38,8 @@ for (const [label, sha] of [
   ['phone-tested build 655', PHONE_TESTED_BASE],
   ['phone-verified Planner build 686', MAIN686_BASE],
   ['phone-tested Project 5.4 build 701', PROJECT54_PHONE_BASE],
-  ['Project 5.5 DP main build 713', PROJECT55_DP_BASE]
+  ['Project 5.5 DP main build 713', PROJECT55_DP_BASE],
+  ['Project 5.5 backup Downloads main build 721', PROJECT55_BACKUP_BASE]
 ]) {
   try { git(['merge-base', '--is-ancestor', sha, 'HEAD']); }
   catch { fail(`feature branch no longer descends from ${label}`); }
@@ -44,7 +47,7 @@ for (const [label, sha] of [
 
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
-const changed = git(['diff', '--name-only', `${PROJECT55_DP_BASE}...HEAD`])
+const changed = git(['diff', '--name-only', `${PROJECT55_BACKUP_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
 
 const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
@@ -52,7 +55,7 @@ const aiPlanPath = 'app/src/main/assets/ai-visual-scene-plan.js';
 const backupPath = 'app/src/main/assets/project-backup-export.js';
 const mainActivityPath = 'app/src/main/java/com/lightingai/app/MainActivity.java';
 const exactAllowed = new Set([
-  backupPath,
+  aiPlanPath,
   mainActivityPath,
   'backend/project5-stable-base-selftest.js'
 ]);
@@ -63,6 +66,7 @@ for (const protectedPath of [
   'app/src/main/assets/catalog.js',
   'app/src/main/assets/scene-measure.js',
   'app/src/main/assets/light-calculator.js',
+  'app/src/main/assets/project-backup-export.js',
   'app/src/main/assets/ai-visual-scene-launcher.js',
   'app/src/main/assets/ai-visual-preview-refinements.js',
   'app/src/main/assets/ai-visual-phone-diagnostics.js',
@@ -71,9 +75,9 @@ for (const protectedPath of [
   'backend/server.js',
   'backend/visual-preview.js'
 ]) {
-  const stable = git(['show', `${PROJECT55_DP_BASE}:${protectedPath}`]);
+  const stable = git(['show', `${PROJECT55_BACKUP_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
-  if (stable !== current) fail(`build 713 protected file changed unexpectedly: ${protectedPath}`);
+  if (stable !== current) fail(`build 721 protected file changed unexpectedly: ${protectedPath}`);
 }
 
 // Preserve the historical non-destructive catalog contract required by Project 5 safety.
@@ -110,7 +114,11 @@ for (const marker of [
   'id="aiv-dp-request"',
   "'Obavezan zahtev DP-a: '",
   'description:descriptionWithMeasurements()',
-  "dpRequestVersion:'0.5-dp-request'"
+  "dpRequestVersion:'0.5-dp-request'",
+  'id="aiv-dp-voice"',
+  'Android.startSpeechInput',
+  'window.LightingAIVoiceInputResult',
+  "voiceInputVersion:'0.6-dp-voice'"
 ]) {
   if (!aiPlan.includes(marker)) fail(`DP request marker missing: ${marker}`);
 }
@@ -129,7 +137,11 @@ for (const marker of [
   'MediaStore.Downloads.EXTERNAL_CONTENT_URI',
   'Environment.DIRECTORY_DOWNLOADS',
   'saveTextDirectlyToDownloads',
-  'openCreateDocumentFallback'
+  'openCreateDocumentFallback',
+  'RecognizerIntent.ACTION_RECOGNIZE_SPEECH',
+  '@JavascriptInterface public void startSpeechInput',
+  'window.LightingAIVoiceInputResult',
+  'SPEECH_INPUT = 506'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
 }
@@ -150,9 +162,10 @@ console.log(JSON.stringify({
   project54Base: MAIN686_BASE,
   project55Base: PROJECT54_PHONE_BASE,
   backupDownloadsBase: PROJECT55_DP_BASE,
-  stableBuilds: [510, 655, 686, 701, 713],
+  dpVoiceBase: PROJECT55_BACKUP_BASE,
+  stableBuilds: [510, 655, 686, 701, 713, 721],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'build 713 AI/Planner/catalog/SUNCE/backend and phone-tested build 701 camera measurement remain protected; only backup export text and MainActivity Downloads save path may change',
-  featureSurface: 'Project Backup saves directly into Android Downloads / Preuzimanja with picker fallback on older Android'
+  protectedByDefault: 'build 721 backup/Planner/catalog/SUNCE/backend and phone-tested build 701 camera measurement remain protected; only AI visual DP voice UI, MainActivity speech bridge and this guard may change',
+  featureSurface: 'Project 5.5 native Serbian/English voice input appends recognized speech into the DP request field'
 }, null, 2));

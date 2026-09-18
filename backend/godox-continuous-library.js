@@ -17,6 +17,7 @@ const F100_200R='https://www.godox.com/Downloads/KNOWLED_F100R_F200R_F200SR.pdf'
 const KNOWLED_FULL_COLOR_MATS='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const C_CREATIVE='https://www.godox.com/Downloads/Godox_KNOWLED_Lighting_Catalogue_EN.pdf';
 const LA150_300='https://godox.com/product-c/LA150R-LA200R-LA300R-LA300Bi.html';
+const LP_SERIES='https://www.godox.com/product-b/LP-Series.html';
 const TL_SERIES='https://www.godox.com/Downloads/Godox_Continuous_Lighting_Catalogue_EN.pdf';
 
 function fixture(id,model,family,cctMin,cctMax,powerW,ipRating,sourceUrl,colorMode,extra={}){
@@ -74,7 +75,13 @@ export const GODOX_CONTINUOUS_FIXTURES=[
   fixture('godox-tl30','TL30','RGBWW Tube Light',2700,6500,8,null,TL_SERIES,'RGBWW',{formFactor:'30cm Tube Light',cri:97,tlci:99,control:['Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
   fixture('godox-tl60','TL60','RGBWW Tube Light',2700,6500,18,null,TL_SERIES,'RGBWW',{formFactor:'75cm Tube Light',cri:96,tlci:98,control:['DMX','2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
   fixture('godox-tl120','TL120','RGBWW Tube Light',2700,6500,30,null,TL_SERIES,'RGBWW',{formFactor:'117cm Tube Light',cri:96,tlci:98,control:['DMX','2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
-  fixture('godox-tl180','TL180','RGBWW Tube Light',2700,6500,55,null,TL_SERIES,'RGBWW',{formFactor:'180cm Tube Light',cri:96,tlci:98,control:['DMX','2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'})
+  fixture('godox-tl180','TL180','RGBWW Tube Light',2700,6500,55,null,TL_SERIES,'RGBWW',{formFactor:'180cm Tube Light',cri:96,tlci:98,control:['DMX','2.4G Remote','Bluetooth/App','On-board'],battery:'Built-in rechargeable'}),
+  fixture('godox-lp400r','LP400R','LITEMONS LP',1800,10000,36,null,LP_SERIES,'Full Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'NP-F optional'}),
+  fixture('godox-lp600r','LP600R','LITEMONS LP',1800,10000,60,null,LP_SERIES,'Full Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'NP-F optional'}),
+  fixture('godox-lp1200r','LP1200R','LITEMONS LP',1800,10000,120,null,LP_SERIES,'Full Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'V-mount optional'}),
+  fixture('godox-lp400bi','LP400Bi','LITEMONS LP',2800,6500,36,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'NP-F optional'}),
+  fixture('godox-lp600bi','LP600Bi','LITEMONS LP',2800,6500,60,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'NP-F optional'}),
+  fixture('godox-lp1200bi','LP1200Bi','LITEMONS LP',2800,6500,120,null,LP_SERIES,'Bi-Color',{formFactor:'LED Panel',cri:96,tlci:96,control:['Bluetooth/App','On-board'],battery:'V-mount optional'})
 ];
 
 const mSeries=['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro'];
@@ -94,6 +101,9 @@ const fullColorMats=['godox-f100r','godox-f200r','godox-f200sr','godox-f400r','g
 const cCreative=['godox-c5r','godox-c7r','godox-c10r'];
 const la150300=['godox-la150r','godox-la200r','godox-la300r','godox-la300bi'];
 const la300=['godox-la300r','godox-la300bi'];
+const lpSmall=['godox-lp400r','godox-lp600r','godox-lp400bi','godox-lp600bi'];
+const lp1200=['godox-lp1200r','godox-lp1200bi'];
+const lpAll=[...lpSmall,...lp1200];
 const tl30=['godox-tl30'];
 const tl60plus=['godox-tl60','godox-tl120','godox-tl180'];
 const tlAll=['godox-tl30',...tl60plus];
@@ -194,5 +204,9 @@ export const GODOX_CONTINUOUS_ACCESSORIES=[
   acc('godox-tl-c120','TL-C120 RJ45 to 5-Pin XLR Cable','Control Cable',tl60plus,TL_SERIES,'Connects the TL tube series to standard 5-pin DMX control.'),
   acc('godox-tl-retaining-clip','TL Series Retaining Clip','Mounting',tl60plus,TL_SERIES),
   acc('godox-tl-wire-rope','TL Series Wire Rope','Mounting',tl60plus,TL_SERIES),
-  acc('godox-tl-carrying-kit','TL Series Multi-Light Carrying Kit','Transport',tlAll,TL_SERIES,'Supports grouped transport and production deployment of multiple TL fixtures.')
+  acc('godox-tl-carrying-kit','TL Series Multi-Light Carrying Kit','Transport',tlAll,TL_SERIES,'Supports grouped transport and production deployment of multiple TL fixtures.'),
+  acc('godox-lp-barndoors','LP Series Detachable 4-Leaf Barndoors','Barn Door',lpAll,LP_SERIES,'Shapes and cuts spill from the LP panel output.'),
+  acc('godox-lp-npf-power','NP-F Battery Power Option','Power',lpSmall,LP_SERIES,'Provides portable battery operation for LP400 and LP600 models.'),
+  acc('godox-lp-vmount-power','V-Mount Battery Power Option','Power',lp1200,LP_SERIES,'Provides portable battery operation for LP1200 models.'),
+  acc('godox-lp-carry-case','LP Series Carry Case','Transport',lpAll,LP_SERIES,'Protects and transports LP fixtures and kit accessories.')
 ];

@@ -127,7 +127,8 @@ for (const marker of [
   "voiceInputVersion:'0.6-dp-voice'",
   'id="aiv-pdf-export"',
   'LightingAIImages.savePlanPdf',
-  "pdfExportVersion:'0.7-professional-pdf'"
+  "pdfExportVersion:'0.7-professional-pdf'",
+  "setSketch:readLocal('lighting_set_sketch_v1',{})"
 ]) {
   if (!aiPlan.includes(marker)) fail(`DP request marker missing: ${marker}`);
 }
@@ -163,6 +164,8 @@ for (const marker of [
   'PdfDocument',
   'AI PREDLOG POSTAVKE RASVETE',
   'drawSetupMap',
+  'drawPlannerSetSketch',
+  'SKICA SETA IZ PLANERA',
   'notifyPdfResult'
 ]) {
   if (!imageBridge.includes(marker)) fail(`professional PDF marker missing: ${marker}`);
@@ -190,5 +193,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 727 voice/backup/Planner/catalog/SUNCE/backend and phone-tested build 701 camera measurement remain protected; only AI visual PDF UI, PDF bridge callback, native PDF renderer and this guard may change',
-  featureSurface: 'Project 5.6 professional AI lighting-plan PDF with photos, setup map, AI proposal and technical scene data saved to Downloads'
+  featureSurface: 'Project 5.6 professional AI lighting-plan PDF with photos, AI setup map, full Planner set sketch, AI proposal and technical scene data saved to Downloads'
 }, null, 2));

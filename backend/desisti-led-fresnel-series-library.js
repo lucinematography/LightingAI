@@ -13,6 +13,7 @@ const F10_VW_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/CE-INSTRUCT
 const F10HP_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/11/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F10HP.pdf';
 const F10HP_VW_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F10HP-Vari-White.pdf';
 const F10_SHP_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
+const F10_SHP_2025_SRC = 'https://www.desisti.it/wp/wp-content/uploads/2025/02/mini-catalog-2025.pdf';
 const VWC_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const F14_SRC = 'https://www.desisti.it/super-led-f14/';
 const F14HP_VW_SRC = 'https://www.desisti.it/wp-content/uploads/Data-Sheet-Super-LED-F14HP-VW-1-1.pdf';
@@ -72,7 +73,7 @@ export const DESISTI_LED_FRESNEL_FIXTURES = [
 
   fixed('desisti-super-led-f10shp-t','Super LED F10 SHP T','Super LED F10 SHP',470,490,3200,96,96,250,F10_SHP_SRC,{ipRating:'IP20',rainProtectedOption:'IP23',beamAngleDeg:{min:15,max:78},control:['DMX512/RDM','On-board dimming']}),
   fixed('desisti-super-led-f10shp-d','Super LED F10 SHP D','Super LED F10 SHP',470,490,5600,96,96,250,F10_SHP_SRC,{ipRating:'IP20',rainProtectedOption:'IP23',beamAngleDeg:{min:15,max:78},control:['DMX512/RDM','On-board dimming']}),
-  vw('desisti-super-led-f10shp-vw','Super LED F10 SHP Vari-White','Super LED F10 SHP',470,490,2700,6500,250,F10_SHP_SRC,{ipRating:'IP20',beamAngleDeg:{min:15,max:78},tlci:95,control:['DMX512/RDM','On-board'],dmxModes:[{name:'8-bit Vari-White',channels:3},{name:'16-bit Vari-White',channels:4}]}),
+  vw('desisti-super-led-f10shp-vw','Super LED F10 SHP Vari-White','Super LED F10 SHP',470,490,2700,6500,250,F10_SHP_SRC,{ipRating:'IP20',beamAngleDeg:{min:15,max:78},tlci:95,control:['DMX512/RDM','On-board'],dmxModes:[{name:'8-bit Vari-White',channels:3,verified:true,sourceUrl:F10_SHP_2025_SRC},{name:'16-bit Vari-White',channels:4,verified:true,sourceUrl:F10_SHP_2025_SRC}]}),
 
   fixed('desisti-super-led-f14-t','Super LED F14 T','Super LED F14',400,null,3200,97,96,350,F14_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verified8BitDimmerModes(F14_SRC)}),
   fixed('desisti-super-led-f14-d','Super LED F14 D','Super LED F14',400,null,5600,95,95,350,F14_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verified8BitDimmerModes(F14_SRC)}),

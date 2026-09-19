@@ -54,7 +54,11 @@ export const DESISTI_LED_FRESNEL_FIXTURES = [
   {
     id:'desisti-super-led-f7-vwc',manufacturer:'De Sisti',model:'Super LED F7 VW+C',family:'Super LED F7',category:'Light',
     sourceType:'Vari-White + Color LED Fresnel',ledPowerW:170,cctK:{min:1800,max:12000},colorMode:'Vari-White + RGBA',
-    cri:95,lensDiameterMm:175,control:['DMX512','On-board'],sourceUrl:F7_VWC_SRC
+    cri:95,lensDiameterMm:175,control:['DMX512','On-board'],sourceUrl:F7_VWC_SRC,
+    dmxModes:[
+      {name:'Extended 8-bit',channels:39,verified:true,sourceUrl:F7_VWC_SRC},
+      {name:'Extended 16-bit',channels:40,verified:true,sourceUrl:F7_VWC_SRC}
+    ]
   },
 
   fixed('desisti-super-led-f10-t','Super LED F10 T','Super LED F10',180,215,3200,97,96,250,F10_SRC,{ipRating:'IP22',dmxModes:verifiedFixedDimmerModes(F10_DMX_MANUAL)}),

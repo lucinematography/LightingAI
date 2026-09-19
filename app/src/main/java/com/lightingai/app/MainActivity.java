@@ -747,6 +747,29 @@ public class MainActivity extends Activity {
                         item.put("ip", node.ip);
                         item.put("shortName", node.shortName);
                         item.put("longName", node.longName);
+                        item.put("nodeReport", node.nodeReport);
+                        item.put("firmwareVersion", node.firmwareVersion);
+                        item.put("numPorts", node.numPorts);
+                        item.put("acnPriority", node.acnPriority);
+                        item.put("bindIndex", node.bindIndex);
+                        item.put("style", node.style);
+                        item.put("maxRefreshRateHz", node.maxRefreshRateHz);
+                        item.put("rdmCapable", node.rdmCapable);
+                        item.put("canSwitchArtNetSacn", node.canSwitchArtNetSacn);
+                        item.put("supports15BitPortAddress", node.supports15BitPortAddress);
+                        item.put("dhcpCapable", node.dhcpCapable);
+                        item.put("dhcpConfigured", node.dhcpConfigured);
+                        item.put("mac", node.mac);
+                        JSONArray outputs = new JSONArray();
+                        for (ArtNetDiscovery.OutputPort port : node.outputs) {
+                            JSONObject output = new JSONObject();
+                            output.put("index", port.index);
+                            output.put("universe", port.universe);
+                            output.put("active", port.active);
+                            output.put("sacnSelected", port.sacnSelected);
+                            outputs.put(output);
+                        }
+                        item.put("outputs", outputs);
                         result.put(item);
                     }
                 } catch (Exception e) {

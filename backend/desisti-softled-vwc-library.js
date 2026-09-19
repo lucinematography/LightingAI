@@ -53,7 +53,7 @@ export const DESISTI_SOFTLED_VWC_FIXTURES=[
   fixture('desisti-softled-12-vwc','Soft LED 12 VW+C',650,725,1750,14500,96,96,18.7,null,S12,{
     lollipopWeightKg:15.0,
     control:['DMX512/RDM','On-board','Optional W-DMX LumenRadio','Optional Art-Net','Optional sACN'],
-    dmxModes:extendedDmx
+    dmxModes:extendedDmx.map((mode)=>({...mode,verified:true,sourceUrl:S12}))
   }),
   fixture('desisti-softled-2xl-vwc','Soft LED 2 XL VW+C',230,260,1800,12000,95,96,5.5,6.7,S2XL),
   fixture('desisti-softled-8xl-vwc','Soft LED 8 XL VW+C',650,725,1800,12000,95,96,19.8,22.1,S8XL)

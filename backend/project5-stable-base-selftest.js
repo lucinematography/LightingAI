@@ -289,6 +289,8 @@ for (const marker of [
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
+  "protocol:'MREŽNI PROTOKOL'",
+  "protocol:'NETWORK PROTOCOL'",
   "sendSacnDmx",
   "setSacnLiveDmx",
   "protocolUniverseLimit(protocol)",

@@ -87,6 +87,8 @@ for (const [fixtureId, label] of [['arri-skypanel-x21','SkyPanel X21'],['arri-sk
   }
   const cct = mode?.controls?.find((item) => item.key === 'cct');
   if (!cct || cct.bits !== 16 || cct.dmxMax !== 65535 || cct.min !== 1500 || cct.max !== 20000) failures.push(`Verified ${label} Ultimate 16-bit CCT mapping missing`);
+  const rgbCctMode = mode?.requiredChannels?.find((item) => item.channel === 5);
+  if (!rgbCctMode || rgbCctMode.value !== 0) failures.push(`Verified ${label} Ultimate RGB & CCT mode requirement missing`);
 }
 
 for (const [fixtureId, label] of [['arri-skypanel-s30-c','SkyPanel S30-C'],['arri-skypanel-s60-c','SkyPanel S60-C'],['arri-skypanel-s120-c','SkyPanel S120-C'],['arri-skypanel-s360-c','SkyPanel S360-C']]) {

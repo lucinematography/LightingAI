@@ -53,7 +53,9 @@ const expected=[
   'kinoflo-micro-flo-100mm',
   'kinoflo-micro-flo-150mm',
   'kinoflo-mini-flo-9',
-  'kinoflo-mini-flo-12'
+  'kinoflo-mini-flo-12',
+  'kinoflo-blanket-lite-6x6',
+  'kinoflo-flathead-80'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

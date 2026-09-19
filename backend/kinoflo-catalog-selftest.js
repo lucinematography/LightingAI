@@ -19,7 +19,11 @@ const expected=[
   'kinoflo-diva-lite-30-led',
   'kinoflo-diva-lite-21-led',
   'kinoflo-diva-lite-31-led',
-  'kinoflo-diva-lite-41-led'
+  'kinoflo-diva-lite-41-led',
+  'kinoflo-image-l40-led',
+  'kinoflo-image-l80-led',
+  'kinoflo-select-led-20',
+  'kinoflo-select-led-30'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

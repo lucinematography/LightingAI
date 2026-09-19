@@ -90,6 +90,7 @@ const exactAllowed = new Set([
   'backend/arri-skypanel-classic-s120-library.js',
   'backend/arri-skypanel-classic-s60-library.js',
   'backend/arri-skypanel-classic-s30-library.js',
+  'backend/arri-skypanel-x-library.js',
   'backend/astera-titantube-library.js',
   'backend/astera-ax5-triplepar-library.js',
   'backend/astera-ax10-spotmax-library.js',
@@ -669,5 +670,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Source-verified ARRI SkyPanel Classic S30-C, S60-C, S120-C and S360-C DMX Mode 1 with dimmer, CCT and RGB semantic controls'
+  featureSurface: 'Verified ARRI SkyPanel X Legacy Mode 1 DMX controls for X21/X22/X23 using the official ARRI SkyPanel X DMX Protocol V6.0'
 }, null, 2));

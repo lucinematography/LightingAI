@@ -7,6 +7,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -31,8 +32,10 @@ import android.widget.Toast;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -47,7 +50,10 @@ public class MainActivity extends Activity {
     private boolean pendingNativeSunLocation = false;
     private String pendingVoiceTarget = null;
     private final AtomicInteger artNetSequence = new AtomicInteger(1);
+    private final AtomicInteger sacnSequence = new AtomicInteger(0);
     private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine();
+    private byte[] sacnCid;
+    private SacnLiveEngine sacnLiveEngine;
 
     private static final int CREATE_FILE = 501;
     private static final int CHOOSE_IMAGE = 502;
@@ -66,6 +72,8 @@ public class MainActivity extends Activity {
         setContentView(webView);
         nativeSunLocation = new NativeSunLocation(this);
         nativeSunCompass = new NativeSunCompass(this);
+        sacnCid = loadOrCreateSacnCid();
+        sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -412,6 +420,25 @@ public class MainActivity extends Activity {
             null));
     }
 
+    private byte[] loadOrCreateSacnCid() {
+        SharedPreferences prefs = getSharedPreferences("lightingai_control", MODE_PRIVATE);
+        String raw = prefs.getString("sacn_cid", null);
+        UUID uuid;
+        try {
+            uuid = raw == null ? null : UUID.fromString(raw);
+        } catch (Exception ignored) {
+            uuid = null;
+        }
+        if (uuid == null) {
+            uuid = UUID.randomUUID();
+            prefs.edit().putString("sacn_cid", uuid.toString()).apply();
+        }
+        return ByteBuffer.allocate(16)
+            .putLong(uuid.getMostSignificantBits())
+            .putLong(uuid.getLeastSignificantBits())
+            .array();
+    }
+
     private void notifyArtNetResult(String requestId, boolean ok, String message) {
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
@@ -523,6 +550,60 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.startSpeechInput("en".equals(language) ? "en" : "sr", targetId));
         }
 
+        @JavascriptInterface public void sacnSendDmx(String requestId, int universe, String channelsJson) {
+            final String id = requestId == null ? "" : requestId;
+            final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
+            final String raw = channelsJson == null ? "[]" : channelsJson;
+            new Thread(() -> {
+                boolean ok = false;
+                String message = "";
+                try {
+                    JSONArray a = new JSONArray(raw);
+                    int count = Math.min(512, a.length());
+                    int[] channels = new int[count];
+                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
+                    int seq = sacnSequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
+                    SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI");
+                    ok = true;
+                } catch (Exception e) {
+                    message = e.getMessage() == null ? "sACN send failed" : e.getMessage();
+                }
+                notifyArtNetResult(id, ok, message);
+            }, "LightingAI-sACN").start();
+        }
+
+        @JavascriptInterface public void sacnSetLiveDmx(String requestId, int universe, String channelsJson) {
+            final String id = requestId == null ? "" : requestId;
+            final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
+            final String raw = channelsJson == null ? "[]" : channelsJson;
+            new Thread(() -> {
+                boolean ok = false;
+                String message = "";
+                try {
+                    JSONArray a = new JSONArray(raw);
+                    int count = Math.min(512, a.length());
+                    int[] channels = new int[count];
+                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
+                    if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+                    sacnLiveEngine.setFrame(u, channels);
+                    ok = true;
+                } catch (Exception e) {
+                    message = e.getMessage() == null ? "sACN live refresh failed" : e.getMessage();
+                }
+                notifyArtNetResult(id, ok, message);
+            }, "LightingAI-sACN-Live-Update").start();
+        }
+
+        @JavascriptInterface public void sacnStopLive(String requestId) {
+            final String id = requestId == null ? "" : requestId;
+            if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+            notifyArtNetResult(id, true, "");
+        }
+
+        @JavascriptInterface public int sacnLiveFrameCount() {
+            return sacnLiveEngine == null ? 0 : sacnLiveEngine.activeFrameCount();
+        }
+
         @JavascriptInterface public void artNetDiscover(String requestId, int timeoutMs) {
             final String id = requestId == null ? "" : requestId;
             new Thread(() -> {
@@ -618,6 +699,7 @@ public class MainActivity extends Activity {
     @Override protected void onPause() {
         stopNativeSunCompass();
         artNetLiveEngine.stopAll();
+        if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         super.onPause();
     }
 

@@ -240,7 +240,9 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.5-platform-transport'"
+  "version:'0.6-master-group'",
+  'function verifiedDimmerEntries()',
+  'function applyMasterDimmer(value)'
 ]) {
   if (!artNetControl.includes(marker)) fail(`cross-platform Art-Net transport marker missing: ${marker}`);
 }
@@ -337,5 +339,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Cross-platform Art-Net transport abstraction: Android native bridge now, iOS WKWebView message-handler contract reserved for later implementation'
+  featureSurface: 'Cross-brand Art-Net master/group dimmer over verified DMX profiles while preserving the platform-independent transport contract'
 }, null, 2));

@@ -44,7 +44,7 @@ export const DESISTI_MUSES_FIXTURES=[
   muse('desisti-muse-tersicore','Tersicore','3LH','Square',960,1130,16,46,7.5,'DSE-1000','3LC','EC19P-10M',SRC.tersicore,{dmxModes:verifiedDmxModes(SRC.tersicore)}),
   muse('desisti-muse-clio','Clio','4LH','Rectangle',480,564,16,28.5,5,'DSE-500','4LC','EC19P-10M',SRC.clio,{dmxModes:verifiedDmxModes(SRC.clio)}),
   muse('desisti-muse-clio-medium','Clio Medium','4MH','Rectangle',240,282,16,17,6.5,'DSE-300','4MC','EC19P-10M',SRC.clioM,{fieldAngleDeg:27,dmxModes:verifiedDmxModes(SRC.clioM)}),
-  muse('desisti-muse-polymnia','Polymnia','5MH','Pentagon',210,247,28,12.9,2.5,'DSE-300','5MC','EC19P-10M',SRC.polymnia),
+  muse('desisti-muse-polymnia','Polymnia','5MH','Pentagon',210,247,28,12.9,2.5,'DSE-300','5MC','EC19P-10M',SRC.polymnia,{dmxModes:verifiedDmxModes(SRC.polymnia)}),
   muse('desisti-muse-erato','Erato','6MH','Hexagon',360,424,34,16,2.5,'DSE-300','6MC','EC19P-10M',SRC.erato),
   muse('desisti-muse-euterpe','Euterpe','7MH','Octagon',540,635,66,23,7.5,'DSE-1000','7MC','EC19P-10M',SRC.euterpe),
   muse('desisti-muse-talia','Talia','8LH','Decagon',1500,1764,105,80,12.5,'DSE-2000','8LC','EC35P-10M',SRC.talia),

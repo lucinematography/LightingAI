@@ -674,5 +674,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Generic verified 8-bit and 16-bit DMX control writer shared by fixture, master dimmer, CCT and RGB controls over Art-Net/sACN'
+  featureSurface: 'Verified ARRI SkyPanel X Standard Ultimate Mode 3 with 16-bit CCT plus existing legacy controls over the generic 16-bit Network DMX writer'
 }, null, 2));

@@ -1,14 +1,20 @@
 // De Sisti Soft LED and Soft LED XL studio softlight families.
 // Verified from official De Sisti product pages, data sheets and manuals.
 const S1='https://www.desisti.it/soft-led-1/';
+const S1_DMX='https://www.desisti.it/wp-content/uploads/2018/10/CE-Instruction-Manual-De-Sisti-SOFT-LED-1.pdf';
 const S2='https://www.desisti.it/wp/wp-content/uploads/2022/04/Data-Sheet-SoftLED-2-VW.pdf';
 const S4='https://www.desisti.it/soft-led-4/';
+const S4_DMX='https://www.desisti.it/wp-content/uploads/2018/10/CE-Instruction-Manual-De-Sisti-SOFT-LED-4.pdf';
 const S8='https://www.desisti.it/soft-led-8/';
 const S1XL='https://www.desisti.it/wp-content/uploads/CE-Instruction-Manual-De-Sisti-SOFT-LED-1XL-VW.pdf';
 const S2XL='https://www.desisti.it/soft-led-2-xl/';
 const S8XL='https://www.desisti.it/soft-led-8-xl/';
 
-function fixed(id,model,family,ledPowerW,powerDrawW,cct,sourceUrl,weightKg){
+const verifiedFixedModes=(sourceUrl)=>[
+  {name:'8-bit dimmer',channels:1,verified:true,sourceUrl,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},
+  {name:'16-bit dimmer',channels:2,verified:true,sourceUrl,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}
+];
+function fixed(id,model,family,ledPowerW,powerDrawW,cct,sourceUrl,weightKg,extra={}){
   return {
     id,manufacturer:'De Sisti',model,family,category:'Light',
     sourceType:'LED Softlight',ledPowerW,...(powerDrawW?{powerDrawW}:{}),
@@ -16,7 +22,8 @@ function fixed(id,model,family,ledPowerW,powerDrawW,cct,sourceUrl,weightKg){
     cri:96,tlci:96,ipRating:'IP22',...(weightKg?{weightKg}:{}),
     control:['DMX512','On-board dimming'],
     dmxModes:[{name:'8-bit dimmer',channels:1},{name:'16-bit dimmer',channels:2}],
-    sourceUrl
+    sourceUrl,
+    ...extra
   };
 }
 function vw(id,model,family,ledPowerW,powerDrawW,sourceUrl,weightKg){
@@ -32,16 +39,16 @@ function vw(id,model,family,ledPowerW,powerDrawW,sourceUrl,weightKg){
 }
 
 export const DESISTI_SOFTLED_FIXTURES=[
-  fixed('desisti-softled-1-t','Soft LED 1 T','Soft LED 1',60,75,3200,S1,3.0),
-  fixed('desisti-softled-1-d','Soft LED 1 D','Soft LED 1',60,75,5600,S1,3.0),
+  fixed('desisti-softled-1-t','Soft LED 1 T','Soft LED 1',60,75,3200,S1,3.0,{dmxModes:verifiedFixedModes(S1_DMX)}),
+  fixed('desisti-softled-1-d','Soft LED 1 D','Soft LED 1',60,75,5600,S1,3.0,{dmxModes:verifiedFixedModes(S1_DMX)}),
   vw('desisti-softled-1-vw','Soft LED 1 VW','Soft LED 1',60,75,S1,3.0),
 
   fixed('desisti-softled-2-t','Soft LED 2 T','Soft LED 2',120,null,3200,S2),
   fixed('desisti-softled-2-d','Soft LED 2 D','Soft LED 2',120,null,5600,S2),
   vw('desisti-softled-2-vw','Soft LED 2 VW','Soft LED 2',120,null,S2),
 
-  fixed('desisti-softled-4-t','Soft LED 4 T','Soft LED 4',180,205,3200,S4,5.5),
-  fixed('desisti-softled-4-d','Soft LED 4 D','Soft LED 4',180,205,5600,S4,5.5),
+  fixed('desisti-softled-4-t','Soft LED 4 T','Soft LED 4',180,205,3200,S4,5.5,{dmxModes:verifiedFixedModes(S4_DMX)}),
+  fixed('desisti-softled-4-d','Soft LED 4 D','Soft LED 4',180,205,5600,S4,5.5,{dmxModes:verifiedFixedModes(S4_DMX)}),
   vw('desisti-softled-4-vw','Soft LED 4 VW','Soft LED 4',180,205,S4,5.5),
 
   fixed('desisti-softled-8-t','Soft LED 8 T','Soft LED 8',360,400,3200,S8,11.0),

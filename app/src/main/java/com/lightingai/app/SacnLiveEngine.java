@@ -53,11 +53,29 @@ public final class SacnLiveEngine {
 
     public void stopAll() {
         synchronized (lock) {
-            frames.clear();
             if (task != null) {
                 task.cancel(false);
                 task = null;
             }
+            if (socket != null && !socket.isClosed() && !frames.isEmpty()) {
+                for (int repeat = 0; repeat < 3; repeat++) {
+                    for (Frame frame : frames.values()) {
+                        try {
+                            SacnSender.sendTermination(
+                                socket,
+                                frame.universe,
+                                frame.channels,
+                                nextSequence(),
+                                cid,
+                                sourceName
+                            );
+                        } catch (Exception ignored) {
+                            // Best-effort stream termination; still release local resources.
+                        }
+                    }
+                }
+            }
+            frames.clear();
             if (executor != null) {
                 executor.shutdownNow();
                 executor = null;
@@ -83,6 +101,10 @@ public final class SacnLiveEngine {
         }
     }
 
+    private int nextSequence() {
+        return sequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
+    }
+
     private void tick() {
         DatagramSocket activeSocket;
         synchronized (lock) {
@@ -92,8 +114,7 @@ public final class SacnLiveEngine {
 
         for (Frame frame : frames.values()) {
             try {
-                int seq = sequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
-                SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, seq, cid, sourceName);
+                SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(), cid, sourceName);
             } catch (Exception ignored) {
                 // Keep refreshing; transient Wi-Fi/network failures may recover.
             }

@@ -285,7 +285,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.17-control-groups'",
+  "version:'0.18-diagnostics'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -345,6 +345,12 @@ for (const marker of [
   'function renderControlGroups()',
   "groupTitle:'CONTROL GRUPE'",
   "groupTitle:'CONTROL GROUPS'",
+  'function requestDiagnostics()',
+  'function renderDiagnostics(nativePayload,error)',
+  'window.LightingAINetworkDmxDiagnosticsResult',
+  "action:'networkDmxDiagnostics'",
+  "diagTitle:'DIJAGNOSTIKA KONTROLE'",
+  "diagTitle:'CONTROL DIAGNOSTICS'",
   'function setLiveEnabled(enabled)',
   'function stopLiveForBackground()',
   'artnetSetLiveDmx',
@@ -366,7 +372,11 @@ for (const marker of [
   'private static final long PERIOD_MS = 33L',
   'scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS)',
   'ArtNetSender.sendDmx(activeSocket',
-  'public void stopAll()'
+  'public void stopAll()',
+  'public long packetsSent()',
+  'public long packetsFailed()',
+  'public long lastSendAtMs()',
+  'public String lastError()'
 ]) {
   if (!artNetLiveEngine.includes(marker)) fail(`Art-Net live engine marker missing: ${marker}`);
 }
@@ -403,7 +413,11 @@ for (const marker of [
   'scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS)',
   'public void stopAll()',
   'SacnSender.sendTermination(',
-  'for (int repeat = 0; repeat < 3; repeat++)'
+  'for (int repeat = 0; repeat < 3; repeat++)',
+  'public long packetsSent()',
+  'public long packetsFailed()',
+  'public long lastSendAtMs()',
+  'public String lastError()'
 ]) {
   if (!sacnLiveEngine.includes(marker)) fail(`sACN live engine marker missing: ${marker}`);
 }
@@ -495,7 +509,12 @@ for (const marker of [
   'window.LightingAIBleDiscoveryResult',
   'Manifest.permission.BLUETOOTH_SCAN',
   'BLE_PERMISSION = 507',
-  "file:///android_asset/ble-control.js"
+  "file:///android_asset/ble-control.js",
+  '@JavascriptInterface public String networkDmxDiagnostics()',
+  'artNet.put("livePacketsSent", artNetLiveEngine.packetsSent())',
+  'sacn.put("livePacketsSent", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsSent())',
+  'artNetDirectSent.incrementAndGet()',
+  'sacnDirectSent.incrementAndGet()'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
 }
@@ -562,5 +581,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Persistent patch-safe cross-brand CONTROL groups that drive existing verified MASTER DIMMER/CCT/RGB selections without bypassing output arming'
+  featureSurface: 'Network DMX diagnostics with native direct/live packet counters, failure tracking, last-send timestamps, and explicit UDP no-ack disclosure'
 }, null, 2));

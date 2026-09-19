@@ -1,0 +1,31 @@
+import { buildRuntimeCatalog } from './catalog-runtime.js';
+
+const catalog=buildRuntimeCatalog();
+const fixtures=catalog.fixtures.filter(x=>x.manufacturer==='LiteGear' && String(x.family||'').includes('LiteMat Spectrum Gen 2'));
+const accessories=catalog.accessories.filter(x=>x.manufacturer==='LiteGear' && String(x.family||'').includes('LiteMat Spectrum Gen 2'));
+const expected=[
+  'litegear-litemat-spectrum-g2-1',
+  'litegear-litemat-spectrum-g2-2',
+  'litegear-litemat-spectrum-g2-2l',
+  'litegear-litemat-spectrum-g2-3',
+  'litegear-litemat-spectrum-g2-4',
+  'litegear-litemat-spectrum-g2-8'
+];
+const ids=new Set(fixtures.map(x=>x.id));
+const failures=[];
+for(const id of expected) if(!ids.has(id)) failures.push('Missing required LiteMat Spectrum Gen 2 fixture: '+id);
+for(const f of fixtures){
+  if(!/^https:\/\/(?:www\.)?litegear\.com\//i.test(f.sourceUrl||'')) failures.push('Non-official LiteGear fixture source: '+f.id);
+  const direct=accessories.filter(a=>(a.compatibleWith||[]).includes(f.id));
+  if(!direct.length) failures.push('No directly linked LiteMat Spectrum Gen 2 accessory: '+f.id);
+}
+for(const a of accessories){
+  if(!/^https:\/\/(?:www\.)?litegear\.com\//i.test(a.sourceUrl||'')) failures.push('Non-official LiteGear accessory source: '+a.id);
+  if(!(a.compatibleWith||[]).length) failures.push('LiteMat accessory without compatibility targets: '+a.id);
+}
+for(const broken of catalog.integrity?.missingAccessoryFixtureIds||[]){
+  if(String(broken.accessoryId||'').startsWith('litegear-')) failures.push('Broken LiteGear compatibility link: '+broken.accessoryId+' -> '+broken.fixtureId);
+}
+const unique=[...new Set(failures)];
+console.log(JSON.stringify({ok:unique.length===0,manufacturer:'LiteGear',family:'LiteMat Spectrum Gen 2',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
+if(unique.length) process.exit(1);

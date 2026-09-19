@@ -376,7 +376,7 @@ for (const marker of [
   "diagMulticast:'MULTICAST'",
   'native&&Array.isArray(native.interfaces)',
   "artnetAutoHint:'AUTO koristi directed broadcast",
-  "artnetAutoHint:'AUTO uses the active IPv4 directed broadcast",
+  "artnetAutoHint:'AUTO uses active IPv4 directed broadcast routes.",
   "const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim()",
   "saved==='255.255.255.255'?'AUTO':saved",
   'function setLiveEnabled(enabled)',

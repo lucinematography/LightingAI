@@ -307,7 +307,7 @@ for (const marker of [
   'function fadeToScene(index,secondsOverride)',
   'function cancelSceneFade(showStatus)',
   "sendFrame(out.slice(),Number(u),'fade')",
-  "String(id||'').indexOf('fade_')===0",
+  "resultId.indexOf('fade_')===0",
   "sceneFade:'PRELAZ'",
   "sceneFade:'FADE'",
   "const CUES_KEY='lighting_control_cues_v1'",

@@ -69,7 +69,7 @@ export const DESISTI_SOFTLED_FIXTURES=[
 
   fixed('desisti-softled-2xl-t','Soft LED 2 XL T','Soft LED 2 XL',180,205,3200,S2XL,5.5,{dmxModes:verifiedFixedModes(S2XL_DMX)}),
   fixed('desisti-softled-2xl-d','Soft LED 2 XL D','Soft LED 2 XL',180,205,5600,S2XL,5.5,{dmxModes:verifiedFixedModes(S2XL_DMX)}),
-  vw('desisti-softled-2xl-vw','Soft LED 2 XL VW','Soft LED 2 XL',180,205,S2XL,5.5,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S2XL_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
+  vw('desisti-softled-2xl-vw','Soft LED 2 XL VW','Soft LED 2 XL',180,205,S2XL,5.5,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S2XL_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:S2XL_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}]}),
 
   fixed('desisti-softled-8xl-t','Soft LED 8 XL T','Soft LED 8 XL',400,460,3200,S8XL,19.8,{dmxModes:verifiedFixedModes(S8XL_DMX)}),
   fixed('desisti-softled-8xl-d','Soft LED 8 XL D','Soft LED 8 XL',400,460,5600,S8XL,19.8,{dmxModes:verifiedFixedModes(S8XL_DMX)}),

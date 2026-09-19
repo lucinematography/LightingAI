@@ -286,7 +286,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.20-network-interfaces'",
+  "version:'0.21-directed-broadcast'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -364,6 +364,10 @@ for (const marker of [
   "diagBroadcast:'BROADCAST'",
   "diagMulticast:'MULTICAST'",
   'native&&Array.isArray(native.interfaces)',
+  "artnetAutoHint:'AUTO koristi directed broadcast",
+  "artnetAutoHint:'AUTO uses the active IPv4 directed broadcast",
+  "const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim()",
+  "saved==='255.255.255.255'?'AUTO':saved",
   'function setLiveEnabled(enabled)',
   'function stopLiveForBackground()',
   'artnetSetLiveDmx',
@@ -380,6 +384,17 @@ for (const marker of [
   if (!artNetControl.includes(marker)) fail(`cross-platform Art-Net transport marker missing: ${marker}`);
 }
 
+const artNetSender = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/ArtNetSender.java']);
+for (const marker of [
+  'public static final String AUTO_TARGET = "AUTO"',
+  'static String normalizeTarget(String targetIp)',
+  'static boolean isAutoTarget(String targetIp)',
+  'ArtNetDiscovery.directedBroadcastTargets()',
+  'No directed IPv4 broadcast target is available'
+]) {
+  if (!artNetSender.includes(marker)) fail(`Art-Net directed-broadcast sender marker missing: ${marker}`);
+}
+
 const artNetLiveEngine = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java']);
 for (const marker of [
   'private static final long PERIOD_MS = 33L',
@@ -389,7 +404,8 @@ for (const marker of [
   'public long packetsSent()',
   'public long packetsFailed()',
   'public long lastSendAtMs()',
-  'public String lastError()'
+  'public String lastError()',
+  'return ArtNetSender.normalizeTarget(targetIp)'
 ]) {
   if (!artNetLiveEngine.includes(marker)) fail(`Art-Net live engine marker missing: ${marker}`);
 }
@@ -402,7 +418,9 @@ for (const marker of [
   '(data[9] & 0xff) != 0x21',
   'socket.bind(new InetSocketAddress(ArtNetSender.ARTNET_PORT))',
   'static List<InetAddress> broadcastTargets()',
-  'address.getBroadcast()'
+  'static List<InetAddress> directedBroadcastTargets()',
+  'address.getBroadcast()',
+  '!"255.255.255.255".equals(broadcast.getHostAddress())'
 ]) {
   if (!artNetDiscovery.includes(marker)) fail(`Art-Net discovery marker missing: ${marker}`);
 }
@@ -461,7 +479,8 @@ for (const marker of [
   'artPollPacketHasCorrectOpcodeAndProtocolVersion',
   'artPollReplyParsesIpAndNames',
   'artPollReplyFallsBackToPacketSourceWhenReplyIpIsZero',
-  'invalidReplyIsRejected'
+  'invalidReplyIsRejected',
+  'automaticDmxTargetMigratesLimitedBroadcastToAuto'
 ]) {
   if (!artNetProtocolTest.includes(marker)) fail(`Art-Net protocol unit-test marker missing: ${marker}`);
 }
@@ -620,5 +639,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Read-only cross-device Network DMX route diagnostics exposing active non-loopback IPv4, broadcast, prefix and multicast capability without new permissions'
+  featureSurface: 'Art-Net AUTO output now uses active directed IPv4 broadcast targets instead of limited 255.255.255.255, while discovered/manual node IP remains unicast'
 }, null, 2));

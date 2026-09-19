@@ -53,6 +53,18 @@ for (const [name, channels] of [['Lighting 2ch',2],['Effects 5ch',5],['Lighting 
   if (!cct || cct.channel !== 2 || cct.type !== 'cct-linear' || cct.min !== 2700 || cct.max !== 6500) failures.push(`Verified LS 600x Pro CCT mapping missing: ${name}`);
 }
 
+for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');
+  if (!mode || mode.channels !== 12 || mode.verified !== true) failures.push(`Verified ${label} Mode 1 missing`);
+  for (const [key, channel, type] of [['dimmer',1,'percent'],['cct',2,'cct-linear'],['red',5,'percent'],['green',6,'percent'],['blue',7,'percent']]) {
+    const control = mode?.controls?.find((item) => item.key === key);
+    if (!control || control.channel !== channel || control.type !== type) failures.push(`Verified ${label} control missing: ${key}`);
+  }
+  const cct = mode?.controls?.find((item) => item.key === 'cct');
+  if (!cct || cct.min !== 2800 || cct.max !== 10000) failures.push(`Verified ${label} CCT range missing`);
+}
+
 const titanTube = RUNTIME_CATALOG.fixtureById.get('astera-titantube-fp1');
 const titanMode = titanTube?.dmxModes?.find((mode) => mode.name === 'Profile 4 DIM RGB 4ch');
 if (!titanMode || titanMode.channels !== 4 || titanMode.verified !== true) failures.push('Verified TitanTube Profile 4 DIM RGB missing');

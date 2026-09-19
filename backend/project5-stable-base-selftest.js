@@ -148,6 +148,7 @@ const exactAllowed = new Set([
   'app/src/main/java/com/lightingai/app/ArtNetSender.java',
   'app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java',
   'app/src/main/java/com/lightingai/app/ArtNetDiscovery.java',
+  'app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -289,6 +290,18 @@ for (const marker of [
   'socket.bind(new InetSocketAddress(ArtNetSender.ARTNET_PORT))'
 ]) {
   if (!artNetDiscovery.includes(marker)) fail(`Art-Net discovery marker missing: ${marker}`);
+}
+
+const artNetProtocolTest = git(['show', 'HEAD:app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java']);
+for (const marker of [
+  'dmxPacketUsesArtNetHeaderUniverseAndEvenLength',
+  'dmxPacketMapsOneBasedUiUniverseToPortAddress',
+  'artPollPacketHasCorrectOpcodeAndProtocolVersion',
+  'artPollReplyParsesIpAndNames',
+  'artPollReplyFallsBackToPacketSourceWhenReplyIpIsZero',
+  'invalidReplyIsRejected'
+]) {
+  if (!artNetProtocolTest.includes(marker)) fail(`Art-Net protocol unit-test marker missing: ${marker}`);
 }
 
 const plannerLayout = git(['show', 'HEAD:app/src/main/assets/planner-layout-lock.js']);

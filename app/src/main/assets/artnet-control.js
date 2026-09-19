@@ -358,6 +358,7 @@ function install(){
  const dmx=E('dmxCard');if(dmx&&dmx.parentNode)dmx.parentNode.insertBefore(card,dmx.nextSibling);else page.appendChild(card);
  try{E('artnetTarget').value=localStorage.getItem(TARGET_KEY)||'255.255.255.255'}catch(e){E('artnetTarget').value='255.255.255.255'}
  E('artnetUniverse').value=defaultUniverse();
+ E('artnetTarget').addEventListener('change',()=>{if(liveEnabled)setLiveEnabled(false)});
  E('artnetValue').addEventListener('input',()=>{E('artnetValueReadout').textContent=E('artnetValue').value+' / 255'});
  E('artnetPatchDevice').addEventListener('change',()=>{choosePatch();if(E('artnetPatchDevice').value==='')renderVerifiedControls(null)});
  E('artnetRefreshPatch').addEventListener('click',()=>{renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();status(t().ready)});

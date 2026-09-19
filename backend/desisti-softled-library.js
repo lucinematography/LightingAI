@@ -11,6 +11,7 @@ const S8_DMX='https://www.desisti.it/wp-content/uploads/2018/10/CE-Instruction-M
 const S1XL='https://www.desisti.it/wp-content/uploads/CE-Instruction-Manual-De-Sisti-SOFT-LED-1XL-VW.pdf';
 const S2XL='https://www.desisti.it/soft-led-2-xl/';
 const S8XL='https://www.desisti.it/soft-led-8-xl/';
+const S8XL_DMX='https://www.desisti.it/wp-content/uploads/CE-Instruction-Manual-De-Sisti-SOFT-LED-8XL.pdf';
 
 const verifiedFixedModes=(sourceUrl)=>[
   {name:'8-bit dimmer',channels:1,verified:true,sourceUrl,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},
@@ -63,8 +64,8 @@ export const DESISTI_SOFTLED_FIXTURES=[
   fixed('desisti-softled-2xl-d','Soft LED 2 XL D','Soft LED 2 XL',180,205,5600,S2XL,5.5),
   vw('desisti-softled-2xl-vw','Soft LED 2 XL VW','Soft LED 2 XL',180,205,S2XL,5.5),
 
-  fixed('desisti-softled-8xl-t','Soft LED 8 XL T','Soft LED 8 XL',400,460,3200,S8XL,19.8),
-  fixed('desisti-softled-8xl-d','Soft LED 8 XL D','Soft LED 8 XL',400,460,5600,S8XL,19.8),
+  fixed('desisti-softled-8xl-t','Soft LED 8 XL T','Soft LED 8 XL',400,460,3200,S8XL,19.8,{dmxModes:verifiedFixedModes(S8XL_DMX)}),
+  fixed('desisti-softled-8xl-d','Soft LED 8 XL D','Soft LED 8 XL',400,460,5600,S8XL,19.8,{dmxModes:verifiedFixedModes(S8XL_DMX)}),
   vw('desisti-softled-8xl-vw','Soft LED 8 XL VW','Soft LED 8 XL',400,460,S8XL,19.8)
 ];
 

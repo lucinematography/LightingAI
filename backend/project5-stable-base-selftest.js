@@ -285,7 +285,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.15-global-blackout'",
+  "version:'0.16-output-arm'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -328,6 +328,13 @@ for (const marker of [
   "panicTitle:'GLOBAL BLACKOUT'",
   "panicRestore:'VRATI PRE BLACKOUTA'",
   "panicRestore:'RESTORE BEFORE BLACKOUT'",
+  'function requireOutputArmed()',
+  'function setOutputArmed(enabled,quiet)',
+  'if(!outputArmed){status(t().armRequired,false);return false}',
+  "armLabel:'ARM OUTPUT'",
+  "armRequired:'Prvo uključi ARM OUTPUT.'",
+  "armRequired:'Arm DMX output first.'",
+  "artnetOutputArm').addEventListener('change'",
   'function setLiveEnabled(enabled)',
   'function stopLiveForBackground()',
   'artnetSetLiveDmx',
@@ -545,5 +552,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Global Network DMX blackout across all LightingAI-known universes with patch-safe one-step restore and existing cue/scene controls'
+  featureSurface: 'Deliberate runtime-only Network DMX output arm gate that auto-locks on route/Patch/background changes while preserving blackout, cues, scenes, Art-Net and sACN'
 }, null, 2));

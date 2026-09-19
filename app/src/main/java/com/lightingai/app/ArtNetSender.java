@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 
 public final class ArtNetSender {
     public static final int ARTNET_PORT = 6454;
+    public static final String AUTO_TARGET = "AUTO";
 
     private ArtNetSender() {}
 
@@ -19,10 +20,35 @@ public final class ArtNetSender {
 
     public static void sendDmx(DatagramSocket socket, String targetIp, int universe, int[] channels, int sequence) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
-        String ip = targetIp == null || targetIp.trim().isEmpty() ? "255.255.255.255" : targetIp.trim();
+        String target = normalizeTarget(targetIp);
         byte[] packet = buildDmxPacket(universe, channels, sequence);
-        InetAddress address = InetAddress.getByName(ip);
+
+        if (isAutoTarget(target)) {
+            java.util.List<InetAddress> broadcasts = ArtNetDiscovery.directedBroadcastTargets();
+            if (broadcasts.isEmpty()) {
+                throw new IllegalStateException("No directed IPv4 broadcast target is available");
+            }
+            for (InetAddress address : broadcasts) {
+                socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));
+            }
+            return;
+        }
+
+        InetAddress address = InetAddress.getByName(target);
         socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));
+    }
+
+    static String normalizeTarget(String targetIp) {
+        if (targetIp == null) return AUTO_TARGET;
+        String value = targetIp.trim();
+        if (value.isEmpty() || "255.255.255.255".equals(value) || AUTO_TARGET.equalsIgnoreCase(value)) {
+            return AUTO_TARGET;
+        }
+        return value;
+    }
+
+    static boolean isAutoTarget(String targetIp) {
+        return AUTO_TARGET.equalsIgnoreCase(normalizeTarget(targetIp));
     }
 
     static byte[] buildDmxPacket(int universe, int[] channels, int sequence) {

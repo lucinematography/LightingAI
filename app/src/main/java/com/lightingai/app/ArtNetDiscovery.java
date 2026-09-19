@@ -76,9 +76,8 @@ public final class ArtNetDiscovery {
         return new ArrayList<>(nodes.values());
     }
 
-    static List<InetAddress> broadcastTargets() throws Exception {
+    static List<InetAddress> directedBroadcastTargets() throws Exception {
         Set<InetAddress> targets = new LinkedHashSet<>();
-        targets.add(InetAddress.getByName("255.255.255.255"));
         Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
         if (interfaces != null) {
             while (interfaces.hasMoreElements()) {
@@ -87,13 +86,22 @@ public final class ArtNetDiscovery {
                     if (!network.isUp() || network.isLoopback()) continue;
                     for (InterfaceAddress address : network.getInterfaceAddresses()) {
                         InetAddress broadcast = address.getBroadcast();
-                        if (broadcast != null) targets.add(broadcast);
+                        if (broadcast != null && !"255.255.255.255".equals(broadcast.getHostAddress())) {
+                            targets.add(broadcast);
+                        }
                     }
                 } catch (Exception ignored) {
                     // Continue through the remaining network interfaces.
                 }
             }
         }
+        return new ArrayList<>(targets);
+    }
+
+    static List<InetAddress> broadcastTargets() throws Exception {
+        Set<InetAddress> targets = new LinkedHashSet<>(directedBroadcastTargets());
+        // ArtPoll may also use limited broadcast during initial discovery.
+        targets.add(InetAddress.getByName("255.255.255.255"));
         return new ArrayList<>(targets);
     }
 

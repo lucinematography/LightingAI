@@ -32,6 +32,16 @@ public class ArtNetProtocolTest {
         assertEquals(1, packet[15] & 0x7f);
     }
 
+    @Test public void automaticDmxTargetMigratesLimitedBroadcastToAuto() {
+        assertEquals("AUTO", ArtNetSender.normalizeTarget(null));
+        assertEquals("AUTO", ArtNetSender.normalizeTarget(""));
+        assertEquals("AUTO", ArtNetSender.normalizeTarget("255.255.255.255"));
+        assertEquals("AUTO", ArtNetSender.normalizeTarget("auto"));
+        assertEquals("192.168.1.50", ArtNetSender.normalizeTarget(" 192.168.1.50 "));
+        assertTrue(ArtNetSender.isAutoTarget("255.255.255.255"));
+        assertFalse(ArtNetSender.isAutoTarget("192.168.1.50"));
+    }
+
     @Test public void artPollPacketHasCorrectOpcodeAndProtocolVersion() {
         byte[] packet = ArtNetDiscovery.buildPollPacket();
         assertEquals(14, packet.length);

@@ -136,8 +136,7 @@ public final class ArtNetLiveEngine {
     }
 
     private static String normalizeIp(String targetIp) {
-        if (targetIp == null || targetIp.trim().isEmpty()) return "255.255.255.255";
-        return targetIp.trim();
+        return ArtNetSender.normalizeTarget(targetIp);
     }
 
     private static String key(String targetIp, int universe) {

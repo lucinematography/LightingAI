@@ -452,6 +452,14 @@ for (const [fixtureId, label] of [
   if (mode16?.controls?.some((item) => item.key === 'cct')) failures.push(`${label} 16-bit CCT control must remain hidden until CCT Mode DMX values are sourced`);
 }
 
+const desistiGiottoVw = RUNTIME_CATALOG.fixtureById.get('desisti-giotto-linear-vw');
+const desistiGiottoVw8 = desistiGiottoVw?.dmxModes?.find((item) => item.name === '8-bit');
+const desistiGiottoVw16 = desistiGiottoVw?.dmxModes?.find((item) => item.name === '16-bit');
+if (!desistiGiottoVw8 || desistiGiottoVw8.channels !== 2 || desistiGiottoVw8.verified !== true) failures.push('Verified De Sisti Giotto Linear VW 2ch 8-bit mode missing');
+if (!desistiGiottoVw16 || desistiGiottoVw16.channels !== 3 || desistiGiottoVw16.verified !== true) failures.push('Verified De Sisti Giotto Linear VW 3ch 16-bit mode missing');
+if (desistiGiottoVw8?.controls?.length || desistiGiottoVw16?.controls?.length) failures.push('De Sisti Giotto Linear VW controls must remain hidden until channel order is sourced');
+
+
 for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

@@ -51,6 +51,14 @@ for (const [name, channels] of [['Lighting 2ch',2],['Effects 5ch',5],['Lighting 
   if (!dimmer || dimmer.channel !== 1 || dimmer.type !== 'percent') failures.push(`Verified LS 600x Pro dimmer mapping missing: ${name}`);
 }
 
+const titanTube = RUNTIME_CATALOG.fixtureById.get('astera-titantube-fp1');
+const titanMode = titanTube?.dmxModes?.find((mode) => mode.name === 'Profile 4 DIM RGB 4ch');
+if (!titanMode || titanMode.channels !== 4 || titanMode.verified !== true) failures.push('Verified TitanTube Profile 4 DIM RGB missing');
+for (const [key, channel] of [['dimmer',1],['red',2],['green',3],['blue',4]]) {
+  const control = titanMode?.controls?.find((item) => item.key === key);
+  if (!control || control.channel !== channel || control.type !== 'percent') failures.push(`Verified TitanTube control missing: ${key}`);
+}
+
 
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));

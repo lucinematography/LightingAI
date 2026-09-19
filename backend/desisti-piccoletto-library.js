@@ -3,6 +3,7 @@
 const SRC = 'https://www.desisti.it/piccoletto/';
 const F_SRC = 'https://www.desisti.it/wp-content/uploads/PICCOLETTO-F.pdf';
 const VW_SRC = 'https://www.desisti.it/wp-content/uploads/PICCOLETTO-VW-1.pdf';
+const VW_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/INSTRUCTION-MANUAL-PICCOLETTO-VW.pdf';
 const C_SRC = 'https://www.desisti.it/wp-content/uploads/PICCOLETTO-C-1.pdf';
 
 const fixed = (id, model, variant, cct, ledPowerW, powerDrawW, control, sourceUrl) => ({
@@ -52,7 +53,10 @@ export const DESISTI_PICCOLETTO_FIXTURES = [
     ipRating:'IP22',
     weightKg:0.95,
     control:['DMX512','On-board'],
-    dmxModes:[{name:'Vari-White',channels:3}],
+    dmxModes:[
+      {name:'Vari-White',channels:3,verified:true,sourceUrl:VW_DMX_MANUAL,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},
+      {name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:VW_DMX_MANUAL,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}
+    ],
     sourceUrl:VW_SRC
   },
   {

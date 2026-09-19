@@ -2,6 +2,7 @@
 // Official product documentation: Astera FP2-BTB HeliosTube user manual.
 const SRC = 'https://astera-led.com/helios';
 const MANUAL = 'https://www.mad-music.de/wp-content/uploads/2026/06/FP2_HeliosTube_Manual_EN_DE-11.pdf';
+const DMX_PROFILE = 'https://impact-even.com/wp-content/uploads/2022/06/astera_helios_tabledmx.pdf';
 
 export const ASTERA_HELIOSTUBE_FIXTURES = [
   {
@@ -30,6 +31,18 @@ export const ASTERA_HELIOSTUBE_FIXTURES = [
       builtInWirelessDMX: true,
       builtInBluetoothBridge: true
     },
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: DMX_PROFILE,
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC,
     manualUrl: MANUAL
   }

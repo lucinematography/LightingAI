@@ -8,6 +8,7 @@ const F7_VW_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F7-VW-3.p
 const F7_VWC_SRC = 'https://www.desisti.it/wp/wp-content/uploads/2022/04/SUPER-LED-F7-VWC-04-2022-.pdf';
 const F10_SRC = 'https://www.desisti.it/super-led-f10/';
 const F10_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/11/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F10.pdf';
+const F10HP_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/11/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F10HP.pdf';
 const F10_SHP_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const VWC_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const F14_SRC = 'https://www.desisti.it/super-led-f14/';
@@ -56,8 +57,8 @@ export const DESISTI_LED_FRESNEL_FIXTURES = [
     ipRating:'IP20',control:['DMX512/RDM','On-board'],sourceUrl:VWC_SRC
   },
 
-  fixed('desisti-super-led-f10hp-t','Super LED F10 HP T','Super LED F10 HP',330,400,3200,97,96,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23'}),
-  fixed('desisti-super-led-f10hp-d','Super LED F10 HP D','Super LED F10 HP',330,400,5600,96,97,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23'}),
+  fixed('desisti-super-led-f10hp-t','Super LED F10 HP T','Super LED F10 HP',330,400,3200,97,96,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F10HP_DMX_MANUAL)}),
+  fixed('desisti-super-led-f10hp-d','Super LED F10 HP D','Super LED F10 HP',330,400,5600,96,97,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F10HP_DMX_MANUAL)}),
   vw('desisti-super-led-f10hp-vw','Super LED F10 HP Vari-White','Super LED F10 HP',330,400,2800,6600,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:[{name:'Vari-White',channels:3}]}),
 
   fixed('desisti-super-led-f10shp-t','Super LED F10 SHP T','Super LED F10 SHP',470,490,3200,96,96,250,F10_SHP_SRC,{ipRating:'IP20',rainProtectedOption:'IP23',beamAngleDeg:{min:15,max:78},control:['DMX512/RDM','On-board dimming']}),

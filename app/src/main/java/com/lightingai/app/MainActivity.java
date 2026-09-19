@@ -34,6 +34,7 @@ import org.json.JSONArray;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -51,6 +52,14 @@ public class MainActivity extends Activity {
     private String pendingVoiceTarget = null;
     private final AtomicInteger artNetSequence = new AtomicInteger(1);
     private final AtomicInteger sacnSequence = new AtomicInteger(0);
+    private final AtomicLong artNetDirectSent = new AtomicLong(0);
+    private final AtomicLong artNetDirectFailed = new AtomicLong(0);
+    private final AtomicLong artNetDirectLastAtMs = new AtomicLong(0);
+    private final AtomicLong sacnDirectSent = new AtomicLong(0);
+    private final AtomicLong sacnDirectFailed = new AtomicLong(0);
+    private final AtomicLong sacnDirectLastAtMs = new AtomicLong(0);
+    private volatile String artNetDirectLastError = "";
+    private volatile String sacnDirectLastError = "";
     private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine();
     private byte[] sacnCid;
     private SacnLiveEngine sacnLiveEngine;
@@ -620,6 +629,41 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
         }
 
+        @JavascriptInterface public String networkDmxDiagnostics() {
+            try {
+                JSONObject out = new JSONObject();
+                out.put("platform", "android");
+                out.put("timestampMs", System.currentTimeMillis());
+
+                JSONObject artNet = new JSONObject();
+                artNet.put("directSent", artNetDirectSent.get());
+                artNet.put("directFailed", artNetDirectFailed.get());
+                artNet.put("directLastAtMs", artNetDirectLastAtMs.get());
+                artNet.put("directLastError", artNetDirectLastError == null ? "" : artNetDirectLastError);
+                artNet.put("liveFrames", artNetLiveEngine.activeFrameCount());
+                artNet.put("livePacketsSent", artNetLiveEngine.packetsSent());
+                artNet.put("livePacketsFailed", artNetLiveEngine.packetsFailed());
+                artNet.put("liveLastSendAtMs", artNetLiveEngine.lastSendAtMs());
+                artNet.put("liveLastError", artNetLiveEngine.lastError());
+                out.put("artNet", artNet);
+
+                JSONObject sacn = new JSONObject();
+                sacn.put("directSent", sacnDirectSent.get());
+                sacn.put("directFailed", sacnDirectFailed.get());
+                sacn.put("directLastAtMs", sacnDirectLastAtMs.get());
+                sacn.put("directLastError", sacnDirectLastError == null ? "" : sacnDirectLastError);
+                sacn.put("liveFrames", sacnLiveEngine == null ? 0 : sacnLiveEngine.activeFrameCount());
+                sacn.put("livePacketsSent", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsSent());
+                sacn.put("livePacketsFailed", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsFailed());
+                sacn.put("liveLastSendAtMs", sacnLiveEngine == null ? 0 : sacnLiveEngine.lastSendAtMs());
+                sacn.put("liveLastError", sacnLiveEngine == null ? "" : sacnLiveEngine.lastError());
+                out.put("sacn", sacn);
+                return out.toString();
+            } catch (Exception e) {
+                return "{}";
+            }
+        }
+
         @JavascriptInterface public void sacnSendDmx(String requestId, int universe, String channelsJson) {
             final String id = requestId == null ? "" : requestId;
             final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
@@ -634,8 +678,13 @@ public class MainActivity extends Activity {
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
                     int seq = sacnSequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
                     SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI");
+                    sacnDirectSent.incrementAndGet();
+                    sacnDirectLastAtMs.set(System.currentTimeMillis());
+                    sacnDirectLastError = "";
                     ok = true;
                 } catch (Exception e) {
+                    sacnDirectFailed.incrementAndGet();
+                    sacnDirectLastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                     message = e.getMessage() == null ? "sACN send failed" : e.getMessage();
                 }
                 notifyArtNetResult(id, ok, message);
@@ -709,8 +758,13 @@ public class MainActivity extends Activity {
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
                     int seq = artNetSequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
                     ArtNetSender.sendDmx(ip, u, channels, seq);
+                    artNetDirectSent.incrementAndGet();
+                    artNetDirectLastAtMs.set(System.currentTimeMillis());
+                    artNetDirectLastError = "";
                     ok = true;
                 } catch (Exception e) {
+                    artNetDirectFailed.incrementAndGet();
+                    artNetDirectLastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                     message = e.getMessage() == null ? "Art-Net send failed" : e.getMessage();
                 }
                 notifyArtNetResult(id, ok, message);

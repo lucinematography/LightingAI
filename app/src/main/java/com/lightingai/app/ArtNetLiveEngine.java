@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class ArtNetLiveEngine {
     private static final long PERIOD_MS = 33L;
@@ -27,6 +28,10 @@ public final class ArtNetLiveEngine {
 
     private final Map<String, Frame> frames = new ConcurrentHashMap<>();
     private final AtomicInteger sequence = new AtomicInteger(1);
+    private final AtomicLong packetsSent = new AtomicLong(0);
+    private final AtomicLong packetsFailed = new AtomicLong(0);
+    private final AtomicLong lastSendAtMs = new AtomicLong(0);
+    private volatile String lastError = "";
     private final Object lock = new Object();
 
     private ScheduledExecutorService executor;
@@ -50,6 +55,22 @@ public final class ArtNetLiveEngine {
 
     public int activeFrameCount() {
         return frames.size();
+    }
+
+    public long packetsSent() {
+        return packetsSent.get();
+    }
+
+    public long packetsFailed() {
+        return packetsFailed.get();
+    }
+
+    public long lastSendAtMs() {
+        return lastSendAtMs.get();
+    }
+
+    public String lastError() {
+        return lastError == null ? "" : lastError;
     }
 
     public void stopAll() {
@@ -103,7 +124,12 @@ public final class ArtNetLiveEngine {
             try {
                 int seq = sequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
                 ArtNetSender.sendDmx(activeSocket, frame.targetIp, frame.universe, frame.channels, seq);
-            } catch (Exception ignored) {
+                packetsSent.incrementAndGet();
+                lastSendAtMs.set(System.currentTimeMillis());
+                lastError = "";
+            } catch (Exception e) {
+                packetsFailed.incrementAndGet();
+                lastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                 // Keep the engine alive; a later frame/network state may recover.
             }
         }

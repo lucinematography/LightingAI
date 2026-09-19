@@ -15,6 +15,7 @@ const F10HP_VW_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/CE-INSTRU
 const F10_SHP_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const F10_SHP_2025_SRC = 'https://www.desisti.it/wp/wp-content/uploads/2025/02/mini-catalog-2025.pdf';
 const VWC_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
+const F10_VWC_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F10-VWC-04-2022-W-PHOTOMETRICS-1.pdf';
 const F14_SRC = 'https://www.desisti.it/super-led-f14/';
 const F14HP_VW_SRC = 'https://www.desisti.it/wp-content/uploads/Data-Sheet-Super-LED-F14HP-VW-1-1.pdf';
 const F20_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2025.pdf';
@@ -68,7 +69,15 @@ export const DESISTI_LED_FRESNEL_FIXTURES = [
     id:'desisti-super-led-f10-vwc',manufacturer:'De Sisti',model:'Super LED F10 VW+C',family:'Super LED F10',category:'Light',
     sourceType:'Vari-White + Color LED Fresnel',ledPowerW:230,powerDrawW:260,cctK:{min:1750,max:14500},
     colorMode:'Vari-White + RGBA',cri:95,tlci:96,beamAngleDeg:{min:18,max:55},lensDiameterMm:250,
-    ipRating:'IP20',control:['DMX512/RDM','On-board'],sourceUrl:VWC_SRC
+    ipRating:'IP20',control:['DMX512/RDM','On-board'],sourceUrl:VWC_SRC,
+    dmxModes:[
+      {name:'8-bit base',channels:7,verified:true,sourceUrl:F10_VWC_SRC},
+      {name:'8-bit with mode/fan',channels:9,verified:true,sourceUrl:F10_VWC_SRC},
+      {name:'8-bit extended',channels:39,verified:true,sourceUrl:F10_VWC_SRC},
+      {name:'16-bit base',channels:8,verified:true,sourceUrl:F10_VWC_SRC},
+      {name:'16-bit with mode/fan',channels:10,verified:true,sourceUrl:F10_VWC_SRC},
+      {name:'16-bit extended',channels:40,verified:true,sourceUrl:F10_VWC_SRC}
+    ]
   },
 
   fixed('desisti-super-led-f10hp-t','Super LED F10 HP T','Super LED F10 HP',330,400,3200,97,96,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F10HP_DMX_MANUAL)}),

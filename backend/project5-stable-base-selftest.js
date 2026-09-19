@@ -123,6 +123,7 @@ const exactAllowed = new Set([
   'backend/kinoflo-current-library.js',
   'backend/kinoflo-freestyle-air-library.js',
   'backend/kinoflo-celeb-led-library.js',
+  'backend/kinoflo-diva-lite-led-library.js',
   'backend/kinoflo-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'

@@ -127,6 +127,7 @@ const exactAllowed = new Set([
   'backend/kinoflo-image-select-led-library.js',
   'backend/kinoflo-4bank-tegra-library.js',
   'backend/kinoflo-parabeam-parazip-library.js',
+  'backend/kinoflo-vistabeam-wallolite-library.js',
   'backend/kinoflo-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'

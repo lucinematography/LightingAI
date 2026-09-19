@@ -34,7 +34,10 @@ const expected=[
   'kinoflo-parazip-200-dmx',
   'kinoflo-parazip-215-dmx',
   'kinoflo-parazip-400-dmx',
-  'kinoflo-parazip-415-dmx'
+  'kinoflo-parazip-415-dmx',
+  'kinoflo-vistabeam-300-dmx',
+  'kinoflo-vistabeam-600-dmx',
+  'kinoflo-wall-o-lite-dmx'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

@@ -47,6 +47,7 @@ public class MainActivity extends Activity {
     private boolean pendingNativeSunLocation = false;
     private String pendingVoiceTarget = null;
     private final AtomicInteger artNetSequence = new AtomicInteger(1);
+    private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine();
 
     private static final int CREATE_FILE = 501;
     private static final int CHOOSE_IMAGE = 502;
@@ -534,6 +535,38 @@ public class MainActivity extends Activity {
                 notifyArtNetResult(id, ok, message);
             }, "LightingAI-ArtNet").start();
         }
+
+        @JavascriptInterface public void artNetSetLiveDmx(String requestId, String targetIp, int universe, String channelsJson) {
+            final String id = requestId == null ? "" : requestId;
+            final String ip = targetIp == null ? "" : targetIp;
+            final int u = Math.max(1, universe);
+            final String raw = channelsJson == null ? "[]" : channelsJson;
+            new Thread(() -> {
+                boolean ok = false;
+                String message = "";
+                try {
+                    JSONArray a = new JSONArray(raw);
+                    int count = Math.min(512, a.length());
+                    int[] channels = new int[count];
+                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
+                    artNetLiveEngine.setFrame(ip, u, channels);
+                    ok = true;
+                } catch (Exception e) {
+                    message = e.getMessage() == null ? "Art-Net live refresh failed" : e.getMessage();
+                }
+                notifyArtNetResult(id, ok, message);
+            }, "LightingAI-ArtNet-Live-Update").start();
+        }
+
+        @JavascriptInterface public void artNetStopLive(String requestId) {
+            final String id = requestId == null ? "" : requestId;
+            artNetLiveEngine.stopAll();
+            notifyArtNetResult(id, true, "");
+        }
+
+        @JavascriptInterface public int artNetLiveFrameCount() {
+            return artNetLiveEngine.activeFrameCount();
+        }
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -554,7 +587,13 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() {
         stopNativeSunCompass();
+        artNetLiveEngine.stopAll();
         super.onPause();
+    }
+
+    @Override protected void onDestroy() {
+        artNetLiveEngine.stopAll();
+        super.onDestroy();
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {

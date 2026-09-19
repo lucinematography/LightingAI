@@ -383,10 +383,7 @@ for (const marker of [
   'public long packetsSent()',
   'public long packetsFailed()',
   'public long lastSendAtMs()',
-  'public String lastError()',
-  'public void setPriority(int value)',
-  'public int priority()',
-  'priority.get()'
+  'public String lastError()'
 ]) {
   if (!artNetLiveEngine.includes(marker)) fail(`Art-Net live engine marker missing: ${marker}`);
 }
@@ -431,7 +428,10 @@ for (const marker of [
   'public long packetsSent()',
   'public long packetsFailed()',
   'public long lastSendAtMs()',
-  'public String lastError()'
+  'public String lastError()',
+  'public void setPriority(int value)',
+  'public int priority()',
+  'priority.get()'
 ]) {
   if (!sacnLiveEngine.includes(marker)) fail(`sACN live engine marker missing: ${marker}`);
 }

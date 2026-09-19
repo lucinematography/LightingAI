@@ -18,6 +18,7 @@ const standardUltimateMode3=()=>({
   channels:20,
   verified:true,
   sourceUrl:DMX,
+  requiredChannels:[{channel:5,value:0,label:'RGB & CCT color mode'}],
   controls:[
     {key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
     {key:'cct',label:'CCT',channel:2,type:'cct-linear',bits:16,min:1500,max:20000,step:10,dmxMin:0,dmxMax:65535},

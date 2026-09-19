@@ -18,7 +18,19 @@ export const ASTERA_TITANTUBE_FIXTURES = [
     pixels: 16,
     ipRating: 'IP65',
     batteryPowered: true,
-    control: { wireless: ['AsteraApp', 'Wireless DMX'] },
+    control: { wireless: ['AsteraApp', 'Wireless DMX'], wired: ['DMX via PowerBox', 'Art-Net via PowerBox', 'sACN via PowerBox'] },
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: 'https://www.nashvillegrip.com/uploads/9/8/7/3/98739938/fp1_fp1-btb_titan_tube_dmx_profiles_v2.pdf',
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC
   }
 ];

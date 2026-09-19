@@ -61,6 +61,26 @@ for (const [key, channel] of [['dimmer',1],['red',2],['green',3],['blue',4]]) {
   if (!control || control.channel !== channel || control.type !== 'percent') failures.push(`Verified TitanTube control missing: ${key}`);
 }
 
+for (const [fixtureId, label] of [['astera-ax5-triplepar','AX5 TriplePAR'],['astera-ax10-spotmax','AX10 SpotMax'],['astera-ax9-powerpar','AX9 PowerPAR'],['astera-pixelbrick-pb15','PixelBrick PB15']]) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const mode = fixture?.dmxModes?.find((item) => item.name === 'Profile 4 DIM RGB 4ch');
+  if (!mode || mode.channels !== 4 || mode.verified !== true) failures.push(`Verified ${label} Profile 4 DIM RGB missing`);
+  for (const [key, channel] of [['dimmer',1],['red',2],['green',3],['blue',4]]) {
+    const control = mode?.controls?.find((item) => item.key === key);
+    if (!control || control.channel !== channel || control.type !== 'percent') failures.push(`Verified ${label} control missing: ${key}`);
+  }
+}
+
+for (const [fixtureId, label] of [['astera-plutofresnel-af80','PlutoFresnel AF80'],['astera-leofresnel-af250','LeoFresnel AF250']]) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const mode = fixture?.dmxModes?.find((item) => item.name === 'Profile 147 DIM RGB FAN 5ch');
+  if (!mode || mode.channels !== 5 || mode.verified !== true) failures.push(`Verified ${label} Profile 147 DIM RGB FAN missing`);
+  for (const [key, channel] of [['dimmer',1],['red',2],['green',3],['blue',4]]) {
+    const control = mode?.controls?.find((item) => item.key === key);
+    if (!control || control.channel !== channel || control.type !== 'percent') failures.push(`Verified ${label} control missing: ${key}`);
+  }
+}
+
 
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));

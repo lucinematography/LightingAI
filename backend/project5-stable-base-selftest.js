@@ -86,6 +86,12 @@ const exactAllowed = new Set([
   'backend/catalog-runtime.js',
   'backend/fixture-library.js',
   'backend/astera-titantube-library.js',
+  'backend/astera-ax5-triplepar-library.js',
+  'backend/astera-ax10-spotmax-library.js',
+  'backend/astera-plutofresnel-library.js',
+  'backend/astera-leofresnel-library.js',
+  'backend/astera-ax9-powerpar-library.js',
+  'backend/astera-pixelbrick-library.js',
   'backend/catalog-selftest.js',
   'backend/desisti-super-led-f47-library.js',
   'backend/desisti-led-fresnel-series-library.js',
@@ -366,5 +372,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Patch-safe Art-Net CONTROL scenes layered over live refresh, master dimmer/CCT/RGB and platform-independent transport'
+  featureSurface: 'Verified Astera AX5/AX10/AX9/PixelBrick plus Pluto/Leo DIM RGB profiles layered over patch-safe CONTROL scenes and the existing Art-Net live/group control stack'
 }, null, 2));

@@ -2,6 +2,7 @@
 // Verified from official De Sisti product pages and data sheets.
 const SRC = 'https://www.desisti.it/super-led-f4-7/';
 const DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2017/03/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F4.7.pdf';
+const VW_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/12/NEW_CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F4.7-Vari-White.pdf';
 const VWC_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F4.7-VWC-04-2022-W-PHOTOMETRICS.pdf';
 
 export const DESISTI_SUPER_LED_F47_FIXTURES = [
@@ -68,7 +69,10 @@ export const DESISTI_SUPER_LED_F47_FIXTURES = [
     lensDiameterMm: 120,
     ipRating: 'IP22',
     control: ['DMX512', 'On-board dimming'],
-    dmxModes: [{ name: 'Vari-White', channels: 3 }],
+    dmxModes: [
+      { name: 'Vari-White', channels: 3, verified: true, sourceUrl: VW_DMX_MANUAL, controls: [{ key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }] },
+      { name: 'Vari-White 16-bit', channels: 4, verified: true, sourceUrl: VW_DMX_MANUAL, controls: [{ key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', bits: 16, min: 0, max: 100, dmxMin: 0, dmxMax: 65535 }] }
+    ],
     sourceUrl: SRC
   },
   {

@@ -427,6 +427,23 @@ for (const [name, channels] of [
 }
 
 
+const desistiClioMedium = RUNTIME_CATALOG.fixtureById.get('desisti-muse-clio-medium');
+for (const [name, channels] of [
+  ['Simple 8-bit',2],
+  ['Simple 16-bit',3],
+  ['8-bit base',7],
+  ['8-bit with mode/fan',9],
+  ['8-bit extended',39],
+  ['16-bit base',8],
+  ['16-bit with mode/fan',10],
+  ['16-bit extended',40]
+]) {
+  const mode = desistiClioMedium?.dmxModes?.find((item) => item.name === name);
+  if (!mode || mode.channels !== channels || mode.verified !== true) failures.push(`Verified De Sisti Clio Medium ${name} ${channels}ch mode missing`);
+  if (mode?.controls?.length) failures.push(`De Sisti Clio Medium ${name} controls must remain hidden until channel order is sourced`);
+}
+
+
 const desistiSoftLed4Vwc = RUNTIME_CATALOG.fixtureById.get('desisti-softled-4-vwc');
 for (const [name, channels] of [
   ['8-bit base',7],

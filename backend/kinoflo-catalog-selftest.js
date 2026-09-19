@@ -55,7 +55,9 @@ const expected=[
   'kinoflo-mini-flo-9',
   'kinoflo-mini-flo-12',
   'kinoflo-blanket-lite-6x6',
-  'kinoflo-flathead-80'
+  'kinoflo-flathead-80',
+  'kinoflo-image-47-dmx',
+  'kinoflo-image-87-dmx'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

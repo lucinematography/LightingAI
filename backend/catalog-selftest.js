@@ -289,6 +289,17 @@ const desistiF10HpVwDimmer16 = desistiF10HpVw16?.controls?.find((item) => item.k
 if (!desistiF10HpVwDimmer16 || desistiF10HpVwDimmer16.channel !== 1 || desistiF10HpVwDimmer16.type !== 'percent' || desistiF10HpVwDimmer16.bits !== 16 || desistiF10HpVwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti F10HP Vari-White 16-bit coarse/fine dimmer mapping missing');
 if (desistiF10HpVw16?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F10HP Vari-White CCT control must remain hidden until CCT Mode values are sourced');
 
+
+const desistiF10Vw = RUNTIME_CATALOG.fixtureById.get('desisti-super-led-f10-vw');
+const desistiF10VwLegacy = desistiF10Vw?.dmxModes?.find((item) => item.name === 'Vari-White');
+const desistiF10Vw16 = desistiF10Vw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
+if (!desistiF10VwLegacy || desistiF10VwLegacy.channels !== 3) failures.push('De Sisti F10 Vari-White legacy personality missing');
+if (desistiF10VwLegacy?.verified === true) failures.push('De Sisti F10 Vari-White legacy personality must remain unverified');
+if (!desistiF10Vw16 || desistiF10Vw16.channels !== 4 || desistiF10Vw16.verified !== true) failures.push('Verified De Sisti F10 Vari-White 16-bit mode missing');
+const desistiF10VwDimmer16 = desistiF10Vw16?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiF10VwDimmer16 || desistiF10VwDimmer16.channel !== 1 || desistiF10VwDimmer16.type !== 'percent' || desistiF10VwDimmer16.bits !== 16 || desistiF10VwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti F10 Vari-White 16-bit coarse/fine dimmer mapping missing');
+if (desistiF10Vw16?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F10 Vari-White CCT control must remain hidden until CCT Mode values are sourced');
+
 for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

@@ -281,8 +281,10 @@ for (const [fixtureId, label] of [
 const desistiF6Vw = RUNTIME_CATALOG.fixtureById.get('desisti-super-led-f6-vw');
 const desistiF6VwLegacy = desistiF6Vw?.dmxModes?.find((item) => item.name === 'Vari-White');
 const desistiF6Vw16 = desistiF6Vw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
-if (!desistiF6VwLegacy || desistiF6VwLegacy.channels !== 3) failures.push('De Sisti F6 Vari-White legacy personality missing');
-if (desistiF6VwLegacy?.verified === true) failures.push('De Sisti F6 Vari-White legacy personality must remain unverified');
+if (!desistiF6VwLegacy || desistiF6VwLegacy.channels !== 3 || desistiF6VwLegacy.verified !== true) failures.push('Verified De Sisti F6 Vari-White 3ch mode missing');
+const desistiF6VwDimmer8 = desistiF6VwLegacy?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiF6VwDimmer8 || desistiF6VwDimmer8.channel !== 1 || desistiF6VwDimmer8.type !== 'percent' || desistiF6VwDimmer8.dmxMax !== 255) failures.push('Verified De Sisti F6 Vari-White 8-bit dimmer mapping missing');
+if (desistiF6VwLegacy?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F6 Vari-White 8-bit CCT control must remain hidden until CCT Mode values are sourced');
 if (!desistiF6Vw16 || desistiF6Vw16.channels !== 4 || desistiF6Vw16.verified !== true) failures.push('Verified De Sisti F6 Vari-White 16-bit mode missing');
 const desistiF6VwDimmer16 = desistiF6Vw16?.controls?.find((item) => item.key === 'dimmer');
 if (!desistiF6VwDimmer16 || desistiF6VwDimmer16.channel !== 1 || desistiF6VwDimmer16.type !== 'percent' || desistiF6VwDimmer16.bits !== 16 || desistiF6VwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti F6 Vari-White 16-bit coarse/fine dimmer mapping missing');

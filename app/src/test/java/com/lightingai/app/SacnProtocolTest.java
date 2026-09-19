@@ -73,5 +73,6 @@ public class SacnProtocolTest {
         System.arraycopy(packet, 44, source, 0, 64);
         assertEquals(64, source.length);
         assertFalse(new String(source, StandardCharsets.UTF_8).isEmpty());
+        assertEquals(0, packet[107] & 0xff);
     }
 }

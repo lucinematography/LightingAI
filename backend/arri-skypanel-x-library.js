@@ -1,8 +1,22 @@
 // ARRI SkyPanel X catalog. Facts verified against official ARRI product, accessories, tech-data and package pages.
+const DMX='https://www.arri.com/resource/blob/341278/4c07d210f60da51157f3f8c91f9ffa97/arri-skypanel-x-dmx-mode-specification-en-data.pdf';
+const legacyMode1=()=>({
+  name:'Mode 1 Legacy CCT & RGBW 8 bit',
+  channels:12,
+  verified:true,
+  sourceUrl:DMX,
+  controls:[
+    {key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+    {key:'cct',label:'CCT',channel:2,type:'cct-linear',min:2800,max:10000,step:10,dmxMin:0,dmxMax:255},
+    {key:'red',label:'Red',channel:5,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+    {key:'green',label:'Green',channel:6,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+    {key:'blue',label:'Blue',channel:7,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}
+  ]
+});
 export const ARRI_SKYPANEL_X_FIXTURES = [
-  { id:'arri-skypanel-x21', manufacturer:'ARRI', model:'SkyPanel X21', family:'SkyPanel X', category:'Light', sourceType:'RGBACL Full-Spectrum LED Panel', powerDrawW:800, cctK:{min:1500,max:20000}, colorMode:'Full Spectrum', lightEngines:4, pixelZones:8, beamAngleDeg:{hard:11,soft:107,openFace:121}, maxLuxAt10m5600K:4800, maxLumensOpenFace:51809, ipRating:'IP66', psu:'Integrated', control:['DMX-512A','RDM','Art-Net 4','sACN','CRMX Classic','CRMX2','W-DMX','BLE','Bluetooth 5.0'], sourceUrl:'https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/tech-data', sourceTypeLabel:'Official ARRI tech data' },
-  { id:'arri-skypanel-x22', manufacturer:'ARRI', model:'SkyPanel X22', family:'SkyPanel X', category:'Light', sourceType:'RGBACL Full-Spectrum LED Panel Array', powerDrawW:1600, cctK:{min:1500,max:20000}, colorMode:'Full Spectrum', lightEngines:8, pixelZones:16, beamAngleDeg:{hard:11,soft:107,openFace:121}, maxLuxAt10m5600K:9600, maxLumensOpenFace:103618, ipRating:'IP66', psu:'Integrated', sourceUrl:'https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/tech-data', sourceTypeLabel:'Official ARRI tech data' },
-  { id:'arri-skypanel-x23', manufacturer:'ARRI', model:'SkyPanel X23', family:'SkyPanel X', category:'Light', sourceType:'RGBACL Full-Spectrum LED Panel Array', powerDrawW:2400, cctK:{min:1500,max:20000}, colorMode:'Full Spectrum', lightEngines:12, pixelZones:24, beamAngleDeg:{hard:11,soft:107,openFace:121}, maxLuxAt10m5600K:14400, maxLumensOpenFace:155427, ipRating:'IP66', psu:'Integrated', sourceUrl:'https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/tech-data', sourceTypeLabel:'Official ARRI tech data' }
+  { id:'arri-skypanel-x21', manufacturer:'ARRI', model:'SkyPanel X21', family:'SkyPanel X', category:'Light', sourceType:'RGBACL Full-Spectrum LED Panel', powerDrawW:800, cctK:{min:1500,max:20000}, colorMode:'Full Spectrum', lightEngines:4, pixelZones:8, beamAngleDeg:{hard:11,soft:107,openFace:121}, maxLuxAt10m5600K:4800, maxLumensOpenFace:51809, ipRating:'IP66', psu:'Integrated', control:['DMX-512A','RDM','Art-Net 4','sACN','CRMX Classic','CRMX2','W-DMX','BLE','Bluetooth 5.0'], dmxModes:[legacyMode1()], sourceUrl:'https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/tech-data', sourceTypeLabel:'Official ARRI tech data' },
+  { id:'arri-skypanel-x22', manufacturer:'ARRI', model:'SkyPanel X22', family:'SkyPanel X', category:'Light', sourceType:'RGBACL Full-Spectrum LED Panel Array', powerDrawW:1600, cctK:{min:1500,max:20000}, colorMode:'Full Spectrum', lightEngines:8, pixelZones:16, beamAngleDeg:{hard:11,soft:107,openFace:121}, maxLuxAt10m5600K:9600, maxLumensOpenFace:103618, ipRating:'IP66', psu:'Integrated', dmxModes:[legacyMode1()], sourceUrl:'https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/tech-data', sourceTypeLabel:'Official ARRI tech data' },
+  { id:'arri-skypanel-x23', manufacturer:'ARRI', model:'SkyPanel X23', family:'SkyPanel X', category:'Light', sourceType:'RGBACL Full-Spectrum LED Panel Array', powerDrawW:2400, cctK:{min:1500,max:20000}, colorMode:'Full Spectrum', lightEngines:12, pixelZones:24, beamAngleDeg:{hard:11,soft:107,openFace:121}, maxLuxAt10m5600K:14400, maxLumensOpenFace:155427, ipRating:'IP66', psu:'Integrated', dmxModes:[legacyMode1()], sourceUrl:'https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/tech-data', sourceTypeLabel:'Official ARRI tech data' }
 ];
 
 const X21 = 'arri-skypanel-x21';

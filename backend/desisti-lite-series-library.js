@@ -11,6 +11,13 @@ const S2_TD='https://www.desisti.it/wp/wp-content/uploads/2024/02/SOFTLED-2Lite-
 const S2_VW='https://www.desisti.it/wp/wp-content/uploads/2024/02/SOFTLED-2Lite-VW-02224.pdf';
 const SERIES='https://www.desisti.it/wp/lite-series/';
 
+// Official model-specific datasheets (page 3) confirm footprints, not channel order.
+// Do not attach controls or required DMX values without a channel map.
+const verifiedVwDmxWidths=(sourceUrl)=>[
+  {name:'8-bit Vari-White',channels:2,verified:true,sourceUrl},
+  {name:'16-bit Vari-White',channels:3,verified:true,sourceUrl}
+];
+
 export const DESISTI_LITE_FIXTURES=[
   {
     id:'desisti-f47-lite-t',manufacturer:'De Sisti',model:'F4.7 Lite T',family:'LITE Series',
@@ -31,7 +38,7 @@ export const DESISTI_LITE_FIXTURES=[
     category:'Light',sourceType:'Fanless Vari-White LED Fresnel',ledPowerW:45,powerDrawW:55,
     cctK:{min:2800,max:6600},colorMode:'Vari-White',cri:95,tlci:96,lensDiameterMm:120,
     ipRating:'IP20',weightKg:3.0,control:['DMX512','On-board dimming'],
-    dmxModes:[{name:'8-bit Vari-White',channels:2},{name:'16-bit Vari-White',channels:3}],sourceUrl:F47_VW
+    dmxModes:verifiedVwDmxWidths(F47_VW),sourceUrl:F47_VW
   },
   {
     id:'desisti-f6-lite-t',manufacturer:'De Sisti',model:'F6 Lite T',family:'LITE Series',
@@ -52,7 +59,7 @@ export const DESISTI_LITE_FIXTURES=[
     category:'Light',sourceType:'Fanless Vari-White LED Fresnel',ledPowerW:80,powerDrawW:90,
     cctK:{min:2800,max:6600},colorMode:'Vari-White',cri:95,tlci:96,lensDiameterMm:150,
     ipRating:'IP20',weightKg:5.5,control:['DMX512','On-board dimming'],
-    dmxModes:[{name:'8-bit Vari-White',channels:2},{name:'16-bit Vari-White',channels:3}],sourceUrl:F6_VW
+    dmxModes:verifiedVwDmxWidths(F6_VW),sourceUrl:F6_VW
   },
   {
     id:'desisti-softled-1-lite-t',manufacturer:'De Sisti',model:'Soft LED 1 Lite T',family:'LITE Series',
@@ -69,7 +76,7 @@ export const DESISTI_LITE_FIXTURES=[
     category:'Light',sourceType:'Fanless Vari-White LED Softlight',ledPowerW:45,powerDrawW:55,
     cctK:{min:2800,max:6600},colorMode:'Vari-White',cri:93,tlci:96,ipRating:'IP20',weightKg:6.5,
     control:['DMX512','On-board dimming'],
-    dmxModes:[{name:'8-bit Vari-White',channels:2},{name:'16-bit Vari-White',channels:3}],sourceUrl:S1_VW
+    dmxModes:verifiedVwDmxWidths(S1_VW),sourceUrl:S1_VW
   },
   {
     id:'desisti-softled-1-lite-vwrgb',manufacturer:'De Sisti',model:'Soft LED 1 Lite VW+RGB',family:'LITE Series',
@@ -98,7 +105,8 @@ export const DESISTI_LITE_FIXTURES=[
     id:'desisti-softled-2-lite-vw',manufacturer:'De Sisti',model:'Soft LED 2 Lite VW',family:'LITE Series',
     category:'Light',sourceType:'Fanless Vari-White LED Softlight',ledPowerW:120,
     cctK:{min:2700,max:6500},colorMode:'Vari-White',cri:93,
-    control:['DMX512','On-board dimming'],sourceUrl:S2_VW
+    control:['DMX512','On-board dimming'],
+    dmxModes:verifiedVwDmxWidths(S2_VW),sourceUrl:S2_VW
   }
 ];
 

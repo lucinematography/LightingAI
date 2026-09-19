@@ -91,6 +91,45 @@ for(const [id,sourceUrl] of remainingMusesSources){
   }
 }
 
+// LITE Vari-White: verify only the model-specific 2ch/3ch DMX footprints.
+const liteVwSources=[
+  ['desisti-f47-lite-vw','https://www.desisti.it/wp/wp-content/uploads/2026/04/FRESNEL-LED-F4.7-Lite-VW-04-26-.pdf'],
+  ['desisti-f6-lite-vw','https://www.desisti.it/wp/wp-content/uploads/2026/04/FRESNEL-LED-F6-Lite-VW-04-26-.pdf'],
+  ['desisti-softled-1-lite-vw','https://www.desisti.it/wp/wp-content/uploads/2026/04/SOFTLED-1Lite-VW-020426.pdf'],
+  ['desisti-softled-2-lite-vw','https://www.desisti.it/wp/wp-content/uploads/2024/02/SOFTLED-2Lite-VW-02224.pdf']
+];
+const liteVwWidths=[['8-bit Vari-White',2],['16-bit Vari-White',3]];
+for(const [id,sourceUrl] of liteVwSources){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)){
+    failures.push('Missing LITE Vari-White DMX modes: '+id);
+    continue;
+  }
+  if(fixture.dmxModes.length!==liteVwWidths.length){
+    failures.push('Unexpected LITE Vari-White DMX mode count: '+id);
+  }
+  for(const [name,channels] of liteVwWidths){
+    const matches=fixture.dmxModes.filter(item=>item?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode.channels!==channels||mode.verified!==true){
+      failures.push('Incorrect verified LITE Vari-White DMX width: '+id+' / '+name);
+    }
+    if(mode?.sourceUrl!==sourceUrl){
+      failures.push('Incorrect model-specific LITE Vari-White DMX source: '+id+' / '+name);
+    }
+    for(const key of ['controls','requiredChannels']){
+      if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
+        failures.push('LITE Vari-White channel controls and required values need a sourced channel map: '+id+' / '+name+' / '+key);
+      }
+    }
+  }
+}
+// The RGB datasheet provides only a 2-20 channel range, not exact personalities.
+const liteRgb=fixtures.find(item=>item.id==='desisti-softled-1-lite-vwrgb');
+if(liteRgb?.dmxModes?.some(mode=>mode.verified===true||mode.controls?.length||mode.requiredChannels?.length)){
+  failures.push('Soft LED 1 Lite VW+RGB exact DMX modes must remain unverified until a channel map is sourced');
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({
   ok:unique.length===0,

@@ -286,7 +286,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.22-arm-preflight'",
+  "version:'0.23-route-select'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -340,6 +340,12 @@ for (const marker of [
   "const id='network_arm_'+Date.now()+'_'+(++seq)",
   "preflightNoBroadcast:'AUTO Art-Net nema dostupnu directed broadcast adresu.'",
   "preflightNoMulticast:'The active network does not support multicast required by sACN.'",
+  'function renderArtNetRoutes(interfaces)',
+  "artnetRoute:'ART-NET MREŽNA RUTA'",
+  "artnetRoute:'ART-NET NETWORK ROUTE'",
+  "preflightMultipleRoutes:'Otkriveno je više Art-Net mrežnih ruta.",
+  "artnetRouteSelect').addEventListener('change'",
+  'setTimeout(requestDiagnostics,250)',
   "artnetOutputArm').addEventListener('change'",
   "const GROUPS_KEY='lighting_control_groups_v1'",
   'function rowKey(r)',
@@ -370,7 +376,7 @@ for (const marker of [
   "diagMulticast:'MULTICAST'",
   'native&&Array.isArray(native.interfaces)',
   "artnetAutoHint:'AUTO koristi directed broadcast",
-  "artnetAutoHint:'AUTO uses the active IPv4 directed broadcast",
+  "artnetAutoHint:'AUTO uses active IPv4 directed broadcast routes.",
   "const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim()",
   "saved==='255.255.255.255'?'AUTO':saved",
   'function setLiveEnabled(enabled)',
@@ -644,5 +650,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Network DMX ARM preflight validates active IPv4 route, Art-Net AUTO directed broadcast or unicast target, and sACN multicast support before physical output can be armed'
+  featureSurface: 'Explicit Art-Net directed-broadcast route selection for multi-interface Android devices with ARM preflight blocking ambiguous AUTO routes'
 }, null, 2));

@@ -278,8 +278,9 @@ for (const [fixtureId, label] of [
   if (!mode8 || mode8.channels !== 1 || mode8.verified !== true) failures.push(`Verified ${label} 8-bit dimmer mode missing`);
   const dimmer8 = mode8?.controls?.find((item) => item.key === 'dimmer');
   if (!dimmer8 || dimmer8.channel !== 1 || dimmer8.type !== 'percent' || dimmer8.dmxMax !== 255) failures.push(`Verified ${label} 8-bit dimmer mapping missing`);
-  if (!mode16 || mode16.channels !== 2) failures.push(`${label} 16-bit dimmer personality missing`);
-  if (mode16?.verified === true) failures.push(`${label} 16-bit dimmer must remain unverified until coarse/fine channel order is sourced`);
+  if (!mode16 || mode16.channels !== 2 || mode16.verified !== true) failures.push(`Verified ${label} 16-bit dimmer footprint missing`);
+  if (mode16?.sourceUrl !== 'https://www.desisti.it/wp/wp-content/uploads/2024/02/SOFTLED-2Lite-T-D-0224.pdf') failures.push(`${label} 16-bit dimmer source mismatch`);
+  if (mode16?.controls?.length || mode16?.requiredChannels?.length) failures.push(`${label} 16-bit channel order must remain hidden until coarse/fine mapping is sourced`);
 }
 
 

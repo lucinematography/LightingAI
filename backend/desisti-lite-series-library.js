@@ -99,14 +99,14 @@ export const DESISTI_LITE_FIXTURES=[
     category:'Light',sourceType:'Fanless LED Softlight',ledPowerW:120,powerDrawW:155,
     cctK:{min:3200,max:3200},colorMode:'Tungsten',cri:93,ipRating:'IP20',weightKg:6.5,
     control:['DMX512','On-board dimming'],
-    dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:S2_TD,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'16-bit dimmer',channels:2}],sourceUrl:S2_TD
+    dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:S2_TD,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'16-bit dimmer',channels:2,verified:true,sourceUrl:S2_TD}],sourceUrl:S2_TD
   },
   {
     id:'desisti-softled-2-lite-d',manufacturer:'De Sisti',model:'Soft LED 2 Lite D',family:'LITE Series',
     category:'Light',sourceType:'Fanless LED Softlight',ledPowerW:120,powerDrawW:155,
     cctK:{min:5600,max:5600},colorMode:'Daylight',cri:93,ipRating:'IP20',weightKg:6.5,
     control:['DMX512','On-board dimming'],
-    dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:S2_TD,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'16-bit dimmer',channels:2}],sourceUrl:S2_TD
+    dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:S2_TD,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'16-bit dimmer',channels:2,verified:true,sourceUrl:S2_TD}],sourceUrl:S2_TD
   },
   {
     id:'desisti-softled-2-lite-vw',manufacturer:'De Sisti',model:'Soft LED 2 Lite VW',family:'LITE Series',

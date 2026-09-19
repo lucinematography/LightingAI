@@ -298,7 +298,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.25-16bit-controls'",
+  "version:'0.26-profile-requirements'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -414,7 +414,9 @@ for (const marker of [
   'function controlBitDepth(ctrl)',
   'function writeControlToFrame(targetFrame,address,ctrl,value)',
   'targetFrame[start-1]=(dmx>>8)&255',
-  'targetFrame[start]=dmx&255'
+  'targetFrame[start]=dmx&255',
+  'function applyProfileRequirements(targetFrame,fixtureStart,profile)',
+  'profile&&Array.isArray(profile.requiredChannels)'
 ]) {
   if (!artNetControl.includes(marker)) fail(`cross-platform Art-Net transport marker missing: ${marker}`);
 }
@@ -674,5 +676,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Verified ARRI SkyPanel X Standard Ultimate Mode 3 with 16-bit CCT plus existing legacy controls over the generic 16-bit Network DMX writer'
+  featureSurface: 'Verified SkyPanel X Standard Ultimate 20ch profile using generic 16-bit controls and enforced RGB & CCT mode prerequisites before physical Art-Net/sACN output'
 }, null, 2));

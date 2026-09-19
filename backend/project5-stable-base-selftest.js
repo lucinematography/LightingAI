@@ -118,6 +118,7 @@ const exactAllowed = new Set([
   'backend/evlight-fresnel-library.js',
   'backend/evlight-gemx-hard-library.js',
   'backend/evlight-profile-library.js',
+  'backend/evlight-gemx-large-library.js',
   'backend/evlight-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'

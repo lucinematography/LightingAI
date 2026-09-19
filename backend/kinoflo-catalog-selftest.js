@@ -49,7 +49,11 @@ const expected=[
   'kinoflo-imara-s6-dmx',
   'kinoflo-imara-s10-dmx',
   'kinoflo-imara-s60-dmx',
-  'kinoflo-imara-s100-dmx'
+  'kinoflo-imara-s100-dmx',
+  'kinoflo-micro-flo-100mm',
+  'kinoflo-micro-flo-150mm',
+  'kinoflo-mini-flo-9',
+  'kinoflo-mini-flo-12'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

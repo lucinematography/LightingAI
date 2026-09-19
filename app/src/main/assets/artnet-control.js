@@ -12,7 +12,8 @@ const TXT={
   ready:'Spremno za slanje.',sending:'Šaljem Art-Net…',sent:'Art-Net paket je poslat.',error:'Slanje nije uspelo.',
   native:'Art-Net zahteva Android build.',patch:'Universe i START adresa se preuzimaju iz postojećeg DMX Patch planera. Značenje konkretnog kanala mora biti verifikovano DMX profilom proizvođača.',
   patchEmpty:'Nema ispravnih uređaja u DMX Patch-u. Dodaj uređaj i unesi broj kanala.',patchLoaded:'Učitano iz Patch-a',patchWarn:'Ovaj Patch red ima upozorenje i nije bezbedan za automatsko učitavanje.',
-  ownership:'TEST režim šalje kompletan Universe iz LightingAI-ja; kanali koje ovde nisi postavio ostaju 0. Ne koristi ga paralelno sa drugom DMX konzolom na istom Universe-u.'
+  ownership:'TEST režim šalje kompletan Universe iz LightingAI-ja; kanali koje ovde nisi postavio ostaju 0. Ne koristi ga paralelno sa drugom DMX konzolom na istom Universe-u.',
+  verifiedTitle:'VERIFIKOVANE KONTROLE',verifiedNone:'Za ovaj uređaj i izabrani DMX mode još nema verifikovanih direktnih kontrola.',verifiedSource:'Profil verifikovan prema zvaničnoj DMX dokumentaciji.',dimmer:'DIMMER'
  },
  en:{
   title:'📡 ART-NET CONTROL',
@@ -22,10 +23,12 @@ const TXT={
   ready:'Ready to send.',sending:'Sending Art-Net…',sent:'Art-Net packet sent.',error:'Send failed.',
   native:'Art-Net requires the Android build.',patch:'Universe and START address come from the existing DMX Patch planner. The meaning of each channel must still be verified from the manufacturer DMX profile.',
   patchEmpty:'No valid devices in the DMX Patch. Add a device and enter its channel count.',patchLoaded:'Loaded from Patch',patchWarn:'This Patch row has a warning and is not safe to auto-load.',
-  ownership:'TEST mode sends a complete Universe from LightingAI; channels not set here remain at 0. Do not use it in parallel with another DMX console on the same Universe.'
+  ownership:'TEST mode sends a complete Universe from LightingAI; channels not set here remain at 0. Do not use it in parallel with another DMX console on the same Universe.',
+  verifiedTitle:'VERIFIED CONTROLS',verifiedNone:'This fixture and selected DMX mode do not yet have verified direct controls.',verifiedSource:'Profile verified against official DMX documentation.',dimmer:'DIMMER'
  }
 };
 const t=()=>TXT[lang()];
+const esc=v=>String(v==null?'':v).replace(/[&<>\"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[ch]));
 let seq=0;
 const frames={};
 function status(s,ok){const el=E('artnetStatus');if(!el)return;el.textContent=s;el.style.color=ok===false?'#ffb5b5':ok===true?'#b8f0d1':'#9299a3';}
@@ -35,6 +38,48 @@ function defaultUniverse(){const s=snapshot();return s&&Array.isArray(s.universe
 function frame(universe){const u=String(Math.max(1,Number(universe)||1));if(!frames[u])frames[u]=new Array(512).fill(0);return frames[u]}
 function patchLabel(r){const end=r.end==null?'?':r.end;return 'U'+r.universe+' · '+r.start+'-'+end+' · '+(r.name||r.fixtureId||('DMX '+r.index))+(r.mode?' · '+r.mode:'')}
 function patchUsable(r){return r&&Number(r.channels)>0&&Array.isArray(r.flags)&&r.flags.length===0}
+function fixtureForRow(r){
+ const list=Array.isArray(window.catalogFixtures)?window.catalogFixtures:[];
+ return r&&r.fixtureId?list.find(f=>f&&f.id===r.fixtureId):null;
+}
+function profileForRow(r){
+ const f=fixtureForRow(r),modes=f&&Array.isArray(f.dmxModes)?f.dmxModes:[];
+ if(!r||!r.mode)return null;
+ return modes.find(m=>m&&m.name===r.mode&&m.verified===true)||null;
+}
+function selectedPatchRow(){
+ const select=E('artnetPatchDevice');
+ if(!select||select.value==='')return null;
+ return rows()[Number(select.value)]||null;
+}
+function renderVerifiedControls(r){
+ const box=E('artnetVerifiedControls');if(!box)return;
+ const profile=profileForRow(r),fixture=fixtureForRow(r),controls=profile&&Array.isArray(profile.controls)?profile.controls:[];
+ if(!profile||!controls.length){box.innerHTML='<div class="muted small">'+esc(t().verifiedNone)+'</div>';return}
+ const items=controls.map((ctrl,i)=>{
+  if(ctrl.type!=='percent')return '';
+  const label=ctrl.key==='dimmer'?t().dimmer:(ctrl.label||ctrl.key||('CH '+ctrl.channel));
+  return '<div style="padding:10px 0;border-top:1px solid #2d333a"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(label)+'</b><span id="artnetVerifiedValue_'+i+'" class="muted small">0%</span></div><input class="artnet-verified-range" data-index="'+i+'" type="range" min="'+Number(ctrl.min||0)+'" max="'+Number(ctrl.max||100)+'" value="0" style="margin-top:8px"></div>';
+ }).join('');
+ box.innerHTML='<div style="font-size:11px;color:#9da3ad;margin-top:12px">'+esc(t().verifiedTitle)+'</div><div style="font-weight:800;margin-top:4px">'+esc((fixture.manufacturer||'')+' '+(fixture.model||fixture.id))+'</div><div class="muted small">'+esc(profile.name)+' · '+Number(profile.channels||r.channels)+' ch</div>'+items+'<div class="muted small" style="margin-top:7px">'+esc(t().verifiedSource)+'</div>';
+ box.querySelectorAll('.artnet-verified-range').forEach(input=>{
+  input.addEventListener('input',()=>{
+   const idx=Number(input.dataset.index),v=Number(input.value)||0,readout=E('artnetVerifiedValue_'+idx);
+   if(readout)readout.textContent=Math.round(v)+'%';
+  });
+  input.addEventListener('change',()=>sendVerifiedControl(r,profile,controls[Number(input.dataset.index)],Number(input.value)||0));
+ });
+}
+function sendVerifiedControl(r,profile,ctrl,value){
+ if(!patchUsable(r)||!profile||!ctrl)return;
+ const u=Math.max(1,Number(r.universe)||1);
+ const address=Math.min(512,Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1);
+ if(address>512){status(t().error,false);return}
+ const inMin=Number(ctrl.min||0),inMax=Number(ctrl.max||100),outMin=Number(ctrl.dmxMin||0),outMax=Number(ctrl.dmxMax==null?255:ctrl.dmxMax);
+ const normalized=inMax===inMin?0:Math.max(0,Math.min(1,(Number(value)-inMin)/(inMax-inMin)));
+ const dmx=Math.round(outMin+normalized*(outMax-outMin));
+ const f=frame(u);f[address-1]=Math.max(0,Math.min(255,dmx));sendFrame(f.slice(),u);
+}
 function renderPatchDevices(){
  const select=E('artnetPatchDevice');if(!select)return;
  const previous=select.value;
@@ -54,6 +99,7 @@ function choosePatch(){
  E('artnetChannel').value=Math.min(512,Math.max(1,Number(r.start)||1));
  const hint=E('artnetPatchSelectionHint');
  if(hint)hint.textContent=t().patchLoaded+': '+patchLabel(r);
+ renderVerifiedControls(r);
  status(t().ready);
 }
 function sendFrame(channels,universe){
@@ -92,17 +138,17 @@ function translate(){
 function install(){
  const page=E('equipment');if(!page||E('artnetCard'))return false;
  const card=document.createElement('details');card.id='artnetCard';card.className='card';card.style.border='1px solid #31506b';
- card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="artnetTitle"></span></summary><div style="margin-top:12px"><p id="artnetIntro" class="muted small"></p><div class="row"><div><label class="caption" id="artnetTargetLabel"></label><input id="artnetTarget" inputmode="decimal"></div><div><label class="caption" id="artnetPatchDeviceLabel"></label><select id="artnetPatchDevice"></select><button id="artnetRefreshPatch" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><div id="artnetPatchSelectionHint" class="muted small" style="margin-top:6px"></div></div></div><div class="row"><div><label class="caption" id="artnetUniverseLabel"></label><input id="artnetUniverse" type="number" min="1" max="32768"></div><div><label class="caption" id="artnetChannelLabel"></label><input id="artnetChannel" type="number" min="1" max="512" value="1"></div></div><div><label class="caption" id="artnetValueLabel"></label><input id="artnetValue" type="range" min="0" max="255" value="0"><div id="artnetValueReadout" class="muted small" style="margin-top:5px">0 / 255</div></div><div class="actions"><button id="artnetSend" class="btn primary" type="button"></button><button id="artnetBlackout" class="btn danger" type="button"></button></div><div id="artnetStatus" class="muted small" style="margin-top:8px"></div><div id="artnetPatchHint" class="muted small" style="margin-top:8px"></div><div id="artnetOwnership" class="status warn" style="margin-top:10px"></div></div>';
+ card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="artnetTitle"></span></summary><div style="margin-top:12px"><p id="artnetIntro" class="muted small"></p><div class="row"><div><label class="caption" id="artnetTargetLabel"></label><input id="artnetTarget" inputmode="decimal"></div><div><label class="caption" id="artnetPatchDeviceLabel"></label><select id="artnetPatchDevice"></select><button id="artnetRefreshPatch" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><div id="artnetPatchSelectionHint" class="muted small" style="margin-top:6px"></div></div></div><div class="row"><div><label class="caption" id="artnetUniverseLabel"></label><input id="artnetUniverse" type="number" min="1" max="32768"></div><div><label class="caption" id="artnetChannelLabel"></label><input id="artnetChannel" type="number" min="1" max="512" value="1"></div></div><div><label class="caption" id="artnetValueLabel"></label><input id="artnetValue" type="range" min="0" max="255" value="0"><div id="artnetValueReadout" class="muted small" style="margin-top:5px">0 / 255</div></div><div class="actions"><button id="artnetSend" class="btn primary" type="button"></button><button id="artnetBlackout" class="btn danger" type="button"></button></div><div id="artnetStatus" class="muted small" style="margin-top:8px"></div><div id="artnetVerifiedControls" style="margin-top:10px"></div><div id="artnetPatchHint" class="muted small" style="margin-top:8px"></div><div id="artnetOwnership" class="status warn" style="margin-top:10px"></div></div>';
  const dmx=E('dmxCard');if(dmx&&dmx.parentNode)dmx.parentNode.insertBefore(card,dmx.nextSibling);else page.appendChild(card);
  try{E('artnetTarget').value=localStorage.getItem(TARGET_KEY)||'255.255.255.255'}catch(e){E('artnetTarget').value='255.255.255.255'}
  E('artnetUniverse').value=defaultUniverse();
  E('artnetValue').addEventListener('input',()=>{E('artnetValueReadout').textContent=E('artnetValue').value+' / 255'});
- E('artnetPatchDevice').addEventListener('change',choosePatch);
+ E('artnetPatchDevice').addEventListener('change',()=>{choosePatch();if(E('artnetPatchDevice').value==='')renderVerifiedControls(null)});
  E('artnetRefreshPatch').addEventListener('click',()=>{renderPatchDevices();status(t().ready)});
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);
  translate();return true;
 }
-window.LightingAIArtNetControl={version:'0.2-dmx-patch',refreshPatch:renderPatchDevices};
+window.LightingAIArtNetControl={version:'0.3-verified-dmx-controls',refreshPatch:renderPatchDevices};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;if(typeof old==='function'&&!window.__artNetLangHook){window.__artNetLangHook=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}
 })();

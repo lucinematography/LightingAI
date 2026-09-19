@@ -11,7 +11,21 @@ public final class ArtNetSender {
     private ArtNetSender() {}
 
     public static void sendDmx(String targetIp, int universe, int[] channels, int sequence) throws Exception {
-        if (targetIp == null || targetIp.trim().isEmpty()) targetIp = "255.255.255.255";
+        try (DatagramSocket socket = new DatagramSocket()) {
+            socket.setBroadcast(true);
+            sendDmx(socket, targetIp, universe, channels, sequence);
+        }
+    }
+
+    public static void sendDmx(DatagramSocket socket, String targetIp, int universe, int[] channels, int sequence) throws Exception {
+        if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
+        String ip = targetIp == null || targetIp.trim().isEmpty() ? "255.255.255.255" : targetIp.trim();
+        byte[] packet = buildDmxPacket(universe, channels, sequence);
+        InetAddress address = InetAddress.getByName(ip);
+        socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));
+    }
+
+    static byte[] buildDmxPacket(int universe, int[] channels, int sequence) {
         int logicalUniverse = Math.max(1, universe) - 1;
         int length = Math.max(2, Math.min(512, channels == null ? 0 : channels.length));
         if ((length & 1) != 0) length++;
@@ -35,11 +49,6 @@ public final class ArtNetSender {
             int value = channels != null && i < channels.length ? channels[i] : 0;
             packet[18 + i] = (byte) Math.max(0, Math.min(255, value));
         }
-
-        InetAddress address = InetAddress.getByName(targetIp.trim());
-        try (DatagramSocket socket = new DatagramSocket()) {
-            socket.setBroadcast(true);
-            socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));
-        }
+        return packet;
     }
 }

@@ -119,6 +119,15 @@ for (const [fixtureId, label] of [['desisti-super-led-f10hp-t','De Sisti Super L
 }
 
 
+
+for (const [fixtureId, label] of [['desisti-piccoletto-f-t','De Sisti Piccoletto F T'],['desisti-piccoletto-f-d','De Sisti Piccoletto F D']]) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const mode = fixture?.dmxModes?.find((item) => item.name === '8-bit dimmer');
+  if (!mode || mode.channels !== 1 || mode.verified !== true) failures.push(`Verified ${label} 8-bit dimmer mode missing`);
+  const dimmer = mode?.controls?.find((item) => item.key === 'dimmer');
+  if (!dimmer || dimmer.channel !== 1 || dimmer.type !== 'percent' || dimmer.dmxMax !== 255) failures.push(`Verified ${label} 8-bit dimmer mapping missing`);
+}
+
 const piccolettoVw = RUNTIME_CATALOG.fixtureById.get('desisti-piccoletto-vw');
 const piccolettoVw8 = piccolettoVw?.dmxModes?.find((item) => item.name === 'Vari-White');
 const piccolettoVw16 = piccolettoVw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');

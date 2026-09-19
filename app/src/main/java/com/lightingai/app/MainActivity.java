@@ -52,6 +52,7 @@ public class MainActivity extends Activity {
     private String pendingVoiceTarget = null;
     private final AtomicInteger artNetSequence = new AtomicInteger(1);
     private final AtomicInteger sacnSequence = new AtomicInteger(0);
+    private final AtomicInteger sacnPriority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
     private final AtomicLong artNetDirectSent = new AtomicLong(0);
     private final AtomicLong artNetDirectFailed = new AtomicLong(0);
     private final AtomicLong artNetDirectLastAtMs = new AtomicLong(0);
@@ -87,6 +88,7 @@ public class MainActivity extends Activity {
         nativeSunCompass = new NativeSunCompass(this);
         sacnCid = loadOrCreateSacnCid();
         sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+        sacnLiveEngine.setPriority(sacnPriority.get());
         bleDeviceScanner = new BleDeviceScanner(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
@@ -657,11 +659,19 @@ public class MainActivity extends Activity {
                 sacn.put("livePacketsFailed", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsFailed());
                 sacn.put("liveLastSendAtMs", sacnLiveEngine == null ? 0 : sacnLiveEngine.lastSendAtMs());
                 sacn.put("liveLastError", sacnLiveEngine == null ? "" : sacnLiveEngine.lastError());
+                sacn.put("priority", sacnPriority.get());
                 out.put("sacn", sacn);
                 return out.toString();
             } catch (Exception e) {
                 return "{}";
             }
+        }
+
+        @JavascriptInterface public void sacnSetPriority(int priority) {
+            int value = SacnSender.normalizePriority(priority);
+            sacnPriority.set(value);
+            if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+            sacnLiveEngine.setPriority(value);
         }
 
         @JavascriptInterface public void sacnSendDmx(String requestId, int universe, String channelsJson) {
@@ -677,7 +687,7 @@ public class MainActivity extends Activity {
                     int[] channels = new int[count];
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
                     int seq = sacnSequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
-                    SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI");
+                    SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get());
                     sacnDirectSent.incrementAndGet();
                     sacnDirectLastAtMs.set(System.currentTimeMillis());
                     sacnDirectLastError = "";
@@ -704,6 +714,7 @@ public class MainActivity extends Activity {
                     int[] channels = new int[count];
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
                     if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+                    sacnLiveEngine.setPriority(sacnPriority.get());
                     sacnLiveEngine.setFrame(u, channels);
                     ok = true;
                 } catch (Exception e) {

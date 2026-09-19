@@ -1,0 +1,15 @@
+[
+  {
+    "id": "example-safe-task",
+    "title": "Example guarded LightingAI change",
+    "prompt": "Make the requested small, reviewable LightingAI change using only the supplied file context. If the required evidence is not present, return BLOCKED and no files.",
+    "allowed_paths": [
+      "docs/PROJECT_5_2_FINAL_CHECKLIST.md"
+    ],
+    "tests": [
+      "project5-base"
+    ],
+    "commit_message": "Apply guarded example automation task",
+    "pr_title": "Guarded automation example"
+  }
+]

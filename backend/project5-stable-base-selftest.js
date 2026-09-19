@@ -286,7 +286,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.21-directed-broadcast'",
+  "version:'0.22-arm-preflight'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -335,6 +335,11 @@ for (const marker of [
   "armLabel:'ARM OUTPUT'",
   "armRequired:'Prvo uključi ARM OUTPUT.'",
   "armRequired:'Arm DMX output first.'",
+  'function validIpv4(value)',
+  'function finishArmPreflight(id,payload,error)',
+  "const id='network_arm_'+Date.now()+'_'+(++seq)",
+  "preflightNoBroadcast:'AUTO Art-Net nema dostupnu directed broadcast adresu.'",
+  "preflightNoMulticast:'The active network does not support multicast required by sACN.'",
   "artnetOutputArm').addEventListener('change'",
   "const GROUPS_KEY='lighting_control_groups_v1'",
   'function rowKey(r)',
@@ -639,5 +644,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Art-Net AUTO output now uses active directed IPv4 broadcast targets instead of limited 255.255.255.255, while discovered/manual node IP remains unicast'
+  featureSurface: 'Network DMX ARM preflight validates active IPv4 route, Art-Net AUTO directed broadcast or unicast target, and sACN multicast support before physical output can be armed'
 }, null, 2));

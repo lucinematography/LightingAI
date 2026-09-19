@@ -87,3 +87,28 @@ py scripts/overnight_git_runner.py --max-tasks 1
 ```
 
 Tek posle provere rezultata moze se ostaviti da obradi celu unapred pripremljenu listu.
+
+
+## Faza 3: pracenje CI i kontrolisana popravka
+
+Posle otvaranja PR-a runner sada prati GitHub Actions provere za tu automation granu.
+
+- ako CI prodje, zadatak se oznacava kao zavrsen, a PR ostaje otvoren za pregled
+- ako CI padne, runner cita samo neuspele GitHub Actions logove
+- model moze da pokusa malu popravku samo unutar istog `allowed_paths` skupa
+- lokalni testovi se ponovo pokrecu pre svakog push-a
+- broj automatskih CI popravki je ogranicen preko `max_ci_repairs` i tvrdo ogranicen na najvise 2
+- podrazumevana vrednost je 1 popravka
+- ako popravka nije bezbedna ili CI i dalje pada, zadatak se oznacava za rucnu proveru
+- runner nikada ne menja niti automatski spaja `main`
+
+Primer politike u zadatku:
+
+```json
+{
+  "ci_timeout_minutes": 45,
+  "max_ci_repairs": 1
+}
+```
+
+Za nocni rad racunar mora ostati ukljucen, GitHub CLI mora biti prijavljen, a terminal u kome je runner pokrenut mora ostati aktivan.

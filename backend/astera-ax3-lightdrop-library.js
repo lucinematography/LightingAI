@@ -29,7 +29,7 @@ export const ASTERA_AX3_LIGHTDROP_FIXTURES = [
       wireless: ['AsteraApp', 'CRMX', 'W-DMX', 'UHF', 'Bluetooth', 'WiFi'],
       builtInCRMX: true,
       builtInBTB: true
-    },,
+    },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,

@@ -54,6 +54,9 @@ public class MainActivity extends Activity {
     private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine();
     private byte[] sacnCid;
     private SacnLiveEngine sacnLiveEngine;
+    private BleDeviceScanner bleDeviceScanner;
+    private String pendingBleDiscoveryRequestId = null;
+    private int pendingBleDiscoveryTimeoutMs = 3000;
 
     private static final int CREATE_FILE = 501;
     private static final int CHOOSE_IMAGE = 502;
@@ -61,6 +64,7 @@ public class MainActivity extends Activity {
     private static final int CAMERA_PERMISSION = 504;
     private static final int MEASURE_SCENE = 505;
     private static final int SPEECH_INPUT = 506;
+    private static final int BLE_PERMISSION = 507;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -74,6 +78,7 @@ public class MainActivity extends Activity {
         nativeSunCompass = new NativeSunCompass(this);
         sacnCid = loadOrCreateSacnCid();
         sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+        bleDeviceScanner = new BleDeviceScanner(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -367,6 +372,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-device-capabilities-script')){var d=document.createElement('script');d.id='lightingai-device-capabilities-script';d.src='file:///android_asset/device-capabilities.js';document.body.appendChild(d);}" +
             "if(!document.getElementById('lightingai-sun-native-bridge-script')){var n=document.createElement('script');n.id='lightingai-sun-native-bridge-script';n.src='file:///android_asset/sun-native-bridge.js';document.body.appendChild(n);}" +
             "if(!document.getElementById('lightingai-artnet-control-script')){var a=document.createElement('script');a.id='lightingai-artnet-control-script';a.src='file:///android_asset/artnet-control.js';document.body.appendChild(a);}" +
+            "if(!document.getElementById('lightingai-ble-control-script')){var b=document.createElement('script');b.id='lightingai-ble-control-script';b.src='file:///android_asset/ble-control.js';document.body.appendChild(b);}" +
             "})();", null);
     }
 
@@ -437,6 +443,62 @@ public class MainActivity extends Activity {
             .putLong(uuid.getMostSignificantBits())
             .putLong(uuid.getLeastSignificantBits())
             .array();
+    }
+
+    private boolean hasBlePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+        }
+        return hasLocationPermission();
+    }
+
+    private void requestBlePermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || hasBlePermission()) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            requestPermissions(
+                new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
+                BLE_PERMISSION
+            );
+        } else {
+            requestPermissions(
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                BLE_PERMISSION
+            );
+        }
+    }
+
+    private void startBleDiscovery(String requestId, int timeoutMs) {
+        final String id = requestId == null ? "" : requestId;
+        final int boundedTimeout = Math.max(1000, Math.min(10000, timeoutMs));
+        if (!hasBlePermission()) {
+            pendingBleDiscoveryRequestId = id;
+            pendingBleDiscoveryTimeoutMs = boundedTimeout;
+            requestBlePermission();
+            return;
+        }
+
+        pendingBleDiscoveryRequestId = null;
+        if (bleDeviceScanner == null) bleDeviceScanner = new BleDeviceScanner(this);
+        bleDeviceScanner.discover(boundedTimeout, new BleDeviceScanner.Callback() {
+            @Override public void onComplete(JSONArray devices) {
+                notifyBleDiscovery(id, devices, "");
+            }
+
+            @Override public void onError(String code) {
+                notifyBleDiscovery(id, new JSONArray(), code);
+            }
+        });
+    }
+
+    private void notifyBleDiscovery(String requestId, JSONArray devices, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String devicesJs = devices == null ? "[]" : devices.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIBleDiscoveryResult&&window.LightingAIBleDiscoveryResult(" + idJs + "," + devicesJs + "," + errJs + ");",
+            null));
     }
 
     private void notifyArtNetResult(String requestId, boolean ok, String message) {
@@ -548,6 +610,14 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void startSpeechInput(String language, String targetId) {
             runOnUiThread(() -> MainActivity.this.startSpeechInput("en".equals(language) ? "en" : "sr", targetId));
+        }
+
+        @JavascriptInterface public boolean hasBlePermission() {
+            return MainActivity.this.hasBlePermission();
+        }
+
+        @JavascriptInterface public void bleDiscover(String requestId, int timeoutMs) {
+            runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
         }
 
         @JavascriptInterface public void sacnSendDmx(String requestId, int universe, String channelsJson) {
@@ -693,6 +763,14 @@ public class MainActivity extends Activity {
         } else if (requestCode == LOCATION_PERMISSION && pendingNativeSunLocation) {
             if (hasLocationPermission()) requestNativeSunLocation();
             else { pendingNativeSunLocation = false; notifyNativeSunLocationError(); }
+        } else if (requestCode == BLE_PERMISSION) {
+            String pendingId = pendingBleDiscoveryRequestId;
+            int pendingTimeout = pendingBleDiscoveryTimeoutMs;
+            pendingBleDiscoveryRequestId = null;
+            if (pendingId != null) {
+                if (hasBlePermission()) startBleDiscovery(pendingId, pendingTimeout);
+                else notifyBleDiscovery(pendingId, new JSONArray(), "ble_permission_denied");
+            }
         }
     }
 
@@ -700,6 +778,7 @@ public class MainActivity extends Activity {
         stopNativeSunCompass();
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        if (bleDeviceScanner != null) bleDeviceScanner.stop();
         super.onPause();
     }
 
@@ -773,6 +852,7 @@ public class MainActivity extends Activity {
         if (pendingFileChooser != null) finishFileChooser(null);
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();
+        if (bleDeviceScanner != null) bleDeviceScanner.stop();
         super.onDestroy();
     }
 

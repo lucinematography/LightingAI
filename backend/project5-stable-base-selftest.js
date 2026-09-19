@@ -140,6 +140,7 @@ const exactAllowed = new Set([
   'backend/package.json',
   'app/src/main/assets/artnet-control.js',
   'app/src/main/java/com/lightingai/app/ArtNetSender.java',
+  'app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -240,7 +241,11 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.8-master-rgb'",
+  "version:'0.9-live-refresh'",
+  'function setLiveEnabled(enabled)',
+  'function stopLiveForBackground()',
+  'artnetSetLiveDmx',
+  'artnetStopLive',
   'function verifiedDimmerEntries()',
   'function applyMasterDimmer(value)',
   'function verifiedCctEntries()',
@@ -250,6 +255,16 @@ for (const marker of [
   'function applyMasterRgb(redValue,greenValue,blueValue)'
 ]) {
   if (!artNetControl.includes(marker)) fail(`cross-platform Art-Net transport marker missing: ${marker}`);
+}
+
+const artNetLiveEngine = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java']);
+for (const marker of [
+  'private static final long PERIOD_MS = 33L',
+  'scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS)',
+  'ArtNetSender.sendDmx(activeSocket',
+  'public void stopAll()'
+]) {
+  if (!artNetLiveEngine.includes(marker)) fail(`Art-Net live engine marker missing: ${marker}`);
 }
 
 const plannerLayout = git(['show', 'HEAD:app/src/main/assets/planner-layout-lock.js']);
@@ -277,7 +292,10 @@ for (const marker of [
   'SPEECH_INPUT = 506',
   'boolean sceneDescription = "aiv-desc".equals(target);',
   'Opiši izgled scene',
-  'notifyAIVisualPdfResult'
+  'notifyAIVisualPdfResult',
+  '@JavascriptInterface public void artNetSetLiveDmx',
+  '@JavascriptInterface public void artNetStopLive',
+  'artNetLiveEngine.stopAll()'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
 }
@@ -344,5 +362,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Cross-brand Art-Net master RGB control over verified DMX profiles, alongside master dimmer, CCT and platform-independent transport'
+  featureSurface: 'Foreground-safe 30 Hz native Art-Net live refresh engine, with master dimmer/CCT/RGB and platform-independent transport preserved'
 }, null, 2));

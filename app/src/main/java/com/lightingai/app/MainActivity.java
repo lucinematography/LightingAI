@@ -372,6 +372,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-device-capabilities-script')){var d=document.createElement('script');d.id='lightingai-device-capabilities-script';d.src='file:///android_asset/device-capabilities.js';document.body.appendChild(d);}" +
             "if(!document.getElementById('lightingai-sun-native-bridge-script')){var n=document.createElement('script');n.id='lightingai-sun-native-bridge-script';n.src='file:///android_asset/sun-native-bridge.js';document.body.appendChild(n);}" +
             "if(!document.getElementById('lightingai-artnet-control-script')){var a=document.createElement('script');a.id='lightingai-artnet-control-script';a.src='file:///android_asset/artnet-control.js';document.body.appendChild(a);}" +
+            "if(!document.getElementById('lightingai-ble-control-script')){var b=document.createElement('script');b.id='lightingai-ble-control-script';b.src='file:///android_asset/ble-control.js';document.body.appendChild(b);}" +
             "})();", null);
     }
 

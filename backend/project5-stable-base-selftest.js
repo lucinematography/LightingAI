@@ -241,7 +241,11 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.9-live-refresh'",
+  "version:'0.10-control-scenes'",
+  'function patchSignature()',
+  'function saveScene()',
+  'function applyScene(index)',
+  "const SCENES_KEY='lighting_artnet_scenes_v1'",
   'function setLiveEnabled(enabled)',
   'function stopLiveForBackground()',
   'artnetSetLiveDmx',
@@ -362,5 +366,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Foreground-safe 30 Hz native Art-Net live refresh engine, with master dimmer/CCT/RGB and platform-independent transport preserved'
+  featureSurface: 'Patch-safe Art-Net CONTROL scenes layered over live refresh, master dimmer/CCT/RGB and platform-independent transport'
 }, null, 2));

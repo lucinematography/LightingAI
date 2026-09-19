@@ -18,20 +18,27 @@ const verifiedVwDmxWidths=(sourceUrl)=>[
   {name:'16-bit Vari-White',channels:3,verified:true,sourceUrl}
 ];
 
+// Official F4.7 Lite T/D datasheet pp. 2-3: 0-100% DMX dimming, one 8-bit channel.
+// The 16-bit footprint is known, but its coarse/fine order is not documented.
+const verifiedF47LiteDimmerModes=()=>[
+  {name:'8-bit dimmer',channels:1,verified:true,sourceUrl:F47_TD,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:8,min:0,max:100,dmxMin:0,dmxMax:255}]},
+  {name:'16-bit dimmer',channels:2}
+];
+
 export const DESISTI_LITE_FIXTURES=[
   {
     id:'desisti-f47-lite-t',manufacturer:'De Sisti',model:'F4.7 Lite T',family:'LITE Series',
     category:'Light',sourceType:'Fanless LED Fresnel',ledPowerW:40,powerDrawW:45,
     cctK:{min:3200,max:3200},colorMode:'Tungsten',cri:97,tlci:96,lensDiameterMm:120,
     ipRating:'IP20',weightKg:3.0,control:['DMX512','On-board dimming'],
-    dmxModes:[{name:'8-bit dimmer',channels:1},{name:'16-bit dimmer',channels:2}],sourceUrl:F47_TD
+    dmxModes:verifiedF47LiteDimmerModes(),sourceUrl:F47_TD
   },
   {
     id:'desisti-f47-lite-d',manufacturer:'De Sisti',model:'F4.7 Lite D',family:'LITE Series',
     category:'Light',sourceType:'Fanless LED Fresnel',ledPowerW:40,powerDrawW:45,
     cctK:{min:5600,max:5600},colorMode:'Daylight',cri:96,tlci:97,lensDiameterMm:120,
     ipRating:'IP20',weightKg:3.0,control:['DMX512','On-board dimming'],
-    dmxModes:[{name:'8-bit dimmer',channels:1},{name:'16-bit dimmer',channels:2}],sourceUrl:F47_TD
+    dmxModes:verifiedF47LiteDimmerModes(),sourceUrl:F47_TD
   },
   {
     id:'desisti-f47-lite-vw',manufacturer:'De Sisti',model:'F4.7 Lite VW',family:'LITE Series',

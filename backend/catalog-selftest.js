@@ -278,6 +278,17 @@ const desistiF6VwDimmer16 = desistiF6Vw16?.controls?.find((item) => item.key ===
 if (!desistiF6VwDimmer16 || desistiF6VwDimmer16.channel !== 1 || desistiF6VwDimmer16.type !== 'percent' || desistiF6VwDimmer16.bits !== 16 || desistiF6VwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti F6 Vari-White 16-bit coarse/fine dimmer mapping missing');
 if (desistiF6Vw16?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F6 Vari-White CCT control must remain hidden until CCT Mode values are sourced');
 
+
+const desistiF10HpVw = RUNTIME_CATALOG.fixtureById.get('desisti-super-led-f10hp-vw');
+const desistiF10HpVwLegacy = desistiF10HpVw?.dmxModes?.find((item) => item.name === 'Vari-White');
+const desistiF10HpVw16 = desistiF10HpVw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
+if (!desistiF10HpVwLegacy || desistiF10HpVwLegacy.channels !== 3) failures.push('De Sisti F10HP Vari-White legacy personality missing');
+if (desistiF10HpVwLegacy?.verified === true) failures.push('De Sisti F10HP Vari-White legacy personality must remain unverified');
+if (!desistiF10HpVw16 || desistiF10HpVw16.channels !== 4 || desistiF10HpVw16.verified !== true) failures.push('Verified De Sisti F10HP Vari-White 16-bit mode missing');
+const desistiF10HpVwDimmer16 = desistiF10HpVw16?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiF10HpVwDimmer16 || desistiF10HpVwDimmer16.channel !== 1 || desistiF10HpVwDimmer16.type !== 'percent' || desistiF10HpVwDimmer16.bits !== 16 || desistiF10HpVwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti F10HP Vari-White 16-bit coarse/fine dimmer mapping missing');
+if (desistiF10HpVw16?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F10HP Vari-White CCT control must remain hidden until CCT Mode values are sourced');
+
 for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

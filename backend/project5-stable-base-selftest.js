@@ -287,7 +287,9 @@ for (const marker of [
   'packet[9] = 0x20',
   'static Node parseReply',
   '(data[9] & 0xff) != 0x21',
-  'socket.bind(new InetSocketAddress(ArtNetSender.ARTNET_PORT))'
+  'socket.bind(new InetSocketAddress(ArtNetSender.ARTNET_PORT))',
+  'static List<InetAddress> broadcastTargets()',
+  'address.getBroadcast()'
 ]) {
   if (!artNetDiscovery.includes(marker)) fail(`Art-Net discovery marker missing: ${marker}`);
 }

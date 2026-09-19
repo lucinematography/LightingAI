@@ -168,6 +168,34 @@ for(const id of ['desisti-f47-lite-t','desisti-f47-lite-d']){
     
 
 
+
+// Super LED F14 T/D and F14 HP T/D: official product page confirms 1ch 8-bit and 2ch 16-bit footprints.
+// Only the 8-bit CH1 dimmer control is sourced here; 16-bit channel order remains hidden.
+const f14FamilySource='https://www.desisti.it/super-led-f14/';
+for(const id of ['desisti-super-led-f14-t','desisti-super-led-f14-d','desisti-super-led-f14hp-t','desisti-super-led-f14hp-d']){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)){
+    failures.push('Missing F14 family fixed-white DMX modes: '+id);
+    continue;
+  }
+  if(fixture.dmxModes.length!==2){
+    failures.push('Unexpected F14 family fixed-white DMX mode count: '+id);
+  }
+  const mode8=fixture.dmxModes.find(mode=>mode?.name==='8-bit dimmer');
+  const mode16=fixture.dmxModes.find(mode=>mode?.name==='16-bit dimmer');
+  if(mode8?.channels!==1||mode8?.verified!==true||mode8?.sourceUrl!==f14FamilySource){
+    failures.push('Incorrect verified F14 family 8-bit dimmer mode/source: '+id);
+  }
+  if(mode16?.channels!==2||mode16?.verified!==true||mode16?.sourceUrl!==f14FamilySource){
+    failures.push('Incorrect verified F14 family 16-bit width/source: '+id);
+  }
+  for(const key of ['controls','requiredChannels']){
+    if(mode16?.[key]!=null&&(!Array.isArray(mode16[key])||mode16[key].length)){
+      failures.push('F14 family 16-bit channel order must remain hidden until sourced: '+id+' / '+key);
+    }
+  }
+}
+
 // Soft LED 2 Lite T/D: official datasheet confirms 1ch 8-bit and 2ch 16-bit footprints.
 // Only the 8-bit CH1 dimmer control is sourced; 16-bit channel order stays hidden.
 const s2LiteDimmerSource='https://www.desisti.it/wp/wp-content/uploads/2024/02/SOFTLED-2Lite-T-D-0224.pdf';

@@ -131,6 +131,7 @@ const exactAllowed = new Set([
   'backend/kinoflo-diva-barfly-library.js',
   'backend/kinoflo-imara-library.js',
   'backend/kinoflo-micro-mini-library.js',
+  'backend/kinoflo-blanket-flathead-library.js',
   'backend/kinoflo-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'

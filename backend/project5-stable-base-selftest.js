@@ -285,7 +285,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.12-artnet-sacn'",
+  "version:'0.13-scene-fades'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -302,6 +302,14 @@ for (const marker of [
   'function saveScene()',
   'function applyScene(index)',
   "const SCENES_KEY='lighting_artnet_scenes_v1'",
+  "const FADE_KEY='lighting_control_fade_seconds_v1'",
+  'function normalizedSceneFrames(scene)',
+  'function fadeToScene(index)',
+  'function cancelSceneFade(showStatus)',
+  "sendFrame(out.slice(),Number(u),'fade')",
+  "String(id||'').indexOf('fade_')===0",
+  "sceneFade:'PRELAZ'",
+  "sceneFade:'FADE'",
   'function setLiveEnabled(enabled)',
   'function stopLiveForBackground()',
   'artnetSetLiveDmx',
@@ -519,5 +527,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Cross-platform network DMX plus permission-safe BLE device discovery foundation; no proprietary manufacturer commands are guessed'
+  featureSurface: 'Timed 30 Hz crossfades between patch-safe CONTROL scenes over the existing Art-Net/sACN transport stack'
 }, null, 2));

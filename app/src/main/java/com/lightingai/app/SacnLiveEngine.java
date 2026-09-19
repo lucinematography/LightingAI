@@ -26,6 +26,7 @@ public final class SacnLiveEngine {
 
     private final Map<Integer, Frame> frames = new ConcurrentHashMap<>();
     private final AtomicInteger sequence = new AtomicInteger(0);
+    private final AtomicInteger priority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
     private final AtomicLong packetsSent = new AtomicLong(0);
     private final AtomicLong packetsFailed = new AtomicLong(0);
     private final AtomicLong lastSendAtMs = new AtomicLong(0);
@@ -54,6 +55,14 @@ public final class SacnLiveEngine {
 
     public int activeFrameCount() {
         return frames.size();
+    }
+
+    public void setPriority(int value) {
+        priority.set(SacnSender.normalizePriority(value));
+    }
+
+    public int priority() {
+        return priority.get();
     }
 
     public long packetsSent() {
@@ -88,7 +97,8 @@ public final class SacnLiveEngine {
                                 frame.channels,
                                 nextSequence(),
                                 cid,
-                                sourceName
+                                sourceName,
+                                priority.get()
                             );
                             packetsSent.incrementAndGet();
                             lastSendAtMs.set(System.currentTimeMillis());
@@ -140,7 +150,7 @@ public final class SacnLiveEngine {
 
         for (Frame frame : frames.values()) {
             try {
-                SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(), cid, sourceName);
+                SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(), cid, sourceName, priority.get());
                 packetsSent.incrementAndGet();
                 lastSendAtMs.set(System.currentTimeMillis());
                 lastError = "";

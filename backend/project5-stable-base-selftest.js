@@ -285,7 +285,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.18-diagnostics'",
+  "version:'0.19-sacn-priority'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -351,6 +351,13 @@ for (const marker of [
   "action:'networkDmxDiagnostics'",
   "diagTitle:'DIJAGNOSTIKA KONTROLE'",
   "diagTitle:'CONTROL DIAGNOSTICS'",
+  "const SACN_PRIORITY_KEY='lighting_sacn_priority_v1'",
+  'function sacnPriority()',
+  'function applySacnPriority()',
+  'setSacnPriority:function(priority)',
+  "action:'sacnSetPriority'",
+  "sacnPriority:'sACN PRIORITET'",
+  "sacnPriority:'sACN PRIORITY'",
   'function setLiveEnabled(enabled)',
   'function stopLiveForBackground()',
   'artnetSetLiveDmx',
@@ -401,7 +408,11 @@ for (const marker of [
   'writeFlagsAndLength(packet, 16',
   'packet[117] = 0x02',
   'packet[118] = (byte) 0xa1',
-  'static String multicastAddress'
+  'static String multicastAddress',
+  'public static final int DEFAULT_PRIORITY = 100',
+  'public static final int MAX_PRIORITY = 200',
+  'static int normalizePriority(int priority)',
+  'packet[108] = (byte) normalizePriority(priority)'
 ]) {
   if (!sacnSender.includes(marker)) fail(`sACN sender marker missing: ${marker}`);
 }
@@ -417,7 +428,10 @@ for (const marker of [
   'public long packetsSent()',
   'public long packetsFailed()',
   'public long lastSendAtMs()',
-  'public String lastError()'
+  'public String lastError()',
+  'public void setPriority(int value)',
+  'public int priority()',
+  'priority.get()'
 ]) {
   if (!sacnLiveEngine.includes(marker)) fail(`sACN live engine marker missing: ${marker}`);
 }
@@ -428,7 +442,8 @@ for (const marker of [
   'sacnUsesBigEndianUniverseAndExpectedMulticastAddress',
   'sacnPropertyCountIncludesStartCode',
   'sacnUniverseIsClampedToStandardRange',
-  'streamTerminationSetsOptionsBit'
+  'streamTerminationSetsOptionsBit',
+  'sacnPriorityIsEncodedAndClamped'
 ]) {
   if (!sacnProtocolTest.includes(marker)) fail(`sACN protocol test marker missing: ${marker}`);
 }
@@ -514,7 +529,12 @@ for (const marker of [
   'artNet.put("livePacketsSent", artNetLiveEngine.packetsSent())',
   'sacn.put("livePacketsSent", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsSent())',
   'artNetDirectSent.incrementAndGet()',
-  'sacnDirectSent.incrementAndGet()'
+  'sacnDirectSent.incrementAndGet()',
+  '@JavascriptInterface public void sacnSetPriority(int priority)',
+  'sacnPriority.set(value)',
+  'sacnLiveEngine.setPriority(value)',
+  'SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get())',
+  'sacn.put("priority", sacnPriority.get())'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
 }
@@ -581,5 +601,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Network DMX diagnostics with native direct/live packet counters, failure tracking, last-send timestamps, and explicit UDP no-ack disclosure'
+  featureSurface: 'Configurable standards-bounded sACN source priority 0-200 with persistent shared UI, Android live/direct application, diagnostics, and protocol tests'
 }, null, 2));

@@ -10,6 +10,8 @@ public final class SacnSender {
     public static final int SACN_PORT = 5568;
     public static final int MIN_UNIVERSE = 1;
     public static final int MAX_UNIVERSE = 63999;
+    public static final int DEFAULT_PRIORITY = 100;
+    public static final int MAX_PRIORITY = 200;
     private static final byte[] ACN_PACKET_ID = new byte[]{
         0x41,0x53,0x43,0x2d,0x45,0x31,0x2e,0x31,0x37,0x00,0x00,0x00
     };
@@ -17,24 +19,36 @@ public final class SacnSender {
     private SacnSender() {}
 
     public static void sendDmx(int universe, int[] channels, int sequence, byte[] cid, String sourceName) throws Exception {
+        sendDmx(universe, channels, sequence, cid, sourceName, DEFAULT_PRIORITY);
+    }
+
+    public static void sendDmx(int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
         try (DatagramSocket socket = new DatagramSocket()) {
-            sendDmx(socket, universe, channels, sequence, cid, sourceName);
+            sendDmx(socket, universe, channels, sequence, cid, sourceName, priority);
         }
     }
 
     public static void sendDmx(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName) throws Exception {
+        sendDmx(socket, universe, channels, sequence, cid, sourceName, DEFAULT_PRIORITY);
+    }
+
+    public static void sendDmx(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
         int u = normalizeUniverse(universe);
-        byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0);
+        byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0, priority);
         InetAddress address = InetAddress.getByName(multicastAddress(u));
         socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
     }
 
     static byte[] buildDmxPacket(int universe, int[] channels, int sequence, byte[] cid, String sourceName) {
-        return buildDmxPacket(universe, channels, sequence, cid, sourceName, 0);
+        return buildDmxPacket(universe, channels, sequence, cid, sourceName, 0, DEFAULT_PRIORITY);
     }
 
     static byte[] buildDmxPacket(int universe, int[] channels, int sequence, byte[] cid, String sourceName, int options) {
+        return buildDmxPacket(universe, channels, sequence, cid, sourceName, options, DEFAULT_PRIORITY);
+    }
+
+    static byte[] buildDmxPacket(int universe, int[] channels, int sequence, byte[] cid, String sourceName, int options, int priority) {
         int u = normalizeUniverse(universe);
         int[] safeChannels = channels == null ? new int[0] : Arrays.copyOf(channels, Math.min(512, channels.length));
         int slotCount = safeChannels.length;
@@ -58,7 +72,7 @@ public final class SacnSender {
 
         byte[] source = (sourceName == null ? "LightingAI" : sourceName).getBytes(StandardCharsets.UTF_8);
         System.arraycopy(source, 0, packet, 44, Math.min(63, source.length));
-        packet[108] = 100;
+        packet[108] = (byte) normalizePriority(priority);
         packet[109] = 0x00;
         packet[110] = 0x00;
         packet[111] = (byte) (sequence & 0xff);
@@ -86,9 +100,13 @@ public final class SacnSender {
     }
 
     static void sendTermination(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName) throws Exception {
+        sendTermination(socket, universe, channels, sequence, cid, sourceName, DEFAULT_PRIORITY);
+    }
+
+    static void sendTermination(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
         int u = normalizeUniverse(universe);
-        byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0x40);
+        byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0x40, priority);
         InetAddress address = InetAddress.getByName(multicastAddress(u));
         socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
     }
@@ -100,6 +118,10 @@ public final class SacnSender {
 
     private static int normalizeUniverse(int universe) {
         return Math.max(MIN_UNIVERSE, Math.min(MAX_UNIVERSE, universe));
+    }
+
+    static int normalizePriority(int priority) {
+        return Math.max(0, Math.min(MAX_PRIORITY, priority));
     }
 
     private static void writeFlagsAndLength(byte[] packet, int offset, int length) {

@@ -66,6 +66,17 @@ public class SacnProtocolTest {
         assertEquals(0x40, packet[112] & 0xff);
     }
 
+    @Test public void sacnPriorityIsEncodedAndClamped() {
+        byte[] low = SacnSender.buildDmxPacket(1, new int[]{1}, 1, CID, "LightingAI", 0, -10);
+        byte[] normal = SacnSender.buildDmxPacket(1, new int[]{1}, 1, CID, "LightingAI", 0, 120);
+        byte[] high = SacnSender.buildDmxPacket(1, new int[]{1}, 1, CID, "LightingAI", 0, 999);
+        assertEquals(0, low[108] & 0xff);
+        assertEquals(120, normal[108] & 0xff);
+        assertEquals(200, high[108] & 0xff);
+        assertEquals(100, SacnSender.DEFAULT_PRIORITY);
+        assertEquals(200, SacnSender.MAX_PRIORITY);
+    }
+
     @Test public void sourceNameIsLimitedToFramingField() {
         String longName = "LightingAI-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-extra";
         byte[] packet = SacnSender.buildDmxPacket(1, new int[]{0}, 1, CID, longName);

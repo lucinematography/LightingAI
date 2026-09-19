@@ -370,6 +370,19 @@ for (const [fixtureId, label] of [
   if (fixture?.dmxModes?.some((item) => item.name === 'Vari-White 16-bit' && item.verified === true)) failures.push(`${label} 16-bit personality must remain unverified until full channel behavior is sourced`);
 }
 
+
+for (const [fixtureId, label] of [
+  ['desisti-softled-4-vw','De Sisti Soft LED 4 VW'],
+  ['desisti-softled-8-vw','De Sisti Soft LED 8 VW']
+]) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const mode16 = fixture?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
+  if (!mode16 || mode16.channels !== 4 || mode16.verified !== true) failures.push(`Verified ${label} 4ch 16-bit mode missing`);
+  const dimmer16 = mode16?.controls?.find((item) => item.key === 'dimmer');
+  if (!dimmer16 || dimmer16.channel !== 1 || dimmer16.type !== 'percent' || dimmer16.bits !== 16 || dimmer16.dmxMax !== 65535) failures.push(`Verified ${label} 16-bit coarse/fine dimmer mapping missing`);
+  if (mode16?.controls?.some((item) => item.key === 'cct')) failures.push(`${label} 16-bit CCT control must remain hidden until CCT Mode DMX values are sourced`);
+}
+
 for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

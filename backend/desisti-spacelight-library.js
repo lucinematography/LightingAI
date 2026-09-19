@@ -23,7 +23,7 @@ export const DESISTI_SPACELIGHT_FIXTURES=[
     detachableDriver:true,
     remoteDriverMaxM:50,
     control:['DMX512','On-board','Optional CRMX LumenRadio'],
-    dmxModes:[{name:'Vari-White',channels:3}],
+    dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:SRC,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}],
     sourceUrl:SRC
   }
 ];

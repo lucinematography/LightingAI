@@ -173,6 +173,22 @@ for (const [fixtureId, label] of [
   if (!dimmer16 || dimmer16.channel !== 1 || dimmer16.type !== 'percent' || dimmer16.bits !== 16 || dimmer16.dmxMax !== 65535) failures.push(`Verified ${label} 16-bit coarse/fine dimmer mapping missing`);
 }
 
+
+for (const [fixtureId, label] of [
+  ['desisti-softled-2-t','De Sisti Soft LED 2 T'],
+  ['desisti-softled-2-d','De Sisti Soft LED 2 D']
+]) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const mode8 = fixture?.dmxModes?.find((item) => item.name === '8-bit dimmer');
+  const mode16 = fixture?.dmxModes?.find((item) => item.name === '16-bit dimmer');
+  if (!mode8 || mode8.channels !== 1 || mode8.verified !== true) failures.push(`Verified ${label} 8-bit dimmer mode missing`);
+  if (!mode16 || mode16.channels !== 2 || mode16.verified !== true) failures.push(`Verified ${label} 16-bit dimmer mode missing`);
+  const dimmer8 = mode8?.controls?.find((item) => item.key === 'dimmer');
+  const dimmer16 = mode16?.controls?.find((item) => item.key === 'dimmer');
+  if (!dimmer8 || dimmer8.channel !== 1 || dimmer8.type !== 'percent' || dimmer8.dmxMax !== 255) failures.push(`Verified ${label} 8-bit dimmer mapping missing`);
+  if (!dimmer16 || dimmer16.channel !== 1 || dimmer16.type !== 'percent' || dimmer16.bits !== 16 || dimmer16.dmxMax !== 65535) failures.push(`Verified ${label} 16-bit coarse/fine dimmer mapping missing`);
+}
+
 for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

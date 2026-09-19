@@ -98,7 +98,7 @@ public final class BleDeviceScanner {
     @SuppressLint("MissingPermission")
     public void stop() {
         synchronized (lock) {
-            stopLocked(false, null);
+            stopLocked(false, "ble_scan_cancelled");
         }
     }
 

@@ -252,6 +252,8 @@ for (const marker of [
   "version:'0.10-node-discovery'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
+  "artnetDiscoveredNodes').addEventListener('change'",
+  'if(liveEnabled)setLiveEnabled(false)',
   'function patchSignature()',
   'function saveScene()',
   'function applyScene(index)',

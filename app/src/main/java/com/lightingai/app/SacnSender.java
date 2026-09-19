@@ -57,7 +57,7 @@ public final class SacnSender {
         writeInt(packet, 40, 0x00000002);
 
         byte[] source = (sourceName == null ? "LightingAI" : sourceName).getBytes(StandardCharsets.UTF_8);
-        System.arraycopy(source, 0, packet, 44, Math.min(64, source.length));
+        System.arraycopy(source, 0, packet, 44, Math.min(63, source.length));
         packet[108] = 100;
         packet[109] = 0x00;
         packet[110] = 0x00;

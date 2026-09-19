@@ -49,6 +49,8 @@ for (const [name, channels] of [['Lighting 2ch',2],['Effects 5ch',5],['Lighting 
   if (!mode || mode.channels !== channels || mode.verified !== true) failures.push(`Verified LS 600x Pro DMX mode missing: ${name}`);
   const dimmer = mode?.controls?.find((control) => control.key === 'dimmer');
   if (!dimmer || dimmer.channel !== 1 || dimmer.type !== 'percent') failures.push(`Verified LS 600x Pro dimmer mapping missing: ${name}`);
+  const cct = mode?.controls?.find((control) => control.key === 'cct');
+  if (!cct || cct.channel !== 2 || cct.type !== 'cct-linear' || cct.min !== 2700 || cct.max !== 6500) failures.push(`Verified LS 600x Pro CCT mapping missing: ${name}`);
 }
 
 const titanTube = RUNTIME_CATALOG.fixtureById.get('astera-titantube-fp1');

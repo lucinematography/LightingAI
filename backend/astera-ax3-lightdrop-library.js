@@ -29,7 +29,19 @@ export const ASTERA_AX3_LIGHTDROP_FIXTURES = [
       wireless: ['AsteraApp', 'CRMX', 'W-DMX', 'UHF', 'Bluetooth', 'WiFi'],
       builtInCRMX: true,
       builtInBTB: true
-    },
+    },,
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: 'https://ledbox.fr/wp-content/uploads/2021/03/ax3-dmx-profiles.pdf',
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC
   }
 ];

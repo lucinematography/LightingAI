@@ -39,3 +39,8 @@ android { namespace 'com.lightingai.app'; compileSdk 35
         }
     }
 }
+
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}

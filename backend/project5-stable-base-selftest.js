@@ -147,6 +147,8 @@ const exactAllowed = new Set([
   'app/src/main/assets/artnet-control.js',
   'app/src/main/java/com/lightingai/app/ArtNetSender.java',
   'app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java',
+  'app/src/main/java/com/lightingai/app/ArtNetDiscovery.java',
+  'app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -247,7 +249,11 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.10-control-scenes'",
+  "version:'0.10-node-discovery'",
+  'function discoverNodes()',
+  'LightingAIArtNetDiscoveryResult',
+  "artnetDiscoveredNodes').addEventListener('change'",
+  'if(liveEnabled)setLiveEnabled(false)',
   'function patchSignature()',
   'function saveScene()',
   'function applyScene(index)',
@@ -275,6 +281,31 @@ for (const marker of [
   'public void stopAll()'
 ]) {
   if (!artNetLiveEngine.includes(marker)) fail(`Art-Net live engine marker missing: ${marker}`);
+}
+
+const artNetDiscovery = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/ArtNetDiscovery.java']);
+for (const marker of [
+  'static byte[] buildPollPacket()',
+  'packet[9] = 0x20',
+  'static Node parseReply',
+  '(data[9] & 0xff) != 0x21',
+  'socket.bind(new InetSocketAddress(ArtNetSender.ARTNET_PORT))',
+  'static List<InetAddress> broadcastTargets()',
+  'address.getBroadcast()'
+]) {
+  if (!artNetDiscovery.includes(marker)) fail(`Art-Net discovery marker missing: ${marker}`);
+}
+
+const artNetProtocolTest = git(['show', 'HEAD:app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java']);
+for (const marker of [
+  'dmxPacketUsesArtNetHeaderUniverseAndEvenLength',
+  'dmxPacketMapsOneBasedUiUniverseToPortAddress',
+  'artPollPacketHasCorrectOpcodeAndProtocolVersion',
+  'artPollReplyParsesIpAndNames',
+  'artPollReplyFallsBackToPacketSourceWhenReplyIpIsZero',
+  'invalidReplyIsRejected'
+]) {
+  if (!artNetProtocolTest.includes(marker)) fail(`Art-Net protocol unit-test marker missing: ${marker}`);
 }
 
 const plannerLayout = git(['show', 'HEAD:app/src/main/assets/planner-layout-lock.js']);
@@ -305,7 +336,9 @@ for (const marker of [
   'notifyAIVisualPdfResult',
   '@JavascriptInterface public void artNetSetLiveDmx',
   '@JavascriptInterface public void artNetStopLive',
-  'artNetLiveEngine.stopAll()'
+  'artNetLiveEngine.stopAll()',
+  '@JavascriptInterface public void artNetDiscover',
+  'window.LightingAIArtNetDiscoveryResult'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
 }
@@ -372,5 +405,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Verified Astera AX5/AX10/AX9/PixelBrick plus Pluto/Leo DIM RGB profiles layered over patch-safe CONTROL scenes and the existing Art-Net live/group control stack'
+  featureSurface: 'Cross-platform Art-Net node discovery layered onto the existing live/group/scene control stack'
 }, null, 2));

@@ -421,6 +421,16 @@ public class MainActivity extends Activity {
             null));
     }
 
+    private void notifyArtNetDiscovery(String requestId, JSONArray nodes, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String nodesJs = nodes == null ? "[]" : nodes.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIArtNetDiscoveryResult&&window.LightingAIArtNetDiscoveryResult(" + idJs + "," + nodesJs + "," + errJs + ");",
+            null));
+    }
+
     private void notifyVoiceInputError(String targetId, String code) {
         if (webView == null) return;
         final String targetJs = JSONObject.quote(targetId == null ? "aiv-dp-request" : targetId);
@@ -511,6 +521,26 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void startSpeechInput(String language, String targetId) {
             runOnUiThread(() -> MainActivity.this.startSpeechInput("en".equals(language) ? "en" : "sr", targetId));
+        }
+
+        @JavascriptInterface public void artNetDiscover(String requestId, int timeoutMs) {
+            final String id = requestId == null ? "" : requestId;
+            new Thread(() -> {
+                JSONArray result = new JSONArray();
+                String error = "";
+                try {
+                    for (ArtNetDiscovery.Node node : ArtNetDiscovery.discover(timeoutMs)) {
+                        JSONObject item = new JSONObject();
+                        item.put("ip", node.ip);
+                        item.put("shortName", node.shortName);
+                        item.put("longName", node.longName);
+                        result.put(item);
+                    }
+                } catch (Exception e) {
+                    error = e.getMessage() == null ? "Art-Net discovery failed" : e.getMessage();
+                }
+                notifyArtNetDiscovery(id, result, error);
+            }, "LightingAI-ArtNet-Discovery").start();
         }
 
         @JavascriptInterface public void artNetSendDmx(String requestId, String targetIp, int universe, String channelsJson) {

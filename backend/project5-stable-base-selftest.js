@@ -84,6 +84,8 @@ const exactAllowed = new Set([
   'app/src/main/assets/planner-layout-lock.js',
   'app/src/main/assets/catalog.js',
   'backend/catalog-runtime.js',
+  'backend/fixture-library.js',
+  'backend/catalog-selftest.js',
   'backend/desisti-super-led-f47-library.js',
   'backend/desisti-led-fresnel-series-library.js',
   'backend/desisti-piccoletto-library.js',
@@ -323,5 +325,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Art-Net control engine: native UDP sender plus isolated Equipment control panel without changing protected Planner/AI surfaces'
+  featureSurface: 'Verified Art-Net DMX profiles: manufacturer-documented channel profiles plus isolated semantic controls without changing protected Planner/AI surfaces'
 }, null, 2));

@@ -85,6 +85,7 @@ const exactAllowed = new Set([
   'app/src/main/assets/catalog.js',
   'backend/catalog-runtime.js',
   'backend/fixture-library.js',
+  'backend/arri-l-series-plus-library.js',
   'backend/astera-titantube-library.js',
   'backend/astera-ax5-triplepar-library.js',
   'backend/astera-ax10-spotmax-library.js',
@@ -664,5 +665,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Expanded source-verified Astera Profile 4 DIM RGB controls for AX2-100, HyperionTube FP3, HydraPanel FP6, AX3 LightDrop and AX7 SpotLite on top of the stable Network DMX stack'
+  featureSurface: 'Source-verified ARRI L5-C Plus and L7-C Plus DMX Mode 1 with dimmer, CCT and RGB semantic controls on the stable Network DMX stack'
 }, null, 2));

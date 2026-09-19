@@ -5,6 +5,7 @@ const S1_DMX='https://www.desisti.it/wp-content/uploads/2018/10/CE-Instruction-M
 const S1_VW_DMX='https://www.desisti.it/wp-content/uploads/2018/10/CE-Instruction-Manual-De-Sisti-SOFT-LED-1-VW.pdf';
 const S2='https://www.desisti.it/wp/wp-content/uploads/2022/04/Data-Sheet-SoftLED-2-VW.pdf';
 const S2_DMX='https://www.desisti.it/wp-content/uploads/2018/10/CE-Instruction-Manual-De-Sisti-SOFT-LED-2.pdf';
+const S2_VW_DMX='https://www.desisti.it/wp-content/uploads/2018/10/CE-Instruction-Manual-De-Sisti-SOFT-LED-2-VW.pdf';
 const S4='https://www.desisti.it/soft-led-4/';
 const S4_DMX='https://www.desisti.it/wp-content/uploads/2018/10/CE-Instruction-Manual-De-Sisti-SOFT-LED-4.pdf';
 const S4_VW_DMX='https://www.desisti.it/wp-content/uploads/2018/10/CE-Instruction-Manual-De-Sisti-SOFT-LED-4VW.pdf';
@@ -55,7 +56,7 @@ export const DESISTI_SOFTLED_FIXTURES=[
 
   fixed('desisti-softled-2-t','Soft LED 2 T','Soft LED 2',120,null,3200,S2,null,{dmxModes:verifiedFixedModes(S2_DMX)}),
   fixed('desisti-softled-2-d','Soft LED 2 D','Soft LED 2',120,null,5600,S2,null,{dmxModes:verifiedFixedModes(S2_DMX)}),
-  vw('desisti-softled-2-vw','Soft LED 2 VW','Soft LED 2',120,null,S2,null,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S2,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
+  vw('desisti-softled-2-vw','Soft LED 2 VW','Soft LED 2',120,null,S2,null,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S2,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:S2_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}]}),
 
   fixed('desisti-softled-4-t','Soft LED 4 T','Soft LED 4',180,205,3200,S4,5.5,{dmxModes:verifiedFixedModes(S4_DMX)}),
   fixed('desisti-softled-4-d','Soft LED 4 D','Soft LED 4',180,205,5600,S4,5.5,{dmxModes:verifiedFixedModes(S4_DMX)}),

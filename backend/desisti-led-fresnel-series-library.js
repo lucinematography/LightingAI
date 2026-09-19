@@ -44,7 +44,7 @@ const vw = (id, model, family, ledPowerW, powerDrawW, min, max, lens, sourceUrl,
 export const DESISTI_LED_FRESNEL_FIXTURES = [
   fixed('desisti-super-led-f6-t','Super LED F6 T','Super LED F6',120,150,3200,97,96,150,F6_SRC,{ipRating:'IP22',dmxModes:verifiedFixedDimmerModes(F6_DMX_MANUAL)}),
   fixed('desisti-super-led-f6-d','Super LED F6 D','Super LED F6',120,150,5600,96,97,150,F6_SRC,{ipRating:'IP22',dmxModes:verifiedFixedDimmerModes(F6_DMX_MANUAL)}),
-  vw('desisti-super-led-f6-vw','Super LED F6 Vari-White','Super LED F6',120,150,2800,6600,150,F6_SRC,{ipRating:'IP22',dmxModes:[{name:'Vari-White',channels:3},{name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:F6_VW_DMX_MANUAL,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}]}),
+  vw('desisti-super-led-f6-vw','Super LED F6 Vari-White','Super LED F6',120,150,2800,6600,150,F6_SRC,{ipRating:'IP22',dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:F6_SRC,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:F6_VW_DMX_MANUAL,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}]}),
 
   fixed('desisti-super-led-f7-t','Super LED F7 T','Super LED F7',160,null,3200,97,96,175,F7_SRC,{rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F7_DMX_MANUAL)}),
   fixed('desisti-super-led-f7-d','Super LED F7 D','Super LED F7',160,null,5600,96,97,175,F7_SRC,{rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F7_DMX_MANUAL)}),

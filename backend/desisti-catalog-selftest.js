@@ -130,6 +130,41 @@ if(liteRgb?.dmxModes?.some(mode=>mode.verified===true||mode.controls?.length||mo
   failures.push('Soft LED 1 Lite VW+RGB exact DMX modes must remain unverified until a channel map is sourced');
 }
 
+// F4.7 Lite T/D: only the documented one-channel 8-bit dimmer may be controlled.
+const f47LiteDimmerSource='https://www.desisti.it/wp/wp-content/uploads/2026/04/FRESNEL-LED-F4.7-Lite-D-T-0426.pdf';
+for(const id of ['desisti-f47-lite-t','desisti-f47-lite-d']){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)){
+    failures.push('Missing F4.7 Lite fixed-white DMX modes: '+id);
+    continue;
+  }
+  if(fixture.dmxModes.length!==2){
+    failures.push('Unexpected F4.7 Lite fixed-white DMX mode count: '+id);
+  }
+  const modes8=fixture.dmxModes.filter(mode=>mode?.name==='8-bit dimmer');
+  const modes16=fixture.dmxModes.filter(mode=>mode?.name==='16-bit dimmer');
+  const mode8=modes8[0],mode16=modes16[0];
+  if(modes8.length!==1||mode8?.channels!==1||mode8?.verified!==true||mode8?.sourceUrl!==f47LiteDimmerSource){
+    failures.push('Incorrect verified F4.7 Lite 8-bit dimmer mode/source: '+id);
+  }
+  const dimmer=Array.isArray(mode8?.controls)?mode8.controls[0]:null;
+  if(!Array.isArray(mode8?.controls)||mode8.controls.length!==1||
+     dimmer?.key!=='dimmer'||dimmer?.label!=='Dimmer'||dimmer?.channel!==1||dimmer?.type!=='percent'||
+     dimmer?.bits!==8||dimmer?.min!==0||dimmer?.max!==100||dimmer?.dmxMin!==0||dimmer?.dmxMax!==255){
+    failures.push('F4.7 Lite requires exactly one CH1 8-bit 0-100% dimmer: '+id);
+  }
+  if(modes16.length!==1||mode16?.channels!==2||mode16?.verified===true){
+    failures.push('F4.7 Lite 16-bit mode must remain unverified until coarse/fine order is sourced: '+id);
+  }
+  for(const [mode,keys] of [[mode8,['requiredChannels']],[mode16,['controls','requiredChannels']]]){
+    for(const key of keys){
+      if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
+        failures.push('Unsourced F4.7 Lite DMX controls or required values: '+id+' / '+(mode?.name||'missing')+' / '+key);
+      }
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({
   ok:unique.length===0,

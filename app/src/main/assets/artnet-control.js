@@ -10,7 +10,7 @@ const TXT={
   target:'ART-NET NODE / IP',patchDevice:'UREĐAJ IZ DMX PATCH-A',manual:'Ručno / bez Patch uređaja',refresh:'OSVEŽI PATCH',
   universe:'UNIVERSE',channel:'DMX KANAL',value:'VREDNOST',send:'POŠALJI TEST',blackout:'BLACKOUT UNIVERSE',
   ready:'Spremno za slanje.',sending:'Šaljem Art-Net…',sent:'Art-Net paket je poslat.',error:'Slanje nije uspelo.',
-  native:'Art-Net zahteva Android build.',patch:'Universe i START adresa se preuzimaju iz postojećeg DMX Patch planera. Značenje konkretnog kanala mora biti verifikovano DMX profilom proizvođača.',
+  native:'Art-Net zahteva podržani native control bridge.',patch:'Universe i START adresa se preuzimaju iz postojećeg DMX Patch planera. Značenje konkretnog kanala mora biti verifikovano DMX profilom proizvođača.',
   patchEmpty:'Nema ispravnih uređaja u DMX Patch-u. Dodaj uređaj i unesi broj kanala.',patchLoaded:'Učitano iz Patch-a',patchWarn:'Ovaj Patch red ima upozorenje i nije bezbedan za automatsko učitavanje.',
   ownership:'TEST režim šalje kompletan Universe iz LightingAI-ja; kanali koje ovde nisi postavio ostaju 0. Ne koristi ga paralelno sa drugom DMX konzolom na istom Universe-u.',
   verifiedTitle:'VERIFIKOVANE KONTROLE',verifiedNone:'Za ovaj uređaj i izabrani DMX mode još nema verifikovanih direktnih kontrola.',verifiedSource:'Profil verifikovan prema zvaničnoj DMX dokumentaciji.',dimmer:'DIMMER'
@@ -21,7 +21,7 @@ const TXT={
   target:'ART-NET NODE / IP',patchDevice:'DEVICE FROM DMX PATCH',manual:'Manual / no Patch device',refresh:'REFRESH PATCH',
   universe:'UNIVERSE',channel:'DMX CHANNEL',value:'VALUE',send:'SEND TEST',blackout:'BLACKOUT UNIVERSE',
   ready:'Ready to send.',sending:'Sending Art-Net…',sent:'Art-Net packet sent.',error:'Send failed.',
-  native:'Art-Net requires the Android build.',patch:'Universe and START address come from the existing DMX Patch planner. The meaning of each channel must still be verified from the manufacturer DMX profile.',
+  native:'Art-Net requires a supported native control bridge.',patch:'Universe and START address come from the existing DMX Patch planner. The meaning of each channel must still be verified from the manufacturer DMX profile.',
   patchEmpty:'No valid devices in the DMX Patch. Add a device and enter its channel count.',patchLoaded:'Loaded from Patch',patchWarn:'This Patch row has a warning and is not safe to auto-load.',
   ownership:'TEST mode sends a complete Universe from LightingAI; channels not set here remain at 0. Do not use it in parallel with another DMX console on the same Universe.',
   verifiedTitle:'VERIFIED CONTROLS',verifiedNone:'This fixture and selected DMX mode do not yet have verified direct controls.',verifiedSource:'Profile verified against official DMX documentation.',dimmer:'DIMMER'
@@ -31,6 +31,29 @@ const t=()=>TXT[lang()];
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 let seq=0;
 const frames={};
+function controlTransport(){
+ if(window.LightingAIControlTransport&&typeof window.LightingAIControlTransport.sendDmx==='function')return window.LightingAIControlTransport;
+ const androidReady=!!(window.Android&&typeof Android.artNetSendDmx==='function');
+ const iosHandler=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.LightingAIControl;
+ const iosReady=!!(iosHandler&&typeof iosHandler.postMessage==='function');
+ const adapter={
+  platform:androidReady?'android':(iosReady?'ios':'none'),
+  isAvailable:function(){return androidReady||iosReady;},
+  sendDmx:function(request){
+   if(androidReady){
+    Android.artNetSendDmx(request.id,request.targetIp,request.universe,JSON.stringify(request.channels));
+    return true;
+   }
+   if(iosReady){
+    iosHandler.postMessage({action:'artnetSendDmx',id:request.id,targetIp:request.targetIp,universe:request.universe,channels:request.channels});
+    return true;
+   }
+   return false;
+  }
+ };
+ window.LightingAIControlTransport=adapter;
+ return adapter;
+}
 function status(s,ok){const el=E('artnetStatus');if(!el)return;el.textContent=s;el.style.color=ok===false?'#ffb5b5':ok===true?'#b8f0d1':'#9299a3';}
 function snapshot(){try{return window.LightingAIDmxSnapshot?window.LightingAIDmxSnapshot():null}catch(e){return null}}
 function rows(){const s=snapshot();return s&&Array.isArray(s.rows)?s.rows:[]}
@@ -105,13 +128,16 @@ function choosePatch(){
  status(t().ready);
 }
 function sendFrame(channels,universe){
- if(!window.Android||typeof Android.artNetSendDmx!=='function'){status(t().native,false);return}
+ const transport=controlTransport();
+ if(!transport.isAvailable()){status(t().native,false);return}
  const ip=(E('artnetTarget')&&E('artnetTarget').value||'255.255.255.255').trim();
  try{localStorage.setItem(TARGET_KEY,ip)}catch(e){}
  const id='artnet_'+Date.now()+'_'+(++seq);
  status(t().sending);
- try{Android.artNetSendDmx(id,ip,Number(universe)||1,JSON.stringify(channels));}
- catch(e){status(t().error,false)}
+ try{
+  const ok=transport.sendDmx({id:id,targetIp:ip,universe:Number(universe)||1,channels:channels});
+  if(!ok)status(t().native,false);
+ }catch(e){status(t().error,false)}
 }
 function sendTest(){
  const u=Math.max(1,Number(E('artnetUniverse').value)||1);
@@ -150,7 +176,7 @@ function install(){
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);
  translate();return true;
 }
-window.LightingAIArtNetControl={version:'0.4-verified-dmx-cct',refreshPatch:renderPatchDevices};
+window.LightingAIArtNetControl={version:'0.5-platform-transport',refreshPatch:renderPatchDevices,transport:controlTransport};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;if(typeof old==='function'&&!window.__artNetLangHook){window.__artNetLangHook=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}
 })();

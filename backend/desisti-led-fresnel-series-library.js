@@ -7,6 +7,7 @@ const F7_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/11/CE-INST
 const F7_VW_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F7-VW-3.pdf';
 const F7_VWC_SRC = 'https://www.desisti.it/wp/wp-content/uploads/2022/04/SUPER-LED-F7-VWC-04-2022-.pdf';
 const F10_SRC = 'https://www.desisti.it/super-led-f10/';
+const F10_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/11/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F10.pdf';
 const F10_SHP_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const VWC_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const F14_SRC = 'https://www.desisti.it/super-led-f14/';
@@ -45,8 +46,8 @@ export const DESISTI_LED_FRESNEL_FIXTURES = [
     cri:95,lensDiameterMm:175,control:['DMX512','On-board'],sourceUrl:F7_VWC_SRC
   },
 
-  fixed('desisti-super-led-f10-t','Super LED F10 T','Super LED F10',180,215,3200,97,96,250,F10_SRC,{ipRating:'IP22'}),
-  fixed('desisti-super-led-f10-d','Super LED F10 D','Super LED F10',180,215,5600,96,97,250,F10_SRC,{ipRating:'IP22'}),
+  fixed('desisti-super-led-f10-t','Super LED F10 T','Super LED F10',180,215,3200,97,96,250,F10_SRC,{ipRating:'IP22',dmxModes:verifiedFixedDimmerModes(F10_DMX_MANUAL)}),
+  fixed('desisti-super-led-f10-d','Super LED F10 D','Super LED F10',180,215,5600,96,97,250,F10_SRC,{ipRating:'IP22',dmxModes:verifiedFixedDimmerModes(F10_DMX_MANUAL)}),
   vw('desisti-super-led-f10-vw','Super LED F10 Vari-White','Super LED F10',200,250,2800,6600,250,F10_SRC,{ipRating:'IP22',dmxModes:[{name:'Vari-White',channels:3}]}),
   {
     id:'desisti-super-led-f10-vwc',manufacturer:'De Sisti',model:'Super LED F10 VW+C',family:'Super LED F10',category:'Light',

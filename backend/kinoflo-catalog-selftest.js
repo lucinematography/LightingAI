@@ -26,7 +26,15 @@ const expected=[
   'kinoflo-select-led-30',
   'kinoflo-2ft-4bank',
   'kinoflo-4ft-4bank',
-  'kinoflo-tegra-4bank-dmx'
+  'kinoflo-tegra-4bank-dmx',
+  'kinoflo-parabeam-200-dmx',
+  'kinoflo-parabeam-210-dmx',
+  'kinoflo-parabeam-400-dmx',
+  'kinoflo-parabeam-410-dmx',
+  'kinoflo-parazip-200-dmx',
+  'kinoflo-parazip-215-dmx',
+  'kinoflo-parazip-400-dmx',
+  'kinoflo-parazip-415-dmx'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

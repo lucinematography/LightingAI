@@ -1,6 +1,7 @@
 // De Sisti Super LED F4.7 family.
 // Verified from official De Sisti product pages and data sheets.
 const SRC = 'https://www.desisti.it/super-led-f4-7/';
+const DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2017/03/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F4.7.pdf';
 const VWC_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F4.7-VWC-04-2022-W-PHOTOMETRICS.pdf';
 
 export const DESISTI_SUPER_LED_F47_FIXTURES = [
@@ -21,7 +22,10 @@ export const DESISTI_SUPER_LED_F47_FIXTURES = [
     lensDiameterMm: 120,
     ipRating: 'IP22',
     control: ['DMX512', 'On-board dimming'],
-    dmxModes: [{ name: '8-bit dimmer', channels: 1 }, { name: '16-bit dimmer', channels: 2 }],
+    dmxModes: [
+      { name: '8-bit dimmer', channels: 1, verified: true, sourceUrl: DMX_MANUAL, controls: [{ key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }] },
+      { name: '16-bit dimmer', channels: 2, verified: true, sourceUrl: DMX_MANUAL, controls: [{ key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', bits: 16, min: 0, max: 100, dmxMin: 0, dmxMax: 65535 }] }
+    ],
     sourceUrl: SRC
   },
   {
@@ -41,7 +45,10 @@ export const DESISTI_SUPER_LED_F47_FIXTURES = [
     lensDiameterMm: 120,
     ipRating: 'IP22',
     control: ['DMX512', 'On-board dimming'],
-    dmxModes: [{ name: '8-bit dimmer', channels: 1 }, { name: '16-bit dimmer', channels: 2 }],
+    dmxModes: [
+      { name: '8-bit dimmer', channels: 1, verified: true, sourceUrl: DMX_MANUAL, controls: [{ key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }] },
+      { name: '16-bit dimmer', channels: 2, verified: true, sourceUrl: DMX_MANUAL, controls: [{ key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', bits: 16, min: 0, max: 100, dmxMin: 0, dmxMax: 65535 }] }
+    ],
     sourceUrl: SRC
   },
   {

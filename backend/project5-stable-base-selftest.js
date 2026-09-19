@@ -135,6 +135,8 @@ const exactAllowed = new Set([
   'backend/kinoflo-image-87-47-library.js',
   'backend/kinoflo-catalog-selftest.js',
   'backend/package.json',
+  'app/src/main/assets/artnet-control.js',
+  'app/src/main/java/com/lightingai/app/ArtNetSender.java',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -321,5 +323,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Project 5 catalog expansion: add Godox and Aladdin continuous-light catalogs and brand folders without changing Planner layout'
+  featureSurface: 'Art-Net control engine: native UDP sender plus isolated Equipment control panel without changing protected Planner/AI surfaces'
 }, null, 2));

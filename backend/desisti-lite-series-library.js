@@ -52,14 +52,14 @@ export const DESISTI_LITE_FIXTURES=[
     category:'Light',sourceType:'Fanless LED Fresnel',ledPowerW:70,
     cctK:{min:3200,max:3200},colorMode:'Tungsten',cri:96,lensDiameterMm:150,
     control:['DMX512','On-board dimming'],
-    dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:F6_TD,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'16-bit dimmer',channels:2}],sourceUrl:F6_TD
+    dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:F6_TD,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'16-bit dimmer',channels:2,verified:true,sourceUrl:F6_TD}],sourceUrl:F6_TD
   },
   {
     id:'desisti-f6-lite-d',manufacturer:'De Sisti',model:'F6 Lite D',family:'LITE Series',
     category:'Light',sourceType:'Fanless LED Fresnel',ledPowerW:70,
     cctK:{min:5600,max:5600},colorMode:'Daylight',cri:96,lensDiameterMm:150,
     control:['DMX512','On-board dimming'],
-    dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:F6_TD,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'16-bit dimmer',channels:2}],sourceUrl:F6_TD
+    dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:F6_TD,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'16-bit dimmer',channels:2,verified:true,sourceUrl:F6_TD}],sourceUrl:F6_TD
   },
   {
     id:'desisti-f6-lite-vw',manufacturer:'De Sisti',model:'F6 Lite VW',family:'LITE Series',

@@ -6,7 +6,7 @@ const VW_SRC = 'https://www.desisti.it/wp-content/uploads/PICCOLETTO-VW-1.pdf';
 const VW_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/INSTRUCTION-MANUAL-PICCOLETTO-VW.pdf';
 const C_SRC = 'https://www.desisti.it/wp-content/uploads/PICCOLETTO-C-1.pdf';
 
-const fixed = (id, model, variant, cct, ledPowerW, powerDrawW, control, sourceUrl) => ({
+const fixed = (id, model, variant, cct, ledPowerW, powerDrawW, control, sourceUrl, extra={}) => ({
   id,
   manufacturer:'De Sisti',
   model,
@@ -24,12 +24,13 @@ const fixed = (id, model, variant, cct, ledPowerW, powerDrawW, control, sourceUr
   ipRating:'IP22',
   weightKg:0.95,
   control,
-  sourceUrl
+  sourceUrl,
+  ...extra
 });
 
 export const DESISTI_PICCOLETTO_FIXTURES = [
-  fixed('desisti-piccoletto-f-t','Piccoletto F T','F',3200,30,35,['DMX512','On-board'],F_SRC),
-  fixed('desisti-piccoletto-f-d','Piccoletto F D','F',5600,30,35,['DMX512','On-board'],F_SRC),
+  fixed('desisti-piccoletto-f-t','Piccoletto F T','F',3200,30,35,['DMX512','On-board'],F_SRC,{dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:F_SRC,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
+  fixed('desisti-piccoletto-f-d','Piccoletto F D','F',5600,30,35,['DMX512','On-board'],F_SRC,{dmxModes:[{name:'8-bit dimmer',channels:1,verified:true,sourceUrl:F_SRC,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
   fixed('desisti-piccoletto-fa-t','Piccoletto FA T','FA',3200,30,35,['Local potentiometer'],SRC),
   fixed('desisti-piccoletto-fa-d','Piccoletto FA D','FA',5600,30,35,['Local potentiometer'],SRC),
   fixed('desisti-piccoletto-dim-t','Piccoletto DIM T','DIM',3200,20,27,['Phase dimming'],SRC),

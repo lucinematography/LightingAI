@@ -267,6 +267,17 @@ for (const [fixtureId, label] of [
   if (mode16?.verified === true) failures.push(`${label} 16-bit dimmer must remain unverified until coarse/fine channel order is sourced`);
 }
 
+
+const desistiF6Vw = RUNTIME_CATALOG.fixtureById.get('desisti-super-led-f6-vw');
+const desistiF6VwLegacy = desistiF6Vw?.dmxModes?.find((item) => item.name === 'Vari-White');
+const desistiF6Vw16 = desistiF6Vw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
+if (!desistiF6VwLegacy || desistiF6VwLegacy.channels !== 3) failures.push('De Sisti F6 Vari-White legacy personality missing');
+if (desistiF6VwLegacy?.verified === true) failures.push('De Sisti F6 Vari-White legacy personality must remain unverified');
+if (!desistiF6Vw16 || desistiF6Vw16.channels !== 4 || desistiF6Vw16.verified !== true) failures.push('Verified De Sisti F6 Vari-White 16-bit mode missing');
+const desistiF6VwDimmer16 = desistiF6Vw16?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiF6VwDimmer16 || desistiF6VwDimmer16.channel !== 1 || desistiF6VwDimmer16.type !== 'percent' || desistiF6VwDimmer16.bits !== 16 || desistiF6VwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti F6 Vari-White 16-bit coarse/fine dimmer mapping missing');
+if (desistiF6Vw16?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F6 Vari-White CCT control must remain hidden until CCT Mode values are sourced');
+
 for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

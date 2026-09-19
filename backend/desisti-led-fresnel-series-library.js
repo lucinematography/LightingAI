@@ -2,6 +2,7 @@
 // Verified from official De Sisti product pages, data sheets and 2024/2025 mini catalogs.
 const F6_SRC = 'https://www.desisti.it/super-led-f6/';
 const F6_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2017/03/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F6.pdf';
+const F6_VW_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/12/NEW_CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F6-Vari-White.pdf';
 const F7_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F7.pdf';
 const F7_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/11/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F7.pdf';
 const F7_VW_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F7-VW-3.pdf';
@@ -41,7 +42,7 @@ const vw = (id, model, family, ledPowerW, powerDrawW, min, max, lens, sourceUrl,
 export const DESISTI_LED_FRESNEL_FIXTURES = [
   fixed('desisti-super-led-f6-t','Super LED F6 T','Super LED F6',120,150,3200,97,96,150,F6_SRC,{ipRating:'IP22',dmxModes:verifiedFixedDimmerModes(F6_DMX_MANUAL)}),
   fixed('desisti-super-led-f6-d','Super LED F6 D','Super LED F6',120,150,5600,96,97,150,F6_SRC,{ipRating:'IP22',dmxModes:verifiedFixedDimmerModes(F6_DMX_MANUAL)}),
-  vw('desisti-super-led-f6-vw','Super LED F6 Vari-White','Super LED F6',120,150,2800,6600,150,F6_SRC,{ipRating:'IP22',dmxModes:[{name:'Vari-White',channels:3}]}),
+  vw('desisti-super-led-f6-vw','Super LED F6 Vari-White','Super LED F6',120,150,2800,6600,150,F6_SRC,{ipRating:'IP22',dmxModes:[{name:'Vari-White',channels:3},{name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:F6_VW_DMX_MANUAL,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}]}),
 
   fixed('desisti-super-led-f7-t','Super LED F7 T','Super LED F7',160,null,3200,97,96,175,F7_SRC,{rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F7_DMX_MANUAL)}),
   fixed('desisti-super-led-f7-d','Super LED F7 D','Super LED F7',160,null,5600,96,97,175,F7_SRC,{rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F7_DMX_MANUAL)}),

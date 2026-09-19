@@ -9,6 +9,8 @@
     "tests": [
       "project5-base"
     ],
+    "ci_timeout_minutes": 45,
+    "max_ci_repairs": 1,
     "commit_message": "Apply guarded example automation task",
     "pr_title": "Guarded automation example"
   }

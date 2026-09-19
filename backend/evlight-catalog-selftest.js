@@ -25,7 +25,9 @@ const expected=[
   'evlight-epro300z',
   'evlight-epro400rgblac-z',
   'evlight-epro400fc',
-  'evlight-epro350fc'
+  'evlight-epro350fc',
+  'evlight-gemx24-st',
+  'evlight-gemx28-hard'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

@@ -333,6 +333,14 @@ if (!desistiF10VwDimmer16 || desistiF10VwDimmer16.channel !== 1 || desistiF10VwD
 if (desistiF10Vw16?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F10 Vari-White CCT control must remain hidden until CCT Mode values are sourced');
 
 
+const desistiF10ShpVw = RUNTIME_CATALOG.fixtureById.get('desisti-super-led-f10shp-vw');
+const desistiF10ShpVw8 = desistiF10ShpVw?.dmxModes?.find((item) => item.name === '8-bit Vari-White');
+const desistiF10ShpVw16 = desistiF10ShpVw?.dmxModes?.find((item) => item.name === '16-bit Vari-White');
+if (!desistiF10ShpVw8 || desistiF10ShpVw8.channels !== 3 || desistiF10ShpVw8.verified !== true) failures.push('Verified De Sisti F10 SHP Vari-White 3ch 8-bit mode missing');
+if (!desistiF10ShpVw16 || desistiF10ShpVw16.channels !== 4 || desistiF10ShpVw16.verified !== true) failures.push('Verified De Sisti F10 SHP Vari-White 4ch 16-bit mode missing');
+if (desistiF10ShpVw8?.controls?.length || desistiF10ShpVw16?.controls?.length) failures.push('De Sisti F10 SHP Vari-White controls must remain hidden until channel order is sourced');
+
+
 const desistiSoftLed1XlVw = RUNTIME_CATALOG.fixtureById.get('desisti-softled-1xl-vw');
 const desistiSoftLed1XlVwMode = desistiSoftLed1XlVw?.dmxModes?.find((item) => item.name === 'Vari-White');
 if (!desistiSoftLed1XlVwMode || desistiSoftLed1XlVwMode.channels !== 3 || desistiSoftLed1XlVwMode.verified !== true) failures.push('Verified De Sisti Soft LED 1 XL Vari-White 3ch mode missing');

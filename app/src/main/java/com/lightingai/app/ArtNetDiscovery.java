@@ -4,12 +4,17 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.Enumeration;
 
 public final class ArtNetDiscovery {
     private static final byte[] ARTNET_ID = "Art-Net\0".getBytes(StandardCharsets.US_ASCII);
@@ -41,13 +46,19 @@ public final class ArtNetDiscovery {
             socket.setSoTimeout(120);
 
             byte[] poll = buildPollPacket();
-            DatagramPacket outgoing = new DatagramPacket(
-                poll,
-                poll.length,
-                InetAddress.getByName("255.255.255.255"),
-                ArtNetSender.ARTNET_PORT
-            );
-            socket.send(outgoing);
+            for (InetAddress broadcast : broadcastTargets()) {
+                try {
+                    DatagramPacket outgoing = new DatagramPacket(
+                        poll,
+                        poll.length,
+                        broadcast,
+                        ArtNetSender.ARTNET_PORT
+                    );
+                    socket.send(outgoing);
+                } catch (Exception ignored) {
+                    // One interface may be unavailable while another is valid.
+                }
+            }
 
             long deadline = System.currentTimeMillis() + boundedTimeout;
             byte[] buffer = new byte[1024];
@@ -63,6 +74,27 @@ public final class ArtNetDiscovery {
             }
         }
         return new ArrayList<>(nodes.values());
+    }
+
+    static List<InetAddress> broadcastTargets() throws Exception {
+        Set<InetAddress> targets = new LinkedHashSet<>();
+        targets.add(InetAddress.getByName("255.255.255.255"));
+        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+        if (interfaces != null) {
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface network = interfaces.nextElement();
+                try {
+                    if (!network.isUp() || network.isLoopback()) continue;
+                    for (InterfaceAddress address : network.getInterfaceAddresses()) {
+                        InetAddress broadcast = address.getBroadcast();
+                        if (broadcast != null) targets.add(broadcast);
+                    }
+                } catch (Exception ignored) {
+                    // Continue through the remaining network interfaces.
+                }
+            }
+        }
+        return new ArrayList<>(targets);
     }
 
     static byte[] buildPollPacket() {

@@ -1,6 +1,7 @@
 // De Sisti Soft LED Vari-White + Color range.
 // Verified from official De Sisti datasheets. Accessories are linked by the exact family codes listed in those sheets.
 const S4='https://www.desisti.it/wp/wp-content/uploads/2022/04/SOFTLED-4-VWC-04-2022.pdf';
+const S4_DMX='https://www.desisti.it/wp-content/uploads/SOFTLED-4-VWC.pdf';
 const S8='https://www.desisti.it/wp/wp-content/uploads/2022/04/SOFTLED-8-VWC-04-2022.pdf';
 const S12='https://www.desisti.it/wp/wp-content/uploads/2023/12/SOFTLED-12-VWC.pdf';
 const S2XL='https://www.desisti.it/wp/wp-content/uploads/2022/04/SOFTLED-2XL-VWC-04-2022.pdf';
@@ -28,7 +29,16 @@ function fixture(id,model,ledPowerW,powerDrawW,cctMin,cctMax,cri,tlci,manualKg,p
 }
 
 export const DESISTI_SOFTLED_VWC_FIXTURES=[
-  fixture('desisti-softled-4-vwc','Soft LED 4 VW+C',230,260,1800,12000,95,96,5.5,6.7,S4),
+  fixture('desisti-softled-4-vwc','Soft LED 4 VW+C',230,260,1800,12000,95,96,5.5,6.7,S4,{
+    dmxModes:[
+      {name:'8-bit base',channels:7,verified:true,sourceUrl:S4_DMX},
+      {name:'8-bit with mode/fan',channels:9,verified:true,sourceUrl:S4_DMX},
+      {name:'8-bit extended',channels:39,verified:true,sourceUrl:S4_DMX},
+      {name:'16-bit base',channels:8,verified:true,sourceUrl:S4_DMX},
+      {name:'16-bit with mode/fan',channels:10,verified:true,sourceUrl:S4_DMX},
+      {name:'16-bit extended',channels:40,verified:true,sourceUrl:S4_DMX}
+    ]
+  }),
   fixture('desisti-softled-8-vwc','Soft LED 8 VW+C',500,560,1800,12000,95,96,11.0,12.3,S8),
   fixture('desisti-softled-12-vwc','Soft LED 12 VW+C',650,725,1750,14500,96,96,18.7,null,S12,{
     lollipopWeightKg:15.0,

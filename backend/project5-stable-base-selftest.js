@@ -286,7 +286,9 @@ for (const marker of [
   'private static final long PERIOD_MS = 33L',
   'scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS)',
   'ArtNetSender.sendDmx(activeSocket',
-  'public void stopAll()'
+  'public void stopAll()',
+  'SacnSender.sendTermination(',
+  'for (int repeat = 0; repeat < 3; repeat++)'
 ]) {
   if (!artNetLiveEngine.includes(marker)) fail(`Art-Net live engine marker missing: ${marker}`);
 }
@@ -331,7 +333,8 @@ for (const marker of [
   'sacnPacketUsesE131LayersAndDmxStartCode',
   'sacnUsesBigEndianUniverseAndExpectedMulticastAddress',
   'sacnPropertyCountIncludesStartCode',
-  'sacnUniverseIsClampedToStandardRange'
+  'sacnUniverseIsClampedToStandardRange',
+  'streamTerminationSetsOptionsBit'
 ]) {
   if (!sacnProtocolTest.includes(marker)) fail(`sACN protocol test marker missing: ${marker}`);
 }

@@ -58,11 +58,11 @@ export const DESISTI_SOFTLED_FIXTURES=[
 
   fixed('desisti-softled-4-t','Soft LED 4 T','Soft LED 4',180,205,3200,S4,5.5,{dmxModes:verifiedFixedModes(S4_DMX)}),
   fixed('desisti-softled-4-d','Soft LED 4 D','Soft LED 4',180,205,5600,S4,5.5,{dmxModes:verifiedFixedModes(S4_DMX)}),
-  vw('desisti-softled-4-vw','Soft LED 4 VW','Soft LED 4',180,205,S4,5.5,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S4_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
+  vw('desisti-softled-4-vw','Soft LED 4 VW','Soft LED 4',180,205,S4,5.5,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S4_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:S4_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}]}),
 
   fixed('desisti-softled-8-t','Soft LED 8 T','Soft LED 8',360,400,3200,S8,11.0,{dmxModes:verifiedFixedModes(S8_DMX)}),
   fixed('desisti-softled-8-d','Soft LED 8 D','Soft LED 8',360,400,5600,S8,11.0,{dmxModes:verifiedFixedModes(S8_DMX)}),
-  vw('desisti-softled-8-vw','Soft LED 8 VW','Soft LED 8',360,400,S8,11.0,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S8_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
+  vw('desisti-softled-8-vw','Soft LED 8 VW','Soft LED 8',360,400,S8,11.0,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S8_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:S8_VW_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}]}),
 
   vw('desisti-softled-1xl-vw','Soft LED 1 XL VW','Soft LED 1 XL',120,null,S1XL,null,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S1XL,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
 

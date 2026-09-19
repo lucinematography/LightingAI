@@ -250,6 +250,34 @@ for(const id of ['desisti-f6-lite-t','desisti-f6-lite-d']){
   }
 }
 
+
+// Super LED F20 T/D: official mini catalog confirms 1ch 8-bit and 2ch 16-bit DMX footprints.
+// The source does not publish a channel map here, so controls and required values remain hidden.
+const f20DmxSource='https://www.desisti.it/wp-content/uploads/mini-catalog-2025.pdf';
+for(const id of ['desisti-super-led-f20-t','desisti-super-led-f20-d']){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)){
+    failures.push('Missing F20 DMX modes: '+id);
+    continue;
+  }
+  const widths=[['8-bit',1],['16-bit',2]];
+  if(fixture.dmxModes.length!==widths.length){
+    failures.push('Unexpected F20 DMX mode count: '+id);
+  }
+  for(const [name,channels] of widths){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==f20DmxSource){
+      failures.push('Incorrect verified F20 DMX width/source: '+id+' / '+name);
+    }
+    for(const key of ['controls','requiredChannels']){
+      if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
+        failures.push('F20 channel mapping must remain hidden until sourced: '+id+' / '+name+' / '+key);
+      }
+    }
+  }
+}
+
 // Galileo SoftNel: the official product page confirms only the 6ch 8-bit and 8ch 16-bit footprints.
 // No channel-by-channel map is published here, so controls and required values must remain hidden.
 const galileoSource='https://www.desisti.it/galileo-softnel/';

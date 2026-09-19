@@ -179,6 +179,22 @@ for (const [fixtureId, label] of [
 }
 
 
+for (const [fixtureId, label] of [
+  ['desisti-super-led-f20-t','De Sisti Super LED F20 T'],
+  ['desisti-super-led-f20-d','De Sisti Super LED F20 D']
+]) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const mode8 = fixture?.dmxModes?.find((item) => item.name === '8-bit');
+  const mode16 = fixture?.dmxModes?.find((item) => item.name === '16-bit');
+  if (!mode8 || mode8.channels !== 1 || mode8.verified !== true) failures.push(`Verified ${label} 8-bit DMX footprint missing`);
+  if (!mode16 || mode16.channels !== 2 || mode16.verified !== true) failures.push(`Verified ${label} 16-bit DMX footprint missing`);
+  for (const mode of [mode8, mode16]) {
+    if (mode?.sourceUrl !== 'https://www.desisti.it/wp-content/uploads/mini-catalog-2025.pdf') failures.push(`${label} DMX source mismatch: ${mode?.name || 'missing'}`);
+    if (mode?.controls?.length || mode?.requiredChannels?.length) failures.push(`${label} channel mapping must remain hidden until sourced: ${mode?.name || 'missing'}`);
+  }
+}
+
+
 const desistiF14HpVw = RUNTIME_CATALOG.fixtureById.get('desisti-super-led-f14hp-vw');
 const desistiF14HpVwMode = desistiF14HpVw?.dmxModes?.find((item) => item.name === 'Vari-White');
 if (!desistiF14HpVwMode || desistiF14HpVwMode.channels !== 3 || desistiF14HpVwMode.verified !== true) failures.push('Verified De Sisti F14HP Vari-White 3ch mode missing');

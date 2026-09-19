@@ -85,6 +85,7 @@ const exactAllowed = new Set([
   'app/src/main/assets/catalog.js',
   'backend/catalog-runtime.js',
   'backend/fixture-library.js',
+  'backend/astera-titantube-library.js',
   'backend/catalog-selftest.js',
   'backend/desisti-super-led-f47-library.js',
   'backend/desisti-led-fresnel-series-library.js',

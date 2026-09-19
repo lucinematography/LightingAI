@@ -55,6 +55,42 @@ for(const broken of catalog.integrity?.missingAccessoryFixtureIds||[]){
   if(String(broken.accessoryId||'').startsWith('desisti-')) failures.push('Broken De Sisti compatibility link: '+broken.accessoryId+' -> '+broken.fixtureId);
 }
 
+// Each model's official datasheet, page 3, documents widths but not channel order.
+// Keep the existing application mode names; do not infer individual controls.
+const remainingMusesSources=[
+  ['desisti-muse-euterpe','https://www.desisti.it/wp/wp-content/uploads/2022/07/Euterpe-DS.pdf'],
+  ['desisti-muse-talia','https://www.desisti.it/wp/wp-content/uploads/2022/06/Talia-DS.pdf'],
+  ['desisti-muse-aurea','https://www.desisti.it/wp/wp-content/uploads/2022/06/Aurea-DS.pdf'],
+  ['desisti-muse-aurea-small','https://www.desisti.it/wp/wp-content/uploads/2022/06/Aurea-Small.pdf']
+];
+const remainingMusesWidths=[
+  ['Simple 8-bit',2],['Simple 16-bit',3],
+  ['8-bit base',7],['8-bit with mode/fan',9],['8-bit extended',39],
+  ['16-bit base',8],['16-bit with mode/fan',10],['16-bit extended',40]
+];
+for(const [id,sourceUrl] of remainingMusesSources){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture){
+    failures.push('Missing verified Muses DMX fixture: '+id);
+    continue;
+  }
+  if(!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==remainingMusesWidths.length){
+    failures.push('Unexpected verified Muses DMX mode count: '+id);
+  }
+  for(const [name,channels] of remainingMusesWidths){
+    const mode=fixture.dmxModes?.find(item=>item.name===name);
+    if(!mode||mode.channels!==channels||mode.verified!==true){
+      failures.push('Missing verified Muses DMX width: '+id+' / '+name+' / '+channels+'ch');
+    }
+    if(mode?.sourceUrl!==sourceUrl){
+      failures.push('Incorrect model-specific Muses DMX source: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Muses DMX controls and required values must remain hidden until channel order is sourced: '+id+' / '+name);
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({
   ok:unique.length===0,

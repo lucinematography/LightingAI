@@ -313,8 +313,10 @@ if (desistiF10HpVw16?.controls?.some((item) => item.key === 'cct')) failures.pus
 const desistiF10Vw = RUNTIME_CATALOG.fixtureById.get('desisti-super-led-f10-vw');
 const desistiF10VwLegacy = desistiF10Vw?.dmxModes?.find((item) => item.name === 'Vari-White');
 const desistiF10Vw16 = desistiF10Vw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
-if (!desistiF10VwLegacy || desistiF10VwLegacy.channels !== 3) failures.push('De Sisti F10 Vari-White legacy personality missing');
-if (desistiF10VwLegacy?.verified === true) failures.push('De Sisti F10 Vari-White legacy personality must remain unverified');
+if (!desistiF10VwLegacy || desistiF10VwLegacy.channels !== 3 || desistiF10VwLegacy.verified !== true) failures.push('Verified De Sisti F10 Vari-White 3ch mode missing');
+const desistiF10VwDimmer8 = desistiF10VwLegacy?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiF10VwDimmer8 || desistiF10VwDimmer8.channel !== 1 || desistiF10VwDimmer8.type !== 'percent' || desistiF10VwDimmer8.dmxMax !== 255) failures.push('Verified De Sisti F10 Vari-White 8-bit dimmer mapping missing');
+if (desistiF10VwLegacy?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F10 Vari-White 8-bit CCT control must remain hidden until CCT Mode values are sourced');
 if (!desistiF10Vw16 || desistiF10Vw16.channels !== 4 || desistiF10Vw16.verified !== true) failures.push('Verified De Sisti F10 Vari-White 16-bit mode missing');
 const desistiF10VwDimmer16 = desistiF10Vw16?.controls?.find((item) => item.key === 'dimmer');
 if (!desistiF10VwDimmer16 || desistiF10VwDimmer16.channel !== 1 || desistiF10VwDimmer16.type !== 'percent' || desistiF10VwDimmer16.bits !== 16 || desistiF10VwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti F10 Vari-White 16-bit coarse/fine dimmer mapping missing');

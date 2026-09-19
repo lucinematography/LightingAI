@@ -151,6 +151,7 @@ const exactAllowed = new Set([
   'app/src/main/java/com/lightingai/app/SacnSender.java',
   'app/src/main/java/com/lightingai/app/SacnLiveEngine.java',
   'app/src/main/java/com/lightingai/app/BleDeviceScanner.java',
+  'app/src/main/java/com/lightingai/app/NetworkInterfaceInspector.java',
   'app/src/main/assets/ble-control.js',
   'app/src/main/AndroidManifest.xml',
   'app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java',
@@ -285,7 +286,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.19-sacn-priority'",
+  "version:'0.20-network-interfaces'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -358,6 +359,11 @@ for (const marker of [
   "action:'sacnSetPriority'",
   "sacnPriority:'sACN PRIORITET'",
   "sacnPriority:'sACN PRIORITY'",
+  "diagInterfaces:'LOKALNE MREŽE'",
+  "diagInterfaces:'LOCAL NETWORKS'",
+  "diagBroadcast:'BROADCAST'",
+  "diagMulticast:'MULTICAST'",
+  'native&&Array.isArray(native.interfaces)',
   'function setLiveEnabled(enabled)',
   'function stopLiveForBackground()',
   'artnetSetLiveDmx',
@@ -484,6 +490,18 @@ for (const marker of [
   if (!bleScanner.includes(marker)) fail(`BLE scanner marker missing: ${marker}`);
 }
 
+const networkInterfaceInspector = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/NetworkInterfaceInspector.java']);
+for (const marker of [
+  'NetworkInterface.getNetworkInterfaces()',
+  'network.supportsMulticast()',
+  'address instanceof Inet4Address',
+  'interfaceAddress.getBroadcast()',
+  'item.put("prefixLength"',
+  'item.put("multicast", multicast)'
+]) {
+  if (!networkInterfaceInspector.includes(marker)) fail(`Network DMX interface inspector marker missing: ${marker}`);
+}
+
 const plannerLayout = git(['show', 'HEAD:app/src/main/assets/planner-layout-lock.js']);
 for (const marker of [
   "const VERSION='1.0-stable-planner-layout'",
@@ -534,7 +552,8 @@ for (const marker of [
   'sacnPriority.set(value)',
   'sacnLiveEngine.setPriority(value)',
   'SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get())',
-  'sacn.put("priority", sacnPriority.get())'
+  'sacn.put("priority", sacnPriority.get())',
+  'out.put("interfaces", NetworkInterfaceInspector.snapshot())'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
 }
@@ -601,5 +620,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Configurable standards-bounded sACN source priority 0-200 with persistent shared UI, Android live/direct application, diagnostics, and protocol tests'
+  featureSurface: 'Read-only cross-device Network DMX route diagnostics exposing active non-loopback IPv4, broadcast, prefix and multicast capability without new permissions'
 }, null, 2));

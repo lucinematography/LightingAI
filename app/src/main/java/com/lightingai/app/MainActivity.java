@@ -637,6 +637,8 @@ public class MainActivity extends Activity {
                 out.put("platform", "android");
                 out.put("timestampMs", System.currentTimeMillis());
 
+                out.put("interfaces", NetworkInterfaceInspector.snapshot());
+
                 JSONObject artNet = new JSONObject();
                 artNet.put("directSent", artNetDirectSent.get());
                 artNet.put("directFailed", artNetDirectFailed.get());

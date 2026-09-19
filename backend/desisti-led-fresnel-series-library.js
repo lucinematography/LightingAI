@@ -97,12 +97,16 @@ export const DESISTI_LED_FRESNEL_FIXTURES = [
   {
     id:'desisti-super-led-f20-t',manufacturer:'De Sisti',model:'Super LED F20 T',family:'Super LED F20',category:'Light',
     sourceType:'LED Fresnel',ledPowerW:1000,cctK:{min:3200,max:3200},colorMode:'Tungsten',cri:95,
-    control:['DMX512','LumenRadio TimoTwo Wireless DMX','On-board dimming'],detachableDriver:true,remoteDriverMaxM:50,sourceUrl:F20_SRC
+    control:['DMX512','LumenRadio TimoTwo Wireless DMX','On-board dimming'],
+    dmxModes:[{name:'8-bit',channels:1,verified:true,sourceUrl:F20_SRC},{name:'16-bit',channels:2,verified:true,sourceUrl:F20_SRC}],
+    detachableDriver:true,remoteDriverMaxM:50,sourceUrl:F20_SRC
   },
   {
     id:'desisti-super-led-f20-d',manufacturer:'De Sisti',model:'Super LED F20 D',family:'Super LED F20',category:'Light',
     sourceType:'LED Fresnel',ledPowerW:1000,cctK:{min:5600,max:5600},colorMode:'Daylight',cri:95,
-    control:['DMX512','LumenRadio TimoTwo Wireless DMX','On-board dimming'],detachableDriver:true,remoteDriverMaxM:50,sourceUrl:F20_SRC
+    control:['DMX512','LumenRadio TimoTwo Wireless DMX','On-board dimming'],
+    dmxModes:[{name:'8-bit',channels:1,verified:true,sourceUrl:F20_SRC},{name:'16-bit',channels:2,verified:true,sourceUrl:F20_SRC}],
+    detachableDriver:true,remoteDriverMaxM:50,sourceUrl:F20_SRC
   }
 ];
 

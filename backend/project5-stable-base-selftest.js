@@ -92,6 +92,8 @@ const exactAllowed = new Set([
   'backend/astera-leofresnel-library.js',
   'backend/astera-ax9-powerpar-library.js',
   'backend/astera-pixelbrick-library.js',
+  'backend/astera-heliostube-library.js',
+  'backend/astera-ax2-pixelbar-library.js',
   'backend/catalog-selftest.js',
   'backend/desisti-super-led-f47-library.js',
   'backend/desisti-led-fresnel-series-library.js',
@@ -658,5 +660,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Verified standards-based Network DMX bridge profiles for Aputure Sidus One and Astera FP3 DataLink without proprietary BLE command guessing'
+  featureSurface: 'Verified HeliosTube FP2-BTB and AX2-50 Profile 4 DIM RGB controls from the Astera Helios/AX2-50 DMX table, layered onto Network DMX control'
 }, null, 2));

@@ -61,6 +61,11 @@ public class SacnProtocolTest {
         assertEquals("239.255.249.255", SacnSender.multicastAddress(70000));
     }
 
+    @Test public void streamTerminationSetsOptionsBit() {
+        byte[] packet = SacnSender.buildDmxPacket(1, new int[]{1,2}, 3, CID, "LightingAI", 0x40);
+        assertEquals(0x40, packet[112] & 0xff);
+    }
+
     @Test public void sourceNameIsLimitedToFramingField() {
         String longName = "LightingAI-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-extra";
         byte[] packet = SacnSender.buildDmxPacket(1, new int[]{0}, 1, CID, longName);

@@ -112,3 +112,30 @@ Primer politike u zadatku:
 ```
 
 Za nocni rad racunar mora ostati ukljucen, GitHub CLI mora biti prijavljen, a terminal u kome je runner pokrenut mora ostati aktivan.
+
+
+## Faza 4: produkcioni red zadataka i preflight
+
+Pre nocnog rada pokreni proveru okruzenja:
+
+```
+py scripts/overnight_preflight.py
+```
+
+Preflight proverava Python 3.11+, Git, GitHub CLI prijavu, cist radni direktorijum i da li su `OPENAI_API_KEY` i `OPENAI_MODEL` postavljeni. Ne trosi API pozive.
+
+Za bezbedan prvi pravi nocni rad dodat je `automation/production_tasks.json`. Pocetna produkciona lista namerno sadrzi samo dokumentacione zadatke koji ne menjaju aplikaciju, katalog, DMX podatke niti stabilne funkcije.
+
+Pokretanje jednog zadatka:
+
+```
+py scripts/overnight_git_runner.py --tasks automation/production_tasks.json --max-tasks 1
+```
+
+Pokretanje cele pocetne nocne liste:
+
+```
+py scripts/overnight_git_runner.py --tasks automation/production_tasks.json
+```
+
+Kada ovaj tok jednom prodje na racunaru od pocetka do kraja, u produkcionu listu se mogu dodavati stvarni LightingAI razvojni zadaci, ali svaki mora imati precizan `allowed_paths`, odobrene testove i dovoljno repozitorijumskog konteksta da se ne izmisljaju tehnicki ili proizvodjacki podaci.

@@ -348,6 +348,14 @@ if (!desistiSoftLed8XlVwDimmer8 || desistiSoftLed8XlVwDimmer8.channel !== 1 || d
 if (!desistiSoftLed8XlVwDimmer16 || desistiSoftLed8XlVwDimmer16.channel !== 1 || desistiSoftLed8XlVwDimmer16.type !== 'percent' || desistiSoftLed8XlVwDimmer16.bits !== 16 || desistiSoftLed8XlVwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti Soft LED 8 XL VW 16-bit coarse/fine dimmer mapping missing');
 if (desistiSoftLed8XlVw?.dmxModes?.some((item) => item.channels === 3 || item.controls?.some((control) => control.key === 'cct'))) failures.push('De Sisti Soft LED 8 XL VW must remain dimmer-only in DMX until an official CCT DMX profile is sourced');
 
+
+const desistiSpacelightVw = RUNTIME_CATALOG.fixtureById.get('desisti-spacelight-vw');
+const desistiSpacelightVwMode = desistiSpacelightVw?.dmxModes?.find((item) => item.name === 'Vari-White');
+if (!desistiSpacelightVwMode || desistiSpacelightVwMode.channels !== 3 || desistiSpacelightVwMode.verified !== true) failures.push('Verified De Sisti Spacelight VW 3ch mode missing');
+const desistiSpacelightVwDimmer = desistiSpacelightVwMode?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiSpacelightVwDimmer || desistiSpacelightVwDimmer.channel !== 1 || desistiSpacelightVwDimmer.type !== 'percent' || desistiSpacelightVwDimmer.dmxMax !== 255) failures.push('Verified De Sisti Spacelight VW 8-bit dimmer mapping missing');
+if (desistiSpacelightVwMode?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti Spacelight VW CCT control must remain hidden until CCT Mode DMX values are sourced');
+
 for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

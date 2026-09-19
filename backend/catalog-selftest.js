@@ -138,6 +138,16 @@ const piccolettoVwDimmer16 = piccolettoVw16?.controls?.find((item) => item.key =
 if (!piccolettoVwDimmer8 || piccolettoVwDimmer8.channel !== 1 || piccolettoVwDimmer8.type !== 'percent' || piccolettoVwDimmer8.dmxMax !== 255) failures.push('Verified De Sisti Piccoletto VW 8-bit dimmer mapping missing');
 if (!piccolettoVwDimmer16 || piccolettoVwDimmer16.channel !== 1 || piccolettoVwDimmer16.type !== 'percent' || piccolettoVwDimmer16.bits !== 16 || piccolettoVwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti Piccoletto VW 16-bit coarse/fine dimmer mapping missing');
 
+const piccolettoVwCct8 = piccolettoVw8?.controls?.find((item) => item.key === 'cct');
+const piccolettoVwCct16 = piccolettoVw16?.controls?.find((item) => item.key === 'cct');
+if (!piccolettoVwCct8 || piccolettoVwCct8.channel !== 2 || piccolettoVwCct8.type !== 'cct-linear' || piccolettoVwCct8.min !== 2750 || piccolettoVwCct8.max !== 6900) failures.push('Verified De Sisti Piccoletto VW 8-bit CCT mapping missing');
+if (!piccolettoVwCct16 || piccolettoVwCct16.channel !== 3 || piccolettoVwCct16.type !== 'cct-linear' || piccolettoVwCct16.min !== 2750 || piccolettoVwCct16.max !== 6900) failures.push('Verified De Sisti Piccoletto VW 16-bit CCT mapping missing');
+const piccolettoVwModeReq8 = piccolettoVw8?.requiredChannels?.find((item) => item.channel === 3);
+const piccolettoVwModeReq16 = piccolettoVw16?.requiredChannels?.find((item) => item.channel === 4);
+if (!piccolettoVwModeReq8 || piccolettoVwModeReq8.value !== 0) failures.push('Verified De Sisti Piccoletto VW 8-bit CCT linear-mode requirement missing');
+if (!piccolettoVwModeReq16 || piccolettoVwModeReq16.value !== 0) failures.push('Verified De Sisti Piccoletto VW 16-bit CCT linear-mode requirement missing');
+
+
 
 for (const [fixtureId, label] of [
   ['desisti-super-led-f14-t','De Sisti Super LED F14 T'],

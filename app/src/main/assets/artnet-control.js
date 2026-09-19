@@ -10,7 +10,7 @@ const TXT={
  sr:{
   title:'📡 MREŽNA DMX KONTROLA',
   intro:'Kontroliši DMX preko mreže koristeći Art-Net ili sACN (E1.31). DMX Patch ostaje zajednički izvor za Universe i adrese.',
-  protocol:'MREŽNI PROTOKOL',artnet:'Art-Net',sacn:'sACN (E1.31)',sacnInfo:'sACN automatski koristi multicast adresu za izabrani Universe.',protocol:'NETWORK PROTOCOL',artnet:'Art-Net',sacn:'sACN (E1.31)',sacnInfo:'sACN automatically uses the multicast address for the selected universe.',target:'ART-NET NODE / IP',discover:'PRONAĐI ART-NET NODE-OVE',nodes:'PRONAĐENI NODE-OVI',noNodes:'Nema pronađenih Art-Net node-ova.',discovering:'Tražim Art-Net node-ove…',patchDevice:'UREĐAJ IZ DMX PATCH-A',manual:'Ručno / bez Patch uređaja',refresh:'OSVEŽI PATCH',
+  protocol:'MREŽNI PROTOKOL',artnet:'Art-Net',sacn:'sACN (E1.31)',sacnInfo:'sACN automatski koristi multicast adresu za izabrani Universe.',target:'ART-NET NODE / IP',discover:'PRONAĐI ART-NET NODE-OVE',nodes:'PRONAĐENI NODE-OVI',noNodes:'Nema pronađenih Art-Net node-ova.',discovering:'Tražim Art-Net node-ove…',patchDevice:'UREĐAJ IZ DMX PATCH-A',manual:'Ručno / bez Patch uređaja',refresh:'OSVEŽI PATCH',
   universe:'UNIVERSE',channel:'DMX KANAL',value:'VREDNOST',send:'POŠALJI TEST',blackout:'BLACKOUT UNIVERSE',
   ready:'Spremno za slanje.',sending:'Šaljem mrežni DMX…',sent:'DMX mrežni paket je poslat.',error:'Slanje nije uspelo.',
   native:'Mrežni DMX zahteva podržani native control bridge.',patch:'Universe i START adresa se preuzimaju iz postojećeg DMX Patch planera. Značenje konkretnog kanala mora biti verifikovano DMX profilom proizvođača.',
@@ -21,7 +21,7 @@ const TXT={
  en:{
   title:'📡 NETWORK DMX CONTROL',
   intro:'Control DMX over the network using Art-Net or sACN (E1.31). The existing DMX Patch remains the shared source for universes and addresses.',
-  target:'ART-NET NODE / IP',discover:'DISCOVER ART-NET NODES',nodes:'DISCOVERED NODES',noNodes:'No Art-Net nodes found.',discovering:'Discovering Art-Net nodes…',patchDevice:'DEVICE FROM DMX PATCH',manual:'Manual / no Patch device',refresh:'REFRESH PATCH',
+  protocol:'NETWORK PROTOCOL',artnet:'Art-Net',sacn:'sACN (E1.31)',sacnInfo:'sACN automatically uses the multicast address for the selected universe.',target:'ART-NET NODE / IP',discover:'DISCOVER ART-NET NODES',nodes:'DISCOVERED NODES',noNodes:'No Art-Net nodes found.',discovering:'Discovering Art-Net nodes…',patchDevice:'DEVICE FROM DMX PATCH',manual:'Manual / no Patch device',refresh:'REFRESH PATCH',
   universe:'UNIVERSE',channel:'DMX CHANNEL',value:'VALUE',send:'SEND TEST',blackout:'BLACKOUT UNIVERSE',
   ready:'Ready to send.',sending:'Sending network DMX…',sent:'Network DMX packet sent.',error:'Send failed.',
   native:'Network DMX requires a supported native control bridge.',patch:'Universe and START address come from the existing DMX Patch planner. The meaning of each channel must still be verified from the manufacturer DMX profile.',

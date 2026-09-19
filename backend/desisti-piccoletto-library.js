@@ -55,8 +55,8 @@ export const DESISTI_PICCOLETTO_FIXTURES = [
     weightKg:0.95,
     control:['DMX512','On-board'],
     dmxModes:[
-      {name:'Vari-White',channels:3,verified:true,sourceUrl:VW_DMX_MANUAL,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},
-      {name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:VW_DMX_MANUAL,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}
+      {name:'Vari-White',channels:3,verified:true,sourceUrl:VW_DMX_MANUAL,requiredChannels:[{channel:3,value:0}],controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},{key:'cct',label:'CCT',channel:2,type:'cct-linear',min:2750,max:6900,dmxMin:0,dmxMax:255}]},
+      {name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:VW_DMX_MANUAL,requiredChannels:[{channel:4,value:0}],controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535},{key:'cct',label:'CCT',channel:3,type:'cct-linear',min:2750,max:6900,dmxMin:0,dmxMax:255}]}
     ],
     sourceUrl:VW_SRC
   },

@@ -43,14 +43,14 @@ export const DESISTI_GIOTTO_LED_FIXTURES=[
     weightKg:5.5,
     control:['DMX512/RDM','On-board','Optional W-DMX LumenRadio','Optional Art-Net','Optional sACN'],
     dmxModes:[
-      {name:'8-bit base',channels:7},
-      {name:'8-bit with mode/fan',channels:9},
-      {name:'8-bit simple',channels:12},
-      {name:'8-bit extended',channels:39},
-      {name:'16-bit base',channels:8},
-      {name:'16-bit with mode/fan',channels:10},
-      {name:'16-bit simple',channels:13},
-      {name:'16-bit extended',channels:40}
+      {name:'8-bit base',channels:7,verified:true,sourceUrl:SRC},
+      {name:'8-bit with mode/fan',channels:9,verified:true,sourceUrl:SRC},
+      {name:'8-bit simple',channels:12,verified:true,sourceUrl:SRC},
+      {name:'8-bit extended',channels:39,verified:true,sourceUrl:SRC},
+      {name:'16-bit base',channels:8,verified:true,sourceUrl:SRC},
+      {name:'16-bit with mode/fan',channels:10,verified:true,sourceUrl:SRC},
+      {name:'16-bit simple',channels:13,verified:true,sourceUrl:SRC},
+      {name:'16-bit extended',channels:40,verified:true,sourceUrl:SRC}
     ],
     colorControlModes:['RGBAWW','Gel','Vari-White + Color','Vari-White + Saturation','Ultra CRI','HSI','XY','FX','Sources'],
     sourceUrl:SRC

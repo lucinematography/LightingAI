@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class SacnLiveEngine {
     private static final long PERIOD_MS = 33L;
@@ -25,6 +26,10 @@ public final class SacnLiveEngine {
 
     private final Map<Integer, Frame> frames = new ConcurrentHashMap<>();
     private final AtomicInteger sequence = new AtomicInteger(0);
+    private final AtomicLong packetsSent = new AtomicLong(0);
+    private final AtomicLong packetsFailed = new AtomicLong(0);
+    private final AtomicLong lastSendAtMs = new AtomicLong(0);
+    private volatile String lastError = "";
     private final Object lock = new Object();
     private final byte[] cid;
     private final String sourceName;
@@ -51,6 +56,22 @@ public final class SacnLiveEngine {
         return frames.size();
     }
 
+    public long packetsSent() {
+        return packetsSent.get();
+    }
+
+    public long packetsFailed() {
+        return packetsFailed.get();
+    }
+
+    public long lastSendAtMs() {
+        return lastSendAtMs.get();
+    }
+
+    public String lastError() {
+        return lastError == null ? "" : lastError;
+    }
+
     public void stopAll() {
         synchronized (lock) {
             if (task != null) {
@@ -69,7 +90,12 @@ public final class SacnLiveEngine {
                                 cid,
                                 sourceName
                             );
-                        } catch (Exception ignored) {
+                            packetsSent.incrementAndGet();
+                            lastSendAtMs.set(System.currentTimeMillis());
+                            lastError = "";
+                        } catch (Exception e) {
+                            packetsFailed.incrementAndGet();
+                            lastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                             // Best-effort stream termination; still release local resources.
                         }
                     }
@@ -115,7 +141,12 @@ public final class SacnLiveEngine {
         for (Frame frame : frames.values()) {
             try {
                 SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(), cid, sourceName);
-            } catch (Exception ignored) {
+                packetsSent.incrementAndGet();
+                lastSendAtMs.set(System.currentTimeMillis());
+                lastError = "";
+            } catch (Exception e) {
+                packetsFailed.incrementAndGet();
+                lastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                 // Keep refreshing; transient Wi-Fi/network failures may recover.
             }
         }

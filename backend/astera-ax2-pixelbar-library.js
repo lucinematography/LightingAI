@@ -56,6 +56,18 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     dimensionsMm: { length: 1000, width: 165, height: 65 },
     weightKg: 7.4,
     control: { wired: ['DMX'], wireless: ['AsteraApp', 'CRMX'], builtInCRMX: true },
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: 'https://cdn.stormlighting.co.uk/content/2022/07/Astera_TitanTube_DMX.pdf',
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC
   }
 ];

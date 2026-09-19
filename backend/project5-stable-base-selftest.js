@@ -94,6 +94,10 @@ const exactAllowed = new Set([
   'backend/astera-pixelbrick-library.js',
   'backend/astera-heliostube-library.js',
   'backend/astera-ax2-pixelbar-library.js',
+  'backend/astera-ax7-spotlite-library.js',
+  'backend/astera-ax3-lightdrop-library.js',
+  'backend/astera-hydrapanel-library.js',
+  'backend/astera-hyperiontube-library.js',
   'backend/catalog-selftest.js',
   'backend/desisti-super-led-f47-library.js',
   'backend/desisti-led-fresnel-series-library.js',
@@ -660,5 +664,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Verified HeliosTube FP2-BTB and AX2-50 Profile 4 DIM RGB controls from the Astera Helios/AX2-50 DMX table, layered onto Network DMX control'
+  featureSurface: 'Expanded source-verified Astera Profile 4 DIM RGB controls for AX2-100, HyperionTube FP3, HydraPanel FP6, AX3 LightDrop and AX7 SpotLite on top of the stable Network DMX stack'
 }, null, 2));

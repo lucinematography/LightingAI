@@ -21,8 +21,8 @@ export const DESISTI_GIOTTO_LED_FIXTURES=[
     weightKg:5.5,
     control:['DMX512/RDM','On-board','Optional W-DMX LumenRadio','Optional Art-Net','Optional sACN'],
     dmxModes:[
-      {name:'8-bit',channels:2},
-      {name:'16-bit',channels:3}
+      {name:'8-bit',channels:2,verified:true,sourceUrl:SRC},
+      {name:'16-bit',channels:3,verified:true,sourceUrl:SRC}
     ],
     sourceUrl:SRC
   },

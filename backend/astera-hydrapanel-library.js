@@ -2,6 +2,7 @@
 // Official product documentation: Astera FP6 HydraPanel user manual.
 const SRC = 'https://astera-led.com/hydra';
 const MANUAL = 'https://cdn.stormlighting.co.uk/content/2024/02/Astera_HydraPanel_Manual.pdf';
+const DMX_PROFILE = 'https://goknight.com/content/documentation/FP6_HydraPanel_DMX_Profiles_V1.pdf';
 
 export const ASTERA_HYDRAPANEL_FIXTURES = [
   {
@@ -31,6 +32,18 @@ export const ASTERA_HYDRAPANEL_FIXTURES = [
       builtInCRMX: true,
       builtInBluetoothBridge: true
     },
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: DMX_PROFILE,
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC,
     manualUrl: MANUAL
   }

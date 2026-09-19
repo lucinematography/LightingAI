@@ -148,7 +148,10 @@ const exactAllowed = new Set([
   'app/src/main/java/com/lightingai/app/ArtNetSender.java',
   'app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java',
   'app/src/main/java/com/lightingai/app/ArtNetDiscovery.java',
+  'app/src/main/java/com/lightingai/app/SacnSender.java',
+  'app/src/main/java/com/lightingai/app/SacnLiveEngine.java',
   'app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java',
+  'app/src/test/java/com/lightingai/app/SacnProtocolTest.java',
   'backend/project5-stable-base-selftest.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
@@ -249,9 +252,13 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.10-node-discovery'",
+  "version:'0.11-artnet-sacn'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
+  "networkDmxProtocol",
+  "sendSacnDmx",
+  "setSacnLiveDmx",
+  "protocolUniverseLimit(protocol)",
   "artnetDiscoveredNodes').addEventListener('change'",
   'if(liveEnabled)setLiveEnabled(false)',
   'function patchSignature()',
@@ -296,6 +303,38 @@ for (const marker of [
   if (!artNetDiscovery.includes(marker)) fail(`Art-Net discovery marker missing: ${marker}`);
 }
 
+const sacnSender = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/SacnSender.java']);
+for (const marker of [
+  'public static final int SACN_PORT = 5568',
+  'static byte[] buildDmxPacket',
+  'writeFlagsAndLength(packet, 16',
+  'packet[117] = 0x02',
+  'packet[118] = (byte) 0xa1',
+  'static String multicastAddress'
+]) {
+  if (!sacnSender.includes(marker)) fail(`sACN sender marker missing: ${marker}`);
+}
+
+const sacnLiveEngine = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/SacnLiveEngine.java']);
+for (const marker of [
+  'private static final long PERIOD_MS = 33L',
+  'SacnSender.sendDmx(activeSocket',
+  'scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS)',
+  'public void stopAll()'
+]) {
+  if (!sacnLiveEngine.includes(marker)) fail(`sACN live engine marker missing: ${marker}`);
+}
+
+const sacnProtocolTest = git(['show', 'HEAD:app/src/test/java/com/lightingai/app/SacnProtocolTest.java']);
+for (const marker of [
+  'sacnPacketUsesE131LayersAndDmxStartCode',
+  'sacnUsesBigEndianUniverseAndExpectedMulticastAddress',
+  'sacnPropertyCountIncludesStartCode',
+  'sacnUniverseIsClampedToStandardRange'
+]) {
+  if (!sacnProtocolTest.includes(marker)) fail(`sACN protocol test marker missing: ${marker}`);
+}
+
 const artNetProtocolTest = git(['show', 'HEAD:app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java']);
 for (const marker of [
   'dmxPacketUsesArtNetHeaderUniverseAndEvenLength',
@@ -338,7 +377,12 @@ for (const marker of [
   '@JavascriptInterface public void artNetStopLive',
   'artNetLiveEngine.stopAll()',
   '@JavascriptInterface public void artNetDiscover',
-  'window.LightingAIArtNetDiscoveryResult'
+  'window.LightingAIArtNetDiscoveryResult',
+  '@JavascriptInterface public void sacnSendDmx',
+  '@JavascriptInterface public void sacnSetLiveDmx',
+  '@JavascriptInterface public void sacnStopLive',
+  'loadOrCreateSacnCid()',
+  'sacnLiveEngine.stopAll()'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
 }
@@ -405,5 +449,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Cross-platform Art-Net node discovery layered onto the existing live/group/scene control stack'
+  featureSurface: 'Cross-platform network DMX control with Art-Net discovery plus sACN E1.31 multicast output and live refresh'
 }, null, 2));

@@ -8,7 +8,14 @@ const expected=[
   'evlight-gem1x1fc',
   'evlight-gem2x1bi',
   'evlight-gem2x1st',
-  'evlight-gemx21-hard'
+  'evlight-gemx21-hard',
+  'evlight-sp150bi',
+  'evlight-sp150fc',
+  'evlight-sp350',
+  'evlight-sp350bi',
+  'evlight-sp350fc',
+  'evlight-sp500bi',
+  'evlight-sp600'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

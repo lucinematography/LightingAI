@@ -2,6 +2,7 @@
 // Official product documentation: Astera FP3 HyperionTube user manual.
 const SRC = 'https://astera-led.com/hyperion';
 const MANUAL = 'https://www.innovationlighting.net/wp-content/uploads/2023/10/FP3_HyperionTube_Manual_EN_DE_IT_ES_FR_CN.pdf';
+const DMX_PROFILE = 'https://motion-rental.de/downloads/artikelpdfs/22399-Astera_Hyperion_DMX_charts.pdf';
 
 export const ASTERA_HYPERIONTUBE_FIXTURES = [
   {
@@ -30,6 +31,18 @@ export const ASTERA_HYPERIONTUBE_FIXTURES = [
       builtInWirelessDMX: true,
       builtInBluetoothBridge: false
     },
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: DMX_PROFILE,
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC,
     manualUrl: MANUAL
   }

@@ -167,6 +167,34 @@ for(const id of ['desisti-f47-lite-t','desisti-f47-lite-d']){
 
     
 
+
+// Soft LED 2 Lite T/D: official datasheet confirms 1ch 8-bit and 2ch 16-bit footprints.
+// Only the 8-bit CH1 dimmer control is sourced; 16-bit channel order stays hidden.
+const s2LiteDimmerSource='https://www.desisti.it/wp/wp-content/uploads/2024/02/SOFTLED-2Lite-T-D-0224.pdf';
+for(const id of ['desisti-softled-2-lite-t','desisti-softled-2-lite-d']){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)){
+    failures.push('Missing Soft LED 2 Lite fixed-white DMX modes: '+id);
+    continue;
+  }
+  if(fixture.dmxModes.length!==2){
+    failures.push('Unexpected Soft LED 2 Lite fixed-white DMX mode count: '+id);
+  }
+  const mode8=fixture.dmxModes.find(mode=>mode?.name==='8-bit dimmer');
+  const mode16=fixture.dmxModes.find(mode=>mode?.name==='16-bit dimmer');
+  if(mode8?.channels!==1||mode8?.verified!==true||mode8?.sourceUrl!==s2LiteDimmerSource){
+    failures.push('Incorrect verified Soft LED 2 Lite 8-bit dimmer mode/source: '+id);
+  }
+  if(mode16?.channels!==2||mode16?.verified!==true||mode16?.sourceUrl!==s2LiteDimmerSource){
+    failures.push('Incorrect verified Soft LED 2 Lite 16-bit width/source: '+id);
+  }
+  for(const key of ['controls','requiredChannels']){
+    if(mode16?.[key]!=null&&(!Array.isArray(mode16[key])||mode16[key].length)){
+      failures.push('Soft LED 2 Lite 16-bit channel order must remain hidden until sourced: '+id+' / '+key);
+    }
+  }
+}
+
 // F6 Lite T/D: official datasheet confirms 1ch 8-bit and 2ch 16-bit footprints.
 // Only the 8-bit CH1 dimmer control is sourced; 16-bit channel order stays hidden.
 const f6LiteDimmerSource='https://www.desisti.it/wp/wp-content/uploads/2026/04/FRESNEL-LED-F6-Lite-D-T-0426.pdf';

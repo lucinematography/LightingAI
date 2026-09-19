@@ -25,12 +25,16 @@ public final class SacnSender {
     public static void sendDmx(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
         int u = normalizeUniverse(universe);
-        byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName);
+        byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0);
         InetAddress address = InetAddress.getByName(multicastAddress(u));
         socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
     }
 
     static byte[] buildDmxPacket(int universe, int[] channels, int sequence, byte[] cid, String sourceName) {
+        return buildDmxPacket(universe, channels, sequence, cid, sourceName, 0);
+    }
+
+    static byte[] buildDmxPacket(int universe, int[] channels, int sequence, byte[] cid, String sourceName, int options) {
         int u = normalizeUniverse(universe);
         int[] safeChannels = channels == null ? new int[0] : Arrays.copyOf(channels, Math.min(512, channels.length));
         int slotCount = safeChannels.length;
@@ -58,7 +62,7 @@ public final class SacnSender {
         packet[109] = 0x00;
         packet[110] = 0x00;
         packet[111] = (byte) (sequence & 0xff);
-        packet[112] = 0x00;
+        packet[112] = (byte) (options & 0xff);
         packet[113] = (byte) ((u >> 8) & 0xff);
         packet[114] = (byte) (u & 0xff);
 
@@ -79,6 +83,14 @@ public final class SacnSender {
             packet[126 + i] = (byte) Math.max(0, Math.min(255, safeChannels[i]));
         }
         return packet;
+    }
+
+    static void sendTermination(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName) throws Exception {
+        if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
+        int u = normalizeUniverse(universe);
+        byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0x40);
+        InetAddress address = InetAddress.getByName(multicastAddress(u));
+        socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
     }
 
     static String multicastAddress(int universe) {

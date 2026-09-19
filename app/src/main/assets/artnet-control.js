@@ -125,10 +125,15 @@ function selectedProtocol(){
  const select=E('networkDmxProtocol');
  return select&&select.value==='sacn'?'sacn':'artnet';
 }
+function protocolUniverseLimit(protocol){return protocol==='sacn'?63999:32768}
 function updateProtocolUi(){
- const protocol=selectedProtocol(),target=E('artnetTargetBlock'),info=E('sacnMulticastInfo');
+ const protocol=selectedProtocol(),target=E('artnetTargetBlock'),info=E('sacnMulticastInfo'),universe=E('artnetUniverse');
  if(target)target.style.display=protocol==='artnet'?'':'none';
  if(info){info.style.display=protocol==='sacn'?'block':'none';info.textContent=t().sacnInfo}
+ if(universe){
+  const limit=protocolUniverseLimit(protocol);universe.max=String(limit);
+  if(Number(universe.value)>limit)universe.value=String(limit);
+ }
 }
 function discoverNodes(){
  const transport=controlTransport();
@@ -435,15 +440,21 @@ function choosePatch(){
  status(t().ready);
 }
 function sendFrame(channels,universe){
- const transport=controlTransport();
+ const transport=controlTransport(),protocol=selectedProtocol();
  if(!transport.isAvailable()){status(t().native,false);return}
+ const limit=protocolUniverseLimit(protocol),u=Math.max(1,Math.min(limit,Number(universe)||1));
  const ip=(E('artnetTarget')&&E('artnetTarget').value||'255.255.255.255').trim();
- try{localStorage.setItem(TARGET_KEY,ip)}catch(e){}
- const id='artnet_'+Date.now()+'_'+(++seq);
+ if(protocol==='artnet'){try{localStorage.setItem(TARGET_KEY,ip)}catch(e){}}
+ const id='networkdmx_'+Date.now()+'_'+(++seq);
  status(t().sending);
  try{
-  const request={id:id,targetIp:ip,universe:Number(universe)||1,channels:channels};
-  const ok=liveEnabled&&typeof transport.supportsLive==='function'&&transport.supportsLive()?transport.setLiveDmx(request):transport.sendDmx(request);
+  const request={id:id,targetIp:ip,universe:u,channels:channels};
+  let ok=false;
+  if(protocol==='sacn'){
+   ok=liveEnabled&&typeof transport.supportsLive==='function'&&transport.supportsLive('sacn')?transport.setSacnLiveDmx(request):transport.sendSacnDmx(request);
+  }else{
+   ok=liveEnabled&&typeof transport.supportsLive==='function'&&transport.supportsLive('artnet')?transport.setLiveDmx(request):transport.sendDmx(request);
+  }
   if(!ok)status(t().native,false);
  }catch(e){status(t().error,false)}
 }
@@ -461,14 +472,16 @@ function blackout(){
 function setLiveEnabled(enabled){
  const transport=controlTransport(),toggle=E('artnetLiveToggle');
  if(enabled){
-  if(typeof transport.supportsLive!=='function'||!transport.supportsLive()){liveEnabled=false;if(toggle)toggle.checked=false;status(t().native,false);return}
-  liveEnabled=true;if(toggle)toggle.checked=true;
+  const protocol=selectedProtocol();
+  if(typeof transport.supportsLive!=='function'||!transport.supportsLive(protocol)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().native,false);return}
+  liveProtocol=protocol;liveEnabled=true;if(toggle)toggle.checked=true;
   Object.keys(frames).forEach(u=>sendFrame(frames[u].slice(),Number(u)));
   status(t().liveOn,true);
  }else{
+  const protocol=liveProtocol||selectedProtocol();
   liveEnabled=false;if(toggle)toggle.checked=false;
-  const id='artnet_stop_'+Date.now()+'_'+(++seq);
-  try{if(typeof transport.stopLive==='function')transport.stopLive({id:id})}catch(e){}
+  const id='networkdmx_stop_'+Date.now()+'_'+(++seq);
+  try{if(typeof transport.stopLive==='function')transport.stopLive({id:id,protocol:protocol})}catch(e){}
   status(t().liveOff);
  }
 }
@@ -481,20 +494,21 @@ window.LightingAIArtNetResult=function(id,ok,message){
 function translate(){
  if(!E('artnetCard'))return;
  const x=t();
- E('artnetTitle').textContent=x.title;E('artnetIntro').textContent=x.intro;E('artnetTargetLabel').textContent=x.target;E('artnetDiscover').textContent=x.discover;
+ E('artnetTitle').textContent=x.title;E('artnetIntro').textContent=x.intro;E('networkDmxProtocolLabel').textContent=x.protocol;E('networkDmxProtocol').options[0].text=x.artnet;E('networkDmxProtocol').options[1].text=x.sacn;E('artnetTargetLabel').textContent=x.target;E('artnetDiscover').textContent=x.discover;
  E('artnetPatchDeviceLabel').textContent=x.patchDevice;E('artnetRefreshPatch').textContent=x.refresh;
  E('artnetUniverseLabel').textContent=x.universe;E('artnetChannelLabel').textContent=x.channel;E('artnetValueLabel').textContent=x.value;
  E('artnetSend').textContent=x.send;E('artnetBlackout').textContent=x.blackout;E('artnetLiveLabel').textContent=x.liveLabel;E('artnetLiveHint').textContent=x.liveHint;E('artnetSceneTitle').textContent=x.sceneTitle;E('artnetSceneHint').textContent=x.sceneHint;E('artnetSceneName').placeholder=x.sceneName;E('artnetSceneSave').textContent=x.sceneSave;E('artnetPatchHint').textContent=x.patch;E('artnetOwnership').textContent=x.ownership;
- renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderScenes();
+ updateProtocolUi();renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderScenes();
  if(!E('artnetStatus').textContent)status(x.ready);
 }
 function install(){
  const page=E('equipment');if(!page||E('artnetCard'))return false;
  const card=document.createElement('details');card.id='artnetCard';card.className='card';card.style.border='1px solid #31506b';
- card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="artnetTitle"></span></summary><div style="margin-top:12px"><p id="artnetIntro" class="muted small"></p><div class="row"><div><label class="caption" id="artnetTargetLabel"></label><input id="artnetTarget" inputmode="decimal"><button id="artnetDiscover" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><select id="artnetDiscoveredNodes" disabled style="margin-top:7px"><option value=""></option></select></div><div><label class="caption" id="artnetPatchDeviceLabel"></label><select id="artnetPatchDevice"></select><button id="artnetRefreshPatch" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><div id="artnetPatchSelectionHint" class="muted small" style="margin-top:6px"></div></div></div><div class="row"><div><label class="caption" id="artnetUniverseLabel"></label><input id="artnetUniverse" type="number" min="1" max="32768"></div><div><label class="caption" id="artnetChannelLabel"></label><input id="artnetChannel" type="number" min="1" max="512" value="1"></div></div><div><label class="caption" id="artnetValueLabel"></label><input id="artnetValue" type="range" min="0" max="255" value="0"><div id="artnetValueReadout" class="muted small" style="margin-top:5px">0 / 255</div></div><div class="actions"><button id="artnetSend" class="btn primary" type="button"></button><button id="artnetBlackout" class="btn danger" type="button"></button></div><label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input id="artnetLiveToggle" type="checkbox" style="width:auto"><b id="artnetLiveLabel"></b></label><div id="artnetLiveHint" class="muted small" style="margin-top:5px"></div><div id="artnetStatus" class="muted small" style="margin-top:8px"></div><div id="artnetScenes" style="margin-top:12px"><div id="artnetSceneTitle" style="font-size:11px;color:#9da3ad"></div><div id="artnetSceneHint" class="muted small" style="margin:5px 0 8px"></div><div class="row"><input id="artnetSceneName"><button id="artnetSceneSave" class="btn secondary" type="button"></button></div><div id="artnetSceneList"></div></div><div id="artnetMasterControl" style="margin-top:10px"></div><div id="artnetMasterCctControl" style="margin-top:10px"></div><div id="artnetMasterRgbControl" style="margin-top:10px"></div><div id="artnetVerifiedControls" style="margin-top:10px"></div><div id="artnetPatchHint" class="muted small" style="margin-top:8px"></div><div id="artnetOwnership" class="status warn" style="margin-top:10px"></div></div>';
+ card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="artnetTitle"></span></summary><div style="margin-top:12px"><p id="artnetIntro" class="muted small"></p><div class="row"><div><label class="caption" id="networkDmxProtocolLabel"></label><select id="networkDmxProtocol"><option value="artnet">Art-Net</option><option value="sacn">sACN (E1.31)</option></select><div id="sacnMulticastInfo" class="muted small" style="display:none;margin-top:6px"></div></div></div><div class="row"><div id="artnetTargetBlock"><label class="caption" id="artnetTargetLabel"></label><input id="artnetTarget" inputmode="decimal"><button id="artnetDiscover" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><select id="artnetDiscoveredNodes" disabled style="margin-top:7px"><option value=""></option></select></div><div><label class="caption" id="artnetPatchDeviceLabel"></label><select id="artnetPatchDevice"></select><button id="artnetRefreshPatch" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><div id="artnetPatchSelectionHint" class="muted small" style="margin-top:6px"></div></div></div><div class="row"><div><label class="caption" id="artnetUniverseLabel"></label><input id="artnetUniverse" type="number" min="1" max="63999"></div><div><label class="caption" id="artnetChannelLabel"></label><input id="artnetChannel" type="number" min="1" max="512" value="1"></div></div><div><label class="caption" id="artnetValueLabel"></label><input id="artnetValue" type="range" min="0" max="255" value="0"><div id="artnetValueReadout" class="muted small" style="margin-top:5px">0 / 255</div></div><div class="actions"><button id="artnetSend" class="btn primary" type="button"></button><button id="artnetBlackout" class="btn danger" type="button"></button></div><label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input id="artnetLiveToggle" type="checkbox" style="width:auto"><b id="artnetLiveLabel"></b></label><div id="artnetLiveHint" class="muted small" style="margin-top:5px"></div><div id="artnetStatus" class="muted small" style="margin-top:8px"></div><div id="artnetScenes" style="margin-top:12px"><div id="artnetSceneTitle" style="font-size:11px;color:#9da3ad"></div><div id="artnetSceneHint" class="muted small" style="margin:5px 0 8px"></div><div class="row"><input id="artnetSceneName"><button id="artnetSceneSave" class="btn secondary" type="button"></button></div><div id="artnetSceneList"></div></div><div id="artnetMasterControl" style="margin-top:10px"></div><div id="artnetMasterCctControl" style="margin-top:10px"></div><div id="artnetMasterRgbControl" style="margin-top:10px"></div><div id="artnetVerifiedControls" style="margin-top:10px"></div><div id="artnetPatchHint" class="muted small" style="margin-top:8px"></div><div id="artnetOwnership" class="status warn" style="margin-top:10px"></div></div>';
  const dmx=E('dmxCard');if(dmx&&dmx.parentNode)dmx.parentNode.insertBefore(card,dmx.nextSibling);else page.appendChild(card);
  try{E('artnetTarget').value=localStorage.getItem(TARGET_KEY)||'255.255.255.255'}catch(e){E('artnetTarget').value='255.255.255.255'}
  E('artnetUniverse').value=defaultUniverse();
+ E('networkDmxProtocol').addEventListener('change',()=>{if(liveEnabled)setLiveEnabled(false);updateProtocolUi();status(t().ready)});
  E('artnetTarget').addEventListener('change',()=>{if(liveEnabled)setLiveEnabled(false)});
  E('artnetValue').addEventListener('input',()=>{E('artnetValueReadout').textContent=E('artnetValue').value+' / 255'});
  E('artnetPatchDevice').addEventListener('change',()=>{choosePatch();if(E('artnetPatchDevice').value==='')renderVerifiedControls(null)});
@@ -504,7 +518,7 @@ function install(){
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);E('artnetLiveToggle').addEventListener('change',()=>setLiveEnabled(!!E('artnetLiveToggle').checked));E('artnetSceneSave').addEventListener('click',saveScene);
  translate();return true;
 }
-window.LightingAIArtNetControl={version:'0.10-node-discovery',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderScenes();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene};
+window.LightingAIArtNetControl={version:'0.11-artnet-sacn',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderScenes();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

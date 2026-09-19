@@ -324,7 +324,11 @@ if (!desistiSoftLed2XlVwMode || desistiSoftLed2XlVwMode.channels !== 3 || desist
 const desistiSoftLed2XlVwDimmer = desistiSoftLed2XlVwMode?.controls?.find((item) => item.key === 'dimmer');
 if (!desistiSoftLed2XlVwDimmer || desistiSoftLed2XlVwDimmer.channel !== 1 || desistiSoftLed2XlVwDimmer.type !== 'percent' || desistiSoftLed2XlVwDimmer.dmxMax !== 255) failures.push('Verified De Sisti Soft LED 2 XL Vari-White 8-bit dimmer mapping missing');
 if (desistiSoftLed2XlVwMode?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti Soft LED 2 XL Vari-White CCT control must remain hidden until CCT Mode values are sourced');
-if (desistiSoftLed2XlVw?.dmxModes?.some((item) => item.name === 'Vari-White 16-bit' && item.verified === true)) failures.push('De Sisti Soft LED 2 XL Vari-White 16-bit personality must remain unverified until full personality width is sourced');
+const desistiSoftLed2XlVw16 = desistiSoftLed2XlVw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
+if (!desistiSoftLed2XlVw16 || desistiSoftLed2XlVw16.channels !== 4 || desistiSoftLed2XlVw16.verified !== true) failures.push('Verified De Sisti Soft LED 2 XL Vari-White 4ch 16-bit mode missing');
+const desistiSoftLed2XlVwDimmer16 = desistiSoftLed2XlVw16?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiSoftLed2XlVwDimmer16 || desistiSoftLed2XlVwDimmer16.channel !== 1 || desistiSoftLed2XlVwDimmer16.type !== 'percent' || desistiSoftLed2XlVwDimmer16.bits !== 16 || desistiSoftLed2XlVwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti Soft LED 2 XL Vari-White 16-bit coarse/fine dimmer mapping missing');
+if (desistiSoftLed2XlVw16?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti Soft LED 2 XL Vari-White 16-bit CCT control must remain hidden until CCT Mode DMX values are sourced');
 
 
 const desistiSoftLed8Vw = RUNTIME_CATALOG.fixtureById.get('desisti-softled-8-vw');

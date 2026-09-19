@@ -336,6 +336,18 @@ if (!desistiSoftLed8VwDimmer || desistiSoftLed8VwDimmer.channel !== 1 || desisti
 if (desistiSoftLed8VwMode?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti Soft LED 8 Vari-White CCT control must remain hidden until CCT Mode values are sourced');
 if (desistiSoftLed8Vw?.dmxModes?.some((item) => item.name === 'Vari-White 16-bit' && item.verified === true)) failures.push('De Sisti Soft LED 8 Vari-White 16-bit personality must remain unverified until full personality width is sourced');
 
+
+const desistiSoftLed8XlVw = RUNTIME_CATALOG.fixtureById.get('desisti-softled-8xl-vw');
+const desistiSoftLed8XlVwMode8 = desistiSoftLed8XlVw?.dmxModes?.find((item) => item.name === '8-bit dimmer');
+const desistiSoftLed8XlVwMode16 = desistiSoftLed8XlVw?.dmxModes?.find((item) => item.name === '16-bit dimmer');
+if (!desistiSoftLed8XlVwMode8 || desistiSoftLed8XlVwMode8.channels !== 1 || desistiSoftLed8XlVwMode8.verified !== true) failures.push('Verified De Sisti Soft LED 8 XL VW 8-bit dimmer mode missing');
+if (!desistiSoftLed8XlVwMode16 || desistiSoftLed8XlVwMode16.channels !== 2 || desistiSoftLed8XlVwMode16.verified !== true) failures.push('Verified De Sisti Soft LED 8 XL VW 16-bit dimmer mode missing');
+const desistiSoftLed8XlVwDimmer8 = desistiSoftLed8XlVwMode8?.controls?.find((item) => item.key === 'dimmer');
+const desistiSoftLed8XlVwDimmer16 = desistiSoftLed8XlVwMode16?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiSoftLed8XlVwDimmer8 || desistiSoftLed8XlVwDimmer8.channel !== 1 || desistiSoftLed8XlVwDimmer8.type !== 'percent' || desistiSoftLed8XlVwDimmer8.dmxMax !== 255) failures.push('Verified De Sisti Soft LED 8 XL VW 8-bit dimmer mapping missing');
+if (!desistiSoftLed8XlVwDimmer16 || desistiSoftLed8XlVwDimmer16.channel !== 1 || desistiSoftLed8XlVwDimmer16.type !== 'percent' || desistiSoftLed8XlVwDimmer16.bits !== 16 || desistiSoftLed8XlVwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti Soft LED 8 XL VW 16-bit coarse/fine dimmer mapping missing');
+if (desistiSoftLed8XlVw?.dmxModes?.some((item) => item.channels === 3 || item.controls?.some((control) => control.key === 'cct'))) failures.push('De Sisti Soft LED 8 XL VW must remain dimmer-only in DMX until an official CCT DMX profile is sourced');
+
 for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

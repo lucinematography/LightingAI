@@ -2,6 +2,8 @@
 // Canonical specifications from Astera AX2 PixelBar datasheet.
 const SRC = 'https://device.report/m/0e05d49354ab0a17b88c19119c7db803ce0c9e24c36414278e744506af83e11f';
 const CHARGING_CASE_SRC = 'https://astera-led.com/products/charging-case-for-ax2/downloads/';
+const DMX_50 = 'https://impact-even.com/wp-content/uploads/2022/06/astera_helios_tabledmx.pdf';
+const DMX_100 = 'https://www.nashvillegrip.com/uploads/9/8/7/3/98739938/ax1_ax1-btb_ax1_pixeltube_dmx_profiles_v2.pdf';
 
 export const ASTERA_AX2_PIXELBAR_FIXTURES = [
   {
@@ -23,6 +25,18 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     dimensionsMm: { length: 500, width: 165, height: 65 },
     weightKg: 4.5,
     control: { wired: ['DMX'], wireless: ['AsteraApp', 'CRMX'], builtInCRMX: true },
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: DMX_50,
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC
   },
   {
@@ -44,6 +58,18 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     dimensionsMm: { length: 1000, width: 165, height: 65 },
     weightKg: 7.4,
     control: { wired: ['DMX'], wireless: ['AsteraApp', 'CRMX'], builtInCRMX: true },
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: DMX_100,
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC
   }
 ];

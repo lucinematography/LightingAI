@@ -45,7 +45,11 @@ const expected=[
   'kinoflo-barfly-100',
   'kinoflo-barfly-200',
   'kinoflo-barfly-400',
-  'kinoflo-barfly-450-dmx'
+  'kinoflo-barfly-450-dmx',
+  'kinoflo-imara-s6-dmx',
+  'kinoflo-imara-s10-dmx',
+  'kinoflo-imara-s60-dmx',
+  'kinoflo-imara-s100-dmx'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

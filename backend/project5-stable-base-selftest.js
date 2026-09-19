@@ -150,6 +150,9 @@ const exactAllowed = new Set([
   'app/src/main/java/com/lightingai/app/ArtNetDiscovery.java',
   'app/src/main/java/com/lightingai/app/SacnSender.java',
   'app/src/main/java/com/lightingai/app/SacnLiveEngine.java',
+  'app/src/main/java/com/lightingai/app/BleDeviceScanner.java',
+  'app/src/main/assets/ble-control.js',
+  'app/src/main/AndroidManifest.xml',
   'app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java',
   'app/src/test/java/com/lightingai/app/SacnProtocolTest.java',
   'backend/project5-stable-base-selftest.js'
@@ -166,12 +169,42 @@ for (const protectedPath of [
   'app/src/main/assets/ai-visual-phone-diagnostics.js',
   'app/src/main/assets/ai-visual-image-actions.js',
   'app/src/main/java/com/lightingai/app/DeviceCapabilities.java',
-  'app/src/main/AndroidManifest.xml',
   'backend/visual-preview.js'
 ]) {
   const stable = git(['show', `${PROJECT510_QA_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
   if (stable !== current) fail(`build 767 protected file changed unexpectedly: ${protectedPath}`);
+}
+
+const manifestPath = 'app/src/main/AndroidManifest.xml';
+const stableManifest = git(['show', `${PROJECT510_QA_BASE}:${manifestPath}`]);
+const currentManifest = git(['show', `HEAD:${manifestPath}`]);
+const manifestWithoutBle = currentManifest
+  .split('\n')
+  .filter((line) => !line.includes('android.permission.BLUETOOTH') && !line.includes('android.hardware.bluetooth_le'))
+  .join('\n');
+if (manifestWithoutBle !== stableManifest) fail('AndroidManifest changed outside the isolated BLE permission/feature additions');
+for (const marker of [
+  'android.permission.BLUETOOTH" android:maxSdkVersion="30"',
+  'android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"',
+  'android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"',
+  'android.permission.BLUETOOTH_CONNECT',
+  'android.hardware.bluetooth_le" android:required="false"'
+]) {
+  if (!currentManifest.includes(marker)) fail(`BLE manifest marker missing: ${marker}`);
+}
+const allowedPermissions = new Set([
+  'android.permission.INTERNET',
+  'android.permission.ACCESS_COARSE_LOCATION',
+  'android.permission.ACCESS_FINE_LOCATION',
+  'android.permission.CAMERA',
+  'android.permission.BLUETOOTH',
+  'android.permission.BLUETOOTH_ADMIN',
+  'android.permission.BLUETOOTH_SCAN',
+  'android.permission.BLUETOOTH_CONNECT'
+]);
+for (const match of currentManifest.matchAll(/android:name="(android\.permission\.[A-Z_]+)"/g)) {
+  if (!allowedPermissions.has(match[1])) fail(`unexpected Android permission added: ${match[1]}`);
 }
 
 // Preserve the historical non-destructive catalog contract required by Project 5 safety.
@@ -288,9 +321,7 @@ for (const marker of [
   'private static final long PERIOD_MS = 33L',
   'scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS)',
   'ArtNetSender.sendDmx(activeSocket',
-  'public void stopAll()',
-  'SacnSender.sendTermination(',
-  'for (int repeat = 0; repeat < 3; repeat++)'
+  'public void stopAll()'
 ]) {
   if (!artNetLiveEngine.includes(marker)) fail(`Art-Net live engine marker missing: ${marker}`);
 }
@@ -325,7 +356,9 @@ for (const marker of [
   'private static final long PERIOD_MS = 33L',
   'SacnSender.sendDmx(activeSocket',
   'scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS)',
-  'public void stopAll()'
+  'public void stopAll()',
+  'SacnSender.sendTermination(',
+  'for (int repeat = 0; repeat < 3; repeat++)'
 ]) {
   if (!sacnLiveEngine.includes(marker)) fail(`sACN live engine marker missing: ${marker}`);
 }
@@ -351,6 +384,30 @@ for (const marker of [
   'invalidReplyIsRejected'
 ]) {
   if (!artNetProtocolTest.includes(marker)) fail(`Art-Net protocol unit-test marker missing: ${marker}`);
+}
+
+const bleControl = git(['show', 'HEAD:app/src/main/assets/ble-control.js']);
+for (const marker of [
+  "version:'0.1-ble-discovery'",
+  'function startScan()',
+  'Android.bleDiscover',
+  'window.LightingAIBleDiscoveryResult',
+  "action:'bleDiscover'",
+  'verified official protocol / SDK'
+]) {
+  if (!bleControl.includes(marker)) fail(`BLE control marker missing: ${marker}`);
+}
+
+const bleScanner = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/BleDeviceScanner.java']);
+for (const marker of [
+  'BluetoothLeScanner',
+  'activeScanner.startScan(activeCallback)',
+  'activeScanner.stopScan(activeCallback)',
+  'result.getRssi()',
+  'record.getServiceUuids()',
+  'ble_scan_cancelled'
+]) {
+  if (!bleScanner.includes(marker)) fail(`BLE scanner marker missing: ${marker}`);
 }
 
 const plannerLayout = git(['show', 'HEAD:app/src/main/assets/planner-layout-lock.js']);
@@ -388,7 +445,12 @@ for (const marker of [
   '@JavascriptInterface public void sacnSetLiveDmx',
   '@JavascriptInterface public void sacnStopLive',
   'loadOrCreateSacnCid()',
-  'sacnLiveEngine.stopAll()'
+  'sacnLiveEngine.stopAll()',
+  '@JavascriptInterface public void bleDiscover',
+  'window.LightingAIBleDiscoveryResult',
+  'Manifest.permission.BLUETOOTH_SCAN',
+  'BLE_PERMISSION = 507',
+  "file:///android_asset/ble-control.js"
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
 }
@@ -455,5 +517,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Cross-platform network DMX control with Art-Net discovery plus sACN E1.31 multicast output and live refresh'
+  featureSurface: 'Cross-platform network DMX plus permission-safe BLE device discovery foundation; no proprietary manufacturer commands are guessed'
 }, null, 2));

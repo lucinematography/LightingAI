@@ -257,9 +257,12 @@ function fadeToScene(index){
   });
   if(p>=1){
    if(activeSceneFade&&activeSceneFade.timer)clearInterval(activeSceneFade.timer);
+   const wasLive=liveEnabled;
    activeSceneFade=null;
+   if(wasLive)setLiveEnabled(false);
    Object.keys(frames).forEach(u=>delete frames[u]);
    Object.keys(next).forEach(u=>{frames[u]=next[u];});
+   if(wasLive)setLiveEnabled(true);
    status(t().sceneFadeDone,true);
   }
  };

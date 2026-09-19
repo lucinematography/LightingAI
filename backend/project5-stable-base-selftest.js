@@ -234,6 +234,17 @@ for (const marker of [
   if (!backupExport.includes(marker)) fail(`backup Downloads marker missing: ${marker}`);
 }
 
+const artNetControl = git(['show', 'HEAD:app/src/main/assets/artnet-control.js']);
+for (const marker of [
+  'function controlTransport()',
+  "platform:androidReady?'android':(iosReady?'ios':'none')",
+  'Android.artNetSendDmx',
+  'window.webkit.messageHandlers.LightingAIControl',
+  "version:'0.5-platform-transport'"
+]) {
+  if (!artNetControl.includes(marker)) fail(`cross-platform Art-Net transport marker missing: ${marker}`);
+}
+
 const plannerLayout = git(['show', 'HEAD:app/src/main/assets/planner-layout-lock.js']);
 for (const marker of [
   "const VERSION='1.0-stable-planner-layout'",
@@ -326,5 +337,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Verified Art-Net DMX profiles: manufacturer-documented channel profiles plus isolated semantic controls without changing protected Planner/AI surfaces'
+  featureSurface: 'Cross-platform Art-Net transport abstraction: Android native bridge now, iOS WKWebView message-handler contract reserved for later implementation'
 }, null, 2));

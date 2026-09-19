@@ -288,9 +288,7 @@ for (const marker of [
   'private static final long PERIOD_MS = 33L',
   'scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS)',
   'ArtNetSender.sendDmx(activeSocket',
-  'public void stopAll()',
-  'SacnSender.sendTermination(',
-  'for (int repeat = 0; repeat < 3; repeat++)'
+  'public void stopAll()'
 ]) {
   if (!artNetLiveEngine.includes(marker)) fail(`Art-Net live engine marker missing: ${marker}`);
 }
@@ -325,7 +323,9 @@ for (const marker of [
   'private static final long PERIOD_MS = 33L',
   'SacnSender.sendDmx(activeSocket',
   'scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS)',
-  'public void stopAll()'
+  'public void stopAll()',
+  'SacnSender.sendTermination(',
+  'for (int repeat = 0; repeat < 3; repeat++)'
 ]) {
   if (!sacnLiveEngine.includes(marker)) fail(`sACN live engine marker missing: ${marker}`);
 }

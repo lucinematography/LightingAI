@@ -753,10 +753,27 @@ function cctBounds(entries){
  const max=Math.min.apply(null,entries.map(entry=>Number(entry.control.max||0)));
  return max>=min?{min:min,max:max}:null;
 }
+function controlBitDepth(ctrl){
+ const explicit=Number(ctrl&&ctrl.bits);
+ if(explicit===16)return 16;
+ return Number(ctrl&&ctrl.dmxMax)>255?16:8;
+}
 function controlToDmx(ctrl,value){
- const inMin=Number(ctrl.min||0),inMax=Number(ctrl.max||100),outMin=Number(ctrl.dmxMin||0),outMax=Number(ctrl.dmxMax==null?255:ctrl.dmxMax);
+ const inMin=Number(ctrl.min||0),inMax=Number(ctrl.max||100),outMin=Number(ctrl.dmxMin||0);
+ const maxDefault=controlBitDepth(ctrl)===16?65535:255;
+ const outMax=Number(ctrl.dmxMax==null?maxDefault:ctrl.dmxMax);
  const normalized=inMax===inMin?0:Math.max(0,Math.min(1,(Number(value)-inMin)/(inMax-inMin)));
- return Math.max(0,Math.min(255,Math.round(outMin+normalized*(outMax-outMin))));
+ return Math.max(0,Math.min(maxDefault,Math.round(outMin+normalized*(outMax-outMin))));
+}
+function writeControlToFrame(targetFrame,address,ctrl,value){
+ const start=Math.max(1,Number(address)||1),bits=controlBitDepth(ctrl),width=bits===16?2:1;
+ if(!Array.isArray(targetFrame)||start+width-1>512)return false;
+ const dmx=controlToDmx(ctrl,value);
+ if(bits===16){
+  targetFrame[start-1]=(dmx>>8)&255;
+  targetFrame[start]=dmx&255;
+ }else targetFrame[start-1]=dmx&255;
+ return true;
 }
 function renderMasterControl(){
  const box=E('artnetMasterControl');if(!box)return;
@@ -779,8 +796,7 @@ function applyMasterDimmer(value){
  selected.forEach(entry=>{
   const r=entry.row,ctrl=entry.control,u=Math.max(1,Number(r.universe)||1);
   const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-  if(address>512)return;
-  frame(u)[address-1]=controlToDmx(ctrl,value);universes.add(u);
+  if(writeControlToFrame(frame(u),address,ctrl,value))universes.add(u);
  });
  if(!universes.size){status(t().error,false);return}
  universes.forEach(u=>sendFrame(frame(u).slice(),u));
@@ -829,8 +845,7 @@ function applyMasterCct(value){
  selected.forEach(entry=>{
   const r=entry.row,ctrl=entry.control,u=Math.max(1,Number(r.universe)||1);
   const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-  if(address>512)return;
-  frame(u)[address-1]=controlToDmx(ctrl,requested);universes.add(u);
+  if(writeControlToFrame(frame(u),address,ctrl,requested))universes.add(u);
  });
  if(!universes.size){status(t().error,false);return}
  universes.forEach(u=>sendFrame(frame(u).slice(),u));
@@ -866,7 +881,7 @@ function applyMasterRgb(redValue,greenValue,blueValue){
   const r=entry.row,u=Math.max(1,Number(r.universe)||1);
   [['red',entry.red],['green',entry.green],['blue',entry.blue]].forEach(pair=>{
    const key=pair[0],ctrl=pair[1],address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-   if(address<=512)frame(u)[address-1]=controlToDmx(ctrl,values[key]);
+   writeControlToFrame(frame(u),address,ctrl,values[key]);
   });
   universes.add(u);
  });
@@ -898,8 +913,9 @@ function sendVerifiedControl(r,profile,ctrl,value){
  if(!patchUsable(r)||!profile||!ctrl)return;
  const u=Math.max(1,Number(r.universe)||1);
  const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
- if(address>512){status(t().error,false);return}
- const f=frame(u);f[address-1]=controlToDmx(ctrl,value);sendFrame(f.slice(),u);
+ const f=frame(u);
+ if(!writeControlToFrame(f,address,ctrl,value)){status(t().error,false);return}
+ sendFrame(f.slice(),u);
 }
 function renderPatchDevices(){
  const select=E('artnetPatchDevice');if(!select)return;
@@ -1037,7 +1053,7 @@ function install(){
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);E('artnetLiveToggle').addEventListener('change',()=>setLiveEnabled(!!E('artnetLiveToggle').checked));E('artnetSceneSave').addEventListener('click',saveScene);
  translate();setTimeout(requestDiagnostics,250);return true;
 }
-window.LightingAIArtNetControl={version:'0.24-verified-bridges',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority};
+window.LightingAIArtNetControl={version:'0.25-16bit-controls',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

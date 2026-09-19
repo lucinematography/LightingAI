@@ -298,7 +298,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.24-verified-bridges'",
+  "version:'0.25-16bit-controls'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -410,7 +410,11 @@ for (const marker of [
   'function applyMasterCct(value)',
   'function cctBounds(entries)',
   'function verifiedRgbEntries()',
-  'function applyMasterRgb(redValue,greenValue,blueValue)'
+  'function applyMasterRgb(redValue,greenValue,blueValue)',
+  'function controlBitDepth(ctrl)',
+  'function writeControlToFrame(targetFrame,address,ctrl,value)',
+  'targetFrame[start-1]=(dmx>>8)&255',
+  'targetFrame[start]=dmx&255'
 ]) {
   if (!artNetControl.includes(marker)) fail(`cross-platform Art-Net transport marker missing: ${marker}`);
 }
@@ -670,5 +674,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Verified ARRI SkyPanel X Legacy Mode 1 DMX controls for X21/X22/X23 using the official ARRI SkyPanel X DMX Protocol V6.0'
+  featureSurface: 'Generic verified 8-bit and 16-bit DMX control writer shared by fixture, master dimmer, CCT and RGB controls over Art-Net/sACN'
 }, null, 2));

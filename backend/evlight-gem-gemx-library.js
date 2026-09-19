@@ -29,6 +29,8 @@ export const EVLIGHT_GEM_GEMX_FIXTURES=[
 const twoByOne=['evlight-gem2x1bi','evlight-gem2x1st','evlight-gemx21-hard'];
 
 export const EVLIGHT_GEM_GEMX_ACCESSORIES=[
+  acc('evlight-1x1-cellular-grille','1x1 Cellular Grille','Grid',['evlight-gem1x1bi','evlight-gem1x1fc'],'Controls spill from EV Light 1x1 GEM panels.'),
+  acc('evlight-1x1-softbox','1x1 Softbox','Softbox',['evlight-gem1x1bi','evlight-gem1x1fc'],'Softens and enlarges the apparent source for EV Light 1x1 GEM panels.'),
   acc('evlight-2x1-cellular-grille','2x1 Cellular Grille','Grid',twoByOne,'Controls spill; official accessory page lists 60° / 90° options.'),
   acc('evlight-2x1-barn-door','2x1 Barn Door','Barn Doors',['evlight-gem2x1bi','evlight-gem2x1st'],'Shapes and cuts the panel beam.'),
   acc('evlight-gemx21-diffuser','GEMX21 Diffuser','Diffusion',['evlight-gemx21-hard'],'Converts the hard-panel output toward a wider, softer field.'),

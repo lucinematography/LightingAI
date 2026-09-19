@@ -121,6 +121,7 @@ const exactAllowed = new Set([
   'backend/evlight-gemx-large-library.js',
   'backend/evlight-catalog-selftest.js',
   'backend/kinoflo-current-library.js',
+  'backend/kinoflo-freestyle-air-library.js',
   'backend/kinoflo-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'

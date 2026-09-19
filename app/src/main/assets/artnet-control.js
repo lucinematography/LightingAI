@@ -13,7 +13,7 @@ const TXT={
   native:'Art-Net zahteva podržani native control bridge.',patch:'Universe i START adresa se preuzimaju iz postojećeg DMX Patch planera. Značenje konkretnog kanala mora biti verifikovano DMX profilom proizvođača.',
   patchEmpty:'Nema ispravnih uređaja u DMX Patch-u. Dodaj uređaj i unesi broj kanala.',patchLoaded:'Učitano iz Patch-a',patchWarn:'Ovaj Patch red ima upozorenje i nije bezbedan za automatsko učitavanje.',
   ownership:'TEST režim šalje kompletan Universe iz LightingAI-ja; kanali koje ovde nisi postavio ostaju 0. Ne koristi ga paralelno sa drugom DMX konzolom na istom Universe-u.',
-  verifiedTitle:'VERIFIKOVANE KONTROLE',verifiedNone:'Za ovaj uređaj i izabrani DMX mode još nema verifikovanih direktnih kontrola.',verifiedSource:'Profil verifikovan prema zvaničnoj DMX dokumentaciji.',dimmer:'DIMMER',masterTitle:'MASTER / GRUPA',masterHint:'Kontroliši zajedno sva označena Patch svetla koja imaju verifikovan DIMMER kanal.',masterApply:'PRIMENI DIMMER',masterBlackout:'BLACKOUT GRUPE',masterNone:'Nema Patch svetala sa verifikovanim DIMMER profilom.',masterEmpty:'Označi najmanje jedno svetlo.'
+  verifiedTitle:'VERIFIKOVANE KONTROLE',verifiedNone:'Za ovaj uređaj i izabrani DMX mode još nema verifikovanih direktnih kontrola.',verifiedSource:'Profil verifikovan prema zvaničnoj DMX dokumentaciji.',dimmer:'DIMMER',masterTitle:'MASTER / GRUPA',masterHint:'Kontroliši zajedno sva označena Patch svetla koja imaju verifikovan DIMMER kanal.',masterApply:'PRIMENI DIMMER',masterBlackout:'BLACKOUT GRUPE',masterNone:'Nema Patch svetala sa verifikovanim DIMMER profilom.',masterEmpty:'Označi najmanje jedno svetlo.',masterCctTitle:'MASTER CCT',masterCctHint:'Zajedno promeni temperaturu boje na označenim svetlima koja imaju verifikovan CCT kanal.',masterCctApply:'PRIMENI CCT',masterCctNone:'Nema Patch svetala sa verifikovanim CCT profilom.',masterCctNoCommon:'Označena svetla nemaju zajednički CCT opseg.'
  },
  en:{
   title:'📡 ART-NET CONTROL',
@@ -24,7 +24,7 @@ const TXT={
   native:'Art-Net requires a supported native control bridge.',patch:'Universe and START address come from the existing DMX Patch planner. The meaning of each channel must still be verified from the manufacturer DMX profile.',
   patchEmpty:'No valid devices in the DMX Patch. Add a device and enter its channel count.',patchLoaded:'Loaded from Patch',patchWarn:'This Patch row has a warning and is not safe to auto-load.',
   ownership:'TEST mode sends a complete Universe from LightingAI; channels not set here remain at 0. Do not use it in parallel with another DMX console on the same Universe.',
-  verifiedTitle:'VERIFIED CONTROLS',verifiedNone:'This fixture and selected DMX mode do not yet have verified direct controls.',verifiedSource:'Profile verified against official DMX documentation.',dimmer:'DIMMER',masterTitle:'MASTER / GROUP',masterHint:'Control all selected Patch fixtures that have a verified DIMMER channel together.',masterApply:'APPLY DIMMER',masterBlackout:'GROUP BLACKOUT',masterNone:'No Patch fixtures have a verified DIMMER profile.',masterEmpty:'Select at least one fixture.'
+  verifiedTitle:'VERIFIED CONTROLS',verifiedNone:'This fixture and selected DMX mode do not yet have verified direct controls.',verifiedSource:'Profile verified against official DMX documentation.',dimmer:'DIMMER',masterTitle:'MASTER / GROUP',masterHint:'Control all selected Patch fixtures that have a verified DIMMER channel together.',masterApply:'APPLY DIMMER',masterBlackout:'GROUP BLACKOUT',masterNone:'No Patch fixtures have a verified DIMMER profile.',masterEmpty:'Select at least one fixture.',masterCctTitle:'MASTER CCT',masterCctHint:'Change color temperature together on selected fixtures that have a verified CCT channel.',masterCctApply:'APPLY CCT',masterCctNone:'No Patch fixtures have a verified CCT profile.',masterCctNoCommon:'Selected fixtures do not share a common CCT range.'
  }
 };
 const t=()=>TXT[lang()];
@@ -83,6 +83,20 @@ function verifiedDimmerEntries(){
   return profile&&fixture&&control?{row:r,index:index,profile:profile,fixture:fixture,control:control}:null;
  }).filter(Boolean);
 }
+function verifiedCctEntries(){
+ return rows().map((r,index)=>{
+  if(!patchUsable(r))return null;
+  const profile=profileForRow(r),fixture=fixtureForRow(r);
+  const control=profile&&Array.isArray(profile.controls)?profile.controls.find(ctrl=>ctrl&&ctrl.key==='cct'&&ctrl.type==='cct-linear'):null;
+  return profile&&fixture&&control?{row:r,index:index,profile:profile,fixture:fixture,control:control}:null;
+ }).filter(Boolean);
+}
+function cctBounds(entries){
+ if(!entries.length)return null;
+ const min=Math.max.apply(null,entries.map(entry=>Number(entry.control.min||0)));
+ const max=Math.min.apply(null,entries.map(entry=>Number(entry.control.max||0)));
+ return max>=min?{min:min,max:max}:null;
+}
 function controlToDmx(ctrl,value){
  const inMin=Number(ctrl.min||0),inMax=Number(ctrl.max||100),outMin=Number(ctrl.dmxMin||0),outMax=Number(ctrl.dmxMax==null?255:ctrl.dmxMax);
  const normalized=inMax===inMin?0:Math.max(0,Math.min(1,(Number(value)-inMin)/(inMax-inMin)));
@@ -116,6 +130,55 @@ function applyMasterDimmer(value){
  if(E('artnetMasterRange'))E('artnetMasterRange').value=String(Math.max(0,Math.min(100,Number(value)||0)));
  if(E('artnetMasterValue'))E('artnetMasterValue').textContent=Math.round(Math.max(0,Math.min(100,Number(value)||0)))+'%';
 }
+function renderMasterCctControl(){
+ const box=E('artnetMasterCctControl');if(!box)return;
+ const entries=verifiedCctEntries();
+ if(!entries.length){box.innerHTML='<div class="muted small">'+esc(t().masterCctNone)+'</div>';return}
+ const devices=entries.map((entry,i)=>{
+  const f=entry.fixture,r=entry.row;
+  return '<label style="display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px solid #2d333a"><input class="artnet-master-cct-device" data-entry="'+i+'" type="checkbox" checked style="width:auto;margin-top:2px"><span>'+esc((f.manufacturer||'')+' '+(f.model||f.id))+'<br><span class="muted small">U'+Number(r.universe)+' · '+Number(r.start)+' · '+esc(r.mode||entry.profile.name)+'</span></span></label>';
+ }).join('');
+ const bounds=cctBounds(entries);
+ if(!bounds){box.innerHTML='<div class="muted small">'+esc(t().masterCctNoCommon)+'</div>'+devices;return}
+ const initial=Math.round((bounds.min+bounds.max)/2/10)*10;
+ box.innerHTML='<div style="font-size:11px;color:#9da3ad;margin-top:12px">'+esc(t().masterCctTitle)+'</div><div class="muted small" style="margin:5px 0 8px">'+esc(t().masterCctHint)+'</div>'+devices+'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:10px"><b>CCT</b><span id="artnetMasterCctValue" class="muted small">'+initial+'K</span></div><input id="artnetMasterCctRange" type="range" min="'+bounds.min+'" max="'+bounds.max+'" step="10" value="'+initial+'"><div class="actions"><button id="artnetMasterCctApply" class="btn primary" type="button">'+esc(t().masterCctApply)+'</button></div>';
+ E('artnetMasterCctRange').addEventListener('input',()=>{E('artnetMasterCctValue').textContent=Math.round(Number(E('artnetMasterCctRange').value)||0)+'K'});
+ E('artnetMasterCctApply').addEventListener('click',()=>applyMasterCct(Number(E('artnetMasterCctRange').value)||initial));
+ box.querySelectorAll('.artnet-master-cct-device').forEach(input=>input.addEventListener('change',refreshMasterCctBounds));
+}
+function selectedMasterCctEntries(){
+ const entries=verifiedCctEntries();
+ return Array.prototype.slice.call(document.querySelectorAll('.artnet-master-cct-device:checked')).map(el=>entries[Number(el.dataset.entry)]).filter(Boolean);
+}
+function refreshMasterCctBounds(){
+ const selected=selectedMasterCctEntries(),range=E('artnetMasterCctRange'),readout=E('artnetMasterCctValue');
+ if(!range)return;
+ const bounds=cctBounds(selected);
+ if(!bounds){status(t().masterCctNoCommon,false);return}
+ range.min=String(bounds.min);range.max=String(bounds.max);
+ const current=Math.max(bounds.min,Math.min(bounds.max,Number(range.value)||bounds.min));
+ range.value=String(current);
+ if(readout)readout.textContent=Math.round(current)+'K';
+ status(t().ready);
+}
+function applyMasterCct(value){
+ const selected=selectedMasterCctEntries();
+ if(!selected.length){status(t().masterEmpty,false);return}
+ const bounds=cctBounds(selected);
+ if(!bounds){status(t().masterCctNoCommon,false);return}
+ const requested=Math.max(bounds.min,Math.min(bounds.max,Number(value)||bounds.min));
+ const universes=new Set();
+ selected.forEach(entry=>{
+  const r=entry.row,ctrl=entry.control,u=Math.max(1,Number(r.universe)||1);
+  const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
+  if(address>512)return;
+  frame(u)[address-1]=controlToDmx(ctrl,requested);universes.add(u);
+ });
+ if(!universes.size){status(t().error,false);return}
+ universes.forEach(u=>sendFrame(frame(u).slice(),u));
+ if(E('artnetMasterCctRange'))E('artnetMasterCctRange').value=String(requested);
+ if(E('artnetMasterCctValue'))E('artnetMasterCctValue').textContent=Math.round(requested)+'K';
+}
 function renderVerifiedControls(r){
  const box=E('artnetVerifiedControls');if(!box)return;
  const profile=profileForRow(r),fixture=fixtureForRow(r),controls=profile&&Array.isArray(profile.controls)?profile.controls:[];
@@ -139,7 +202,7 @@ function renderVerifiedControls(r){
 function sendVerifiedControl(r,profile,ctrl,value){
  if(!patchUsable(r)||!profile||!ctrl)return;
  const u=Math.max(1,Number(r.universe)||1);
- const address=Math.min(512,Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1);
+ const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
  if(address>512){status(t().error,false);return}
  const f=frame(u);f[address-1]=controlToDmx(ctrl,value);sendFrame(f.slice(),u);
 }
@@ -198,23 +261,23 @@ function translate(){
  E('artnetPatchDeviceLabel').textContent=x.patchDevice;E('artnetRefreshPatch').textContent=x.refresh;
  E('artnetUniverseLabel').textContent=x.universe;E('artnetChannelLabel').textContent=x.channel;E('artnetValueLabel').textContent=x.value;
  E('artnetSend').textContent=x.send;E('artnetBlackout').textContent=x.blackout;E('artnetPatchHint').textContent=x.patch;E('artnetOwnership').textContent=x.ownership;
- renderPatchDevices();renderMasterControl();
+ renderPatchDevices();renderMasterControl();renderMasterCctControl();
  if(!E('artnetStatus').textContent)status(x.ready);
 }
 function install(){
  const page=E('equipment');if(!page||E('artnetCard'))return false;
  const card=document.createElement('details');card.id='artnetCard';card.className='card';card.style.border='1px solid #31506b';
- card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="artnetTitle"></span></summary><div style="margin-top:12px"><p id="artnetIntro" class="muted small"></p><div class="row"><div><label class="caption" id="artnetTargetLabel"></label><input id="artnetTarget" inputmode="decimal"></div><div><label class="caption" id="artnetPatchDeviceLabel"></label><select id="artnetPatchDevice"></select><button id="artnetRefreshPatch" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><div id="artnetPatchSelectionHint" class="muted small" style="margin-top:6px"></div></div></div><div class="row"><div><label class="caption" id="artnetUniverseLabel"></label><input id="artnetUniverse" type="number" min="1" max="32768"></div><div><label class="caption" id="artnetChannelLabel"></label><input id="artnetChannel" type="number" min="1" max="512" value="1"></div></div><div><label class="caption" id="artnetValueLabel"></label><input id="artnetValue" type="range" min="0" max="255" value="0"><div id="artnetValueReadout" class="muted small" style="margin-top:5px">0 / 255</div></div><div class="actions"><button id="artnetSend" class="btn primary" type="button"></button><button id="artnetBlackout" class="btn danger" type="button"></button></div><div id="artnetStatus" class="muted small" style="margin-top:8px"></div><div id="artnetMasterControl" style="margin-top:10px"></div><div id="artnetVerifiedControls" style="margin-top:10px"></div><div id="artnetPatchHint" class="muted small" style="margin-top:8px"></div><div id="artnetOwnership" class="status warn" style="margin-top:10px"></div></div>';
+ card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="artnetTitle"></span></summary><div style="margin-top:12px"><p id="artnetIntro" class="muted small"></p><div class="row"><div><label class="caption" id="artnetTargetLabel"></label><input id="artnetTarget" inputmode="decimal"></div><div><label class="caption" id="artnetPatchDeviceLabel"></label><select id="artnetPatchDevice"></select><button id="artnetRefreshPatch" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><div id="artnetPatchSelectionHint" class="muted small" style="margin-top:6px"></div></div></div><div class="row"><div><label class="caption" id="artnetUniverseLabel"></label><input id="artnetUniverse" type="number" min="1" max="32768"></div><div><label class="caption" id="artnetChannelLabel"></label><input id="artnetChannel" type="number" min="1" max="512" value="1"></div></div><div><label class="caption" id="artnetValueLabel"></label><input id="artnetValue" type="range" min="0" max="255" value="0"><div id="artnetValueReadout" class="muted small" style="margin-top:5px">0 / 255</div></div><div class="actions"><button id="artnetSend" class="btn primary" type="button"></button><button id="artnetBlackout" class="btn danger" type="button"></button></div><div id="artnetStatus" class="muted small" style="margin-top:8px"></div><div id="artnetMasterControl" style="margin-top:10px"></div><div id="artnetMasterCctControl" style="margin-top:10px"></div><div id="artnetVerifiedControls" style="margin-top:10px"></div><div id="artnetPatchHint" class="muted small" style="margin-top:8px"></div><div id="artnetOwnership" class="status warn" style="margin-top:10px"></div></div>';
  const dmx=E('dmxCard');if(dmx&&dmx.parentNode)dmx.parentNode.insertBefore(card,dmx.nextSibling);else page.appendChild(card);
  try{E('artnetTarget').value=localStorage.getItem(TARGET_KEY)||'255.255.255.255'}catch(e){E('artnetTarget').value='255.255.255.255'}
  E('artnetUniverse').value=defaultUniverse();
  E('artnetValue').addEventListener('input',()=>{E('artnetValueReadout').textContent=E('artnetValue').value+' / 255'});
  E('artnetPatchDevice').addEventListener('change',()=>{choosePatch();if(E('artnetPatchDevice').value==='')renderVerifiedControls(null)});
- E('artnetRefreshPatch').addEventListener('click',()=>{renderPatchDevices();renderMasterControl();status(t().ready)});
+ E('artnetRefreshPatch').addEventListener('click',()=>{renderPatchDevices();renderMasterControl();renderMasterCctControl();status(t().ready)});
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);
  translate();return true;
 }
-window.LightingAIArtNetControl={version:'0.6-master-group',refreshPatch:function(){renderPatchDevices();renderMasterControl();},transport:controlTransport};
+window.LightingAIArtNetControl={version:'0.7-master-cct',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();},transport:controlTransport};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;if(typeof old==='function'&&!window.__artNetLangHook){window.__artNetLangHook=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}
 })();

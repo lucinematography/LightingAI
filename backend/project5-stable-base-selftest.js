@@ -285,7 +285,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.16-output-arm'",
+  "version:'0.17-control-groups'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -335,6 +335,16 @@ for (const marker of [
   "armRequired:'Prvo uključi ARM OUTPUT.'",
   "armRequired:'Arm DMX output first.'",
   "artnetOutputArm').addEventListener('change'",
+  "const GROUPS_KEY='lighting_control_groups_v1'",
+  'function rowKey(r)',
+  'function readGroups()',
+  'function writeGroups(items)',
+  'function groupEligibleRows()',
+  'function saveControlGroup()',
+  'function applyControlGroup(index)',
+  'function renderControlGroups()',
+  "groupTitle:'CONTROL GRUPE'",
+  "groupTitle:'CONTROL GROUPS'",
   'function setLiveEnabled(enabled)',
   'function stopLiveForBackground()',
   'artnetSetLiveDmx',
@@ -552,5 +562,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Deliberate runtime-only Network DMX output arm gate that auto-locks on route/Patch/background changes while preserving blackout, cues, scenes, Art-Net and sACN'
+  featureSurface: 'Persistent patch-safe cross-brand CONTROL groups that drive existing verified MASTER DIMMER/CCT/RGB selections without bypassing output arming'
 }, null, 2));

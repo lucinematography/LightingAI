@@ -109,6 +109,8 @@ const exactAllowed = new Set([
   'backend/aladdin-onboard-library.js',
   'backend/aladdin-bi-fabric-library.js',
   'backend/aladdin-catalog-selftest.js',
+  'backend/litegear-litemat-spectrum-g2-library.js',
+  'backend/litegear-litemat-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'
 ]);

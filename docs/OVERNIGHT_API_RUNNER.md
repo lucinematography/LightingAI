@@ -26,7 +26,7 @@ py -m pip install --upgrade openai
 PowerShell:
 
 ```
-$env:OPENAI_API_KEY="vas-kljuc"
+$env:OPENAI_API_KEY = Read-Host "Unesite OpenAI API kljuc"
 $env:OPENAI_MODEL="model-koji-imate-na-API-nalogu"
 ```
 

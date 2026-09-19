@@ -26,6 +26,11 @@ const expected=[
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];
+const duplicateFixtureIds=fixtures.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
+const duplicateAccessoryIds=accessories.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
+if(duplicateFixtureIds.length) failures.push('Duplicate LiteMat fixture IDs: '+[...new Set(duplicateFixtureIds)].join(', '));
+if(duplicateAccessoryIds.length) failures.push('Duplicate LiteMat accessory IDs: '+[...new Set(duplicateAccessoryIds)].join(', '));
+if(fixtures.length!==expected.length) failures.push(`Unexpected LiteMat fixture count: ${fixtures.length}; expected ${expected.length}`);
 for(const id of expected) if(!ids.has(id)) failures.push('Missing required LiteMat fixture: '+id);
 for(const f of fixtures){
   if(!/^https:\/\/(?:www\.)?litegear\.com\//i.test(f.sourceUrl||'')) failures.push('Non-official LiteGear fixture source: '+f.id);

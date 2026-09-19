@@ -165,6 +165,35 @@ for(const id of ['desisti-f47-lite-t','desisti-f47-lite-d']){
   }
 }
 
+    
+// Galileo SoftNel: the official product page confirms only the 6ch 8-bit and 8ch 16-bit footprints.
+// No channel-by-channel map is published here, so controls and required values must remain hidden.
+const galileoSource='https://www.desisti.it/galileo-softnel/';
+const galileo=fixtures.find(item=>item.id==='desisti-galileo-softnel');
+const galileoWidths=[['8-bit',6],['16-bit',8]];
+if(!galileo||!Array.isArray(galileo.dmxModes)){
+  failures.push('Missing Galileo SoftNel DMX modes');
+}else{
+  if(galileo.dmxModes.length!==galileoWidths.length){
+    failures.push('Unexpected Galileo SoftNel DMX mode count');
+  }
+  for(const [name,channels] of galileoWidths){
+    const matches=galileo.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true){
+      failures.push('Incorrect verified Galileo SoftNel DMX width: '+name+' / '+channels+'ch');
+    }
+    if(mode?.sourceUrl!==galileoSource){
+      failures.push('Incorrect Galileo SoftNel DMX source: '+name);
+    }
+    for(const key of ['controls','requiredChannels']){
+      if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
+        failures.push('Galileo SoftNel controls and required values must remain hidden until channel order is sourced: '+name+' / '+key);
+      }
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({
   ok:unique.length===0,

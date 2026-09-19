@@ -240,12 +240,14 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.7-master-cct'",
+  "version:'0.8-master-rgb'",
   'function verifiedDimmerEntries()',
   'function applyMasterDimmer(value)',
   'function verifiedCctEntries()',
   'function applyMasterCct(value)',
-  'function cctBounds(entries)'
+  'function cctBounds(entries)',
+  'function verifiedRgbEntries()',
+  'function applyMasterRgb(redValue,greenValue,blueValue)'
 ]) {
   if (!artNetControl.includes(marker)) fail(`cross-platform Art-Net transport marker missing: ${marker}`);
 }
@@ -342,5 +344,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Cross-brand Art-Net master CCT control over verified DMX profiles, alongside master dimmer and platform-independent transport'
+  featureSurface: 'Cross-brand Art-Net master RGB control over verified DMX profiles, alongside master dimmer, CCT and platform-independent transport'
 }, null, 2));

@@ -285,7 +285,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.14-cue-stack'",
+  "version:'0.15-global-blackout'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -319,6 +319,15 @@ for (const marker of [
   'function renderCueStack()',
   "cueTitle:'CUE LISTA'",
   "cueTitle:'CUE LIST'",
+  'function knownUniverseNumbers()',
+  'function globalBlackout()',
+  'function restoreBeforeBlackout()',
+  'function clearBlackoutRestore()',
+  "sendFrame(frames[String(u)].slice(),u,'panic')",
+  "sendFrame(frames[String(u)].slice(),Number(u),'restore')",
+  "panicTitle:'GLOBAL BLACKOUT'",
+  "panicRestore:'VRATI PRE BLACKOUTA'",
+  "panicRestore:'RESTORE BEFORE BLACKOUT'",
   'function setLiveEnabled(enabled)',
   'function stopLiveForBackground()',
   'artnetSetLiveDmx',
@@ -536,5 +545,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Ordered patch-safe Network DMX cue stack with GO/NEXT, previous, reset, per-cue fade times, and existing scene crossfades'
+  featureSurface: 'Global Network DMX blackout across all LightingAI-known universes with patch-safe one-step restore and existing cue/scene controls'
 }, null, 2));

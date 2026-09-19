@@ -775,6 +775,16 @@ function writeControlToFrame(targetFrame,address,ctrl,value){
  }else targetFrame[start-1]=dmx&255;
  return true;
 }
+function applyProfileRequirements(targetFrame,fixtureStart,profile){
+ const requirements=profile&&Array.isArray(profile.requiredChannels)?profile.requiredChannels:[];
+ let ok=true;
+ requirements.forEach(item=>{
+  const address=Math.max(1,Number(fixtureStart)||1)+Math.max(1,Number(item&&item.channel)||1)-1;
+  if(!Array.isArray(targetFrame)||address>512){ok=false;return}
+  targetFrame[address-1]=Math.max(0,Math.min(255,Number(item&&item.value)||0));
+ });
+ return ok;
+}
 function renderMasterControl(){
  const box=E('artnetMasterControl');if(!box)return;
  const entries=verifiedDimmerEntries();
@@ -794,9 +804,9 @@ function applyMasterDimmer(value){
  if(!selected.length){status(t().masterEmpty,false);return}
  const universes=new Set();
  selected.forEach(entry=>{
-  const r=entry.row,ctrl=entry.control,u=Math.max(1,Number(r.universe)||1);
+  const r=entry.row,ctrl=entry.control,u=Math.max(1,Number(r.universe)||1),target=frame(u);
   const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-  if(writeControlToFrame(frame(u),address,ctrl,value))universes.add(u);
+  if(applyProfileRequirements(target,r.start,entry.profile)&&writeControlToFrame(target,address,ctrl,value))universes.add(u);
  });
  if(!universes.size){status(t().error,false);return}
  universes.forEach(u=>sendFrame(frame(u).slice(),u));
@@ -843,9 +853,9 @@ function applyMasterCct(value){
  const requested=Math.max(bounds.min,Math.min(bounds.max,Number(value)||bounds.min));
  const universes=new Set();
  selected.forEach(entry=>{
-  const r=entry.row,ctrl=entry.control,u=Math.max(1,Number(r.universe)||1);
+  const r=entry.row,ctrl=entry.control,u=Math.max(1,Number(r.universe)||1),target=frame(u);
   const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-  if(writeControlToFrame(frame(u),address,ctrl,requested))universes.add(u);
+  if(applyProfileRequirements(target,r.start,entry.profile)&&writeControlToFrame(target,address,ctrl,requested))universes.add(u);
  });
  if(!universes.size){status(t().error,false);return}
  universes.forEach(u=>sendFrame(frame(u).slice(),u));
@@ -878,12 +888,14 @@ function applyMasterRgb(redValue,greenValue,blueValue){
  const values={red:Math.max(0,Math.min(100,Number(redValue)||0)),green:Math.max(0,Math.min(100,Number(greenValue)||0)),blue:Math.max(0,Math.min(100,Number(blueValue)||0))};
  const universes=new Set();
  selected.forEach(entry=>{
-  const r=entry.row,u=Math.max(1,Number(r.universe)||1);
+  const r=entry.row,u=Math.max(1,Number(r.universe)||1),target=frame(u);
+  if(!applyProfileRequirements(target,r.start,entry.profile))return;
+  let wrote=true;
   [['red',entry.red],['green',entry.green],['blue',entry.blue]].forEach(pair=>{
    const key=pair[0],ctrl=pair[1],address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-   writeControlToFrame(frame(u),address,ctrl,values[key]);
+   if(!writeControlToFrame(target,address,ctrl,values[key]))wrote=false;
   });
-  universes.add(u);
+  if(wrote)universes.add(u);
  });
  if(!universes.size){status(t().error,false);return}
  universes.forEach(u=>sendFrame(frame(u).slice(),u));
@@ -914,7 +926,7 @@ function sendVerifiedControl(r,profile,ctrl,value){
  const u=Math.max(1,Number(r.universe)||1);
  const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
  const f=frame(u);
- if(!writeControlToFrame(f,address,ctrl,value)){status(t().error,false);return}
+ if(!applyProfileRequirements(f,r.start,profile)||!writeControlToFrame(f,address,ctrl,value)){status(t().error,false);return}
  sendFrame(f.slice(),u);
 }
 function renderPatchDevices(){
@@ -1053,7 +1065,7 @@ function install(){
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);E('artnetLiveToggle').addEventListener('change',()=>setLiveEnabled(!!E('artnetLiveToggle').checked));E('artnetSceneSave').addEventListener('click',saveScene);
  translate();setTimeout(requestDiagnostics,250);return true;
 }
-window.LightingAIArtNetControl={version:'0.25-16bit-controls',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority};
+window.LightingAIArtNetControl={version:'0.26-profile-requirements',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

@@ -15,7 +15,9 @@ const expected=[
   'litegear-litemat-plus-2l',
   'litegear-litemat-plus-3',
   'litegear-litemat-plus-4',
-  'litegear-litemat-plus-8'
+  'litegear-litemat-plus-8',
+  'litegear-litemat-spectrum-2019-2',
+  'litegear-litemat-spectrum-2019-4'
 ];
 const ids=new Set(fixtures.map(x=>x.id));
 const failures=[];

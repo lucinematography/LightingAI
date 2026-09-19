@@ -118,6 +118,17 @@ for (const [fixtureId, label] of [['desisti-super-led-f10hp-t','De Sisti Super L
   if (!dimmer16 || dimmer16.channel !== 1 || dimmer16.type !== 'percent' || dimmer16.bits !== 16 || dimmer16.dmxMax !== 65535) failures.push(`Verified ${label} 16-bit coarse/fine dimmer mapping missing`);
 }
 
+
+const piccolettoVw = RUNTIME_CATALOG.fixtureById.get('desisti-piccoletto-vw');
+const piccolettoVw8 = piccolettoVw?.dmxModes?.find((item) => item.name === 'Vari-White');
+const piccolettoVw16 = piccolettoVw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
+if (!piccolettoVw8 || piccolettoVw8.channels !== 3 || piccolettoVw8.verified !== true) failures.push('Verified De Sisti Piccoletto VW 8-bit mode missing');
+if (!piccolettoVw16 || piccolettoVw16.channels !== 4 || piccolettoVw16.verified !== true) failures.push('Verified De Sisti Piccoletto VW 16-bit mode missing');
+const piccolettoVwDimmer8 = piccolettoVw8?.controls?.find((item) => item.key === 'dimmer');
+const piccolettoVwDimmer16 = piccolettoVw16?.controls?.find((item) => item.key === 'dimmer');
+if (!piccolettoVwDimmer8 || piccolettoVwDimmer8.channel !== 1 || piccolettoVwDimmer8.type !== 'percent' || piccolettoVwDimmer8.dmxMax !== 255) failures.push('Verified De Sisti Piccoletto VW 8-bit dimmer mapping missing');
+if (!piccolettoVwDimmer16 || piccolettoVwDimmer16.channel !== 1 || piccolettoVwDimmer16.type !== 'percent' || piccolettoVwDimmer16.bits !== 16 || piccolettoVwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti Piccoletto VW 16-bit coarse/fine dimmer mapping missing');
+
 for (const [fixtureId, label] of [['arri-l5-c-plus','ARRI L5-C Plus'],['arri-l7-c-plus','ARRI L7-C Plus']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

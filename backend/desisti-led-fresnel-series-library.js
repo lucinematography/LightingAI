@@ -1,6 +1,7 @@
 // De Sisti current Super LED Fresnel families beyond F4.7.
 // Verified from official De Sisti product pages, data sheets and 2024/2025 mini catalogs.
 const F6_SRC = 'https://www.desisti.it/super-led-f6/';
+const F6_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2017/03/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F6.pdf';
 const F7_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F7.pdf';
 const F7_VW_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F7-VW-3.pdf';
 const F7_VWC_SRC = 'https://www.desisti.it/wp/wp-content/uploads/2022/04/SUPER-LED-F7-VWC-04-2022-.pdf';
@@ -9,6 +10,11 @@ const F10_SHP_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024
 const VWC_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const F14_SRC = 'https://www.desisti.it/super-led-f14/';
 const F20_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2025.pdf';
+
+const verifiedFixedDimmerModes = (sourceUrl) => [
+  {name:'8-bit dimmer',channels:1,verified:true,sourceUrl,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},
+  {name:'16-bit dimmer',channels:2,verified:true,sourceUrl,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}
+];
 
 const fixed = (id, model, family, ledPowerW, powerDrawW, cct, cri, tlci, lens, sourceUrl, extra={}) => ({
   id, manufacturer:'De Sisti', model, family, category:'Light', sourceType:'LED Fresnel',
@@ -25,8 +31,8 @@ const vw = (id, model, family, ledPowerW, powerDrawW, min, max, lens, sourceUrl,
 });
 
 export const DESISTI_LED_FRESNEL_FIXTURES = [
-  fixed('desisti-super-led-f6-t','Super LED F6 T','Super LED F6',120,150,3200,97,96,150,F6_SRC,{ipRating:'IP22'}),
-  fixed('desisti-super-led-f6-d','Super LED F6 D','Super LED F6',120,150,5600,96,97,150,F6_SRC,{ipRating:'IP22'}),
+  fixed('desisti-super-led-f6-t','Super LED F6 T','Super LED F6',120,150,3200,97,96,150,F6_SRC,{ipRating:'IP22',dmxModes:verifiedFixedDimmerModes(F6_DMX_MANUAL)}),
+  fixed('desisti-super-led-f6-d','Super LED F6 D','Super LED F6',120,150,5600,96,97,150,F6_SRC,{ipRating:'IP22',dmxModes:verifiedFixedDimmerModes(F6_DMX_MANUAL)}),
   vw('desisti-super-led-f6-vw','Super LED F6 Vari-White','Super LED F6',120,150,2800,6600,150,F6_SRC,{ipRating:'IP22',dmxModes:[{name:'Vari-White',channels:3}]}),
 
   fixed('desisti-super-led-f7-t','Super LED F7 T','Super LED F7',160,null,3200,97,96,175,F7_SRC,{rainProtectedOption:'IP23'}),

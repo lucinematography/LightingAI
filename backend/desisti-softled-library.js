@@ -50,11 +50,11 @@ function vw(id,model,family,ledPowerW,powerDrawW,sourceUrl,weightKg,extra={}){
 export const DESISTI_SOFTLED_FIXTURES=[
   fixed('desisti-softled-1-t','Soft LED 1 T','Soft LED 1',60,75,3200,S1,3.0,{dmxModes:verifiedFixedModes(S1_DMX)}),
   fixed('desisti-softled-1-d','Soft LED 1 D','Soft LED 1',60,75,5600,S1,3.0,{dmxModes:verifiedFixedModes(S1_DMX)}),
-  vw('desisti-softled-1-vw','Soft LED 1 VW','Soft LED 1',60,75,S1,3.0),
+  vw('desisti-softled-1-vw','Soft LED 1 VW','Soft LED 1',60,75,S1,3.0,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S1,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
 
   fixed('desisti-softled-2-t','Soft LED 2 T','Soft LED 2',120,null,3200,S2,null,{dmxModes:verifiedFixedModes(S2_DMX)}),
   fixed('desisti-softled-2-d','Soft LED 2 D','Soft LED 2',120,null,5600,S2,null,{dmxModes:verifiedFixedModes(S2_DMX)}),
-  vw('desisti-softled-2-vw','Soft LED 2 VW','Soft LED 2',120,null,S2),
+  vw('desisti-softled-2-vw','Soft LED 2 VW','Soft LED 2',120,null,S2,null,{dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:S2,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
 
   fixed('desisti-softled-4-t','Soft LED 4 T','Soft LED 4',180,205,3200,S4,5.5,{dmxModes:verifiedFixedModes(S4_DMX)}),
   fixed('desisti-softled-4-d','Soft LED 4 D','Soft LED 4',180,205,5600,S4,5.5,{dmxModes:verifiedFixedModes(S4_DMX)}),

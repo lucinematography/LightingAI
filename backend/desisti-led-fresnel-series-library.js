@@ -10,6 +10,7 @@ const F7_VWC_SRC = 'https://www.desisti.it/wp/wp-content/uploads/2022/04/SUPER-L
 const F10_SRC = 'https://www.desisti.it/super-led-f10/';
 const F10_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/11/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F10.pdf';
 const F10HP_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/2018/11/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F10HP.pdf';
+const F10HP_VW_DMX_MANUAL = 'https://www.desisti.it/wp-content/uploads/CE-INSTRUCTION-MANUAL-SUPER-LED-FRESNEL-F10HP-Vari-White.pdf';
 const F10_SHP_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const VWC_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const F14_SRC = 'https://www.desisti.it/super-led-f14/';
@@ -65,7 +66,7 @@ export const DESISTI_LED_FRESNEL_FIXTURES = [
 
   fixed('desisti-super-led-f10hp-t','Super LED F10 HP T','Super LED F10 HP',330,400,3200,97,96,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F10HP_DMX_MANUAL)}),
   fixed('desisti-super-led-f10hp-d','Super LED F10 HP D','Super LED F10 HP',330,400,5600,96,97,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F10HP_DMX_MANUAL)}),
-  vw('desisti-super-led-f10hp-vw','Super LED F10 HP Vari-White','Super LED F10 HP',330,400,2800,6600,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:[{name:'Vari-White',channels:3}]}),
+  vw('desisti-super-led-f10hp-vw','Super LED F10 HP Vari-White','Super LED F10 HP',330,400,2800,6600,250,F10_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:[{name:'Vari-White',channels:3},{name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:F10HP_VW_DMX_MANUAL,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:16,min:0,max:100,dmxMin:0,dmxMax:65535}]}]}),
 
   fixed('desisti-super-led-f10shp-t','Super LED F10 SHP T','Super LED F10 SHP',470,490,3200,96,96,250,F10_SHP_SRC,{ipRating:'IP20',rainProtectedOption:'IP23',beamAngleDeg:{min:15,max:78},control:['DMX512/RDM','On-board dimming']}),
   fixed('desisti-super-led-f10shp-d','Super LED F10 SHP D','Super LED F10 SHP',470,490,5600,96,96,250,F10_SHP_SRC,{ipRating:'IP20',rainProtectedOption:'IP23',beamAngleDeg:{min:15,max:78},control:['DMX512/RDM','On-board dimming']}),

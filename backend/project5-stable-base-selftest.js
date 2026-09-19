@@ -114,6 +114,8 @@ const exactAllowed = new Set([
   'backend/litegear-litemat-spectrum-2019-library.js',
   'backend/litegear-litemat-s2-library.js',
   'backend/litegear-litemat-catalog-selftest.js',
+  'backend/evlight-gem-gemx-library.js',
+  'backend/evlight-catalog-selftest.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js'
 ]);

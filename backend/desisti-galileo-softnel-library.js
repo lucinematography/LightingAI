@@ -24,8 +24,8 @@ export const DESISTI_GALILEO_FIXTURES=[
     poleOperatedWeightKg:14.3,
     control:['DMX512','On-board dimming'],
     dmxModes:[
-      {name:'8-bit',channels:6},
-      {name:'16-bit',channels:8}
+      {name:'8-bit',channels:6,verified:true,sourceUrl:SRC},
+      {name:'16-bit',channels:8,verified:true,sourceUrl:SRC}
     ],
     sourceUrl:SRC
   }

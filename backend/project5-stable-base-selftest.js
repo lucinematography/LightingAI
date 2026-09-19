@@ -286,7 +286,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.23-route-select'",
+  "version:'0.24-verified-bridges'",
   'function discoverNodes()',
   'LightingAIArtNetDiscoveryResult',
   "networkDmxProtocol",
@@ -346,6 +346,14 @@ for (const marker of [
   "preflightMultipleRoutes:'Otkriveno je više Art-Net mrežnih ruta.",
   "artnetRouteSelect').addEventListener('change'",
   'setTimeout(requestDiagnostics,250)',
+  "const BRIDGE_KEY='lighting_network_dmx_bridge_v1'",
+  'const VERIFIED_BRIDGES=[',
+  "id:'aputure-sidus-one'",
+  "id:'astera-fp3-datalink'",
+  'function selectedBridge()',
+  'function renderBridge()',
+  "bridgeTitle:'VERIFIKOVANI MREŽNI BRIDŽ'",
+  "bridgeTitle:'VERIFIED NETWORK BRIDGE'",
   "artnetOutputArm').addEventListener('change'",
   "const GROUPS_KEY='lighting_control_groups_v1'",
   'function rowKey(r)',
@@ -650,5 +658,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Explicit Art-Net directed-broadcast route selection for multi-interface Android devices with ARM preflight blocking ambiguous AUTO routes'
+  featureSurface: 'Verified standards-based Network DMX bridge profiles for Aputure Sidus One and Astera FP3 DataLink without proprietary BLE command guessing'
 }, null, 2));

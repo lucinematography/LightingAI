@@ -23,6 +23,18 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     dimensionsMm: { length: 500, width: 165, height: 65 },
     weightKg: 4.5,
     control: { wired: ['DMX'], wireless: ['AsteraApp', 'CRMX'], builtInCRMX: true },
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: 'https://device.report/m/4bc78c9a477002bb5c297f8f11244eaa051e3d6fec9752995b3254dd82fd1fdf',
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC
   },
   {

@@ -438,6 +438,21 @@ for (const [name, channels] of [
 }
 
 
+const desistiSoftLed8XlVwc = RUNTIME_CATALOG.fixtureById.get('desisti-softled-8xl-vwc');
+for (const [name, channels] of [
+  ['8-bit base',7],
+  ['8-bit with mode/fan',9],
+  ['8-bit extended',39],
+  ['16-bit base',8],
+  ['16-bit with mode/fan',10],
+  ['16-bit extended',40]
+]) {
+  const mode = desistiSoftLed8XlVwc?.dmxModes?.find((item) => item.name === name);
+  if (!mode || mode.channels !== channels || mode.verified !== true) failures.push(`Verified De Sisti Soft LED 8 XL VW+C ${name} ${channels}ch mode missing`);
+  if (mode?.controls?.length) failures.push(`De Sisti Soft LED 8 XL VW+C ${name} controls must remain hidden until channel order is sourced`);
+}
+
+
 const desistiSoftLed1XlVw = RUNTIME_CATALOG.fixtureById.get('desisti-softled-1xl-vw');
 const desistiSoftLed1XlVwMode = desistiSoftLed1XlVw?.dmxModes?.find((item) => item.name === 'Vari-White');
 if (!desistiSoftLed1XlVwMode || desistiSoftLed1XlVwMode.channels !== 3 || desistiSoftLed1XlVwMode.verified !== true) failures.push('Verified De Sisti Soft LED 1 XL Vari-White 3ch mode missing');

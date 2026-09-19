@@ -1,6 +1,7 @@
 package com.lightingai.app;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -37,6 +38,7 @@ public final class NativeSunLocation implements LocationListener {
         this.locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
     }
 
+    @SuppressLint("MissingPermission") // request() exits before protected calls unless hasPermission() succeeds.
     public boolean request(Callback callback) {
         cancel();
         this.callback = callback;
@@ -81,6 +83,7 @@ public final class NativeSunLocation implements LocationListener {
             context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
+    @SuppressLint("MissingPermission") // Called only after request() has verified fine/coarse location permission.
     private Location bestLastKnown() {
         Location best = null;
         String[] providers = new String[]{LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER, LocationManager.PASSIVE_PROVIDER};

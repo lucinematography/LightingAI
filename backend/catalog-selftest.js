@@ -91,6 +91,21 @@ for (const [fixtureId, label] of [['arri-skypanel-x21','SkyPanel X21'],['arri-sk
   if (!rgbCctMode || rgbCctMode.value !== 0) failures.push(`Verified ${label} Ultimate RGB & CCT mode requirement missing`);
 }
 
+
+for (const [fixtureId, label] of [['arri-skypanel-x21','SkyPanel X21'],['arri-skypanel-x22','SkyPanel X22'],['arri-skypanel-x23','SkyPanel X23']]) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 4 Extended Ultimate 27ch');
+  if (!mode || mode.channels !== 27 || mode.verified !== true) failures.push(`Verified ${label} Extended Ultimate Mode 4 missing`);
+  for (const [key, channel, type] of [['dimmer',1,'percent'],['cct',3,'cct-linear'],['red',7,'percent'],['green',9,'percent'],['blue',11,'percent']]) {
+    const control = mode?.controls?.find((item) => item.key === key);
+    if (!control || control.channel !== channel || control.type !== type || control.bits !== 16 || control.dmxMax !== 65535) failures.push(`Verified ${label} Extended Ultimate 16-bit control missing: ${key}`);
+  }
+  const cct = mode?.controls?.find((item) => item.key === 'cct');
+  if (!cct || cct.min !== 1500 || cct.max !== 20000) failures.push(`Verified ${label} Extended Ultimate CCT range missing`);
+  const rgbCctMode = mode?.requiredChannels?.find((item) => item.channel === 6);
+  if (!rgbCctMode || rgbCctMode.value !== 0) failures.push(`Verified ${label} Extended Ultimate RGB & CCT mode requirement missing`);
+}
+
 for (const [fixtureId, label] of [['arri-skypanel-s30-c','SkyPanel S30-C'],['arri-skypanel-s60-c','SkyPanel S60-C'],['arri-skypanel-s120-c','SkyPanel S120-C'],['arri-skypanel-s360-c','SkyPanel S360-C']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Mode 1 CCT & RGBW 8 bit');

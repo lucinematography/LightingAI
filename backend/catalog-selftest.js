@@ -365,8 +365,15 @@ for (const [fixtureId, label] of [
   const dimmer = mode?.controls?.find((item) => item.key === 'dimmer');
   if (!dimmer || dimmer.channel !== 1 || dimmer.type !== 'percent' || dimmer.dmxMax !== 255) failures.push(`Verified ${label} 8-bit dimmer mapping missing`);
   if (mode?.controls?.some((item) => item.key === 'cct')) failures.push(`${label} CCT control must remain hidden until CCT Mode DMX values are sourced`);
-  if (fixture?.dmxModes?.some((item) => item.name === 'Vari-White 16-bit' && item.verified === true)) failures.push(`${label} 16-bit personality must remain unverified until full channel behavior is sourced`);
 }
+const desistiSoftLed1Vw = RUNTIME_CATALOG.fixtureById.get('desisti-softled-1-vw');
+const desistiSoftLed1Vw16 = desistiSoftLed1Vw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
+if (!desistiSoftLed1Vw16 || desistiSoftLed1Vw16.channels !== 4 || desistiSoftLed1Vw16.verified !== true) failures.push('Verified De Sisti Soft LED 1 VW 4ch 16-bit mode missing');
+const desistiSoftLed1VwDimmer16 = desistiSoftLed1Vw16?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiSoftLed1VwDimmer16 || desistiSoftLed1VwDimmer16.channel !== 1 || desistiSoftLed1VwDimmer16.type !== 'percent' || desistiSoftLed1VwDimmer16.bits !== 16 || desistiSoftLed1VwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti Soft LED 1 VW 16-bit coarse/fine dimmer mapping missing');
+if (desistiSoftLed1Vw16?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti Soft LED 1 VW 16-bit CCT control must remain hidden until CCT Mode DMX values are sourced');
+const desistiSoftLed2Vw = RUNTIME_CATALOG.fixtureById.get('desisti-softled-2-vw');
+if (desistiSoftLed2Vw?.dmxModes?.some((item) => item.name === 'Vari-White 16-bit' && item.verified === true)) failures.push('De Sisti Soft LED 2 VW 16-bit personality must remain unverified until full channel behavior is sourced');
 
 
 for (const [fixtureId, label] of [

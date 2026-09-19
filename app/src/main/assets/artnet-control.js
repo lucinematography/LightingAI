@@ -5,7 +5,9 @@ const TARGET_KEY='lighting_artnet_target_v1';
 const PROTOCOL_KEY='lighting_network_dmx_protocol_v1';
 const SCENES_KEY='lighting_artnet_scenes_v1';
 const FADE_KEY='lighting_control_fade_seconds_v1';
+const CUES_KEY='lighting_control_cues_v1';
 const MAX_SCENES=12;
+const MAX_CUES=64;
 const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
 const TXT={
  sr:{
@@ -17,7 +19,7 @@ const TXT={
   native:'Mrežni DMX zahteva podržani native control bridge.',patch:'Universe i START adresa se preuzimaju iz postojećeg DMX Patch planera. Značenje konkretnog kanala mora biti verifikovano DMX profilom proizvođača.',
   patchEmpty:'Nema ispravnih uređaja u DMX Patch-u. Dodaj uređaj i unesi broj kanala.',patchLoaded:'Učitano iz Patch-a',patchWarn:'Ovaj Patch red ima upozorenje i nije bezbedan za automatsko učitavanje.',
   ownership:'TEST režim šalje kompletan Universe iz LightingAI-ja; kanali koje ovde nisi postavio ostaju 0. Ne koristi ga paralelno sa drugom DMX konzolom na istom Universe-u.',
-  verifiedTitle:'VERIFIKOVANE KONTROLE',verifiedNone:'Za ovaj uređaj i izabrani DMX mode još nema verifikovanih direktnih kontrola.',verifiedSource:'Profil verifikovan prema zvaničnoj DMX dokumentaciji.',dimmer:'DIMMER',masterTitle:'MASTER / GRUPA',masterHint:'Kontroliši zajedno sva označena Patch svetla koja imaju verifikovan DIMMER kanal.',masterApply:'PRIMENI DIMMER',masterBlackout:'BLACKOUT GRUPE',masterNone:'Nema Patch svetala sa verifikovanim DIMMER profilom.',masterEmpty:'Označi najmanje jedno svetlo.',masterCctTitle:'MASTER CCT',masterCctHint:'Zajedno promeni temperaturu boje na označenim svetlima koja imaju verifikovan CCT kanal.',masterCctApply:'PRIMENI CCT',masterCctNone:'Nema Patch svetala sa verifikovanim CCT profilom.',masterCctNoCommon:'Označena svetla nemaju zajednički CCT opseg.',masterRgbTitle:'MASTER RGB',masterRgbHint:'Zajedno postavi RGB na označenim svetlima koja imaju verifikovane R/G/B kanale.',masterRgbApply:'PRIMENI RGB',masterRgbNone:'Nema Patch svetala sa verifikovanim RGB profilom.',liveLabel:'LIVE DMX REFRESH · 30 Hz',liveHint:'Kada je uključeno, LightingAI neprekidno osvežava aktivne Universe-e preko izabranog mrežnog protokola dok je aplikacija u prvom planu. Automatski se zaustavlja kada napustiš aplikaciju.',liveOn:'LIVE mrežni DMX je uključen.',liveOff:'LIVE mrežni DMX je zaustavljen.',sceneTitle:'CONTROL SCENE',sceneHint:'Sačuvaj trenutno LightingAI stanje kanala i vrati ga kasnije. Scena radi samo ako DMX Patch ostane isti.',sceneName:'Naziv scene',sceneSave:'SAČUVAJ SCENU',sceneApply:'PRIMENI',sceneFade:'PRELAZ',sceneFadeSeconds:'PRELAZ (s)',sceneDelete:'OBRIŠI',sceneEmpty:'Nema sačuvanih CONTROL scena.',sceneSaved:'CONTROL scena je sačuvana.',sceneApplied:'CONTROL scena je primenjena.',sceneFading:'Prelaz scene…',sceneFadeDone:'Prelaz scene je završen.',sceneFadeCancelled:'Prelaz scene je zaustavljen.',scenePatchMismatch:'DMX Patch je promenjen od trenutka čuvanja scene. Primena je blokirana radi bezbednosti.',sceneNeedFrame:'Prvo pošalji bar jednu LightingAI kontrolnu vrednost.',sceneLimit:'Možeš sačuvati najviše 12 CONTROL scena.'
+  verifiedTitle:'VERIFIKOVANE KONTROLE',verifiedNone:'Za ovaj uređaj i izabrani DMX mode još nema verifikovanih direktnih kontrola.',verifiedSource:'Profil verifikovan prema zvaničnoj DMX dokumentaciji.',dimmer:'DIMMER',masterTitle:'MASTER / GRUPA',masterHint:'Kontroliši zajedno sva označena Patch svetla koja imaju verifikovan DIMMER kanal.',masterApply:'PRIMENI DIMMER',masterBlackout:'BLACKOUT GRUPE',masterNone:'Nema Patch svetala sa verifikovanim DIMMER profilom.',masterEmpty:'Označi najmanje jedno svetlo.',masterCctTitle:'MASTER CCT',masterCctHint:'Zajedno promeni temperaturu boje na označenim svetlima koja imaju verifikovan CCT kanal.',masterCctApply:'PRIMENI CCT',masterCctNone:'Nema Patch svetala sa verifikovanim CCT profilom.',masterCctNoCommon:'Označena svetla nemaju zajednički CCT opseg.',masterRgbTitle:'MASTER RGB',masterRgbHint:'Zajedno postavi RGB na označenim svetlima koja imaju verifikovane R/G/B kanale.',masterRgbApply:'PRIMENI RGB',masterRgbNone:'Nema Patch svetala sa verifikovanim RGB profilom.',liveLabel:'LIVE DMX REFRESH · 30 Hz',liveHint:'Kada je uključeno, LightingAI neprekidno osvežava aktivne Universe-e preko izabranog mrežnog protokola dok je aplikacija u prvom planu. Automatski se zaustavlja kada napustiš aplikaciju.',liveOn:'LIVE mrežni DMX je uključen.',liveOff:'LIVE mrežni DMX je zaustavljen.',sceneTitle:'CONTROL SCENE',sceneHint:'Sačuvaj trenutno LightingAI stanje kanala i vrati ga kasnije. Scena radi samo ako DMX Patch ostane isti.',sceneName:'Naziv scene',sceneSave:'SAČUVAJ SCENU',sceneApply:'PRIMENI',sceneFade:'PRELAZ',sceneFadeSeconds:'PRELAZ (s)',sceneDelete:'OBRIŠI',sceneEmpty:'Nema sačuvanih CONTROL scena.',sceneSaved:'CONTROL scena je sačuvana.',sceneApplied:'CONTROL scena je primenjena.',sceneFading:'Prelaz scene…',sceneFadeDone:'Prelaz scene je završen.',sceneFadeCancelled:'Prelaz scene je zaustavljen.',scenePatchMismatch:'DMX Patch je promenjen od trenutka čuvanja scene. Primena je blokirana radi bezbednosti.',sceneNeedFrame:'Prvo pošalji bar jednu LightingAI kontrolnu vrednost.',sceneLimit:'Možeš sačuvati najviše 12 CONTROL scena.',cueTitle:'CUE LISTA',cueHint:'Složi redosled CONTROL scena i pokreći ih redom jednim GO dugmetom.',cueScene:'SCENA',cueFade:'PRELAZ (s)',cueAdd:'DODAJ CUE',cueGo:'GO / SLEDEĆI',cuePrevious:'PRETHODNI',cueReset:'RESET',cueDelete:'OBRIŠI',cueUp:'GORE',cueDown:'DOLE',cueEmpty:'Cue lista je prazna.',cueMissing:'Cue scena više ne postoji.',cueAdded:'Cue je dodat.',cueCurrent:'AKTIVAN',cueEnd:'Kraj cue liste.',cueBusy:'Sačekaj da se trenutni prelaz završi.',cueLimit:'Možeš sačuvati najviše 64 cue-a.'
  },
  en:{
   title:'📡 NETWORK DMX CONTROL',
@@ -28,7 +30,7 @@ const TXT={
   native:'Network DMX requires a supported native control bridge.',patch:'Universe and START address come from the existing DMX Patch planner. The meaning of each channel must still be verified from the manufacturer DMX profile.',
   patchEmpty:'No valid devices in the DMX Patch. Add a device and enter its channel count.',patchLoaded:'Loaded from Patch',patchWarn:'This Patch row has a warning and is not safe to auto-load.',
   ownership:'TEST mode sends a complete Universe from LightingAI; channels not set here remain at 0. Do not use it in parallel with another DMX console on the same Universe.',
-  verifiedTitle:'VERIFIED CONTROLS',verifiedNone:'This fixture and selected DMX mode do not yet have verified direct controls.',verifiedSource:'Profile verified against official DMX documentation.',dimmer:'DIMMER',masterTitle:'MASTER / GROUP',masterHint:'Control all selected Patch fixtures that have a verified DIMMER channel together.',masterApply:'APPLY DIMMER',masterBlackout:'GROUP BLACKOUT',masterNone:'No Patch fixtures have a verified DIMMER profile.',masterEmpty:'Select at least one fixture.',masterCctTitle:'MASTER CCT',masterCctHint:'Change color temperature together on selected fixtures that have a verified CCT channel.',masterCctApply:'APPLY CCT',masterCctNone:'No Patch fixtures have a verified CCT profile.',masterCctNoCommon:'Selected fixtures do not share a common CCT range.',masterRgbTitle:'MASTER RGB',masterRgbHint:'Set RGB together on selected fixtures that have verified R/G/B channels.',masterRgbApply:'APPLY RGB',masterRgbNone:'No Patch fixtures have a verified RGB profile.',liveLabel:'LIVE DMX REFRESH · 30 Hz',liveHint:'When enabled, LightingAI continuously refreshes active universes over the selected network protocol while the app is in the foreground. It stops automatically when you leave the app.',liveOn:'LIVE network DMX is enabled.',liveOff:'LIVE network DMX stopped.',sceneTitle:'CONTROL SCENE',sceneHint:'Save the current LightingAI channel state and recall it later. A scene can only be recalled while the DMX Patch is unchanged.',sceneName:'Scene name',sceneSave:'SAVE SCENE',sceneApply:'APPLY',sceneFade:'FADE',sceneFadeSeconds:'FADE (s)',sceneDelete:'DELETE',sceneEmpty:'No saved CONTROL scenes.',sceneSaved:'CONTROL scene saved.',sceneApplied:'CONTROL scene applied.',sceneFading:'Scene fade in progress…',sceneFadeDone:'Scene fade complete.',sceneFadeCancelled:'Scene fade stopped.',scenePatchMismatch:'The DMX Patch changed after this scene was saved. Recall is blocked for safety.',sceneNeedFrame:'Send at least one LightingAI control value first.',sceneLimit:'You can save up to 12 CONTROL scenes.'
+  verifiedTitle:'VERIFIED CONTROLS',verifiedNone:'This fixture and selected DMX mode do not yet have verified direct controls.',verifiedSource:'Profile verified against official DMX documentation.',dimmer:'DIMMER',masterTitle:'MASTER / GROUP',masterHint:'Control all selected Patch fixtures that have a verified DIMMER channel together.',masterApply:'APPLY DIMMER',masterBlackout:'GROUP BLACKOUT',masterNone:'No Patch fixtures have a verified DIMMER profile.',masterEmpty:'Select at least one fixture.',masterCctTitle:'MASTER CCT',masterCctHint:'Change color temperature together on selected fixtures that have a verified CCT channel.',masterCctApply:'APPLY CCT',masterCctNone:'No Patch fixtures have a verified CCT profile.',masterCctNoCommon:'Selected fixtures do not share a common CCT range.',masterRgbTitle:'MASTER RGB',masterRgbHint:'Set RGB together on selected fixtures that have verified R/G/B channels.',masterRgbApply:'APPLY RGB',masterRgbNone:'No Patch fixtures have a verified RGB profile.',liveLabel:'LIVE DMX REFRESH · 30 Hz',liveHint:'When enabled, LightingAI continuously refreshes active universes over the selected network protocol while the app is in the foreground. It stops automatically when you leave the app.',liveOn:'LIVE network DMX is enabled.',liveOff:'LIVE network DMX stopped.',sceneTitle:'CONTROL SCENE',sceneHint:'Save the current LightingAI channel state and recall it later. A scene can only be recalled while the DMX Patch is unchanged.',sceneName:'Scene name',sceneSave:'SAVE SCENE',sceneApply:'APPLY',sceneFade:'FADE',sceneFadeSeconds:'FADE (s)',sceneDelete:'DELETE',sceneEmpty:'No saved CONTROL scenes.',sceneSaved:'CONTROL scene saved.',sceneApplied:'CONTROL scene applied.',sceneFading:'Scene fade in progress…',sceneFadeDone:'Scene fade complete.',sceneFadeCancelled:'Scene fade stopped.',scenePatchMismatch:'The DMX Patch changed after this scene was saved. Recall is blocked for safety.',sceneNeedFrame:'Send at least one LightingAI control value first.',sceneLimit:'You can save up to 12 CONTROL scenes.',cueTitle:'CUE LIST',cueHint:'Arrange CONTROL scenes in order and trigger them sequentially with one GO button.',cueScene:'SCENE',cueFade:'FADE (s)',cueAdd:'ADD CUE',cueGo:'GO / NEXT',cuePrevious:'PREVIOUS',cueReset:'RESET',cueDelete:'DELETE',cueUp:'UP',cueDown:'DOWN',cueEmpty:'Cue list is empty.',cueMissing:'The cue scene no longer exists.',cueAdded:'Cue added.',cueCurrent:'ACTIVE',cueEnd:'End of cue list.',cueBusy:'Wait for the current fade to finish.',cueLimit:'You can save up to 64 cues.'
  }
 };
 const t=()=>TXT[lang()];
@@ -37,6 +39,7 @@ let seq=0;
 let liveEnabled=false;
 let liveProtocol='artnet';
 let activeSceneFade=null;
+let currentCueIndex=-1;
 const frames={};
 function controlTransport(){
  if(window.LightingAIControlTransport&&typeof window.LightingAIControlTransport.sendDmx==='function')return window.LightingAIControlTransport;
@@ -180,6 +183,85 @@ function readScenes(){
 function writeScenes(items){
  try{localStorage.setItem(SCENES_KEY,JSON.stringify(items.slice(0,MAX_SCENES)));return true}catch(e){return false}
 }
+function readCues(){
+ try{
+  const value=JSON.parse(localStorage.getItem(CUES_KEY)||'[]');
+  return Array.isArray(value)?value:[];
+ }catch(e){return []}
+}
+function writeCues(items){
+ try{localStorage.setItem(CUES_KEY,JSON.stringify(items.slice(0,MAX_CUES)));return true}catch(e){return false}
+}
+function sceneIndexByName(name){
+ return readScenes().findIndex(scene=>scene&&scene.name===name);
+}
+function cueFadeSecondsValue(){
+ const input=E('artnetCueFadeSeconds'),raw=input?Number(input.value):fadeSeconds();
+ return Math.max(0,Math.min(60,Number.isFinite(raw)?raw:fadeSeconds()));
+}
+function addCue(){
+ const select=E('artnetCueScene'),name=select&&select.value?select.value:'';
+ if(!name){status(t().cueMissing,false);return}
+ const cues=readCues();
+ if(cues.length>=MAX_CUES){status(t().cueLimit,false);return}
+ cues.push({version:1,sceneName:name,fadeSeconds:cueFadeSecondsValue()});
+ if(!writeCues(cues)){status(t().error,false);return}
+ renderCueStack();status(t().cueAdded,true);
+}
+function moveCue(index,delta){
+ const cues=readCues(),to=index+delta;
+ if(index<0||index>=cues.length||to<0||to>=cues.length)return;
+ const item=cues[index];cues[index]=cues[to];cues[to]=item;
+ if(currentCueIndex===index)currentCueIndex=to;
+ else if(currentCueIndex===to)currentCueIndex=index;
+ writeCues(cues);renderCueStack();
+}
+function deleteCue(index){
+ const cues=readCues();
+ if(index<0||index>=cues.length)return;
+ cues.splice(index,1);
+ if(currentCueIndex===index)currentCueIndex=-1;
+ else if(currentCueIndex>index)currentCueIndex--;
+ writeCues(cues);renderCueStack();
+}
+function resetCueStack(){
+ currentCueIndex=-1;cancelSceneFade(false);renderCueStack();status(t().ready);
+}
+function goCue(index){
+ if(activeSceneFade){status(t().cueBusy,false);return}
+ const cues=readCues();
+ if(!cues.length){status(t().cueEmpty,false);return}
+ const target=index==null?currentCueIndex+1:index;
+ if(target<0||target>=cues.length){status(t().cueEnd,false);return}
+ const cue=cues[target],sceneIndex=sceneIndexByName(cue.sceneName);
+ if(sceneIndex<0){status(t().cueMissing,false);return}
+ const fade=Math.max(0,Math.min(60,Number(cue.fadeSeconds)||0));
+ if(fade>0)fadeToScene(sceneIndex,fade);else applyScene(sceneIndex);
+ currentCueIndex=target;renderCueStack();
+}
+function previousCue(){
+ if(activeSceneFade){status(t().cueBusy,false);return}
+ if(currentCueIndex<=0){currentCueIndex=-1;renderCueStack();status(t().ready);return}
+ goCue(currentCueIndex-1);
+}
+function renderCueStack(){
+ const select=E('artnetCueScene'),list=E('artnetCueList');
+ if(!select||!list)return;
+ const scenes=readScenes(),previous=select.value;
+ select.innerHTML=scenes.length?scenes.map(scene=>'<option value="'+esc(scene.name||'')+'">'+esc(scene.name||'')+'</option>').join(''):'<option value="">'+esc(t().sceneEmpty)+'</option>';
+ if(previous&&scenes.some(scene=>scene&&scene.name===previous))select.value=previous;
+ select.disabled=!scenes.length;
+ const cues=readCues();
+ if(!cues.length){list.innerHTML='<div class="muted small" style="margin-top:7px">'+esc(t().cueEmpty)+'</div>';return}
+ list.innerHTML=cues.map((cue,i)=>{
+  const exists=sceneIndexByName(cue.sceneName)>=0,active=i===currentCueIndex;
+  return '<div style="padding:8px 0;border-top:1px solid #2d333a;'+(active?'font-weight:900':'')+'"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span>'+(active?'<span class="muted small">'+esc(t().cueCurrent)+' · </span>':'')+esc((i+1)+'. '+(cue.sceneName||'?'))+' · '+Number(cue.fadeSeconds||0).toFixed(1)+'s'+(exists?'':' ⚠')+'</span><span style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn secondary artnet-cue-go" data-index="'+i+'" type="button">'+esc(t().cueGo)+'</button><button class="btn secondary artnet-cue-up" data-index="'+i+'" type="button">↑</button><button class="btn secondary artnet-cue-down" data-index="'+i+'" type="button">↓</button><button class="btn danger artnet-cue-delete" data-index="'+i+'" type="button">'+esc(t().cueDelete)+'</button></span></div>'+(exists?'':'<div class="muted small">'+esc(t().cueMissing)+'</div>')+'</div>';
+ }).join('');
+ list.querySelectorAll('.artnet-cue-go').forEach(btn=>btn.addEventListener('click',()=>goCue(Number(btn.dataset.index))));
+ list.querySelectorAll('.artnet-cue-up').forEach(btn=>btn.addEventListener('click',()=>moveCue(Number(btn.dataset.index),-1)));
+ list.querySelectorAll('.artnet-cue-down').forEach(btn=>btn.addEventListener('click',()=>moveCue(Number(btn.dataset.index),1)));
+ list.querySelectorAll('.artnet-cue-delete').forEach(btn=>btn.addEventListener('click',()=>deleteCue(Number(btn.dataset.index))));
+}
 function cloneFrames(){
  const out={};
  Object.keys(frames).forEach(u=>{out[u]=frames[u].slice(0,512).map(v=>Math.max(0,Math.min(255,Number(v)||0)))});
@@ -209,7 +291,7 @@ function saveScene(){
  }
  if(!writeScenes(scenes)){status(t().error,false);return}
  if(input)input.value='';
- renderScenes();status(t().sceneSaved,true);
+ renderScenes();renderCueStack();status(t().sceneSaved,true);
 }
 function normalizedSceneFrames(scene){
  const next={};
@@ -231,7 +313,7 @@ function cancelSceneFade(showStatus){
  activeSceneFade=null;
  if(showStatus)status(t().sceneFadeCancelled);
 }
-function fadeToScene(index){
+function fadeToScene(index,secondsOverride){
  const scenes=readScenes(),scene=scenes[index];
  if(!scene||!scene.frames)return;
  if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return}
@@ -245,7 +327,8 @@ function fadeToScene(index){
   target[u]=(next[u]||new Array(512).fill(0)).slice(0,512);
   while(target[u].length<512)target[u].push(0);
  });
- const duration=Math.max(100,Math.round(fadeSeconds()*1000)),started=Date.now();
+ const seconds=secondsOverride==null?fadeSeconds():Math.max(0.1,Math.min(60,Number(secondsOverride)||fadeSeconds()));
+ const duration=Math.max(100,Math.round(seconds*1000)),started=Date.now();
  const tick=()=>{
   if(!activeSceneFade)return;
   const p=Math.min(1,(Date.now()-started)/duration);
@@ -287,7 +370,13 @@ function applyScene(index){
 function deleteScene(index){
  const scenes=readScenes();
  if(index<0||index>=scenes.length)return;
- scenes.splice(index,1);writeScenes(scenes);renderScenes();
+ const deleted=scenes[index]&&scenes[index].name;
+ scenes.splice(index,1);writeScenes(scenes);
+ if(deleted){
+  const cues=readCues().filter(cue=>cue&&cue.sceneName!==deleted);
+  writeCues(cues);currentCueIndex=-1;
+ }
+ renderScenes();renderCueStack();
 }
 function defaultUniverse(){const s=snapshot();return s&&Array.isArray(s.universes)&&s.universes.length?s.universes[0]:1}
 function frame(universe){const u=String(Math.max(1,Number(universe)||1));if(!frames[u])frames[u]=new Array(512).fill(0);return frames[u]}
@@ -570,14 +659,14 @@ function translate(){
  E('artnetTitle').textContent=x.title;E('artnetIntro').textContent=x.intro;E('networkDmxProtocolLabel').textContent=x.protocol;E('networkDmxProtocol').options[0].text=x.artnet;E('networkDmxProtocol').options[1].text=x.sacn;E('artnetTargetLabel').textContent=x.target;E('artnetDiscover').textContent=x.discover;
  E('artnetPatchDeviceLabel').textContent=x.patchDevice;E('artnetRefreshPatch').textContent=x.refresh;
  E('artnetUniverseLabel').textContent=x.universe;E('artnetChannelLabel').textContent=x.channel;E('artnetValueLabel').textContent=x.value;
- E('artnetSend').textContent=x.send;E('artnetBlackout').textContent=x.blackout;E('artnetLiveLabel').textContent=x.liveLabel;E('artnetLiveHint').textContent=x.liveHint;E('artnetSceneTitle').textContent=x.sceneTitle;E('artnetSceneHint').textContent=x.sceneHint;E('artnetSceneName').placeholder=x.sceneName;E('artnetSceneSave').textContent=x.sceneSave;E('artnetSceneFadeLabel').textContent=x.sceneFadeSeconds;E('artnetPatchHint').textContent=x.patch;E('artnetOwnership').textContent=x.ownership;
- updateProtocolUi();renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderScenes();
+ E('artnetSend').textContent=x.send;E('artnetBlackout').textContent=x.blackout;E('artnetLiveLabel').textContent=x.liveLabel;E('artnetLiveHint').textContent=x.liveHint;E('artnetSceneTitle').textContent=x.sceneTitle;E('artnetSceneHint').textContent=x.sceneHint;E('artnetSceneName').placeholder=x.sceneName;E('artnetSceneSave').textContent=x.sceneSave;E('artnetSceneFadeLabel').textContent=x.sceneFadeSeconds;E('artnetCueTitle').textContent=x.cueTitle;E('artnetCueHint').textContent=x.cueHint;E('artnetCueSceneLabel').textContent=x.cueScene;E('artnetCueFadeLabel').textContent=x.cueFade;E('artnetCueAdd').textContent=x.cueAdd;E('artnetCuePrevious').textContent=x.cuePrevious;E('artnetCueGo').textContent=x.cueGo;E('artnetCueReset').textContent=x.cueReset;E('artnetPatchHint').textContent=x.patch;E('artnetOwnership').textContent=x.ownership;
+ updateProtocolUi();renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderScenes();renderCueStack();
  if(!E('artnetStatus').textContent)status(x.ready);
 }
 function install(){
  const page=E('equipment');if(!page||E('artnetCard'))return false;
  const card=document.createElement('details');card.id='artnetCard';card.className='card';card.style.border='1px solid #31506b';
- card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="artnetTitle"></span></summary><div style="margin-top:12px"><p id="artnetIntro" class="muted small"></p><div class="row"><div><label class="caption" id="networkDmxProtocolLabel"></label><select id="networkDmxProtocol"><option value="artnet">Art-Net</option><option value="sacn">sACN (E1.31)</option></select><div id="sacnMulticastInfo" class="muted small" style="display:none;margin-top:6px"></div></div></div><div class="row"><div id="artnetTargetBlock"><label class="caption" id="artnetTargetLabel"></label><input id="artnetTarget" inputmode="decimal"><button id="artnetDiscover" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><select id="artnetDiscoveredNodes" disabled style="margin-top:7px"><option value=""></option></select></div><div><label class="caption" id="artnetPatchDeviceLabel"></label><select id="artnetPatchDevice"></select><button id="artnetRefreshPatch" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><div id="artnetPatchSelectionHint" class="muted small" style="margin-top:6px"></div></div></div><div class="row"><div><label class="caption" id="artnetUniverseLabel"></label><input id="artnetUniverse" type="number" min="1" max="63999"></div><div><label class="caption" id="artnetChannelLabel"></label><input id="artnetChannel" type="number" min="1" max="512" value="1"></div></div><div><label class="caption" id="artnetValueLabel"></label><input id="artnetValue" type="range" min="0" max="255" value="0"><div id="artnetValueReadout" class="muted small" style="margin-top:5px">0 / 255</div></div><div class="actions"><button id="artnetSend" class="btn primary" type="button"></button><button id="artnetBlackout" class="btn danger" type="button"></button></div><label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input id="artnetLiveToggle" type="checkbox" style="width:auto"><b id="artnetLiveLabel"></b></label><div id="artnetLiveHint" class="muted small" style="margin-top:5px"></div><div id="artnetStatus" class="muted small" style="margin-top:8px"></div><div id="artnetScenes" style="margin-top:12px"><div id="artnetSceneTitle" style="font-size:11px;color:#9da3ad"></div><div id="artnetSceneHint" class="muted small" style="margin:5px 0 8px"></div><div class="row"><input id="artnetSceneName"><button id="artnetSceneSave" class="btn secondary" type="button"></button></div><div style="margin-top:8px"><label class="caption" id="artnetSceneFadeLabel"></label><input id="artnetSceneFadeSeconds" type="number" min="0.1" max="60" step="0.1" value="2"></div><div id="artnetSceneList"></div></div><div id="artnetMasterControl" style="margin-top:10px"></div><div id="artnetMasterCctControl" style="margin-top:10px"></div><div id="artnetMasterRgbControl" style="margin-top:10px"></div><div id="artnetVerifiedControls" style="margin-top:10px"></div><div id="artnetPatchHint" class="muted small" style="margin-top:8px"></div><div id="artnetOwnership" class="status warn" style="margin-top:10px"></div></div>';
+ card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="artnetTitle"></span></summary><div style="margin-top:12px"><p id="artnetIntro" class="muted small"></p><div class="row"><div><label class="caption" id="networkDmxProtocolLabel"></label><select id="networkDmxProtocol"><option value="artnet">Art-Net</option><option value="sacn">sACN (E1.31)</option></select><div id="sacnMulticastInfo" class="muted small" style="display:none;margin-top:6px"></div></div></div><div class="row"><div id="artnetTargetBlock"><label class="caption" id="artnetTargetLabel"></label><input id="artnetTarget" inputmode="decimal"><button id="artnetDiscover" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><select id="artnetDiscoveredNodes" disabled style="margin-top:7px"><option value=""></option></select></div><div><label class="caption" id="artnetPatchDeviceLabel"></label><select id="artnetPatchDevice"></select><button id="artnetRefreshPatch" class="btn secondary" type="button" style="width:100%;margin-top:7px"></button><div id="artnetPatchSelectionHint" class="muted small" style="margin-top:6px"></div></div></div><div class="row"><div><label class="caption" id="artnetUniverseLabel"></label><input id="artnetUniverse" type="number" min="1" max="63999"></div><div><label class="caption" id="artnetChannelLabel"></label><input id="artnetChannel" type="number" min="1" max="512" value="1"></div></div><div><label class="caption" id="artnetValueLabel"></label><input id="artnetValue" type="range" min="0" max="255" value="0"><div id="artnetValueReadout" class="muted small" style="margin-top:5px">0 / 255</div></div><div class="actions"><button id="artnetSend" class="btn primary" type="button"></button><button id="artnetBlackout" class="btn danger" type="button"></button></div><label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input id="artnetLiveToggle" type="checkbox" style="width:auto"><b id="artnetLiveLabel"></b></label><div id="artnetLiveHint" class="muted small" style="margin-top:5px"></div><div id="artnetStatus" class="muted small" style="margin-top:8px"></div><div id="artnetScenes" style="margin-top:12px"><div id="artnetSceneTitle" style="font-size:11px;color:#9da3ad"></div><div id="artnetSceneHint" class="muted small" style="margin:5px 0 8px"></div><div class="row"><input id="artnetSceneName"><button id="artnetSceneSave" class="btn secondary" type="button"></button></div><div style="margin-top:8px"><label class="caption" id="artnetSceneFadeLabel"></label><input id="artnetSceneFadeSeconds" type="number" min="0.1" max="60" step="0.1" value="2"></div><div id="artnetSceneList"></div></div><div id="artnetCues" style="margin-top:14px"><div id="artnetCueTitle" style="font-size:11px;color:#9da3ad"></div><div id="artnetCueHint" class="muted small" style="margin:5px 0 8px"></div><div class="row"><div><label class="caption" id="artnetCueSceneLabel"></label><select id="artnetCueScene"></select></div><div><label class="caption" id="artnetCueFadeLabel"></label><input id="artnetCueFadeSeconds" type="number" min="0" max="60" step="0.1" value="2"></div></div><div class="actions"><button id="artnetCueAdd" class="btn secondary" type="button"></button><button id="artnetCuePrevious" class="btn secondary" type="button"></button><button id="artnetCueGo" class="btn primary" type="button"></button><button id="artnetCueReset" class="btn secondary" type="button"></button></div><div id="artnetCueList"></div></div><div id="artnetMasterControl" style="margin-top:10px"></div><div id="artnetMasterCctControl" style="margin-top:10px"></div><div id="artnetMasterRgbControl" style="margin-top:10px"></div><div id="artnetVerifiedControls" style="margin-top:10px"></div><div id="artnetPatchHint" class="muted small" style="margin-top:8px"></div><div id="artnetOwnership" class="status warn" style="margin-top:10px"></div></div>';
  const dmx=E('dmxCard');if(dmx&&dmx.parentNode)dmx.parentNode.insertBefore(card,dmx.nextSibling);else page.appendChild(card);
  try{E('artnetTarget').value=localStorage.getItem(TARGET_KEY)||'255.255.255.255'}catch(e){E('artnetTarget').value='255.255.255.255'}
  try{E('networkDmxProtocol').value=localStorage.getItem(PROTOCOL_KEY)==='sacn'?'sacn':'artnet'}catch(e){E('networkDmxProtocol').value='artnet'}
@@ -592,10 +681,11 @@ function install(){
  E('artnetDiscoveredNodes').addEventListener('change',()=>{if(E('artnetDiscoveredNodes').value){cancelSceneFade(false);if(liveEnabled)setLiveEnabled(false);E('artnetTarget').value=E('artnetDiscoveredNodes').value}});
  E('artnetRefreshPatch').addEventListener('click',()=>{renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();status(t().ready)});
  E('artnetSceneFadeSeconds').addEventListener('change',()=>{const seconds=fadeSeconds();E('artnetSceneFadeSeconds').value=String(seconds);try{localStorage.setItem(FADE_KEY,String(seconds))}catch(e){}});
+ E('artnetCueAdd').addEventListener('click',addCue);E('artnetCuePrevious').addEventListener('click',previousCue);E('artnetCueGo').addEventListener('click',()=>goCue());E('artnetCueReset').addEventListener('click',resetCueStack);
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);E('artnetLiveToggle').addEventListener('change',()=>setLiveEnabled(!!E('artnetLiveToggle').checked));E('artnetSceneSave').addEventListener('click',saveScene);
  translate();return true;
 }
-window.LightingAIArtNetControl={version:'0.13-scene-fades',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderScenes();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade};
+window.LightingAIArtNetControl={version:'0.14-cue-stack',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

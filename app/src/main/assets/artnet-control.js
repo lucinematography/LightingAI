@@ -57,15 +57,17 @@ function renderVerifiedControls(r){
  const profile=profileForRow(r),fixture=fixtureForRow(r),controls=profile&&Array.isArray(profile.controls)?profile.controls:[];
  if(!profile||!controls.length){box.innerHTML='<div class="muted small">'+esc(t().verifiedNone)+'</div>';return}
  const items=controls.map((ctrl,i)=>{
-  if(ctrl.type!=='percent')return '';
+  if(ctrl.type!=='percent'&&ctrl.type!=='cct-linear')return '';
   const label=ctrl.key==='dimmer'?t().dimmer:(ctrl.label||ctrl.key||('CH '+ctrl.channel));
-  return '<div style="padding:10px 0;border-top:1px solid #2d333a"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(label)+'</b><span id="artnetVerifiedValue_'+i+'" class="muted small">0%</span></div><input class="artnet-verified-range" data-index="'+i+'" type="range" min="'+Number(ctrl.min||0)+'" max="'+Number(ctrl.max||100)+'" value="0" style="margin-top:8px"></div>';
+  const min=Number(ctrl.min==null?0:ctrl.min),max=Number(ctrl.max==null?100:ctrl.max),step=Number(ctrl.step||1),initial=min;
+  const suffix=ctrl.type==='cct-linear'?'K':'%';
+  return '<div style="padding:10px 0;border-top:1px solid #2d333a"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(label)+'</b><span id="artnetVerifiedValue_'+i+'" class="muted small">'+Math.round(initial)+suffix+'</span></div><input class="artnet-verified-range" data-index="'+i+'" data-suffix="'+suffix+'" type="range" min="'+min+'" max="'+max+'" step="'+step+'" value="'+initial+'" style="margin-top:8px"></div>';
  }).join('');
  box.innerHTML='<div style="font-size:11px;color:#9da3ad;margin-top:12px">'+esc(t().verifiedTitle)+'</div><div style="font-weight:800;margin-top:4px">'+esc((fixture.manufacturer||'')+' '+(fixture.model||fixture.id))+'</div><div class="muted small">'+esc(profile.name)+' · '+Number(profile.channels||r.channels)+' ch</div>'+items+'<div class="muted small" style="margin-top:7px">'+esc(t().verifiedSource)+'</div>';
  box.querySelectorAll('.artnet-verified-range').forEach(input=>{
   input.addEventListener('input',()=>{
    const idx=Number(input.dataset.index),v=Number(input.value)||0,readout=E('artnetVerifiedValue_'+idx);
-   if(readout)readout.textContent=Math.round(v)+'%';
+   if(readout)readout.textContent=Math.round(v)+(input.dataset.suffix||'');
   });
   input.addEventListener('change',()=>sendVerifiedControl(r,profile,controls[Number(input.dataset.index)],Number(input.value)||0));
  });
@@ -148,7 +150,7 @@ function install(){
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);
  translate();return true;
 }
-window.LightingAIArtNetControl={version:'0.3-verified-dmx-controls',refreshPatch:renderPatchDevices};
+window.LightingAIArtNetControl={version:'0.4-verified-dmx-cct',refreshPatch:renderPatchDevices};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;if(typeof old==='function'&&!window.__artNetLangHook){window.__artNetLangHook=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}
 })();

@@ -120,6 +120,18 @@ for (const [fixtureId, label] of [['desisti-super-led-f10hp-t','De Sisti Super L
 
 
 
+const desistiF47Vw = RUNTIME_CATALOG.fixtureById.get('desisti-super-led-f47-vw');
+const desistiF47Vw8 = desistiF47Vw?.dmxModes?.find((item) => item.name === 'Vari-White');
+const desistiF47Vw16 = desistiF47Vw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
+if (!desistiF47Vw8 || desistiF47Vw8.channels !== 3 || desistiF47Vw8.verified !== true) failures.push('Verified De Sisti F4.7 Vari-White 3ch 8-bit mode missing');
+if (!desistiF47Vw16 || desistiF47Vw16.channels !== 4 || desistiF47Vw16.verified !== true) failures.push('Verified De Sisti F4.7 Vari-White 4ch 16-bit mode missing');
+const desistiF47VwDimmer8 = desistiF47Vw8?.controls?.find((item) => item.key === 'dimmer');
+const desistiF47VwDimmer16 = desistiF47Vw16?.controls?.find((item) => item.key === 'dimmer');
+if (!desistiF47VwDimmer8 || desistiF47VwDimmer8.channel !== 1 || desistiF47VwDimmer8.type !== 'percent' || desistiF47VwDimmer8.dmxMax !== 255) failures.push('Verified De Sisti F4.7 Vari-White 8-bit dimmer mapping missing');
+if (!desistiF47VwDimmer16 || desistiF47VwDimmer16.channel !== 1 || desistiF47VwDimmer16.type !== 'percent' || desistiF47VwDimmer16.bits !== 16 || desistiF47VwDimmer16.dmxMax !== 65535) failures.push('Verified De Sisti F4.7 Vari-White 16-bit coarse/fine dimmer mapping missing');
+if (desistiF47Vw8?.controls?.some((item) => item.key === 'cct') || desistiF47Vw16?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F4.7 Vari-White CCT controls must remain hidden until CCT Mode DMX values are sourced');
+
+
 for (const [fixtureId, label] of [['desisti-piccoletto-f-t','De Sisti Piccoletto F T'],['desisti-piccoletto-f-d','De Sisti Piccoletto F D']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === '8-bit dimmer');

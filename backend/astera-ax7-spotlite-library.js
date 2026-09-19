@@ -30,7 +30,7 @@ export const ASTERA_AX7_SPOTLITE_FIXTURES = [
       wireless: ['AsteraApp', 'CRMX', 'W-DMX', 'UHF'],
       builtInCRMX: true,
       builtInBTB: false
-    },,
+    },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,

@@ -48,7 +48,7 @@ export const DESISTI_LED_FRESNEL_FIXTURES = [
 
   fixed('desisti-super-led-f7-t','Super LED F7 T','Super LED F7',160,null,3200,97,96,175,F7_SRC,{rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F7_DMX_MANUAL)}),
   fixed('desisti-super-led-f7-d','Super LED F7 D','Super LED F7',160,null,5600,96,97,175,F7_SRC,{rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerModes(F7_DMX_MANUAL)}),
-  vw('desisti-super-led-f7-vw','Super LED F7 Vari-White','Super LED F7',160,null,2800,6600,175,F7_VW_SRC,{rainProtectedOption:'IP23',dmxModes:[{name:'Vari-White',channels:3}]}),
+  vw('desisti-super-led-f7-vw','Super LED F7 Vari-White','Super LED F7',160,null,2800,6600,175,F7_VW_SRC,{rainProtectedOption:'IP23',dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:F7_VW_SRC,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
   {
     id:'desisti-super-led-f7-vwc',manufacturer:'De Sisti',model:'Super LED F7 VW+C',family:'Super LED F7',category:'Light',
     sourceType:'Vari-White + Color LED Fresnel',ledPowerW:170,cctK:{min:1800,max:12000},colorMode:'Vari-White + RGBA',

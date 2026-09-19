@@ -29,7 +29,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.ArrayList;
 
 public class MainActivity extends Activity {
@@ -44,6 +46,7 @@ public class MainActivity extends Activity {
     private NativeSunCompass nativeSunCompass;
     private boolean pendingNativeSunLocation = false;
     private String pendingVoiceTarget = null;
+    private final AtomicInteger artNetSequence = new AtomicInteger(1);
 
     private static final int CREATE_FILE = 501;
     private static final int CHOOSE_IMAGE = 502;
@@ -354,6 +357,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-set-sketch-camera-fov-script')){var f=document.createElement('script');f.id='lightingai-set-sketch-camera-fov-script';f.src='file:///android_asset/set-sketch-camera-fov.js';document.body.appendChild(f);}" +
             "if(!document.getElementById('lightingai-device-capabilities-script')){var d=document.createElement('script');d.id='lightingai-device-capabilities-script';d.src='file:///android_asset/device-capabilities.js';document.body.appendChild(d);}" +
             "if(!document.getElementById('lightingai-sun-native-bridge-script')){var n=document.createElement('script');n.id='lightingai-sun-native-bridge-script';n.src='file:///android_asset/sun-native-bridge.js';document.body.appendChild(n);}" +
+            "if(!document.getElementById('lightingai-artnet-control-script')){var a=document.createElement('script');a.id='lightingai-artnet-control-script';a.src='file:///android_asset/artnet-control.js';document.body.appendChild(a);}" +
             "})();", null);
     }
 
@@ -404,6 +408,15 @@ public class MainActivity extends Activity {
         final String textJs = JSONObject.quote(text == null ? "" : text);
         webView.post(() -> webView.evaluateJavascript(
             "window.LightingAIVoiceInputResult&&window.LightingAIVoiceInputResult(" + targetJs + "," + textJs + ");",
+            null));
+    }
+
+    private void notifyArtNetResult(String requestId, boolean ok, String message) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String msgJs = JSONObject.quote(message == null ? "" : message);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIArtNetResult&&window.LightingAIArtNetResult(" + idJs + "," + (ok ? "true" : "false") + "," + msgJs + ");",
             null));
     }
 
@@ -497,6 +510,29 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void startSpeechInput(String language, String targetId) {
             runOnUiThread(() -> MainActivity.this.startSpeechInput("en".equals(language) ? "en" : "sr", targetId));
+        }
+
+        @JavascriptInterface public void artNetSendDmx(String requestId, String targetIp, int universe, String channelsJson) {
+            final String id = requestId == null ? "" : requestId;
+            final String ip = targetIp == null ? "" : targetIp;
+            final int u = Math.max(1, universe);
+            final String raw = channelsJson == null ? "[]" : channelsJson;
+            new Thread(() -> {
+                boolean ok = false;
+                String message = "";
+                try {
+                    JSONArray a = new JSONArray(raw);
+                    int count = Math.min(512, a.length());
+                    int[] channels = new int[count];
+                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
+                    int seq = artNetSequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
+                    ArtNetSender.sendDmx(ip, u, channels, seq);
+                    ok = true;
+                } catch (Exception e) {
+                    message = e.getMessage() == null ? "Art-Net send failed" : e.getMessage();
+                }
+                notifyArtNetResult(id, ok, message);
+            }, "LightingAI-ArtNet").start();
         }
     }
 

@@ -23,6 +23,7 @@ const dmxModes=[
   {name:'16-bit with mode/fan',channels:10},
   {name:'16-bit extended',channels:40}
 ];
+const verifiedDmxModes=(sourceUrl)=>dmxModes.map((mode)=>({...mode,verified:true,sourceUrl}));
 
 function muse(id,model,orderCode,shape,ledPowerW,powerDrawW,beamAngleDeg,headKg,driverKg,driverModel,caseCode,cableCode,sourceUrl,extra={}){
   return {
@@ -39,7 +40,7 @@ function muse(id,model,orderCode,shape,ledPowerW,powerDrawW,beamAngleDeg,headKg,
 }
 
 export const DESISTI_MUSES_FIXTURES=[
-  muse('desisti-muse-melpomene','Melpomene','2LH','Triangle',480,null,11,23.8,5,'DSE-500','2LC','EC19P-10M',SRC.melpomene),
+  muse('desisti-muse-melpomene','Melpomene','2LH','Triangle',480,null,11,23.8,5,'DSE-500','2LC','EC19P-10M',SRC.melpomene,{dmxModes:verifiedDmxModes(SRC.melpomene)}),
   muse('desisti-muse-tersicore','Tersicore','3LH','Square',960,1130,16,46,7.5,'DSE-1000','3LC','EC19P-10M',SRC.tersicore),
   muse('desisti-muse-clio','Clio','4LH','Rectangle',480,564,16,28.5,5,'DSE-500','4LC','EC19P-10M',SRC.clio),
   muse('desisti-muse-clio-medium','Clio Medium','4MH','Rectangle',240,282,16,17,6.5,'DSE-300','4MC','EC19P-10M',SRC.clioM,{fieldAngleDeg:27}),

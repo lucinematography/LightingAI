@@ -3,6 +3,7 @@
 const MOSAIC_2X4='https://aladdin-lights.com/mosaic-2x4/';
 const MOSAIC_MANUAL='https://aladdin-lights.com/wp-content/uploads/2023/09/MOSAIC-4x4-Manual-SINGLE-PAGE.pdf';
 const MOSAIC_4X4_ACC='https://aladdin-lights.com/wp-content/uploads/2022/12/Accessory-Chart-MOSAIC-4x4-1.pdf';
+const MOSAIC_DMX='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
 
 function fixture(id,model,powerW,sourceUrl,extra={}){
   return {
@@ -11,6 +12,11 @@ function fixture(id,model,powerW,sourceUrl,extra={}){
     colorMode:'RGBWW',powerW,sourceUrl,
     cri:95,tlci:95,beamAngleDeg:140,
     control:['Bluetooth/App','DMX512','LumenRadio','On-board','Optional Wired Dimmer'],
+    // DMX requires the compatible DMX attachment or M-WDIM; this pass models footprints only.
+    dmxModes:[
+      {name:'Simple CCT Crossfade RGBW',channels:8,verified:true,sourceUrl:MOSAIC_DMX},
+      {name:'Expert CCT Crossfade RGBW + Effects',channels:11,verified:true,sourceUrl:MOSAIC_DMX}
+    ],
     ...extra
   };
 }

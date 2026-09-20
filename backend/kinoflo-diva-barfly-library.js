@@ -3,6 +3,7 @@
 const DIVA='https://kinoflo.com/diva-lite-series/';
 const DIVA_MANUAL='https://kinoflo.com/wp-content/uploads/2022/07/3100048-Diva-Lite-401-201-Rev-C-3-20-2013-Web-Quality.pdf';
 const BARFLY='https://kinoflo.com/barfly-2/';
+const BARFLY_450_MANUAL='https://kinoflo.com/wp-content/uploads/2022/07/3100062-BarFly-450-Rev-A-5-18-2012-Web-Quality.pdf';
 const REMOTE='https://kinoflo.com/fixtures-remote/';
 
 function fixture(id,model,family,sourceUrl,extra={}){
@@ -27,7 +28,7 @@ export const KINOFLO_DIVA_BARFLY_FIXTURES=[
   fixture('kinoflo-barfly-100','BarFly 100 Fixture','BarFly',REMOTE,{lampCount:1,lampType:'F55/QFL'}),
   fixture('kinoflo-barfly-200','BarFly 200 Fixture','BarFly',BARFLY,{lampCount:2,lampType:'F55/QFL'}),
   fixture('kinoflo-barfly-400','BarFly 400 Fixture','BarFly',BARFLY,{lampCount:4,lampType:'F55/QFL'}),
-  fixture('kinoflo-barfly-450-dmx','BarFly 450 DMX','BarFly',BARFLY,{lampCount:4,control:['DMX512']})
+  fixture('kinoflo-barfly-450-dmx','BarFly 450 DMX','BarFly',BARFLY,{lampCount:4,control:['DMX512'],dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:BARFLY_450_MANUAL},{name:'4ch individual lamps',channels:4,verified:true,sourceUrl:BARFLY_450_MANUAL}]})
 ];
 
 export const KINOFLO_DIVA_BARFLY_ACCESSORIES=[

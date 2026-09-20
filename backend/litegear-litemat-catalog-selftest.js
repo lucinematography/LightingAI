@@ -391,6 +391,36 @@ else{
   if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat Spectrum 4 (2019) must not invent a public DMX channel table');
 }
 
+
+const s2_1=fixtures.find(x=>x.id==='litegear-litemat-s2-1');
+if(!s2_1) failures.push('Missing LiteMat S2 1 control-route fixture');
+else{
+  const control=s2_1.control||{};
+  if(s2_1.powerW!==50) failures.push('LiteMat S2 1 power must be 50W');
+  if(s2_1.inputVoltage!=='12V DC') failures.push('LiteMat S2 1 input voltage must be 12V DC');
+  if(s2_1.ledQuantity!==288) failures.push('LiteMat S2 1 LED quantity must be 288');
+  if(s2_1.weightKg!==1.1) failures.push('LiteMat S2 1 weight must be 1.1kg');
+  if(s2_1.dimensions!=='292 x 533 x 23 mm') failures.push('LiteMat S2 1 dimensions mismatch');
+  if(control.fixtureNative?.local!==false) failures.push('LiteMat S2 1 head must not claim native local control');
+  if(control.fixtureNative?.dmx512!==false) failures.push('LiteMat S2 1 head must not claim native DMX512');
+  if(control.fixtureNative?.rdm!==false) failures.push('LiteMat S2 1 head must not claim native RDM');
+  if(control.fixtureNative?.artNet!==false) failures.push('LiteMat S2 1 head must not claim native Art-Net');
+  if(control.fixtureNative?.sacn!==false) failures.push('LiteMat S2 1 head must not claim native sACN');
+  if(control.fixtureNative?.crmx!==false) failures.push('LiteMat S2 1 head must not claim native CRMX');
+  if(control.controller?.model!=='LiteDimmer Pro Hybrid') failures.push('LiteMat S2 1 controller must be LiteDimmer Pro Hybrid');
+  if(control.controller?.local!==true) failures.push('LiteMat S2 1 Pro Hybrid local control missing');
+  if(control.controller?.dmx512!==false) failures.push('LiteMat S2 1 Pro Hybrid must not claim DMX512');
+  if(control.controller?.rdm!==false) failures.push('LiteMat S2 1 Pro Hybrid must not claim RDM');
+  if(control.controller?.artNet!==false) failures.push('LiteMat S2 1 Pro Hybrid must not claim Art-Net');
+  if(control.controller?.sacn!==false) failures.push('LiteMat S2 1 Pro Hybrid must not claim sACN');
+  if(control.controller?.crmx!==false) failures.push('LiteMat S2 1 Pro Hybrid must not claim CRMX');
+  if(control.controller?.bluetooth!==false) failures.push('LiteMat S2 1 Pro Hybrid must not claim Bluetooth');
+  if(control.controller?.wifi!==false) failures.push('LiteMat S2 1 Pro Hybrid must not claim Wi-Fi');
+  if(!Array.isArray(control.controller?.controls) || !control.controller.controls.includes('Kelvin') || !control.controller.controls.includes('Level')) failures.push('LiteMat S2 1 Pro Hybrid local Kelvin/Level controls missing');
+  if(control.dmx?.profileAppliesAt!==null) failures.push('LiteMat S2 1 must not claim a DMX profile owner');
+  if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat S2 1 must not invent a public DMX channel table');
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'LiteGear',family:'LiteMat',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -174,7 +174,43 @@ export const LITEGEAR_LITEMAT_SPECTRUM_G2_FIXTURES=[
       sourceUrls:[S3,DIMMER200,SPECTRUM_OS3_DMX]
     }
   }),
-  fixture('litegear-litemat-spectrum-g2-4','LiteMat Spectrum 4 (Gen 2)',200,53,4,5.4,'536 x 1015.5 x 25.4 mm',S4,{modelNumber:'255-1',ledQuantity:5184}),
+  fixture('litegear-litemat-spectrum-g2-4','LiteMat Spectrum 4 (Gen 2)',200,53,4,5.4,'536 x 1015.5 x 25.4 mm',S4,{
+    modelNumber:'255-1',ledQuantity:5184,
+    control:{
+      fixtureNative:{
+        local:false,dmx512:false,rdm:false,artNet:false,sacn:false,crmx:false,bluetooth:false,wifi:false,
+        note:'LiteMat Spectrum 4 head is a 48V PDX light engine; manufacturer-documented external control is provided by a compatible LiteDimmer Spectrum.'
+      },
+      controller:{
+        model:'LiteDimmer Spectrum AC/DC 200',
+        connectionToFixture:'PDX power/data',
+        wired:['DMX512','RDM','Art-Net 4','sACN (E1.31)'],
+        wireless:['CRMX'],
+        builtInCRMX:true,
+        bluetooth:false,
+        wifi:false,
+        dataConnectors:['5-pin DMX In/Thru','2x etherCON','internal CRMX antenna','USB-A','PDX']
+      },
+      directLightingAI:['Art-Net 4 via LiteDimmer Spectrum AC/DC 200 Ethernet','sACN (E1.31) via LiteDimmer Spectrum AC/DC 200 Ethernet'],
+      externalInterfaceRequired:[
+        'LiteDimmer Spectrum AC/DC 200 between fixture head and all documented control protocols',
+        'Wired DMX interface when LightingAI sends DMX512 directly',
+        'CRMX transmitter/bridge when LightingAI reaches the LiteDimmer through CRMX'
+      ],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented Bluetooth control path for LiteMat Spectrum 4 / LiteDimmer Spectrum AC/DC 200',
+        'No manufacturer-documented Wi-Fi control path for LiteMat Spectrum 4 / LiteDimmer Spectrum AC/DC 200'
+      ],
+      dmx:{
+        profileAppliesAt:'LiteDimmer Spectrum AC/DC 200 running Spectrum OS 3.1',
+        officialProfileTable:SPECTRUM_OS3_DMX,
+        rdmSupported:true,
+        pixelCount:4,
+        note:'DMX/RDM personalities are implemented by the LiteDimmer, not by the LiteMat head. Spectrum OS 3.1 publishes the official personality/channel tables, with channel footprint depending on active personality and pixel count.'
+      },
+      sourceUrls:[S4,DIMMER200,SPECTRUM_OS3_DMX]
+    }
+  }),
   fixture('litegear-litemat-spectrum-g2-8','LiteMat Spectrum 8 (Gen 2)',400,53,8,9.6,'1015.5 x 1015.5 x 25.4 mm',S8,{modelNumber:'256-1',ledQuantity:5184})
 ];
 

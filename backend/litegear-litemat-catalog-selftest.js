@@ -131,6 +131,28 @@ else{
   if(!String(control.dmx?.officialProfileTable||'').includes('rdm-dmx-profile-tables-spectrum-os-3-1.pdf')) failures.push('LiteMat Spectrum 3 official Spectrum OS 3.1 RDM-DMX table missing');
 }
 
+
+const spectrum4=fixtures.find(x=>x.id==='litegear-litemat-spectrum-g2-4');
+if(!spectrum4) failures.push('Missing LiteMat Spectrum 4 Gen 2 control-route fixture');
+else{
+  const control=spectrum4.control||{};
+  if(control.fixtureNative?.dmx512!==false) failures.push('LiteMat Spectrum 4 head must not claim native DMX512');
+  if(control.fixtureNative?.rdm!==false) failures.push('LiteMat Spectrum 4 head must not claim native RDM');
+  if(control.fixtureNative?.artNet!==false) failures.push('LiteMat Spectrum 4 head must not claim native Art-Net');
+  if(control.fixtureNative?.sacn!==false) failures.push('LiteMat Spectrum 4 head must not claim native sACN');
+  if(control.fixtureNative?.crmx!==false) failures.push('LiteMat Spectrum 4 head must not claim native CRMX');
+  if(control.fixtureNative?.bluetooth!==false) failures.push('LiteMat Spectrum 4 head must not claim Bluetooth');
+  if(control.fixtureNative?.wifi!==false) failures.push('LiteMat Spectrum 4 head must not claim Wi-Fi');
+  if(control.controller?.model!=='LiteDimmer Spectrum AC/DC 200') failures.push('LiteMat Spectrum 4 controller must be LiteDimmer Spectrum AC/DC 200');
+  for(const item of ['DMX512','RDM','Art-Net 4','sACN (E1.31)']) if(!control.controller?.wired?.includes(item)) failures.push('LiteMat Spectrum 4 dimmer wired control path missing: '+item);
+  if(!control.controller?.wireless?.includes('CRMX')) failures.push('LiteMat Spectrum 4 dimmer CRMX path missing');
+  if(control.controller?.bluetooth!==false) failures.push('LiteMat Spectrum 4 dimmer must not claim Bluetooth');
+  if(control.controller?.wifi!==false) failures.push('LiteMat Spectrum 4 dimmer must not claim Wi-Fi');
+  if(control.dmx?.profileAppliesAt!=='LiteDimmer Spectrum AC/DC 200 running Spectrum OS 3.1') failures.push('LiteMat Spectrum 4 DMX profile ownership/version missing');
+  if(control.dmx?.pixelCount!==4) failures.push('LiteMat Spectrum 4 DMX pixel count must be 4');
+  if(!String(control.dmx?.officialProfileTable||'').includes('rdm-dmx-profile-tables-spectrum-os-3-1.pdf')) failures.push('LiteMat Spectrum 4 official Spectrum OS 3.1 RDM-DMX table missing');
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'LiteGear',family:'LiteMat',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

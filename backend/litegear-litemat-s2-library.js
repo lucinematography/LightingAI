@@ -68,7 +68,47 @@ export const LITEGEAR_LITEMAT_S2_FIXTURES=[
       sourceUrls:[S1_PRODUCT,S1,PRO_HYBRID,PRO_HYBRID_GUIDE,S2_SUPPORT]
     }
   }),
-  fixture('litegear-litemat-s2-2','LiteMat S2 2',100,576,1.6,'533 x 533 x 23 mm',S2),
+  fixture('litegear-litemat-s2-2','LiteMat S2 2',100,576,1.6,'533 x 533 x 23 mm',S2,{
+    control:{
+      fixtureNative:{
+        local:false,dmx512:false,rdm:false,artNet:false,sacn:false,crmx:false,bluetooth:false,wifi:false,
+        note:'LiteMat S2 2 head is a passive 12V Hybrid light engine; manufacturer-documented control is provided by the external LiteDimmer Pro Hybrid.'
+      },
+      controller:{
+        model:'LiteDimmer Pro Hybrid',
+        connectionToFixture:'3-conductor HyConn / PH3 output path',
+        local:true,
+        dmx512:false,
+        rdm:false,
+        artNet:false,
+        sacn:false,
+        crmx:false,
+        bluetooth:false,
+        wifi:false,
+        controls:['Kelvin','Level'],
+        note:'Official LiteDimmer Pro Hybrid documentation describes local Kelvin and Level controls plus trigger/effect modes, but does not document DMX512, RDM, Art-Net, sACN, CRMX/LumenRadio, Bluetooth or Wi-Fi control.'
+      },
+      directLightingAI:[],
+      externalInterfaceRequired:[
+        'LiteDimmer Pro Hybrid between fixture head and documented local control'
+      ],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented DMX512 control path for LiteDimmer Pro Hybrid',
+        'No manufacturer-documented RDM path for LiteDimmer Pro Hybrid',
+        'No manufacturer-documented Art-Net path for LiteDimmer Pro Hybrid',
+        'No manufacturer-documented sACN path for LiteDimmer Pro Hybrid',
+        'No manufacturer-documented CRMX/LumenRadio path for LiteDimmer Pro Hybrid',
+        'No manufacturer-documented Bluetooth control path',
+        'No manufacturer-documented Wi-Fi control path'
+      ],
+      dmx:{
+        profileAppliesAt:null,
+        publicChannelTable:null,
+        note:'No DMX profile is asserted because the verified LiteDimmer Pro Hybrid documentation does not expose a DMX512 control path.'
+      },
+      sourceUrls:[S2,PRO_HYBRID,PRO_HYBRID_GUIDE,S2_SUPPORT]
+    }
+  }),
   fixture('litegear-litemat-s2-2l','LiteMat S2 2L',100,576,1.6,'292 x 1016 x 23 mm',S2L),
   fixture('litegear-litemat-s2-3','LiteMat S2 3',150,864,2.1,'533 x 775 x 23 mm',S2_CATALOG),
   fixture('litegear-litemat-s2-4','LiteMat S2 4',200,1152,2.6,'533 x 1016 x 23 mm',S4)

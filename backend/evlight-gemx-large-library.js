@@ -56,7 +56,25 @@ export const EVLIGHT_GEMX_LARGE_FIXTURES=[
       sourceUrls:[GEMX24ST,FILM]
     }
   },
-  fixture('evlight-gemx28-hard','GEMX28 HARD','Large-format LED Hard Panel')
+  {
+    ...fixture('evlight-gemx28-hard','GEMX28 HARD','Large-format LED Hard Panel'),
+    powerW:2600,
+    colorMode:'RGBW Full Spectrum',
+    control:{
+      wired:[],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['A manufacturer-verified DMX/network interface is required before LightingAI control can be enabled'],
+      unavailableDirectProtocols:[
+        'Official EV Light public GEMX28 HARD information does not publish a verified DMX512/RDM control path',
+        'Official EV Light public GEMX28 HARD information does not publish Art-Net or sACN network input',
+        'Official EV Light public GEMX28 HARD information does not publish CRMX/LumenRadio, Bluetooth or Wi-Fi control'
+      ],
+      sourceUrls:[FILM]
+    }
+  }
 ];
 
 const all=EVLIGHT_GEMX_LARGE_FIXTURES.map(x=>x.id);

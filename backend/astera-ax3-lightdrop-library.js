@@ -28,7 +28,14 @@ export const ASTERA_AX3_LIGHTDROP_FIXTURES = [
       wired: [],
       wireless: ['AsteraApp', 'CRMX', 'W-DMX', 'UHF', 'Bluetooth', 'WiFi'],
       builtInCRMX: true,
-      builtInBTB: true
+      builtInBTB: true,
+      directLightingAI: [],
+      externalInterfaceRequired: ['CRMX/W-DMX transmitter for wireless DMX control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/products/ax3-lightdrop/',
+        'https://update.astera-led.com/release_notes/ax2_50/release_notes'
+      ]
     },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',

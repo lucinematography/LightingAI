@@ -1229,6 +1229,27 @@ const kinoWallOLiteDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/310
   }
 }
 
+
+// Kino Flo BarFly 450 verified DMX footprint widths.
+const kinoBarFly450DmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100062-BarFly-450-Rev-A-5-18-2012-Web-Quality.pdf';
+{
+  const fixture=RUNTIME_CATALOG.fixtureById.get('kinoflo-barfly-450-dmx');
+  const widths=[['1ch all lamps',1],['4ch individual lamps',4]];
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Kino Flo BarFly 450 DMX mode set missing');
+  }else{
+    for(const [name,channels] of widths){
+      const mode=fixture.dmxModes.find(item=>item?.name===name);
+      if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==kinoBarFly450DmxSource){
+        failures.push('Verified Kino Flo BarFly 450 DMX width/source missing: '+name);
+      }
+      if(mode?.controls?.length||mode?.requiredChannels?.length){
+        failures.push('Kino Flo BarFly 450 DMX mapping must remain width-only in this pass: '+name);
+      }
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

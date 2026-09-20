@@ -42,6 +42,21 @@ export const EVLIGHT_PROFILE_FIXTURES=[
   }),
   fixture('evlight-epro200z','EPRO200Z',{
     powerW:200,colorMode:'Warm White',beamAngleDeg:{min:15,max:38},
+    control:{
+      wired:['DMX512'],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['Wired DMX interface for DMX512 control'],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented Art-Net or sACN network input is published for EPRO200Z',
+        'No manufacturer-documented CRMX/LumenRadio, Bluetooth or Wi-Fi control path is published for EPRO200Z'
+      ],
+      sourceUrls:[EPRO200Z]
+    },
+    localControl:['Auto run','Master/Slave'],
+    dmxChannelOptions:['1/3CH single color','2/5CH 2in1','3/7CH RGB','4/8CH RGBW'],
     optics:'Manual zoom ellipsoidal / leko optics',sourceUrl:EPRO200Z
   }),
   fixture('evlight-ev-sp300z','EV SP300Z',{

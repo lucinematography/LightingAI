@@ -25,10 +25,18 @@ export const ASTERA_HELIOSTUBE_FIXTURES = [
     dimensionsMm: { diameter: 42, length: 550 },
     weightKg: 0.765,
     control: {
-      wired: ['DMX via Titan Power/Data Combination Cable'],
-      wireless: ['AsteraApp', 'Wireless DMX', 'CRMX', 'Bluetooth Bridge'],
+      wired: ['DMX via FP1-PWB / FP3-DTL / PWB-2-86', 'Art-Net via PowerBox bridge', 'sACN via PowerBox bridge'],
+      wireless: ['AsteraApp', 'CRMX', 'UHF', 'Bluetooth', 'Wi-Fi'],
       builtInWirelessDMX: true,
-      builtInBluetoothBridge: true
+      builtInCRMX: true,
+      builtInBluetoothBridge: true,
+      directLightingAI: ['Art-Net via PowerBox bridge', 'sACN via PowerBox bridge'],
+      externalInterfaceRequired: ['Wired DMX interface or Astera PowerBox', 'CRMX transmitter for CRMX control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/fr/products/helios-tube/specs/',
+        'https://update.astera-led.com/release_notes.html'
+      ]
     },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',

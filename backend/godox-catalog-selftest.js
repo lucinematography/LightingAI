@@ -13,7 +13,7 @@ const expected=[
   'godox-f100r','godox-f200r','godox-f200sr','godox-f400r','godox-f800r',
   'godox-c5r','godox-c7r','godox-c10r','godox-la150r','godox-la200r','godox-la300r','godox-la300bi',
   'godox-lp400r','godox-lp600r','godox-lp1200r','godox-lp400bi','godox-lp600bi','godox-lp1200bi',
-  'godox-lc500r','godox-lc500bi','godox-lc500mini','godox-lc500rmini','godox-lc1000bi','godox-lc1000r',
+  'godox-lc500r','godox-lc500','godox-lc500mini','godox-lc500rmini','godox-lc1000bi','godox-lc1000r',
   'godox-ldp8d','godox-ldp18d','godox-ldp8bi','godox-ldp18bi','godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi',
   'godox-ml100bi','godox-ml100r',
   'godox-sl60iid','godox-sl60iibi','godox-sl100d','godox-sl100bi','godox-sl150iii','godox-sl200iii','godox-sl300iii','godox-sl150iiibi','godox-sl200iiibi','godox-sl300iiibi',
@@ -246,6 +246,27 @@ for(const fixtureId of ['godox-lp400r','godox-lp600r','godox-lp1200r','godox-lp4
   if(control.externalInterfaceRequired?.length) failures.push('Godox LP should not require DMX/CRMX interface: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox LP Bluetooth protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-lc500r','godox-lc500']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(control.wired?.length) failures.push('Godox LC500/LC500R must not claim wired control: '+fixtureId);
+  if(!control.wireless?.includes('2.4G Remote')) failures.push('Godox LC500/LC500R 2.4GHz remote path missing: '+fixtureId);
+  if(control.builtInCRMX) failures.push('Godox LC500/LC500R must not claim built-in CRMX: '+fixtureId);
+  if(control.builtInBluetooth) failures.push('Godox LC500/LC500R must not claim built-in Bluetooth: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox LC500/LC500R must not claim direct LightingAI transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Compatible Godox wireless remote for 2.4GHz remote control')) failures.push('Godox LC500/LC500R remote requirement missing: '+fixtureId);
+}
+for(const fixtureId of ['godox-lc500mini','godox-lc500rmini','godox-lc1000bi','godox-lc1000r']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(control.wired?.length) failures.push('Godox LC Bluetooth models must not claim wired control: '+fixtureId);
+  if(!control.wireless?.includes('Bluetooth/App')) failures.push('Godox LC Bluetooth/App path missing: '+fixtureId);
+  if(control.builtInCRMX) failures.push('Godox LC Bluetooth models must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox LC Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox LC Bluetooth models must not claim direct LightingAI transport: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox LC Bluetooth protocol limitation missing: '+fixtureId);
+}
+if(ids.has('godox-lc500bi')) failures.push('Obsolete non-official Godox LC500Bi fixture ID must not exist');
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

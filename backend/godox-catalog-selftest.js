@@ -267,6 +267,17 @@ for(const fixtureId of ['godox-lc500mini','godox-lc500rmini','godox-lc1000bi','g
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox LC Bluetooth protocol limitation missing: '+fixtureId);
 }
 if(ids.has('godox-lc500bi')) failures.push('Obsolete non-official Godox LC500Bi fixture ID must not exist');
+for(const fixtureId of ['godox-ldp8d','godox-ldp18d','godox-ldp8bi','godox-ldp18bi']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(control.wired?.length) failures.push('Godox LDP must not claim wired control: '+fixtureId);
+  if(control.wireless?.length) failures.push('Godox LDP must not claim wireless remote control: '+fixtureId);
+  if(control.builtInCRMX) failures.push('Godox LDP must not claim built-in CRMX: '+fixtureId);
+  if(control.builtInBluetooth) failures.push('Godox LDP must not claim built-in Bluetooth: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox LDP must not claim direct LightingAI transport: '+fixtureId);
+  if(control.externalInterfaceRequired?.length) failures.push('Godox LDP should not require external control interface: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('No manufacturer-documented remote control protocol'))) failures.push('Godox LDP remote-control limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

@@ -25,10 +25,17 @@ export const ASTERA_PLUTOFRESNEL_FIXTURES = [
     dimensionsMm: { length: 281.9, width: 153.5, height: 161.8 },
     weightKg: 4.637,
     control: {
-      wired: ['DMX'],
-      wireless: ['AsteraApp', 'CRMX'],
+      wired: ['DMX', 'RDM'],
+      wireless: ['AsteraApp', 'CRMX', 'UHF', 'Bluetooth', 'Wi-Fi'],
       builtInCRMX: true,
-      builtInBTB: true
+      builtInBTB: true,
+      directLightingAI: [],
+      externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX transmitter for CRMX control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/wp-content/uploads/AF250_LeoFresnel_DMX-Profiles_V1.pdf',
+        'https://update.astera-led.com/release_notes/ax2_50/release_notes'
+      ]
     },
     dmxModes: [{
       name: 'Profile 147 DIM RGB FAN 5ch',

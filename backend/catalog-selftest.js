@@ -196,6 +196,23 @@ for (const fixtureId of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar']) {
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera QuikSpot public-protocol limitation note missing');
 }
 
+// Astera HyperionTube FP3 control audit: preserve legacy FP3 routes without inheriting HyperionBTB-only capabilities.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-hyperiontube-fp3');
+  const control = fixture?.control || {};
+  if (!control.wired?.includes('DMX via Titan Power/Data Combination Cable')) failures.push('Astera HyperionTube FP3 wired DMX path missing');
+  for (const item of ['AsteraApp via AsteraBox/UHF','Wireless DMX','CRMX']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera HyperionTube FP3 wireless/input path missing: ${item}`);
+  }
+  if (!control.builtInWirelessDMX) failures.push('Astera HyperionTube FP3 built-in wireless DMX flag missing');
+  if (control.builtInBluetoothBridge) failures.push('Astera HyperionTube FP3 must not inherit HyperionBTB BluetoothBridge capability');
+  if (control.directLightingAI?.length) failures.push('Astera HyperionTube FP3 must not claim direct LightingAI transport without a documented public API');
+  for (const item of ['Titan Power/Data Combination Cable plus wired DMX interface for DMX control','CRMX/Wireless DMX transmitter for wireless DMX control','AsteraBox for AsteraApp/UHF control']) {
+    if (!control.externalInterfaceRequired?.includes(item)) failures.push(`Astera HyperionTube FP3 external interface requirement missing: ${item}`);
+  }
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera HyperionTube FP3 public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

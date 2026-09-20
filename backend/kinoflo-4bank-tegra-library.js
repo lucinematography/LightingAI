@@ -22,7 +22,7 @@ function acc(id,model,family,category,compatibleWith,sourceUrl,effectOnLight,ext
 export const KINOFLO_4BANK_TEGRA_FIXTURES=[
   fixture('kinoflo-2ft-4bank','2ft 4Bank','4Bank',FOURBANK,{lampCount:4,lampLengthFt:2}),
   fixture('kinoflo-4ft-4bank','4ft 4Bank','4Bank',FOURBANK,{lampCount:4,lampLengthFt:4}),
-  fixture('kinoflo-tegra-4bank-dmx','Tegra 4Bank DMX','Tegra 4Bank',TEGRA_MANUAL,{lampCount:4,control:['DMX512','Local']})
+  fixture('kinoflo-tegra-4bank-dmx','Tegra 4Bank DMX','Tegra 4Bank',TEGRA_MANUAL,{lampCount:4,control:['DMX512','Local'],dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:TEGRA_MANUAL},{name:'4ch individual lamps',channels:4,verified:true,sourceUrl:TEGRA_MANUAL}]})
 ];
 
 export const KINOFLO_4BANK_TEGRA_ACCESSORIES=[

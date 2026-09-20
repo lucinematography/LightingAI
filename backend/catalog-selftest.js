@@ -1071,6 +1071,27 @@ for(const id of ["kinoflo-freestyle-air-mini","kinoflo-freestyle-air","kinoflo-f
   }
 }
 
+
+// Kino Flo Tegra 4Bank DMX verified 1ch/4ch footprints.
+const kinoTegraDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100061-archive-Rev-A-Tegra-4Bank-DMX-02-06-2013.pdf';
+{
+  const fixture=RUNTIME_CATALOG.fixtureById.get('kinoflo-tegra-4bank-dmx');
+  const widths=[['1ch all lamps',1],['4ch individual lamps',4]];
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Kino Flo Tegra 4Bank DMX mode set missing');
+  }else{
+    for(const [name,channels] of widths){
+      const mode=fixture.dmxModes.find(item=>item?.name===name);
+      if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==kinoTegraDmxSource){
+        failures.push('Verified Kino Flo Tegra DMX width/source missing: '+name);
+      }
+      if(mode?.controls?.length||mode?.requiredChannels?.length){
+        failures.push('Kino Flo Tegra DMX channel values remain width-only in this pass: '+name);
+      }
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

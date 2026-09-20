@@ -859,6 +859,58 @@ for(const id of ["kinoflo-celeb-250-led-dmx","kinoflo-celeb-450-led-dmx","kinofl
   }
 }
 
+
+// Kino Flo Diva-Lite 20/30/21/31/41 True Match 5.0 DMX personality widths.
+const kinoDivaTrueMatch5Source='https://kinoflo.com/wp-content/uploads/2022/07/True-Match-Firmware-5.0-RDM-DMX-Personalities-May-2021.pdf';
+const kinoDivaTrueMatch5Widths=[
+  ['P1 CCT 8-bit',3],
+  ['P2 GEL 8-bit',6],
+  ['P3 RGB 8-bit',6],
+  ['P4 FX 8-bit',8],
+  ['P5 CIE xy 8-bit',3],
+  ['P6 CCT 16-bit',4],
+  ['P7 GEL 16-bit',7],
+  ['P8 RGB 16-bit',7],
+  ['P9 FX 16-bit',9],
+  ['P10 CIE xy 16-bit',4],
+  ['P11 CCT 8-bit',3],
+  ['P12 CCT 16-bit',5],
+  ['P13 Gel 8-bit',3],
+  ['P14 Gel 16-bit',5],
+  ['P15 HS 8-bit',4],
+  ['P16 HS 16-bit',8],
+  ['P17 RGB 8-bit',5],
+  ['P18 RGB 16-bit',10],
+  ['P19 CIE xy 8-bit',3],
+  ['P20 CIE xy 16-bit',6],
+  ['P21 FX 8-bit',8],
+  ['P22 FX 16-bit',10],
+  ['P23 CCT & HS 8-bit',7],
+  ['P24 CCT & HS 16-bit',13],
+  ['P25 CCT & RGB 8-bit',8],
+  ['P26 CCT & RGB 16-bit',15],
+  ['P27 xy1 & xy2 8-bit',6],
+  ['P28 xy1 & xy2 16-bit',12],
+  ['P29 CCT & TDRGB 8-bit',9],
+  ['P30 CCT & TDRGB 16-bit',15]
+];
+for(const id of ["kinoflo-diva-lite-20-led","kinoflo-diva-lite-30-led","kinoflo-diva-lite-21-led","kinoflo-diva-lite-31-led","kinoflo-diva-lite-41-led"]){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==kinoDivaTrueMatch5Widths.length){
+    failures.push('Kino Flo Diva-Lite True Match 5.0 DMX mode set missing: '+id);
+    continue;
+  }
+  for(const [name,channels] of kinoDivaTrueMatch5Widths){
+    const mode=fixture.dmxModes.find(item=>item?.name===name);
+    if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==kinoDivaTrueMatch5Source){
+      failures.push('Verified Kino Flo Diva-Lite DMX width/source missing: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo Diva-Lite channel mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

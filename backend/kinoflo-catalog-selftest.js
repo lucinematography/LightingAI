@@ -497,6 +497,29 @@ for(const [id,widths,sourceUrl] of [
   }
 }
 
+
+// VistaBeam 300/600 official manual documents Fixture and Individual Lamp DMX methods.
+// Both methods span 4 addresses on VistaBeam 300 and 7 addresses on VistaBeam 600; the final address controls STD/HO.
+const vistaBeamDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100041-VistaBeam-Web-Quality-Old.pdf';
+for(const [id,channels] of [['kinoflo-vistabeam-300-dmx',4],['kinoflo-vistabeam-600-dmx',7]]){
+  const fixture=fixtures.find(item=>item.id===id);
+  const names=['Fixture mode','Individual Lamp mode'];
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==names.length){
+    failures.push('Missing Kino Flo VistaBeam DMX mode set: '+id);
+    continue;
+  }
+  for(const name of names){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==vistaBeamDmxSource){
+      failures.push('Incorrect verified Kino Flo VistaBeam DMX width/source: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo VistaBeam DMX mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,finalAudit:true,failures:unique},null,2));
 if(unique.length) process.exit(1);

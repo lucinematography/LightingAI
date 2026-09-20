@@ -1187,6 +1187,27 @@ for(const [id,widths,sourceUrl] of [
   }
 }
 
+
+// Kino Flo VistaBeam 300/600 verified DMX footprint widths.
+const kinoVistaBeamDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100041-VistaBeam-Web-Quality-Old.pdf';
+for(const [id,channels] of [['kinoflo-vistabeam-300-dmx',4],['kinoflo-vistabeam-600-dmx',7]]){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  const names=['Fixture mode','Individual Lamp mode'];
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==names.length){
+    failures.push('Kino Flo VistaBeam DMX mode set missing: '+id);
+    continue;
+  }
+  for(const name of names){
+    const mode=fixture.dmxModes.find(item=>item?.name===name);
+    if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==kinoVistaBeamDmxSource){
+      failures.push('Verified Kino Flo VistaBeam DMX width/source missing: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo VistaBeam DMX mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

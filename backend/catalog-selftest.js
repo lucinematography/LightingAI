@@ -37,6 +37,22 @@ for (const fixture of RUNTIME_CATALOG.fixtures) {
 }
 
 if (RUNTIME_CATALOG.duplicateAccessoryIds.length) failures.push(`Duplicate accessory source IDs must be zero: ${RUNTIME_CATALOG.duplicateAccessoryIds.join(', ')}`);
+
+// Astera HeliosTube control audit: keep documented direct vs bridge control paths explicit.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-heliostube-fp2-btb');
+  const control = fixture?.control || {};
+  for (const item of ['CRMX','UHF','Bluetooth','Wi-Fi']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera HeliosTube wireless control path missing: ${item}`);
+  }
+  if (!control.builtInCRMX || !control.builtInBluetoothBridge) failures.push('Astera HeliosTube built-in CRMX/BluetoothBridge flags missing');
+  for (const item of ['Art-Net via PowerBox bridge','sACN via PowerBox bridge']) {
+    if (!control.wired?.includes(item) || !control.directLightingAI?.includes(item)) failures.push(`Astera HeliosTube LightingAI network bridge route missing: ${item}`);
+  }
+  if (!control.wired?.includes('DMX via FP1-PWB / FP3-DTL / PWB-2-86')) failures.push('Astera HeliosTube documented wired DMX interface route missing');
+  if (!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Astera HeliosTube CRMX transmitter requirement missing');
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera HeliosTube public-protocol limitation note missing');
+}
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

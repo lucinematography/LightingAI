@@ -130,6 +130,9 @@ public class MainActivity extends Activity {
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setDatabaseEnabled(true); s.setGeolocationEnabled(true);
         s.setAllowFileAccess(true); s.setAllowContentAccess(true); s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        webView.clearCache(true);
+        webView.clearHistory();
         webView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
@@ -183,7 +186,7 @@ public class MainActivity extends Activity {
         });
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.addJavascriptInterface(new AIVisualImageBridge(this), "LightingAIImages");
-        webView.loadUrl("file:///android_asset/index.html");
+        webView.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v2");
         webView.requestApplyInsets();
     }
 

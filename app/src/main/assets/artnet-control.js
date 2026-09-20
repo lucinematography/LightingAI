@@ -1155,7 +1155,50 @@ function install(){
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);E('artnetLiveToggle').addEventListener('change',()=>setLiveEnabled(!!E('artnetLiveToggle').checked));E('artnetSceneSave').addEventListener('click',saveScene);
  translate();setTimeout(requestDiagnostics,250);return true;
 }
-window.LightingAIArtNetControl={version:'0.27-enum-piecewise-controls',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority};
+
+function focusPatchFixture(fixtureId){
+ const list=rows(),index=list.findIndex(r=>r&&r.fixtureId===fixtureId&&patchUsable(r));
+ if(index<0)return false;
+ const card=E('artnetCard'),select=E('artnetPatchDevice');
+ if(card)card.open=true;
+ if(select){select.value=String(index);choosePatch();}
+ if(card&&card.scrollIntoView)card.scrollIntoView({behavior:'smooth',block:'start'});
+ return true;
+}
+function numericStageValue(value,suffix){
+ if(value==null||value==='')return null;
+ if(typeof value==='number'&&Number.isFinite(value))return value;
+ const raw=String(value).replace(',','.').match(/-?\d+(?:\.\d+)?/);
+ if(!raw)return null;
+ const n=Number(raw[0]);return Number.isFinite(n)?n:null;
+}
+function stagePatchFixture(fixtureId,values){
+ if(!focusPatchFixture(fixtureId))return false;
+ const r=selectedPatchRow(),profile=r&&profileForRow(r),controls=profile&&Array.isArray(profile.controls)?profile.controls:[];
+ if(!r||!profile||!controls.length)return false;
+ values=values||{};
+ controls.forEach((ctrl,i)=>{
+  if(!ctrl)return;
+  let requested=null;
+  if(ctrl.key==='dimmer')requested=numericStageValue(values.intensity);
+  else if(ctrl.key==='cct')requested=numericStageValue(values.cct);
+  else if(ctrl.key==='red')requested=numericStageValue(values.red);
+  else if(ctrl.key==='green')requested=numericStageValue(values.green);
+  else if(ctrl.key==='blue')requested=numericStageValue(values.blue);
+  if(requested==null)return;
+  const input=E('artnetVerifiedRange_'+i)||E('artnetVerifiedEnum_'+i);
+  if(!input)return;
+  const min=Number(input.min),max=Number(input.max);
+  if(Number.isFinite(min))requested=Math.max(min,requested);
+  if(Number.isFinite(max)&&max>min)requested=Math.min(max,requested);
+  input.value=String(requested);
+  try{input.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}
+ });
+ status(lang()==='sr'?'AI vrednosti su pripremljene. Proveri ih pa potvrdi slanje.':'AI values are staged. Verify them before sending.');
+ return true;
+}
+
+window.LightingAIArtNetControl={version:'0.28-ai-staging',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,stageFixture:stagePatchFixture};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

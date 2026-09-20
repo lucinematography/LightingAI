@@ -124,8 +124,13 @@ for(const [id,sourceUrl] of liteVwSources){
     }
   }
 }
-// The RGB datasheet provides only a 2-20 channel range, not exact personalities.
+// The RGB datasheet verifies only a 2-20 channel range, not exact personalities.
 const liteRgb=fixtures.find(item=>item.id==='desisti-softled-1-lite-vwrgb');
+const liteRgbRange=liteRgb?.dmxChannelRange;
+if(!liteRgbRange||liteRgbRange.min!==2||liteRgbRange.max!==20||liteRgbRange.verified!==true||
+   liteRgbRange.sourceUrl!=='https://www.desisti.it/wp/wp-content/uploads/2024/02/SOFTLED-1Lite-VWRGB.pdf'){
+  failures.push('Soft LED 1 Lite VW+RGB verified 2-20 DMX channel range missing');
+}
 if(liteRgb?.dmxModes?.some(mode=>mode.verified===true||mode.controls?.length||mode.requiredChannels?.length)){
   failures.push('Soft LED 1 Lite VW+RGB exact DMX modes must remain unverified until a channel map is sourced');
 }

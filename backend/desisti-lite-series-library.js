@@ -91,6 +91,7 @@ export const DESISTI_LITE_FIXTURES=[
     cctK:{min:2700,max:10000},colorMode:'Vari-White + RGB',cri:94,tlci:96,ipRating:'IP20',weightKg:1.7,
     batterySupport:'2 x S1 Lite-BATT 6600 mAh; approx. 60 min at full power',
     pixels:4,control:['DMX512','On-board','Bluetooth app'],
+    dmxChannelRange:{min:2,max:20,verified:true,sourceUrl:S1_RGB},
     dmxModes:[{name:'Minimum control',channels:2},{name:'Extended / zones',channels:20}],
     sourceUrl:S1_RGB
   },

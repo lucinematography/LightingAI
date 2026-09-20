@@ -300,6 +300,17 @@ for(const fixtureId of ['godox-ml100bi','godox-ml100r']){
   if(control.externalInterfaceRequired?.length) failures.push('Godox ML100 should not require DMX/CRMX interface: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox ML100 Bluetooth protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-sl60iid','godox-sl60iibi','godox-sl100d','godox-sl100bi','godox-sl150iii','godox-sl200iii','godox-sl300iii','godox-sl150iiibi','godox-sl200iiibi','godox-sl300iiibi']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(control.wired?.length) failures.push('Godox SL must not claim wired control: '+fixtureId);
+  for(const item of ['2.4G Remote','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox SL wireless path missing: '+fixtureId+' '+item);
+  if(control.builtInCRMX) failures.push('Godox SL must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox SL built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox SL must not claim direct LightingAI transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox SL 2.4GHz remote requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox SL public-protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

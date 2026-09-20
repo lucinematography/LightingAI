@@ -78,7 +78,28 @@ export const EVLIGHT_FRESNEL_FIXTURES=[
       sourceUrls:[SP350,SP_SERIES]
     }
   }),
-  fixture('evlight-sp350bi','SP350BI',350,2700,6500,'Bi-Color',15,55,SP350BI,{zoom:'Manual or motorized option',pwm:'1-20 kHz',weightKg:9.2}),
+  fixture('evlight-sp350bi','SP350BI',350,2700,6400,'Bi-Color',15,55,SP350BI,{
+    cri:96,
+    zoom:'Electric zoom / manual zoom optional',
+    pwm:'1-20 kHz',
+    dimmingDepth:'8-bit / 16-bit',
+    localControl:['LCD TFT display','Master/slave mode','Auto run mode','Sound control mode'],
+    dmxChannels:[5,9],
+    weightKg:9.2,
+    control:{
+      wired:['DMX512','RDM'],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['Wired DMX interface for DMX512/RDM control'],
+      unavailableDirectProtocols:[
+        'Official EV Light SP350BI product information does not publish Art-Net or sACN network input',
+        'Official EV Light SP350BI product information does not publish CRMX/LumenRadio, Bluetooth or Wi-Fi control'
+      ],
+      sourceUrls:[SP350BI]
+    }
+  }),
   fixture('evlight-sp350fc','SP350FC',350,2200,8500,'RGBLA Full Color',15,55,SP_SERIES,{ledEngine:'RGBLA 5-in-1',tlci:98}),
   fixture('evlight-sp500bi','SP500BI',500,2700,6500,'Bi-Color',15,55,SP_SERIES,{weightKg:10.2}),
   fixture('evlight-sp600','SP600',600,3000,3000,'Tungsten White',15,55,SP_SERIES,{cri:97,tlci:98})

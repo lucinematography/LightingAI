@@ -213,6 +213,28 @@ for(const fixtureId of ['godox-la150r','godox-la200r','godox-la300r','godox-la30
   const control=fixture?.control||{};
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox LA Bluetooth protocol limitation missing: '+fixtureId);
 }
+{
+  const fixture=fixtures.find(x=>x.id==='godox-tl30');
+  const control=fixture?.control||{};
+  if(control.wired?.length) failures.push('Godox TL30 must not claim wired control');
+  if(!control.wireless?.includes('Bluetooth/App')) failures.push('Godox TL30 Bluetooth/App path missing');
+  if(control.builtInCRMX) failures.push('Godox TL30 must not claim built-in CRMX');
+  if(!control.builtInBluetooth) failures.push('Godox TL30 built-in Bluetooth flag missing');
+  if(control.directLightingAI?.length) failures.push('Godox TL30 must not claim direct LightingAI transport');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox TL30 Bluetooth protocol limitation missing');
+}
+for(const fixtureId of ['godox-tl60','godox-tl120','godox-tl180']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(!control.wired?.includes('DMX512')) failures.push('Godox TL DMX512 path missing: '+fixtureId);
+  for(const item of ['2.4G Remote','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox TL wireless path missing: '+fixtureId+' '+item);
+  if(control.builtInCRMX) failures.push('Godox TL must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox TL built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox TL must not claim direct LightingAI network transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512 control')) failures.push('Godox TL wired DMX requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox TL 2.4GHz remote requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox TL public-protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

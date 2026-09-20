@@ -78,7 +78,7 @@ export const DESISTI_PICCOLETTO_FIXTURES = [
     ipRating:'IP20',
     weightKg:0.95,
     control:['DMX512','On-board'],
-    dmxModes:[{name:'Color',channels:4}],
+    dmxModes:[{name:'Color',channels:4,verified:true,sourceUrl:C_SRC}],
     sourceUrl:C_SRC
   }
 ];

@@ -25,11 +25,18 @@ export const ASTERA_HYDRAPANEL_FIXTURES = [
     dimensionsMm: { width: 166, height: 85, depth: 44 },
     weightKg: 0.6,
     control: {
-      wired: ['DMX via FP1-PWB, FP3-DTL or PWB-2-86'],
-      wireless: ['AsteraApp', 'Wireless DMX', 'CRMX', 'Bluetooth Bridge'],
+      wired: ['DMX via FP1-PWB / FP3-DTL / PWB-2-86', 'Art-Net via PowerBox bridge', 'sACN via PowerBox bridge'],
+      wireless: ['AsteraApp', 'CRMX', 'UHF', 'Bluetooth', 'Wi-Fi'],
       builtInWirelessDMX: true,
       builtInCRMX: true,
-      builtInBluetoothBridge: true
+      builtInBluetoothBridge: true,
+      directLightingAI: ['Art-Net via PowerBox bridge', 'sACN via PowerBox bridge'],
+      externalInterfaceRequired: ['Wired DMX interface or Astera PowerBox', 'CRMX transmitter for CRMX control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/wp-content/uploads/FP6_HydraPanel_Datasheet_V1.pdf',
+        'https://update.astera-led.com/firmwares/current/release_notes.html'
+      ]
     },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',

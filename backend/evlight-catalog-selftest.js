@@ -285,6 +285,23 @@ else{
   if(gemx24hard.ipRating!=='IP65') failures.push('EV Light GEMX24 HARD IP65 rating missing');
   if(gemx24hard.pwm!=='24 kHz') failures.push('EV Light GEMX24 HARD PWM detail missing');
 }
+const gemx24st=fixtures.find(x=>x.id==='evlight-gemx24-st');
+if(!gemx24st) failures.push('Missing EV Light GEMX24 ST control-route fixture');
+else{
+  const control=gemx24st.control||{};
+  for(const item of ['DMX512','RDM']) if(!control.wired?.includes(item)) failures.push('EV Light GEMX24 ST wired control path missing: '+item);
+  for(const item of ['App control','WiFi-DMX','Wireless DMX']) if(!control.wireless?.includes(item)) failures.push('EV Light GEMX24 ST wireless/app control path missing: '+item);
+  if(control.builtInCRMX) failures.push('EV Light GEMX24 ST must not claim CRMX/LumenRadio from unspecified Wireless DMX');
+  if(control.builtInBluetooth) failures.push('EV Light GEMX24 ST must not claim built-in Bluetooth without manufacturer documentation');
+  if(control.directLightingAI?.length) failures.push('EV Light GEMX24 ST must not claim direct LightingAI Art-Net/sACN transport');
+  if(!control.externalInterfaceRequired?.some(x=>String(x).includes('Art-Net/sACN'))) failures.push('EV Light GEMX24 ST LightingAI bridge requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light GEMX24 ST wireless-DMX qualification missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light GEMX24 ST network-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/led-soft-light-panel/68692360.html')) failures.push('EV Light GEMX24 ST official model source missing');
+  if(Number(gemx24st.powerW)!==1300) failures.push('EV Light GEMX24 ST power must be 1300W');
+  if(Number(gemx24st.beamAngleDeg)!==110) failures.push('EV Light GEMX24 ST beam angle must be 110 degrees');
+  if(gemx24st.ipRating!=='IP65') failures.push('EV Light GEMX24 ST IP65 rating missing');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

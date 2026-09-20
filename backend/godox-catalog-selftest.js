@@ -74,6 +74,18 @@ for(const fixtureId of ['godox-p600r-hard','godox-p1200r-hard']){
   if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox P Hard CRMX transmitter requirement missing: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox P Hard Bluetooth protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-f200bi','godox-f400bi','godox-f600bi']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(!control.wired?.includes('DMX512')) failures.push('Godox flexible Bi wired DMX path missing: '+fixtureId);
+  for(const item of ['2.4G Remote','Bluetooth/App','CRMX via optional TimoLink RX']) if(!control.wireless?.includes(item)) failures.push('Godox flexible Bi wireless path missing: '+fixtureId+' '+item);
+  if(control.builtInCRMX) failures.push('Godox flexible Bi must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox flexible Bi built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox flexible Bi must not claim direct LightingAI network transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512 control')) failures.push('Godox flexible Bi wired DMX interface requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('CRMX transmitter plus Godox TimoLink RX for CRMX control')) failures.push('Godox flexible Bi CRMX/TimoLink requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox flexible Bi public-protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

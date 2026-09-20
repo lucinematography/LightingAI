@@ -318,6 +318,20 @@ for (const fixtureId of ['astera-lunabulb-fp7-e26','astera-lunabulb-fp7-e27','as
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera QuikBeam public-protocol limitation note missing');
 }
 
+// Astera QuikPunch control audit: preserve DMX/RDM and radio capabilities with explicit LightingAI limits.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-quikpunch');
+  const control = fixture?.control || {};
+  for (const item of ['DMX','RDM']) if (!control.wired?.includes(item)) failures.push(`Astera QuikPunch wired path missing: ${item}`);
+  for (const item of ['AsteraApp','CRMX','UHF','Bluetooth','WiFi']) if (!control.wireless?.includes(item)) failures.push(`Astera QuikPunch wireless/input path missing: ${item}`);
+  if (!control.builtInCRMX || !control.builtInBTB) failures.push('Astera QuikPunch CRMX/BTB capability flags missing');
+  if (control.directLightingAI?.length) failures.push('Astera QuikPunch must not claim direct LightingAI transport without a documented public network/API path');
+  for (const item of ['Wired DMX interface for DMX control','CRMX transmitter for CRMX control']) {
+    if (!control.externalInterfaceRequired?.includes(item)) failures.push(`Astera QuikPunch external interface requirement missing: ${item}`);
+  }
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera QuikPunch public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

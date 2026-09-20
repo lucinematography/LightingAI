@@ -12,12 +12,21 @@ function fixture(id,model,powerW,widthMm,heightMm,sourceUrl){
     cri:98,tlci:98,beamAngleDeg:140,dimming:'1-100%',
     cooling:'Passive',
     formFactor:`${widthMm} x ${heightMm} mm flexible LED panel`,
-    control:['Bluetooth/App','On-board','Optional DMX512','Optional Wired Controller'],
-    // Requires optional ALL-DMXAT attachment or ALL-WDIM controller (2024 model manuals, printed p. 5).
-    // Widths only: no ALL-IN COLOR / MOSAIC personalities or channel values are inferred.
+    control:['Bluetooth/App','On-board','Optional DMX512','LumenRadio via ALL-WDIM','Optional Wired Controller'],
+    controlNotes:'ALL-WDIM provides cable DMX or LumenRadio. While ALL-WDIM is connected, the official manual says Bluetooth app access to the panel is unavailable.',
+    // Requires optional ALL-DMXAT attachment or ALL-WDIM controller. The controller manual documents
+    // Bi-Color controls as intensity + CCT and RGB controls as red + green + blue. Exact Kelvin-vs-DMX
+    // transfer is not published, so the CCT channel is deliberately exposed only as a normalized position.
     dmxModes:[
-      {name:'2ch White Bi-Color (optional DMX)',channels:2,verified:true,sourceUrl},
-      {name:'3ch RGB (optional DMX)',channels:3,verified:true,sourceUrl}
+      {name:'2ch White Bi-Color (optional DMX)',channels:2,verified:true,sourceUrl:ALL_IN_CONTROLLER,controlScope:'documented-functions-normalized-cct',controls:[
+        {key:'dimmer',label:'Dimmer',channel:1,type:'percent',bits:8,min:0,max:100,dmxMin:0,dmxMax:255},
+        {key:'cctPosition',label:'CCT position (warm to cool)',labelSr:'CCT položaj (toplo ka hladnom)',channel:2,type:'percent',bits:8,min:0,max:100,dmxMin:0,dmxMax:255}
+      ],requiredChannels:[]},
+      {name:'3ch RGB (optional DMX)',channels:3,verified:true,sourceUrl:ALL_IN_CONTROLLER,controlScope:'documented-functions',controls:[
+        {key:'red',label:'Red',channel:1,type:'percent',bits:8,min:0,max:100,dmxMin:0,dmxMax:255},
+        {key:'green',label:'Green',channel:2,type:'percent',bits:8,min:0,max:100,dmxMin:0,dmxMax:255},
+        {key:'blue',label:'Blue',channel:3,type:'percent',bits:8,min:0,max:100,dmxMin:0,dmxMax:255}
+      ],requiredChannels:[]}
     ],
     powerSupply:'100-240V AC / 12-15V DC'
   };

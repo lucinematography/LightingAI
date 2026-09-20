@@ -4,6 +4,7 @@ const FABRIC20='https://aladdin-lights.com/wp-content/uploads/2022/08/FABRIC-LIT
 const FABRIC35='https://aladdin-lights.com/wp-content/uploads/2018/03/Aladdin-Cat2018.pdf';
 const DIM200='https://aladdin-lights.com/wp-content/uploads/2022/08/DIMMER-UNIT-200W-Manual-SINGLE-PAGE.pdf';
 const DIM350='https://aladdin-lights.com/wp-content/uploads/2022/08/DIMMER-UNIT-350W-Manual-SINGLE-PAGE.pdf';
+const FABRIC_DMX='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
 
 function fixture(id,model,cctMin,cctMax,powerW,sourceUrl,extra={}){
   return {
@@ -12,6 +13,10 @@ function fixture(id,model,cctMin,cctMax,powerW,sourceUrl,extra={}){
     colorMode:'Bi-Color',powerW,sourceUrl,
     cri:98,tlci:98,beamAngleDeg:140,
     control:['DMX512','LumenRadio','On-board Dimmer'],
+    dmxModes:[{name:'2ch Dimmer + CCT',channels:2,verified:true,sourceUrl:FABRIC_DMX,controls:[
+      {key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+      {key:'cct',label:'CCT',channel:2,type:'cct-linear',min:2900,max:6000,dmxMin:0,dmxMax:255}
+    ]}],
     ...extra
   };
 }

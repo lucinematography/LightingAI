@@ -5,6 +5,7 @@ const EPRO100='https://www.evlightpro.com/profile-spot-light/63349887.html';
 const EPRO200Z='https://www.evlightpro.com/ellipsoidal-led/62310805.html';
 const SP300Z='https://www.evlightpro.com/profile-spot-light/62506587.html';
 const EPRO300Z='https://www.evlightpro.com/profile-spot-light/62480750.html';
+const EPRO350FC='https://www.evlightpro.com/profile-spot-light/63631474.html';
 
 function fixture(id,model,extra){
   return {
@@ -136,7 +137,22 @@ export const EVLIGHT_PROFILE_FIXTURES=[
   }),
   fixture('evlight-epro350fc','EPRO350FC',{
     powerW:430,ledEnginePowerW:500,colorMode:'RGBLA Full Color',cri:90,
-    optics:'Ellipsoidal leko profile optics',sourceUrl:STUDIO
+    control:{
+      wired:['DMX512','RDM'],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['Wired DMX interface for DMX512/RDM control'],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented Art-Net or sACN network input is published for EPRO350FC',
+        'No manufacturer-documented CRMX/LumenRadio, Bluetooth or Wi-Fi control path is published for EPRO350FC'
+      ],
+      sourceUrls:[EPRO350FC]
+    },
+    localControl:['Self Running','Master-Slave'],
+    dmxChannelOptions:['6CH','10CH'],
+    optics:'Ellipsoidal leko profile optics',sourceUrl:EPRO350FC
   })
 ];
 

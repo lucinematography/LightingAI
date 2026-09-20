@@ -4,6 +4,8 @@ const PB200='https://kinoflo.com/parabeam-200-series/';
 const PB210='https://kinoflo.com/product-category/products/parts/parabeam/';
 const PB400='https://kinoflo.com/parabeam-400-series/';
 const PB410='https://kinoflo.com/parabeam-410-series/';
+const PB_OLD_MANUAL='https://kinoflo.com/wp-content/uploads/2022/07/3100026-ParaBeam-400-200-Rev-10-05-2005-Web-Quality-Old.pdf';
+const PB_NEW_MANUAL='https://kinoflo.com/wp-content/uploads/2022/07/3100026-ParaBeam-400-200-Rev-10-05-2005-Web-Quality.pdf';
 const PZ200='https://kinoflo.com/parazip-200-series/';
 const PZ215='https://kinoflo.com/product-category/products/parts/parazip/';
 const PZ400='https://kinoflo.com/parazip-400-series/';
@@ -27,10 +29,10 @@ function acc(id,model,family,category,compatibleWith,sourceUrl,effectOnLight,ext
 }
 
 export const KINOFLO_PARABEAM_PARAZIP_FIXTURES=[
-  fixture('kinoflo-parabeam-200-dmx','ParaBeam 200 DMX','ParaBeam',PB200),
-  fixture('kinoflo-parabeam-210-dmx','ParaBeam 210 DMX','ParaBeam',PB210),
-  fixture('kinoflo-parabeam-400-dmx','ParaBeam 400 DMX','ParaBeam',PB400),
-  fixture('kinoflo-parabeam-410-dmx','ParaBeam 410 DMX','ParaBeam',PB410),
+  fixture('kinoflo-parabeam-200-dmx','ParaBeam 200 DMX','ParaBeam',PB200,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:PB_OLD_MANUAL}]}),
+  fixture('kinoflo-parabeam-210-dmx','ParaBeam 210 DMX','ParaBeam',PB210,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:PB_NEW_MANUAL}]}),
+  fixture('kinoflo-parabeam-400-dmx','ParaBeam 400 DMX','ParaBeam',PB400,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:PB_OLD_MANUAL},{name:'2ch inner/outer lamp pairs',channels:2,verified:true,sourceUrl:PB_OLD_MANUAL}]}),
+  fixture('kinoflo-parabeam-410-dmx','ParaBeam 410 DMX','ParaBeam',PB410,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:PB_NEW_MANUAL},{name:'2ch inner/outer lamp pairs',channels:2,verified:true,sourceUrl:PB_NEW_MANUAL}]}),
   fixture('kinoflo-parazip-200-dmx','ParaZip 200 DMX','ParaZip',PZ200,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:PZ_OLD_MANUAL}]}),
   fixture('kinoflo-parazip-215-dmx','ParaZip 215 DMX','ParaZip',PZ215,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:PZ_NEW_MANUAL}]}),
   fixture('kinoflo-parazip-400-dmx','ParaZip 400 DMX','ParaZip',PZ400,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:PZ_OLD_MANUAL},{name:'2ch inner/outer lamp pairs',channels:2,verified:true,sourceUrl:PZ_OLD_MANUAL}]}),

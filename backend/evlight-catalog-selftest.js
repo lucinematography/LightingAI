@@ -335,6 +335,23 @@ else{
   if(!Array.isArray(sp150bi.dmxChannels)||!sp150bi.dmxChannels.includes(3)||!sp150bi.dmxChannels.includes(7)) failures.push('EV Light SP150BI DMX channel options must include 3 and 7');
   if(sp150bi.dmxConnection!=='Neutrik 3-pin or 5-pin XLR in/out') failures.push('EV Light SP150BI DMX connector detail missing');
 }
+const sp150fc=fixtures.find(x=>x.id==='evlight-sp150fc');
+if(!sp150fc) failures.push('Missing EV Light SP150FC control-route fixture');
+else{
+  const control=sp150fc.control||{};
+  if(control.wired?.length) failures.push('EV Light SP150FC must not claim an unverified wired control protocol');
+  if(control.wireless?.length) failures.push('EV Light SP150FC must not claim an unverified wireless control protocol');
+  if(control.builtInCRMX) failures.push('EV Light SP150FC must not claim built-in CRMX/LumenRadio');
+  if(control.builtInBluetooth) failures.push('EV Light SP150FC must not claim built-in Bluetooth');
+  if(control.directLightingAI?.length) failures.push('EV Light SP150FC must not claim direct LightingAI transport');
+  if(!control.externalInterfaceRequired?.some(x=>String(x).includes('manufacturer-verified'))) failures.push('EV Light SP150FC verified-interface requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('DMX512/RDM'))) failures.push('EV Light SP150FC unpublished wired-control limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light SP150FC network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light SP150FC wireless-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/fresnel-led/')) failures.push('EV Light SP150FC official source missing');
+  if(!sp150fc.localControl?.includes('Stand-alone control with LCD display')) failures.push('EV Light SP150FC local LCD control missing');
+  if(Number(sp150fc.powerW)!==200) failures.push('EV Light SP150FC power must be 200W');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -134,6 +134,22 @@ if (RUNTIME_CATALOG.duplicateAccessoryIds.length) failures.push(`Duplicate acces
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera AX9 public-protocol limitation note missing');
 }
 
+// Astera AX2 PixelBar control audit: preserve documented AsteraBox/UHF and CRMX paths.
+for (const fixtureId of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar']) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const control = fixture?.control || {};
+  if (!control.wired?.includes('DMX')) failures.push(`Astera AX2 wired DMX path missing: ${fixtureId}`);
+  for (const item of ['AsteraApp via AsteraBox/UHF','CRMX']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera AX2 wireless/input path missing: ${fixtureId} ${item}`);
+  }
+  if (!control.builtInCRMX) failures.push(`Astera AX2 built-in CRMX flag missing: ${fixtureId}`);
+  if (control.directLightingAI?.length) failures.push(`Astera AX2 must not claim direct LightingAI transport: ${fixtureId}`);
+  for (const item of ['Wired DMX interface for DMX control','CRMX transmitter for CRMX control','AsteraBox for AsteraApp/UHF control']) {
+    if (!control.externalInterfaceRequired?.includes(item)) failures.push(`Astera AX2 external interface requirement missing: ${fixtureId} ${item}`);
+  }
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push(`Astera AX2 public-protocol limitation note missing: ${fixtureId}`);
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

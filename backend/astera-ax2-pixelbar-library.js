@@ -22,7 +22,18 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     batteryRuntimeHours: { max: 20 },
     dimensionsMm: { length: 500, width: 165, height: 65 },
     weightKg: 4.5,
-    control: { wired: ['DMX'], wireless: ['AsteraApp', 'CRMX'], builtInCRMX: true },
+    control: {
+      wired: ['DMX'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX'],
+      builtInCRMX: true,
+      directLightingAI: [],
+      externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX transmitter for CRMX control', 'AsteraBox for AsteraApp/UHF control'],
+      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://update.astera-led.com/release_notes/ax2_50/release_notes',
+        'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf'
+      ]
+    },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,
@@ -55,7 +66,18 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     batteryRuntimeHours: { max: 20 },
     dimensionsMm: { length: 1000, width: 165, height: 65 },
     weightKg: 7.4,
-    control: { wired: ['DMX'], wireless: ['AsteraApp', 'CRMX'], builtInCRMX: true },
+    control: {
+      wired: ['DMX'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX'],
+      builtInCRMX: true,
+      directLightingAI: [],
+      externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX transmitter for CRMX control', 'AsteraBox for AsteraApp/UHF control'],
+      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://update.astera-led.com/release_notes/ax2_50/release_notes',
+        'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf'
+      ]
+    },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,

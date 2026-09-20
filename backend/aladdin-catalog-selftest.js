@@ -94,6 +94,33 @@ for(const id of ['aladdin-fabric-lite-20','aladdin-fabric-lite-35']){
   }
 }
 
+
+// BI-FLEX M3/M7: official Aladdin DMX map defines CH1 dimmer and CH2 linear CCT 2900-5600 K.
+const biFlexMxDmxSource='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
+for(const id of ['aladdin-bi-flex-m3','aladdin-bi-flex-m7']){
+  const fixture=fixtures.find(item=>item.id===id);
+  const mode=fixture?.dmxModes?.find(item=>item?.name==='2ch Dimmer + CCT');
+  if(!mode||fixture.dmxModes.length!==1||mode.channels!==2||mode.verified!==true||mode.sourceUrl!==biFlexMxDmxSource){
+    failures.push('Incorrect verified Aladdin BI-FLEX M3/M7 DMX mode/source: '+id);
+    continue;
+  }
+  const dimmer=mode.controls?.find(item=>item?.key==='dimmer');
+  const cct=mode.controls?.find(item=>item?.key==='cct');
+  if(!dimmer||dimmer.channel!==1||dimmer.type!=='percent'||dimmer.min!==0||dimmer.max!==100||dimmer.dmxMin!==0||dimmer.dmxMax!==255){
+    failures.push('Incorrect Aladdin BI-FLEX M3/M7 dimmer mapping: '+id);
+  }
+  if(!cct||cct.channel!==2||cct.type!=='cct-linear'||cct.min!==2900||cct.max!==5600||cct.dmxMin!==0||cct.dmxMax!==255){
+    failures.push('Incorrect Aladdin BI-FLEX M3/M7 CCT mapping: '+id);
+  }
+  if(mode.controls?.length!==2||mode.requiredChannels?.length){
+    failures.push('Unexpected Aladdin BI-FLEX M3/M7 extra DMX mapping data: '+id);
+  }
+}
+for(const id of ['aladdin-bi-flex-1','aladdin-bi-flex-2','aladdin-bi-flex-4']){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(fixture?.dmxModes?.length) failures.push('Legacy BI-FLEX exact DMX map must remain unchanged until separately sourced: '+id);
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Aladdin',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -4,6 +4,7 @@ const BI_FLEX_CATALOG='https://aladdin-lights.com/wp-content/uploads/2022/05/Ala
 const BI_FLEX_SPEC='https://aladdin-lights.com/wp-content/uploads/2019/06/Aladdin-lights-specifications.pdf';
 const M7_MANUAL='https://aladdin-lights.com/wp-content/uploads/2023/06/BI-FLEX-M7-Manual-.pdf';
 const M7_ACCESSORIES='https://aladdin-lights.com/wp-content/uploads/2024/12/Accessory-Chart-BI-FLEX-M7-1.pdf';
+const BI_FLEX_DMX='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
 
 function fixture(id,model,powerW,cctMin,cctMax,sourceUrl,extra={}){
   return {
@@ -20,8 +21,8 @@ function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
 }
 
 export const ALADDIN_BI_FLEX_FIXTURES=[
-  fixture('aladdin-bi-flex-m3','BI-FLEX M3',30,2900,5600,BI_FLEX_CATALOG,{formFactor:'30 x 12.5 cm flexible LED panel',control:['On-board Dimmer','Optional DMX Module'],powerSupply:'100-240V AC / 12-30V DC battery'}),
-  fixture('aladdin-bi-flex-m7','BI-FLEX M7',70,2900,5600,M7_MANUAL,{formFactor:'30 x 30 cm flexible LED panel',control:['On-board Dimmer','Optional DMX Module'],powerSupply:'100-240V AC / 12-30V DC battery'}),
+  fixture('aladdin-bi-flex-m3','BI-FLEX M3',30,2900,5600,BI_FLEX_CATALOG,{formFactor:'30 x 12.5 cm flexible LED panel',control:['On-board Dimmer','Optional DMX Module'],dmxModes:[{name:'2ch Dimmer + CCT',channels:2,verified:true,sourceUrl:BI_FLEX_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},{key:'cct',label:'CCT',channel:2,type:'cct-linear',min:2900,max:5600,dmxMin:0,dmxMax:255}]}],powerSupply:'100-240V AC / 12-30V DC battery'}),
+  fixture('aladdin-bi-flex-m7','BI-FLEX M7',70,2900,5600,M7_MANUAL,{formFactor:'30 x 30 cm flexible LED panel',control:['On-board Dimmer','Optional DMX Module'],dmxModes:[{name:'2ch Dimmer + CCT',channels:2,verified:true,sourceUrl:BI_FLEX_DMX,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},{key:'cct',label:'CCT',channel:2,type:'cct-linear',min:2900,max:5600,dmxMin:0,dmxMax:255}]}],powerSupply:'100-240V AC / 12-30V DC battery'}),
   fixture('aladdin-bi-flex-1','BI-FLEX 1',50,2900,6100,BI_FLEX_SPEC,{formFactor:'30 x 30 cm flexible LED panel',control:['On-board Dimmer']}),
   fixture('aladdin-bi-flex-2','BI-FLEX 2',100,2820,6000,BI_FLEX_SPEC,{formFactor:'56 x 30 cm flexible LED panel',control:['DMX512','On-board Dimmer'],powerSupply:'100-240V AC / 12-30V DC battery'}),
   fixture('aladdin-bi-flex-4','BI-FLEX 4',200,2900,6000,BI_FLEX_SPEC,{formFactor:'108 x 30 cm flexible LED panel',control:['DMX512','On-board Dimmer'],powerSupply:'90-260V AC / 12-30V DC battery'})

@@ -1319,6 +1319,33 @@ for(const id of ['aladdin-fabric-lite-20','aladdin-fabric-lite-35']){
   }
 }
 
+
+// Aladdin BI-FLEX M3/M7 exact 2-channel DMX mapping.
+const aladdinBiFlexMxDmxSource='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
+for(const id of ['aladdin-bi-flex-m3','aladdin-bi-flex-m7']){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  const mode=fixture?.dmxModes?.find(item=>item?.name==='2ch Dimmer + CCT');
+  if(!mode||fixture.dmxModes.length!==1||mode.channels!==2||mode.verified!==true||mode.sourceUrl!==aladdinBiFlexMxDmxSource){
+    failures.push('Verified Aladdin BI-FLEX M3/M7 DMX mode/source missing: '+id);
+    continue;
+  }
+  const dimmer=mode.controls?.find(item=>item?.key==='dimmer');
+  const cct=mode.controls?.find(item=>item?.key==='cct');
+  if(!dimmer||dimmer.channel!==1||dimmer.type!=='percent'||dimmer.min!==0||dimmer.max!==100||dimmer.dmxMin!==0||dimmer.dmxMax!==255){
+    failures.push('Verified Aladdin BI-FLEX M3/M7 dimmer mapping missing: '+id);
+  }
+  if(!cct||cct.channel!==2||cct.type!=='cct-linear'||cct.min!==2900||cct.max!==5600||cct.dmxMin!==0||cct.dmxMax!==255){
+    failures.push('Verified Aladdin BI-FLEX M3/M7 CCT mapping missing: '+id);
+  }
+  if(mode.controls?.length!==2||mode.requiredChannels?.length){
+    failures.push('Unexpected Aladdin BI-FLEX M3/M7 extra DMX mapping data: '+id);
+  }
+}
+for(const id of ['aladdin-bi-flex-1','aladdin-bi-flex-2','aladdin-bi-flex-4']){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  if(fixture?.dmxModes?.length) failures.push('Legacy Aladdin BI-FLEX exact DMX map must remain unchanged until separately sourced: '+id);
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

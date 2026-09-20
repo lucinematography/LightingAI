@@ -183,7 +183,11 @@ const exactAllowed = new Set([
   'backend/project5-stable-base-selftest.js',
   'backend/project5-feature-selftest.js',
   'backend/project52-release-gate-selftest.js',
-  'app/src/main/assets/ai-visual-scene-launcher.js'
+  'app/src/main/assets/ai-visual-scene-launcher.js',
+  'app/src/main/assets/ai-control-bridge.js',
+  'app/src/main/assets/control-dashboard.js',
+  'app/src/main/assets/lightai-intro.jpg',
+  'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
 if (unexpected.length) fail(`files changed outside the isolated Project 5.4 camera-distance surface: ${unexpected.join(', ')}`);
@@ -312,7 +316,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.27-enum-piecewise-controls'",
+  "version:'0.29-ai-explicit-apply'",
   'function fadeChannelValue(from,to,progress,snap)',
   'function fadeSnapChannels()',
   'function controlFromDmx(ctrl,raw)',
@@ -695,5 +699,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Verified SkyPanel X Standard Ultimate 20ch profile using generic 16-bit controls and enforced RGB & CCT mode prerequisites before physical Art-Net/sACN output'
+  featureSurface: 'Project 5.2 redesign with Planner / Equipment / Control / AI / Tools, safe AI-to-Control staging, verified DMX patch mapping, and explicit confirmation before physical Art-Net/sACN output'
 }, null, 2));

@@ -33,10 +33,11 @@ function fixtureCard(row){
  var ext=r.external.length?'<div class="muted small" style="margin-top:7px"><b>'+(sr()?'Potreban interfejs: ':'Interface required: ')+'</b>'+esc(r.external.join(' • '))+'</div>':'';
  var mode=modes.length?'<div class="muted small" style="margin-top:7px"><b>'+(sr()?'DMX profili: ':'DMX profiles: ')+'</b>'+modes.length+'</div>':'';
  var mapped=patch?'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#10251d;color:#b8f0d1;font-size:11px"><b>'+(sr()?'DMX PATCH POVEZAN':'DMX PATCH MAPPED')+'</b> · U'+Number(patch.universe||1)+' · '+(sr()?'adresa ':'address ')+Number(patch.start||1)+(patch.mode?' · '+esc(patch.mode):'')+(controls.length?' · '+esc(controls.join(' / ')):'')+'</div>':'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#342e18;color:#f5dd91;font-size:11px">'+(sr()?'Nije povezan sa DMX Patch-om.':'Not mapped in DMX Patch.')+'</div>';
+ var open=patch?'<button class="btn secondary control-open-fixture" data-fixture="'+esc(f.id)+'" type="button" style="width:100%;margin-top:8px">'+(sr()?'OTVORI KONTROLU UREĐAJA':'OPEN FIXTURE CONTROL')+'</button>':'';
  return '<div class="card" style="margin-bottom:10px;border-color:#303842">'+
    '<div style="display:flex;gap:10px;justify-content:space-between;align-items:flex-start"><div><div style="font-weight:900;font-size:16px">'+esc(name)+'</div><div class="muted small">'+esc(f.family||f.type||'')+'</div></div>'+statusBadge(r)+'</div>'+
    '<div style="margin-top:10px;font-size:12px;line-height:1.45"><b>'+(sr()?'LightingAI kontrola: ':'LightingAI control: ')+'</b>'+esc(direct)+'</div>'+
-   ext+mode+mapped+
+   ext+mode+mapped+open+
    '</div>';
 }
 function jump(id){var x=E(id);if(x){x.open=true;x.scrollIntoView({behavior:'smooth',block:'start'})}}
@@ -56,9 +57,10 @@ function render(){
  var n=E('controlJumpNetwork'),b=E('controlJumpBle');
  if(n)n.onclick=function(){jump('artnetCard')};
  if(b)b.onclick=function(){jump('bleControlCard')};
+ card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl;if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.2-patch-aware'};
+window.LightingAIControlDashboard={render:render,version:'0.3-fixture-open'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(render,900);
 var old=window.setLanguage;

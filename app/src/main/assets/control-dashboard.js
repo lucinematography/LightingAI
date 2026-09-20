@@ -41,6 +41,10 @@ function fixtureCard(row){
    '</div>';
 }
 function jump(id){var x=E(id);if(x){x.open=true;x.scrollIntoView({behavior:'smooth',block:'start'})}}
+function liveStatus(){
+ var api=window.LightingAIArtNetControl,armed=!!(api&&typeof api.isArmed==='function'&&api.isArmed()),protocol=E('networkDmxProtocol'),value=protocol?String(protocol.value||'artnet').toUpperCase():'—';
+ return {armed:armed,protocol:value};
+}
 function render(){
  var host=E('controlContent');if(!host)return false;
  var card=E(CARD_ID);
@@ -48,11 +52,12 @@ function render(){
  var rows=selectedFixtures(), count=rows.length;
  var title=sr()?'IZABRANA RASVETA':'SELECTED FIXTURES';
  var empty=sr()?'Nema izabranih rasvetnih tela. Dodaj ih u Oprema pa se vrati u Kontrolu.':'No selected fixtures. Add them in Equipment, then return to Control.';
- var patched=rows.filter(function(row){return !!patchForFixture(row.fixture)}).length,verified=rows.filter(function(row){var p=patchForFixture(row.fixture);return !!(p&&profileForPatch(row.fixture,p))}).length;
+ var patched=rows.filter(function(row){return !!patchForFixture(row.fixture)}).length,verified=rows.filter(function(row){var p=patchForFixture(row.fixture);return !!(p&&profileForPatch(row.fixture,p))}).length,live=liveStatus();
  card.innerHTML='<div class="card" style="border-color:#66571f;background:linear-gradient(180deg,#191b20,#13161b)">'+
    '<div style="font-size:20px;font-weight:900;color:#f5c542">'+title+' <span style="font-size:13px;color:#9299a3">('+count+')</span></div>'+
    '<div class="muted small" style="margin-top:6px">'+(sr()?'Ovaj ekran koristi stvarno izabranu opremu iz kataloga i prikazuje samo verifikovane kontrolne puteve.':'This screen uses the actual selected catalog equipment and shows only verified control routes.')+'</div>'+
    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px"><div style="padding:8px;border:1px solid #30343b;border-radius:10px;text-align:center"><b>'+count+'</b><div class="muted small">'+(sr()?'Izabrano':'Selected')+'</div></div><div style="padding:8px;border:1px solid #30343b;border-radius:10px;text-align:center"><b>'+patched+'</b><div class="muted small">DMX Patch</div></div><div style="padding:8px;border:1px solid #30343b;border-radius:10px;text-align:center"><b>'+verified+'</b><div class="muted small">'+(sr()?'Verifikovano':'Verified')+'</div></div></div>'+
+   '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:8px;padding:8px 10px;border-radius:10px;background:'+(live.armed?'#10251d':'#20191a')+'"><span class="muted small">'+(sr()?'IZLAZ':'OUTPUT')+' · '+esc(live.protocol)+'</span><b style="font-size:11px;color:'+(live.armed?'#b8f0d1':'#ffb5b5')+'">'+(live.armed?(sr()?'AKTIVAN':'ARMED'):(sr()?'ZAKLJUČAN':'LOCKED'))+'</b></div>'+
    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px"><button id="controlJumpFixtures" class="btn secondary" type="button">'+(sr()?'UREĐAJI':'FIXTURES')+'</button><button id="controlJumpGroups" class="btn secondary" type="button">'+(sr()?'GRUPE':'GROUPS')+'</button><button id="controlJumpScenes" class="btn secondary" type="button">'+(sr()?'SCENE':'SCENES')+'</button><button id="controlJumpProtocols" class="btn secondary" type="button">'+(sr()?'PROTOKOLI':'PROTOCOLS')+'</button></div>'+
    '<div class="actions" style="margin-top:8px"><button id="controlJumpNetwork" class="btn primary" type="button">'+(sr()?'MREŽNA KONTROLA':'NETWORK CONTROL')+'</button><button id="controlJumpBle" class="btn secondary" type="button">BLE</button></div>'+
    '</div>'+
@@ -67,7 +72,7 @@ function render(){
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl;if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.4-control-sections'};
+window.LightingAIControlDashboard={render:render,version:'0.5-output-status'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(render,900);
 var old=window.setLanguage;

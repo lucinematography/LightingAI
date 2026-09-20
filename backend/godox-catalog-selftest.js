@@ -129,6 +129,18 @@ for(const fixtureId of ['godox-ms60bi','godox-ms60r']){
   if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox MS60 CRMX transmitter requirement missing: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox MS60 Bluetooth protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-m200d','godox-m300d','godox-m200bi','godox-m300bi']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(!control.wired?.includes('DMX512')) failures.push('Godox M200/M300 DMX path missing: '+fixtureId);
+  for(const item of ['2.4G Remote','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox M200/M300 wireless path missing: '+fixtureId+' '+item);
+  if(control.builtInCRMX) failures.push('Godox M200/M300 must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox M200/M300 built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox M200/M300 must not claim direct LightingAI network transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512 control')) failures.push('Godox M200/M300 wired DMX interface requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox M200/M300 2.4GHz remote requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox M200/M300 public-protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

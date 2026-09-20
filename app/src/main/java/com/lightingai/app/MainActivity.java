@@ -202,20 +202,19 @@ public class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER);
         title.setScaleX(0.08f);
         title.setScaleY(0.08f);
-        title.setAlpha(0f);
+        title.setAlpha(1f);
 
         FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.CENTER
         );
         splash.addView(title, titleParams);
 
         title.animate()
-            .alpha(1f)
-            .scaleX(6.2f)
-            .scaleY(6.2f)
-            .setDuration(2200)
+            .scaleX(1.0f)
+            .scaleY(1.0f)
+            .setDuration(3200)
             .start();
 
         return splash;
@@ -231,7 +230,7 @@ public class MainActivity extends Activity {
                 }
                 startupSplash = null;
             }).start();
-        }, 2350);
+        }, 4000);
     }
 
     private boolean hasLocationPermission() {

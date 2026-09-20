@@ -27,9 +27,16 @@ export const ASTERA_AX10_SPOTMAX_FIXTURES = [
     dimensionsMm: { length: 279, width: 253, height: 296 },
     control: {
       wired: [],
-      wireless: ['AsteraApp', 'CRMX', 'W-DMX', 'UHF'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX', 'W-DMX', 'UHF'],
       builtInCRMX: true,
-      builtInBTB: false
+      builtInBTB: false,
+      directLightingAI: [],
+      externalInterfaceRequired: ['CRMX/W-DMX transmitter for wireless DMX control', 'AsteraBox for AsteraApp/UHF control'],
+      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/products/ax10-spotmax/',
+        'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf'
+      ]
     },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',

@@ -1357,6 +1357,24 @@ for(const id of ['aladdin-bi-flex-2','aladdin-bi-flex-4']){
   if(fixture?.dmxModes?.length) failures.push('Aladdin BI-FLEX 1 must remain non-DMX');
 }
 
+
+// Aladdin ALL-IN ONE/TWO safe controls: documented function order, normalized CCT only.
+const aladdinAllInController='https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-DIMMER-UNIT-Manual-05.02.2024.pdf';
+for(const id of ['aladdin-all-in-one','aladdin-all-in-two']){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  const bi=fixture?.dmxModes?.find(mode=>mode?.name==='2ch White Bi-Color (optional DMX)');
+  const rgb=fixture?.dmxModes?.find(mode=>mode?.name==='3ch RGB (optional DMX)');
+  if(!bi||bi.channels!==2||bi.verified!==true||bi.sourceUrl!==aladdinAllInController) failures.push('Verified Aladdin ALL-IN 2ch controls missing: '+id);
+  if(!rgb||rgb.channels!==3||rgb.verified!==true||rgb.sourceUrl!==aladdinAllInController) failures.push('Verified Aladdin ALL-IN 3ch controls missing: '+id);
+  for(const [mode,expected] of [[bi,[['dimmer',1],['cctPosition',2]]],[rgb,[['red',1],['green',2],['blue',3]]]]){
+    if(!mode) continue;
+    if(mode.controls?.length!==expected.length||mode.requiredChannels?.length) failures.push('Unexpected Aladdin ALL-IN controls: '+id+' / '+mode.name);
+    for(const [key,channel] of expected){const control=mode.controls?.find(item=>item?.key===key);if(!control||control.channel!==channel||control.type!=='percent'||control.bits!==8||control.min!==0||control.max!==100||control.dmxMin!==0||control.dmxMax!==255) failures.push('Incorrect Aladdin ALL-IN control: '+id+' / '+key);}
+  }
+  if(bi?.controls?.some(control=>control.key==='cct'||control.type==='cct-linear')) failures.push('Aladdin ALL-IN must not invent Kelvin transfer: '+id);
+  if(!fixture?.control?.includes('LumenRadio via ALL-WDIM')) failures.push('Aladdin ALL-IN LumenRadio route missing: '+id);
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

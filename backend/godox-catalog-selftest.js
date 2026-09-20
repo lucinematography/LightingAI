@@ -86,6 +86,19 @@ for(const fixtureId of ['godox-f200bi','godox-f400bi','godox-f600bi']){
   if(!control.externalInterfaceRequired?.includes('CRMX transmitter plus Godox TimoLink RX for CRMX control')) failures.push('Godox flexible Bi CRMX/TimoLink requirement missing: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox flexible Bi public-protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-tp2r','godox-tp4r','godox-tp8r']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  for(const item of ['DMX512 via DMX-C1','RDM via DMX-C1']) if(!control.wired?.includes(item)) failures.push('Godox TP wired control path missing: '+fixtureId+' '+item);
+  for(const item of ['CRMX','Bluetooth/App','2.4G Remote']) if(!control.wireless?.includes(item)) failures.push('Godox TP wireless control path missing: '+fixtureId+' '+item);
+  if(!control.builtInCRMX) failures.push('Godox TP built-in CRMX flag missing: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox TP built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox TP must not claim direct LightingAI network transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface plus Godox DMX-C1 adapter cable for DMX512/RDM control')) failures.push('Godox TP DMX-C1 requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox TP CRMX transmitter requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox TP 2.4GHz remote requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox TP public-protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

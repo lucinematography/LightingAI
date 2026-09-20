@@ -302,6 +302,23 @@ else{
   if(Number(gemx24st.beamAngleDeg)!==110) failures.push('EV Light GEMX24 ST beam angle must be 110 degrees');
   if(gemx24st.ipRating!=='IP65') failures.push('EV Light GEMX24 ST IP65 rating missing');
 }
+const gemx28hard=fixtures.find(x=>x.id==='evlight-gemx28-hard');
+if(!gemx28hard) failures.push('Missing EV Light GEMX28 HARD control-route fixture');
+else{
+  const control=gemx28hard.control||{};
+  if(control.wired?.length) failures.push('EV Light GEMX28 HARD must not claim an unverified wired control protocol');
+  if(control.wireless?.length) failures.push('EV Light GEMX28 HARD must not claim an unverified wireless control protocol');
+  if(control.builtInCRMX) failures.push('EV Light GEMX28 HARD must not claim built-in CRMX/LumenRadio');
+  if(control.builtInBluetooth) failures.push('EV Light GEMX28 HARD must not claim built-in Bluetooth');
+  if(control.directLightingAI?.length) failures.push('EV Light GEMX28 HARD must not claim direct LightingAI transport');
+  if(!control.externalInterfaceRequired?.some(x=>String(x).includes('manufacturer-verified'))) failures.push('EV Light GEMX28 HARD verified-interface requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('DMX512/RDM'))) failures.push('EV Light GEMX28 HARD unpublished wired-control limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light GEMX28 HARD network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light GEMX28 HARD wireless-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/led-film-lighting/')) failures.push('EV Light GEMX28 HARD official source missing');
+  if(Number(gemx28hard.powerW)!==2600) failures.push('EV Light GEMX28 HARD power must be 2600W');
+  if(gemx28hard.colorMode!=='RGBW Full Spectrum') failures.push('EV Light GEMX28 HARD color mode must be RGBW Full Spectrum');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -247,6 +247,20 @@ for (const fixtureId of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar']) {
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera AX10 SpotMax public-protocol limitation note missing');
 }
 
+// Astera AX3 LightDrop control audit: preserve existing model capabilities and add LightingAI transport limits.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-ax3-lightdrop');
+  const control = fixture?.control || {};
+  if (control.wired?.length) failures.push('Astera AX3 LightDrop must not claim wired control without a documented fixture input');
+  for (const item of ['AsteraApp','CRMX','W-DMX','UHF','Bluetooth','WiFi']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera AX3 LightDrop wireless/input path missing: ${item}`);
+  }
+  if (!control.builtInCRMX || !control.builtInBTB) failures.push('Astera AX3 LightDrop existing CRMX/BTB capability flags changed unexpectedly');
+  if (control.directLightingAI?.length) failures.push('Astera AX3 LightDrop must not claim direct LightingAI transport without a documented public API');
+  if (!control.externalInterfaceRequired?.includes('CRMX/W-DMX transmitter for wireless DMX control')) failures.push('Astera AX3 LightDrop wireless DMX transmitter requirement missing');
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera AX3 LightDrop public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

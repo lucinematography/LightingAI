@@ -307,6 +307,34 @@ else{
   if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat Plus 4 must not invent a public DMX channel table');
 }
 
+
+const plus8=fixtures.find(x=>x.id==='litegear-litemat-plus-8');
+if(!plus8) failures.push('Missing LiteMat Plus 8 control-route fixture');
+else{
+  const control=plus8.control||{};
+  if(plus8.powerW!==400) failures.push('LiteMat Plus 8 power must be 400W');
+  if(plus8.inputVoltage!=='24V DC') failures.push('LiteMat Plus 8 input voltage must be 24V DC');
+  if(plus8.ledQuantity!==4608) failures.push('LiteMat Plus 8 LED quantity must be 4608');
+  if(control.fixtureNative?.dmx512!==false) failures.push('LiteMat Plus 8 head must not claim native DMX512');
+  if(control.fixtureNative?.rdm!==false) failures.push('LiteMat Plus 8 head must not claim native RDM');
+  if(control.fixtureNative?.artNet!==false) failures.push('LiteMat Plus 8 head must not claim native Art-Net');
+  if(control.fixtureNative?.sacn!==false) failures.push('LiteMat Plus 8 head must not claim native sACN');
+  if(control.fixtureNative?.crmx!==false) failures.push('LiteMat Plus 8 head must not claim native CRMX');
+  if(control.controller?.model!=='LiteDimmer Plus AC400 DMX') failures.push('LiteMat Plus 8 controller must be LiteDimmer Plus AC400 DMX');
+  if(control.controller?.local!==true) failures.push('LiteMat Plus 8 AC400 controller must expose local control');
+  if(control.controller?.dmx512!==true) failures.push('LiteMat Plus 8 AC400 controller DMX512 path missing');
+  if(control.controller?.rdm!==false) failures.push('LiteMat Plus 8 AC400 controller must not claim RDM');
+  if(control.controller?.artNet!==false) failures.push('LiteMat Plus 8 AC400 controller must not claim Art-Net');
+  if(control.controller?.sacn!==false) failures.push('LiteMat Plus 8 AC400 controller must not claim sACN');
+  if(control.controller?.crmx!==false) failures.push('LiteMat Plus 8 AC400 controller must not claim built-in CRMX');
+  if(control.controller?.bluetooth!==false) failures.push('LiteMat Plus 8 AC400 controller must not claim Bluetooth');
+  if(control.controller?.wifi!==false) failures.push('LiteMat Plus 8 AC400 controller must not claim Wi-Fi');
+  if(!String(control.controller?.wireless||'').includes('No built-in wireless protocol')) failures.push('LiteMat Plus 8 wireless limitation missing');
+  if(control.dmx?.profileAppliesAt!=='LiteDimmer Plus AC400 DMX') failures.push('LiteMat Plus 8 DMX profile ownership missing');
+  if(control.dmx?.connector!=='5-pin DMX In and Pass Thru') failures.push('LiteMat Plus 8 documented 5-pin DMX connector path missing');
+  if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat Plus 8 must not invent a public DMX channel table');
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'LiteGear',family:'LiteMat',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

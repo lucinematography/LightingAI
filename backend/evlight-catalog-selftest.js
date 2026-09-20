@@ -221,6 +221,22 @@ else{
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light GEM2X1ST wireless-DMX qualification missing');
   if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightprofessional.com/quality-led-soft-light-panel-63400265.html')) failures.push('EV Light GEM2X1ST official control source missing');
 }
+const gemx21hard=fixtures.find(x=>x.id==='evlight-gemx21-hard');
+if(!gemx21hard) failures.push('Missing EV Light GEMX21 HARD control-route fixture');
+else{
+  const control=gemx21hard.control||{};
+  for(const item of ['DMX512','RDM']) if(!control.wired?.includes(item)) failures.push('EV Light GEMX21 HARD wired control path missing: '+item);
+  for(const item of ['Bluetooth App Control','WiFi-DMX','Wireless DMX','LumenRadio CRMX (optional)']) if(!control.wireless?.includes(item)) failures.push('EV Light GEMX21 HARD published wireless/app control path missing: '+item);
+  if(control.builtInCRMX) failures.push('EV Light GEMX21 HARD must not claim standard built-in CRMX because manufacturer lists CRMX as optional');
+  if(!control.builtInBluetooth) failures.push('EV Light GEMX21 HARD Bluetooth App Control flag missing');
+  if(control.directLightingAI?.length) failures.push('EV Light GEMX21 HARD must not claim direct LightingAI Art-Net/sACN transport');
+  if(!control.externalInterfaceRequired?.some(x=>String(x).includes('Art-Net/sACN'))) failures.push('EV Light GEMX21 HARD LightingAI bridge requirement missing');
+  if(!control.externalInterfaceRequired?.some(x=>String(x).includes('CRMX'))) failures.push('EV Light GEMX21 HARD CRMX option/transmitter requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light GEMX21 HARD network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('optional'))) failures.push('EV Light GEMX21 HARD optional-CRMX qualification missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightprofessional.com/quality-led-soft-light-panel-63424122.html')) failures.push('EV Light GEMX21 HARD official Bluetooth/CRMX source missing');
+  if(!control.sourceUrls.includes('https://www.evlightprofessional.com/quality-led-soft-light-panel-63418635.html')) failures.push('EV Light GEMX21 HARD official WiFi/Wireless-DMX source missing');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

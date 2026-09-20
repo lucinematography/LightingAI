@@ -5,7 +5,8 @@ const GEM1X1FC='https://www.evlightprofessional.com/products-index/2/';
 const GEM1X1FC_DETAIL='https://ru.evlightpro.com/led-soft-light-panel/62570433.html';
 const GEM2X1BI='https://www.evlightprofessional.com/quality-led-soft-light-panel-63222309.html';
 const GEM2X1ST='https://www.evlightprofessional.com/quality-led-soft-light-panel-63400265.html';
-const GEMX21HARD='https://www.evlightprofessional.com/quality-led-soft-light-panel-63364386.html';
+const GEMX21HARD='https://www.evlightprofessional.com/quality-led-soft-light-panel-63424122.html';
+const GEMX21HARD_ALT='https://www.evlightprofessional.com/quality-led-soft-light-panel-63418635.html';
 const ACCESSORIES='https://www.evlightpro.com/accessories/';
 
 function fixture(id,model,family,powerW,cctMin,cctMax,colorMode,beamAngleDeg,sourceUrl,extra={}){
@@ -91,7 +92,23 @@ export const EVLIGHT_GEM_GEMX_FIXTURES=[
     },
     modes:['CCT','HSI','GEL','RGBCW','XY'],battery:'57V series supported'
   }),
-  fixture('evlight-gemx21-hard','GEMX21 HARD','GEMX',360,2700,10000,'RGBWW Full Color',25,GEMX21HARD,{cri:96,control:['DMX512','RDM','Wireless DMX','WiFi-DMX'],ipRating:'IP65',dimmingFrequency:'20 kHz',alternateBeamAngleDeg:120})
+  fixture('evlight-gemx21-hard','GEMX21 HARD','GEMX',360,2700,10000,'RGBWW Full Color',25,GEMX21HARD,{
+    cri:96,
+    control:{
+      wired:['DMX512','RDM'],
+      wireless:['Bluetooth App Control','WiFi-DMX','Wireless DMX','LumenRadio CRMX (optional)'],
+      builtInCRMX:false,
+      builtInBluetooth:true,
+      directLightingAI:[],
+      externalInterfaceRequired:['External verified bridge required for LightingAI Art-Net/sACN control','Compatible LumenRadio CRMX option/transmitter required for CRMX control'],
+      unavailableDirectProtocols:[
+        'Official EV Light public product information does not publish Art-Net or sACN network input for GEMX21 HARD',
+        'LumenRadio CRMX is listed as optional, not standard built-in equipment'
+      ],
+      sourceUrls:[GEMX21HARD,GEMX21HARD_ALT]
+    },
+    ipRating:'IP65',dimmingFrequency:'20 kHz',alternateBeamAngleDeg:120
+  })
 ];
 
 const twoByOne=['evlight-gem2x1bi','evlight-gem2x1st','evlight-gemx21-hard'];

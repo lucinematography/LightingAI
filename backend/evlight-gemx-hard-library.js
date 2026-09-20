@@ -53,7 +53,23 @@ export const EVLIGHT_GEMX_HARD_FIXTURES=[
       sourceUrls:[GEMX21ST,SOFT]
     }
   }),
-  fixture('evlight-gemx24-hard','GEMX24 HARD','LED Hard Panel',1200,2700,10000,'RGBW Full Color',25,GEMX24,{cri:96,tlci:98,ipRating:'IP65',control:['DMX512','RDM','Bluetooth App Control','LumenRadio CRMX'],pwm:'24 kHz',dimming:'8-bit / 16-bit'})
+  fixture('evlight-gemx24-hard','GEMX24 HARD','LED Hard Panel',1200,2700,10000,'RGBW Full Color',25,GEMX24,{
+    cri:96,tlci:98,ipRating:'IP65',
+    control:{
+      wired:['DMX512','RDM'],
+      wireless:['Bluetooth App Control','LumenRadio CRMX Wireless DMX','Wi-Fi connectivity'],
+      builtInCRMX:true,
+      builtInBluetooth:true,
+      directLightingAI:[],
+      externalInterfaceRequired:['External Art-Net/sACN-to-DMX or CRMX bridge required for LightingAI network control'],
+      unavailableDirectProtocols:[
+        'Official EV Light GEMX24 HARD product information does not publish Art-Net or sACN network input',
+        'Wi-Fi connectivity is published, but no public LightingAI-compatible network protocol is identified'
+      ],
+      sourceUrls:[GEMX24]
+    },
+    pwm:'24 kHz',dimming:'8-bit / 16-bit'
+  })
 ];
 
 const panels=EVLIGHT_GEMX_HARD_FIXTURES.map(x=>x.id);

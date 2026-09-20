@@ -169,6 +169,22 @@ for(const id of ['desisti-f47-lite-t','desisti-f47-lite-d']){
 
 
 
+// Super LED F7 VW: official 2024 mini catalog confirms 3ch 8-bit and 4ch 16-bit footprints.
+// Only the existing sourced 8-bit dimmer control is exposed; 16-bit channel order remains hidden.
+const f7VwWidthSource='https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
+{
+  const fixture=fixtures.find(item=>item.id==='desisti-super-led-f7-vw');
+  const mode16=fixture?.dmxModes?.find(mode=>mode?.name==='Vari-White 16-bit');
+  if(!mode16||mode16.channels!==4||mode16.verified!==true||mode16.sourceUrl!==f7VwWidthSource){
+    failures.push('Incorrect verified F7 VW 16-bit DMX width/source');
+  }
+  for(const key of ['controls','requiredChannels']){
+    if(mode16?.[key]!=null&&(!Array.isArray(mode16[key])||mode16[key].length)){
+      failures.push('F7 VW 16-bit channel mapping must remain hidden until sourced: '+key);
+    }
+  }
+}
+
 // Super LED F14 HP VW: official 2024 mini catalog confirms 3ch 8-bit and 4ch 16-bit footprints.
 // Only the existing sourced 8-bit dimmer control is exposed; 16-bit channel order remains hidden.
 const f14HpVwWidthSource='https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';

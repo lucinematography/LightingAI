@@ -117,6 +117,18 @@ for(const fixtureId of ['godox-mg1200bi','godox-mg2400bi']){
   if(!control.wireless?.includes('2.4G Remote')) failures.push('Godox MG Bi 2.4GHz path missing: '+fixtureId);
   if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox MG Bi 2.4GHz remote requirement missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-ms60bi','godox-ms60r']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  for(const item of ['DMX512','RDM']) if(!control.wired?.includes(item)) failures.push('Godox MS60 wired control path missing: '+fixtureId+' '+item);
+  for(const item of ['CRMX','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox MS60 wireless control path missing: '+fixtureId+' '+item);
+  if(!control.builtInCRMX) failures.push('Godox MS60 built-in CRMX flag missing: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox MS60 built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox MS60 must not claim direct LightingAI network transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512/RDM control')) failures.push('Godox MS60 wired DMX interface requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox MS60 CRMX transmitter requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox MS60 Bluetooth protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

@@ -25,13 +25,17 @@ export const KINOFLO_VISTABEAM_WALLO_FIXTURES=[
     lampType:'96W CFL',lampCount:3,power:'120VAC or 230VAC',
     currentA:{v120:4.8,v230:2.4},weightKg:13.4,
     dimensionsCm:{width:105.5,height:62.2,depth:21.5},
-    control:['DMX512','Remote Lamp Select'],switching:'1-3'
+    control:['DMX512','Remote Lamp Select'],switching:'1-3',
+    // Reserve the STD/HO address even when FIX mode switches lamps from one fader.
+    dmxModes:[{name:'4ch fixture sequence + STD/HO',channels:4,verified:true,sourceUrl:VB_MANUAL},{name:'4ch individual lamps + STD/HO',channels:4,verified:true,sourceUrl:VB_MANUAL}]
   }),
   fixture('kinoflo-vistabeam-600-dmx','VistaBeam 600 DMX','VistaBeam',VB600,{
     lampType:'96W CFL',lampCount:6,power:'120VAC or 230VAC',
     currentA:{v120:9.1,v230:4.6},weightKg:21.4,
     dimensionsCm:{width:105.5,height:100.5,depth:21.5},
-    control:['DMX512','Remote Lamp Select'],switching:'1-6'
+    control:['DMX512','Remote Lamp Select'],switching:'1-6',
+    // Reserve the STD/HO address even when FIX mode switches lamps from one fader.
+    dmxModes:[{name:'7ch fixture sequence + STD/HO',channels:7,verified:true,sourceUrl:VB_MANUAL},{name:'7ch individual lamps + STD/HO',channels:7,verified:true,sourceUrl:VB_MANUAL}]
   }),
   fixture('kinoflo-wall-o-lite-dmx','Wall-O-Lite DMX','Wall-O-Lite',WALL,{
     voltageVariants:['120VAC','230VAC'],control:['DMX512']

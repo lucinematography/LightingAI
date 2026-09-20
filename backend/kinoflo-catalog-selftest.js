@@ -471,6 +471,30 @@ for(const [id,widths,sourceUrl] of [
   }
 }
 
+// VistaBeam 300/600: manual pp. 16-18 reserves STD/HO at offset 4/7 in BOTH modes.
+// Fixture mode is NOT a 1ch footprint: the intervening addresses must stay reserved.
+const vistaBeamDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100041-VistaBeam-Web-Quality-Old.pdf';
+for(const [id,channels] of [['kinoflo-vistabeam-300-dmx',4],['kinoflo-vistabeam-600-dmx',7]]){
+  const fixture=fixtures.find(item=>item.id===id);
+  const names=[channels+'ch fixture sequence + STD/HO',channels+'ch individual lamps + STD/HO'];
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==names.length){
+    failures.push('Missing Kino Flo VistaBeam DMX mode set: '+id);
+    continue;
+  }
+  for(const name of names){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==vistaBeamDmxSource){
+      failures.push('Incorrect VistaBeam DMX footprint/source; reserve the STD/HO address: '+id+' / '+name);
+    }
+    for(const key of ['controls','requiredChannels']){
+      if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
+        failures.push('VistaBeam channel mapping must remain width-only in this pass: '+id+' / '+name+' / '+key);
+      }
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,finalAudit:true,failures:unique},null,2));
 if(unique.length) process.exit(1);

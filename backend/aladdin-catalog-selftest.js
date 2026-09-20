@@ -139,38 +139,31 @@ for(const id of ['aladdin-bi-flex-2','aladdin-bi-flex-4']){
 let mosaicControls=null;
 try{mosaicControls=verifyMosaicControls(fixtures);}catch(error){failures.push('Aladdin MOSAIC controls: '+error.message);}
 
-// ALL-IN ONE/TWO: model-specific manuals dated 2024-02-05, technical specifications (printed p. 5).
-// Requires optional ALL-DMXAT attachment or ALL-WDIM controller. Do not reuse ALL-IN COLOR / MOSAIC modes.
-const allInDmxWidths=[['2ch White Bi-Color (optional DMX)',2],['3ch RGB (optional DMX)',3]];
-for(const [id,sourceUrl] of [
-  ['aladdin-all-in-one','https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-ONE-Manual-corrected-version-05.02.2024.pdf'],
-  ['aladdin-all-in-two','https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-TWO-Manual-corrected-version-05.02.2024.pdf']
-]){
+// ALL-IN ONE/TWO: official 2024 controller manual documents two DMX personalities and the function order.
+// We intentionally keep CCT normalized because no official Kelvin-vs-DMX transfer curve is published.
+const allInController='https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-DIMMER-UNIT-Manual-05.02.2024.pdf';
+for(const id of ['aladdin-all-in-one','aladdin-all-in-two']){
   const fixture=fixtures.find(item=>item.id===id);
-  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==allInDmxWidths.length){
-    failures.push('Missing or unexpected Aladdin ALL-IN DMX mode set: '+id);
-    continue;
-  }
-  if(!Array.isArray(fixture.control)||!fixture.control.includes('Optional DMX512')){
-    failures.push('Aladdin ALL-IN must retain the optional DMX hardware requirement: '+id);
-  }
-  for(const [name,channels] of allInDmxWidths){
-    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
-    const mode=matches[0];
-    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==sourceUrl){
-      failures.push('Incorrect verified Aladdin ALL-IN DMX width/source: '+id+' / '+name);
-    }
-    for(const key of ['controls','requiredChannels']){
-      if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
-        failures.push('Aladdin ALL-IN DMX mapping must remain width-only in this pass: '+id+' / '+name+' / '+key);
-      }
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==2){failures.push('Missing Aladdin ALL-IN DMX modes: '+id);continue;}
+  if(!fixture.control?.includes('Optional DMX512')||!fixture.control?.includes('LumenRadio via ALL-WDIM')) failures.push('Missing ALL-IN verified remote-control path: '+id);
+  if(!String(fixture.controlNotes||'').includes('Bluetooth app access')) failures.push('Missing ALL-IN Bluetooth/controller exclusivity note: '+id);
+  const bi=fixture.dmxModes.find(mode=>mode?.name==='2ch White Bi-Color (optional DMX)');
+  const rgb=fixture.dmxModes.find(mode=>mode?.name==='3ch RGB (optional DMX)');
+  if(!bi||bi.channels!==2||bi.verified!==true||bi.sourceUrl!==allInController||bi.controlScope!=='documented-functions-normalized-cct') failures.push('Incorrect ALL-IN 2ch profile: '+id);
+  if(!rgb||rgb.channels!==3||rgb.verified!==true||rgb.sourceUrl!==allInController||rgb.controlScope!=='documented-functions') failures.push('Incorrect ALL-IN 3ch profile: '+id);
+  const expectedBi=[['dimmer',1],['cctPosition',2]],expectedRgb=[['red',1],['green',2],['blue',3]];
+  for(const [mode,expected] of [[bi,expectedBi],[rgb,expectedRgb]]){
+    if(!mode) continue;
+    if(mode.controls?.length!==expected.length||mode.requiredChannels?.length) failures.push('Unexpected ALL-IN control count/requirements: '+id+' / '+mode.name);
+    for(const [key,channel] of expected){
+      const control=mode.controls?.find(item=>item?.key===key);
+      if(!control||control.channel!==channel||control.type!=='percent'||control.bits!==8||control.min!==0||control.max!==100||control.dmxMin!==0||control.dmxMax!==255){failures.push('Incorrect ALL-IN control mapping: '+id+' / '+mode.name+' / '+key);}
     }
   }
+  if(bi?.controls?.some(control=>control.key==='cct'||control.type==='cct-linear')) failures.push('ALL-IN must not invent an undocumented Kelvin transfer: '+id);
   for(const accessoryId of ['aladdin-all-wdim','aladdin-all-dmxat']){
     const accessory=accessories.find(item=>item.id===accessoryId);
-    if(!Array.isArray(accessory?.compatibleWith)||!accessory.compatibleWith.includes(id)){
-      failures.push('Missing Aladdin ALL-IN optional DMX accessory link: '+id+' / '+accessoryId);
-    }
+    if(!accessory?.compatibleWith?.includes(id)) failures.push('Missing ALL-IN control accessory link: '+id+' / '+accessoryId);
   }
 }
 

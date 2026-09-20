@@ -150,6 +150,21 @@ for (const fixtureId of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar']) {
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push(`Astera AX2 public-protocol limitation note missing: ${fixtureId}`);
 }
 
+// Astera PixelBrick PB15 control audit: preserve confirmed fixture capabilities and LightingAI limits.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-pixelbrick-pb15');
+  const control = fixture?.control || {};
+  if (!control.wired?.includes('DMX via PWB-2-86')) failures.push('Astera PixelBrick wired DMX path missing');
+  for (const item of ['AsteraApp','CRMX','UHF','Bluetooth']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera PixelBrick wireless/input path missing: ${item}`);
+  }
+  if (!control.builtInCRMX || !control.builtInBluetoothBridge) failures.push('Astera PixelBrick built-in CRMX/BluetoothBridge flags missing');
+  if (control.directLightingAI?.length) failures.push('Astera PixelBrick must not claim direct LightingAI transport without a documented direct network/API path');
+  if (!control.externalInterfaceRequired?.includes('PWB-2-86 or compatible wired DMX interface for DMX control')) failures.push('Astera PixelBrick wired DMX interface requirement missing');
+  if (!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Astera PixelBrick CRMX transmitter requirement missing');
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera PixelBrick public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

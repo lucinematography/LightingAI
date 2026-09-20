@@ -28,7 +28,14 @@ export const ASTERA_PIXELBRICK_FIXTURES = [
       wired: ['DMX via PWB-2-86'],
       wireless: ['AsteraApp', 'CRMX', 'UHF', 'Bluetooth'],
       builtInCRMX: true,
-      builtInBluetoothBridge: true
+      builtInBluetoothBridge: true,
+      directLightingAI: [],
+      externalInterfaceRequired: ['PWB-2-86 or compatible wired DMX interface for DMX control', 'CRMX transmitter for CRMX control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/products/pixelbrick/downloads/',
+        'https://update.astera-led.com/firmwares/current/release_notes.html'
+      ]
     },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',

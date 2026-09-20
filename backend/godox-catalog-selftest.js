@@ -178,6 +178,17 @@ for(const fixtureId of ['godox-f100r','godox-f200r','godox-f200sr','godox-f400r'
   if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox full-color mat CRMX requirement missing: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox full-color mat Bluetooth protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-c5r','godox-c7r','godox-c10r']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(control.wired?.length) failures.push('Godox C-series must not claim wired control: '+fixtureId);
+  if(!control.wireless?.includes('Bluetooth/App')) failures.push('Godox C-series Bluetooth/App path missing: '+fixtureId);
+  if(control.builtInCRMX) failures.push('Godox C-series must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox C-series built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox C-series must not claim direct LightingAI transport: '+fixtureId);
+  if(control.externalInterfaceRequired?.length) failures.push('Godox C-series should not require DMX/CRMX interface: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox C-series Bluetooth protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

@@ -119,6 +119,21 @@ if (RUNTIME_CATALOG.duplicateAccessoryIds.length) failures.push(`Duplicate acces
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera AX5 public-protocol limitation note missing');
 }
 
+// Astera AX9 PowerPAR control audit: keep confirmed transport capabilities and LightingAI limits explicit.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-ax9-powerpar');
+  const control = fixture?.control || {};
+  if (!control.wired?.includes('DMX')) failures.push('Astera AX9 wired DMX path missing');
+  for (const item of ['AsteraApp','Wireless DMX','CRMX']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera AX9 wireless/input path missing: ${item}`);
+  }
+  if (!control.builtInCRMX) failures.push('Astera AX9 built-in CRMX flag missing');
+  if (control.directLightingAI?.length) failures.push('Astera AX9 must not claim direct LightingAI transport without a documented direct network/API path');
+  if (!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX control')) failures.push('Astera AX9 wired DMX interface requirement missing');
+  if (!control.externalInterfaceRequired?.includes('CRMX/Wireless DMX transmitter for wireless DMX control')) failures.push('Astera AX9 wireless DMX transmitter requirement missing');
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera AX9 public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

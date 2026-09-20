@@ -16,7 +16,11 @@ export const ASTERA_AX9_POWERPAR_FIXTURES = [
     control: {
       wired: ['DMX'],
       wireless: ['AsteraApp', 'Wireless DMX', 'CRMX'],
-      builtInCRMX: true
+      builtInCRMX: true,
+      directLightingAI: [],
+      externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX/Wireless DMX transmitter for wireless DMX control'],
+      unavailableDirectProtocols: ['AsteraApp protocol is not publicly documented for third-party direct control'],
+      sourceUrls: ['https://astera-led.com/products/ax9-powerpar/downloads/']
     },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',

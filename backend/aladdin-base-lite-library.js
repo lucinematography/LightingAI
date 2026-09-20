@@ -13,6 +13,10 @@ function fixture(id,model,powerW,dimensions,weightG){
     cooling:'Passive',formFactor:'Hard-shell LED soft panel',
     dimensions,weightG,
     control:['DMX512','On-board'],
+    dmxModes:[{name:'2ch Dimmer + CCT',channels:2,verified:true,sourceUrl:BASE_DMX,controls:[
+      {key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+      {key:'cct',label:'CCT',channel:2,type:'cct-linear',min:2900,max:6400,dmxMin:0,dmxMax:255}
+    ]}],
     powerSupply:'90-260V AC / 12-30V DC battery'
   };
 }

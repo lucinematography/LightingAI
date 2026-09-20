@@ -278,6 +278,17 @@ for(const fixtureId of ['godox-ldp8d','godox-ldp18d','godox-ldp8bi','godox-ldp18
   if(control.externalInterfaceRequired?.length) failures.push('Godox LDP should not require external control interface: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('No manufacturer-documented remote control protocol'))) failures.push('Godox LDP remote-control limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(control.wired?.length) failures.push('Godox LDX must not claim wired control: '+fixtureId);
+  for(const item of ['2.4G Remote','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox LDX wireless path missing: '+fixtureId+' '+item);
+  if(control.builtInCRMX) failures.push('Godox LDX must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox LDX built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox LDX must not claim direct LightingAI transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox LDX 2.4GHz remote requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox LDX public-protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

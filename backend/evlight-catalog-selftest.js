@@ -352,6 +352,23 @@ else{
   if(!sp150fc.localControl?.includes('Stand-alone control with LCD display')) failures.push('EV Light SP150FC local LCD control missing');
   if(Number(sp150fc.powerW)!==200) failures.push('EV Light SP150FC power must be 200W');
 }
+const sp350=fixtures.find(x=>x.id==='evlight-sp350');
+if(!sp350) failures.push('Missing EV Light SP350 control-route fixture');
+else{
+  const control=sp350.control||{};
+  for(const item of ['DMX512','RDM']) if(!control.wired?.includes(item)) failures.push('EV Light SP350 wired control path missing: '+item);
+  if(control.wireless?.length) failures.push('EV Light SP350 must not claim manufacturer-documented wireless control');
+  if(control.builtInCRMX) failures.push('EV Light SP350 must not claim built-in CRMX/LumenRadio');
+  if(control.builtInBluetooth) failures.push('EV Light SP350 must not claim built-in Bluetooth');
+  if(control.directLightingAI?.length) failures.push('EV Light SP350 must not claim direct LightingAI Art-Net/sACN transport');
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512/RDM control')) failures.push('EV Light SP350 wired DMX/RDM interface requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light SP350 network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light SP350 wireless-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/fresnel-led/62965541.html')) failures.push('EV Light SP350 official model source missing');
+  if(!Array.isArray(sp350.dmxChannels)||!sp350.dmxChannels.includes(1)||!sp350.dmxChannels.includes(2)) failures.push('EV Light SP350 DMX channel options must include 1 and 2');
+  if(sp350.dmxConnection!=='3-pin or 5-pin XLR in/out + RJ45') failures.push('EV Light SP350 DMX connector detail missing');
+  if(Number(sp350.beamAngleDeg?.min)!==10||Number(sp350.beamAngleDeg?.max)!==50) failures.push('EV Light SP350 beam range must be 10-50 degrees');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

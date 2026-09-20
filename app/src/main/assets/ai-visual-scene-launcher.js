@@ -11,17 +11,12 @@ var IMAGE_ACTIONS_SCRIPT_ID='lightingai-ai-visual-image-actions-script';
 var REFINEMENTS_SCRIPT_ID='lightingai-ai-preview-refinements-script';
 var BUILD_SCRIPT_ID='lightingai-feature-build-info-script';
 var PHONE_DIAG_SCRIPT_ID='lightingai-project5-phone-diagnostics-script';
-var DIAG_ID='lightingai-project5-diagnostic';
 var MODULE_ID='lightingai-ai-visual-scene-plan';
 var PROD_API='https://lightingai.onrender.com';
 var PREVIEW_TEST_API='https://lightingai-ai-preview-test.onrender.com';
 var PLAN_TIMEOUT_MS=55000;
 var previewCapabilityVerified=false;
 var previewActiveApi='';
-var diagnosticRequestInFlight=false;
-var currentPreviewState='checking';
-var planDiagnosticText='';
-var planDiagnosticError=false;
 function label(){return window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN';}
 function isSr(){return window.currentLang!=='en';}
 function equipmentText(){return isSr()?{title:'✦ AI VIZUELNI PLAN',desc:'Fotografija scene + dostupna rasveta + AI predlog + vizuelni preview.'}:{title:'✦ AI VISUAL PLAN',desc:'Scene photo + available lighting + AI proposal + visual preview.'};}
@@ -41,31 +36,7 @@ function ensureBuildInfo(next){
   script.onerror=function(){updateButton();if(next)next();};
   document.body.appendChild(script);
 }
-function diagnosticShell(){
-  var module=document.getElementById(MODULE_ID);if(!module)return null;
-  var existing=document.getElementById(DIAG_ID);if(existing)return existing;
-  var inner=module.firstElementChild;if(!inner)return null;
-  var box=document.createElement('div');box.id=DIAG_ID;
-  box.style.cssText='margin-top:12px;padding:10px 12px;border:1px solid #3b4048;border-radius:11px;background:#11141a;color:#c7ccd3;font-size:12px;line-height:1.45';
-  var header=inner.firstElementChild;if(header&&header.parentNode===inner)header.insertAdjacentElement('afterend',box);else inner.insertBefore(box,inner.firstChild);
-  return box;
-}
-function renderDiagnostic(previewState){
-  currentPreviewState=previewState||currentPreviewState;
-  var box=diagnosticShell();if(!box)return;
-  var b=buildInfo(),run=b.run||'?',sha=b.sha||'?',branch=b.branch||'feature',previewText=currentPreviewState==='active'?(isSr()?'AKTIVAN':'ACTIVE'):currentPreviewState==='checking'?(isSr()?'PROVERA...':'CHECKING...'):(isSr()?'ZAKLJUČAN':'LOCKED');
-  var previewColor=currentPreviewState==='active'?'#8ee6a8':currentPreviewState==='checking'?'#f5dd91':'#ffb5b5';
-  var planDiag=planDiagnosticText?'<div style="margin-top:5px;color:'+(planDiagnosticError?'#ffb5b5':'#f5dd91')+'">'+planDiagnosticText+'</div>':'';
-  box.innerHTML='<b style="color:#f5c542">P5 TEST • BUILD '+String(run)+' • '+String(sha)+'</b><div style="margin-top:4px">'+(isSr()?'GRANA':'BRANCH')+': '+String(branch)+'</div><div>AI PLAN: <b style="color:#8ee6a8">'+(isSr()?'PRODUKCIJA':'PRODUCTION')+'</b> • timeout '+Math.round(PLAN_TIMEOUT_MS/1000)+' s</div><div>FOTO-PREVIEW: <b style="color:'+previewColor+'">'+previewText+'</b></div>'+planDiag;
-  if(window.LightingAIProject5Diagnostics&&typeof window.LightingAIProject5Diagnostics.mount==='function')window.LightingAIProject5Diagnostics.mount();
-}
-function setPlanDiagnostic(text,error){planDiagnosticText=text;planDiagnosticError=!!error;renderDiagnostic(currentPreviewState);}
-function updateDiagnostic(){
-  renderDiagnostic('checking');
-  if(diagnosticRequestInFlight)return;
-  diagnosticRequestInFlight=true;
-  fetch(PROD_API+'/api/visual-preview',{cache:'no-store'}).then(function(r){return r.json();}).then(function(v){renderDiagnostic(v&&v.ok===true?'active':'locked');}).catch(function(){renderDiagnostic('locked');}).finally(function(){diagnosticRequestInFlight=false;});
-}
+function setPlanDiagnostic(){/* Release build: request diagnostics stay internal and never mount user-visible test UI. */}
 function selectedLook(){var s=document.getElementById('aiv-look-preset');if(s&&s.value)return s.value;if(window.LightingAILocalLightSimulation&&typeof window.LightingAILocalLightSimulation.getPreset==='function')return window.LightingAILocalLightSimulation.getPreset();return 'Cinematic';}
 function injectLook(init){if(!init||typeof init.body!=='string')return init;try{var body=JSON.parse(init.body);if(body&&typeof body==='object'&&!Array.isArray(body)){body.look=selectedLook();var copy=Object.assign({},init);copy.body=JSON.stringify(body);return copy;}}catch(e){}return init;}
 function emitPlan(response){
@@ -150,7 +121,7 @@ function ensureRefinements(next){ensureScript(REFINEMENTS_SCRIPT_ID,'file:///and
 function ensureImageActions(next){ensureScript(IMAGE_ACTIONS_SCRIPT_ID,'file:///android_asset/ai-visual-image-actions.js',function(){return !!window.LightingAIVisualImageActions;},next);}
 function ensurePolish(next){ensureScript(POLISH_SCRIPT_ID,'file:///android_asset/ai-visual-result-polish.js',function(){return !!window.LightingAIVisualResultPolish;},function(){ensureImageActions(function(){ensureRefinements(function(){ensurePhoneDiagnostics(next);});});});}
 function ensureSimulation(next){ensureScript(SIM_SCRIPT_ID,'file:///android_asset/ai-visual-local-simulation.js',function(){return !!window.LightingAILocalLightSimulation;},function(){ensurePolish(next);});}
-function opened(){setTimeout(updateDiagnostic,0);setTimeout(updateDiagnostic,900);setTimeout(function(){if(window.LightingAIProject5Diagnostics&&typeof window.LightingAIProject5Diagnostics.mount==='function')window.LightingAIProject5Diagnostics.mount();},1000);}
+function opened(){/* Release build intentionally exposes no Project 5 diagnostic/test surface. */}
 function openPlanModule(){
   if(window.LightingAIVisualScenePlan&&typeof window.LightingAIVisualScenePlan.open==='function'){
     window.LightingAIVisualScenePlan.open();opened();return;

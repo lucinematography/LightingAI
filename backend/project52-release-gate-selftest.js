@@ -21,6 +21,8 @@ assert.match(launcher, /AbortController/, 'AI plan request must be abortable');
 assert.match(launcher, /diagnosticPlanRequest/, 'AI plan must use the guarded request wrapper');
 assert.match(launcher, /isExactApi\(url,'\/api\/lighting-plan'\)/, 'Lighting-plan requests must pass through the guarded request path');
 assert.match(launcher, /installPreviewApiRouter\(\)/, 'AI request router must be installed before opening the module');
+assert.doesNotMatch(launcher, /lightingai-project5-diagnostic|P5 TEST • BUILD|function diagnosticShell\(|function renderDiagnostic\(/, 'Release launcher must not construct the old Project 5 diagnostic UI');
+assert.doesNotMatch(launcher, /LightingAIProject5Diagnostics\.mount\(/, 'Release launcher must not mount Project 5 diagnostics into normal user mode');
 
 assert.match(plan, /SCENE_MEASURE_KEY='lighting_scene_measurements_v1'/, 'Planner measurement bridge must keep its storage key');
 assert.match(plan, /useMeasurements/, 'AI plan must expose the Planner measurement opt-in');

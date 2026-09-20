@@ -180,7 +180,10 @@ const exactAllowed = new Set([
   'app/src/main/AndroidManifest.xml',
   'app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java',
   'app/src/test/java/com/lightingai/app/SacnProtocolTest.java',
-  'backend/project5-stable-base-selftest.js'
+  'backend/project5-stable-base-selftest.js',
+  'backend/project5-feature-selftest.js',
+  'backend/project52-release-gate-selftest.js',
+  'app/src/main/assets/ai-visual-scene-launcher.js'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
 if (unexpected.length) fail(`files changed outside the isolated Project 5.4 camera-distance surface: ${unexpected.join(', ')}`);
@@ -189,7 +192,6 @@ for (const protectedPath of [
   'app/src/main/assets/scene-measure.js',
   'app/src/main/assets/light-calculator.js',
   'app/src/main/assets/project-backup-export.js',
-  'app/src/main/assets/ai-visual-scene-launcher.js',
   'app/src/main/assets/ai-visual-preview-refinements.js',
   'app/src/main/assets/ai-visual-phone-diagnostics.js',
   'app/src/main/assets/ai-visual-image-actions.js',

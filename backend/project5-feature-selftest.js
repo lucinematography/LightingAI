@@ -48,7 +48,7 @@ requireText(launcher, "file:///android_asset/ai-visual-image-actions.js", 'image
 requireText(launcher, "file:///android_asset/ai-visual-preview-refinements.js", 'preview refinement loader missing');
 requireText(launcher, "file:///android_asset/ai-visual-phone-diagnostics.js", 'phone diagnostics loader missing');
 requireText(launcher, "file:///android_asset/feature-build-info.js", 'embedded build identity loader missing');
-requireText(launcher, 'P5 TEST • BUILD ', 'visible Project 5 build diagnostic missing');
+forbidText(launcher, 'P5 TEST • BUILD ', 'release launcher must not expose visible Project 5 build diagnostics');
 requireText(launcher, 'LightingAIFeatureBuild', 'feature build metadata hook missing');
 
 requireText(moduleJs, "var API_BASE='https://lightingai.onrender.com';", 'AI plan must keep production API base');
@@ -286,7 +286,7 @@ console.log(JSON.stringify({
     'look presets and intensity control',
     'conceptual-preview disclaimer',
     'result polish layer',
-    'visible build identity diagnostics',
+    'hidden release diagnostics with embedded build identity',
     'phone diagnostics and copyable report',
     'guided build-scoped phone test checklist',
     'native save/share actions and one-image before/after composition',

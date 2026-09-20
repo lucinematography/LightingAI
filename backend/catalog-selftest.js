@@ -1341,9 +1341,20 @@ for(const id of ['aladdin-bi-flex-m3','aladdin-bi-flex-m7']){
     failures.push('Unexpected Aladdin BI-FLEX M3/M7 extra DMX mapping data: '+id);
   }
 }
-for(const id of ['aladdin-bi-flex-1','aladdin-bi-flex-2','aladdin-bi-flex-4']){
+for(const id of ['aladdin-bi-flex-2','aladdin-bi-flex-4']){
   const fixture=RUNTIME_CATALOG.fixtureById.get(id);
-  if(fixture?.dmxModes?.length) failures.push('Legacy Aladdin BI-FLEX exact DMX map must remain unchanged until separately sourced: '+id);
+  const mode=fixture?.dmxModes?.find(item=>item?.name==='2ch Dimmer + CCT');
+  const source='https://aladdin-lights.com/wp-content/uploads/2022/08/DIMMER-UNIT-200W-Manual-SINGLE-PAGE.pdf';
+  if(!mode||fixture.dmxModes.length!==1||mode.channels!==2||mode.verified!==true||mode.sourceUrl!==source){failures.push('Verified legacy Aladdin BI-FLEX 2/4 DMX mode/source missing: '+id);continue;}
+  const dimmer=mode.controls?.find(item=>item?.key==='dimmer'),cct=mode.controls?.find(item=>item?.key==='cct');
+  if(!dimmer||dimmer.channel!==1||dimmer.type!=='percent'||dimmer.min!==0||dimmer.max!==100||dimmer.dmxMin!==0||dimmer.dmxMax!==255) failures.push('Verified legacy Aladdin BI-FLEX 2/4 dimmer mapping missing: '+id);
+  if(!cct||cct.channel!==2||cct.type!=='cct-linear'||cct.min!==2900||cct.max!==6000||cct.dmxMin!==0||cct.dmxMax!==255) failures.push('Verified legacy Aladdin BI-FLEX 2/4 CCT mapping missing: '+id);
+  if(mode.controls?.length!==2||mode.requiredChannels?.length) failures.push('Unexpected legacy Aladdin BI-FLEX 2/4 extra DMX mapping data: '+id);
+  if(!fixture.control?.includes('LumenRadio')) failures.push('Verified legacy Aladdin BI-FLEX 2/4 LumenRadio path missing: '+id);
+}
+{
+  const fixture=RUNTIME_CATALOG.fixtureById.get('aladdin-bi-flex-1');
+  if(fixture?.dmxModes?.length) failures.push('Aladdin BI-FLEX 1 must remain non-DMX');
 }
 
 const uniqueFailures=[...new Set(failures)];

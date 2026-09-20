@@ -1018,6 +1018,59 @@ for(const id of ["kinoflo-select-led-20","kinoflo-select-led-30"]){
   }
 }
 
+
+// Kino Flo FreeStyle Air Mini/Air/Max via LED-140X, True Match 6.0 DFS.
+const kinoFreeStyleAirTm6Source='https://kinoflo.com/wp-content/uploads/2025/07/TrueMatch-Firmware-6.0-RDM-DMX-Personalities-June-2025-Rev-E.pdf';
+const kinoFreeStyleAirTm6Widths=[
+  ['TM6 P1 CCT 8-bit',3],
+  ['TM6 P2 CCT/Gel/HS 8-bit',6],
+  ['TM6 P3 CCT/RGB 8-bit',6],
+  ['TM6 P4 CCT 8-bit',3],
+  ['TM6 P5 CIE xy 8-bit',3],
+  ['TM6 P6 CCT 16-bit',4],
+  ['TM6 P7 CCT/Gel/HS 16-bit',7],
+  ['TM6 P8 CCT/RGB 16-bit',7],
+  ['TM6 P9 CCT 16-bit',4],
+  ['TM6 P10 CIE xy 16-bit',4],
+  ['TM6 P11 CCT 8-bit',3],
+  ['TM6 P12 CCT 16-bit',5],
+  ['TM6 P13 Gel 8-bit',3],
+  ['TM6 P14 Gel 16-bit',5],
+  ['TM6 P15 HS 8-bit',4],
+  ['TM6 P16 HS 16-bit',8],
+  ['TM6 P17 RGB 8-bit',5],
+  ['TM6 P18 RGB 16-bit',10],
+  ['TM6 P19 CIE xy 8-bit',3],
+  ['TM6 P20 CIE xy 16-bit',6],
+  ['TM6 P21 CCT 8-bit',3],
+  ['TM6 P22 CCT 16-bit',5],
+  ['TM6 P23 xfade CCT & HS 8-bit',7],
+  ['TM6 P24 xfade CCT & HS 16-bit',13],
+  ['TM6 P25 xfade CCT & RGB 8-bit',8],
+  ['TM6 P26 xfade CCT & RGB 16-bit',15],
+  ['TM6 P27 xfade CIE xy1 & xy2 8-bit',6],
+  ['TM6 P28 xfade CIE xy1 & xy2 16-bit',12],
+  ['TM6 P29 xfade CCT & TDRGB 8-bit',9],
+  ['TM6 P30 xfade CCT & TDRGB 16-bit',15]
+];
+for(const id of ["kinoflo-freestyle-air-mini","kinoflo-freestyle-air","kinoflo-freestyle-air-max"]){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  if(!fixture||fixture.dmxControllerModel!=='LED-140X'||fixture.dmxFirmware!=='True Match 6.0 DFS'||
+     !Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==kinoFreeStyleAirTm6Widths.length){
+    failures.push('Kino Flo FreeStyle Air True Match 6.0 DMX mode set missing: '+id);
+    continue;
+  }
+  for(const [name,channels] of kinoFreeStyleAirTm6Widths){
+    const mode=fixture.dmxModes.find(item=>item?.name===name);
+    if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==kinoFreeStyleAirTm6Source){
+      failures.push('Verified Kino Flo FreeStyle Air TM6 DMX width/source missing: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo FreeStyle Air TM6 channel mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

@@ -3,6 +3,39 @@
 const MINI='https://kinoflo.com/freestyle-air-mini/';
 const AIR='https://kinoflo.com/freestyle-air/';
 const MAX='https://kinoflo.com/freestyle-air-max/';
+const TRUE_MATCH_6_DMX_SRC='https://kinoflo.com/wp-content/uploads/2025/07/TrueMatch-Firmware-6.0-RDM-DMX-Personalities-June-2025-Rev-E.pdf';
+const TRUE_MATCH_6_DMX_MODES=[
+  {name:'TM6 P1 CCT 8-bit',channels:3,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P2 CCT/Gel/HS 8-bit',channels:6,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P3 CCT/RGB 8-bit',channels:6,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P4 CCT 8-bit',channels:3,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P5 CIE xy 8-bit',channels:3,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P6 CCT 16-bit',channels:4,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P7 CCT/Gel/HS 16-bit',channels:7,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P8 CCT/RGB 16-bit',channels:7,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P9 CCT 16-bit',channels:4,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P10 CIE xy 16-bit',channels:4,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P11 CCT 8-bit',channels:3,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P12 CCT 16-bit',channels:5,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P13 Gel 8-bit',channels:3,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P14 Gel 16-bit',channels:5,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P15 HS 8-bit',channels:4,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P16 HS 16-bit',channels:8,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P17 RGB 8-bit',channels:5,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P18 RGB 16-bit',channels:10,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P19 CIE xy 8-bit',channels:3,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P20 CIE xy 16-bit',channels:6,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P21 CCT 8-bit',channels:3,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P22 CCT 16-bit',channels:5,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P23 xfade CCT & HS 8-bit',channels:7,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P24 xfade CCT & HS 16-bit',channels:13,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P25 xfade CCT & RGB 8-bit',channels:8,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P26 xfade CCT & RGB 16-bit',channels:15,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P27 xfade CIE xy1 & xy2 8-bit',channels:6,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P28 xfade CIE xy1 & xy2 16-bit',channels:12,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P29 xfade CCT & TDRGB 8-bit',channels:9,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC},
+  {name:'TM6 P30 xfade CCT & TDRGB 16-bit',channels:15,verified:true,sourceUrl:TRUE_MATCH_6_DMX_SRC}
+];
 
 function fixture(id,model,sourceUrl,dimensionsCm,weightKg){
   return {
@@ -13,6 +46,8 @@ function fixture(id,model,sourceUrl,dimensionsCm,weightKg){
     dimming:'100%-1%',controller:'FreeStyle 140 LED DMX Controller',
     controllerPowerW:150,input:'100-240VAC or 18-36VDC',
     control:['Onboard','DMX512','LumenRadio wireless DMX'],
+    dmxControllerModel:'LED-140X',dmxFirmware:'True Match 6.0 DFS',
+    dmxModes:TRUE_MATCH_6_DMX_MODES.map((mode)=>({...mode})),
     cooling:'Passive / quiet operation',dimensionsCm,weightKg
   };
 }

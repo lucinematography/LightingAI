@@ -3,6 +3,7 @@
 const BI_FABRIC_CATALOG='https://aladdin-lights.com/wp-content/uploads/2022/05/Aladdin_Katalog_2022_high_res.pdf';
 const BI_FABRIC_2_MANUAL='https://aladdin-lights.com/wp-content/uploads/2022/08/BI-FABRIC-2-Manual-SINGLE-PAGE.pdf';
 const BI_FABRIC_4_MANUAL='https://aladdin-lights.com/wp-content/uploads/2022/08/BI-FABRIC-4-Manual-SINGLE-PAGE.pdf';
+const BI_FABRIC_DMX='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
 
 function fixture(id,model,powerW,sourceUrl,extra={}){
   return {
@@ -12,6 +13,10 @@ function fixture(id,model,powerW,sourceUrl,extra={}){
     cri:97,tlci:98,beamAngleDeg:140,dimming:'1-100%',
     cooling:'Passive',
     control:['DMX512','LumenRadio','On-board Dimmer'],
+    dmxModes:[{name:'2ch Dimmer + CCT',channels:2,verified:true,sourceUrl:BI_FABRIC_DMX,controls:[
+      {key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+      {key:'cct',label:'CCT',channel:2,type:'cct-linear',min:2900,max:6000,dmxMin:0,dmxMax:255}
+    ]}],
     powerSupply:'90-260V AC / 12-30V DC battery',
     ...extra
   };

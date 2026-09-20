@@ -213,6 +213,23 @@ for (const fixtureId of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar']) {
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera HyperionTube FP3 public-protocol limitation note missing');
 }
 
+// Astera AX7 SpotLite control audit: preserve legacy wireless routes without inventing wired or direct BLE/Wi-Fi control.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-ax7-spotlite');
+  const control = fixture?.control || {};
+  if (control.wired?.length) failures.push('Astera AX7 SpotLite must not claim wired control without a documented fixture input');
+  for (const item of ['AsteraApp via AsteraBox/UHF','CRMX','W-DMX','UHF']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera AX7 SpotLite wireless/input path missing: ${item}`);
+  }
+  if (!control.builtInCRMX) failures.push('Astera AX7 SpotLite built-in CRMX flag missing');
+  if (control.builtInBTB) failures.push('Astera AX7 SpotLite must not claim built-in BTB');
+  if (control.directLightingAI?.length) failures.push('Astera AX7 SpotLite must not claim direct LightingAI transport without a documented public API');
+  for (const item of ['CRMX/W-DMX transmitter for wireless DMX control','AsteraBox for AsteraApp/UHF control']) {
+    if (!control.externalInterfaceRequired?.includes(item)) failures.push(`Astera AX7 SpotLite external interface requirement missing: ${item}`);
+  }
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera AX7 SpotLite public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

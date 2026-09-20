@@ -20,10 +20,17 @@ export const ASTERA_QUIKSPOT_FIXTURES = [
     weightKg: 3.45,
     dimensionsMm: { length: 164, width: 164, height: 182 },
     control: {
-      wired: ['DMX'],
-      wireless: ['AsteraApp', 'CRMX'],
+      wired: ['DMX', 'RDM'],
+      wireless: ['AsteraApp', 'CRMX', 'Bluetooth'],
       builtInCRMX: true,
-      builtInBTB: true
+      builtInBTB: true,
+      directLightingAI: [],
+      externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX transmitter for CRMX control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/products/quikspot/',
+        'https://update.astera-led.com/firmwares/current/release_notes.html'
+      ]
     },
     sourceUrl: SRC
   }

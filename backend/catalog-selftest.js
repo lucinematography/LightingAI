@@ -86,6 +86,23 @@ if (RUNTIME_CATALOG.duplicateAccessoryIds.length) failures.push(`Duplicate acces
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera LeoFresnel public-protocol limitation note missing');
 }
 
+// Astera PlutoFresnel control audit: keep documented transport capabilities and LightingAI limits explicit.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-plutofresnel-af80');
+  const control = fixture?.control || {};
+  for (const item of ['CRMX','UHF','Bluetooth','Wi-Fi']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera PlutoFresnel wireless control path missing: ${item}`);
+  }
+  for (const item of ['DMX','RDM']) {
+    if (!control.wired?.includes(item)) failures.push(`Astera PlutoFresnel wired control/management path missing: ${item}`);
+  }
+  if (!control.builtInCRMX || !control.builtInBTB) failures.push('Astera PlutoFresnel built-in CRMX/BTB flags missing');
+  if (control.directLightingAI?.length) failures.push('Astera PlutoFresnel must not claim direct LightingAI transport without a documented direct network/API path');
+  if (!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX control')) failures.push('Astera PlutoFresnel wired DMX interface requirement missing');
+  if (!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Astera PlutoFresnel CRMX transmitter requirement missing');
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera PlutoFresnel public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

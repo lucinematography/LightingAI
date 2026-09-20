@@ -1208,6 +1208,27 @@ for(const [id,channels] of [['kinoflo-vistabeam-300-dmx',4],['kinoflo-vistabeam-
   }
 }
 
+
+// Kino Flo Wall-O-Lite verified DMX footprint widths.
+const kinoWallOLiteDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100021-wall-o-lite-colorRev-10-05-2005-Web-Quality.pdf';
+{
+  const fixture=RUNTIME_CATALOG.fixtureById.get('kinoflo-wall-o-lite-dmx');
+  const widths=[['Fixture mode',1],['Individual Lamp mode',8]];
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Kino Flo Wall-O-Lite DMX mode set missing');
+  }else{
+    for(const [name,channels] of widths){
+      const mode=fixture.dmxModes.find(item=>item?.name===name);
+      if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==kinoWallOLiteDmxSource){
+        failures.push('Verified Kino Flo Wall-O-Lite DMX width/source missing: '+name);
+      }
+      if(mode?.controls?.length||mode?.requiredChannels?.length){
+        failures.push('Kino Flo Wall-O-Lite DMX mapping must remain width-only in this pass: '+name);
+      }
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

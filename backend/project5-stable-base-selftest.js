@@ -399,7 +399,7 @@ for (const marker of [
   'setSacnPriority:function(priority)',
   "action:'sacnSetPriority'",
   "sacnPriority:'sACN PRIORITET'",
-  "sacnPriority:'SACN PRIORITY'",
+  "sacnPriority:'sACN PRIORITY'",
   "diagInterfaces:'LOKALNE MREŽE'",
   "diagInterfaces:'LOCAL NETWORKS'",
   "diagBroadcast:'BROADCAST'",

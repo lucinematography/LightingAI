@@ -72,6 +72,21 @@ else{
   if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/profile-spot-light/63349887.html')) failures.push('EV Light EPRO100 official control source missing');
   if(Number(epro100.dmxChannels)!==1) failures.push('EV Light EPRO100 DMX channel count must be 1');
 }
+const epro200z=fixtures.find(x=>x.id==='evlight-epro200z');
+if(!epro200z) failures.push('Missing EV Light EPRO200Z control-route fixture');
+else{
+  const control=epro200z.control||{};
+  if(!control.wired?.includes('DMX512')) failures.push('EV Light EPRO200Z DMX512 route missing');
+  if(control.wireless?.length) failures.push('EV Light EPRO200Z must not claim manufacturer-documented wireless control');
+  if(control.builtInCRMX) failures.push('EV Light EPRO200Z must not claim built-in CRMX/LumenRadio');
+  if(control.builtInBluetooth) failures.push('EV Light EPRO200Z must not claim built-in Bluetooth');
+  if(control.directLightingAI?.length) failures.push('EV Light EPRO200Z must not claim direct LightingAI Art-Net/sACN transport');
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512 control')) failures.push('EV Light EPRO200Z wired DMX interface requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light EPRO200Z network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light EPRO200Z wireless-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/ellipsoidal-led/62310805.html')) failures.push('EV Light EPRO200Z official control source missing');
+  for(const mode of ['1/3CH single color','2/5CH 2in1','3/7CH RGB','4/8CH RGBW']) if(!epro200z.dmxChannelOptions?.includes(mode)) failures.push('EV Light EPRO200Z published DMX channel option missing: '+mode);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

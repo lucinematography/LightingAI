@@ -16,8 +16,17 @@ export const ASTERA_NYX_BULB_FIXTURES = [
     outputLumensAtCctK: 4000,
     colorMode: 'RGBMintAmber',
     control: {
-      wireless: ['AsteraApp', 'CRMX'],
-      builtInCRMX: true
+      wired: [],
+      wireless: ['AsteraApp', 'CRMX', 'Bluetooth'],
+      builtInCRMX: true,
+      builtInBluetooth: true,
+      directLightingAI: [],
+      externalInterfaceRequired: ['CRMX transmitter for CRMX control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://nyx-for-filmmakers.astera-led.com/',
+        'https://update.astera-led.com/release_notes/ax2_50/release_notes'
+      ]
     },
     sourceUrl: SRC
   }

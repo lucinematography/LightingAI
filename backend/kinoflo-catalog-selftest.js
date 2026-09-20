@@ -200,6 +200,63 @@ for(const id of ["kinoflo-diva-lite-20-led","kinoflo-diva-lite-30-led","kinoflo-
   }
 }
 
+
+// Image L40/L80 True Match 5.0 RDM: official Kino Flo protocol lists both model IDs and P1-P30 widths.
+// Width-only pass; channel functions remain intentionally unmodeled here.
+const imageTrueMatch5Source='https://kinoflo.com/wp-content/uploads/2022/07/True-Match-Firmware-5.0-RDM-DMX-Personalities-May-2021.pdf';
+const imageTrueMatch5Widths=[
+  ['P1 CCT 8-bit',3],
+  ['P2 GEL 8-bit',6],
+  ['P3 RGB 8-bit',6],
+  ['P4 FX 8-bit',8],
+  ['P5 CIE xy 8-bit',3],
+  ['P6 CCT 16-bit',4],
+  ['P7 GEL 16-bit',7],
+  ['P8 RGB 16-bit',7],
+  ['P9 FX 16-bit',9],
+  ['P10 CIE xy 16-bit',4],
+  ['P11 CCT 8-bit',3],
+  ['P12 CCT 16-bit',5],
+  ['P13 Gel 8-bit',3],
+  ['P14 Gel 16-bit',5],
+  ['P15 HS 8-bit',4],
+  ['P16 HS 16-bit',8],
+  ['P17 RGB 8-bit',5],
+  ['P18 RGB 16-bit',10],
+  ['P19 CIE xy 8-bit',3],
+  ['P20 CIE xy 16-bit',6],
+  ['P21 FX 8-bit',8],
+  ['P22 FX 16-bit',10],
+  ['P23 CCT & HS 8-bit',7],
+  ['P24 CCT & HS 16-bit',13],
+  ['P25 CCT & RGB 8-bit',8],
+  ['P26 CCT & RGB 16-bit',15],
+  ['P27 xy1 & xy2 8-bit',6],
+  ['P28 xy1 & xy2 16-bit',12],
+  ['P29 CCT & TDRGB 8-bit',9],
+  ['P30 CCT & TDRGB 16-bit',15]
+];
+for(const id of ["kinoflo-image-l40-led","kinoflo-image-l80-led"]){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)){
+    failures.push('Missing Kino Flo Image LED True Match 5.0 DMX modes: '+id);
+    continue;
+  }
+  if(fixture.dmxModes.length!==imageTrueMatch5Widths.length){
+    failures.push('Unexpected Kino Flo Image LED True Match 5.0 mode count: '+id);
+  }
+  for(const [name,channels] of imageTrueMatch5Widths){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==imageTrueMatch5Source){
+      failures.push('Incorrect verified Kino Flo Image LED DMX width/source: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo Image LED channel mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,finalAudit:true,failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -165,6 +165,20 @@ for (const fixtureId of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar']) {
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera PixelBrick public-protocol limitation note missing');
 }
 
+// Astera NYX Bulb control audit: preserve confirmed CRMX/Bluetooth capabilities and LightingAI limits.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-nyx-bulb');
+  const control = fixture?.control || {};
+  if (control.wired?.length) failures.push('Astera NYX Bulb must not claim wired control without documented fixture input');
+  for (const item of ['AsteraApp','CRMX','Bluetooth']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera NYX Bulb wireless/input path missing: ${item}`);
+  }
+  if (!control.builtInCRMX || !control.builtInBluetooth) failures.push('Astera NYX Bulb built-in CRMX/Bluetooth flags missing');
+  if (control.directLightingAI?.length) failures.push('Astera NYX Bulb must not claim direct LightingAI transport without a documented public API');
+  if (!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Astera NYX Bulb CRMX transmitter requirement missing');
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera NYX Bulb public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

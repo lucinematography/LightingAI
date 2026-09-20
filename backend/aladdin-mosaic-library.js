@@ -5,26 +5,59 @@ const MOSAIC_MANUAL='https://aladdin-lights.com/wp-content/uploads/2023/09/MOSAI
 const MOSAIC_4X4_ACC='https://aladdin-lights.com/wp-content/uploads/2022/12/Accessory-Chart-MOSAIC-4x4-1.pdf';
 const MOSAIC_DMX='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
 
-
-// Static-light controls: DMX map 2023 pp. 1-2, reconfirmed by 12.2025 pp. 25-26.
-// Green correction is piecewise, and FX selection is discrete: neither is a linear slider.
-// Keep both neutral/off until their dedicated UI is implemented. Do not infer crossfade direction.
+// Official map pp. 1-2; reconfirmed by ALADDIN_DMX_MAP-12.2025.pdf pp. 25-26.
+// Preserve saved Patch mode names and footprints. Correction and FX need the typed app controls.
 function mosaicModes(){
   const percent=(key,label,channel)=>({key,label,channel,type:'percent',bits:8,min:0,max:100,dmxMin:0,dmxMax:255});
   return [['Simple CCT Crossfade RGBW',8],['Expert CCT Crossfade RGBW + Effects',11]].map(([name,channels])=>({
     name,channels,verified:true,sourceUrl:MOSAIC_DMX,
-    controlScope:'static-light',
-    controlNotes:'Green correction is neutral; Expert effects are OFF during these direct controls.',
+    controlScope:'full-profile',
+    controlNotes:'Minus correction = magenta; plus = green. FX intensity and speed are relative percentages. Select effects deliberately; some flash. Scene fades switch correction and effect selection at the end.',
+    controlNotesSr:'Minus korekcija = magenta; plus = zelena. Ja\u010dina i brzina efekta su relativni procenti. Efekti mogu da bljeskaju; biraj ih namerno. Prelaz scene menja korekciju i izbor efekta tek na kraju.',
     controls:[
       percent('dimmer','Dimmer',1),
       {key:'cct',label:'CCT',channel:2,type:'cct-linear',bits:8,min:2200,max:12000,dmxMin:0,dmxMax:255},
-      percent('crossfade','CCT / RGBW crossfade (static light)',4),
+      {key:'greenCorrection',label:'Green / magenta correction',labelSr:'Korekcija zelena / magenta',channel:3,type:'piecewise',bits:8,min:-100,max:100,step:1,defaultValue:0,fade:'snap-at-end',
+        segments:[
+          {min:-100,max:-100,dmxMin:11,dmxMax:11},
+          {min:-99,max:-1,dmxMin:21,dmxMax:119},
+          {min:0,max:0,dmxMin:0,dmxMax:0},
+          {min:1,max:99,dmxMin:146,dmxMax:244},
+          {min:100,max:100,dmxMin:245,dmxMax:245}
+        ],
+        readSegments:[
+          {min:0,max:0,dmxMin:0,dmxMax:10},
+          {min:-100,max:-100,dmxMin:11,dmxMax:20},
+          {min:-99,max:-1,dmxMin:21,dmxMax:119},
+          {min:0,max:0,dmxMin:120,dmxMax:145},
+          {min:1,max:99,dmxMin:146,dmxMax:244},
+          {min:100,max:100,dmxMin:245,dmxMax:255}
+        ]
+      },
+      percent('crossfade','CCT / RGBW crossfade',4),
       percent('red','Red',5),
       percent('green','Green',6),
       percent('blue','Blue',7),
-      percent('white','White',8)
+      percent('white','White',8),
+      ...(channels===11?[
+        {key:'effect',label:'Effect selection',labelSr:'Izbor efekta',channel:9,type:'enum',bits:8,defaultValue:0,readFallback:0,fade:'snap-at-end',choices:[
+          {value:0,dmxValue:0,dmxMin:0,dmxMax:9,label:'Off',labelSr:'Isklju\u010deno'},
+          {value:1,dmxValue:10,dmxMin:10,dmxMax:19,label:'Strobe',labelSr:'Stroboskop'},
+          {value:2,dmxValue:20,dmxMin:20,dmxMax:29,label:'Fade',labelSr:'Postepeni prelaz'},
+          {value:3,dmxValue:30,dmxMin:30,dmxMax:39,label:'Flicker',labelSr:'Treperenje'},
+          {value:4,dmxValue:40,dmxMin:40,dmxMax:49,label:'Flash',labelSr:'Bljesak'},
+          {value:5,dmxValue:50,dmxMin:50,dmxMax:59,label:'Police',labelSr:'Policija'},
+          {value:6,dmxValue:60,dmxMin:60,dmxMax:69,label:'Welding',labelSr:'Varenje'},
+          {value:7,dmxValue:70,dmxMin:70,dmxMax:79,label:'Fire',labelSr:'Vatra'},
+          {value:8,dmxValue:80,dmxMin:80,dmxMax:89,label:'Candle',labelSr:'Sve\u0107a'},
+          {value:9,dmxValue:90,dmxMin:90,dmxMax:99,label:'Television',labelSr:'Televizija'},
+          {value:10,dmxValue:100,dmxMin:100,dmxMax:109,label:'Dissolve',labelSr:'Pretapanje'}
+        ]},
+        {...percent('fxDimmer','FX intensity',10),labelSr:'Ja\u010dina efekta'},
+        {...percent('fxSpeed','FX speed (relative)',11),labelSr:'Brzina efekta (relativna)'}
+      ]:[])
     ],
-    requiredChannels:[{channel:3,value:0},...(channels===11?[{channel:9,value:0}]:[])]
+    requiredChannels:[]
   }));
 }
 

@@ -1,6 +1,5 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
-import { readFileSync } from 'node:fs';
-import { runInNewContext } from 'node:vm';
+import { verifyMosaicControls } from './aladdin-mosaic-controls-selftest.js';
 
 const catalog=buildRuntimeCatalog();
 const fixtures=catalog.fixtures.filter(x=>x.manufacturer==='Aladdin');
@@ -123,97 +122,9 @@ for(const id of ['aladdin-bi-flex-1','aladdin-bi-flex-2','aladdin-bi-flex-4']){
   if(fixture?.dmxModes?.length) failures.push('Legacy BI-FLEX exact DMX map must remain unchanged until separately sourced: '+id);
 }
 
-// MOSAIC 2X4/4X4/3X6: static direct controls, official DMX map 2023 pp. 1-2.
-// Reconfirmed against ALADDIN_DMX_MAP-12.2025.pdf pp. 25-26.
-const mosaicDmxSource='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
-const mosaicDmxWidths=[['Simple CCT Crossfade RGBW',8],['Expert CCT Crossfade RGBW + Effects',11]];
-const mosaicControls=[['dimmer',1,'percent',0,100],['cct',2,'cct-linear',2200,12000],['crossfade',4,'percent',0,100],['red',5,'percent',0,100],['green',6,'percent',0,100],['blue',7,'percent',0,100],['white',8,'percent',0,100]];
-for(const id of ['aladdin-mosaic-2x4','aladdin-mosaic-4x4','aladdin-mosaic-3x6']){
-  const fixture=fixtures.find(item=>item.id===id);
-  if(!fixture||!Array.isArray(fixture.dmxModes)){
-    failures.push('Missing Aladdin MOSAIC DMX modes: '+id);
-    continue;
-  }
-  if(fixture.dmxModes.length!==mosaicDmxWidths.length){
-    failures.push('Unexpected Aladdin MOSAIC DMX mode count: '+id);
-  }
-  for(const [name,channels] of mosaicDmxWidths){
-    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
-    const mode=matches[0];
-    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==mosaicDmxSource){
-      failures.push('Incorrect verified Aladdin MOSAIC DMX width/source: '+id+' / '+name);
-    }
-    if(mode?.controlScope!=='static-light'||!Array.isArray(mode?.controls)||mode.controls.length!==mosaicControls.length){
-      failures.push('Incorrect Aladdin MOSAIC static control set: '+id+' / '+name);
-      continue;
-    }
-    for(const [key,channel,type,min,max] of mosaicControls){
-      const controls=mode.controls.filter(control=>control?.key===key);
-      const control=controls[0];
-      if(controls.length!==1||control?.channel!==channel||control?.type!==type||control?.bits!==8||control?.min!==min||control?.max!==max||control?.dmxMin!==0||control?.dmxMax!==255){
-        failures.push('Incorrect Aladdin MOSAIC control mapping: '+id+' / '+name+' / '+key);
-      }
-    }
-    const requirements=channels===11?[[3,0],[9,0]]:[[3,0]];
-    if(!Array.isArray(mode.requiredChannels)||mode.requiredChannels.length!==requirements.length){
-      failures.push('Incorrect Aladdin MOSAIC static safety requirements: '+id+' / '+name);
-    }else{
-      for(const [channel,value] of requirements){
-        const values=mode.requiredChannels.filter(item=>item?.channel===channel);
-        if(values.length!==1||values[0]?.value!==value){
-          failures.push('MOSAIC static controls must neutralize green correction and disable Expert FX: '+id+' / '+name+' / CH'+channel);
-        }
-      }
-    }
-  }
-}
-
-// Exercise the actual app's pure DMX encoder; no network/native sender is executed.
-{
-  const appSource=readFileSync(new URL('../app/src/main/assets/artnet-control.js',import.meta.url),'utf8');
-  const start=appSource.indexOf('function controlBitDepth(ctrl){');
-  const end=appSource.indexOf('function renderMasterControl(){',start);
-  if(start<0||end<=start){
-    failures.push('Cannot locate the app DMX encoder for the Aladdin integration test');
-  }else{
-    const codec=runInNewContext(appSource.slice(start,end)+';({controlToDmx,writeControlToFrame,applyProfileRequirements})',{}, {timeout:1000});
-    for(const fixture of fixtures.filter(item=>item.family==='MOSAIC')){
-      for(const mode of fixture.dmxModes||[]){
-        for(const control of mode.controls||[]){
-          for(let value=0;value<=255;value++){
-            const input=control.min+(control.max-control.min)*value/255;
-            if(codec.controlToDmx(control,input)!==value){
-              failures.push('Aladdin MOSAIC DMX quantization mismatch: '+fixture.id+' / '+mode.name+' / '+control.key);
-              break;
-            }
-          }
-          for(const fixtureStart of [1,513-mode.channels]){
-            const frame=new Array(512).fill(77);
-            const address=fixtureStart+control.channel-1;
-            if(!codec.applyProfileRequirements(frame,fixtureStart,mode)||!codec.writeControlToFrame(frame,address,control,control.max)||frame[address-1]!==255){
-              failures.push('Aladdin MOSAIC app frame write failed: '+fixture.id+' / '+mode.name+' / '+control.key);
-            }
-            const written=new Set([address-1,...(mode.requiredChannels||[]).map(item=>fixtureStart+item.channel-2)]);
-            for(let index=0;index<512;index++){
-              if(!written.has(index)&&frame[index]!==77){
-                failures.push('Aladdin MOSAIC frame write changed an unrelated channel: '+fixture.id);
-                break;
-              }
-            }
-            for(const requirement of mode.requiredChannels||[]){
-              if(frame[fixtureStart+requirement.channel-2]!==requirement.value){
-                failures.push('Aladdin MOSAIC frame requirement was not applied: '+fixture.id);
-              }
-            }
-          }
-          if(codec.controlToDmx(control,control.min-100)!==0||codec.controlToDmx(control,control.max+100)!==255){
-            failures.push('Aladdin MOSAIC input clamping failed: '+fixture.id+' / '+control.key);
-          }
-        }
-      }
-    }
-  }
-}
+// Includes all linear encoder checks from the static pass plus typed controls, UI handlers and fade safety.
+let mosaicControls=null;
+try{mosaicControls=verifyMosaicControls(fixtures);}catch(error){failures.push('Aladdin MOSAIC controls: '+error.message);}
 
 // ALL-IN ONE/TWO: model-specific manuals dated 2024-02-05, technical specifications (printed p. 5).
 // Requires optional ALL-DMXAT attachment or ALL-WDIM controller. Do not reuse ALL-IN COLOR / MOSAIC modes.
@@ -251,5 +162,5 @@ for(const [id,sourceUrl] of [
 }
 
 const unique=[...new Set(failures)];
-console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Aladdin',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
+console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Aladdin',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,mosaicControls,failures:unique},null,2));
 if(unique.length) process.exit(1);

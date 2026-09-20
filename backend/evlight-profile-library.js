@@ -61,8 +61,21 @@ export const EVLIGHT_PROFILE_FIXTURES=[
   }),
   fixture('evlight-ev-sp300z','EV SP300Z',{
     powerW:300,colorMode:'RGBAL Full Color',cctK:{min:2800,max:8000},
-    beamAngleDeg:{min:15,max:30},control:['DMX512','RDM','Master-Slave','Self Running'],
-    dmxChannels:10,weightKg:12,pwmHz:{min:500,max:25000},
+    beamAngleDeg:{min:15,max:30},
+    control:{
+      wired:['DMX512','RDM'],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['Wired DMX interface for DMX512/RDM control'],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented Art-Net or sACN network input is published for EV SP300Z',
+        'No manufacturer-documented CRMX/LumenRadio, Bluetooth or Wi-Fi control path is published for EV SP300Z'
+      ],
+      sourceUrls:[SP300Z]
+    },
+    localControl:['Self Running','Master-Slave'],dmxChannels:10,weightKg:12,pwmHz:{min:500,max:25000},
     optics:'Manual focus, glass reflector zoom profile optics',sourceUrl:SP300Z
   }),
   fixture('evlight-epro300z','EPRO300Z',{

@@ -189,6 +189,30 @@ for(const fixtureId of ['godox-c5r','godox-c7r','godox-c10r']){
   if(control.externalInterfaceRequired?.length) failures.push('Godox C-series should not require DMX/CRMX interface: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox C-series Bluetooth protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-la150r','godox-la200r']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(control.wired?.length) failures.push('Godox LA150/LA200 must not claim wired control: '+fixtureId);
+  if(!control.wireless?.includes('Bluetooth/App')) failures.push('Godox LA150/LA200 Bluetooth/App path missing: '+fixtureId);
+  if(control.builtInCRMX) failures.push('Godox LA150/LA200 must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox LA150/LA200 built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox LA150/LA200 must not claim direct LightingAI transport: '+fixtureId);
+}
+for(const fixtureId of ['godox-la300r','godox-la300bi']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(!control.wired?.includes('DMX512 via DMX-TRS1')) failures.push('Godox LA300 DMX-TRS1 path missing: '+fixtureId);
+  if(!control.wireless?.includes('Bluetooth/App')) failures.push('Godox LA300 Bluetooth/App path missing: '+fixtureId);
+  if(control.builtInCRMX) failures.push('Godox LA300 must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox LA300 built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox LA300 must not claim direct LightingAI network transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface plus Godox DMX-TRS1 adapter cable for DMX512 control')) failures.push('Godox LA300 DMX-TRS1 requirement missing: '+fixtureId);
+}
+for(const fixtureId of ['godox-la150r','godox-la200r','godox-la300r','godox-la300bi']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox LA Bluetooth protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

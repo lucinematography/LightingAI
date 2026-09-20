@@ -169,6 +169,33 @@ for(const id of ['desisti-f47-lite-t','desisti-f47-lite-d']){
 
 
 
+// Super LED F10 SHP T/D: official mini catalog confirms 1ch 8-bit and 2ch 16-bit DMX footprints.
+// The source used here does not publish channel order, so controls and required values remain hidden.
+const f10ShpFixedSource='https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
+for(const id of ['desisti-super-led-f10shp-t','desisti-super-led-f10shp-d']){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)){
+    failures.push('Missing F10 SHP fixed-white DMX modes: '+id);
+    continue;
+  }
+  const widths=[['8-bit dimmer',1],['16-bit dimmer',2]];
+  if(fixture.dmxModes.length!==widths.length){
+    failures.push('Unexpected F10 SHP fixed-white DMX mode count: '+id);
+  }
+  for(const [name,channels] of widths){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==f10ShpFixedSource){
+      failures.push('Incorrect verified F10 SHP fixed-white DMX width/source: '+id+' / '+name);
+    }
+    for(const key of ['controls','requiredChannels']){
+      if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
+        failures.push('F10 SHP fixed-white channel mapping must remain hidden until sourced: '+id+' / '+name+' / '+key);
+      }
+    }
+  }
+}
+
 // Super LED F14 T/D and F14 HP T/D: official product page confirms 1ch 8-bit and 2ch 16-bit footprints.
 // Only the 8-bit CH1 dimmer control is sourced here; 16-bit channel order remains hidden.
 const f14FamilySource='https://www.desisti.it/super-led-f14/';

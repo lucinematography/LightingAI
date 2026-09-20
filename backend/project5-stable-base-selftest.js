@@ -77,6 +77,7 @@ const serverPath = 'backend/server.js';
 const exactAllowed = new Set([
   aiPlanPath,
   mainActivityPath,
+  imageBridgePath,
   'app/build.gradle',
   '.github/workflows/release-apk.yml',
   'app/src/main/assets/index.html',

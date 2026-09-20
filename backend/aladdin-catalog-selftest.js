@@ -148,6 +148,41 @@ for(const id of ['aladdin-mosaic-2x4','aladdin-mosaic-4x4','aladdin-mosaic-3x6']
   }
 }
 
+// ALL-IN ONE/TWO: model-specific manuals dated 2024-02-05, technical specifications (printed p. 5).
+// Requires optional ALL-DMXAT attachment or ALL-WDIM controller. Do not reuse ALL-IN COLOR / MOSAIC modes.
+const allInDmxWidths=[['2ch White Bi-Color (optional DMX)',2],['3ch RGB (optional DMX)',3]];
+for(const [id,sourceUrl] of [
+  ['aladdin-all-in-one','https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-ONE-Manual-corrected-version-05.02.2024.pdf'],
+  ['aladdin-all-in-two','https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-TWO-Manual-corrected-version-05.02.2024.pdf']
+]){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==allInDmxWidths.length){
+    failures.push('Missing or unexpected Aladdin ALL-IN DMX mode set: '+id);
+    continue;
+  }
+  if(!Array.isArray(fixture.control)||!fixture.control.includes('Optional DMX512')){
+    failures.push('Aladdin ALL-IN must retain the optional DMX hardware requirement: '+id);
+  }
+  for(const [name,channels] of allInDmxWidths){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==sourceUrl){
+      failures.push('Incorrect verified Aladdin ALL-IN DMX width/source: '+id+' / '+name);
+    }
+    for(const key of ['controls','requiredChannels']){
+      if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
+        failures.push('Aladdin ALL-IN DMX mapping must remain width-only in this pass: '+id+' / '+name+' / '+key);
+      }
+    }
+  }
+  for(const accessoryId of ['aladdin-all-wdim','aladdin-all-dmxat']){
+    const accessory=accessories.find(item=>item.id===accessoryId);
+    if(!Array.isArray(accessory?.compatibleWith)||!accessory.compatibleWith.includes(id)){
+      failures.push('Missing Aladdin ALL-IN optional DMX accessory link: '+id+' / '+accessoryId);
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Aladdin',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -13,6 +13,12 @@ function fixture(id,model,powerW,widthMm,heightMm,sourceUrl){
     cooling:'Passive',
     formFactor:`${widthMm} x ${heightMm} mm flexible LED panel`,
     control:['Bluetooth/App','On-board','Optional DMX512','Optional Wired Controller'],
+    // Requires optional ALL-DMXAT attachment or ALL-WDIM controller (2024 model manuals, printed p. 5).
+    // Widths only: no ALL-IN COLOR / MOSAIC personalities or channel values are inferred.
+    dmxModes:[
+      {name:'2ch White Bi-Color (optional DMX)',channels:2,verified:true,sourceUrl},
+      {name:'3ch RGB (optional DMX)',channels:3,verified:true,sourceUrl}
+    ],
     powerSupply:'100-240V AC / 12-15V DC'
   };
 }

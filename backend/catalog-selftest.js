@@ -261,6 +261,20 @@ for (const fixtureId of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar']) {
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera AX3 LightDrop public-protocol limitation note missing');
 }
 
+// Astera SolaBulb control audit: preserve documented family capabilities and LightingAI limits.
+for (const fixtureId of ['astera-solabulb-e26','astera-solabulb-e27','astera-solabulb-b22']) {
+  const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
+  const control = fixture?.control || {};
+  if (control.wired?.length) failures.push(`Astera SolaBulb must not claim wired control: ${fixtureId}`);
+  for (const item of ['AsteraApp','CRMX','UHF','Bluetooth','WiFi']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera SolaBulb wireless/input path missing: ${fixtureId} ${item}`);
+  }
+  if (!control.builtInCRMX || !control.builtInBTB) failures.push(`Astera SolaBulb CRMX/BTB capability flags missing: ${fixtureId}`);
+  if (control.directLightingAI?.length) failures.push(`Astera SolaBulb must not claim direct LightingAI transport: ${fixtureId}`);
+  if (!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push(`Astera SolaBulb CRMX transmitter requirement missing: ${fixtureId}`);
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push(`Astera SolaBulb public-protocol limitation note missing: ${fixtureId}`);
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

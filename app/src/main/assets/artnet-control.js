@@ -644,7 +644,7 @@ function fadeToScene(index,secondsOverride){
  const next=normalizedSceneFrames(scene),universeSet=new Set(Object.keys(frames).concat(Object.keys(next)));
  if(!universeSet.size){status(t().sceneNeedFrame,false);return}
  cancelSceneFade(false);
- const start={},target={},universes=Array.from(universeSet);
+ const start={},target={},universes=Array.from(universeSet),snapChannels=fadeSnapChannels();
  universes.forEach(u=>{
   start[u]=(frames[u]||new Array(512).fill(0)).slice(0,512);
   while(start[u].length<512)start[u].push(0);
@@ -658,7 +658,7 @@ function fadeToScene(index,secondsOverride){
   const p=Math.min(1,(Date.now()-started)/duration);
   universes.forEach(u=>{
    const out=new Array(512);
-   for(let i=0;i<512;i++)out[i]=Math.round(start[u][i]+(target[u][i]-start[u][i])*p);
+   for(let i=0;i<512;i++)out[i]=fadeChannelValue(start[u][i],target[u][i],p,!!(snapChannels[u]&&snapChannels[u].has(i)));
    frames[u]=out;
    sendFrame(out.slice(),Number(u),'fade');
   });
@@ -714,7 +714,13 @@ function fixtureForRow(r){
 function profileForRow(r){
  const f=fixtureForRow(r),modes=f&&Array.isArray(f.dmxModes)?f.dmxModes:[];
  if(!r||!r.mode)return null;
- return modes.find(m=>m&&m.name===r.mode&&m.verified===true)||null;
+ const profile=modes.find(m=>m&&m.name===r.mode&&m.verified===true)||null;
+ // Typed profiles must fit their Patch allocation before any direct or master control is exposed.
+ if(profile&&Array.isArray(profile.controls)&&profile.controls.some(ctrl=>ctrl&&(ctrl.type==='enum'||ctrl.type==='piecewise'))){
+  if(!patchUsable(r)||Number(r.channels)!==Number(profile.channels)||
+     !Number.isInteger(Number(r.start))||Number(r.start)<1||Number(r.start)+Number(profile.channels)-1>512)return null;
+ }
+ return profile;
 }
 function selectedPatchRow(){
  const select=E('artnetPatchDevice');
@@ -758,7 +764,44 @@ function controlBitDepth(ctrl){
  if(explicit===16)return 16;
  return Number(ctrl&&ctrl.dmxMax)>255?16:8;
 }
+// Enum selectors and non-linear corrections are never interpolated as raw DMX bytes.
+function fadeChannelValue(from,to,progress,snap){
+ return snap?(progress>=1?to:from):Math.round(from+(to-from)*progress);
+}
+function fadeSnapChannels(){
+ const result={};
+ rows().forEach(r=>{
+  if(!patchUsable(r))return;
+  const profile=profileForRow(r);
+  if(!profile||Number(r.channels)!==Number(profile.channels))return;
+  (Array.isArray(profile.controls)?profile.controls:[]).forEach(ctrl=>{
+   if(!ctrl||!(ctrl.type==='enum'||ctrl.type==='piecewise'||ctrl.fade==='snap-at-end'))return;
+   const offset=Number(ctrl.channel),start=Number(r.start),universe=Number(r.universe);
+   if(!Number.isInteger(offset)||offset<1||offset>Number(profile.channels)||
+      !Number.isInteger(start)||start<1||start+Number(profile.channels)-1>512||
+      !Number.isInteger(universe)||universe<1)return;
+   const key=String(universe);
+   if(!result[key])result[key]=new Set();
+   result[key].add(start+offset-2);
+  });
+ });
+ return result;
+}
 function controlToDmx(ctrl,value){
+ if(ctrl&&(ctrl.type==='enum'||ctrl.type==='piecewise')){
+  if((typeof value!=='number'&&typeof value!=='string')||String(value).trim()===''||!Number.isFinite(Number(value)))return null;
+  const input=Number(value);
+  if(ctrl.type==='enum'){
+   const choice=(Array.isArray(ctrl.choices)?ctrl.choices:[]).find(item=>item&&item.value===input);
+   return choice&&Number.isInteger(choice.dmxValue)&&choice.dmxValue>=0&&choice.dmxValue<=255?choice.dmxValue:null;
+  }
+  if(!Number.isInteger(input)||input<ctrl.min||input>ctrl.max)return null;
+  const part=(Array.isArray(ctrl.segments)?ctrl.segments:[]).find(item=>item&&input>=item.min&&input<=item.max);
+  if(!part)return null;
+  const p=part.max===part.min?0:(input-part.min)/(part.max-part.min);
+  const output=Math.round(part.dmxMin+p*(part.dmxMax-part.dmxMin));
+  return Number.isInteger(output)&&output>=0&&output<=255?output:null;
+ }
  const inMin=Number(ctrl.min||0),inMax=Number(ctrl.max||100),outMin=Number(ctrl.dmxMin||0);
  const maxDefault=controlBitDepth(ctrl)===16?65535:255;
  const outMax=Number(ctrl.dmxMax==null?maxDefault:ctrl.dmxMax);
@@ -769,6 +812,7 @@ function writeControlToFrame(targetFrame,address,ctrl,value){
  const start=Math.max(1,Number(address)||1),bits=controlBitDepth(ctrl),width=bits===16?2:1;
  if(!Array.isArray(targetFrame)||start+width-1>512)return false;
  const dmx=controlToDmx(ctrl,value);
+ if(!Number.isInteger(dmx)||dmx<0||dmx>(bits===16?65535:255))return false;
  if(bits===16){
   targetFrame[start-1]=(dmx>>8)&255;
   targetFrame[start]=dmx&255;
@@ -784,6 +828,23 @@ function applyProfileRequirements(targetFrame,fixtureStart,profile){
   targetFrame[address-1]=Math.max(0,Math.min(255,Number(item&&item.value)||0));
  });
  return ok;
+}
+function controlFromDmx(ctrl,raw){
+ const maximum=controlBitDepth(ctrl)===16?65535:255;
+ if(!Number.isInteger(raw)||raw<0||raw>maximum)return null;
+ if(ctrl.type==='enum'){
+  const item=(Array.isArray(ctrl.choices)?ctrl.choices:[]).find(choice=>raw>=choice.dmxMin&&raw<=choice.dmxMax);
+  return item?item.value:(ctrl.readFallback==null?null:ctrl.readFallback);
+ }
+ if(ctrl.type==='piecewise'){
+  const part=(Array.isArray(ctrl.readSegments)?ctrl.readSegments:[]).find(item=>raw>=item.dmxMin&&raw<=item.dmxMax);
+  if(!part)return null;
+  const p=part.dmxMax===part.dmxMin?0:(raw-part.dmxMin)/(part.dmxMax-part.dmxMin);
+  return Math.round(part.min+p*(part.max-part.min));
+ }
+ const low=Number(ctrl.dmxMin||0),high=Number(ctrl.dmxMax==null?maximum:ctrl.dmxMax);
+ const min=Number(ctrl.min==null?0:ctrl.min),max=Number(ctrl.max==null?100:ctrl.max);
+ return high===low?min:min+Math.max(0,Math.min(1,(raw-low)/(high-low)))*(max-min);
 }
 function renderMasterControl(){
  const box=E('artnetMasterControl');if(!box)return;
@@ -904,25 +965,54 @@ function renderVerifiedControls(r){
  const box=E('artnetVerifiedControls');if(!box)return;
  const profile=profileForRow(r),fixture=fixtureForRow(r),controls=profile&&Array.isArray(profile.controls)?profile.controls:[];
  if(!profile||!controls.length){box.innerHTML='<div class="muted small">'+esc(t().verifiedNone)+'</div>';return}
+ const current=frames[String(Number(r.universe)||1)];
+ const initialValue=ctrl=>{
+  const fallback=ctrl.defaultValue==null?Number(ctrl.min==null?0:ctrl.min):Number(ctrl.defaultValue);
+  const offset=Number(r.start)+Number(ctrl.channel)-2,width=controlBitDepth(ctrl)===16?2:1;
+  if(!current||!Number.isInteger(offset)||offset<0||offset+width>512)return fallback;
+  const raw=width===2?current[offset]*256+current[offset+1]:current[offset];
+  const decoded=controlFromDmx(ctrl,raw);
+  return decoded==null?fallback:decoded;
+ };
  const items=controls.map((ctrl,i)=>{
-  if(ctrl.type!=='percent'&&ctrl.type!=='cct-linear')return '';
-  const label=ctrl.key==='dimmer'?t().dimmer:(ctrl.label||ctrl.key||('CH '+ctrl.channel));
-  const min=Number(ctrl.min==null?0:ctrl.min),max=Number(ctrl.max==null?100:ctrl.max),step=Number(ctrl.step||1),initial=min;
+  if(!ctrl||!['percent','cct-linear','enum','piecewise'].includes(ctrl.type))return '';
+  const label=ctrl.key==='dimmer'?t().dimmer:(lang()==='sr'&&ctrl.labelSr?ctrl.labelSr:(ctrl.label||ctrl.key||('CH '+ctrl.channel)));
+  const initial=initialValue(ctrl);
+  if(ctrl.type==='enum'){
+   const choices=Array.isArray(ctrl.choices)?ctrl.choices:[];
+   return '<div style="padding:10px 0;border-top:1px solid #2d333a"><label for="artnetVerifiedEnum_'+i+'"><b>'+esc(label)+'</b></label><select id="artnetVerifiedEnum_'+i+'" class="artnet-verified-enum" data-index="'+i+'" style="margin-top:8px">'+choices.map(choice=>'<option value="'+esc(choice.value)+'"'+(choice.value===initial?' selected':'')+'>'+esc(lang()==='sr'&&choice.labelSr?choice.labelSr:choice.label)+'</option>').join('')+'</select></div>';
+  }
+  const min=Number(ctrl.min==null?0:ctrl.min),max=Number(ctrl.max==null?100:ctrl.max),step=Number(ctrl.step||1);
   const suffix=ctrl.type==='cct-linear'?'K':'%';
-  return '<div style="padding:10px 0;border-top:1px solid #2d333a"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+esc(label)+'</b><span id="artnetVerifiedValue_'+i+'" class="muted small">'+Math.round(initial)+suffix+'</span></div><input class="artnet-verified-range" data-index="'+i+'" data-suffix="'+suffix+'" type="range" min="'+min+'" max="'+max+'" step="'+step+'" value="'+initial+'" style="margin-top:8px"></div>';
+  return '<div style="padding:10px 0;border-top:1px solid #2d333a"><div style="display:flex;justify-content:space-between;gap:8px"><label for="artnetVerifiedRange_'+i+'"><b>'+esc(label)+'</b></label><span id="artnetVerifiedValue_'+i+'" class="muted small">'+Math.round(initial)+suffix+'</span></div><input id="artnetVerifiedRange_'+i+'" class="artnet-verified-range" data-index="'+i+'" data-suffix="'+suffix+'" type="range" min="'+min+'" max="'+max+'" step="'+step+'" value="'+initial+'" style="margin-top:8px"></div>';
  }).join('');
- box.innerHTML='<div style="font-size:11px;color:#9da3ad;margin-top:12px">'+esc(t().verifiedTitle)+'</div><div style="font-weight:800;margin-top:4px">'+esc((fixture.manufacturer||'')+' '+(fixture.model||fixture.id))+'</div><div class="muted small">'+esc(profile.name)+' · '+Number(profile.channels||r.channels)+' ch</div>'+items+'<div class="muted small" style="margin-top:7px">'+esc(t().verifiedSource)+'</div>';
+ const note=lang()==='sr'&&profile.controlNotesSr?profile.controlNotesSr:profile.controlNotes;
+ box.innerHTML='<div style="font-size:11px;color:#9da3ad;margin-top:12px">'+esc(t().verifiedTitle)+'</div><div style="font-weight:800;margin-top:4px">'+esc((fixture.manufacturer||'')+' '+(fixture.model||fixture.id))+'</div><div class="muted small">'+esc(profile.name)+' \u00b7 '+Number(profile.channels||r.channels)+' ch</div>'+(note?'<div class="muted small" style="margin-top:7px">'+esc(note)+'</div>':'')+items+'<div class="muted small" style="margin-top:7px">'+esc(t().verifiedSource)+'</div>';
  box.querySelectorAll('.artnet-verified-range').forEach(input=>{
   input.addEventListener('input',()=>{
    const idx=Number(input.dataset.index),v=Number(input.value)||0,readout=E('artnetVerifiedValue_'+idx);
    if(readout)readout.textContent=Math.round(v)+(input.dataset.suffix||'');
   });
-  input.addEventListener('change',()=>sendVerifiedControl(r,profile,controls[Number(input.dataset.index)],Number(input.value)||0));
+  input.addEventListener('change',()=>sendVerifiedControl(r,profile,controls[Number(input.dataset.index)],Number(input.value)));
  });
+ box.querySelectorAll('.artnet-verified-enum').forEach(input=>{
+  input.addEventListener('change',()=>sendVerifiedControl(r,profile,controls[Number(input.dataset.index)],Number(input.value)));
+ });
+}
+function controlsInclude(profile,ctrl){
+ return Array.isArray(profile.controls)&&profile.controls.includes(ctrl);
 }
 function sendVerifiedControl(r,profile,ctrl,value){
  if(!requireOutputArmed())return;
  if(!patchUsable(r)||!profile||!ctrl)return;
+ if(Array.isArray(profile.controls)&&profile.controls.some(control=>control&&(control.type==='enum'||control.type==='piecewise'))){
+  if(profileForRow(r)!==profile||!controlsInclude(profile,ctrl)||
+     !Number.isInteger(Number(r.start))||Number(r.start)<1||Number(r.start)+Number(profile.channels)-1>512||
+     !Number.isInteger(Number(ctrl.channel))||Number(ctrl.channel)<1||Number(ctrl.channel)>Number(profile.channels)||
+     !rows().some(row=>rowKey(row)===rowKey(r))||Number(r.channels)!==Number(profile.channels)||
+     controlToDmx(ctrl,value)==null)return;
+  cancelSceneFade(false);
+ }
  const u=Math.max(1,Number(r.universe)||1);
  const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
  const f=frame(u);
@@ -1065,7 +1155,7 @@ function install(){
  E('artnetSend').addEventListener('click',sendTest);E('artnetBlackout').addEventListener('click',blackout);E('artnetLiveToggle').addEventListener('change',()=>setLiveEnabled(!!E('artnetLiveToggle').checked));E('artnetSceneSave').addEventListener('click',saveScene);
  translate();setTimeout(requestDiagnostics,250);return true;
 }
-window.LightingAIArtNetControl={version:'0.26-profile-requirements',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority};
+window.LightingAIArtNetControl={version:'0.27-enum-piecewise-controls',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

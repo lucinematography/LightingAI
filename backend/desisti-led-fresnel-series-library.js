@@ -18,6 +18,7 @@ const VWC_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.p
 const F10_VWC_SRC = 'https://www.desisti.it/wp-content/uploads/SUPER-LED-F10-VWC-04-2022-W-PHOTOMETRICS-1.pdf';
 const F14_SRC = 'https://www.desisti.it/super-led-f14/';
 const F14HP_VW_SRC = 'https://www.desisti.it/wp-content/uploads/Data-Sheet-Super-LED-F14HP-VW-1-1.pdf';
+const F14HP_VW_DMX_WIDTHS='https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';
 const F20_SRC = 'https://www.desisti.it/wp-content/uploads/mini-catalog-2025.pdf';
 
 const verifiedFixedDimmerModes = (sourceUrl) => [
@@ -92,7 +93,7 @@ export const DESISTI_LED_FRESNEL_FIXTURES = [
   fixed('desisti-super-led-f14-d','Super LED F14 D','Super LED F14',400,null,5600,95,95,350,F14_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerWidths(F14_SRC)}),
   fixed('desisti-super-led-f14hp-t','Super LED F14 HP T','Super LED F14 HP',580,650,3200,97,96,350,F14_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerWidths(F14_SRC)}),
   fixed('desisti-super-led-f14hp-d','Super LED F14 HP D','Super LED F14 HP',580,650,5600,96,97,350,F14_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:verifiedFixedDimmerWidths(F14_SRC)}),
-  vw('desisti-super-led-f14hp-vw','Super LED F14 HP Vari-White','Super LED F14 HP',580,650,2800,6600,350,F14_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:F14HP_VW_SRC,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]}]}),
+  vw('desisti-super-led-f14hp-vw','Super LED F14 HP Vari-White','Super LED F14 HP',580,650,2800,6600,350,F14_SRC,{ipRating:'IP22',rainProtectedOption:'IP23',dmxModes:[{name:'Vari-White',channels:3,verified:true,sourceUrl:F14HP_VW_SRC,controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}]},{name:'Vari-White 16-bit',channels:4,verified:true,sourceUrl:F14HP_VW_DMX_WIDTHS}]}),
 
   {
     id:'desisti-super-led-f20-t',manufacturer:'De Sisti',model:'Super LED F20 T',family:'Super LED F20',category:'Light',

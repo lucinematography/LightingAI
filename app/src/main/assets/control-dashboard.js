@@ -48,19 +48,26 @@ function render(){
  var rows=selectedFixtures(), count=rows.length;
  var title=sr()?'IZABRANA RASVETA':'SELECTED FIXTURES';
  var empty=sr()?'Nema izabranih rasvetnih tela. Dodaj ih u Oprema pa se vrati u Kontrolu.':'No selected fixtures. Add them in Equipment, then return to Control.';
+ var patched=rows.filter(function(row){return !!patchForFixture(row.fixture)}).length,verified=rows.filter(function(row){var p=patchForFixture(row.fixture);return !!(p&&profileForPatch(row.fixture,p))}).length;
  card.innerHTML='<div class="card" style="border-color:#66571f;background:linear-gradient(180deg,#191b20,#13161b)">'+
    '<div style="font-size:20px;font-weight:900;color:#f5c542">'+title+' <span style="font-size:13px;color:#9299a3">('+count+')</span></div>'+
    '<div class="muted small" style="margin-top:6px">'+(sr()?'Ovaj ekran koristi stvarno izabranu opremu iz kataloga i prikazuje samo verifikovane kontrolne puteve.':'This screen uses the actual selected catalog equipment and shows only verified control routes.')+'</div>'+
-   '<div class="actions" style="margin-top:12px"><button id="controlJumpNetwork" class="btn primary" type="button">'+(sr()?'MREŽNA KONTROLA':'NETWORK CONTROL')+'</button><button id="controlJumpBle" class="btn secondary" type="button">BLE</button></div>'+
+   '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px"><div style="padding:8px;border:1px solid #30343b;border-radius:10px;text-align:center"><b>'+count+'</b><div class="muted small">'+(sr()?'Izabrano':'Selected')+'</div></div><div style="padding:8px;border:1px solid #30343b;border-radius:10px;text-align:center"><b>'+patched+'</b><div class="muted small">DMX Patch</div></div><div style="padding:8px;border:1px solid #30343b;border-radius:10px;text-align:center"><b>'+verified+'</b><div class="muted small">'+(sr()?'Verifikovano':'Verified')+'</div></div></div>'+
+   '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px"><button id="controlJumpFixtures" class="btn secondary" type="button">'+(sr()?'UREĐAJI':'FIXTURES')+'</button><button id="controlJumpGroups" class="btn secondary" type="button">'+(sr()?'GRUPE':'GROUPS')+'</button><button id="controlJumpScenes" class="btn secondary" type="button">'+(sr()?'SCENE':'SCENES')+'</button><button id="controlJumpProtocols" class="btn secondary" type="button">'+(sr()?'PROTOKOLI':'PROTOCOLS')+'</button></div>'+
+   '<div class="actions" style="margin-top:8px"><button id="controlJumpNetwork" class="btn primary" type="button">'+(sr()?'MREŽNA KONTROLA':'NETWORK CONTROL')+'</button><button id="controlJumpBle" class="btn secondary" type="button">BLE</button></div>'+
    '</div>'+
    (rows.length?rows.map(fixtureCard).join(''):'<div class="card"><div class="muted small">'+empty+'</div></div>');
- var n=E('controlJumpNetwork'),b=E('controlJumpBle');
+ var n=E('controlJumpNetwork'),b=E('controlJumpBle'),jf=E('controlJumpFixtures'),jg=E('controlJumpGroups'),js=E('controlJumpScenes'),jp=E('controlJumpProtocols');
  if(n)n.onclick=function(){jump('artnetCard')};
  if(b)b.onclick=function(){jump('bleControlCard')};
+ if(jf)jf.onclick=function(){card.scrollIntoView({behavior:'smooth',block:'start'})};
+ if(jg)jg.onclick=function(){jump('artnetControlGroups')};
+ if(js)js.onclick=function(){jump('artnetScenes')};
+ if(jp)jp.onclick=function(){jump('networkDmxBridgeBlock')};
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl;if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.3-fixture-open'};
+window.LightingAIControlDashboard={render:render,version:'0.4-control-sections'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(render,900);
 var old=window.setLanguage;

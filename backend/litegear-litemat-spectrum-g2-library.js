@@ -8,7 +8,7 @@ const S3='https://www.litegear.com/product/litemat-spectrum-3-kit-2023/';
 const S4='https://www.litegear.com/download/557/litemat-spectrum-2023/47607/litemat-spectrum-4-gen-2-data-sheet.pdf';
 const S8='https://www.litegear.com/product/litemat-spectrum-8-kit-2023/';
 const DIMMER200='https://www.litegear.com/product/litedimmer-spectrum-ac-dc-200/';
-const SPECTRUM_OS3_DMX='https://www.litegear.com/download/568/os-3-0/42315/spectrum-os-3-rdm-dmx-profile-tables.pdf';
+const SPECTRUM_OS3_DMX='https://litegear.com/download/583/spectrum-os-3-1/45936/rdm-dmx-profile-tables-spectrum-os-3-1.pdf';
 
 function fixture(id,model,powerW,beamAngleDeg,pixels,weightKg,dimensions,sourceUrl,extra={}){
   return {
@@ -55,10 +55,10 @@ export const LITEGEAR_LITEMAT_SPECTRUM_G2_FIXTURES=[
         'No manufacturer-documented Wi-Fi control path for LiteMat Spectrum 1 / LiteDimmer Spectrum AC/DC 200'
       ],
       dmx:{
-        profileAppliesAt:'LiteDimmer Spectrum AC/DC 200 running Spectrum OS 3.x',
+        profileAppliesAt:'LiteDimmer Spectrum AC/DC 200 running Spectrum OS 3.1',
         officialProfileTable:SPECTRUM_OS3_DMX,
         rdmSupported:true,
-        note:'DMX/RDM personalities are implemented by the LiteDimmer, not by the LiteMat head. Spectrum OS 3.0 publishes the official personality/channel tables.'
+        note:'DMX/RDM personalities are implemented by the LiteDimmer, not by the LiteMat head. Spectrum OS 3.1 publishes the official personality/channel tables.'
       },
       sourceUrls:[S1,DIMMER200,SPECTRUM_OS3_DMX]
     }

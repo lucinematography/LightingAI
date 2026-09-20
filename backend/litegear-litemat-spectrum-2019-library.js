@@ -4,6 +4,9 @@ const S2='https://www.litegear.com/product/litemat-spectrum-2/';
 const S4='https://www.litegear.com/product/litemat-spectrum-4/';
 const SPECTRUM='https://www.litegear.com/litemat-spectrum/';
 const INTRO='https://www.litegear.com/litemat-spectrum-intro-page/';
+const S2_DATASHEET='https://www.litegear.com/wp-content/uploads/2019/10/LiteMat-Spectrum-2-Data-Sheet.pdf';
+const DC200='https://www.litegear.com/wpfd_file/litedimmer-spectrum-dc-200-user-guide/';
+const OS22='https://www.litegear.com/about-spectrum-os-2-2/';
 
 function fixture(id,model,pixels,sourceUrl,extra={}){
   return {
@@ -18,7 +21,46 @@ function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight){
 }
 
 export const LITEGEAR_LITEMAT_SPECTRUM_2019_FIXTURES=[
-  fixture('litegear-litemat-spectrum-2019-2','LiteMat Spectrum 2 (2019)',2,S2,{sku:'LM1.00112',weightLb:2.626,dimensions:'23 x 12 x 1.5 in'}),
+  fixture('litegear-litemat-spectrum-2019-2','LiteMat Spectrum 2 (2019)',2,S2,{
+    sku:'LM1.00112',powerW:100,inputVoltage:'48V DC',ledQuantity:2592,
+    dimensions:'533 x 533 x 23 mm',weightKg:1.9,
+    control:{
+      fixtureNative:{
+        local:false,dmx512:false,rdm:false,artNet:false,sacn:false,crmx:false,bluetooth:false,wifi:false,
+        note:'LiteMat Spectrum 2 (2019) head is a passive 48V light engine; manufacturer-documented control is provided by the external LiteDimmer Spectrum DC 200.'
+      },
+      controller:{
+        model:'LiteDimmer Spectrum DC 200',
+        local:true,
+        dmx512:true,
+        rdm:true,
+        artNet:false,
+        sacn:false,
+        crmx:false,
+        bluetooth:false,
+        wifi:false,
+        firmware:'Spectrum OS 2.2'
+      },
+      directLightingAI:[],
+      externalInterfaceRequired:[
+        'LiteDimmer Spectrum DC 200 between fixture head and documented control',
+        'Wired DMX interface when LightingAI sends DMX512 directly'
+      ],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented Art-Net path for LiteDimmer Spectrum DC 200',
+        'No manufacturer-documented sACN path for LiteDimmer Spectrum DC 200',
+        'No manufacturer-documented CRMX/LumenRadio path for LiteDimmer Spectrum DC 200',
+        'No manufacturer-documented Bluetooth control path',
+        'No manufacturer-documented Wi-Fi control path'
+      ],
+      dmx:{
+        profileAppliesAt:'LiteDimmer Spectrum DC 200 running Spectrum OS 2.2',
+        publicChannelTable:null,
+        note:'LiteGear documents DMX improvements and a unique RDM ID in Spectrum OS 2.2 for the DC 200; no channel table is asserted here unless a directly verified public profile table is available.'
+      },
+      sourceUrls:[S2,S2_DATASHEET,DC200,OS22]
+    }
+  }),
   fixture('litegear-litemat-spectrum-2019-4','LiteMat Spectrum 4 (2019)',4,S4,{sku:'LM1.00109',weightLb:7.4,thicknessIn:0.9})
 ];
 

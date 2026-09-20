@@ -335,6 +335,33 @@ else{
   if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat Plus 8 must not invent a public DMX channel table');
 }
 
+
+const spectrum2019_2=fixtures.find(x=>x.id==='litegear-litemat-spectrum-2019-2');
+if(!spectrum2019_2) failures.push('Missing LiteMat Spectrum 2 (2019) control-route fixture');
+else{
+  const control=spectrum2019_2.control||{};
+  if(spectrum2019_2.powerW!==100) failures.push('LiteMat Spectrum 2 (2019) power must be 100W');
+  if(spectrum2019_2.inputVoltage!=='48V DC') failures.push('LiteMat Spectrum 2 (2019) input voltage must be 48V DC');
+  if(spectrum2019_2.ledQuantity!==2592) failures.push('LiteMat Spectrum 2 (2019) LED quantity must be 2592');
+  if(control.fixtureNative?.dmx512!==false) failures.push('LiteMat Spectrum 2 (2019) head must not claim native DMX512');
+  if(control.fixtureNative?.rdm!==false) failures.push('LiteMat Spectrum 2 (2019) head must not claim native RDM');
+  if(control.fixtureNative?.artNet!==false) failures.push('LiteMat Spectrum 2 (2019) head must not claim native Art-Net');
+  if(control.fixtureNative?.sacn!==false) failures.push('LiteMat Spectrum 2 (2019) head must not claim native sACN');
+  if(control.fixtureNative?.crmx!==false) failures.push('LiteMat Spectrum 2 (2019) head must not claim native CRMX');
+  if(control.controller?.model!=='LiteDimmer Spectrum DC 200') failures.push('LiteMat Spectrum 2 (2019) controller must be LiteDimmer Spectrum DC 200');
+  if(control.controller?.local!==true) failures.push('LiteMat Spectrum 2 (2019) DC 200 local control missing');
+  if(control.controller?.dmx512!==true) failures.push('LiteMat Spectrum 2 (2019) DC 200 DMX512 path missing');
+  if(control.controller?.rdm!==true) failures.push('LiteMat Spectrum 2 (2019) DC 200 RDM path missing');
+  if(control.controller?.artNet!==false) failures.push('LiteMat Spectrum 2 (2019) DC 200 must not claim Art-Net');
+  if(control.controller?.sacn!==false) failures.push('LiteMat Spectrum 2 (2019) DC 200 must not claim sACN');
+  if(control.controller?.crmx!==false) failures.push('LiteMat Spectrum 2 (2019) DC 200 must not claim CRMX');
+  if(control.controller?.bluetooth!==false) failures.push('LiteMat Spectrum 2 (2019) DC 200 must not claim Bluetooth');
+  if(control.controller?.wifi!==false) failures.push('LiteMat Spectrum 2 (2019) DC 200 must not claim Wi-Fi');
+  if(control.controller?.firmware!=='Spectrum OS 2.2') failures.push('LiteMat Spectrum 2 (2019) firmware must be Spectrum OS 2.2');
+  if(control.dmx?.profileAppliesAt!=='LiteDimmer Spectrum DC 200 running Spectrum OS 2.2') failures.push('LiteMat Spectrum 2 (2019) DMX profile ownership/version missing');
+  if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat Spectrum 2 (2019) must not invent a public DMX channel table');
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'LiteGear',family:'LiteMat',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

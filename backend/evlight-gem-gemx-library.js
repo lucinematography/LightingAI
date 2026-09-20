@@ -54,7 +54,25 @@ export const EVLIGHT_GEM_GEMX_FIXTURES=[
     dmxConnection:'RJ45 + 3-pin XLR or 5-pin XLR',
     formFactor:'1x1 soft panel'
   }),
-  fixture('evlight-gem2x1bi','GEM2X1BI','GEM',350,2700,6500,'Bi-Color',120,GEM2X1BI,{cri:96,dimming:'0-100%',control:['DMX512'],ipRating:'IP20',dimensions:'737 x 382.5 x 173 mm',weightKg:11.8}),
+  fixture('evlight-gem2x1bi','GEM2X1BI','GEM',350,2700,6500,'Bi-Color',120,GEM2X1BI,{
+    cri:96,dimming:'0-100%',
+    control:{
+      wired:['DMX512'],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['Wired DMX interface for DMX512 control'],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented RDM, Art-Net or sACN control path is published for GEM2X1BI',
+        'No manufacturer-documented CRMX/LumenRadio, Bluetooth or Wi-Fi control path is published for GEM2X1BI'
+      ],
+      sourceUrls:[GEM2X1BI]
+    },
+    dmxChannels:[3,7],
+    dmxConnection:'3-pin XLR in/out',
+    ipRating:'IP20',dimensions:'737 x 382.5 x 173 mm',weightKg:11.8
+  }),
   fixture('evlight-gem2x1st','GEM2X1ST','GEM',350,2700,10000,'RGBW Full Color',110,GEM2X1ST,{cri:97,tlci:98,cqs:96,control:['DMX512','RDM','WiFi-DMX'],modes:['CCT','HSI','GEL','RGBCW','XY'],battery:'57V series supported'}),
   fixture('evlight-gemx21-hard','GEMX21 HARD','GEMX',360,2700,10000,'RGBWW Full Color',25,GEMX21HARD,{cri:96,control:['DMX512','RDM','Wireless DMX','WiFi-DMX'],ipRating:'IP65',dimmingFrequency:'20 kHz',alternateBeamAngleDeg:120})
 ];

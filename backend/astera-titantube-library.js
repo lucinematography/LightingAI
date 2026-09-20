@@ -18,7 +18,23 @@ export const ASTERA_TITANTUBE_FIXTURES = [
     pixels: 16,
     ipRating: 'IP65',
     batteryPowered: true,
-    control: { wireless: ['AsteraApp', 'Wireless DMX'], wired: ['DMX via PowerBox', 'Art-Net via PowerBox', 'sACN via PowerBox'] },
+    control: {
+      wireless: ['AsteraApp via AsteraBox/UHF', 'Wireless DMX'],
+      wired: ['DMX via PowerBox', 'Art-Net via PowerBox', 'sACN via PowerBox'],
+      builtInBTB: false,
+      directLightingAI: ['Art-Net via PowerBox', 'sACN via PowerBox'],
+      externalInterfaceRequired: [
+        'Astera PowerBox for wired DMX, Art-Net or sACN control',
+        'Wireless DMX transmitter for wireless DMX control',
+        'AsteraBox for AsteraApp/UHF control'
+      ],
+      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/products/titantube/',
+        'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf',
+        'https://update.astera-led.com/firmwares/current/release_notes.html'
+      ]
+    },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,

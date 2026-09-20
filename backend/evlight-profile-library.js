@@ -100,6 +100,20 @@ export const EVLIGHT_PROFILE_FIXTURES=[
   fixture('evlight-epro400rgblac-z','EPRO400RGBLAC-Z',{
     ledEnginePowerW:600,colorMode:'RGBLAC Full Color',cctK:{min:2000,max:10000},
     cri:95,beamAngleDeg:{options:['15-30','25-50']},
+    control:{
+      wired:[],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:[],
+      unavailableDirectProtocols:[
+        'Official EV Light public product information does not publish a verified DMX512/RDM control route for EPRO400RGBLAC-Z',
+        'No manufacturer-documented Art-Net or sACN network input is published for EPRO400RGBLAC-Z',
+        'No manufacturer-documented CRMX/LumenRadio, Bluetooth or Wi-Fi control path is published for EPRO400RGBLAC-Z'
+      ],
+      sourceUrls:[STUDIO,'https://www.evlightpro.com/download/']
+    },
     optics:'Zoom profile / ellipsoidal',sourceUrl:STUDIO
   }),
   fixture('evlight-epro400fc','EPRO400FC',{

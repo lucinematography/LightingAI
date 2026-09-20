@@ -1139,6 +1139,30 @@ for(const [id,widths,sourceUrl] of [
   }
 }
 
+
+// Kino Flo ParaZip verified DMX footprint widths.
+for(const [id,widths,sourceUrl] of [
+  ['kinoflo-parazip-200-dmx',[['1ch all lamps',1]],'https://kinoflo.com/wp-content/uploads/2022/07/3100039-Rev-D-ParaZip-400-200-7-02-2012-Web-Quality-Old.pdf'],
+  ['kinoflo-parazip-215-dmx',[['1ch all lamps',1]],'https://kinoflo.com/wp-content/uploads/2022/07/3100081-Rev-A-ParaZip-415-215-06-16-2015.pdf'],
+  ['kinoflo-parazip-400-dmx',[['1ch all lamps',1],['2ch inner/outer lamp pairs',2]],'https://kinoflo.com/wp-content/uploads/2022/07/3100039-Rev-D-ParaZip-400-200-7-02-2012-Web-Quality-Old.pdf'],
+  ['kinoflo-parazip-415-dmx',[['1ch all lamps',1],['2ch inner/outer lamp pairs',2]],'https://kinoflo.com/wp-content/uploads/2022/07/3100081-Rev-A-ParaZip-415-215-06-16-2015.pdf']
+]){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Kino Flo ParaZip DMX mode set missing: '+id);
+    continue;
+  }
+  for(const [name,channels] of widths){
+    const mode=fixture.dmxModes.find(item=>item?.name===name);
+    if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==sourceUrl){
+      failures.push('Verified Kino Flo ParaZip DMX width/source missing: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo ParaZip DMX mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

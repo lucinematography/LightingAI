@@ -103,6 +103,22 @@ if (RUNTIME_CATALOG.duplicateAccessoryIds.length) failures.push(`Duplicate acces
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera PlutoFresnel public-protocol limitation note missing');
 }
 
+// Astera AX5 TriplePAR control audit: preserve official input-source separation.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-ax5-triplepar');
+  const control = fixture?.control || {};
+  if (!control.wired?.includes('5-pin XLR DMX')) failures.push('Astera AX5 wired DMX path missing');
+  for (const item of ['AsteraApp','CRMX/W-DMX','ART3 DMX (legacy)']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera AX5 wireless/input path missing: ${item}`);
+  }
+  if (!control.builtInCRMX) failures.push('Astera AX5 built-in CRMX flag missing');
+  if (control.directLightingAI?.length) failures.push('Astera AX5 must not claim direct LightingAI transport without a documented direct network/API path');
+  if (!control.externalInterfaceRequired?.includes('Wired DMX interface for 5-pin XLR DMX control')) failures.push('Astera AX5 wired DMX interface requirement missing');
+  if (!control.externalInterfaceRequired?.includes('CRMX/W-DMX transmitter for wireless DMX control')) failures.push('Astera AX5 CRMX/W-DMX transmitter requirement missing');
+  if (!control.externalInterfaceRequired?.includes('ART3 transmitter for legacy ART3 DMX control')) failures.push('Astera AX5 ART3 transmitter requirement missing');
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera AX5 public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

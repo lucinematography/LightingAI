@@ -24,10 +24,14 @@ export const ASTERA_LEOFRESNEL_FIXTURES = [
     acInput: '100-240 VAC',
     outputLumens: { cct3200K: 4963, cct4000K: 6378, cct5500K: 7119 },
     control: {
-      wired: ['DMX'],
-      wireless: ['AsteraApp', 'CRMX'],
+      wired: ['DMX', 'RDM'],
+      wireless: ['AsteraApp', 'CRMX', 'UHF', 'Bluetooth', 'Wi-Fi'],
       builtInCRMX: true,
-      builtInBTB: true
+      builtInBTB: true,
+      directLightingAI: [],
+      externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX transmitter for CRMX control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
+      sourceUrls: ['https://astera-led.com/fr/products/leofresnel/specs/']
     },
     dmxModes: [{
       name: 'Profile 147 DIM RGB FAN 5ch',

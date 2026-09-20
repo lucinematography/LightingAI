@@ -2,6 +2,7 @@
 // Model identities are kept conservative here; detailed photometrics/specs are intentionally
 // omitted until they are locked to a model-specific manufacturer page.
 const FILM='https://www.evlightpro.com/led-film-lighting/';
+const GEMX24ST='https://www.evlightpro.com/led-soft-light-panel/68692360.html';
 const ACCESSORIES='https://www.evlightpro.com/accessories/';
 
 function fixture(id,model,sourceType){
@@ -30,7 +31,31 @@ function acc(id,model,category,compatibleWith,effectOnLight){
 }
 
 export const EVLIGHT_GEMX_LARGE_FIXTURES=[
-  fixture('evlight-gemx24-st','GEMX24 ST','Large-format LED Soft Panel'),
+  {
+    ...fixture('evlight-gemx24-st','GEMX24 ST','Large-format LED Soft Panel'),
+    sourceUrl:GEMX24ST,
+    powerW:1300,
+    cctK:{min:2700,max:10000},
+    colorMode:'Full RGB+W Color Gamut',
+    beamAngleDeg:110,
+    cri:97,
+    tlci:98,
+    ipRating:'IP65',
+    pwm:'20 kHz',
+    control:{
+      wired:['DMX512','RDM'],
+      wireless:['App control','WiFi-DMX','Wireless DMX'],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['External verified bridge required for LightingAI Art-Net/sACN control'],
+      unavailableDirectProtocols:[
+        'Official EV Light GEMX24 ST product information does not identify Wireless DMX as CRMX/LumenRadio',
+        'Official EV Light GEMX24 ST product information does not publish Art-Net or sACN network input'
+      ],
+      sourceUrls:[GEMX24ST,FILM]
+    }
+  },
   fixture('evlight-gemx28-hard','GEMX28 HARD','Large-format LED Hard Panel')
 ];
 

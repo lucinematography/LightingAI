@@ -117,6 +117,20 @@ else{
   if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/profile-spot-light/62480750.html')) failures.push('EV Light EPRO300Z official control source missing');
   if(Number(epro300z.dmxChannels)!==10) failures.push('EV Light EPRO300Z DMX channel count must be 10');
 }
+const epro400rgblacZ=fixtures.find(x=>x.id==='evlight-epro400rgblac-z');
+if(!epro400rgblacZ) failures.push('Missing EV Light EPRO400RGBLAC-Z control-route fixture');
+else{
+  const control=epro400rgblacZ.control||{};
+  if(control.wired?.length) failures.push('EV Light EPRO400RGBLAC-Z must not claim an unverified wired control protocol');
+  if(control.wireless?.length) failures.push('EV Light EPRO400RGBLAC-Z must not claim manufacturer-documented wireless control');
+  if(control.builtInCRMX) failures.push('EV Light EPRO400RGBLAC-Z must not claim built-in CRMX/LumenRadio');
+  if(control.builtInBluetooth) failures.push('EV Light EPRO400RGBLAC-Z must not claim built-in Bluetooth');
+  if(control.directLightingAI?.length) failures.push('EV Light EPRO400RGBLAC-Z must not claim direct LightingAI transport');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('DMX512/RDM'))) failures.push('EV Light EPRO400RGBLAC-Z unpublished wired-control limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light EPRO400RGBLAC-Z network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light EPRO400RGBLAC-Z wireless-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/download/')) failures.push('EV Light EPRO400RGBLAC-Z official manual source missing');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

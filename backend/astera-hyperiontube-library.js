@@ -26,9 +26,16 @@ export const ASTERA_HYPERIONTUBE_FIXTURES = [
     weightKg: 2.9,
     control: {
       wired: ['DMX via Titan Power/Data Combination Cable'],
-      wireless: ['AsteraApp via Bluetooth Bridge', 'Wireless DMX', 'CRMX'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'Wireless DMX', 'CRMX'],
       builtInWirelessDMX: true,
-      builtInBluetoothBridge: false
+      builtInBluetoothBridge: false,
+      directLightingAI: [],
+      externalInterfaceRequired: ['Titan Power/Data Combination Cable plus wired DMX interface for DMX control', 'CRMX/Wireless DMX transmitter for wireless DMX control', 'AsteraBox for AsteraApp/UHF control'],
+      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/hyperion',
+        'https://update.astera-led.com/firmwares/current/release_notes.html'
+      ]
     },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',

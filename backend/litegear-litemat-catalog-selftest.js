@@ -481,6 +481,38 @@ else{
   if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat S2 2L must not invent a public DMX channel table');
 }
 
+
+const s2_3=fixtures.find(x=>x.id==='litegear-litemat-s2-3');
+if(!s2_3) failures.push('Missing LiteMat S2 3 control-route fixture');
+else{
+  const control=s2_3.control||{};
+  if(s2_3.powerW!==150) failures.push('LiteMat S2 3 power must be 150W');
+  if(s2_3.inputVoltage!=='12V DC') failures.push('LiteMat S2 3 input voltage must be 12V DC');
+  if(s2_3.ledQuantity!==864) failures.push('LiteMat S2 3 LED quantity must be 864');
+  if(s2_3.weightKg!==2.1) failures.push('LiteMat S2 3 weight must be 2.1kg');
+  if(s2_3.dimensions!=='533 x 775 x 23 mm') failures.push('LiteMat S2 3 dimensions mismatch');
+  if(control.fixtureNative?.local!==false) failures.push('LiteMat S2 3 head must not claim native local control');
+  if(control.fixtureNative?.dmx512!==false) failures.push('LiteMat S2 3 head must not claim native DMX512');
+  if(control.fixtureNative?.rdm!==false) failures.push('LiteMat S2 3 head must not claim native RDM');
+  if(control.fixtureNative?.artNet!==false) failures.push('LiteMat S2 3 head must not claim native Art-Net');
+  if(control.fixtureNative?.sacn!==false) failures.push('LiteMat S2 3 head must not claim native sACN');
+  if(control.fixtureNative?.crmx!==false) failures.push('LiteMat S2 3 head must not claim native CRMX');
+  if(control.controller?.model!=='LiteDimmer Pro Hybrid High Capacity') failures.push('LiteMat S2 3 controller must be LiteDimmer Pro Hybrid High Capacity');
+  if(control.controller?.sku!=='LD-PRO-HYBRID-HICAP') failures.push('LiteMat S2 3 controller SKU mismatch');
+  if(control.controller?.capacityA!==16) failures.push('LiteMat S2 3 controller capacity must be 16A');
+  if(control.controller?.local!==true) failures.push('LiteMat S2 3 High Capacity local control missing');
+  if(control.controller?.dmx512!==false) failures.push('LiteMat S2 3 High Capacity must not claim DMX512');
+  if(control.controller?.rdm!==false) failures.push('LiteMat S2 3 High Capacity must not claim RDM');
+  if(control.controller?.artNet!==false) failures.push('LiteMat S2 3 High Capacity must not claim Art-Net');
+  if(control.controller?.sacn!==false) failures.push('LiteMat S2 3 High Capacity must not claim sACN');
+  if(control.controller?.crmx!==false) failures.push('LiteMat S2 3 High Capacity must not claim CRMX');
+  if(control.controller?.bluetooth!==false) failures.push('LiteMat S2 3 High Capacity must not claim Bluetooth');
+  if(control.controller?.wifi!==false) failures.push('LiteMat S2 3 High Capacity must not claim Wi-Fi');
+  if(!Array.isArray(control.controller?.controls) || !control.controller.controls.includes('Kelvin') || !control.controller.controls.includes('Level')) failures.push('LiteMat S2 3 High Capacity local Kelvin/Level controls missing');
+  if(control.dmx?.profileAppliesAt!==null) failures.push('LiteMat S2 3 must not claim a DMX profile owner');
+  if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat S2 3 must not invent a public DMX channel table');
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'LiteGear',family:'LiteMat',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

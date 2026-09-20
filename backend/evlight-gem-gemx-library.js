@@ -1,7 +1,8 @@
 // EV LIGHT GEM / GEMX film and studio panel catalog.
 // Sources: official EV LIGHT product pages and accessories catalog.
 const GEM1X1BI='https://www.evlightprofessional.com/quality-led-soft-light-panel-68277576.html';
-const GEM1X1FC='https://www.evlightprofessional.com/products-index/5/';
+const GEM1X1FC='https://www.evlightprofessional.com/products-index/2/';
+const GEM1X1FC_DETAIL='https://ru.evlightpro.com/led-soft-light-panel/62570433.html';
 const GEM2X1BI='https://www.evlightprofessional.com/quality-led-soft-light-panel-63222309.html';
 const GEM2X1ST='https://www.evlightprofessional.com/quality-led-soft-light-panel-63400265.html';
 const GEMX21HARD='https://www.evlightprofessional.com/quality-led-soft-light-panel-63364386.html';
@@ -37,7 +38,22 @@ export const EVLIGHT_GEM_GEMX_FIXTURES=[
     dmxConnection:'3-pin XLR or 5-pin XLR',
     ipRating:'IP20',dimensions:'449 x 506 x 178.5 mm',weightKg:7,cooling:'Controllable fan'
   }),
-  fixture('evlight-gem1x1fc','GEM1X1FC','GEM',200,2700,10000,'RGBW Full Color',null,GEM1X1FC,{control:['DMX512'],formFactor:'1x1 soft panel'}),
+  fixture('evlight-gem1x1fc','GEM1X1FC','GEM',200,2700,10000,'RGBW Full Color',null,GEM1X1FC,{
+    control:{
+      wired:['DMX512','RDM','Art-Net','sACN'],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:['Art-Net','sACN'],
+      externalInterfaceRequired:[],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented CRMX/LumenRadio, Bluetooth or Wi-Fi control path is published for GEM1X1FC'
+      ],
+      sourceUrls:[GEM1X1FC,GEM1X1FC_DETAIL]
+    },
+    dmxConnection:'RJ45 + 3-pin XLR or 5-pin XLR',
+    formFactor:'1x1 soft panel'
+  }),
   fixture('evlight-gem2x1bi','GEM2X1BI','GEM',350,2700,6500,'Bi-Color',120,GEM2X1BI,{cri:96,dimming:'0-100%',control:['DMX512'],ipRating:'IP20',dimensions:'737 x 382.5 x 173 mm',weightKg:11.8}),
   fixture('evlight-gem2x1st','GEM2X1ST','GEM',350,2700,10000,'RGBW Full Color',110,GEM2X1ST,{cri:97,tlci:98,cqs:96,control:['DMX512','RDM','WiFi-DMX'],modes:['CCT','HSI','GEL','RGBCW','XY'],battery:'57V series supported'}),
   fixture('evlight-gemx21-hard','GEMX21 HARD','GEMX',360,2700,10000,'RGBWW Full Color',25,GEMX21HARD,{cri:96,control:['DMX512','RDM','Wireless DMX','WiFi-DMX'],ipRating:'IP65',dimmingFrequency:'20 kHz',alternateBeamAngleDeg:120})

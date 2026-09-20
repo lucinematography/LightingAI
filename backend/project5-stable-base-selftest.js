@@ -102,6 +102,7 @@ const exactAllowed = new Set([
   'backend/astera-quikspot-library.js',
   'backend/astera-solabulb-library.js',
   'backend/astera-ax1-pixeltube-library.js',
+  'backend/astera-lunabulb-library.js',
   'backend/astera-heliostube-library.js',
   'backend/astera-ax2-pixelbar-library.js',
   'backend/astera-ax7-spotlite-library.js',

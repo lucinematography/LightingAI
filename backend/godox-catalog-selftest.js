@@ -99,6 +99,24 @@ for(const fixtureId of ['godox-tp2r','godox-tp4r','godox-tp8r']){
   if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox TP 2.4GHz remote requirement missing: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox TP public-protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-mg1200bi','godox-mg2400bi','godox-mg1200r','godox-mg2400r']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  for(const item of ['DMX512','RDM','Ethernet Art-Net','Ethernet sACN']) if(!control.wired?.includes(item)) failures.push('Godox MG wired control path missing: '+fixtureId+' '+item);
+  for(const item of ['CRMX','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox MG wireless control path missing: '+fixtureId+' '+item);
+  if(!control.builtInCRMX) failures.push('Godox MG built-in CRMX flag missing: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox MG built-in Bluetooth flag missing: '+fixtureId);
+  for(const item of ['Art-Net','sACN']) if(!control.directLightingAI?.includes(item)) failures.push('Godox MG LightingAI network path missing: '+fixtureId+' '+item);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512/RDM control')) failures.push('Godox MG wired DMX interface requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox MG CRMX transmitter requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox MG public-protocol limitation missing: '+fixtureId);
+}
+for(const fixtureId of ['godox-mg1200bi','godox-mg2400bi']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(!control.wireless?.includes('2.4G Remote')) failures.push('Godox MG Bi 2.4GHz path missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox MG Bi 2.4GHz remote requirement missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

@@ -5,6 +5,29 @@ const MOSAIC_MANUAL='https://aladdin-lights.com/wp-content/uploads/2023/09/MOSAI
 const MOSAIC_4X4_ACC='https://aladdin-lights.com/wp-content/uploads/2022/12/Accessory-Chart-MOSAIC-4x4-1.pdf';
 const MOSAIC_DMX='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
 
+
+// Static-light controls: DMX map 2023 pp. 1-2, reconfirmed by 12.2025 pp. 25-26.
+// Green correction is piecewise, and FX selection is discrete: neither is a linear slider.
+// Keep both neutral/off until their dedicated UI is implemented. Do not infer crossfade direction.
+function mosaicModes(){
+  const percent=(key,label,channel)=>({key,label,channel,type:'percent',bits:8,min:0,max:100,dmxMin:0,dmxMax:255});
+  return [['Simple CCT Crossfade RGBW',8],['Expert CCT Crossfade RGBW + Effects',11]].map(([name,channels])=>({
+    name,channels,verified:true,sourceUrl:MOSAIC_DMX,
+    controlScope:'static-light',
+    controlNotes:'Green correction is neutral; Expert effects are OFF during these direct controls.',
+    controls:[
+      percent('dimmer','Dimmer',1),
+      {key:'cct',label:'CCT',channel:2,type:'cct-linear',bits:8,min:2200,max:12000,dmxMin:0,dmxMax:255},
+      percent('crossfade','CCT / RGBW crossfade (static light)',4),
+      percent('red','Red',5),
+      percent('green','Green',6),
+      percent('blue','Blue',7),
+      percent('white','White',8)
+    ],
+    requiredChannels:[{channel:3,value:0},...(channels===11?[{channel:9,value:0}]:[])]
+  }));
+}
+
 function fixture(id,model,powerW,sourceUrl,extra={}){
   return {
     id,manufacturer:'Aladdin',model,family:'MOSAIC',category:'Light',
@@ -12,11 +35,8 @@ function fixture(id,model,powerW,sourceUrl,extra={}){
     colorMode:'RGBWW',powerW,sourceUrl,
     cri:95,tlci:95,beamAngleDeg:140,
     control:['Bluetooth/App','DMX512','LumenRadio','On-board','Optional Wired Dimmer'],
-    // DMX requires the compatible DMX attachment or M-WDIM; this pass models footprints only.
-    dmxModes:[
-      {name:'Simple CCT Crossfade RGBW',channels:8,verified:true,sourceUrl:MOSAIC_DMX},
-      {name:'Expert CCT Crossfade RGBW + Effects',channels:11,verified:true,sourceUrl:MOSAIC_DMX}
-    ],
+    // DMX requires the compatible DMX attachment or M-WDIM.
+    dmxModes:mosaicModes(),
     ...extra
   };
 }

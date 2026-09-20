@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.location.Location;
 import android.net.Uri;
@@ -33,7 +32,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -194,25 +192,6 @@ public class MainActivity extends Activity {
         FrameLayout splash = new FrameLayout(this);
         splash.setBackgroundColor(Color.BLACK);
 
-        ImageView image = new ImageView(this);
-        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        try {
-            image.setImageBitmap(BitmapFactory.decodeStream(getAssets().open("lightai-intro.jpg")));
-        } catch (Exception ignored) {
-            image.setBackgroundColor(Color.rgb(5, 6, 7));
-        }
-        splash.addView(image, new FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        ));
-
-        View shade = new View(this);
-        shade.setBackgroundColor(0x42000000);
-        splash.addView(shade, new FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        ));
-
         TextView title = new TextView(this);
         SpannableString label = new SpannableString("LightAI");
         label.setSpan(new ForegroundColorSpan(Color.WHITE), 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -221,12 +200,24 @@ public class MainActivity extends Activity {
         title.setTextSize(56);
         title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         title.setGravity(Gravity.CENTER);
+        title.setScaleX(0.08f);
+        title.setScaleY(0.08f);
+        title.setAlpha(0f);
+
         FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.CENTER
         );
         splash.addView(title, titleParams);
+
+        title.animate()
+            .alpha(1f)
+            .scaleX(6.2f)
+            .scaleY(6.2f)
+            .setDuration(2200)
+            .start();
+
         return splash;
     }
 
@@ -234,13 +225,13 @@ public class MainActivity extends Activity {
         if (startupSplash == null) return;
         startupSplash.postDelayed(() -> {
             if (startupSplash == null) return;
-            startupSplash.animate().alpha(0f).setDuration(450).withEndAction(() -> {
+            startupSplash.animate().alpha(0f).setDuration(350).withEndAction(() -> {
                 if (startupSplash != null && startupSplash.getParent() instanceof ViewGroup) {
                     ((ViewGroup) startupSplash.getParent()).removeView(startupSplash);
                 }
                 startupSplash = null;
             }).start();
-        }, 2400);
+        }, 2350);
     }
 
     private boolean hasLocationPermission() {

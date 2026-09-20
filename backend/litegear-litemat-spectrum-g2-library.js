@@ -8,6 +8,7 @@ const S3='https://www.litegear.com/product/litemat-spectrum-3-kit-2023/';
 const S4='https://www.litegear.com/download/557/litemat-spectrum-2023/47607/litemat-spectrum-4-gen-2-data-sheet.pdf';
 const S8='https://www.litegear.com/product/litemat-spectrum-8-kit-2023/';
 const DIMMER200='https://www.litegear.com/product/litedimmer-spectrum-ac-dc-200/';
+const DIMMER400='https://www.litegear.com/product/litedimmer-spectrum-ac-dc-400/';
 const SPECTRUM_OS3_DMX='https://litegear.com/download/583/spectrum-os-3-1/45936/rdm-dmx-profile-tables-spectrum-os-3-1.pdf';
 
 function fixture(id,model,powerW,beamAngleDeg,pixels,weightKg,dimensions,sourceUrl,extra={}){
@@ -211,7 +212,43 @@ export const LITEGEAR_LITEMAT_SPECTRUM_G2_FIXTURES=[
       sourceUrls:[S4,DIMMER200,SPECTRUM_OS3_DMX]
     }
   }),
-  fixture('litegear-litemat-spectrum-g2-8','LiteMat Spectrum 8 (Gen 2)',400,53,8,9.6,'1015.5 x 1015.5 x 25.4 mm',S8,{modelNumber:'256-1',ledQuantity:5184})
+  fixture('litegear-litemat-spectrum-g2-8','LiteMat Spectrum 8 (Gen 2)',400,53,8,9.6,'1015.5 x 1015.5 x 25.4 mm',S8,{
+    modelNumber:'256-1',ledQuantity:5184,
+    control:{
+      fixtureNative:{
+        local:false,dmx512:false,rdm:false,artNet:false,sacn:false,crmx:false,bluetooth:false,wifi:false,
+        note:'LiteMat Spectrum 8 head is a 48V PDX light engine; manufacturer-documented external control is provided by the LiteDimmer Spectrum AC/DC 400.'
+      },
+      controller:{
+        model:'LiteDimmer Spectrum AC/DC 400',
+        connectionToFixture:'PDX power/data',
+        wired:['DMX512','RDM','Art-Net 4','sACN (E1.31)'],
+        wireless:['CRMX'],
+        builtInCRMX:true,
+        bluetooth:false,
+        wifi:false,
+        dataConnectors:['5-pin DMX In/Thru','2x etherCON','internal CRMX antenna','USB-A','PDX']
+      },
+      directLightingAI:['Art-Net 4 via LiteDimmer Spectrum AC/DC 400 Ethernet','sACN (E1.31) via LiteDimmer Spectrum AC/DC 400 Ethernet'],
+      externalInterfaceRequired:[
+        'LiteDimmer Spectrum AC/DC 400 between fixture head and all documented control protocols',
+        'Wired DMX interface when LightingAI sends DMX512 directly',
+        'CRMX transmitter/bridge when LightingAI reaches the LiteDimmer through CRMX'
+      ],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented Bluetooth control path for LiteMat Spectrum 8 / LiteDimmer Spectrum AC/DC 400',
+        'No manufacturer-documented Wi-Fi control path for LiteMat Spectrum 8 / LiteDimmer Spectrum AC/DC 400'
+      ],
+      dmx:{
+        profileAppliesAt:'LiteDimmer Spectrum AC/DC 400 running Spectrum OS 3.1',
+        officialProfileTable:SPECTRUM_OS3_DMX,
+        rdmSupported:true,
+        pixelCount:8,
+        note:'DMX/RDM personalities are implemented by the LiteDimmer, not by the LiteMat head. Spectrum OS publishes the official personality/channel tables, with channel footprint depending on active personality and pixel count.'
+      },
+      sourceUrls:[S8,DIMMER400,SPECTRUM_OS3_DMX]
+    }
+  })
 ];
 
 const all=LITEGEAR_LITEMAT_SPECTRUM_G2_FIXTURES.map(x=>x.id);

@@ -160,6 +160,21 @@ else{
   if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/profile-spot-light/63631474.html')) failures.push('EV Light EPRO350FC official control source missing');
   if(!Array.isArray(epro350fc.dmxChannelOptions)||!epro350fc.dmxChannelOptions.includes('6CH')||!epro350fc.dmxChannelOptions.includes('10CH')) failures.push('EV Light EPRO350FC DMX channel options must include 6CH and 10CH');
 }
+const gem1x1bi=fixtures.find(x=>x.id==='evlight-gem1x1bi');
+if(!gem1x1bi) failures.push('Missing EV Light GEM1X1BI control-route fixture');
+else{
+  const control=gem1x1bi.control||{};
+  for(const item of ['DMX512','RDM']) if(!control.wired?.includes(item)) failures.push('EV Light GEM1X1BI wired control path missing: '+item);
+  if(control.wireless?.length) failures.push('EV Light GEM1X1BI must not claim manufacturer-documented wireless control');
+  if(control.builtInCRMX) failures.push('EV Light GEM1X1BI must not claim built-in CRMX/LumenRadio');
+  if(control.builtInBluetooth) failures.push('EV Light GEM1X1BI must not claim built-in Bluetooth');
+  if(control.directLightingAI?.length) failures.push('EV Light GEM1X1BI must not claim direct LightingAI Art-Net/sACN transport');
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512/RDM control')) failures.push('EV Light GEM1X1BI wired DMX/RDM interface requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light GEM1X1BI network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light GEM1X1BI wireless-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightprofessional.com/quality-led-soft-light-panel-68277576.html')) failures.push('EV Light GEM1X1BI official control source missing');
+  if(gem1x1bi.dmxConnection!=='3-pin XLR or 5-pin XLR') failures.push('EV Light GEM1X1BI DMX connector detail missing');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

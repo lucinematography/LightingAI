@@ -578,6 +578,18 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> openCreateDocumentFallback(filename, text));
         }
 
+        @JavascriptInterface public void shareText(String title, String text, String chooserTitle) {
+            runOnUiThread(() -> {
+                try {
+                    Intent share = new Intent(Intent.ACTION_SEND);
+                    share.setType("text/plain");
+                    share.putExtra(Intent.EXTRA_SUBJECT, title == null ? "LightingAI" : title);
+                    share.putExtra(Intent.EXTRA_TEXT, text == null ? "" : text);
+                    startActivity(Intent.createChooser(share, chooserTitle == null ? "Share LightingAI" : chooserTitle));
+                } catch (Exception ignored) {}
+            });
+        }
+
         @JavascriptInterface public void requestLocationPermission() {
             runOnUiThread(() -> MainActivity.this.requestLocationPermission());
         }

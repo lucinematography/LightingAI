@@ -373,6 +373,27 @@ for(const id of ["kinoflo-freestyle-air-mini","kinoflo-freestyle-air","kinoflo-f
   }
 }
 
+
+// Tegra 4Bank DMX: official manual documents selectable 1-channel all-lamps and 4-channel individual-lamp footprints.
+const tegraDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100061-archive-Rev-A-Tegra-4Bank-DMX-02-06-2013.pdf';
+{
+  const fixture=fixtures.find(item=>item.id==='kinoflo-tegra-4bank-dmx');
+  const widths=[['1ch all lamps',1],['4ch individual lamps',4]];
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Missing Kino Flo Tegra 4Bank DMX mode set');
+  }else{
+    for(const [name,channels] of widths){
+      const mode=fixture.dmxModes.find(item=>item?.name===name);
+      if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==tegraDmxSource){
+        failures.push('Incorrect verified Kino Flo Tegra DMX width/source: '+name);
+      }
+      if(mode?.controls?.length||mode?.requiredChannels?.length){
+        failures.push('Kino Flo Tegra DMX channel values remain width-only in this pass: '+name);
+      }
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,finalAudit:true,failures:unique},null,2));
 if(unique.length) process.exit(1);

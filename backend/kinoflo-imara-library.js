@@ -4,11 +4,11 @@ const IMARA_S10_S6='https://kinoflo.com/wp-content/uploads/2022/07/3100051-Imara
 const IMARA_S100_S60='https://kinoflo.com/wp-content/uploads/2022/07/3100083-Imara-S100-S60-DMX-Rev-A-03-02-2015.pdf';
 const IMARA_PARTS='https://kinoflo.com/product-category/products/parts/imara/';
 
-function fixture(id,model,sourceUrl){
+function fixture(id,model,sourceUrl,extra={}){
   return {
     id,manufacturer:'Kino Flo',model,family:'Imara',category:'Light',
     sourceType:'Fluorescent Softlight',status:'Legacy / Archive',sourceUrl,
-    control:['DMX512','Local']
+    control:['DMX512','Local'],...extra
   };
 }
 function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight,extra={}){
@@ -20,10 +20,10 @@ function acc(id,model,category,compatibleWith,sourceUrl,effectOnLight,extra={}){
 }
 
 export const KINOFLO_IMARA_FIXTURES=[
-  fixture('kinoflo-imara-s6-dmx','Imara S6 DMX',IMARA_S10_S6),
-  fixture('kinoflo-imara-s10-dmx','Imara S10 DMX',IMARA_S10_S6),
-  fixture('kinoflo-imara-s60-dmx','Imara S60 DMX',IMARA_S100_S60),
-  fixture('kinoflo-imara-s100-dmx','Imara S100 DMX',IMARA_S100_S60)
+  fixture('kinoflo-imara-s6-dmx','Imara S6 DMX',IMARA_S10_S6,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:IMARA_S10_S6},{name:'3ch lamp pairs',channels:3,verified:true,sourceUrl:IMARA_S10_S6}]}),
+  fixture('kinoflo-imara-s10-dmx','Imara S10 DMX',IMARA_S10_S6,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:IMARA_S10_S6},{name:'5ch lamp pairs',channels:5,verified:true,sourceUrl:IMARA_S10_S6}]}),
+  fixture('kinoflo-imara-s60-dmx','Imara S60 DMX',IMARA_S100_S60,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:IMARA_S100_S60},{name:'3ch lamp pairs',channels:3,verified:true,sourceUrl:IMARA_S100_S60}]}),
+  fixture('kinoflo-imara-s100-dmx','Imara S100 DMX',IMARA_S100_S60,{dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:IMARA_S100_S60},{name:'5ch lamp pairs',channels:5,verified:true,sourceUrl:IMARA_S100_S60}]})
 ];
 
 export const KINOFLO_IMARA_ACCESSORIES=[

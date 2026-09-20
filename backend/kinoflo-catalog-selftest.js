@@ -419,6 +419,32 @@ for(const [id,widths] of [
   }
 }
 
+
+// Imara fluorescent DMX widths from official Kino Flo manuals.
+// S6/S60: 1ch all lamps or 3ch lamp pairs. S10/S100: 1ch all lamps or 5ch lamp pairs.
+for(const [id,widths,sourceUrl] of [
+  ['kinoflo-imara-s6-dmx',[['1ch all lamps',1],['3ch lamp pairs',3]],'https://kinoflo.com/wp-content/uploads/2022/07/3100051-Imara-Rev-001-01-01-2011-web.pdf'],
+  ['kinoflo-imara-s10-dmx',[['1ch all lamps',1],['5ch lamp pairs',5]],'https://kinoflo.com/wp-content/uploads/2022/07/3100051-Imara-Rev-001-01-01-2011-web.pdf'],
+  ['kinoflo-imara-s60-dmx',[['1ch all lamps',1],['3ch lamp pairs',3]],'https://kinoflo.com/wp-content/uploads/2022/07/3100083-Imara-S100-S60-DMX-Rev-A-03-02-2015.pdf'],
+  ['kinoflo-imara-s100-dmx',[['1ch all lamps',1],['5ch lamp pairs',5]],'https://kinoflo.com/wp-content/uploads/2022/07/3100083-Imara-S100-S60-DMX-Rev-A-03-02-2015.pdf']
+]){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Missing Kino Flo Imara DMX mode set: '+id);
+    continue;
+  }
+  for(const [name,channels] of widths){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==sourceUrl){
+      failures.push('Incorrect verified Kino Flo Imara DMX width/source: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo Imara DMX mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,finalAudit:true,failures:unique},null,2));
 if(unique.length) process.exit(1);

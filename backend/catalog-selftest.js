@@ -1115,6 +1115,30 @@ for(const [id,widths] of [
   }
 }
 
+
+// Kino Flo Imara verified DMX footprint widths.
+for(const [id,widths,sourceUrl] of [
+  ['kinoflo-imara-s6-dmx',[['1ch all lamps',1],['3ch lamp pairs',3]],'https://kinoflo.com/wp-content/uploads/2022/07/3100051-Imara-Rev-001-01-01-2011-web.pdf'],
+  ['kinoflo-imara-s10-dmx',[['1ch all lamps',1],['5ch lamp pairs',5]],'https://kinoflo.com/wp-content/uploads/2022/07/3100051-Imara-Rev-001-01-01-2011-web.pdf'],
+  ['kinoflo-imara-s60-dmx',[['1ch all lamps',1],['3ch lamp pairs',3]],'https://kinoflo.com/wp-content/uploads/2022/07/3100083-Imara-S100-S60-DMX-Rev-A-03-02-2015.pdf'],
+  ['kinoflo-imara-s100-dmx',[['1ch all lamps',1],['5ch lamp pairs',5]],'https://kinoflo.com/wp-content/uploads/2022/07/3100083-Imara-S100-S60-DMX-Rev-A-03-02-2015.pdf']
+]){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Kino Flo Imara DMX mode set missing: '+id);
+    continue;
+  }
+  for(const [name,channels] of widths){
+    const mode=fixture.dmxModes.find(item=>item?.name===name);
+    if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==sourceUrl){
+      failures.push('Verified Kino Flo Imara DMX width/source missing: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo Imara DMX mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

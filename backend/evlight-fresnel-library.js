@@ -2,6 +2,7 @@
 // Sources: official EV LIGHT Fresnel product pages and product index.
 const INDEX='https://www.evlightprofessional.com/products-index.html';
 const SP150BI='https://www.evlightprofessional.com/quality-fresnel-led-68836124.html';
+const SP150FC='https://www.evlightpro.com/fresnel-led/';
 const SP_SERIES='https://www.evlightpro.com/fresnel-led/63172212.html';
 const SP350BI='https://www.evlightpro.com/fresnel-led/63234789.html';
 
@@ -37,7 +38,26 @@ export const EVLIGHT_FRESNEL_FIXTURES=[
       sourceUrls:[SP150BI,INDEX]
     }
   }),
-  fixture('evlight-sp150fc','SP150FC',200,2200,8500,'RGBLAC Full Color',15,55,INDEX,{ledEngine:'RGBLAC',dimmingDepth:'16-bit',pwm:'Selectable'}),
+  fixture('evlight-sp150fc','SP150FC',200,2200,8500,'RGBLAC Full Color',15,55,SP150FC,{
+    ledEngine:'RGBLAC',
+    dimmingDepth:'16-bit',
+    pwm:'Selectable',
+    localControl:['Stand-alone control with LCD display'],
+    control:{
+      wired:[],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['A manufacturer-verified DMX/network interface is required before LightingAI control can be enabled'],
+      unavailableDirectProtocols:[
+        'Official EV Light public SP150FC information does not publish a verified DMX512/RDM control path',
+        'Official EV Light public SP150FC information does not publish Art-Net or sACN network input',
+        'Official EV Light public SP150FC information does not publish CRMX/LumenRadio, Bluetooth or Wi-Fi control'
+      ],
+      sourceUrls:[SP150FC,INDEX]
+    }
+  }),
   fixture('evlight-sp350','SP350',350,3000,3000,'Tungsten White',15,55,SP_SERIES,{cri:97,tlci:98}),
   fixture('evlight-sp350bi','SP350BI',350,2700,6500,'Bi-Color',15,55,SP350BI,{zoom:'Manual or motorized option',pwm:'1-20 kHz',weightKg:9.2}),
   fixture('evlight-sp350fc','SP350FC',350,2200,8500,'RGBLA Full Color',15,55,SP_SERIES,{ledEngine:'RGBLA 5-in-1',tlci:98}),

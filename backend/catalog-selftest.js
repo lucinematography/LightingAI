@@ -179,6 +179,23 @@ for (const fixtureId of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar']) {
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera NYX Bulb public-protocol limitation note missing');
 }
 
+// Astera QuikSpot control audit: preserve confirmed QUIK control capabilities and LightingAI limits.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-quikspot');
+  const control = fixture?.control || {};
+  for (const item of ['DMX','RDM']) {
+    if (!control.wired?.includes(item)) failures.push(`Astera QuikSpot wired control/management path missing: ${item}`);
+  }
+  for (const item of ['AsteraApp','CRMX','Bluetooth']) {
+    if (!control.wireless?.includes(item)) failures.push(`Astera QuikSpot wireless/input path missing: ${item}`);
+  }
+  if (!control.builtInCRMX || !control.builtInBTB) failures.push('Astera QuikSpot built-in CRMX/BTB flags missing');
+  if (control.directLightingAI?.length) failures.push('Astera QuikSpot must not claim direct LightingAI transport without a documented public API');
+  if (!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX control')) failures.push('Astera QuikSpot wired DMX interface requirement missing');
+  if (!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Astera QuikSpot CRMX transmitter requirement missing');
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera QuikSpot public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

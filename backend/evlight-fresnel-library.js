@@ -6,6 +6,7 @@ const SP150FC='https://www.evlightpro.com/fresnel-led/';
 const SP_SERIES='https://www.evlightpro.com/fresnel-led/63172212.html';
 const SP350='https://www.evlightpro.com/fresnel-led/62965541.html';
 const SP350BI='https://www.evlightpro.com/fresnel-led/63234789.html';
+const SP350FC='https://www.evlightprofessional.com/quality-fresnel-led-63172212.html';
 
 function fixture(id,model,powerW,cctMin,cctMax,colorMode,beamMin,beamMax,sourceUrl,extra={}){
   return {
@@ -100,7 +101,28 @@ export const EVLIGHT_FRESNEL_FIXTURES=[
       sourceUrls:[SP350BI]
     }
   }),
-  fixture('evlight-sp350fc','SP350FC',350,2200,8500,'RGBLA Full Color',15,55,SP_SERIES,{ledEngine:'RGBLA 5-in-1',tlci:98}),
+  fixture('evlight-sp350fc','SP350FC',350,2200,8500,'RGBLA Full Color',15,55,SP350FC,{
+    ledEngine:'RGBAL 5-in-1',
+    cri:90,
+    tlci:98,
+    pwm:'2-25 kHz',
+    zoom:'Manual / motorized zoom',
+    dmxChannels:[7,11],
+    dmxConnection:'3-pin XLR in/out',
+    control:{
+      wired:['DMX512','RDM'],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['Wired DMX interface for DMX512/RDM control'],
+      unavailableDirectProtocols:[
+        'Official EV Light SP350FC product information does not publish Art-Net or sACN network input',
+        'Official EV Light SP350FC product information does not publish CRMX/LumenRadio, Bluetooth or Wi-Fi control'
+      ],
+      sourceUrls:[SP350FC,SP_SERIES]
+    }
+  }),
   fixture('evlight-sp500bi','SP500BI',500,2700,6500,'Bi-Color',15,55,SP_SERIES,{weightKg:10.2}),
   fixture('evlight-sp600','SP600',600,3000,3000,'Tungsten White',15,55,SP_SERIES,{cri:97,tlci:98})
 ];

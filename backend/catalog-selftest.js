@@ -1163,6 +1163,30 @@ for(const [id,widths,sourceUrl] of [
   }
 }
 
+
+// Kino Flo ParaBeam verified DMX footprint widths.
+for(const [id,widths,sourceUrl] of [
+  ['kinoflo-parabeam-200-dmx',[['1ch all lamps',1]],'https://kinoflo.com/wp-content/uploads/2022/07/3100026-ParaBeam-400-200-Rev-10-05-2005-Web-Quality-Old.pdf'],
+  ['kinoflo-parabeam-210-dmx',[['1ch all lamps',1]],'https://kinoflo.com/wp-content/uploads/2022/07/3100026-ParaBeam-400-200-Rev-10-05-2005-Web-Quality.pdf'],
+  ['kinoflo-parabeam-400-dmx',[['1ch all lamps',1],['2ch inner/outer lamp pairs',2]],'https://kinoflo.com/wp-content/uploads/2022/07/3100026-ParaBeam-400-200-Rev-10-05-2005-Web-Quality-Old.pdf'],
+  ['kinoflo-parabeam-410-dmx',[['1ch all lamps',1],['2ch inner/outer lamp pairs',2]],'https://kinoflo.com/wp-content/uploads/2022/07/3100026-ParaBeam-400-200-Rev-10-05-2005-Web-Quality.pdf']
+]){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Kino Flo ParaBeam DMX mode set missing: '+id);
+    continue;
+  }
+  for(const [name,channels] of widths){
+    const mode=fixture.dmxModes.find(item=>item?.name===name);
+    if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==sourceUrl){
+      failures.push('Verified Kino Flo ParaBeam DMX width/source missing: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo ParaBeam DMX mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

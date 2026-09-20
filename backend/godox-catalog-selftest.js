@@ -50,6 +50,18 @@ for(const fixtureId of ['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi
   if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox KNOWLED M CRMX transmitter requirement missing: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox KNOWLED M Bluetooth protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-la600r','godox-la600bi']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  for(const item of ['DMX512','RDM']) if(!control.wired?.includes(item)) failures.push('Godox LA600 wired control path missing: '+fixtureId+' '+item);
+  for(const item of ['Bluetooth/App','CRMX via TimoLink RX']) if(!control.wireless?.includes(item)) failures.push('Godox LA600 wireless control path missing: '+fixtureId+' '+item);
+  if(control.builtInCRMX) failures.push('Godox LA600 must not claim built-in CRMX: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox LA600 built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox LA600 must not claim direct LightingAI network transport: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512 control')) failures.push('Godox LA600 wired DMX interface requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('CRMX transmitter plus Godox TimoLink RX for CRMX control')) failures.push('Godox LA600 CRMX/TimoLink requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox LA600 Bluetooth protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

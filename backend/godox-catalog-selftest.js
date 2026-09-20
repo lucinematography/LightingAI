@@ -38,6 +38,18 @@ for(const a of accessories){
 for(const broken of catalog.integrity?.missingAccessoryFixtureIds||[]){
   if(String(broken.accessoryId||'').startsWith('godox-')) failures.push('Broken Godox compatibility link: '+broken.accessoryId+' -> '+broken.fixtureId);
 }
+for(const fixtureId of ['godox-m300r','godox-m600r','godox-m1000r','godox-m600bi-pro']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  for(const item of ['DMX512','RDM','Ethernet Art-Net','Ethernet sACN']) if(!control.wired?.includes(item)) failures.push('Godox KNOWLED M wired control path missing: '+fixtureId+' '+item);
+  for(const item of ['CRMX','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox KNOWLED M wireless control path missing: '+fixtureId+' '+item);
+  if(!control.builtInCRMX) failures.push('Godox KNOWLED M built-in CRMX flag missing: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox KNOWLED M built-in Bluetooth flag missing: '+fixtureId);
+  for(const item of ['Art-Net','sACN']) if(!control.directLightingAI?.includes(item)) failures.push('Godox KNOWLED M LightingAI network path missing: '+fixtureId+' '+item);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512 control')) failures.push('Godox KNOWLED M wired DMX interface requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox KNOWLED M CRMX transmitter requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox KNOWLED M Bluetooth protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

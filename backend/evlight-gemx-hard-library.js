@@ -2,6 +2,7 @@
 // Sources: official EV LIGHT product/category pages.
 const HARD='https://www.evlightpro.com/hard-panel-light/';
 const SOFT='https://www.evlightpro.com/led-soft-light-panel/';
+const GEMX21ST='https://www.evlightprofessional.com/quality-led-soft-light-panel-63337022.html';
 const GEMX24='https://www.evlightpro.com/led-film-lighting/65882903.html';
 const ACCESSORIES='https://www.evlightpro.com/accessories/';
 
@@ -36,7 +37,22 @@ export const EVLIGHT_GEMX_HARD_FIXTURES=[
       sourceUrls:[HARD]
     }
   }),
-  fixture('evlight-gemx21-st','GEMX21 ST','LED Soft Panel',400,2700,10000,'Full Color',null,SOFT,{ipRating:'IP65'}),
+  fixture('evlight-gemx21-st','GEMX21 ST','LED Soft Panel',400,2700,10000,'Full Color',120,GEMX21ST,{
+    ipRating:'IP65',
+    control:{
+      wired:['DMX512','RDM'],
+      wireless:['App control','WiFi-DMX','Wireless DMX'],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['External verified bridge required for LightingAI Art-Net/sACN control'],
+      unavailableDirectProtocols:[
+        'Official EV Light GEMX21 ST product information does not identify Wireless DMX as CRMX/LumenRadio',
+        'Official EV Light GEMX21 ST product information does not publish Art-Net or sACN network input'
+      ],
+      sourceUrls:[GEMX21ST,SOFT]
+    }
+  }),
   fixture('evlight-gemx24-hard','GEMX24 HARD','LED Hard Panel',1200,2700,10000,'RGBW Full Color',25,GEMX24,{cri:96,tlci:98,ipRating:'IP65',control:['DMX512','RDM','Bluetooth App Control','LumenRadio CRMX'],pwm:'24 kHz',dimming:'8-bit / 16-bit'})
 ];
 

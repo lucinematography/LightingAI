@@ -1172,11 +1172,24 @@ function numericStageValue(value,suffix){
  if(!raw)return null;
  const n=Number(raw[0]);return Number.isFinite(n)?n:null;
 }
+let aiStagedFixture=null;
+function renderAiStageAction(){
+ const box=E('artnetVerifiedControls');if(!box||!aiStagedFixture)return;
+ let action=E('artnetAiStageAction');
+ if(action)action.remove();
+ action=document.createElement('div');action.id='artnetAiStageAction';action.style.cssText='margin-top:12px;padding:10px;border:1px solid #66571f;border-radius:11px;background:#19170e';
+ action.innerHTML='<div style="font-size:12px;font-weight:800;color:#f5c542">'+esc(lang()==='sr'?'AI VREDNOSTI PRIPREMLJENE':'AI VALUES STAGED')+'</div><div class="muted small" style="margin-top:5px">'+esc(lang()==='sr'?'Ništa još nije poslato. Proveri vrednosti iznad, zatim potvrdi slanje.':'Nothing has been sent yet. Verify the values above, then confirm output.')+'</div><div class="actions" style="margin-top:8px"><button id="artnetAiStageApply" class="btn primary" type="button">'+esc(lang()==='sr'?'PRIMENI AI VREDNOSTI':'APPLY AI VALUES')+'</button><button id="artnetAiStageCancel" class="btn secondary" type="button">'+esc(lang()==='sr'?'ODUSTANI':'CANCEL')+'</button></div>';
+ box.appendChild(action);
+ const apply=E('artnetAiStageApply'),cancel=E('artnetAiStageCancel');
+ if(apply)apply.onclick=()=>applyStagedFixture(aiStagedFixture.fixtureId);
+ if(cancel)cancel.onclick=()=>{aiStagedFixture=null;action.remove();status(t().ready);};
+}
 function stagePatchFixture(fixtureId,values){
  if(!focusPatchFixture(fixtureId))return false;
  const r=selectedPatchRow(),profile=r&&profileForRow(r),controls=profile&&Array.isArray(profile.controls)?profile.controls:[];
  if(!r||!profile||!controls.length)return false;
  values=values||{};
+ const staged=[];
  controls.forEach((ctrl,i)=>{
   if(!ctrl)return;
   let requested=null;
@@ -1193,12 +1206,39 @@ function stagePatchFixture(fixtureId,values){
   if(Number.isFinite(max)&&max>min)requested=Math.min(max,requested);
   input.value=String(requested);
   try{input.dispatchEvent(new Event('input',{bubbles:true}));}catch(e){}
+  staged.push({key:ctrl.key,value:requested});
  });
+ if(!staged.length)return false;
+ aiStagedFixture={fixtureId:fixtureId,rowKey:rowKey(r),profileName:profile.name,values:staged};
+ renderAiStageAction();
  status(lang()==='sr'?'AI vrednosti su pripremljene. Proveri ih pa potvrdi slanje.':'AI values are staged. Verify them before sending.');
  return true;
 }
+function applyStagedFixture(fixtureId){
+ if(!aiStagedFixture||aiStagedFixture.fixtureId!==fixtureId)return false;
+ if(!requireOutputArmed())return false;
+ const r=rows().find(row=>rowKey(row)===aiStagedFixture.rowKey),profile=r&&profileForRow(r);
+ if(!r||!profile||profile.name!==aiStagedFixture.profileName){status(t().patchWarn,false);return false}
+ const confirmed=window.confirm(lang()==='sr'?'Poslati pripremljene AI vrednosti ovom rasvetnom telu?':'Send the staged AI values to this fixture?');
+ if(!confirmed)return false;
+ const target=frame(Math.max(1,Number(r.universe)||1));
+ if(!applyProfileRequirements(target,r.start,profile)){status(t().error,false);return false}
+ let wrote=false;
+ aiStagedFixture.values.forEach(item=>{
+  const ctrl=(profile.controls||[]).find(x=>x&&x.key===item.key);
+  if(!ctrl)return;
+  const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
+  if(writeControlToFrame(target,address,ctrl,item.value))wrote=true;
+ });
+ if(!wrote){status(t().error,false);return false}
+ sendFrame(target.slice(),Math.max(1,Number(r.universe)||1));
+ aiStagedFixture=null;
+ const action=E('artnetAiStageAction');if(action)action.remove();
+ status(lang()==='sr'?'AI vrednosti su poslate verifikovanim DMX putem.':'AI values sent through the verified DMX path.',true);
+ return true;
+}
 
-window.LightingAIArtNetControl={version:'0.28-ai-staging',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,stageFixture:stagePatchFixture};
+window.LightingAIArtNetControl={version:'0.29-ai-explicit-apply',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

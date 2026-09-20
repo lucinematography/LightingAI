@@ -169,6 +169,22 @@ for(const id of ['desisti-f47-lite-t','desisti-f47-lite-d']){
 
 
 
+// Piccoletto Color: official De Sisti product page/datasheet confirms a 4-channel DMX footprint.
+// The source does not provide a channel-by-channel map here, so controls and required values remain hidden.
+const piccolettoColorSource='https://www.desisti.it/wp-content/uploads/PICCOLETTO-C-1.pdf';
+{
+  const fixture=fixtures.find(item=>item.id==='desisti-piccoletto-c');
+  const mode=fixture?.dmxModes?.find(item=>item?.name==='Color');
+  if(!mode||mode.channels!==4||mode.verified!==true||mode.sourceUrl!==piccolettoColorSource){
+    failures.push('Incorrect verified Piccoletto Color 4ch DMX width/source');
+  }
+  for(const key of ['controls','requiredChannels']){
+    if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
+      failures.push('Piccoletto Color channel mapping must remain hidden until sourced: '+key);
+    }
+  }
+}
+
 // Super LED F7 VW: official 2024 mini catalog confirms 3ch 8-bit and 4ch 16-bit footprints.
 // Only the existing sourced 8-bit dimmer control is exposed; 16-bit channel order remains hidden.
 const f7VwWidthSource='https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf';

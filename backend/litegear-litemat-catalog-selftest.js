@@ -175,6 +175,30 @@ else{
   if(!String(control.dmx?.officialProfileTable||'').includes('rdm-dmx-profile-tables-spectrum-os-3-1.pdf')) failures.push('LiteMat Spectrum 8 official Spectrum OS 3.1 RDM-DMX table missing');
 }
 
+
+const plus1=fixtures.find(x=>x.id==='litegear-litemat-plus-1');
+if(!plus1) failures.push('Missing LiteMat Plus 1 control-route fixture');
+else{
+  const control=plus1.control||{};
+  if(control.fixtureNative?.dmx512!==false) failures.push('LiteMat Plus 1 head must not claim native DMX512');
+  if(control.fixtureNative?.rdm!==false) failures.push('LiteMat Plus 1 head must not claim native RDM');
+  if(control.fixtureNative?.artNet!==false) failures.push('LiteMat Plus 1 head must not claim native Art-Net');
+  if(control.fixtureNative?.sacn!==false) failures.push('LiteMat Plus 1 head must not claim native sACN');
+  if(control.fixtureNative?.crmx!==false) failures.push('LiteMat Plus 1 head must not claim native CRMX');
+  if(control.controller?.model!=='LiteDimmer Plus DC200 DMX Duo') failures.push('LiteMat Plus 1 controller must be LiteDimmer Plus DC200 DMX Duo');
+  if(control.controller?.local!==true) failures.push('LiteMat Plus 1 Duo controller must expose local control');
+  if(control.controller?.dmx512!==true) failures.push('LiteMat Plus 1 Duo controller DMX512 path missing');
+  if(control.controller?.rdm!==false) failures.push('LiteMat Plus 1 Duo controller must not claim RDM');
+  if(control.controller?.artNet!==false) failures.push('LiteMat Plus 1 Duo controller must not claim Art-Net');
+  if(control.controller?.sacn!==false) failures.push('LiteMat Plus 1 Duo controller must not claim sACN');
+  if(control.controller?.crmx!==false) failures.push('LiteMat Plus 1 Duo controller must not claim CRMX without explicit manufacturer protocol identification');
+  if(control.controller?.bluetooth!==false) failures.push('LiteMat Plus 1 Duo controller must not claim Bluetooth');
+  if(control.controller?.wifi!==false) failures.push('LiteMat Plus 1 Duo controller must not claim Wi-Fi');
+  if(!String(control.controller?.wireless||'').includes('does not identify the radio protocol as CRMX/LumenRadio')) failures.push('LiteMat Plus 1 wireless protocol limitation missing');
+  if(control.dmx?.profileAppliesAt!=='LiteDimmer Plus DC200 DMX Duo') failures.push('LiteMat Plus 1 DMX profile ownership missing');
+  if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat Plus 1 must not invent a public DMX channel table');
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'LiteGear',family:'LiteMat',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -9,6 +9,9 @@ const PLUS2L_DATASHEET='https://www.litegear.com/download/544/data-sheets/10020/
 const PLUS3='https://www.litegear.com/product/litemat-plus-three-duo-kit/';
 const PLUS4='https://www.litegear.com/product/litemat-plus-four-duo-kit/';
 const PLUS4_DATASHEET='https://www.litegear.com/wp-content/uploads/2019/10/LiteMat-Plus-4-Data-Sheet.pdf';
+const PLUS8='https://www.litegear.com/product/litemat-plus-8/';
+const PLUS8_DATASHEET='https://www.litegear.com/wp-content/uploads/2022/04/LiteMat-Plus-8-Data-Sheet-2022.pdf';
+const DIMMER_AC400_DATASHEET='https://www.litegear.com/wp-content/uploads/2020/10/LiteDimmer-Plus-AC400-Data-Sheet.pdf';
 const DIMMER_DUO='https://www.litegear.com/product/litedimmer-plus-dc200-dmx-duo/';
 const DIMMER_DUO_DATASHEET='https://www.litegear.com/wp-content/uploads/2020/10/LiteDimmer-Plus-Duo-DC200-Data-Sheet.pdf';
 
@@ -241,7 +244,50 @@ export const LITEGEAR_LITEMAT_PLUS_FIXTURES=[
       sourceUrls:[PLUS4,PLUS4_DATASHEET,DIMMER_DUO,DIMMER_DUO_DATASHEET]
     }
   }),
-  fixture('litegear-litemat-plus-8','LiteMat Plus 8',FAMILY)
+  fixture('litegear-litemat-plus-8','LiteMat Plus 8',PLUS8,{
+    powerW:400,inputVoltage:'24V DC',ledQuantity:4608,
+    dimensions:'1016 x 1016 x 23 mm',weightKg:4.7,
+    control:{
+      fixtureNative:{
+        local:false,dmx512:false,rdm:false,artNet:false,sacn:false,crmx:false,bluetooth:false,wifi:false,
+        note:'LiteMat Plus 8 head is a passive 24V light engine; manufacturer-documented local and DMX control are provided by the external LiteDimmer Plus AC400 DMX.'
+      },
+      controller:{
+        model:'LiteDimmer Plus AC400 DMX',
+        connectionToFixture:'PL7 power/control cable',
+        local:true,
+        dmx512:true,
+        rdm:false,
+        artNet:false,
+        sacn:false,
+        crmx:false,
+        bluetooth:false,
+        wifi:false,
+        wireless:'No built-in wireless protocol is identified in the verified LiteGear AC400 DMX documentation. The 12V convenience outlet can power an external wireless receiver, whose protocol depends on that separate receiver.'
+      },
+      directLightingAI:[],
+      externalInterfaceRequired:[
+        'LiteDimmer Plus AC400 DMX between fixture head and documented local/DMX control',
+        'Wired DMX interface when LightingAI sends DMX512 directly',
+        'Separate wireless DMX receiver/transmitter pair if wireless control is required; do not assume CRMX/LumenRadio without the receiver model being explicitly documented'
+      ],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented RDM path for LiteDimmer Plus AC400 DMX',
+        'No manufacturer-documented Art-Net path for LiteDimmer Plus AC400 DMX',
+        'No manufacturer-documented sACN path for LiteDimmer Plus AC400 DMX',
+        'No built-in CRMX/LumenRadio protocol is identified for LiteDimmer Plus AC400 DMX',
+        'No manufacturer-documented Bluetooth control path',
+        'No manufacturer-documented Wi-Fi control path'
+      ],
+      dmx:{
+        profileAppliesAt:'LiteDimmer Plus AC400 DMX',
+        connector:'5-pin DMX In and Pass Thru',
+        publicChannelTable:null,
+        note:'LiteGear documents DMX512 and local/DMX operating modes for the AC400. No public LiteMat Plus 8-specific channel table is asserted here.'
+      },
+      sourceUrls:[PLUS8,PLUS8_DATASHEET,DIMMER_AC400_DATASHEET]
+    }
+  })
 ];
 
 const rows=[
@@ -250,7 +296,7 @@ const rows=[
   ['2l','litegear-litemat-plus-2l',PLUS2L],
   ['3','litegear-litemat-plus-3',PLUS3],
   ['4','litegear-litemat-plus-4',PLUS4],
-  ['8','litegear-litemat-plus-8',FAMILY]
+  ['8','litegear-litemat-plus-8',PLUS8]
 ];
 
 export const LITEGEAR_LITEMAT_PLUS_ACCESSORIES=[

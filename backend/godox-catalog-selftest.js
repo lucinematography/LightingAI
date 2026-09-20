@@ -311,6 +311,19 @@ for(const fixtureId of ['godox-sl60iid','godox-sl60iibi','godox-sl100d','godox-s
   if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox SL 2.4GHz remote requirement missing: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox SL public-protocol limitation missing: '+fixtureId);
 }
+const godoxFixtures=fixtures.filter(x=>String(x.id||'').startsWith('godox-'));
+if(godoxFixtures.length!==74) failures.push('Godox fixture count must remain 74, got '+godoxFixtures.length);
+for(const fixture of godoxFixtures){
+  const control=fixture?.control;
+  if(!control || Array.isArray(control) || typeof control!=='object') failures.push('Godox fixture must use structured control object: '+fixture.id);
+  for(const key of ['wired','wireless','directLightingAI','externalInterfaceRequired','unavailableDirectProtocols','sourceUrls']){
+    if(!Array.isArray(control?.[key])) failures.push('Godox structured control array missing: '+fixture.id+' '+key);
+  }
+  for(const key of ['builtInCRMX','builtInBluetooth']){
+    if(typeof control?.[key]!=='boolean') failures.push('Godox structured control boolean missing: '+fixture.id+' '+key);
+  }
+}
+if(godoxFixtures.some(x=>x.id==='godox-lc500bi')) failures.push('Obsolete Godox LC500Bi id must not return');
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

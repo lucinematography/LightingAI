@@ -23,7 +23,14 @@ const common = {
     wired: [],
     wireless: ['AsteraApp', 'CRMX', 'UHF', 'Bluetooth', 'WiFi'],
     builtInCRMX: true,
-    builtInBTB: true
+    builtInBTB: true,
+    directLightingAI: [],
+    externalInterfaceRequired: ['CRMX transmitter for CRMX control'],
+    unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
+    sourceUrls: [
+      'https://astera-led.com/solabulb/',
+      'https://update.astera-led.com/firmwares/current/release_notes.html'
+    ]
   },
   sourceUrl: SRC
 };

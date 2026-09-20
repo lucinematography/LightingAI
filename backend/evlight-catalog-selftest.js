@@ -207,6 +207,20 @@ else{
   if(!Array.isArray(gem2x1bi.dmxChannels)||!gem2x1bi.dmxChannels.includes(3)||!gem2x1bi.dmxChannels.includes(7)) failures.push('EV Light GEM2X1BI DMX channel options must include 3 and 7');
   if(gem2x1bi.dmxConnection!=='3-pin XLR in/out') failures.push('EV Light GEM2X1BI DMX connector detail missing');
 }
+const gem2x1st=fixtures.find(x=>x.id==='evlight-gem2x1st');
+if(!gem2x1st) failures.push('Missing EV Light GEM2X1ST control-route fixture');
+else{
+  const control=gem2x1st.control||{};
+  for(const item of ['DMX512','RDM']) if(!control.wired?.includes(item)) failures.push('EV Light GEM2X1ST wired control path missing: '+item);
+  for(const item of ['WiFi-DMX','Wireless DMX','App control']) if(!control.wireless?.includes(item)) failures.push('EV Light GEM2X1ST wireless/app control path missing: '+item);
+  if(control.builtInCRMX) failures.push('EV Light GEM2X1ST must not claim CRMX/LumenRadio from unspecified Wireless DMX');
+  if(control.builtInBluetooth) failures.push('EV Light GEM2X1ST must not claim built-in Bluetooth');
+  if(control.directLightingAI?.length) failures.push('EV Light GEM2X1ST must not claim direct LightingAI Art-Net/sACN transport');
+  if(!control.externalInterfaceRequired?.includes('External verified bridge required for LightingAI Art-Net/sACN control')) failures.push('EV Light GEM2X1ST LightingAI bridge requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light GEM2X1ST network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light GEM2X1ST wireless-DMX qualification missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightprofessional.com/quality-led-soft-light-panel-63400265.html')) failures.push('EV Light GEM2X1ST official control source missing');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

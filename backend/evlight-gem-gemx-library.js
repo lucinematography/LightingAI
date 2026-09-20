@@ -73,7 +73,24 @@ export const EVLIGHT_GEM_GEMX_FIXTURES=[
     dmxConnection:'3-pin XLR in/out',
     ipRating:'IP20',dimensions:'737 x 382.5 x 173 mm',weightKg:11.8
   }),
-  fixture('evlight-gem2x1st','GEM2X1ST','GEM',350,2700,10000,'RGBW Full Color',110,GEM2X1ST,{cri:97,tlci:98,cqs:96,control:['DMX512','RDM','WiFi-DMX'],modes:['CCT','HSI','GEL','RGBCW','XY'],battery:'57V series supported'}),
+  fixture('evlight-gem2x1st','GEM2X1ST','GEM',350,2700,10000,'RGBW Full Color',110,GEM2X1ST,{
+    cri:97,tlci:98,cqs:96,
+    control:{
+      wired:['DMX512','RDM'],
+      wireless:['WiFi-DMX','Wireless DMX','App control'],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['External verified bridge required for LightingAI Art-Net/sACN control'],
+      unavailableDirectProtocols:[
+        'Official EV Light public product information does not publish a verified Art-Net or sACN network input for GEM2X1ST',
+        'Wireless DMX is published for GEM2X1ST, but the manufacturer page does not identify it as CRMX/LumenRadio',
+        'App control / WiFi-DMX is manufacturer-documented, but no public LightingAI-compatible network protocol is published'
+      ],
+      sourceUrls:[GEM2X1ST]
+    },
+    modes:['CCT','HSI','GEL','RGBCW','XY'],battery:'57V series supported'
+  }),
   fixture('evlight-gemx21-hard','GEMX21 HARD','GEMX',360,2700,10000,'RGBWW Full Color',25,GEMX21HARD,{cri:96,control:['DMX512','RDM','Wireless DMX','WiFi-DMX'],ipRating:'IP65',dimmingFrequency:'20 kHz',alternateBeamAngleDeg:120})
 ];
 

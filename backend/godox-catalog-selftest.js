@@ -153,6 +153,31 @@ for(const fixtureId of ['godox-p300r','godox-p600r']){
   if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox P300R/P600R CRMX transmitter requirement missing: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox P300R/P600R Bluetooth protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-f100r','godox-f200r','godox-f200sr']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  for(const item of ['DMX512','RDM']) if(!control.wired?.includes(item)) failures.push('Godox F100/F200 wired path missing: '+fixtureId+' '+item);
+  for(const item of ['CRMX','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox F100/F200 wireless path missing: '+fixtureId+' '+item);
+  if(!control.builtInCRMX) failures.push('Godox F100/F200 built-in CRMX flag missing: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox F100/F200 built-in Bluetooth flag missing: '+fixtureId);
+  if(control.directLightingAI?.length) failures.push('Godox F100/F200 must not claim direct LightingAI network transport: '+fixtureId);
+}
+for(const fixtureId of ['godox-f400r','godox-f800r']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  for(const item of ['DMX512','RDM','Ethernet Art-Net','Ethernet sACN']) if(!control.wired?.includes(item)) failures.push('Godox F400/F800 wired path missing: '+fixtureId+' '+item);
+  for(const item of ['CRMX','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox F400/F800 wireless path missing: '+fixtureId+' '+item);
+  if(!control.builtInCRMX) failures.push('Godox F400/F800 built-in CRMX flag missing: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox F400/F800 built-in Bluetooth flag missing: '+fixtureId);
+  for(const item of ['Art-Net','sACN']) if(!control.directLightingAI?.includes(item)) failures.push('Godox F400/F800 LightingAI network path missing: '+fixtureId+' '+item);
+}
+for(const fixtureId of ['godox-f100r','godox-f200r','godox-f200sr','godox-f400r','godox-f800r']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512/RDM control')) failures.push('Godox full-color mat wired DMX requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox full-color mat CRMX requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox full-color mat Bluetooth protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

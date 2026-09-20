@@ -10,6 +10,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.BitmapFactory;
+import android.graphics.Typeface;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -20,6 +22,7 @@ import android.speech.RecognizerIntent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.view.Gravity;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
@@ -29,6 +32,12 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.OutputStream;
@@ -40,6 +49,8 @@ import java.util.UUID;
 
 public class MainActivity extends Activity {
     private WebView webView;
+    private FrameLayout rootView;
+    private View startupSplash;
     private String pendingText = null;
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private Uri pendingCameraUri = null;
@@ -81,9 +92,19 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
+        rootView = new FrameLayout(this);
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(13, 15, 18));
-        setContentView(webView);
+        rootView.addView(webView, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+        startupSplash = createStartupSplash();
+        rootView.addView(startupSplash, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+        setContentView(rootView);
         nativeSunLocation = new NativeSunLocation(this);
         nativeSunCompass = new NativeSunCompass(this);
         sacnCid = loadOrCreateSacnCid();
@@ -114,6 +135,7 @@ public class MainActivity extends Activity {
                 super.onPageFinished(view, url);
                 applyNavigationInset();
                 installCatalogView();
+                hideStartupSplashAfterDelay();
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
@@ -163,6 +185,59 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new AIVisualImageBridge(this), "LightingAIImages");
         webView.loadUrl("file:///android_asset/index.html");
         webView.requestApplyInsets();
+    }
+
+    private View createStartupSplash() {
+        FrameLayout splash = new FrameLayout(this);
+        splash.setBackgroundColor(Color.BLACK);
+
+        ImageView image = new ImageView(this);
+        image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        try {
+            image.setImageBitmap(BitmapFactory.decodeStream(getAssets().open("lightai-intro.jpg")));
+        } catch (Exception ignored) {
+            image.setBackgroundColor(Color.rgb(5, 6, 7));
+        }
+        splash.addView(image, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+
+        View shade = new View(this);
+        shade.setBackgroundColor(0x42000000);
+        splash.addView(shade, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+
+        TextView title = new TextView(this);
+        SpannableString label = new SpannableString("LightAI");
+        label.setSpan(new ForegroundColorSpan(Color.WHITE), 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        label.setSpan(new ForegroundColorSpan(Color.rgb(245, 197, 66)), 5, 7, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        title.setText(label);
+        title.setTextSize(56);
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        title.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            Gravity.CENTER
+        );
+        splash.addView(title, titleParams);
+        return splash;
+    }
+
+    private void hideStartupSplashAfterDelay() {
+        if (startupSplash == null) return;
+        startupSplash.postDelayed(() -> {
+            if (startupSplash == null) return;
+            startupSplash.animate().alpha(0f).setDuration(450).withEndAction(() -> {
+                if (startupSplash != null && startupSplash.getParent() instanceof ViewGroup) {
+                    ((ViewGroup) startupSplash.getParent()).removeView(startupSplash);
+                }
+                startupSplash = null;
+            }).start();
+        }, 2400);
     }
 
     private boolean hasLocationPermission() {

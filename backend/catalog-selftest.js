@@ -306,6 +306,18 @@ for (const fixtureId of ['astera-lunabulb-fp7-e26','astera-lunabulb-fp7-e27','as
   if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push(`Astera LunaBulb public-protocol limitation note missing: ${fixtureId}`);
 }
 
+// Astera QuikBeam control audit: preserve documented network/radio capabilities and LightingAI limits.
+{
+  const fixture = RUNTIME_CATALOG.fixtureById.get('astera-quikbeam');
+  const control = fixture?.control || {};
+  for (const item of ['Art-Net','sACN']) if (!control.wired?.includes(item)) failures.push(`Astera QuikBeam wired/network path missing: ${item}`);
+  for (const item of ['AsteraApp','CRMX','UHF','Bluetooth','WiFi']) if (!control.wireless?.includes(item)) failures.push(`Astera QuikBeam wireless/input path missing: ${item}`);
+  if (!control.builtInCRMX || !control.builtInBTB) failures.push('Astera QuikBeam CRMX/BTB capability flags missing');
+  for (const item of ['Art-Net','sACN']) if (!control.directLightingAI?.includes(item)) failures.push(`Astera QuikBeam direct LightingAI network path missing: ${item}`);
+  if (!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Astera QuikBeam CRMX transmitter requirement missing');
+  if (!control.unavailableDirectProtocols?.some((item) => String(item).includes('not publicly documented'))) failures.push('Astera QuikBeam public-protocol limitation note missing');
+}
+
 const aputure600dPro = RUNTIME_CATALOG.fixtureById.get('aputure-ls-600d-pro');
 const aputure600dMode = aputure600dPro?.dmxModes?.find((mode) => mode.name === '5ch Lighting & FX');
 if (!aputure600dMode || aputure600dMode.channels !== 5 || aputure600dMode.verified !== true) failures.push('Verified LS 600d Pro 5ch DMX profile missing');

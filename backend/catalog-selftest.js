@@ -336,7 +336,11 @@ if (desistiF6Vw16?.controls?.some((item) => item.key === 'cct')) failures.push('
 
 const desistiF7Vw = RUNTIME_CATALOG.fixtureById.get('desisti-super-led-f7-vw');
 const desistiF7VwMode = desistiF7Vw?.dmxModes?.find((item) => item.name === 'Vari-White');
+const desistiF7Vw16 = desistiF7Vw?.dmxModes?.find((item) => item.name === 'Vari-White 16-bit');
 if (!desistiF7VwMode || desistiF7VwMode.channels !== 3 || desistiF7VwMode.verified !== true) failures.push('Verified De Sisti F7 Vari-White 3ch mode missing');
+if (!desistiF7Vw16 || desistiF7Vw16.channels !== 4 || desistiF7Vw16.verified !== true) failures.push('Verified De Sisti F7 Vari-White 4ch 16-bit mode missing');
+if (desistiF7Vw16?.sourceUrl !== 'https://www.desisti.it/wp-content/uploads/mini-catalog-2024-1.pdf') failures.push('De Sisti F7 Vari-White 16-bit source mismatch');
+if (desistiF7Vw16?.controls?.length || desistiF7Vw16?.requiredChannels?.length) failures.push('De Sisti F7 Vari-White 16-bit channel mapping must remain hidden until sourced');
 const desistiF7VwDimmer = desistiF7VwMode?.controls?.find((item) => item.key === 'dimmer');
 if (!desistiF7VwDimmer || desistiF7VwDimmer.channel !== 1 || desistiF7VwDimmer.type !== 'percent' || desistiF7VwDimmer.dmxMax !== 255) failures.push('Verified De Sisti F7 Vari-White 8-bit dimmer mapping missing');
 if (desistiF7VwMode?.controls?.some((item) => item.key === 'cct')) failures.push('De Sisti F7 Vari-White CCT control must remain hidden until CCT Mode DMX values are sourced');

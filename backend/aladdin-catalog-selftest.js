@@ -121,6 +121,33 @@ for(const id of ['aladdin-bi-flex-1','aladdin-bi-flex-2','aladdin-bi-flex-4']){
   if(fixture?.dmxModes?.length) failures.push('Legacy BI-FLEX exact DMX map must remain unchanged until separately sourced: '+id);
 }
 
+// MOSAIC 2X4/4X4/3X6: official DMX Protocol Map, pages 1-2.
+// Width-only pass. Crossfade, green correction and effect behavior require a separate control review.
+const mosaicDmxSource='https://aladdin-lights.com/wp-content/uploads/2023/06/ALADDIN_DMX_MAPS_ALL_FIXTURES-NEW.pdf';
+const mosaicDmxWidths=[['Simple CCT Crossfade RGBW',8],['Expert CCT Crossfade RGBW + Effects',11]];
+for(const id of ['aladdin-mosaic-2x4','aladdin-mosaic-4x4','aladdin-mosaic-3x6']){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)){
+    failures.push('Missing Aladdin MOSAIC DMX modes: '+id);
+    continue;
+  }
+  if(fixture.dmxModes.length!==mosaicDmxWidths.length){
+    failures.push('Unexpected Aladdin MOSAIC DMX mode count: '+id);
+  }
+  for(const [name,channels] of mosaicDmxWidths){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==mosaicDmxSource){
+      failures.push('Incorrect verified Aladdin MOSAIC DMX width/source: '+id+' / '+name);
+    }
+    for(const key of ['controls','requiredChannels']){
+      if(mode?.[key]!=null&&(!Array.isArray(mode[key])||mode[key].length)){
+        failures.push('Aladdin MOSAIC DMX mapping must remain width-only in this pass: '+id+' / '+name+' / '+key);
+      }
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Aladdin',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

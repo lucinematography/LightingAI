@@ -141,6 +141,18 @@ for(const fixtureId of ['godox-m200d','godox-m300d','godox-m200bi','godox-m300bi
   if(!control.externalInterfaceRequired?.includes('Compatible Godox 2.4GHz remote for 2.4GHz remote control')) failures.push('Godox M200/M300 2.4GHz remote requirement missing: '+fixtureId);
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox M200/M300 public-protocol limitation missing: '+fixtureId);
 }
+for(const fixtureId of ['godox-p300r','godox-p600r']){
+  const fixture=fixtures.find(x=>x.id===fixtureId);
+  const control=fixture?.control||{};
+  for(const item of ['DMX512','RDM','Ethernet Art-Net','Ethernet sACN']) if(!control.wired?.includes(item)) failures.push('Godox P300R/P600R wired control path missing: '+fixtureId+' '+item);
+  for(const item of ['CRMX','Bluetooth/App']) if(!control.wireless?.includes(item)) failures.push('Godox P300R/P600R wireless control path missing: '+fixtureId+' '+item);
+  if(!control.builtInCRMX) failures.push('Godox P300R/P600R built-in CRMX flag missing: '+fixtureId);
+  if(!control.builtInBluetooth) failures.push('Godox P300R/P600R built-in Bluetooth flag missing: '+fixtureId);
+  for(const item of ['Art-Net','sACN']) if(!control.directLightingAI?.includes(item)) failures.push('Godox P300R/P600R LightingAI network path missing: '+fixtureId+' '+item);
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512/RDM control')) failures.push('Godox P300R/P600R wired DMX interface requirement missing: '+fixtureId);
+  if(!control.externalInterfaceRequired?.includes('CRMX transmitter for CRMX control')) failures.push('Godox P300R/P600R CRMX transmitter requirement missing: '+fixtureId);
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox P300R/P600R Bluetooth protocol limitation missing: '+fixtureId);
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

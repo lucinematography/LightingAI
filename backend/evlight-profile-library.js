@@ -24,7 +24,20 @@ export const EVLIGHT_PROFILE_FIXTURES=[
   fixture('evlight-epro100','EPRO100',{
     powerW:100,colorMode:'Warm White or Cool White option',cctK:{min:3200,max:5600},
     cri:95,beamAngleDeg:{options:['15-35','20-40','50-60']},
-    control:['DMX512','Master-Slave','Auto'],ipRating:'IP20',weightKg:3.25,
+    control:{
+      wired:['DMX512 via 3-pin XLR'],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['Wired DMX interface for DMX512 control'],
+      unavailableDirectProtocols:[
+        'No manufacturer-documented Art-Net or sACN network input is published for EPRO100',
+        'No manufacturer-documented CRMX/LumenRadio, Bluetooth or Wi-Fi control path is published for EPRO100'
+      ],
+      sourceUrls:[EPRO100]
+    },
+    localControl:['Master-Slave','Auto'],dmxChannels:1,ipRating:'IP20',weightKg:3.25,
     optics:'Manual zoom, manual focus, 4-blade framing shutters',sourceUrl:EPRO100
   }),
   fixture('evlight-epro200z','EPRO200Z',{

@@ -161,6 +161,13 @@ if (!piccolettoVwModeReq16 || piccolettoVwModeReq16.value !== 0) failures.push('
 
 
 
+const piccolettoColor = RUNTIME_CATALOG.fixtureById.get('desisti-piccoletto-c');
+const piccolettoColorMode = piccolettoColor?.dmxModes?.find((item) => item.name === 'Color');
+if (!piccolettoColorMode || piccolettoColorMode.channels !== 4 || piccolettoColorMode.verified !== true) failures.push('Verified De Sisti Piccoletto Color 4ch DMX mode missing');
+if (piccolettoColorMode?.sourceUrl !== 'https://www.desisti.it/wp-content/uploads/PICCOLETTO-C-1.pdf') failures.push('De Sisti Piccoletto Color DMX source mismatch');
+if (piccolettoColorMode?.controls?.length || piccolettoColorMode?.requiredChannels?.length) failures.push('De Sisti Piccoletto Color channel mapping must remain hidden until sourced');
+
+
 for (const [fixtureId, label] of [
   ['desisti-super-led-f14-t','De Sisti Super LED F14 T'],
   ['desisti-super-led-f14-d','De Sisti Super LED F14 D'],

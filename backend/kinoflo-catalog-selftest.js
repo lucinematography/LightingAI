@@ -445,6 +445,32 @@ for(const [id,widths,sourceUrl] of [
   }
 }
 
+
+// ParaZip fluorescent DMX widths from official Kino Flo manuals.
+// 200/215: one DMX address for all lamps. 400/415: one address for all lamps or two addresses for inner/outer pairs.
+for(const [id,widths,sourceUrl] of [
+  ['kinoflo-parazip-200-dmx',[['1ch all lamps',1]],'https://kinoflo.com/wp-content/uploads/2022/07/3100039-Rev-D-ParaZip-400-200-7-02-2012-Web-Quality-Old.pdf'],
+  ['kinoflo-parazip-215-dmx',[['1ch all lamps',1]],'https://kinoflo.com/wp-content/uploads/2022/07/3100081-Rev-A-ParaZip-415-215-06-16-2015.pdf'],
+  ['kinoflo-parazip-400-dmx',[['1ch all lamps',1],['2ch inner/outer lamp pairs',2]],'https://kinoflo.com/wp-content/uploads/2022/07/3100039-Rev-D-ParaZip-400-200-7-02-2012-Web-Quality-Old.pdf'],
+  ['kinoflo-parazip-415-dmx',[['1ch all lamps',1],['2ch inner/outer lamp pairs',2]],'https://kinoflo.com/wp-content/uploads/2022/07/3100081-Rev-A-ParaZip-415-215-06-16-2015.pdf']
+]){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Missing Kino Flo ParaZip DMX mode set: '+id);
+    continue;
+  }
+  for(const [name,channels] of widths){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==sourceUrl){
+      failures.push('Incorrect verified Kino Flo ParaZip DMX width/source: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo ParaZip DMX mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,finalAudit:true,failures:unique},null,2));
 if(unique.length) process.exit(1);

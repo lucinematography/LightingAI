@@ -57,6 +57,21 @@ for(const a of accessories){
 for(const broken of catalog.integrity?.missingAccessoryFixtureIds||[]){
   if(String(broken.accessoryId||'').startsWith('evlight-')) failures.push('Broken EV Light compatibility link: '+broken.accessoryId+' -> '+broken.fixtureId);
 }
+const epro100=fixtures.find(x=>x.id==='evlight-epro100');
+if(!epro100) failures.push('Missing EV Light EPRO100 control-route fixture');
+else{
+  const control=epro100.control||{};
+  if(!control.wired?.includes('DMX512 via 3-pin XLR')) failures.push('EV Light EPRO100 DMX512 / 3-pin XLR route missing');
+  if(control.wireless?.length) failures.push('EV Light EPRO100 must not claim manufacturer-documented wireless control');
+  if(control.builtInCRMX) failures.push('EV Light EPRO100 must not claim built-in CRMX/LumenRadio');
+  if(control.builtInBluetooth) failures.push('EV Light EPRO100 must not claim built-in Bluetooth');
+  if(control.directLightingAI?.length) failures.push('EV Light EPRO100 must not claim direct LightingAI Art-Net/sACN transport');
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512 control')) failures.push('EV Light EPRO100 wired DMX interface requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light EPRO100 network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light EPRO100 wireless-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/profile-spot-light/63349887.html')) failures.push('EV Light EPRO100 official control source missing');
+  if(Number(epro100.dmxChannels)!==1) failures.push('EV Light EPRO100 DMX channel count must be 1');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

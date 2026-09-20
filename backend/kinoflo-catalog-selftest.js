@@ -520,6 +520,28 @@ for(const [id,channels] of [['kinoflo-vistabeam-300-dmx',4],['kinoflo-vistabeam-
   }
 }
 
+
+// Wall-O-Lite official manual: Fixture mode uses one DMX fader/address for the inside-out lamp sequence;
+// Individual Lamp mode spans the base address plus the next seven addresses.
+const wallOLiteDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100021-wall-o-lite-colorRev-10-05-2005-Web-Quality.pdf';
+{
+  const fixture=fixtures.find(item=>item.id==='kinoflo-wall-o-lite-dmx');
+  const widths=[['Fixture mode',1],['Individual Lamp mode',8]];
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Missing Kino Flo Wall-O-Lite DMX mode set');
+  }else{
+    for(const [name,channels] of widths){
+      const mode=fixture.dmxModes.find(item=>item?.name===name);
+      if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==wallOLiteDmxSource){
+        failures.push('Incorrect verified Kino Flo Wall-O-Lite DMX width/source: '+name);
+      }
+      if(mode?.controls?.length||mode?.requiredChannels?.length){
+        failures.push('Kino Flo Wall-O-Lite DMX mapping must remain width-only in this pass: '+name);
+      }
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,finalAudit:true,failures:unique},null,2));
 if(unique.length) process.exit(1);

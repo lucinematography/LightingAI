@@ -4,6 +4,7 @@ const VB300='https://kinoflo.com/vistabeam-300-series/';
 const VB600='https://kinoflo.com/vistabeam-600-series/';
 const WALL='https://kinoflo.com/wall-o-lite/';
 const VB_MANUAL='https://kinoflo.com/wp-content/uploads/2022/07/3100041-VistaBeam-Web-Quality-Old.pdf';
+const WALL_MANUAL='https://kinoflo.com/wp-content/uploads/2022/07/3100021-wall-o-lite-colorRev-10-05-2005-Web-Quality.pdf';
 const MANUALS='https://kinoflo.com/manuals-archive/';
 
 function fixture(id,model,family,sourceUrl,extra={}){
@@ -36,7 +37,8 @@ export const KINOFLO_VISTABEAM_WALLO_FIXTURES=[
     dmxModes:[{name:'Fixture mode',channels:7,verified:true,sourceUrl:VB_MANUAL},{name:'Individual Lamp mode',channels:7,verified:true,sourceUrl:VB_MANUAL}]
   }),
   fixture('kinoflo-wall-o-lite-dmx','Wall-O-Lite DMX','Wall-O-Lite',WALL,{
-    voltageVariants:['120VAC','230VAC'],control:['DMX512']
+    voltageVariants:['120VAC','230VAC'],control:['DMX512'],
+    dmxModes:[{name:'Fixture mode',channels:1,verified:true,sourceUrl:WALL_MANUAL},{name:'Individual Lamp mode',channels:8,verified:true,sourceUrl:WALL_MANUAL}]
   })
 ];
 

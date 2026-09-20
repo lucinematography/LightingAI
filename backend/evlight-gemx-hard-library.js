@@ -17,7 +17,25 @@ function acc(id,model,category,compatibleWith,effectOnLight){
 }
 
 export const EVLIGHT_GEMX_HARD_FIXTURES=[
-  fixture('evlight-gemx12','GEMX12','LED Hard Panel',650,2700,10000,'Full Color',25,HARD,{useCases:['Film production','Long-throw location lighting'],effects:'Built-in special effects'}),
+  fixture('evlight-gemx12','GEMX12','LED Hard Panel',650,2700,10000,'Full Color',25,HARD,{
+    useCases:['Film production','Long-throw location lighting'],
+    effects:'Built-in special effects',
+    ipRating:'IP65',
+    control:{
+      wired:[],
+      wireless:[],
+      builtInCRMX:false,
+      builtInBluetooth:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['A manufacturer-verified DMX/network interface is required before LightingAI control can be enabled'],
+      unavailableDirectProtocols:[
+        'Official EV Light public GEMX12 product information does not publish a verified DMX512/RDM control path',
+        'Official EV Light public GEMX12 product information does not publish Art-Net or sACN network input',
+        'Official EV Light public GEMX12 product information does not publish CRMX/LumenRadio, Bluetooth or Wi-Fi control'
+      ],
+      sourceUrls:[HARD]
+    }
+  }),
   fixture('evlight-gemx21-st','GEMX21 ST','LED Soft Panel',400,2700,10000,'Full Color',null,SOFT,{ipRating:'IP65'}),
   fixture('evlight-gemx24-hard','GEMX24 HARD','LED Hard Panel',1200,2700,10000,'RGBW Full Color',25,GEMX24,{cri:96,tlci:98,ipRating:'IP65',control:['DMX512','RDM','Bluetooth App Control','LumenRadio CRMX'],pwm:'24 kHz',dimming:'8-bit / 16-bit'})
 ];

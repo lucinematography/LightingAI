@@ -17,8 +17,8 @@ function acc(id,model,category,compatibleWith,effectOnLight,extra={}){
 }
 
 export const KINOFLO_IMAGE_87_47_FIXTURES=[
-  fixture('kinoflo-image-47-dmx','Image 47 DMX',{lampCount:4,lampType:'F75T12',voltage:'100-240VAC',control:['DMX512','Local']}),
-  fixture('kinoflo-image-87-dmx','Image 87 DMX',{lampCount:8,lampType:'F75T12',voltage:'100-240VAC',control:['DMX512','Local']})
+  fixture('kinoflo-image-47-dmx','Image 47 DMX',{lampCount:4,lampType:'F75T12',voltage:'100-240VAC',control:['DMX512','Local'],dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:IMAGE_MANUAL},{name:'5ch individual lamps + HO/Std',channels:5,verified:true,sourceUrl:IMAGE_MANUAL}]}),
+  fixture('kinoflo-image-87-dmx','Image 87 DMX',{lampCount:8,lampType:'F75T12',voltage:'100-240VAC',control:['DMX512','Local'],dmxModes:[{name:'1ch all lamps',channels:1,verified:true,sourceUrl:IMAGE_MANUAL},{name:'9ch individual lamps + HO/Std',channels:9,verified:true,sourceUrl:IMAGE_MANUAL}]})
 ];
 
 export const KINOFLO_IMAGE_87_47_ACCESSORIES=[

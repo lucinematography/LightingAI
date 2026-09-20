@@ -1092,6 +1092,29 @@ const kinoTegraDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100061
   }
 }
 
+
+// Kino Flo Image 47/87 fluorescent verified DMX footprint widths.
+const kinoImageFluoroDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100066-Rev-A-IMAGE-87-47-DMX-Rev-6-12-2013-Web-Quality-1.pdf';
+for(const [id,widths] of [
+  ['kinoflo-image-47-dmx',[['1ch all lamps',1],['5ch individual lamps + HO/Std',5]]],
+  ['kinoflo-image-87-dmx',[['1ch all lamps',1],['9ch individual lamps + HO/Std',9]]]
+]){
+  const fixture=RUNTIME_CATALOG.fixtureById.get(id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Kino Flo Image fluorescent DMX mode set missing: '+id);
+    continue;
+  }
+  for(const [name,channels] of widths){
+    const mode=fixture.dmxModes.find(item=>item?.name===name);
+    if(!mode||mode.channels!==channels||mode.verified!==true||mode.sourceUrl!==kinoImageFluoroDmxSource){
+      failures.push('Verified Kino Flo Image fluorescent DMX width/source missing: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo Image fluorescent DMX mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const uniqueFailures=[...new Set(failures)];
 console.log(JSON.stringify({ok:uniqueFailures.length===0,fixtures:RUNTIME_CATALOG.fixtures.length,accessories:RUNTIME_CATALOG.accessories.length,duplicateSourceDefinitions:RUNTIME_CATALOG.duplicateAccessoryIds,warnings:report.warnings.length,failures:uniqueFailures},null,2));
 if(uniqueFailures.length)process.exit(1);

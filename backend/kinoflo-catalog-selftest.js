@@ -394,6 +394,31 @@ const tegraDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100061-arc
   }
 }
 
+
+// Image 47/87 fluorescent DMX: official manual documents selectable all-lamps 1ch mode or individual-lamp mode.
+// Image 47 uses 5 addresses (lamps 1-4 + HO/Std); Image 87 uses 9 addresses (lamps 1-8 + HO/Std).
+const imageFluoroDmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100066-Rev-A-IMAGE-87-47-DMX-Rev-6-12-2013-Web-Quality-1.pdf';
+for(const [id,widths] of [
+  ['kinoflo-image-47-dmx',[['1ch all lamps',1],['5ch individual lamps + HO/Std',5]]],
+  ['kinoflo-image-87-dmx',[['1ch all lamps',1],['9ch individual lamps + HO/Std',9]]]
+]){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==widths.length){
+    failures.push('Missing Kino Flo Image fluorescent DMX mode set: '+id);
+    continue;
+  }
+  for(const [name,channels] of widths){
+    const matches=fixture.dmxModes.filter(mode=>mode?.name===name);
+    const mode=matches[0];
+    if(matches.length!==1||mode?.channels!==channels||mode?.verified!==true||mode?.sourceUrl!==imageFluoroDmxSource){
+      failures.push('Incorrect verified Kino Flo Image fluorescent DMX width/source: '+id+' / '+name);
+    }
+    if(mode?.controls?.length||mode?.requiredChannels?.length){
+      failures.push('Kino Flo Image fluorescent DMX mapping must remain width-only in this pass: '+id+' / '+name);
+    }
+  }
+}
+
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,finalAudit:true,failures:unique},null,2));
 if(unique.length) process.exit(1);

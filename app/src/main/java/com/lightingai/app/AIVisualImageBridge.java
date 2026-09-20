@@ -93,6 +93,35 @@ public final class AIVisualImageBridge {
         }, "LightingAI-pdf-save").start();
     }
 
+    @JavascriptInterface public void sharePlanPdf(String filename, String payloadJson, String chooserTitle) {
+        new Thread(() -> {
+            String safeName = safePdfFilename(filename);
+            try {
+                byte[] pdfBytes = renderPlanPdf(payloadJson);
+                File directory = AIVisualImageProvider.shareDirectory(activity);
+                if (!directory.exists() && !directory.mkdirs()) throw new IllegalStateException("Share directory unavailable");
+                File output = new File(directory, safeName);
+                try (OutputStream stream = new FileOutputStream(output, false)) { stream.write(pdfBytes); }
+                Uri uri = Uri.parse("content://" + activity.getPackageName() + ".ai.preview/" + Uri.encode(safeName));
+                activity.runOnUiThread(() -> {
+                    try {
+                        Intent share = new Intent(Intent.ACTION_SEND);
+                        share.setType("application/pdf");
+                        share.putExtra(Intent.EXTRA_STREAM, uri);
+                        share.setClipData(ClipData.newRawUri("LightingAI PDF", uri));
+                        share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        activity.startActivity(Intent.createChooser(share, chooserTitle));
+                        notifyPdfResult(true, safeName);
+                    } catch (Exception error) {
+                        notifyPdfResult(false, safeName);
+                    }
+                });
+            } catch (Exception error) {
+                notifyPdfResult(false, safeName);
+            }
+        }, "LightingAI-pdf-share").start();
+    }
+
     private String safePdfFilename(String requested) {
         String base = requested == null ? "LightingAI_AI_Plan" : requested.replaceAll("[^A-Za-z0-9._-]", "_");
         if (base.length() > 90) base = base.substring(0, 90);

@@ -175,6 +175,21 @@ else{
   if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightprofessional.com/quality-led-soft-light-panel-68277576.html')) failures.push('EV Light GEM1X1BI official control source missing');
   if(gem1x1bi.dmxConnection!=='3-pin XLR or 5-pin XLR') failures.push('EV Light GEM1X1BI DMX connector detail missing');
 }
+const gem1x1fc=fixtures.find(x=>x.id==='evlight-gem1x1fc');
+if(!gem1x1fc) failures.push('Missing EV Light GEM1X1FC control-route fixture');
+else{
+  const control=gem1x1fc.control||{};
+  for(const item of ['DMX512','RDM','Art-Net','sACN']) if(!control.wired?.includes(item)) failures.push('EV Light GEM1X1FC wired/network control path missing: '+item);
+  for(const item of ['Art-Net','sACN']) if(!control.directLightingAI?.includes(item)) failures.push('EV Light GEM1X1FC direct LightingAI transport missing: '+item);
+  if(control.wireless?.length) failures.push('EV Light GEM1X1FC must not claim manufacturer-documented wireless control');
+  if(control.builtInCRMX) failures.push('EV Light GEM1X1FC must not claim built-in CRMX/LumenRadio');
+  if(control.builtInBluetooth) failures.push('EV Light GEM1X1FC must not claim built-in Bluetooth');
+  if(control.externalInterfaceRequired?.length) failures.push('EV Light GEM1X1FC must not require an external interface for published Art-Net/sACN input');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light GEM1X1FC wireless-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightprofessional.com/products-index/2/')) failures.push('EV Light GEM1X1FC official index source missing');
+  if(!control.sourceUrls.includes('https://ru.evlightpro.com/led-soft-light-panel/62570433.html')) failures.push('EV Light GEM1X1FC official detail source missing');
+  if(gem1x1fc.dmxConnection!=='RJ45 + 3-pin XLR or 5-pin XLR') failures.push('EV Light GEM1X1FC connector detail missing');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

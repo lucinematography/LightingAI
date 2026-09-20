@@ -269,6 +269,22 @@ else{
   if(gemx21st.ipRating!=='IP65') failures.push('EV Light GEMX21 ST IP65 rating missing');
   if(Number(gemx21st.beamAngleDeg)!==120) failures.push('EV Light GEMX21 ST beam angle must be 120 degrees');
 }
+const gemx24hard=fixtures.find(x=>x.id==='evlight-gemx24-hard');
+if(!gemx24hard) failures.push('Missing EV Light GEMX24 HARD control-route fixture');
+else{
+  const control=gemx24hard.control||{};
+  for(const item of ['DMX512','RDM']) if(!control.wired?.includes(item)) failures.push('EV Light GEMX24 HARD wired control path missing: '+item);
+  for(const item of ['Bluetooth App Control','LumenRadio CRMX Wireless DMX','Wi-Fi connectivity']) if(!control.wireless?.includes(item)) failures.push('EV Light GEMX24 HARD published wireless/control path missing: '+item);
+  if(!control.builtInCRMX) failures.push('EV Light GEMX24 HARD CRMX flag missing');
+  if(!control.builtInBluetooth) failures.push('EV Light GEMX24 HARD Bluetooth flag missing');
+  if(control.directLightingAI?.length) failures.push('EV Light GEMX24 HARD must not claim direct LightingAI Art-Net/sACN transport');
+  if(!control.externalInterfaceRequired?.some(x=>String(x).includes('Art-Net/sACN'))) failures.push('EV Light GEMX24 HARD LightingAI bridge requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light GEMX24 HARD network-protocol limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Wi-Fi'))) failures.push('EV Light GEMX24 HARD Wi-Fi protocol qualification missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/led-film-lighting/65882903.html')) failures.push('EV Light GEMX24 HARD official model source missing');
+  if(gemx24hard.ipRating!=='IP65') failures.push('EV Light GEMX24 HARD IP65 rating missing');
+  if(gemx24hard.pwm!=='24 kHz') failures.push('EV Light GEMX24 HARD PWM detail missing');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -190,6 +190,23 @@ else{
   if(!control.sourceUrls.includes('https://ru.evlightpro.com/led-soft-light-panel/62570433.html')) failures.push('EV Light GEM1X1FC official detail source missing');
   if(gem1x1fc.dmxConnection!=='RJ45 + 3-pin XLR or 5-pin XLR') failures.push('EV Light GEM1X1FC connector detail missing');
 }
+const gem2x1bi=fixtures.find(x=>x.id==='evlight-gem2x1bi');
+if(!gem2x1bi) failures.push('Missing EV Light GEM2X1BI control-route fixture');
+else{
+  const control=gem2x1bi.control||{};
+  if(!control.wired?.includes('DMX512')) failures.push('EV Light GEM2X1BI DMX512 route missing');
+  if(control.wired?.some(x=>x==='RDM'||x==='Art-Net'||x==='sACN')) failures.push('EV Light GEM2X1BI must not claim unpublished RDM/Art-Net/sACN support');
+  if(control.wireless?.length) failures.push('EV Light GEM2X1BI must not claim manufacturer-documented wireless control');
+  if(control.builtInCRMX) failures.push('EV Light GEM2X1BI must not claim built-in CRMX/LumenRadio');
+  if(control.builtInBluetooth) failures.push('EV Light GEM2X1BI must not claim built-in Bluetooth');
+  if(control.directLightingAI?.length) failures.push('EV Light GEM2X1BI must not claim direct LightingAI Art-Net/sACN transport');
+  if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512 control')) failures.push('EV Light GEM2X1BI wired DMX interface requirement missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('RDM, Art-Net or sACN'))) failures.push('EV Light GEM2X1BI unpublished network/control limitation missing');
+  if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light GEM2X1BI wireless-protocol limitation missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightprofessional.com/quality-led-soft-light-panel-63222309.html')) failures.push('EV Light GEM2X1BI official control source missing');
+  if(!Array.isArray(gem2x1bi.dmxChannels)||!gem2x1bi.dmxChannels.includes(3)||!gem2x1bi.dmxChannels.includes(7)) failures.push('EV Light GEM2X1BI DMX channel options must include 3 and 7');
+  if(gem2x1bi.dmxConnection!=='3-pin XLR in/out') failures.push('EV Light GEM2X1BI DMX connector detail missing');
+}
 const unique=[...new Set(failures)];
 console.log(JSON.stringify({ok:unique.length===0,manufacturer:'EV Light',fixtureCount:fixtures.length,accessoryCount:accessories.length,lockedFixtureCount:EXPECTED_FIXTURE_COUNT,requiredFixtures:expected.length,families:[...new Set(fixtures.map(x=>x.family))].sort(),failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -172,9 +172,15 @@ jobs:
           )
 
           test -s "$APK"
-          jarsigner -verify "$APK"
-          CERT_INFO="$(keytool -printcert -jarfile "$APK")"
-          grep -Fq 'SHA256:' <<<"$CERT_INFO" || { echo 'Signed review APK certificate missing'; exit 1; }
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK_ROOT" || { echo 'Android SDK root missing'; exit 1; }
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n1)"
+          test -x "$APKSIGNER" || { echo 'apksigner missing'; exit 1; }
+          "$APKSIGNER" verify --verbose "$APK"
+          APK_CERT_SHA="$("$APKSIGNER" verify --print-certs "$APK" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1 | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
+          KEY_CERT_SHA="$(keytool -list -v -keystore "$LIGHTINGAI_KEYSTORE_PATH" -storepass "$LIGHTINGAI_KEYSTORE_PASSWORD" -alias "$LIGHTINGAI_KEY_ALIAS" | sed -n 's/^[[:space:]]*SHA256: //p' | head -n1 | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
+          test -n "$APK_CERT_SHA" && test "$APK_CERT_SHA" = "$KEY_CERT_SHA" || { echo 'Review APK signer does not match stable review key'; exit 1; }
+          echo "Stable review APK signer SHA-256: $APK_CERT_SHA"
           for asset in "${REQUIRED[@]}"; do
             unzip -Z1 "$APK" | grep -Fxq "$asset" || { echo "Missing packaged asset: $asset"; exit 1; }
             cmp -s <(unzip -p "$APK" "$asset") "app/src/main/$asset" || { echo "Packaged asset differs from source: $asset"; exit 1; }

@@ -255,6 +255,7 @@ for (const marker of [
   "window.LightingAIShotList={version:'1.1-blocking-storyboard'",
   'referenceImage:null',
   'horizontalFovDeg:cam?hfov:null',
+  'framing:framing?JSON.parse(JSON.stringify(framing)):null',
   'blocking:cam&&cam.blocking'
 ]) {
   if (!shotListBlocking.includes(marker)) fail(`Blocking Shot List marker missing: ${marker}`);

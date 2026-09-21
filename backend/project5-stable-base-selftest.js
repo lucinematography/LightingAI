@@ -184,6 +184,7 @@ const exactAllowed = new Set([
   'app/src/test/java/com/lightingai/app/SacnProtocolTest.java',
   'backend/project5-stable-base-selftest.js',
   'backend/project-backup-selftest.js',
+  'backend/blocking-designer-selftest.js',
   'backend/project5-feature-selftest.js',
   'backend/project52-release-gate-selftest.js',
   'app/src/main/assets/ai-visual-scene-launcher.js',

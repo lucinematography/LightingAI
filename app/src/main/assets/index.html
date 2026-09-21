@@ -33,13 +33,25 @@ function organizeTools(){
   let h=wrap.querySelector('.toolsGroupTitle');if(h)h.textContent=currentLang==='sr'?g.sr:g.en;
   g.items.forEach(id=>{let x=E(id);if(x&&x.parentNode!==wrap)wrap.appendChild(x)});
  });
- let sunBtn=document.querySelector('nav button[data-page="sunce"]');
+ let sunBtn=document.querySelector('button[data-page="sunce"]');
  if(sunBtn){
-  let prod=E('toolsGroupProd');
-  if(prod&&sunBtn.parentNode!==prod)prod.appendChild(sunBtn);
+  let prod=E('toolsGroupProd'),folder=E('sunToolsFolder');
+  if(!folder){
+   folder=document.createElement('div');folder.id='sunToolsFolder';folder.className='card';
+   folder.style.cssText='padding:0;overflow:hidden;border-color:#6d5921';
+  }
+  sunBtn.className='btn secondary';
+  sunBtn.style.cssText='width:100%;text-align:left;padding:16px;border-radius:15px;font-size:14px;font-weight:900;color:#f5c542';
+  if(sunBtn.parentNode!==folder)folder.appendChild(sunBtn);
+  let dmx=E('dmxCard');
+  if(prod&&(folder.parentNode!==prod||folder.nextSibling!==dmx))prod.insertBefore(folder,dmx&&dmx.parentNode===prod?dmx:null);
+  if(!sunBtn.dataset.toolsHook){
+   sunBtn.dataset.toolsHook='1';
+   sunBtn.addEventListener('click',()=>setTimeout(()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));let t=document.querySelector('nav button[data-page="tools"]');if(t)t.classList.add('active')},0));
+  }
  }
 }
-function setupCompactNavigation(){let control=E('controlContent'),ai=E('aiContent'),tools=E('toolsDynamic');if(control){['artnetCard','bleControlCard'].forEach(id=>{let x=E(id);if(x&&x.parentNode!==control)control.appendChild(x)})}if(ai){let x=E('lightingai-ai-equipment-card');if(x&&x.parentNode!==ai)ai.appendChild(x)}if(tools){['sceneMeasureCard','setSketchCard','dmxCard','dofCard','flickerCard','continuityCard','shotListCard','cueCard','cameraSetupSection','lightingRatioCard','powerCalculatorCard','lightCalcCard','cctGelCard','projectBackupCard','deviceCapabilitiesCard'].forEach(id=>{let x=E(id);if(x&&x.parentNode!==tools)tools.appendChild(x)})}organizeTools();let sunBtn=document.querySelector('nav button[data-page="sunce"]');if(sunBtn&&tools){sunBtn.className='btn secondary';sunBtn.style.cssText='width:100%;text-align:left;margin-top:8px';tools.appendChild(sunBtn);if(!sunBtn.dataset.toolsHook){sunBtn.dataset.toolsHook='1';sunBtn.addEventListener('click',()=>setTimeout(()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));let t=document.querySelector('nav button[data-page="tools"]');if(t)t.classList.add('active')},0))}}let nav=document.querySelector('nav');if(nav)nav.style.gridTemplateColumns='repeat(5,1fr)'}
+function setupCompactNavigation(){let control=E('controlContent'),ai=E('aiContent'),tools=E('toolsDynamic');if(control){['artnetCard','bleControlCard'].forEach(id=>{let x=E(id);if(x&&x.parentNode!==control)control.appendChild(x)})}if(ai){let x=E('lightingai-ai-equipment-card');if(x&&x.parentNode!==ai)ai.appendChild(x)}if(tools){['sceneMeasureCard','setSketchCard','dmxCard','dofCard','flickerCard','continuityCard','shotListCard','cueCard','cameraSetupSection','lightingRatioCard','powerCalculatorCard','lightCalcCard','cctGelCard','projectBackupCard','deviceCapabilitiesCard'].forEach(id=>{let x=E(id);if(x&&x.parentNode!==tools)tools.appendChild(x)})}organizeTools();let nav=document.querySelector('nav');if(nav)nav.style.gridTemplateColumns='repeat(5,1fr)'}
 E('toolsProjectsBtn').onclick=()=>openCompactPage('projects','tools');E('toolsSettingsBtn').onclick=()=>openCompactPage('settings','tools');
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>openCompactPage(b.dataset.page,b.dataset.page));
 function plannerVoiceStatus(message,isError){let s=E('plannerVoiceStatus');if(!s)return;s.textContent=message||'';s.style.color=isError?'#ffb5b5':'#b8f0d1';}

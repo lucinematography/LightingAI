@@ -189,7 +189,10 @@ public class MainActivity extends Activity {
         });
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.addJavascriptInterface(new AIVisualImageBridge(this), "LightingAIImages");
-        webView.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v2");
+        webView.postDelayed(
+            () -> webView.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v3"),
+            350
+        );
         webView.requestApplyInsets();
     }
 
@@ -216,11 +219,14 @@ public class MainActivity extends Activity {
         );
         splash.addView(title, titleParams);
 
-        title.animate()
+        title.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        title.post(() -> title.animate()
             .scaleX(1.0f)
             .scaleY(1.0f)
             .setDuration(3200)
-            .start();
+            .setInterpolator(new android.view.animation.DecelerateInterpolator(1.15f))
+            .withEndAction(() -> title.setLayerType(View.LAYER_TYPE_NONE, null))
+            .start());
 
         return splash;
     }

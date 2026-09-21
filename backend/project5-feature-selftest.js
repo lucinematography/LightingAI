@@ -81,9 +81,8 @@ requireText(imageProvider, 'ParcelFileDescriptor.MODE_READ_ONLY', 'shared image 
 requireText(imageProvider, 'file.getParentFile().equals(root)', 'shared image provider must reject path traversal');
 requireText(mainActivity, 'new AIVisualImageBridge(this), "LightingAIImages"', 'native image bridge registration missing');
 requireText(mainActivity, 's.setAllowContentAccess(true)', 'WebView content URI access must remain enabled for gallery files');
-requireText(mainActivity, 'new Intent(Intent.ACTION_OPEN_DOCUMENT)', 'gallery picker must use the proven Android document picker');
-requireText(mainActivity, 'Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION', 'gallery picker must request persistable read access');
-requireText(mainActivity, 'takePersistableUriPermission', 'selected gallery URI access must be retained');
+requireText(mainActivity, 'new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)', 'gallery picker must open phone images/gallery');
+requireText(mainActivity, 'Intent.FLAG_GRANT_READ_URI_PERMISSION', 'gallery picker must request read access');
 requireText(mainActivity, 'data.getData()', 'gallery result must accept a direct returned URI');
 requireText(mainActivity, 'data.getClipData()', 'gallery result must accept ClipData returned by OEM pickers');
 requireText(moduleJs, "input.value='';", 'gallery input must reset so the same image can be chosen again');
@@ -99,7 +98,9 @@ const galleryMethodStart = mainActivity.indexOf('private boolean openGalleryForW
 const galleryMethodEnd = mainActivity.indexOf('private boolean openCameraForWebView', galleryMethodStart);
 assert(galleryMethodStart >= 0 && galleryMethodEnd > galleryMethodStart, 'gallery picker method boundaries missing');
 const galleryMethod = mainActivity.slice(galleryMethodStart, galleryMethodEnd);
-assert(!galleryMethod.includes('ACTION_PICK_IMAGES'), 'AI gallery picker must not regress to ACTION_PICK_IMAGES on this phone flow');
+assert(galleryMethod.includes('Intent.ACTION_PICK'), 'AI gallery picker must use the phone gallery image flow');
+assert(galleryMethod.includes('MediaStore.Images.Media.EXTERNAL_CONTENT_URI'), 'AI gallery picker must target phone images');
+assert(!galleryMethod.includes('Intent.ACTION_OPEN_DOCUMENT'), 'AI gallery picker must not open the document/files picker');
 requireText(manifest, 'android:name=".AIVisualImageProvider"', 'AI image share provider missing');
 
 for (const action of ['SVETLIJE','TAMNIJE','TOPLIJE','HLADNIJE','MEKŠE','VIŠE KONTRASTA','NAPRAVI MOJU VERZIJU','VRATI PRETHODNU AI VERZIJU']) {

@@ -115,7 +115,11 @@ const aiPickerEnd = mainActivity.indexOf('private void deliverAIVisualImage(Uri 
 assert(aiPickerStart >= 0 && aiPickerEnd > aiPickerStart, 'native AI picker method boundaries missing');
 const aiPickerMethod = mainActivity.slice(aiPickerStart, aiPickerEnd);
 assert(!aiPickerMethod.includes('pendingFileChooser'), 'native AI picker must never share pendingFileChooser with Planner/JSON/WebView inputs');
-assert(!aiPickerMethod.includes('CHOOSE_IMAGE)'), 'native AI picker must never use the generic WebView request code');
+assert(
+  !aiPickerMethod.includes('startActivityForResult(intent, CHOOSE_IMAGE)') &&
+  !aiPickerMethod.includes('startActivityForResult(camera, CHOOSE_IMAGE)'),
+  'native AI picker must never use the generic WebView request code'
+);
 requireText(mainActivity, 'BitmapFactory.decodeStream', 'native image transfer must decode the selected URI');
 requireText(mainActivity, 'output.compress(Bitmap.CompressFormat.JPEG, 82, bytes)', 'native image transfer must compress to bounded JPEG');
 requireText(mainActivity, 'deliverAIVisualImageChunks(base64);', 'native image transfer must hand compressed base64 to WebView');

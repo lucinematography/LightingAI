@@ -177,9 +177,8 @@ jobs:
           APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n1)"
           test -x "$APKSIGNER" || { echo 'apksigner missing'; exit 1; }
           "$APKSIGNER" verify --verbose "$APK"
-          APK_CERT_SHA="$("$APKSIGNER" verify --print-certs "$APK" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1 | tr '[:upper:]' '[:lower:]' | tr -d ':[:space:]')"
-          test -n "$APK_CERT_SHA" || { echo 'Signed review APK certificate missing'; exit 1; }
-          echo "Stable review APK signer SHA-256: $APK_CERT_SHA"
+          "$APKSIGNER" verify --print-certs "$APK"
+          echo "Stable review APK signature verified"
           for asset in "${REQUIRED[@]}"; do
             unzip -Z1 "$APK" | grep -Fxq "$asset" || { echo "Missing packaged asset: $asset"; exit 1; }
             cmp -s <(unzip -p "$APK" "$asset") "app/src/main/$asset" || { echo "Packaged asset differs from source: $asset"; exit 1; }

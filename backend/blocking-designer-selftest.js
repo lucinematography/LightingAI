@@ -29,6 +29,9 @@ assert.ok(blocking.includes("pointer-events','none'"), 'Overlapping waypoint mus
 assert.ok(blocking.includes('previewActive'), 'Blocking must track active preview while editing waypoints');
 assert.ok(blocking.includes("c.setAttribute('r',sel?'13':'9')"), 'Waypoint markers must stay enlarged for readability');
 assert.ok(blocking.includes("tx.setAttribute('font-size','16')"), 'Waypoint labels must stay enlarged for readability');
+assert.ok(blocking.includes('blocking-subject-buttons'), 'Tracking subject chooser must use stable large buttons');
+assert.ok(blocking.includes('trackingEnabled'), 'Tracking enable state must remain independent from subject selection');
+assert.ok(!blocking.includes('id="blockingTrackSubject"'), 'Native tracking subject select must not return');
 assert.ok(blocking.includes("overObject&&!previewActive"), 'Preview waypoint must remain draggable without moving the object');
 assert.ok(blocking.includes('previewActive=false;const a=api();if(a&&a.clearPreview)a.clearPreview()'), 'Clearing path must exit preview mode');
 assert.ok(!blocking.includes('localStorage.setItem(KEY,JSON.stringify(buildPreview'), 'Animation preview must not persist frame positions');

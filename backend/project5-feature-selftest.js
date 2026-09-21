@@ -25,6 +25,7 @@ const refinements = read('app/src/main/assets/ai-visual-preview-refinements.js')
 const imageBridge = read('app/src/main/java/com/lightingai/app/AIVisualImageBridge.java');
 const imageProvider = read('app/src/main/java/com/lightingai/app/AIVisualImageProvider.java');
 const mainActivity = read('app/src/main/java/com/lightingai/app/MainActivity.java');
+const indexHtml = read('app/src/main/assets/index.html');
 const manifest = read('app/src/main/AndroidManifest.xml');
 const phoneDiagnostics = read('app/src/main/assets/ai-visual-phone-diagnostics.js');
 const phoneTest = read('app/src/main/assets/ai-visual-phone-test.js');
@@ -51,8 +52,10 @@ requireText(launcher, "file:///android_asset/feature-build-info.js", 'embedded b
 forbidText(launcher, 'P5 TEST • BUILD ', 'release launcher must not expose visible Project 5 build diagnostics');
 requireText(launcher, 'LightingAIFeatureBuild', 'feature build metadata hook missing');
 
+requireText(indexHtml, 'id="galleryInput" type="file" accept="image/*" hidden onchange="handlePhoto(event)"', 'working Planner gallery input must remain unchanged');
+requireText(indexHtml, 'id="cameraInput" type="file" accept="image/*" capture="environment" hidden onchange="handlePhoto(event)"', 'working Planner camera input must remain unchanged');
 requireText(moduleJs, "var API_BASE='https://lightingai.onrender.com';", 'AI plan must keep production API base');
-requireText(moduleJs, "capture=\"environment\"", 'direct scene camera capture missing');
+requireText(indexHtml, 'id="aiVisualCameraInput" type="file" accept="image/*" capture="environment" hidden', 'persistent AI camera input missing');
 requireText(moduleJs, "visualPreviewAvailable:false", 'real photo preview must default to unavailable');
 requireText(moduleJs, "SCENE_MEASURE_KEY='lighting_scene_measurements_v1'", 'Planner measurement storage bridge missing');
 requireText(moduleJs, "id=\"aiv-use-measurements\"", 'Planner measurement opt-in control missing');
@@ -89,8 +92,14 @@ requireText(mainActivity, 'data.getClipData()', 'gallery result must accept Clip
 requireText(mainActivity, 'hasReadableImageData(uri)', 'camera result must accept a written image even when an OEM camera returns a non-standard result code');
 requireText(moduleJs, "input.value='';", 'file-input fallback must reset so the same image can be chosen again');
 requireText(moduleJs, 'input.click();', 'AI scene image action must use the proven WebView file chooser');
-requireText(moduleJs, "document.getElementById('aiv-gallery').onchange=receiveFile", 'gallery selection must feed the AI scene photo handler');
-requireText(moduleJs, "document.getElementById('aiv-camera').onchange=receiveFile", 'camera selection must feed the AI scene photo handler');
+requireText(indexHtml, 'id="aiVisualGalleryInput" type="file" accept="image/*" hidden', 'persistent AI gallery input missing');
+requireText(indexHtml, 'id="aiVisualCameraInput" type="file" accept="image/*" capture="environment" hidden', 'persistent AI camera input missing');
+requireText(moduleJs, "document.getElementById('aiVisualGalleryInput')", 'AI gallery must bind the persistent file input');
+requireText(moduleJs, "document.getElementById('aiVisualCameraInput')", 'AI camera must bind the persistent file input');
+requireText(moduleJs, 'aiVisualGalleryInput.onchange=receiveFile', 'persistent gallery selection must feed the AI scene photo handler');
+requireText(moduleJs, 'aiVisualCameraInput.onchange=receiveFile', 'persistent camera selection must feed the AI scene photo handler');
+forbidText(moduleJs, 'id="aiv-gallery"', 'AI module must not create a transient gallery file input');
+forbidText(moduleJs, 'id="aiv-camera"', 'AI module must not create a transient camera file input');
 requireText(moduleJs, 'optimizeImage(f).then(setPhoto)', 'selected WebView file must be optimized and rendered into the AI scene');
 requireText(mainActivity, '@JavascriptInterface public void openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
 requireText(mainActivity, 'MainActivity.this.openAIImagePicker("camera".equals(mode))', 'native AI image picker bridge must route gallery/camera mode');
@@ -140,9 +149,12 @@ assert(imageActionStart >= 0 && imageActionEnd > imageActionStart, 'AI image act
 const imageAction = moduleJs.slice(imageActionStart, imageActionEnd);
 assert(
   imageAction.indexOf('input.click();') >= 0 &&
+  imageAction.indexOf('aiVisualGalleryInput') >= 0 &&
+  imageAction.indexOf('aiVisualCameraInput') >= 0 &&
   imageAction.indexOf('Android.openImagePicker(mode);') < 0,
-  'AI image selection must use the same WebView file chooser path as the working Planner photo input'
+  'AI image selection must use persistent WebView file inputs and never the native AI picker'
 );
+forbidText(moduleJs, 'function openSceneImage(mode)', 'unused native-first AI image opener must remain removed');
 const webGalleryStart = mainActivity.indexOf('private boolean openGalleryForWebView');
 const webGalleryEnd = mainActivity.indexOf('private boolean openCameraForWebView', webGalleryStart);
 assert(webGalleryStart >= 0 && webGalleryEnd > webGalleryStart, 'working Planner/WebView gallery method boundaries missing');

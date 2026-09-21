@@ -1291,9 +1291,21 @@ public class MainActivity extends Activity {
                     pendingCameraUri = null;
                     finishFileChooser(new Uri[]{uri});
                 } else {
-                    Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-                    if ((result == null || result.length == 0) && data != null && data.getData() != null) {
+                    Uri[] result = null;
+                    if (data != null && data.getData() != null) {
                         result = new Uri[]{data.getData()};
+                    }
+                    if ((result == null || result.length == 0) && data != null && data.getClipData() != null) {
+                        ClipData clip = data.getClipData();
+                        ArrayList<Uri> picked = new ArrayList<>();
+                        for (int i = 0; i < clip.getItemCount(); i++) {
+                            Uri pickedUri = clip.getItemAt(i) == null ? null : clip.getItemAt(i).getUri();
+                            if (pickedUri != null && !picked.contains(pickedUri)) picked.add(pickedUri);
+                        }
+                        if (!picked.isEmpty()) result = picked.toArray(new Uri[0]);
+                    }
+                    if (result == null || result.length == 0) {
+                        result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
                     }
                     persistGalleryAccess(data, result);
                     finishFileChooser(result);

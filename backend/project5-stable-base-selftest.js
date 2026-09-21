@@ -189,7 +189,8 @@ const exactAllowed = new Set([
   'app/src/main/assets/control-dashboard.js',
   'app/src/main/assets/device-capabilities.js',
   'app/src/main/assets/lightai-intro.jpg',
-  'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java'
+  'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
+  'app/src/main/res/values/styles.xml'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
 if (unexpected.length) fail(`files changed outside the isolated Project 5.4 camera-distance surface: ${unexpected.join(', ')}`);

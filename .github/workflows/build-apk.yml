@@ -118,6 +118,15 @@ jobs:
             'assets/ai-visual-phone-test.js'
             'assets/feature-build-info.js'
             'assets/catalog.js'
+            'assets/set-sketch.js'
+            'assets/set-sketch-camera-fov.js'
+            'assets/blocking-camera-designer.js'
+            'assets/set-sketch-sun.js'
+            'assets/blocking-sun-integration.js'
+            'assets/blocking-ai-integration.js'
+            'assets/shot-list-planner.js'
+            'assets/shot-setup-report.js'
+            'assets/camera-setup-snapshots.js'
           )
 
           test -s "$APK"

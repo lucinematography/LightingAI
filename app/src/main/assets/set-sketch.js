@@ -147,7 +147,7 @@ function iconSvg(o,p,isSel){
     const len=o.type==='light'?105:80,x2=dx*len,y2=dy*len;
     direction='<line x1="0" y1="0" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="'+(o.type==='light'?'#f5c542':'#89c7ff')+'" stroke-width="3" stroke-dasharray="7 5"/><circle cx="'+x2.toFixed(1)+'" cy="'+y2.toFixed(1)+'" r="5" fill="'+(o.type==='light'?'#f5c542':'#89c7ff')+'"/>';
   }
-  return '<g class="set-object" data-object-id="'+esc(o.id)+'" transform="translate('+p.x.toFixed(1)+' '+p.y.toFixed(1)+')" style="cursor:grab">'+direction+body+'<text x="0" y="'+(o.type==='subject'?60:48)+'" text-anchor="middle" font-size="15" font-weight="700" fill="#f3f4f6" stroke="#0d0f12" stroke-width="4" paint-order="stroke">'+label+'</text></g>';
+  return '<g class="set-object" data-object-id="'+esc(o.id)+'" transform="translate('+p.x.toFixed(1)+' '+p.y.toFixed(1)+')" style="cursor:grab"><g transform="scale(1.22)">'+direction+body+'</g><text x="0" y="'+(o.type==='subject'?70:60)+'" text-anchor="middle" font-size="18" font-weight="800" fill="#f3f4f6" stroke="#0d0f12" stroke-width="5" paint-order="stroke">'+label+'</text></g>';
 }
 
 function renderSvg(){
@@ -158,18 +158,18 @@ function renderSvg(){
   s.objects.filter(o=>o.type==='light').forEach(o=>{const v=visualObject(o);htm+=beamSvg(v,o.id===selectedId);});
   for(let m=0;m<=Math.floor(s.roomW);m++){
     const x=left+m/s.roomW*w;
-    htm+='<line x1="'+x+'" y1="'+top+'" x2="'+x+'" y2="'+(top+h)+'" stroke="'+(m===0||m===Math.floor(s.roomW)?'#424850':'#24292f')+'" stroke-width="1"/><text x="'+x+'" y="'+(top+h+22)+'" text-anchor="middle" font-size="11" fill="#7f8792">'+m+'m</text>';
+    htm+='<line x1="'+x+'" y1="'+top+'" x2="'+x+'" y2="'+(top+h)+'" stroke="'+(m===0||m===Math.floor(s.roomW)?'#424850':'#24292f')+'" stroke-width="1"/><text x="'+x+'" y="'+(top+h+22)+'" text-anchor="middle" font-size="13" font-weight="700" fill="#9aa2ad">'+m+'m</text>';
   }
   for(let m=0;m<=Math.floor(s.roomH);m++){
     const y=top+m/s.roomH*h;
-    htm+='<line x1="'+left+'" y1="'+y+'" x2="'+(left+w)+'" y2="'+y+'" stroke="'+(m===0||m===Math.floor(s.roomH)?'#424850':'#24292f')+'" stroke-width="1"/><text x="'+(left-9)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="#7f8792">'+m+'m</text>';
+    htm+='<line x1="'+left+'" y1="'+y+'" x2="'+(left+w)+'" y2="'+y+'" stroke="'+(m===0||m===Math.floor(s.roomH)?'#424850':'#24292f')+'" stroke-width="1"/><text x="'+(left-9)+'" y="'+(y+4)+'" text-anchor="end" font-size="13" font-weight="700" fill="#9aa2ad">'+m+'m</text>';
   }
   const chosenBase=obj(selectedId),chosen=visualObject(chosenBase);
   if(chosen){
     const a=screenPoint(chosen);
     s.objects.filter(o=>o.id!==chosen.id).forEach(o=>{
       const v=visualObject(o),b=screenPoint(v),d=Math.hypot(v.x-chosen.x,v.y-chosen.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
-      htm+='<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="#646c77" stroke-width="1.5" stroke-dasharray="5 5"/><rect x="'+(mx-27)+'" y="'+(my-11)+'" width="54" height="22" rx="7" fill="#15191e" stroke="#444b54"/><text x="'+mx+'" y="'+(my+4)+'" text-anchor="middle" font-size="12" fill="#f5c542">'+d.toFixed(2)+'m</text>';
+      htm+='<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="#646c77" stroke-width="1.5" stroke-dasharray="5 5"/><rect x="'+(mx-27)+'" y="'+(my-11)+'" width="54" height="22" rx="7" fill="#15191e" stroke="#444b54"/><text x="'+mx+'" y="'+(my+4)+'" text-anchor="middle" font-size="14" font-weight="800" fill="#f5c542">'+d.toFixed(2)+'m</text>';
     });
   }
   s.objects.forEach(o=>{const v=visualObject(o);htm+=iconSvg(v,screenPoint(v),o.id===selectedId);});
@@ -330,7 +330,7 @@ window.LightingAISetSketch={version:'1.2-blocking-lighting',getState:function(){
 function init(){
   const planner=E('planner');if(!planner||E('setSketchCard'))return false;
   const style=document.createElement('style');
-  style.textContent='.set-sketch-card{overflow:hidden}.set-sketch-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:10px}.set-sketch-stage{background:#090b0e;border:1px solid #30343b;border-radius:14px;overflow:hidden;margin:12px 0}.set-sketch-stage svg{display:block;width:100%;height:auto;aspect-ratio:10/7;touch-action:none;user-select:none}.set-sketch-add{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.set-sketch-add .wide{grid-column:1/-1}.set-selected-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;align-items:end}.set-selected-grid label,.set-beam-controls label{font-size:11px;color:#9299a3}.set-readout{background:#0f1115;border:1px solid #30343b;border-radius:10px;padding:9px}.set-readout small{display:block;color:#9299a3;font-size:10px}.set-readout b{display:block;color:#f5c542;margin-top:3px;font-size:13px}.set-beam-controls{display:grid;grid-template-columns:140px 1fr;gap:8px;margin-top:8px}.set-beam-info{background:#15191e;border:1px solid #30343b;border-radius:10px;padding:9px}.set-beam-info small{display:block;color:#9299a3}.set-beam-info b{display:block;color:#f5c542;margin-top:4px;font-size:12px}.set-light-coverage{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:7px;margin-top:8px}.set-distance-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #292d33}.set-distance-row b{color:#f5c542}.set-empty,.set-sketch-note,.set-sketch-status{color:#9299a3;font-size:12px;line-height:1.4}.set-sketch-status{min-height:18px;color:#b8f0d1}.set-sketch-card h4{margin:14px 0 5px}@media(max-width:520px){.set-selected-grid{grid-template-columns:1fr 1fr}.set-selected-grid label{grid-column:1/-1}.set-beam-controls{grid-template-columns:1fr}.set-light-coverage{grid-template-columns:1fr 1fr}.set-light-coverage .set-readout:first-child{grid-column:1/-1}}';
+  style.textContent='.set-sketch-card{overflow:hidden}.set-sketch-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:10px}.set-sketch-stage{background:#090b0e;border:1px solid #30343b;border-radius:14px;overflow:hidden;margin:12px 0}.set-sketch-stage svg{display:block;width:100%;height:auto;aspect-ratio:10/7;touch-action:none;user-select:none}.set-sketch-add{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.set-sketch-add .wide{grid-column:1/-1}.set-selected-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;align-items:end}.set-selected-grid label,.set-beam-controls label{font-size:11px;color:#9299a3}.set-readout{background:#0f1115;border:1px solid #30343b;border-radius:10px;padding:9px}.set-readout small{display:block;color:#9299a3;font-size:10px}.set-readout b{display:block;color:#f5c542;margin-top:3px;font-size:13px}.set-beam-controls{display:grid;grid-template-columns:140px 1fr;gap:8px;margin-top:8px}.set-beam-info{background:#15191e;border:1px solid #30343b;border-radius:10px;padding:9px}.set-beam-info small{display:block;color:#9299a3}.set-beam-info b{display:block;color:#f5c542;margin-top:4px;font-size:12px}.set-light-coverage{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:7px;margin-top:8px}.set-distance-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #292d33}.set-distance-row b{color:#f5c542}.set-empty,.set-sketch-note,.set-sketch-status{color:#aab1bb;font-size:14px;line-height:1.5}.set-sketch-card .btn{font-size:14px;min-height:46px}.set-sketch-card select,.set-sketch-card input{font-size:16px}.set-sketch-status{min-height:18px;color:#b8f0d1}.set-sketch-card h4{margin:14px 0 5px}@media(max-width:520px){.set-selected-grid{grid-template-columns:1fr 1fr}.set-selected-grid label{grid-column:1/-1}.set-beam-controls{grid-template-columns:1fr}.set-light-coverage{grid-template-columns:1fr 1fr}.set-light-coverage .set-readout:first-child{grid-column:1/-1}}';
   document.head.appendChild(style);
   const card=document.createElement('details');
   card.id='setSketchCard';card.className='card set-sketch-card';

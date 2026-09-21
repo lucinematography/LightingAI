@@ -9,7 +9,11 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -17,9 +21,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
+import android.speech.RecognitionListener;
+import android.speech.SpeechRecognizer;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.view.Gravity;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.PermissionRequest;
@@ -29,9 +36,17 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.util.Base64;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -40,6 +55,8 @@ import java.util.UUID;
 
 public class MainActivity extends Activity {
     private WebView webView;
+    private FrameLayout rootView;
+    private View startupSplash;
     private String pendingText = null;
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private Uri pendingCameraUri = null;
@@ -50,6 +67,8 @@ public class MainActivity extends Activity {
     private NativeSunCompass nativeSunCompass;
     private boolean pendingNativeSunLocation = false;
     private String pendingVoiceTarget = null;
+    private String pendingVoiceLanguage = "sr";
+    private SpeechRecognizer speechRecognizer;
     private final AtomicInteger artNetSequence = new AtomicInteger(1);
     private final AtomicInteger sacnSequence = new AtomicInteger(0);
     private final AtomicInteger sacnPriority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
@@ -75,15 +94,27 @@ public class MainActivity extends Activity {
     private static final int MEASURE_SCENE = 505;
     private static final int SPEECH_INPUT = 506;
     private static final int BLE_PERMISSION = 507;
+    private static final int AUDIO_PERMISSION = 508;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
+        rootView = new FrameLayout(this);
+        rootView.setBackgroundColor(Color.BLACK);
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(13, 15, 18));
-        setContentView(webView);
+        rootView.addView(webView, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+        startupSplash = createStartupSplash();
+        rootView.addView(startupSplash, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
+        setContentView(rootView);
         nativeSunLocation = new NativeSunLocation(this);
         nativeSunCompass = new NativeSunCompass(this);
         sacnCid = loadOrCreateSacnCid();
@@ -109,11 +140,15 @@ public class MainActivity extends Activity {
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setDatabaseEnabled(true); s.setGeolocationEnabled(true);
         s.setAllowFileAccess(true); s.setAllowContentAccess(true); s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        webView.clearCache(true);
+        webView.clearHistory();
         webView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 applyNavigationInset();
                 installCatalogView();
+                hideStartupSplashAfterDelay();
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
@@ -161,8 +196,63 @@ public class MainActivity extends Activity {
         });
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.addJavascriptInterface(new AIVisualImageBridge(this), "LightingAIImages");
-        webView.loadUrl("file:///android_asset/index.html");
+        webView.postDelayed(
+            () -> webView.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v4"),
+            3350
+        );
         webView.requestApplyInsets();
+    }
+
+    private View createStartupSplash() {
+        FrameLayout splash = new FrameLayout(this);
+        splash.setBackgroundColor(Color.BLACK);
+
+        TextView title = new TextView(this);
+        SpannableString label = new SpannableString("LightAI");
+        label.setSpan(new ForegroundColorSpan(Color.WHITE), 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        label.setSpan(new ForegroundColorSpan(Color.rgb(245, 197, 66)), 5, 7, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        title.setText(label);
+        title.setTextSize(56);
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        title.setGravity(Gravity.CENTER);
+        title.setScaleX(0.08f);
+        title.setScaleY(0.08f);
+        title.setAlpha(1f);
+
+        FrameLayout.LayoutParams titleParams = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            FrameLayout.LayoutParams.WRAP_CONTENT,
+            Gravity.CENTER
+        );
+        splash.addView(title, titleParams);
+
+        title.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        title.setHasTransientState(true);
+        title.postDelayed(() -> title.animate()
+            .scaleX(1.0f)
+            .scaleY(1.0f)
+            .setDuration(3200)
+            .setInterpolator(new android.view.animation.LinearInterpolator())
+            .withEndAction(() -> {
+                title.setHasTransientState(false);
+                title.setLayerType(View.LAYER_TYPE_NONE, null);
+            })
+            .start(), 80);
+
+        return splash;
+    }
+
+    private void hideStartupSplashAfterDelay() {
+        if (startupSplash == null) return;
+        startupSplash.postDelayed(() -> {
+            if (startupSplash == null) return;
+            startupSplash.animate().alpha(0f).setDuration(350).withEndAction(() -> {
+                if (startupSplash != null && startupSplash.getParent() instanceof ViewGroup) {
+                    ((ViewGroup) startupSplash.getParent()).removeView(startupSplash);
+                }
+                startupSplash = null;
+            }).start();
+        }, 250);
     }
 
     private boolean hasLocationPermission() {
@@ -270,30 +360,129 @@ public class MainActivity extends Activity {
             null));
     }
 
+    private void openAIImagePicker(boolean cameraCapture) {
+        if (pendingFileChooser != null) finishFileChooser(null);
+        pendingCameraCapture = cameraCapture;
+        pendingGalleryPersistable = false;
+        pendingFileChooser = uris -> {
+            Uri uri = uris != null && uris.length > 0 ? uris[0] : null;
+            deliverAIVisualImage(uri);
+        };
+        if (cameraCapture) {
+            if (!hasCameraPermission()) {
+                pendingPhotoCapturePermission = true;
+                requestCameraPermission();
+                return;
+            }
+            openCameraForWebView();
+            return;
+        }
+        openGalleryForWebView(null);
+    }
+
+    private void deliverAIVisualImage(Uri uri) {
+        if (webView == null) return;
+        if (uri == null) {
+            webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAIVisualImageTransferError&&window.LightingAIVisualImageTransferError();", null));
+            return;
+        }
+        new Thread(() -> {
+            Bitmap bitmap = null;
+            Bitmap scaled = null;
+            try {
+                BitmapFactory.Options bounds = new BitmapFactory.Options();
+                bounds.inJustDecodeBounds = true;
+                try (InputStream input = getContentResolver().openInputStream(uri)) {
+                    if (input == null) throw new IllegalStateException("Image input unavailable");
+                    BitmapFactory.decodeStream(input, null, bounds);
+                }
+
+                int maxSide = Math.max(bounds.outWidth, bounds.outHeight);
+                int sample = 1;
+                while (maxSide > 0 && maxSide / sample > 1800) sample *= 2;
+
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = Math.max(1, sample);
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                try (InputStream input = getContentResolver().openInputStream(uri)) {
+                    if (input == null) throw new IllegalStateException("Image input unavailable");
+                    bitmap = BitmapFactory.decodeStream(input, null, options);
+                }
+                if (bitmap == null) throw new IllegalStateException("Image decode failed");
+
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+                int longest = Math.max(width, height);
+                Bitmap output = bitmap;
+                if (longest > 1280) {
+                    float scale = 1280f / longest;
+                    int outW = Math.max(1, Math.round(width * scale));
+                    int outH = Math.max(1, Math.round(height * scale));
+                    scaled = Bitmap.createScaledBitmap(bitmap, outW, outH, true);
+                    output = scaled;
+                }
+
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                if (!output.compress(Bitmap.CompressFormat.JPEG, 82, bytes)) {
+                    throw new IllegalStateException("Image compression failed");
+                }
+                String base64 = Base64.encodeToString(bytes.toByteArray(), Base64.NO_WRAP);
+                deliverAIVisualImageChunks(base64);
+            } catch (Exception e) {
+                webView.post(() -> webView.evaluateJavascript(
+                    "window.LightingAIVisualImageTransferError&&window.LightingAIVisualImageTransferError();", null));
+            } finally {
+                if (scaled != null && scaled != bitmap && !scaled.isRecycled()) scaled.recycle();
+                if (bitmap != null && !bitmap.isRecycled()) bitmap.recycle();
+            }
+        }, "LightingAI-AI-Image").start();
+    }
+
+    private void deliverAIVisualImageChunks(String base64) {
+        if (webView == null || base64 == null || base64.isEmpty()) {
+            if (webView != null) webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAIVisualImageTransferError&&window.LightingAIVisualImageTransferError();", null));
+            return;
+        }
+        final int chunkSize = 48000;
+        final int total = (base64.length() + chunkSize - 1) / chunkSize;
+        webView.post(() -> {
+            webView.evaluateJavascript(
+                "window.LightingAIVisualImageTransferBegin&&window.LightingAIVisualImageTransferBegin(" + total + ");", null);
+            for (int i = 0; i < total; i++) {
+                int from = i * chunkSize;
+                int to = Math.min(base64.length(), from + chunkSize);
+                String chunk = JSONObject.quote(base64.substring(from, to));
+                webView.evaluateJavascript(
+                    "window.LightingAIVisualImageTransferChunk&&window.LightingAIVisualImageTransferChunk(" + i + "," + chunk + ");", null);
+            }
+            webView.evaluateJavascript(
+                "window.LightingAIVisualImageTransferEnd&&window.LightingAIVisualImageTransferEnd();", null);
+        });
+    }
+
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
         pendingGalleryPersistable = false;
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("image/*");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-        if (params != null && params.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE) {
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= 33) {
+            intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+            intent.setType("image/*");
+        } else {
+            intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
         }
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
             startActivityForResult(intent, CHOOSE_IMAGE);
-            pendingGalleryPersistable = true;
             return true;
-        } catch (ActivityNotFoundException e) {
+        } catch (ActivityNotFoundException primaryError) {
             try {
                 Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
-                fallback.addCategory(Intent.CATEGORY_OPENABLE);
                 fallback.setType("image/*");
+                fallback.addCategory(Intent.CATEGORY_OPENABLE);
                 fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                if (params != null && params.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE) {
-                    fallback.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                }
                 startActivityForResult(fallback, CHOOSE_IMAGE);
-                pendingGalleryPersistable = false;
                 return true;
             } catch (Exception ignored) {
                 finishFileChooser(null);
@@ -320,6 +509,15 @@ public class MainActivity extends Activity {
             camera.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
             camera.setClipData(ClipData.newRawUri("LightingAI scene", pendingCameraUri));
             camera.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            for (ResolveInfo info : getPackageManager().queryIntentActivities(camera, PackageManager.MATCH_DEFAULT_ONLY)) {
+                if (info != null && info.activityInfo != null && info.activityInfo.packageName != null) {
+                    grantUriPermission(
+                        info.activityInfo.packageName,
+                        pendingCameraUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    );
+                }
+            }
             startActivityForResult(camera, CHOOSE_IMAGE);
             return true;
         } catch (Exception e) {
@@ -383,7 +581,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-device-capabilities-script')){var d=document.createElement('script');d.id='lightingai-device-capabilities-script';d.src='file:///android_asset/device-capabilities.js';document.body.appendChild(d);}" +
             "if(!document.getElementById('lightingai-sun-native-bridge-script')){var n=document.createElement('script');n.id='lightingai-sun-native-bridge-script';n.src='file:///android_asset/sun-native-bridge.js';document.body.appendChild(n);}" +
             "if(!document.getElementById('lightingai-artnet-control-script')){var a=document.createElement('script');a.id='lightingai-artnet-control-script';a.src='file:///android_asset/artnet-control.js';document.body.appendChild(a);}" +
-            "if(!document.getElementById('lightingai-ble-control-script')){var b=document.createElement('script');b.id='lightingai-ble-control-script';b.src='file:///android_asset/ble-control.js';document.body.appendChild(b);}" +
+            "if(!document.getElementById('lightingai-ble-control-script')){var b=document.createElement('script');b.id='lightingai-ble-control-script';b.src='file:///android_asset/ble-control.js';document.body.appendChild(b);}if(!document.getElementById('lightingai-control-dashboard-script')){var h=document.createElement('script');h.id='lightingai-control-dashboard-script';h.src='file:///android_asset/control-dashboard.js';document.body.appendChild(h);}if(!document.getElementById('lightingai-ai-control-bridge-script')){var j=document.createElement('script');j.id='lightingai-ai-control-bridge-script';j.src='file:///android_asset/ai-control-bridge.js';document.body.appendChild(j);}if(!document.getElementById('lightingai-dmx-patch-script')){var x1=document.createElement('script');x1.id='lightingai-dmx-patch-script';x1.src='file:///android_asset/dmx-patch-planner.js';document.body.appendChild(x1);}if(!document.getElementById('lightingai-dmx-export-script')){var x2=document.createElement('script');x2.id='lightingai-dmx-export-script';x2.src='file:///android_asset/dmx-export.js';document.body.appendChild(x2);}if(!document.getElementById('lightingai-dof-script')){var x3=document.createElement('script');x3.id='lightingai-dof-script';x3.src='file:///android_asset/dof-planner.js';document.body.appendChild(x3);}if(!document.getElementById('lightingai-flicker-script')){var x4=document.createElement('script');x4.id='lightingai-flicker-script';x4.src='file:///android_asset/flicker-shutter-planner.js';document.body.appendChild(x4);}if(!document.getElementById('lightingai-continuity-script')){var x5=document.createElement('script');x5.id='lightingai-continuity-script';x5.src='file:///android_asset/continuity-match-shot.js';document.body.appendChild(x5);}if(!document.getElementById('lightingai-shot-list-script')){var x6=document.createElement('script');x6.id='lightingai-shot-list-script';x6.src='file:///android_asset/shot-list-planner.js';document.body.appendChild(x6);}if(!document.getElementById('lightingai-shot-list-export-script')){var x7=document.createElement('script');x7.id='lightingai-shot-list-export-script';x7.src='file:///android_asset/shot-list-export.js';document.body.appendChild(x7);}if(!document.getElementById('lightingai-cue-script')){var x8=document.createElement('script');x8.id='lightingai-cue-script';x8.src='file:///android_asset/lighting-cue-planner.js';document.body.appendChild(x8);}if(!document.getElementById('lightingai-cue-export-script')){var x9=document.createElement('script');x9.id='lightingai-cue-export-script';x9.src='file:///android_asset/lighting-cue-export.js';document.body.appendChild(x9);}if(!document.getElementById('lightingai-beam-report-script')){var x10=document.createElement('script');x10.id='lightingai-beam-report-script';x10.src='file:///android_asset/beam-coverage-report.js';document.body.appendChild(x10);}if(!document.getElementById('lightingai-camera-snapshots-script')){var x11=document.createElement('script');x11.id='lightingai-camera-snapshots-script';x11.src='file:///android_asset/camera-setup-snapshots.js';document.body.appendChild(x11);}if(!document.getElementById('lightingai-camera-report-script')){var x12=document.createElement('script');x12.id='lightingai-camera-report-script';x12.src='file:///android_asset/camera-setup-report.js';document.body.appendChild(x12);}if(!document.getElementById('lightingai-ratio-script')){var x13=document.createElement('script');x13.id='lightingai-ratio-script';x13.src='file:///android_asset/lighting-ratio.js';document.body.appendChild(x13);}if(!document.getElementById('lightingai-shot-setup-report-script')){var x14=document.createElement('script');x14.id='lightingai-shot-setup-report-script';x14.src='file:///android_asset/shot-setup-report.js';document.body.appendChild(x14);}if(!document.getElementById('lightingai-backup-script')){var x15=document.createElement('script');x15.id='lightingai-backup-script';x15.src='file:///android_asset/project-backup-export.js';document.body.appendChild(x15);}" +
             "})();", null);
     }
 
@@ -430,8 +628,22 @@ public class MainActivity extends Activity {
 
     private void notifyVoiceInputResult(String targetId, String text) {
         if (webView == null) return;
-        final String targetJs = JSONObject.quote(targetId == null ? "aiv-dp-request" : targetId);
+        final String target = targetId == null ? "aiv-dp-request" : targetId;
+        final String targetJs = JSONObject.quote(target);
         final String textJs = JSONObject.quote(text == null ? "" : text);
+        if ("aiv-dp-request".equals(target) || "aiv-desc".equals(target)) {
+            final String statusIdJs = JSONObject.quote("aiv-desc".equals(target) ? "aiv-desc-voice-status" : "aiv-dp-voice-status");
+            final String successJs = JSONObject.quote("aiv-desc".equals(target) ? "Glasovni opis je dodat u opis scene." : "Glasovni zahtev je dodat u polje DP-a.");
+            webView.post(() -> webView.evaluateJavascript(
+                "(function(){var f=document.getElementById(" + targetJs + ");" +
+                "var spoken=String(" + textJs + "||'').trim();" +
+                "if(f&&spoken){var existing=String(f.value||'').trim();f.value=existing?(existing+' '+spoken):spoken;" +
+                "f.dispatchEvent(new Event('input',{bubbles:true}));var s=document.getElementById(" + statusIdJs + ");" +
+                "if(s){s.textContent=" + successJs + ";s.style.color='#b8f0d1';}return true;}" +
+                "if(window.LightingAIVoiceInputResult){window.LightingAIVoiceInputResult(" + targetJs + "," + textJs + ");return true;}return false;})();",
+                null));
+            return;
+        }
         webView.post(() -> webView.evaluateJavascript(
             "window.LightingAIVoiceInputResult&&window.LightingAIVoiceInputResult(" + targetJs + "," + textJs + ");",
             null));
@@ -533,35 +745,127 @@ public class MainActivity extends Activity {
 
     private void notifyVoiceInputError(String targetId, String code) {
         if (webView == null) return;
-        final String targetJs = JSONObject.quote(targetId == null ? "aiv-dp-request" : targetId);
+        final String target = targetId == null ? "aiv-dp-request" : targetId;
+        final String targetJs = JSONObject.quote(target);
         final String codeJs = JSONObject.quote(code == null ? "error" : code);
+        if ("aiv-dp-request".equals(target) || "aiv-desc".equals(target)) {
+            final String statusIdJs = JSONObject.quote("aiv-desc".equals(target) ? "aiv-desc-voice-status" : "aiv-dp-voice-status");
+            webView.post(() -> webView.evaluateJavascript(
+                "(function(){var s=document.getElementById(" + statusIdJs + ");" +
+                "if(s){var c=" + codeJs + ";s.textContent=c==='cancelled'?'Glasovni unos je otkazan.':(c==='empty'?'Nije prepoznat govor. Pokušaj ponovo.':'Glasovni unos nije dostupan na ovom telefonu.');" +
+                "s.style.color=c==='cancelled'?'#b8f0d1':'#ffb5b5';return true;}" +
+                "if(window.LightingAIVoiceInputError){window.LightingAIVoiceInputError(" + targetJs + "," + codeJs + ");return true;}return false;})();",
+                null));
+            return;
+        }
         webView.post(() -> webView.evaluateJavascript(
             "window.LightingAIVoiceInputError&&window.LightingAIVoiceInputError(" + targetJs + "," + codeJs + ");",
             null));
     }
 
+    private boolean hasAudioPermission() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+            checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestAudioPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasAudioPermission()) {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, AUDIO_PERMISSION);
+        }
+    }
+
     private void startSpeechInput(String language, String targetId) {
         String target = (targetId == null || targetId.trim().isEmpty()) ? "aiv-dp-request" : targetId.trim();
+        pendingVoiceTarget = target;
+        pendingVoiceLanguage = "en".equals(language) ? "en" : "sr";
+        startExternalSpeechInput(pendingVoiceLanguage, target);
+    }
+
+    private void startNativeSpeechInput(String language, String target) {
+        String locale = "en".equals(language) ? "en-US" : "sr-RS";
+        boolean onDeviceAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            SpeechRecognizer.isOnDeviceRecognitionAvailable(this);
+        if (!onDeviceAvailable && !SpeechRecognizer.isRecognitionAvailable(this)) {
+            notifyVoiceInputError(target, "unavailable");
+            return;
+        }
+        try {
+            if (speechRecognizer != null) {
+                try { speechRecognizer.destroy(); } catch (Exception ignored) {}
+            }
+            speechRecognizer = onDeviceAvailable
+                ? SpeechRecognizer.createOnDeviceSpeechRecognizer(this)
+                : SpeechRecognizer.createSpeechRecognizer(this);
+            speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                @Override public void onReadyForSpeech(Bundle params) {}
+                @Override public void onBeginningOfSpeech() {}
+                @Override public void onRmsChanged(float rmsdB) {}
+                @Override public void onBufferReceived(byte[] buffer) {}
+                @Override public void onEndOfSpeech() {}
+                @Override public void onPartialResults(Bundle partialResults) {}
+                @Override public void onEvent(int eventType, Bundle params) {}
+                @Override public void onError(int error) {
+                    String activeTarget = pendingVoiceTarget;
+                    pendingVoiceTarget = null;
+                    if (activeTarget == null) activeTarget = target;
+                    String code = (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) ? "empty" :
+                        (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ? "denied" : "error");
+                    notifyVoiceInputError(activeTarget, code);
+                }
+                @Override public void onResults(Bundle results) {
+                    String activeTarget = pendingVoiceTarget;
+                    pendingVoiceTarget = null;
+                    if (activeTarget == null) activeTarget = target;
+                    ArrayList<String> matches = results == null ? null : results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    if (matches != null && !matches.isEmpty() && matches.get(0) != null && !matches.get(0).trim().isEmpty()) {
+                        notifyVoiceInputResult(activeTarget, matches.get(0).trim());
+                    } else {
+                        notifyVoiceInputError(activeTarget, "empty");
+                    }
+                }
+            });
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
+            intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+            intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+            speechRecognizer.startListening(intent);
+        } catch (Exception e) {
+            pendingVoiceTarget = null;
+            notifyVoiceInputError(target, "error");
+        }
+    }
+
+    private void fallbackToNativeSpeech(String language, String target) {
+        pendingVoiceTarget = target;
+        pendingVoiceLanguage = "en".equals(language) ? "en" : "sr";
+        if (!hasAudioPermission()) {
+            requestAudioPermission();
+            return;
+        }
+        webView.postDelayed(() -> startNativeSpeechInput(pendingVoiceLanguage, target), 250);
+    }
+
+    private void startExternalSpeechInput(String language, String target) {
         String locale = "en".equals(language) ? "en-US" : "sr-RS";
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
-        boolean sceneDescription = "aiv-desc".equals(target);
+        boolean sceneDescription = "aiv-desc".equals(target) || "planner-description".equals(target);
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
             sceneDescription
-                ? ("en".equals(language) ? "Describe the scene look" : "Opiši izgled scene")
+                ? ("en".equals(language) ? "Describe the scene" : "Opiši scenu")
                 : ("en".equals(language) ? "Describe the DP lighting request" : "Izgovori zahtev DP-a za rasvetu"));
         pendingVoiceTarget = target;
         try {
             startActivityForResult(intent, SPEECH_INPUT);
         } catch (ActivityNotFoundException e) {
-            pendingVoiceTarget = null;
-            notifyVoiceInputError(target, "unavailable");
+            fallbackToNativeSpeech(language, target);
         } catch (Exception e) {
-            pendingVoiceTarget = null;
-            notifyVoiceInputError(target, "error");
+            fallbackToNativeSpeech(language, target);
         }
     }
 
@@ -576,6 +880,18 @@ public class MainActivity extends Activity {
                 return;
             }
             runOnUiThread(() -> openCreateDocumentFallback(filename, text));
+        }
+
+        @JavascriptInterface public void shareText(String title, String text, String chooserTitle) {
+            runOnUiThread(() -> {
+                try {
+                    Intent share = new Intent(Intent.ACTION_SEND);
+                    share.setType("text/plain");
+                    share.putExtra(Intent.EXTRA_SUBJECT, title == null ? "LightingAI" : title);
+                    share.putExtra(Intent.EXTRA_TEXT, text == null ? "" : text);
+                    startActivity(Intent.createChooser(share, chooserTitle == null ? "Share LightingAI" : chooserTitle));
+                } catch (Exception ignored) {}
+            });
         }
 
         @JavascriptInterface public void requestLocationPermission() {
@@ -600,6 +916,10 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void requestCameraPermission() {
             runOnUiThread(() -> MainActivity.this.requestCameraPermission());
+        }
+
+        @JavascriptInterface public void openImagePicker(String mode) {
+            runOnUiThread(() -> MainActivity.this.openAIImagePicker("camera".equals(mode)));
         }
 
         @JavascriptInterface public boolean hasCameraPermission() {
@@ -827,9 +1147,16 @@ public class MainActivity extends Activity {
                 if (granted && pendingFileChooser != null) openCameraForWebView();
                 else finishFileChooser(null);
             }
-        } else if (requestCode == LOCATION_PERMISSION && pendingNativeSunLocation) {
-            if (hasLocationPermission()) requestNativeSunLocation();
-            else { pendingNativeSunLocation = false; notifyNativeSunLocationError(); }
+        } else if (requestCode == LOCATION_PERMISSION) {
+            if (pendingNativeSunLocation) {
+                if (hasLocationPermission()) requestNativeSunLocation();
+                else { pendingNativeSunLocation = false; notifyNativeSunLocationError(); }
+            }
+            if (webView != null) {
+                webView.post(() -> webView.evaluateJavascript(
+                    "window.LightingAIRefreshDeviceCapabilities&&window.LightingAIRefreshDeviceCapabilities();",
+                    null));
+            }
         } else if (requestCode == BLE_PERMISSION) {
             String pendingId = pendingBleDiscoveryRequestId;
             int pendingTimeout = pendingBleDiscoveryTimeoutMs;
@@ -837,6 +1164,16 @@ public class MainActivity extends Activity {
             if (pendingId != null) {
                 if (hasBlePermission()) startBleDiscovery(pendingId, pendingTimeout);
                 else notifyBleDiscovery(pendingId, new JSONArray(), "ble_permission_denied");
+            }
+        } else if (requestCode == AUDIO_PERMISSION) {
+            String target = pendingVoiceTarget;
+            if (target != null) {
+                if (hasAudioPermission()) {
+                    webView.postDelayed(() -> startNativeSpeechInput(pendingVoiceLanguage, target), 250);
+                } else {
+                    pendingVoiceTarget = null;
+                    notifyVoiceInputError(target, "denied");
+                }
             }
         }
     }
@@ -920,10 +1257,29 @@ public class MainActivity extends Activity {
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
+        if (speechRecognizer != null) {
+            try { speechRecognizer.destroy(); } catch (Exception ignored) {}
+            speechRecognizer = null;
+        }
         super.onDestroy();
     }
 
+    private void finishBackFallback() {
+        if (webView != null && webView.canGoBack()) webView.goBack();
+        else super.onBackPressed();
+    }
+
     @Override public void onBackPressed() {
-        if (webView.canGoBack()) webView.goBack(); else super.onBackPressed();
+        if (webView == null) {
+            super.onBackPressed();
+            return;
+        }
+        webView.evaluateJavascript(
+            "(function(){try{return !!(window.LightingAIHandleBack&&window.LightingAIHandleBack());}catch(e){return false;}})();",
+            value -> {
+                if ("true".equals(value)) return;
+                finishBackFallback();
+            }
+        );
     }
 }

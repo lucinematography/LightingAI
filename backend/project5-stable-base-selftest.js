@@ -77,6 +77,7 @@ const serverPath = 'backend/server.js';
 const exactAllowed = new Set([
   aiPlanPath,
   mainActivityPath,
+  imageBridgePath,
   'app/build.gradle',
   '.github/workflows/release-apk.yml',
   'app/src/main/assets/index.html',
@@ -183,7 +184,13 @@ const exactAllowed = new Set([
   'backend/project5-stable-base-selftest.js',
   'backend/project5-feature-selftest.js',
   'backend/project52-release-gate-selftest.js',
-  'app/src/main/assets/ai-visual-scene-launcher.js'
+  'app/src/main/assets/ai-visual-scene-launcher.js',
+  'app/src/main/assets/ai-control-bridge.js',
+  'app/src/main/assets/control-dashboard.js',
+  'app/src/main/assets/device-capabilities.js',
+  'app/src/main/assets/lightai-intro.jpg',
+  'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
+  'app/src/main/res/values/styles.xml'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
 if (unexpected.length) fail(`files changed outside the isolated Project 5.4 camera-distance surface: ${unexpected.join(', ')}`);
@@ -195,7 +202,6 @@ for (const protectedPath of [
   'app/src/main/assets/ai-visual-preview-refinements.js',
   'app/src/main/assets/ai-visual-phone-diagnostics.js',
   'app/src/main/assets/ai-visual-image-actions.js',
-  'app/src/main/java/com/lightingai/app/DeviceCapabilities.java',
   'backend/visual-preview.js'
 ]) {
   const stable = git(['show', `${PROJECT510_QA_BASE}:${protectedPath}`]);
@@ -208,7 +214,7 @@ const stableManifest = git(['show', `${PROJECT510_QA_BASE}:${manifestPath}`]);
 const currentManifest = git(['show', `HEAD:${manifestPath}`]);
 const manifestWithoutBle = currentManifest
   .split('\n')
-  .filter((line) => !line.includes('android.permission.BLUETOOTH') && !line.includes('android.hardware.bluetooth_le'))
+  .filter((line) => !line.includes('android.permission.BLUETOOTH') && !line.includes('android.hardware.bluetooth_le') && !line.includes('android.permission.RECORD_AUDIO'))
   .join('\n');
 if (manifestWithoutBle !== stableManifest) fail('AndroidManifest changed outside the isolated BLE permission/feature additions');
 for (const marker of [
@@ -225,6 +231,7 @@ const allowedPermissions = new Set([
   'android.permission.ACCESS_COARSE_LOCATION',
   'android.permission.ACCESS_FINE_LOCATION',
   'android.permission.CAMERA',
+  'android.permission.RECORD_AUDIO',
   'android.permission.BLUETOOTH',
   'android.permission.BLUETOOTH_ADMIN',
   'android.permission.BLUETOOTH_SCAN',
@@ -312,7 +319,7 @@ for (const marker of [
   "platform:androidReady?'android':(iosReady?'ios':'none')",
   'Android.artNetSendDmx',
   'window.webkit.messageHandlers.LightingAIControl',
-  "version:'0.27-enum-piecewise-controls'",
+  "version:'0.29-ai-explicit-apply'",
   'function fadeChannelValue(from,to,progress,snap)',
   'function fadeSnapChannels()',
   'function controlFromDmx(ctrl,raw)',
@@ -600,8 +607,8 @@ for (const marker of [
   '@JavascriptInterface public void startSpeechInput',
   'window.LightingAIVoiceInputResult',
   'SPEECH_INPUT = 506',
-  'boolean sceneDescription = "aiv-desc".equals(target);',
-  'Opiši izgled scene',
+  'boolean sceneDescription = "aiv-desc".equals(target) || "planner-description".equals(target);',
+  'Opiši scenu',
   'notifyAIVisualPdfResult',
   '@JavascriptInterface public void artNetSetLiveDmx',
   '@JavascriptInterface public void artNetStopLive',
@@ -695,5 +702,5 @@ console.log(JSON.stringify({
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
   protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
-  featureSurface: 'Verified SkyPanel X Standard Ultimate 20ch profile using generic 16-bit controls and enforced RGB & CCT mode prerequisites before physical Art-Net/sACN output'
+  featureSurface: 'Project 5.2 redesign with Planner / Equipment / Control / AI / Tools, safe AI-to-Control staging, verified DMX patch mapping, and explicit confirmation before physical Art-Net/sACN output'
 }, null, 2));

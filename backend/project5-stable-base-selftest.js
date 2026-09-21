@@ -227,7 +227,7 @@ for (const marker of [
 
 const blockingDesigner = git(['show', 'HEAD:app/src/main/assets/blocking-camera-designer.js']);
 for (const marker of [
-  "window.LightingAIBlocking={version:'0.1-phase1'",
+  "window.LightingAIBlocking={version:'0.2-storyboard-camera-link'",
   'requestAnimationFrame(tick)',
   'function addPoint()',
   'function pointerMove(ev)',

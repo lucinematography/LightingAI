@@ -1156,14 +1156,18 @@ function install(){
  translate();setTimeout(requestDiagnostics,250);return true;
 }
 
-function focusPatchFixture(fixtureId){
- const list=rows(),index=list.findIndex(r=>r&&r.fixtureId===fixtureId&&patchUsable(r));
- if(index<0)return false;
+function focusPatchIndex(index){
+ const list=rows(),i=Math.max(0,Math.round(Number(index)||0));
+ if(!list[i]||!patchUsable(list[i]))return false;
  const card=E('artnetCard'),select=E('artnetPatchDevice');
  if(card)card.open=true;
- if(select){select.value=String(index);choosePatch();}
+ if(select){select.value=String(i);choosePatch();}
  if(card&&card.scrollIntoView)card.scrollIntoView({behavior:'smooth',block:'start'});
  return true;
+}
+function focusPatchFixture(fixtureId){
+ const list=rows(),index=list.findIndex(r=>r&&r.fixtureId===fixtureId&&patchUsable(r));
+ return index<0?false:focusPatchIndex(index);
 }
 function numericStageValue(value,suffix){
  if(value==null||value==='')return null;
@@ -1238,7 +1242,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.29-ai-explicit-apply',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.29-ai-explicit-apply',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

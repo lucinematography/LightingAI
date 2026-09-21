@@ -188,6 +188,7 @@ const exactAllowed = new Set([
   'app/src/main/assets/ai-control-bridge.js',
   'app/src/main/assets/control-dashboard.js',
   'app/src/main/assets/device-capabilities.js',
+  'app/src/main/assets/shot-setup-report.js',
   'app/src/main/assets/lightai-intro.jpg',
   'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
   'app/src/main/res/values/styles.xml'

@@ -98,7 +98,7 @@ function render(){
  if(E('blockingAiTitle'))E('blockingAiTitle').textContent=x.title;
  if(!plan){
   body.innerHTML='<div class="blocking-ai-empty">'+esc(x.empty)+'</div><div class="blocking-ai-actions"><button id="blockingAiOpen" class="btn primary" type="button">'+esc(x.open)+'</button><button id="blockingAiRefresh" class="btn secondary" type="button">'+esc(x.refresh)+'</button></div><div class="blocking-ai-note">'+esc(x.manual)+'</div>';
-  if(E('blockingAiOpen'))E('blockingAiOpen').onclick=()=>{try{const m=window.LightingAIVisualScenePlan;if(m&&typeof m.open==='function')m.open()}catch(e){}};
+  if(E('blockingAiOpen'))E('blockingAiOpen').onclick=()=>{try{const m=window.LightingAIVisualScenePlan;if(m&&typeof m.open==='function'){m.open();return}const l=window.LightingAIVisualSceneLauncher;if(l&&typeof l.open==='function'){l.open();return}status(lang()==='en'?'AI Visual Plan is not ready.':'AI Visual Plan još nije spreman.')}catch(e){status(lang()==='en'?'AI Visual Plan could not open.':'AI Visual Plan nije mogao da se otvori.')}};
   if(E('blockingAiRefresh'))E('blockingAiRefresh').onclick=()=>analyze(window.__lightingAIVisualLastPlan||null);
   return;
  }
@@ -117,6 +117,6 @@ function install(){
  setInterval(()=>{const sig=sceneSignature();if(sig!==lastSceneSignature&&plan){proposals=buildProposals(plan);lastSceneSignature=sig;render();draw()}},900);
  analyze(window.__lightingAIVisualLastPlan||null);return true;
 }
-window.LightingAIBlockingAI={version:'1.0-confirmed-proposals',analyze:analyze,applyProposal:applyProposal,applyAll:applyAll,snapshot:function(){return{hasPlan:!!plan,proposals:JSON.parse(JSON.stringify(proposals))}}};
+window.LightingAIBlockingAI={version:'1.1-launcher-open',analyze:analyze,applyProposal:applyProposal,applyAll:applyAll,snapshot:function(){return{hasPlan:!!plan,proposals:JSON.parse(JSON.stringify(proposals))}}};
 let tries=0;const boot=setInterval(()=>{tries++;if(install()||tries>200)clearInterval(boot)},100);
 })();

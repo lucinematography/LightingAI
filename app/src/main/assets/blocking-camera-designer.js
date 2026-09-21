@@ -41,6 +41,7 @@ function ensureBlocking(o){
  if(!Array.isArray(o.blocking.path))o.blocking.path=[];
  if(!(Number(o.blocking.durationSec)>0))o.blocking.durationSec=5;
  if(o.type==='camera'&&o.blocking.trackFramingMode!=='preserve')o.blocking.trackFramingMode='center';
+ if(o.type==='camera'&&typeof o.blocking.trackingEnabled!=='boolean')o.blocking.trackingEnabled=!!o.blocking.trackSubjectId;
  return o.blocking;
 }
 function usable(o){return !!(o&&(o.type==='camera'||o.type==='subject'))}
@@ -64,7 +65,7 @@ function captureTrackingOffset(cam,target){
  if(!cam||!target)return 0;const bearing=trackingRotation(cam,target),raw=signedAngle(bearing-(Number(cam.rot)||0)),limit=Math.max(1,cameraHalfFov(cam)*0.92);return clamp(raw,-limit,limit);
 }
 function prepareTrackingOffsets(){
- const s=scene();if(!s)return;s.objects.filter(o=>o.type==='camera').forEach(cam=>{const b=ensureBlocking(cam);if(!b.trackSubjectId||b.trackFramingMode!=='preserve')return;const target=s.objects.find(o=>o.id===b.trackSubjectId&&o.type==='subject');if(!target)return;const a=api(),cp=a&&a.getVisualObject?a.getVisualObject(cam):cam,tp=a&&a.getVisualObject?a.getVisualObject(target):target;b.trackOffsetDeg=captureTrackingOffset(cp,tp)});save();
+ const s=scene();if(!s)return;s.objects.filter(o=>o.type==='camera').forEach(cam=>{const b=ensureBlocking(cam);if(!b.trackingEnabled||!b.trackSubjectId||b.trackFramingMode!=='preserve')return;const target=s.objects.find(o=>o.id===b.trackSubjectId&&o.type==='subject');if(!target)return;const a=api(),cp=a&&a.getVisualObject?a.getVisualObject(cam):cam,tp=a&&a.getVisualObject?a.getVisualObject(target):target;b.trackOffsetDeg=captureTrackingOffset(cp,tp)});save();
 }
 function buildPreview(progress){
  const s=scene(),map=Object.create(null);if(!s)return map;
@@ -74,7 +75,7 @@ function buildPreview(progress){
   if(p)map[o.id]={x:p.x,y:p.y};
  });
  s.objects.filter(o=>o.type==='camera').forEach(cam=>{
-  const b=cam.blocking;if(!b||!b.trackSubjectId)return;
+  const b=cam.blocking;if(!b||!b.trackingEnabled||!b.trackSubjectId)return;
   const target=s.objects.find(o=>o.id===b.trackSubjectId&&o.type==='subject');if(!target)return;
   const cp=Object.assign({},cam,map[cam.id]||{}),tp=Object.assign({},target,map[target.id]||{}),bearing=trackingRotation(cp,tp),offset=b.trackFramingMode==='preserve'?Number(b.trackOffsetDeg)||0:0;
   map[cam.id]=Object.assign({},map[cam.id]||{},{rot:((bearing-offset)%360+360)%360});
@@ -129,9 +130,9 @@ function renderControls(){
  const b=ensureBlocking(o),pts=b.path||[];
  let tracking='';
  if(o.type==='camera'){
-  const options='<option value="">'+esc(x.off)+'</option>'+subjects().map(s=>'<option value="'+esc(s.id)+'" '+(b.trackSubjectId===s.id?'selected':'')+'>'+esc(s.label||'Glumac')+'</option>').join('');
+   const subjectButtons='<button type="button" class="btn '+(!b.trackSubjectId?'primary':'secondary')+' blocking-track-subject" data-subject-id="">'+esc(x.off)+'</button>'+subjects().map(s=>'<button type="button" class="btn '+(b.trackSubjectId===s.id?'primary':'secondary')+' blocking-track-subject" data-subject-id="'+esc(s.id)+'">'+esc(s.label||'Glumac')+'</button>').join('');
   const framingMode=b.trackFramingMode==='preserve'?'preserve':'center',offset=Number(b.trackOffsetDeg)||0;
-  tracking='<div class="blocking-track"><h4>'+esc(x.tracking)+'</h4><label>'+esc(x.trackSubject)+'<select id="blockingTrackSubject">'+options+'</select></label><label class="blocking-check"><input id="blockingTrackingEnabled" type="checkbox" '+(b.trackSubjectId?'checked':'')+'> '+esc(x.framing)+'</label><label class="blocking-framing-mode">'+esc(x.framingMode)+'<select id="blockingFramingMode"><option value="center" '+(framingMode==='center'?'selected':'')+'>'+esc(x.framingCenter)+'</option><option value="preserve" '+(framingMode==='preserve'?'selected':'')+'>'+esc(x.framingPreserve)+'</option></select></label><div class="blocking-framing-readout"><small>'+esc(x.framingOffset)+'</small><b>'+(framingMode==='preserve'?(offset>=0?'+':'')+offset.toFixed(1)+'°':'0.0°')+'</b></div><div class="blocking-note">'+esc(x.trackingHint)+'</div></div><div class="blocking-track"><h4>'+esc(x.cameraTools)+'</h4><div class="blocking-camera-actions"><button id="blockingSaveShot" class="btn primary" type="button">'+esc(x.saveShot)+'</button><button class="btn secondary blocking-save-setup" data-slot="A" type="button">'+esc(x.setupA)+'</button><button class="btn secondary blocking-save-setup" data-slot="B" type="button">'+esc(x.setupB)+'</button><button class="btn secondary blocking-save-setup" data-slot="C" type="button">'+esc(x.setupC)+'</button></div></div>';
+   tracking='<div class="blocking-track"><h4>'+esc(x.tracking)+'</h4><div class="blocking-track-label">'+esc(x.trackSubject)+'</div><div class="blocking-subject-buttons">'+subjectButtons+'</div><label class="blocking-check"><input id="blockingTrackingEnabled" type="checkbox" '+(b.trackingEnabled?'checked':'')+'> '+esc(x.framing)+'</label><label class="blocking-framing-mode">'+esc(x.framingMode)+'<select id="blockingFramingMode"><option value="center" '+(framingMode==='center'?'selected':'')+'>'+esc(x.framingCenter)+'</option><option value="preserve" '+(framingMode==='preserve'?'selected':'')+'>'+esc(x.framingPreserve)+'</option></select></label><div class="blocking-framing-readout"><small>'+esc(x.framingOffset)+'</small><b>'+(framingMode==='preserve'?(offset>=0?'+':'')+offset.toFixed(1)+'°':'0.0°')+'</b></div><div class="blocking-note">'+esc(x.trackingHint)+'</div></div><div class="blocking-track"><h4>'+esc(x.cameraTools)+'</h4><div class="blocking-camera-actions"><button id="blockingSaveShot" class="btn primary" type="button">'+esc(x.saveShot)+'</button><button class="btn secondary blocking-save-setup" data-slot="A" type="button">'+esc(x.setupA)+'</button><button class="btn secondary blocking-save-setup" data-slot="B" type="button">'+esc(x.setupB)+'</button><button class="btn secondary blocking-save-setup" data-slot="C" type="button">'+esc(x.setupC)+'</button></div></div>';
  }
  box.innerHTML='<div class="blocking-head"><div><small>'+esc(x.select)+'</small><b>'+esc(o.label||o.type)+'</b></div><div id="blockingTime">0.0 / '+maxDuration().toFixed(1)+' s</div></div>'+
  '<div class="blocking-grid"><label>'+esc(x.duration)+'<input id="blockingDuration" type="number" min="0.2" max="120" step="0.1" value="'+Number(b.durationSec||5).toFixed(1)+'"></label><div><small>'+esc(x.path)+'</small><b>'+pts.length+' waypoint</b></div></div>'+
@@ -140,8 +141,8 @@ function renderControls(){
  tracking+'<div class="blocking-note">'+esc(x.hint)+'</div>';
  E('blockingDuration').onchange=ev=>{b.durationSec=clamp(Number(ev.target.value)||5,.2,120);save();renderAll()};
  E('blockingAddPoint').onclick=addPoint;E('blockingClearPath').onclick=clearPath;E('blockingPlay').onclick=play;E('blockingPause').onclick=pause;E('blockingStop').onclick=()=>stop(false);E('blockingReset').onclick=reset;
- if(E('blockingTrackSubject'))E('blockingTrackSubject').onchange=ev=>{b.trackSubjectId=ev.target.value||'';if(b.trackSubjectId&&b.trackFramingMode==='preserve'){const target=subjects().find(s=>s.id===b.trackSubjectId);if(target)b.trackOffsetDeg=captureTrackingOffset(o,target)}save();renderAll()};
- if(E('blockingTrackingEnabled'))E('blockingTrackingEnabled').onchange=ev=>{if(!ev.target.checked)b.trackSubjectId='';else if(!b.trackSubjectId&&subjects()[0])b.trackSubjectId=subjects()[0].id;if(b.trackSubjectId&&b.trackFramingMode==='preserve'){const target=subjects().find(s=>s.id===b.trackSubjectId);if(target)b.trackOffsetDeg=captureTrackingOffset(o,target)}save();renderAll()};
+  box.querySelectorAll('.blocking-track-subject').forEach(btn=>btn.onclick=()=>{b.trackSubjectId=btn.dataset.subjectId||'';if(!b.trackSubjectId)b.trackingEnabled=false;if(b.trackSubjectId&&b.trackFramingMode==='preserve'){const target=subjects().find(s=>s.id===b.trackSubjectId);if(target)b.trackOffsetDeg=captureTrackingOffset(o,target)}save();renderAll()});
+  if(E('blockingTrackingEnabled'))E('blockingTrackingEnabled').onchange=ev=>{b.trackingEnabled=!!ev.target.checked;if(b.trackingEnabled&&!b.trackSubjectId&&subjects()[0])b.trackSubjectId=subjects()[0].id;if(b.trackingEnabled&&b.trackSubjectId&&b.trackFramingMode==='preserve'){const target=subjects().find(s=>s.id===b.trackSubjectId);if(target)b.trackOffsetDeg=captureTrackingOffset(o,target)}save();renderAll()};
  if(E('blockingFramingMode'))E('blockingFramingMode').onchange=ev=>{b.trackFramingMode=ev.target.value==='preserve'?'preserve':'center';if(b.trackFramingMode==='preserve'&&b.trackSubjectId){const target=subjects().find(s=>s.id===b.trackSubjectId);if(target)b.trackOffsetDeg=captureTrackingOffset(o,target)}else b.trackOffsetDeg=0;save();renderAll()};
  if(E('blockingSaveShot'))E('blockingSaveShot').onclick=()=>{const s=window.LightingAIShotList;if(s&&typeof s.addCurrent==='function'){s.addCurrent();status(t().shotSaved)}};
  box.querySelectorAll('.blocking-save-setup').forEach(btn=>btn.onclick=()=>{const a=window.LightingAICameraSetups;if(a&&typeof a.saveCurrentToSlot==='function'&&a.saveCurrentToSlot(btn.dataset.slot,o.id))status(t().setupSaved)});

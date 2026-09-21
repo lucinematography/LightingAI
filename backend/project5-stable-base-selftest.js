@@ -242,7 +242,10 @@ for (const marker of [
 const setSketchFov = git(['show', 'HEAD:app/src/main/assets/set-sketch-camera-fov.js']);
 for (const marker of [
   "window.LightingAISetSketch&&typeof window.LightingAISetSketch.getVisualObject==='function'",
-  "svg.addEventListener('lightingai:set-sketch-rendered'"
+  "svg.addEventListener('lightingai:set-sketch-rendered'",
+  "window.LightingAICameraFov={version:'1.1-framing-metrics'",
+  'edgeMargin:margin',
+  'centerOffset:offset'
 ]) {
   if (!setSketchFov.includes(marker)) fail(`Blocking Camera FOV integration marker missing: ${marker}`);
 }

@@ -192,6 +192,8 @@ const exactAllowed = new Set([
   'app/src/main/assets/set-sketch.js',
   'app/src/main/assets/set-sketch-camera-fov.js',
   'app/src/main/assets/blocking-camera-designer.js',
+  'app/src/main/assets/shot-list-planner.js',
+  'app/src/main/assets/camera-setup-snapshots.js',
   'app/src/main/assets/lightai-intro.jpg',
   'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
   'app/src/main/res/values/styles.xml'
@@ -241,6 +243,25 @@ for (const marker of [
   "svg.addEventListener('lightingai:set-sketch-rendered'"
 ]) {
   if (!setSketchFov.includes(marker)) fail(`Blocking Camera FOV integration marker missing: ${marker}`);
+}
+
+const shotListBlocking = git(['show', 'HEAD:app/src/main/assets/shot-list-planner.js']);
+for (const marker of [
+  "window.LightingAIShotList={version:'1.1-blocking-storyboard'",
+  'referenceImage:null',
+  'horizontalFovDeg:cam?hfov:null',
+  'blocking:cam&&cam.blocking'
+]) {
+  if (!shotListBlocking.includes(marker)) fail(`Blocking Shot List marker missing: ${marker}`);
+}
+
+const cameraSetupsBlocking = git(['show', 'HEAD:app/src/main/assets/camera-setup-snapshots.js']);
+for (const marker of [
+  "window.LightingAICameraSetups={version:'1.1-blocking-link'",
+  'selectedSketchCameraId()',
+  'saveCurrentToSlot:function(slot,id)'
+]) {
+  if (!cameraSetupsBlocking.includes(marker)) fail(`Blocking Camera Setup marker missing: ${marker}`);
 }
 
 const blockingLoader = git(['show', `HEAD:${mainActivityPath}`]);

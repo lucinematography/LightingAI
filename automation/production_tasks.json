@@ -1,0 +1,47 @@
+[
+  {
+    "id": "night-docs-automation-sync",
+    "title": "Sync overnight automation documentation",
+    "prompt": "Review the current overnight automation documentation for internal consistency with the supplied file. Improve clarity only where needed. Do not change product behavior, catalog facts, DMX data, or any safety policy.",
+    "allowed_paths": [
+      "docs/OVERNIGHT_API_RUNNER.md"
+    ],
+    "tests": [
+      "project5-base"
+    ],
+    "ci_timeout_minutes": 45,
+    "max_ci_repairs": 1,
+    "commit_message": "Sync overnight automation documentation",
+    "pr_title": "Sync LightingAI overnight automation docs"
+  },
+  {
+    "id": "night-final-checklist-sync",
+    "title": "Refresh Project 5.2 final checklist wording",
+    "prompt": "Review the supplied Project 5.2 final checklist and make only documentation-level wording or consistency improvements that are directly supported by the existing text. Do not invent completed work and do not alter application code.",
+    "allowed_paths": [
+      "docs/PROJECT_5_2_FINAL_CHECKLIST.md"
+    ],
+    "tests": [
+      "project5-base"
+    ],
+    "ci_timeout_minutes": 45,
+    "max_ci_repairs": 1,
+    "commit_message": "Refresh Project 5.2 checklist wording",
+    "pr_title": "Refresh Project 5.2 checklist"
+  },
+  {
+    "id": "night-golden-scene-doc-audit",
+    "title": "Audit golden scene test instructions",
+    "prompt": "Audit the supplied golden-scene document for clarity and reproducibility. Make only documentation changes supported by the existing document; do not invent test results, device behavior, or product facts.",
+    "allowed_paths": [
+      "docs/PROJECT_5_2_GOLDEN_SCENE.md"
+    ],
+    "tests": [
+      "project5-base"
+    ],
+    "ci_timeout_minutes": 45,
+    "max_ci_repairs": 1,
+    "commit_message": "Audit golden scene test instructions",
+    "pr_title": "Audit Project 5.2 golden scene instructions"
+  }
+]

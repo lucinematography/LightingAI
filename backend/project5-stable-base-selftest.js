@@ -169,6 +169,8 @@ const exactAllowed = new Set([
   'scripts/overnight_runner.py',
   'automation/git_tasks.json',
   'scripts/overnight_git_runner.py',
+  'automation/production_tasks.json',
+  'scripts/overnight_preflight.py',
   'app/src/main/assets/artnet-control.js',
   'app/src/main/java/com/lightingai/app/ArtNetSender.java',
   'app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java',

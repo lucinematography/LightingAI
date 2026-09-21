@@ -175,15 +175,41 @@ window.addEventListener('storage',function(ev){if(ev&&ev.key===DMX_KEY)renderDmx
 var pendingImageMode='';
 function openSceneImage(mode){
  pendingImageMode=mode;
+ var status=document.getElementById('aiv-photo-status');
+ if(status)status.textContent=mode==='camera'?(currentLanguage()==='sr'?'Otvaram kameru…':'Opening camera…'):(currentLanguage()==='sr'?'Otvaram galeriju…':'Opening gallery…');
  try{if(window.Android&&typeof Android.openImagePicker==='function'){Android.openImagePicker(mode);return;}}catch(e){}
  document.getElementById(mode==='camera'?'aiv-camera':'aiv-gallery').click();
 }
-window.LightingAIVisualPickedData=function(dataUrl){
+var nativeImageChunks=[];
+var nativeImageExpected=0;
+window.LightingAIVisualImageTransferBegin=function(total){
  pendingImageMode='';
+ nativeImageExpected=Math.max(0,Number(total)||0);
+ nativeImageChunks=new Array(nativeImageExpected);
  var status=document.getElementById('aiv-photo-status');
- if(!dataUrl){if(status)status.textContent=t.error;return;}
  if(status)status.textContent=t.preparing;
- try{setPhoto(String(dataUrl));}catch(e){if(status)status.textContent=t.error;}
+};
+window.LightingAIVisualImageTransferChunk=function(index,chunk){
+ index=Number(index);
+ if(index>=0&&index<nativeImageExpected)nativeImageChunks[index]=String(chunk||'');
+};
+window.LightingAIVisualImageTransferEnd=function(){
+ var status=document.getElementById('aiv-photo-status');
+ try{
+  if(!nativeImageExpected||nativeImageChunks.length!==nativeImageExpected||nativeImageChunks.some(function(x){return typeof x!=='string';}))throw new Error('incomplete image');
+  var dataUrl='data:image/jpeg;base64,'+nativeImageChunks.join('');
+  nativeImageChunks=[];nativeImageExpected=0;
+  setPhoto(dataUrl);
+ }catch(e){
+  nativeImageChunks=[];nativeImageExpected=0;
+  if(status)status.textContent=t.error;
+ }
+};
+window.LightingAIVisualImageTransferError=function(){
+ pendingImageMode='';
+ nativeImageChunks=[];nativeImageExpected=0;
+ var status=document.getElementById('aiv-photo-status');
+ if(status)status.textContent=t.error;
 };
 document.getElementById('aiv-add').onclick=function(){openSceneImage('gallery');};
 document.getElementById('aiv-take').onclick=function(){openSceneImage('camera');};
@@ -204,5 +230,5 @@ document.getElementById('aiv-map-share').onclick=function(){mapAction('share');}
 document.getElementById('aiv-real-preview-btn').onclick=async function(){if(!state.plan||!state.photo||!state.visualPreviewAvailable)return;var btn=document.getElementById('aiv-real-preview-btn'),status=document.getElementById('aiv-real-preview-status'),img=document.getElementById('aiv-real-preview-img');btn.disabled=true;status.textContent=t.previewWorking;try{var r=await fetch(API_BASE+'/api/visual-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scenePhoto:state.photo,plan:state.plan,description:descriptionWithMeasurements(),equipment:chosenEquipment(),language:currentLanguage()})});if(!r.ok)throw new Error('HTTP '+r.status);var data=await r.json();if(!data.image)throw new Error('No image');img.src=data.image;img.style.display='block';status.textContent=t.previewReady;}catch(e){status.textContent=t.previewError;}finally{btn.disabled=false;}};
 document.getElementById('aiv-generate').onclick=async function(){var eq=chosenEquipment(),measurementInfo=chosenMeasurementContext();if(!state.photo){document.getElementById('aiv-status').innerHTML='<div style="padding:10px;border-radius:10px;background:#342e18;color:#f5dd91">'+t.noPhoto+'</div>';return;}if(!eq.length){document.getElementById('aiv-status').innerHTML='<div style="padding:10px;border-radius:10px;background:#342e18;color:#f5dd91">'+t.noEquipment+'</div>';return;}document.getElementById('aiv-status').innerHTML='<div style="padding:10px;border-radius:10px;background:#342e18;color:#f5dd91">'+t.working+'</div>';var subjectLayout=setSketchSubjects(),sunContext=chosenSunContext(),dmxContext=chosenDmxContext(),payload={project:'AI Visual Scene Plan',scene:'Photo-based scene',type:'Film',look:'Cinematic',camera:measurementInfo,description:descriptionWithMeasurements(),subjects:subjectLayout,sun:sunContext||undefined,dmx:dmxContext||undefined,equipment:eq,language:currentLanguage(),scenePhoto:state.photo,visualPreview:true};try{var r=await fetch(API_BASE+'/api/lighting-plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw new Error('HTTP '+r.status);var plan=normalizePlan(await r.json());state.plan=plan;window.__lightingAIVisualLastPlan=plan;try{window.dispatchEvent(new CustomEvent('lightingai-visual-plan-ready',{detail:{plan:plan}}));}catch(_eventError){}document.getElementById('aiv-overlay').innerHTML=photoOverlay(plan);document.getElementById('aiv-map').innerHTML=setupMap(plan);document.getElementById('aiv-plan').innerHTML=planHtml(plan);document.getElementById('aiv-preview-copy').textContent=t.approx+(measurementInfo?' '+(currentLanguage()==='sr'?'Plan koristi sačuvana merenja iz Planera.':'The plan uses saved Planner measurements.'):'');document.getElementById('aiv-result').style.display='block';if(state.visualPreviewAvailable)document.getElementById('aiv-real-preview-box').style.display='block';document.getElementById('aiv-status').innerHTML='';}catch(e){document.getElementById('aiv-status').innerHTML='<div style="padding:10px;border-radius:10px;background:#342e18;color:#f5dd91">'+t.error+'</div>';}};
 }
-window.LightingAIVisualScenePlan={open:create,close:closeModule,closeIfOpen:closeModule,readSceneMeasurements:sceneMeasurements,measurementContext:measurementContext,version:'0.4-planner-measurements',dpRequestVersion:'0.5-dp-request',voiceInputVersion:'0.6-dp-voice',pdfExportVersion:'0.7-professional-pdf',multiSubjectVersion:'0.8-multi-subject-ai',sunIntegrationVersion:'0.9-sun-ai',dmxIntegrationVersion:'1.0-dmx-ai',sceneVoiceVersion:'1.1-scene-voice',controlBridgeVersion:'1.3-ai-page-handoff',uiWorkflowVersion:'1.6-native-image-data'};
+window.LightingAIVisualScenePlan={open:create,close:closeModule,closeIfOpen:closeModule,readSceneMeasurements:sceneMeasurements,measurementContext:measurementContext,version:'0.4-planner-measurements',dpRequestVersion:'0.5-dp-request',voiceInputVersion:'0.6-dp-voice',pdfExportVersion:'0.7-professional-pdf',multiSubjectVersion:'0.8-multi-subject-ai',sunIntegrationVersion:'0.9-sun-ai',dmxIntegrationVersion:'1.0-dmx-ai',sceneVoiceVersion:'1.1-scene-voice',controlBridgeVersion:'1.3-ai-page-handoff',uiWorkflowVersion:'1.7-chunked-native-image-data'};
 })();

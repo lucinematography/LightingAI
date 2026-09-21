@@ -96,6 +96,7 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
         rootView = new FrameLayout(this);
+        rootView.setBackgroundColor(Color.BLACK);
         webView = new WebView(this);
         webView.setBackgroundColor(Color.rgb(13, 15, 18));
         rootView.addView(webView, new FrameLayout.LayoutParams(
@@ -190,8 +191,8 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.addJavascriptInterface(new AIVisualImageBridge(this), "LightingAIImages");
         webView.postDelayed(
-            () -> webView.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v3"),
-            350
+            () -> webView.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v4"),
+            3350
         );
         webView.requestApplyInsets();
     }
@@ -220,13 +221,17 @@ public class MainActivity extends Activity {
         splash.addView(title, titleParams);
 
         title.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        title.post(() -> title.animate()
+        title.setHasTransientState(true);
+        title.postDelayed(() -> title.animate()
             .scaleX(1.0f)
             .scaleY(1.0f)
             .setDuration(3200)
-            .setInterpolator(new android.view.animation.DecelerateInterpolator(1.15f))
-            .withEndAction(() -> title.setLayerType(View.LAYER_TYPE_NONE, null))
-            .start());
+            .setInterpolator(new android.view.animation.LinearInterpolator())
+            .withEndAction(() -> {
+                title.setHasTransientState(false);
+                title.setLayerType(View.LAYER_TYPE_NONE, null);
+            })
+            .start(), 80);
 
         return splash;
     }
@@ -241,7 +246,7 @@ public class MainActivity extends Activity {
                 }
                 startupSplash = null;
             }).start();
-        }, 4000);
+        }, 250);
     }
 
     private boolean hasLocationPermission() {

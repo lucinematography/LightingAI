@@ -18,7 +18,7 @@ for(const marker of [
 ]) assert.ok(sketch.includes(marker), 'Set Sketch contract missing: '+marker);
 
 for(const marker of [
-  "window.LightingAIBlocking={version:'0.4-persist-framing'",
+  "window.LightingAIBlocking={version:'0.5-compact-tracking'",
   'requestAnimationFrame(tick)','function prepareTrackingOffsets()',
   "b.trackFramingMode==='preserve'",'function addAllEquipmentLights'
 ].filter(x=>x!=='function addAllEquipmentLights')) assert.ok(blocking.includes(marker), 'Blocking contract missing: '+marker);
@@ -38,6 +38,8 @@ assert.ok(blocking.includes("FRAMING_KEY='lighting_blocking_camera_framing_v1'")
 assert.ok(blocking.includes('function persistFraming()'), 'Camera framing persistence function missing');
 assert.ok(!blocking.includes('id="blockingTrackSubject"'), 'Native tracking subject select must not return');
 assert.ok(blocking.includes('blocking-framing-buttons'), 'Framing chooser must use stable large buttons');
+assert.ok(blocking.includes('blocking-track-quick'), 'Mobile Camera Tracking quick panel missing');
+assert.ok(blocking.includes('box.innerHTML=tracking+'), 'Camera Tracking must render before movement controls on mobile');
 assert.ok(blocking.includes('blocking-framing-choice'), 'Framing buttons must be directly clickable');
 assert.ok(!blocking.includes('id="blockingFramingMode"'), 'Native framing select must not return');
 assert.ok(blocking.includes("hit.setAttribute('data-blocking-point'"), 'Separated waypoint drag handle must own waypoint pointer events');

@@ -151,6 +151,7 @@ function startVoiceDirect(target){
 }
 window.LightingAIStartVoiceDirect=startVoiceDirect;
 window.LightingAIOpenSceneImage=function(mode){
+ photoDiag('AI_CLICK',mode);
  var status=document.getElementById('aiv-photo-status');
  if(status)status.textContent=mode==='camera'?(currentLanguage()==='sr'?'Otvaram kameru…':'Opening camera…'):(currentLanguage()==='sr'?'Otvaram galeriju…':'Opening gallery…');
  try{
@@ -160,7 +161,8 @@ window.LightingAIOpenSceneImage=function(mode){
    input.click();
    return false;
   }
- }catch(e){}
+ }catch(e){photoDiag('ERROR_INPUT_CLICK',e&&e.message?e.message:'click');}
+ photoDiag('ERROR_INPUT_MISSING',mode);
  if(status)status.textContent=currentLanguage()==='sr'?'Izbor slike nije dostupan.':'Image picker unavailable.';
  return false;
 };
@@ -191,8 +193,25 @@ function descriptionWithMeasurements(){var description=document.getElementById('
 function renderEquipment(){var box=document.getElementById('aiv-equipment');box.innerHTML=state.equipment.length?state.equipment.map(function(e,i){return '<label style="display:flex;gap:8px;align-items:flex-start;background:#0f1115;border:1px solid #30343b;border-radius:11px;padding:10px"><input class="aiv-eq" data-index="'+i+'" type="checkbox" checked style="width:auto;margin-top:2px"><span>'+esc(e.name||e.model||e.id)+' × '+esc(e.qty||1)+'</span></label>';}).join(''):'<div style="color:#f5dd91">'+t.noEquipment+'</div>';}
 function chosenEquipment(){return Array.prototype.slice.call(document.querySelectorAll('.aiv-eq:checked')).map(function(x){return state.equipment[Number(x.getAttribute('data-index'))];}).filter(Boolean);}
 function resetGenerated(){state.plan=null;var r=document.getElementById('aiv-result');if(r)r.style.display='none';var p=document.getElementById('aiv-real-preview-img');if(p){p.style.display='none';p.removeAttribute('src');}var b=document.getElementById('aiv-real-preview-box');if(b)b.style.display='none';}
-function setPhoto(src){resetGenerated();state.photo=src||'';var img=document.getElementById('aiv-photo'),empty=document.getElementById('aiv-photo-empty'),remove=document.getElementById('aiv-remove');img.src=state.photo;img.style.display=state.photo?'block':'none';empty.style.display=state.photo?'none':'block';remove.style.display=state.photo?'block':'none';document.getElementById('aiv-overlay').innerHTML='';document.getElementById('aiv-photo-status').textContent=state.photo?t.photoReady:'';}
-function receiveFile(ev){var f=ev.target.files&&ev.target.files[0];if(!f)return;document.getElementById('aiv-photo-status').textContent=t.preparing;optimizeImage(f).then(setPhoto).catch(function(){document.getElementById('aiv-photo-status').textContent=t.error;});}
+function photoDiag(stage,detail){
+ var status=document.getElementById('aiv-photo-status'),box=document.getElementById('aiv-photo-diagnostic');
+ if(!box&&status&&status.parentNode){box=document.createElement('div');box.id='aiv-photo-diagnostic';box.style.cssText='margin-top:8px;padding:9px;border:1px solid #66571f;border-radius:9px;background:#101216;color:#f5c542;font:700 11px/1.45 monospace;white-space:pre-wrap';status.parentNode.insertBefore(box,status.nextSibling);}
+ if(!box)return;
+ var line=String(stage||'UNKNOWN')+(detail?' • '+String(detail):'');
+ var rows=(box.textContent||'').split('\n').filter(Boolean);
+ if(!rows.length||rows[rows.length-1]!==line)rows.push(line);
+ box.textContent=rows.slice(-12).join('\n');
+}
+function setPhoto(src){photoDiag('SETPHOTO',src?'OK':'EMPTY');resetGenerated();state.photo=src||'';var img=document.getElementById('aiv-photo'),empty=document.getElementById('aiv-photo-empty'),remove=document.getElementById('aiv-remove');img.src=state.photo;img.style.display=state.photo?'block':'none';empty.style.display=state.photo?'none':'block';remove.style.display=state.photo?'block':'none';document.getElementById('aiv-overlay').innerHTML='';document.getElementById('aiv-photo-status').textContent=state.photo?t.photoReady:'';}
+function receiveFile(ev){
+ photoDiag('ONCHANGE');
+ var f=ev&&ev.target&&ev.target.files&&ev.target.files[0];
+ if(!f){photoDiag('ERROR_NO_FILE');return;}
+ photoDiag('FILE_FOUND',(f.name||'image')+' '+(f.type||'unknown')+' '+(f.size||0));
+ document.getElementById('aiv-photo-status').textContent=t.preparing;
+ photoDiag('OPTIMIZE_START');
+ optimizeImage(f).then(function(src){photoDiag('OPTIMIZE_OK');setPhoto(src);}).catch(function(err){photoDiag('ERROR_OPTIMIZE',err&&err.message?err.message:'failed');document.getElementById('aiv-photo-status').textContent=t.error;});
+}
 function readLocal(key,fallback){try{var v=JSON.parse(localStorage.getItem(key)||'null');return v==null?fallback:v;}catch(e){return fallback;}}
 function domValue(id){var e=document.getElementById(id);return e?String(e.value!=null?e.value:e.textContent||'').trim():'';}
 function pdfEquipment(){var catalog=Array.isArray(window.catalogFixtures)?window.catalogFixtures:[];return chosenEquipment().map(function(e){var f=catalog.find(function(x){return x.id===e.id||x.id===e.fixtureId;})||{};return {id:e.id||e.fixtureId||f.id||'',name:e.name||((f.manufacturer||'')+' '+(f.model||f.id||'')).trim(),qty:Math.max(1,Number(e.qty)||1),powerDrawW:Number.isFinite(Number(f.powerDrawW))?Number(f.powerDrawW):undefined,cctK:f.cctK&&typeof f.cctK==='object'?f.cctK:undefined,colorMode:f.colorMode||undefined};});}
@@ -222,6 +241,7 @@ var pendingImageMode='';
 var nativeImageChunks=[];
 var nativeImageExpected=0;
 window.LightingAIVisualImageTransferStage=function(stage){
+ photoDiag(stage);
  var status=document.getElementById('aiv-photo-status');
  if(!status)return;
  var sr=currentLanguage()==='sr';

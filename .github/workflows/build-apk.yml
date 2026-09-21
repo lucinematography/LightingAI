@@ -97,6 +97,7 @@ jobs:
         with:
           path: ~/.lightingai-review/lightingai-review.p12
           key: lightingai-review-signing-v1
+          # Keep this cache key stable so review APKs remain in-place updatable on test phones.
 
       - name: Prepare stable review signing
         shell: bash

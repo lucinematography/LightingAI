@@ -25,6 +25,7 @@ const refinements = read('app/src/main/assets/ai-visual-preview-refinements.js')
 const imageBridge = read('app/src/main/java/com/lightingai/app/AIVisualImageBridge.java');
 const imageProvider = read('app/src/main/java/com/lightingai/app/AIVisualImageProvider.java');
 const mainActivity = read('app/src/main/java/com/lightingai/app/MainActivity.java');
+const appGradle = read('app/build.gradle');
 const manifest = read('app/src/main/AndroidManifest.xml');
 const phoneDiagnostics = read('app/src/main/assets/ai-visual-phone-diagnostics.js');
 const phoneTest = read('app/src/main/assets/ai-visual-phone-test.js');

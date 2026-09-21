@@ -189,6 +189,9 @@ const exactAllowed = new Set([
   'app/src/main/assets/control-dashboard.js',
   'app/src/main/assets/device-capabilities.js',
   'app/src/main/assets/shot-setup-report.js',
+  'app/src/main/assets/set-sketch.js',
+  'app/src/main/assets/set-sketch-camera-fov.js',
+  'app/src/main/assets/blocking-camera-designer.js',
   'app/src/main/assets/lightai-intro.jpg',
   'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
   'app/src/main/res/values/styles.xml'
@@ -208,6 +211,41 @@ for (const protectedPath of [
   const stable = git(['show', `${PROJECT510_QA_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
   if (stable !== current) fail(`build 767 protected file changed unexpectedly: ${protectedPath}`);
+}
+
+const setSketch = git(['show', 'HEAD:app/src/main/assets/set-sketch.js']);
+for (const marker of [
+  "window.LightingAISetSketch={version:'1.1-blocking-preview'",
+  'setPreview:setPreview',
+  'clearPreview:clearPreview',
+  "new CustomEvent('lightingai:set-sketch-rendered')"
+]) {
+  if (!setSketch.includes(marker)) fail(`Blocking Set Sketch preview marker missing: ${marker}`);
+}
+
+const blockingDesigner = git(['show', 'HEAD:app/src/main/assets/blocking-camera-designer.js']);
+for (const marker of [
+  "window.LightingAIBlocking={version:'0.1-phase1'",
+  'requestAnimationFrame(tick)',
+  'function addPoint()',
+  'function pointerMove(ev)',
+  'function trackingRotation(cameraPos,targetPos)',
+  'a.setPreview(buildPreview'
+]) {
+  if (!blockingDesigner.includes(marker)) fail(`Blocking Camera Designer marker missing: ${marker}`);
+}
+
+const setSketchFov = git(['show', 'HEAD:app/src/main/assets/set-sketch-camera-fov.js']);
+for (const marker of [
+  "window.LightingAISetSketch&&typeof window.LightingAISetSketch.getVisualObject==='function'",
+  "svg.addEventListener('lightingai:set-sketch-rendered'"
+]) {
+  if (!setSketchFov.includes(marker)) fail(`Blocking Camera FOV integration marker missing: ${marker}`);
+}
+
+const blockingLoader = git(['show', `HEAD:${mainActivityPath}`]);
+if (!blockingLoader.includes("blocking-camera-designer.js")) {
+  fail('Blocking Camera Designer loader missing from MainActivity');
 }
 
 const manifestPath = 'app/src/main/AndroidManifest.xml';

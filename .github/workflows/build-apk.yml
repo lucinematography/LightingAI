@@ -117,6 +117,11 @@ jobs:
               -dname "CN=LightingAI Review,O=LightingAI,C=RS"
           fi
           keytool -list -keystore "$KEYSTORE" -storepass lightingai-review -alias lightingai-review >/dev/null
+          echo "LIGHTINGAI_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
+          echo "LIGHTINGAI_KEYSTORE_PASSWORD=lightingai-review" >> "$GITHUB_ENV"
+          echo "LIGHTINGAI_KEY_ALIAS=lightingai-review" >> "$GITHUB_ENV"
+          echo "LIGHTINGAI_KEY_PASSWORD=lightingai-review" >> "$GITHUB_ENV"
+          keytool -list -v -keystore "$KEYSTORE" -storepass lightingai-review -alias lightingai-review | grep 'SHA256:'
           echo "Stable review signing key ready"
 
 
@@ -132,12 +137,8 @@ jobs:
         run: gradle testDebugUnitTest
 
       - name: Build stable-signed review APK
-        env:
-          LIGHTINGAI_KEYSTORE_PATH: ${{ env.HOME }}/.lightingai-review/lightingai-review.p12
-          LIGHTINGAI_KEYSTORE_PASSWORD: lightingai-review
-          LIGHTINGAI_KEY_ALIAS: lightingai-review
-          LIGHTINGAI_KEY_PASSWORD: lightingai-review
         run: |
+          test -s "$LIGHTINGAI_KEYSTORE_PATH"
           gradle assembleDebug \
             -PreleaseVersionCode=${GITHUB_RUN_NUMBER} \
             -PreleaseVersionName=2.1.${GITHUB_RUN_NUMBER}

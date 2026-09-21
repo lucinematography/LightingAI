@@ -1147,9 +1147,16 @@ public class MainActivity extends Activity {
                 if (granted && pendingFileChooser != null) openCameraForWebView();
                 else finishFileChooser(null);
             }
-        } else if (requestCode == LOCATION_PERMISSION && pendingNativeSunLocation) {
-            if (hasLocationPermission()) requestNativeSunLocation();
-            else { pendingNativeSunLocation = false; notifyNativeSunLocationError(); }
+        } else if (requestCode == LOCATION_PERMISSION) {
+            if (pendingNativeSunLocation) {
+                if (hasLocationPermission()) requestNativeSunLocation();
+                else { pendingNativeSunLocation = false; notifyNativeSunLocationError(); }
+            }
+            if (webView != null) {
+                webView.post(() -> webView.evaluateJavascript(
+                    "window.LightingAIRefreshDeviceCapabilities&&window.LightingAIRefreshDeviceCapabilities();",
+                    null));
+            }
         } else if (requestCode == BLE_PERMISSION) {
             String pendingId = pendingBleDiscoveryRequestId;
             int pendingTimeout = pendingBleDiscoveryTimeoutMs;

@@ -85,14 +85,38 @@ requireText(mainActivity, 'new Intent(Intent.ACTION_PICK, MediaStore.Images.Medi
 requireText(mainActivity, 'Intent.FLAG_GRANT_READ_URI_PERMISSION', 'gallery picker must request read access');
 requireText(mainActivity, 'data.getData()', 'gallery result must accept a direct returned URI');
 requireText(mainActivity, 'data.getClipData()', 'gallery result must accept ClipData returned by OEM pickers');
-requireText(moduleJs, "input.value='';", 'gallery input must reset so the same image can be chosen again');
-requireText(moduleJs, 'input.click();', 'AI scene image action must invoke the WebView file chooser');
-requireText(moduleJs, "document.getElementById('aiv-gallery').onchange=receiveFile", 'gallery selection must feed the AI scene photo handler');
-requireText(moduleJs, 'optimizeImage(f).then(setPhoto)', 'selected gallery file must be rendered into the AI scene');
+requireText(moduleJs, "input.value='';", 'file-input fallback must reset so the same image can be chosen again');
+requireText(moduleJs, 'input.click();', 'AI scene image action must retain the WebView file chooser fallback');
+requireText(moduleJs, "document.getElementById('aiv-gallery').onchange=receiveFile", 'gallery fallback must feed the AI scene photo handler');
+requireText(moduleJs, "document.getElementById('aiv-camera').onchange=receiveFile", 'camera fallback must feed the AI scene photo handler');
+requireText(moduleJs, 'optimizeImage(f).then(setPhoto)', 'fallback selected file must be optimized and rendered into the AI scene');
+requireText(mainActivity, '@JavascriptInterface public void openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
+requireText(mainActivity, 'MainActivity.this.openAIImagePicker("camera".equals(mode))', 'native AI image picker bridge must route gallery/camera mode');
+requireText(mainActivity, 'pendingFileChooser = uris ->', 'native AI picker must retain a result callback');
+requireText(mainActivity, 'deliverAIVisualImage(uri);', 'native AI picker result must enter the image decode/transfer path');
+requireText(mainActivity, 'if (requestCode == CHOOSE_IMAGE)', 'Android image result handler missing');
+requireText(mainActivity, 'pendingCameraCapture && pendingCameraUri != null', 'camera result must use the captured MediaStore URI');
+requireText(mainActivity, 'finishFileChooser(new Uri[]{uri});', 'camera URI must be delivered to the pending image callback');
+requireText(mainActivity, 'finishFileChooser(result);', 'gallery URI must be delivered to the pending image callback');
+requireText(mainActivity, 'BitmapFactory.decodeStream', 'native image transfer must decode the selected URI');
+requireText(mainActivity, 'output.compress(Bitmap.CompressFormat.JPEG, 82, bytes)', 'native image transfer must compress to bounded JPEG');
+requireText(mainActivity, 'deliverAIVisualImageChunks(base64);', 'native image transfer must hand compressed base64 to WebView');
+requireText(mainActivity, 'LightingAIVisualImageTransferBegin&&window.LightingAIVisualImageTransferBegin', 'native image transfer begin callback missing');
+requireText(mainActivity, 'LightingAIVisualImageTransferChunk&&window.LightingAIVisualImageTransferChunk', 'native image transfer chunk callback missing');
+requireText(mainActivity, 'LightingAIVisualImageTransferEnd&&window.LightingAIVisualImageTransferEnd', 'native image transfer end callback missing');
+requireText(moduleJs, "var dataUrl='data:image/jpeg;base64,'+nativeImageChunks.join('');", 'AI scene module must reconstruct native JPEG data');
+requireText(moduleJs, 'setPhoto(dataUrl);', 'native image transfer must finish at setPhoto');
+requireText(moduleJs, 'img.src=state.photo;', 'setPhoto must write the selected image into the preview DOM');
+requireText(moduleJs, "img.style.display=state.photo?'block':'none';", 'setPhoto must reveal the selected image in the preview DOM');
+const imageActionStart = moduleJs.indexOf('window.LightingAIOpenSceneImage=function(mode){');
+const imageActionEnd = moduleJs.indexOf('function create()', imageActionStart);
+assert(imageActionStart >= 0 && imageActionEnd > imageActionStart, 'AI image action boundaries missing');
+const imageAction = moduleJs.slice(imageActionStart, imageActionEnd);
 assert(
-  moduleJs.indexOf('input.click();') >= 0 &&
-  moduleJs.indexOf('input.click();') < moduleJs.indexOf('Android.openImagePicker(mode);'),
-  'AI image selection must prefer the proven WebView chooser before the native fallback'
+  imageAction.indexOf('Android.openImagePicker(mode);') >= 0 &&
+  imageAction.indexOf('input.click();') >= 0 &&
+  imageAction.indexOf('Android.openImagePicker(mode);') < imageAction.indexOf('input.click();'),
+  'AI image selection must prefer the proven native URI/base64 bridge and use WebView file input only as fallback'
 );
 const galleryMethodStart = mainActivity.indexOf('private boolean openGalleryForWebView');
 const galleryMethodEnd = mainActivity.indexOf('private boolean openCameraForWebView', galleryMethodStart);

@@ -64,7 +64,8 @@ function render(){
  var b=E('aiControlTransfer');if(b)b.onclick=function(){var d=normalize(window.__lightingAIVisualLastPlan||{});save(d);window.__lightingAIControlDraft=d;var s=E('aiControlStatus');if(s)s.textContent=sr()?'AI nacrt je prenet. Proveri uređaje, DMX Patch i vrednosti pre slanja.':'AI draft transferred. Verify fixtures, DMX Patch and values before sending.';render()};var clear=E('aiControlClear');if(clear)clear.onclick=function(){localStorage.removeItem(KEY);window.__lightingAIControlDraft=null;render()};card.querySelectorAll('.ai-stage-fixture').forEach(function(btn){btn.onclick=function(){var item=lights[Number(btn.dataset.index)],patch=matchPatch(item),api=window.LightingAIArtNetControl;if(!item||!patch||!api||typeof api.stageFixture!=='function')return;api.stageFixture(patch.fixtureId,{intensity:item.intensity,cct:item.cct});var s=E('aiControlStatus');if(s)s.textContent=sr()?'AI vrednosti su pripremljene u verifikovanoj kontroli uređaja. Još nisu poslate.':'AI values are staged in the verified fixture control. They have not been sent.';};});
  return true;
 }
-window.LightingAIAIControlBridge={render:render,getDraft:load,clear:function(){localStorage.removeItem(KEY);render()},version:'0.3-stage-fixture'};
+function transferLatest(){var latest=window.__lightingAIVisualLastPlan||null;if(!latest)return false;var d=normalize(latest);if(!d.lights||!d.lights.length)return false;save(d);window.__lightingAIControlDraft=d;render();return true;}
+window.LightingAIAIControlBridge={render:render,getDraft:load,transferLatest:transferLatest,clear:function(){localStorage.removeItem(KEY);render()},version:'0.4-ai-page-handoff'};
 window.addEventListener('lightingai-visual-plan-ready',function(){setTimeout(render,0)});
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(render,1200);

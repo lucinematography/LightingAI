@@ -174,7 +174,7 @@ function install(){
  const shell=document.createElement('div');shell.id='blockingShell';shell.className='blocking-shell';shell.innerHTML='<h3 id="blockingTitle"></h3><div id="blockingIntro" class="blocking-intro"></div><div id="blockingControls"></div><div id="blockingStatus" class="set-sketch-status"></div>';
  const stage=E('setSketchStage');if(stage&&stage.parentNode)stage.parentNode.insertBefore(shell,stage.nextSibling);else card.appendChild(shell);
  svg.addEventListener('pointerdown',pointerDown,true);svg.addEventListener('pointermove',pointerMove,true);svg.addEventListener('pointerup',pointerEnd,true);svg.addEventListener('pointercancel',pointerEnd,true);
- svg.addEventListener('lightingai:set-sketch-rendered',()=>setTimeout(pathMarkup,0));
+ svg.addEventListener('lightingai:set-sketch-rendered',()=>setTimeout(()=>{renderControls();pathMarkup()},0));
  document.addEventListener('click',ev=>{const id=String(ev.target&&ev.target.id||'');if(id.indexOf('setSketch')===0)setTimeout(renderAll,0)});
  if(typeof window.setLanguage==='function'&&!window.__lightingaiBlockingLang){const old=window.setLanguage;window.__lightingaiBlockingLang=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}
  translate();renderAll();return true;

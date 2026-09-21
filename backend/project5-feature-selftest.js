@@ -88,10 +88,10 @@ requireText(mainActivity, 'data.getData()', 'gallery result must accept a direct
 requireText(mainActivity, 'data.getClipData()', 'gallery result must accept ClipData returned by OEM pickers');
 requireText(mainActivity, 'hasReadableImageData(uri)', 'camera result must accept a written image even when an OEM camera returns a non-standard result code');
 requireText(moduleJs, "input.value='';", 'file-input fallback must reset so the same image can be chosen again');
-requireText(moduleJs, 'input.click();', 'AI scene image action must retain the WebView file chooser fallback');
-requireText(moduleJs, "document.getElementById('aiv-gallery').onchange=receiveFile", 'gallery fallback must feed the AI scene photo handler');
-requireText(moduleJs, "document.getElementById('aiv-camera').onchange=receiveFile", 'camera fallback must feed the AI scene photo handler');
-requireText(moduleJs, 'optimizeImage(f).then(setPhoto)', 'fallback selected file must be optimized and rendered into the AI scene');
+requireText(moduleJs, 'input.click();', 'AI scene image action must use the proven WebView file chooser');
+requireText(moduleJs, "document.getElementById('aiv-gallery').onchange=receiveFile", 'gallery selection must feed the AI scene photo handler');
+requireText(moduleJs, "document.getElementById('aiv-camera').onchange=receiveFile", 'camera selection must feed the AI scene photo handler');
+requireText(moduleJs, 'optimizeImage(f).then(setPhoto)', 'selected WebView file must be optimized and rendered into the AI scene');
 requireText(mainActivity, '@JavascriptInterface public void openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
 requireText(mainActivity, 'MainActivity.this.openAIImagePicker("camera".equals(mode))', 'native AI image picker bridge must route gallery/camera mode');
 requireText(mainActivity, 'AI_CHOOSE_IMAGE = 509', 'native AI image picker must use a dedicated Android request code');
@@ -139,11 +139,19 @@ const imageActionEnd = moduleJs.indexOf('function create()', imageActionStart);
 assert(imageActionStart >= 0 && imageActionEnd > imageActionStart, 'AI image action boundaries missing');
 const imageAction = moduleJs.slice(imageActionStart, imageActionEnd);
 assert(
-  imageAction.indexOf('Android.openImagePicker(mode);') >= 0 &&
   imageAction.indexOf('input.click();') >= 0 &&
-  imageAction.indexOf('Android.openImagePicker(mode);') < imageAction.indexOf('input.click();'),
-  'AI image selection must prefer the proven native URI/base64 bridge and use WebView file input only as fallback'
+  imageAction.indexOf('Android.openImagePicker(mode);') < 0,
+  'AI image selection must use the same WebView file chooser path as the working Planner photo input'
 );
+const webGalleryStart = mainActivity.indexOf('private boolean openGalleryForWebView');
+const webGalleryEnd = mainActivity.indexOf('private boolean openCameraForWebView', webGalleryStart);
+assert(webGalleryStart >= 0 && webGalleryEnd > webGalleryStart, 'working Planner/WebView gallery method boundaries missing');
+const webGalleryMethod = mainActivity.slice(webGalleryStart, webGalleryEnd);
+assert(webGalleryMethod.includes('Build.VERSION.SDK_INT >= 33'), 'Planner/WebView gallery must keep the Android 13+ picker branch');
+assert(webGalleryMethod.includes('MediaStore.ACTION_PICK_IMAGES'), 'Planner/WebView gallery must keep the phone-verified Android photo picker');
+assert(webGalleryMethod.includes('startActivityForResult(intent, CHOOSE_IMAGE)'), 'Planner/WebView gallery must return through the generic file chooser result path');
+requireText(moduleJs, 'aiv-build-id', 'AI visual plan must expose the running APK build marker before phone validation');
+requireText(moduleJs, 'window.LightingAIFeatureBuild', 'AI visual plan build marker must use embedded workflow identity');
 const aiGalleryStart = mainActivity.indexOf('private void openAIImageGallery()');
 const aiGalleryEnd = mainActivity.indexOf('private void openAIImageCamera()', aiGalleryStart);
 assert(aiGalleryStart >= 0 && aiGalleryEnd > aiGalleryStart, 'dedicated AI gallery method boundaries missing');

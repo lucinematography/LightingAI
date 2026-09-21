@@ -182,6 +182,7 @@ const exactAllowed = new Set([
   'app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java',
   'app/src/test/java/com/lightingai/app/SacnProtocolTest.java',
   'backend/project5-stable-base-selftest.js',
+  'backend/project-backup-selftest.js',
   'backend/project5-feature-selftest.js',
   'backend/project52-release-gate-selftest.js',
   'app/src/main/assets/ai-visual-scene-launcher.js',
@@ -271,9 +272,12 @@ for (const marker of [
 
 const shotSetupBlocking = git(['show', 'HEAD:app/src/main/assets/shot-setup-report.js']);
 for (const marker of [
-  "schema:'lightingai-shot-setup-v2-blocking'",
-  'blockingLighting:blockingLighting()',
-  "'BLOCKING LIGHT MAP:'",
+  "schema:'lightingai-shot-setup-v3-blocking-designer'",
+  'blocking:{motion:blockingMotion(scene),lighting:blockingLighting(),framing:cameraFraming(),sunCamera:blockingSun(),ai:blockingAi()}',
+  'function blockingMotion(scene)',
+  'function cameraFraming()',
+  'function blockingSun()',
+  'function blockingAi()',
   "['shotSetupBlockingLightsTile','BLOCKING LIGHT MAP']"
 ]) {
   if (!shotSetupBlocking.includes(marker)) fail(`Blocking Shot Setup marker missing: ${marker}`);

@@ -192,6 +192,8 @@ const exactAllowed = new Set([
   'app/src/main/assets/set-sketch.js',
   'app/src/main/assets/set-sketch-camera-fov.js',
   'app/src/main/assets/blocking-camera-designer.js',
+  'app/src/main/assets/blocking-sun-integration.js',
+  'app/src/main/assets/set-sketch-sun.js',
   'app/src/main/assets/shot-list-planner.js',
   'app/src/main/assets/camera-setup-snapshots.js',
   'app/src/main/assets/lightai-intro.jpg',
@@ -285,9 +287,22 @@ for (const marker of [
   if (!cameraSetupsBlocking.includes(marker)) fail(`Blocking Camera Setup marker missing: ${marker}`);
 }
 
+const blockingSun = git(['show', 'HEAD:app/src/main/assets/blocking-sun-integration.js']);
+for (const marker of [
+  "window.LightingAIBlockingSun={version:'1.0'",
+  'function shiftTime(delta)',
+  'cameraHeadingDeg:cameraHeading',
+  'relativeAngleDeg:relative'
+]) {
+  if (!blockingSun.includes(marker)) fail(`Blocking SUNCE marker missing: ${marker}`);
+}
+
 const blockingLoader = git(['show', `HEAD:${mainActivityPath}`]);
 if (!blockingLoader.includes("blocking-camera-designer.js")) {
   fail('Blocking Camera Designer loader missing from MainActivity');
+}
+if (!blockingLoader.includes("set-sketch-sun.js") || !blockingLoader.includes("blocking-sun-integration.js")) {
+  fail('Blocking SUNCE loaders missing from MainActivity');
 }
 
 const manifestPath = 'app/src/main/AndroidManifest.xml';

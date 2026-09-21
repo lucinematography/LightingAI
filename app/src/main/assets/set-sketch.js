@@ -34,8 +34,11 @@ function read(){
   return defaultState();
 }
 
-let state=read(),selectedId=null,dragId=null,dragPointer=null,statusTimer=null;
+let state=read(),selectedId=null,dragId=null,dragPointer=null,statusTimer=null,previewState=Object.create(null);
 function persist(){localStorage.setItem(KEY,JSON.stringify(state));}
+function visualObject(o){if(!o)return o;const p=previewState&&previewState[o.id];return p?Object.assign({},o,p):o;}
+function setPreview(map){previewState=map&&typeof map==='object'?map:Object.create(null);renderSvg();}
+function clearPreview(){previewState=Object.create(null);renderSvg();}
 function active(){let s=state.scenes.find(x=>x.id===state.activeId);if(!s){s=state.scenes[0];state.activeId=s.id;}return s;}
 function obj(id){return active().objects.find(x=>x.id===id);}
 function labelFor(o){return o.label||({camera:t().camera,subject:t().subject,light:t().genericLight,wall:t().wall,background:t().background}[o.type]||o.type);}
@@ -129,7 +132,7 @@ function renderSvg(){
   const s=active(),left=55,top=45,w=890,h=610;
   let htm='<defs><clipPath id="setSketchClip"><rect x="'+left+'" y="'+top+'" width="'+w+'" height="'+h+'" rx="10"/></clipPath></defs>';
   htm+='<rect x="'+left+'" y="'+top+'" width="'+w+'" height="'+h+'" rx="10" fill="#0b0d10" stroke="#4b515b" stroke-width="2"/>';
-  s.objects.filter(o=>o.type==='light').forEach(o=>{htm+=beamSvg(o,o.id===selectedId);});
+  s.objects.filter(o=>o.type==='light').forEach(o=>{const v=visualObject(o);htm+=beamSvg(v,o.id===selectedId);});
   for(let m=0;m<=Math.floor(s.roomW);m++){
     const x=left+m/s.roomW*w;
     htm+='<line x1="'+x+'" y1="'+top+'" x2="'+x+'" y2="'+(top+h)+'" stroke="'+(m===0||m===Math.floor(s.roomW)?'#424850':'#24292f')+'" stroke-width="1"/><text x="'+x+'" y="'+(top+h+22)+'" text-anchor="middle" font-size="11" fill="#7f8792">'+m+'m</text>';
@@ -138,17 +141,18 @@ function renderSvg(){
     const y=top+m/s.roomH*h;
     htm+='<line x1="'+left+'" y1="'+y+'" x2="'+(left+w)+'" y2="'+y+'" stroke="'+(m===0||m===Math.floor(s.roomH)?'#424850':'#24292f')+'" stroke-width="1"/><text x="'+(left-9)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="#7f8792">'+m+'m</text>';
   }
-  const chosen=obj(selectedId);
+  const chosenBase=obj(selectedId),chosen=visualObject(chosenBase);
   if(chosen){
     const a=screenPoint(chosen);
     s.objects.filter(o=>o.id!==chosen.id).forEach(o=>{
-      const b=screenPoint(o),d=Math.hypot(o.x-chosen.x,o.y-chosen.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+      const v=visualObject(o),b=screenPoint(v),d=Math.hypot(v.x-chosen.x,v.y-chosen.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
       htm+='<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="#646c77" stroke-width="1.5" stroke-dasharray="5 5"/><rect x="'+(mx-27)+'" y="'+(my-11)+'" width="54" height="22" rx="7" fill="#15191e" stroke="#444b54"/><text x="'+mx+'" y="'+(my+4)+'" text-anchor="middle" font-size="12" fill="#f5c542">'+d.toFixed(2)+'m</text>';
     });
   }
-  s.objects.forEach(o=>{htm+=iconSvg(o,screenPoint(o),o.id===selectedId);});
+  s.objects.forEach(o=>{const v=visualObject(o);htm+=iconSvg(v,screenPoint(v),o.id===selectedId);});
   svg.innerHTML=htm;
   renderSelected();
+  try{svg.dispatchEvent(new CustomEvent('lightingai:set-sketch-rendered'));}catch(e){}
 }
 
 function renderSelected(){
@@ -267,6 +271,8 @@ function translate(){
   if(!E('setSketchCard'))return;const x=t();
   E('setSketchTitle').textContent=x.title;E('setSketchIntro').textContent=x.intro;E('setSketchSceneLabel').textContent=x.scene;E('setSketchSceneNameLabel').textContent=x.sceneName;E('setSketchSave').textContent=x.save;E('setSketchNew').textContent=x.newScene;E('setSketchCopy').textContent=x.copy;E('setSketchDeleteScene').textContent=x.deleteScene;E('setSketchApplyMeasurements').textContent='📏 '+x.applyMeasurements;E('setSketchMeasureHint').textContent=x.measureHint;E('setSketchRoomTitle').textContent=x.room;E('setSketchRoomWLabel').textContent=x.width;E('setSketchRoomHLabel').textContent=x.height;E('setSketchAddTitle').textContent=x.add;E('setSketchFixtureLabel').textContent=x.fixture;E('setSketchAddCamera').textContent='📷 '+x.camera;E('setSketchAddSubject').textContent='👤 '+x.subject;E('setSketchAddLight').textContent='💡 '+x.light;E('setSketchAddWall').textContent='━ '+x.wall;E('setSketchAddBackground').textContent='▰ '+x.background;E('setSketchSelectedTitle').textContent=x.selected;E('setSketchDragNote').textContent=x.drag;renderAll();
 }
+window.LightingAISetSketch={version:'1.1-blocking-preview',getState:function(){return state;},getActiveScene:function(){return active();},getSelectedId:function(){return selectedId;},getVisualObject:function(value){const o=typeof value==='string'?obj(value):value;return visualObject(o);},selectObject:function(id){selectedId=id&&obj(id)?id:null;renderSvg();},setPreview:setPreview,clearPreview:clearPreview,refresh:function(){renderSvg();},persist:function(){persist();},screenXY:function(x,y){return screenXY(x,y);},roomPointFromClient:function(clientX,clientY){return roomPointFromSvg(svgPointFromEvent({clientX:clientX,clientY:clientY}));}};
+
 function init(){
   const planner=E('planner');if(!planner||E('setSketchCard'))return false;
   const style=document.createElement('style');

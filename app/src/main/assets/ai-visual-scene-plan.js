@@ -234,6 +234,14 @@ function openSceneImage(mode){
 }
 var nativeImageChunks=[];
 var nativeImageExpected=0;
+window.LightingAIVisualImageTransferStage=function(stage){
+ var status=document.getElementById('aiv-photo-status');
+ if(!status)return;
+ var sr=currentLanguage()==='sr';
+ if(stage==='result')status.textContent=sr?'Fotografija je vraćena iz Androida.':'Photo returned from Android.';
+ else if(stage==='decode')status.textContent=sr?'Pripremam fotografiju za AI analizu...':'Preparing the photo for AI analysis...';
+ else if(stage==='transfer')status.textContent=sr?'Prenosim fotografiju u AI modul...':'Transferring the photo into the AI module...';
+};
 window.LightingAIVisualImageTransferBegin=function(total){
  pendingImageMode='';
  nativeImageExpected=Math.max(0,Number(total)||0);

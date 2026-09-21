@@ -628,24 +628,24 @@ public class MainActivity extends Activity {
         String target = (targetId == null || targetId.trim().isEmpty()) ? "aiv-dp-request" : targetId.trim();
         pendingVoiceTarget = target;
         pendingVoiceLanguage = "en".equals(language) ? "en" : "sr";
-        if (!hasAudioPermission()) {
-            requestAudioPermission();
-            return;
-        }
-        startNativeSpeechInput(pendingVoiceLanguage, target);
+        startExternalSpeechInput(pendingVoiceLanguage, target);
     }
 
     private void startNativeSpeechInput(String language, String target) {
         String locale = "en".equals(language) ? "en-US" : "sr-RS";
-        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            startExternalSpeechInput(language, target);
+        boolean onDeviceAvailable = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            SpeechRecognizer.isOnDeviceRecognitionAvailable(this);
+        if (!onDeviceAvailable && !SpeechRecognizer.isRecognitionAvailable(this)) {
+            notifyVoiceInputError(target, "unavailable");
             return;
         }
         try {
             if (speechRecognizer != null) {
                 try { speechRecognizer.destroy(); } catch (Exception ignored) {}
             }
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+            speechRecognizer = onDeviceAvailable
+                ? SpeechRecognizer.createOnDeviceSpeechRecognizer(this)
+                : SpeechRecognizer.createSpeechRecognizer(this);
             speechRecognizer.setRecognitionListener(new RecognitionListener() {
                 @Override public void onReadyForSpeech(Bundle params) {}
                 @Override public void onBeginningOfSpeech() {}
@@ -682,8 +682,19 @@ public class MainActivity extends Activity {
             intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
             speechRecognizer.startListening(intent);
         } catch (Exception e) {
-            startExternalSpeechInput(language, target);
+            pendingVoiceTarget = null;
+            notifyVoiceInputError(target, "error");
         }
+    }
+
+    private void fallbackToNativeSpeech(String language, String target) {
+        pendingVoiceTarget = target;
+        pendingVoiceLanguage = "en".equals(language) ? "en" : "sr";
+        if (!hasAudioPermission()) {
+            requestAudioPermission();
+            return;
+        }
+        webView.postDelayed(() -> startNativeSpeechInput(pendingVoiceLanguage, target), 250);
     }
 
     private void startExternalSpeechInput(String language, String target) {
@@ -702,11 +713,9 @@ public class MainActivity extends Activity {
         try {
             startActivityForResult(intent, SPEECH_INPUT);
         } catch (ActivityNotFoundException e) {
-            pendingVoiceTarget = null;
-            notifyVoiceInputError(target, "unavailable");
+            fallbackToNativeSpeech(language, target);
         } catch (Exception e) {
-            pendingVoiceTarget = null;
-            notifyVoiceInputError(target, "error");
+            fallbackToNativeSpeech(language, target);
         }
     }
 
@@ -998,8 +1007,12 @@ public class MainActivity extends Activity {
         } else if (requestCode == AUDIO_PERMISSION) {
             String target = pendingVoiceTarget;
             if (target != null) {
-                if (hasAudioPermission()) startNativeSpeechInput(pendingVoiceLanguage, target);
-                else { pendingVoiceTarget = null; notifyVoiceInputError(target, "denied"); }
+                if (hasAudioPermission()) {
+                    webView.postDelayed(() -> startNativeSpeechInput(pendingVoiceLanguage, target), 250);
+                } else {
+                    pendingVoiceTarget = null;
+                    notifyVoiceInputError(target, "denied");
+                }
             }
         }
     }

@@ -229,11 +229,14 @@ for (const marker of [
 
 const blockingDesigner = git(['show', 'HEAD:app/src/main/assets/blocking-camera-designer.js']);
 for (const marker of [
-  "window.LightingAIBlocking={version:'0.2-storyboard-camera-link'",
+  "window.LightingAIBlocking={version:'0.3-preserve-framing'",
   'requestAnimationFrame(tick)',
   'function addPoint()',
   'function pointerMove(ev)',
   'function trackingRotation(cameraPos,targetPos)',
+  'function captureTrackingOffset(cam,target)',
+  "b.trackFramingMode==='preserve'",
+  'prepareTrackingOffsets()',
   'a.setPreview(buildPreview'
 ]) {
   if (!blockingDesigner.includes(marker)) fail(`Blocking Camera Designer marker missing: ${marker}`);

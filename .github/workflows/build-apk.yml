@@ -76,6 +76,10 @@ jobs:
       - name: Validate Project Backup data and exclusions
         run: node backend/project-backup-selftest.js
 
+      - name: Validate Blocking Camera Designer integration
+        working-directory: backend
+        run: npm run test:blocking-designer
+
       - name: Set up Java 17
         uses: actions/setup-java@v6
         with:

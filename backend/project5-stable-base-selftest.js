@@ -217,9 +217,11 @@ for (const protectedPath of [
 
 const setSketch = git(['show', 'HEAD:app/src/main/assets/set-sketch.js']);
 for (const marker of [
-  "window.LightingAISetSketch={version:'1.1-blocking-preview'",
+  "window.LightingAISetSketch={version:'1.2-blocking-lighting'",
   'setPreview:setPreview',
   'clearPreview:clearPreview',
+  'addAllEquipmentLights:addAllEquipmentLights',
+  'getLightingSnapshot:lightingSnapshot',
   "new CustomEvent('lightingai:set-sketch-rendered')"
 ]) {
   if (!setSketch.includes(marker)) fail(`Blocking Set Sketch preview marker missing: ${marker}`);

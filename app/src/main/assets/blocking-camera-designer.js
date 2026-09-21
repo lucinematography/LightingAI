@@ -28,7 +28,7 @@ const TXT={
 };
 const t=()=>TXT[lang()];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-let playing=false,paused=false,startMs=0,pauseAt=0,raf=0,dragWaypoint=null,statusTimer=null;
+let playing=false,paused=false,previewActive=false,startMs=0,pauseAt=0,raf=0,dragWaypoint=null,statusTimer=null;
 
 function api(){return window.LightingAISetSketch||null}
 function scene(){const a=api();return a&&a.getActiveScene?a.getActiveScene():null}
@@ -85,7 +85,7 @@ function maxDuration(){
  const s=scene();if(!s)return 0;let m=0;s.objects.forEach(o=>{const b=o.blocking;if(usable(o)&&b&&Array.isArray(b.path)&&b.path.length>=2)m=Math.max(m,Number(b.durationSec)||5)});return m;
 }
 function finishAtEnd(total){
- cancelAnimationFrame(raf);playing=false;paused=false;pauseAt=0;
+ cancelAnimationFrame(raf);playing=false;paused=false;previewActive=true;pauseAt=0;
  const a=api();renderControls();if(a&&a.setPreview)a.setPreview(buildPreview({animationTime:total}));updateTime(total,total);
 }
 function tick(now){
@@ -100,14 +100,14 @@ function tick(now){
 function play(){
  const total=maxDuration();if(!(total>0)){status(t().need);return}
  if(playing&&paused){paused=false;startMs=performance.now()-pauseAt*1000;raf=requestAnimationFrame(tick);renderControls();status(t().statusPlay);return}
- prepareTrackingOffsets();playing=true;paused=false;startMs=performance.now();pauseAt=0;raf=requestAnimationFrame(tick);renderControls();status(t().statusPlay);
+ prepareTrackingOffsets();playing=true;paused=false;previewActive=true;startMs=performance.now();pauseAt=0;raf=requestAnimationFrame(tick);renderControls();status(t().statusPlay);
 }
 function pause(){
  if(!playing||paused)return;paused=true;cancelAnimationFrame(raf);pauseAt=(performance.now()-startMs)/1000;renderControls();status(t().statusPause);
 }
 function stop(reset){
  cancelAnimationFrame(raf);playing=false;paused=false;pauseAt=0;
- const total=maxDuration(),a=api();if(a){if(total>0&&a.setPreview)a.setPreview(buildPreview({animationTime:0}));else if(a.clearPreview)a.clearPreview()}updateTime(0,total);renderControls();if(!reset)status(t().statusStop);
+ const total=maxDuration(),a=api();previewActive=total>0;if(a){if(total>0&&a.setPreview)a.setPreview(buildPreview({animationTime:0}));else if(a.clearPreview)a.clearPreview()}updateTime(0,total);renderControls();if(!reset)status(t().statusStop);
 }
 function reset(){stop(false)}
 function updateTime(v,total){if(E('blockingTime'))E('blockingTime').textContent=(v||0).toFixed(1)+' / '+(total||0).toFixed(1)+' s'}
@@ -117,7 +117,7 @@ function addPoint(){
  b.path.push({x:Number(v.x)||0,y:Number(v.y)||0});save();renderAll();status(t().pointAdded);
 }
 function clearPath(){
- const o=selected();if(!usable(o))return;ensureBlocking(o).path=[];save();renderAll();status(t().pathCleared);
+ const o=selected();if(!usable(o))return;ensureBlocking(o).path=[];previewActive=false;const a=api();if(a&&a.clearPreview)a.clearPreview();save();renderAll();status(t().pathCleared);
 }
 function subjects(){
  const s=scene();return s?s.objects.filter(o=>o.type==='subject'):[];
@@ -155,13 +155,13 @@ function pathMarkup(){
   const sp=pts.map(p=>a.screenXY(p.x,p.y)),selectedId=a.getSelectedId&&a.getSelectedId(),sel=o.id===selectedId,col=o.type==='camera'?'#89c7ff':'#f5c542';
   if(sp.length>1){const poly=document.createElementNS('http://www.w3.org/2000/svg','polyline');poly.setAttribute('points',sp.map(p=>p.x+','+p.y).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke',col);poly.setAttribute('stroke-width',sel?'4':'2.5');poly.setAttribute('stroke-dasharray','10 7');poly.setAttribute('opacity',sel?'.95':'.55');poly.setAttribute('pointer-events','none');root.appendChild(poly)}
    const vo=a.getVisualObject?a.getVisualObject(o):o;
-   sp.forEach((p,i)=>{const c=document.createElementNS('http://www.w3.org/2000/svg','circle'),overObject=vo&&Math.hypot((Number(pts[i].x)||0)-(Number(vo.x)||0),(Number(pts[i].y)||0)-(Number(vo.y)||0))<0.12;c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',sel?'10':'7');c.setAttribute('fill','#11151b');c.setAttribute('stroke',col);c.setAttribute('stroke-width',sel?'4':'2');c.setAttribute('data-blocking-object',o.id);c.setAttribute('data-blocking-point',String(i));c.style.cursor=overObject?'default':'grab';if(overObject)c.setAttribute('pointer-events','none');root.appendChild(c);if(sel){const tx=document.createElementNS('http://www.w3.org/2000/svg','text');tx.setAttribute('x',p.x);tx.setAttribute('y',p.y-15);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size','12');tx.setAttribute('font-weight','800');tx.setAttribute('fill',col);tx.setAttribute('pointer-events','none');tx.textContent=(i===0?'START ':i===sp.length-1?'END ':'')+(i+1);root.appendChild(tx)}});
+   sp.forEach((p,i)=>{const c=document.createElementNS('http://www.w3.org/2000/svg','circle'),overObject=vo&&Math.hypot((Number(pts[i].x)||0)-(Number(vo.x)||0),(Number(pts[i].y)||0)-(Number(vo.y)||0))<0.12;c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',sel?'10':'7');c.setAttribute('fill','#11151b');c.setAttribute('stroke',col);c.setAttribute('stroke-width',sel?'4':'2');c.setAttribute('data-blocking-object',o.id);c.setAttribute('data-blocking-point',String(i));c.style.cursor=overObject&&!previewActive?'default':'grab';if(overObject&&!previewActive)c.setAttribute('pointer-events','none');root.appendChild(c);if(sel){const tx=document.createElementNS('http://www.w3.org/2000/svg','text');tx.setAttribute('x',p.x);tx.setAttribute('y',p.y-15);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size','12');tx.setAttribute('font-weight','800');tx.setAttribute('fill',col);tx.setAttribute('pointer-events','none');tx.textContent=(i===0?'START ':i===sp.length-1?'END ':'')+(i+1);root.appendChild(tx)}});
  });
  svg.appendChild(root);
 }
 function renderAll(){renderControls();setTimeout(pathMarkup,0)}
 function pointerDown(ev){
- const n=ev.target&&ev.target.closest?ev.target.closest('[data-blocking-point]'):null;if(!n){if(!playing){const a=api();if(a&&a.clearPreview)a.clearPreview()}return;}
+ const target=ev.target,n=target&&target.getAttribute&&target.getAttribute('data-blocking-point')!==null?target:(target&&target.closest?target.closest('[data-blocking-point]'):null);if(!n){if(!playing){previewActive=false;const a=api();if(a&&a.clearPreview)a.clearPreview()}return;}
  dragWaypoint={objectId:n.getAttribute('data-blocking-object'),index:Number(n.getAttribute('data-blocking-point')),pointerId:ev.pointerId};
  const svg=E('setSketchSvg');try{svg.setPointerCapture(ev.pointerId)}catch(e){}ev.preventDefault();ev.stopPropagation();
 }

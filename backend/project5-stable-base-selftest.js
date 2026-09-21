@@ -192,6 +192,7 @@ const exactAllowed = new Set([
   'app/src/main/assets/control-dashboard.js',
   'app/src/main/assets/device-capabilities.js',
   'app/src/main/assets/shot-setup-report.js',
+  'app/src/main/assets/shot-setup-recovery.js',
   'app/src/main/assets/set-sketch.js',
   'app/src/main/assets/set-sketch-camera-fov.js',
   'app/src/main/assets/blocking-camera-designer.js',

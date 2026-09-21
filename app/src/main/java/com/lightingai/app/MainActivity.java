@@ -9,6 +9,8 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Location;
@@ -38,9 +40,12 @@ import android.widget.TextView;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
+import android.util.Base64;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -359,12 +364,8 @@ public class MainActivity extends Activity {
         pendingCameraCapture = cameraCapture;
         pendingGalleryPersistable = false;
         pendingFileChooser = uris -> {
-            if (webView == null) return;
-            String value = "";
-            if (uris != null && uris.length > 0 && uris[0] != null) value = JSONObject.quote(uris[0].toString());
-            final String jsValue = value.isEmpty() ? "null" : value;
-            webView.post(() -> webView.evaluateJavascript(
-                "window.LightingAIVisualPickedUri&&window.LightingAIVisualPickedUri(" + jsValue + ");", null));
+            Uri uri = uris != null && uris.length > 0 ? uris[0] : null;
+            deliverAIVisualImage(uri);
         };
         if (cameraCapture) {
             if (!hasCameraPermission()) {
@@ -376,6 +377,66 @@ public class MainActivity extends Activity {
             return;
         }
         openGalleryForWebView(null);
+    }
+
+    private void deliverAIVisualImage(Uri uri) {
+        if (webView == null) return;
+        if (uri == null) {
+            webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAIVisualPickedData&&window.LightingAIVisualPickedData(null);", null));
+            return;
+        }
+        new Thread(() -> {
+            Bitmap bitmap = null;
+            Bitmap scaled = null;
+            try {
+                BitmapFactory.Options bounds = new BitmapFactory.Options();
+                bounds.inJustDecodeBounds = true;
+                try (InputStream input = getContentResolver().openInputStream(uri)) {
+                    if (input == null) throw new IllegalStateException("Image input unavailable");
+                    BitmapFactory.decodeStream(input, null, bounds);
+                }
+                int maxSide = Math.max(bounds.outWidth, bounds.outHeight);
+                int sample = 1;
+                while (maxSide > 0 && maxSide / sample > 2200) sample *= 2;
+
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = Math.max(1, sample);
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                try (InputStream input = getContentResolver().openInputStream(uri)) {
+                    if (input == null) throw new IllegalStateException("Image input unavailable");
+                    bitmap = BitmapFactory.decodeStream(input, null, options);
+                }
+                if (bitmap == null) throw new IllegalStateException("Image decode failed");
+
+                int width = bitmap.getWidth();
+                int height = bitmap.getHeight();
+                int longest = Math.max(width, height);
+                Bitmap output = bitmap;
+                if (longest > 1600) {
+                    float scale = 1600f / longest;
+                    int outW = Math.max(1, Math.round(width * scale));
+                    int outH = Math.max(1, Math.round(height * scale));
+                    scaled = Bitmap.createScaledBitmap(bitmap, outW, outH, true);
+                    output = scaled;
+                }
+
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                if (!output.compress(Bitmap.CompressFormat.JPEG, 86, bytes)) {
+                    throw new IllegalStateException("Image compression failed");
+                }
+                String dataUrl = "data:image/jpeg;base64," + Base64.encodeToString(bytes.toByteArray(), Base64.NO_WRAP);
+                String quoted = JSONObject.quote(dataUrl);
+                webView.post(() -> webView.evaluateJavascript(
+                    "window.LightingAIVisualPickedData&&window.LightingAIVisualPickedData(" + quoted + ");", null));
+            } catch (Exception e) {
+                webView.post(() -> webView.evaluateJavascript(
+                    "window.LightingAIVisualPickedData&&window.LightingAIVisualPickedData(null);", null));
+            } finally {
+                if (scaled != null && scaled != bitmap && !scaled.isRecycled()) scaled.recycle();
+                if (bitmap != null && !bitmap.isRecycled()) bitmap.recycle();
+            }
+        }, "LightingAI-AI-Image").start();
     }
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {

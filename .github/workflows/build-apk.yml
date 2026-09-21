@@ -91,20 +91,33 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Restore stable review signing key
+        id: review-signing-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.lightingai-review/lightingai-review.p12
+          key: lightingai-review-signing-v1
+
       - name: Prepare stable review signing
         shell: bash
-        env:
-          KEYSTORE_B64: ${{ secrets.LIGHTINGAI_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          test -n "$KEYSTORE_B64" || { echo "Missing LIGHTINGAI_KEYSTORE_BASE64"; exit 1; }
-          test -n "$STORE_PASSWORD" || { echo "Missing LIGHTINGAI_KEYSTORE_PASSWORD"; exit 1; }
-          test -n "$KEY_ALIAS" || { echo "Missing LIGHTINGAI_KEY_ALIAS"; exit 1; }
-          test -n "$KEY_PASSWORD" || { echo "Missing LIGHTINGAI_KEY_PASSWORD"; exit 1; }
-          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lightingai-review.jks"
+          mkdir -p "$HOME/.lightingai-review"
+          KEYSTORE="$HOME/.lightingai-review/lightingai-review.p12"
+          if [ ! -s "$KEYSTORE" ]; then
+            keytool -genkeypair -noprompt \
+              -storetype PKCS12 \
+              -keystore "$KEYSTORE" \
+              -storepass lightingai-review \
+              -alias lightingai-review \
+              -keypass lightingai-review \
+              -keyalg RSA \
+              -keysize 3072 \
+              -validity 10000 \
+              -dname "CN=LightingAI Review,O=LightingAI,C=RS"
+          fi
+          keytool -list -keystore "$KEYSTORE" -storepass lightingai-review -alias lightingai-review >/dev/null
+          echo "Stable review signing key ready"
 
 
       - name: Collect Android lint report
@@ -120,10 +133,10 @@ jobs:
 
       - name: Build stable-signed review APK
         env:
-          LIGHTINGAI_KEYSTORE_PATH: ${{ runner.temp }}/lightingai-review.jks
-          LIGHTINGAI_KEYSTORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
-          LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
-          LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
+          LIGHTINGAI_KEYSTORE_PATH: ${{ env.HOME }}/.lightingai-review/lightingai-review.p12
+          LIGHTINGAI_KEYSTORE_PASSWORD: lightingai-review
+          LIGHTINGAI_KEY_ALIAS: lightingai-review
+          LIGHTINGAI_KEY_PASSWORD: lightingai-review
         run: |
           gradle assembleDebug \
             -PreleaseVersionCode=${GITHUB_RUN_NUMBER} \

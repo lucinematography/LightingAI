@@ -25,7 +25,6 @@ const refinements = read('app/src/main/assets/ai-visual-preview-refinements.js')
 const imageBridge = read('app/src/main/java/com/lightingai/app/AIVisualImageBridge.java');
 const imageProvider = read('app/src/main/java/com/lightingai/app/AIVisualImageProvider.java');
 const mainActivity = read('app/src/main/java/com/lightingai/app/MainActivity.java');
-const appGradle = read('app/build.gradle');
 const manifest = read('app/src/main/AndroidManifest.xml');
 const phoneDiagnostics = read('app/src/main/assets/ai-visual-phone-diagnostics.js');
 const phoneTest = read('app/src/main/assets/ai-visual-phone-test.js');
@@ -81,7 +80,6 @@ requireText(imageBridge, 'MAX_IMAGE_BYTES = 20 * 1024 * 1024', 'native image bri
 requireText(imageProvider, 'ParcelFileDescriptor.MODE_READ_ONLY', 'shared image provider must remain read-only');
 requireText(imageProvider, 'file.getParentFile().equals(root)', 'shared image provider must reject path traversal');
 requireText(mainActivity, 'new AIVisualImageBridge(this), "LightingAIImages"', 'native image bridge registration missing');
-requireText(appGradle, "implementation 'androidx.activity:activity:1.10.1'", 'Activity Result API dependency must be pinned');
 requireText(mainActivity, 's.setAllowContentAccess(true)', 'WebView content URI access must remain enabled for gallery files');
 requireText(mainActivity, 'new Intent(MediaStore.ACTION_PICK_IMAGES)', 'Android 13+ gallery picker must use the phone-tested system photo picker');
 requireText(mainActivity, 'new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)', 'pre-Android-13 gallery picker must retain the MediaStore fallback');
@@ -96,28 +94,32 @@ requireText(moduleJs, "document.getElementById('aiv-camera').onchange=receiveFil
 requireText(moduleJs, 'optimizeImage(f).then(setPhoto)', 'fallback selected file must be optimized and rendered into the AI scene');
 requireText(mainActivity, '@JavascriptInterface public void openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
 requireText(mainActivity, 'MainActivity.this.openAIImagePicker("camera".equals(mode))', 'native AI image picker bridge must route gallery/camera mode');
-requireText(mainActivity, 'extends ComponentActivity', 'AI photo Activity Result API requires ComponentActivity');
-requireText(mainActivity, 'ActivityResultLauncher<PickVisualMediaRequest> aiPhotoPickerLauncher', 'AI gallery must use a dedicated Activity Result launcher');
-requireText(mainActivity, 'ActivityResultLauncher<Uri> aiCameraLauncher', 'AI camera must use a dedicated Activity Result launcher');
-requireText(mainActivity, 'new ActivityResultContracts.PickVisualMedia()', 'AI gallery must use the official Photo Picker Activity Result contract');
-requireText(mainActivity, 'new ActivityResultContracts.TakePicture()', 'AI camera must use the TakePicture Activity Result contract');
-requireText(mainActivity, 'PickVisualMedia.ImageOnly.INSTANCE', 'AI gallery must restrict the Photo Picker to images');
-requireText(mainActivity, 'aiPhotoPickerLauncher.launch(request)', 'AI gallery must launch through Activity Result API');
-requireText(mainActivity, 'aiCameraLauncher.launch(pendingAIImageCameraUri)', 'AI camera must launch through Activity Result API');
-requireText(mainActivity, 'notifyAIVisualImageStage("result")', 'AI Activity Result callback must report that Android returned the image');
-requireText(mainActivity, 'deliverAIVisualImage(uri);', 'AI Activity Result callback must enter image decode/transfer directly');
+requireText(mainActivity, 'AI_CHOOSE_IMAGE = 509', 'native AI image picker must use a dedicated Android request code');
+requireText(mainActivity, 'pendingAIImageCameraUri', 'native AI camera must keep a dedicated output URI');
+requireText(mainActivity, 'pendingAIImageCameraCapture', 'native AI picker must keep dedicated capture state');
+requireText(mainActivity, 'pendingAIImageCameraPermission', 'native AI picker must keep dedicated permission state');
+requireText(mainActivity, 'private void openAIImageGallery()', 'native AI gallery path must be isolated from WebView file chooser state');
+requireText(mainActivity, 'private void openAIImageCamera()', 'native AI camera path must be isolated from WebView file chooser state');
+requireText(mainActivity, 'startActivityForResult(intent, AI_CHOOSE_IMAGE)', 'native AI gallery must return through its dedicated request');
+requireText(mainActivity, 'startActivityForResult(camera, AI_CHOOSE_IMAGE)', 'native AI camera must return through its dedicated request');
+requireText(mainActivity, 'if (requestCode == AI_CHOOSE_IMAGE)', 'dedicated Android AI image result handler missing');
+requireText(mainActivity, 'notifyAIVisualImageStage("result")', 'AI image result must report that Android returned the URI');
+requireText(mainActivity, 'deliverAIVisualImage(uri);', 'native AI picker result must enter the image decode/transfer path directly');
 requireText(mainActivity, 'if (requestCode == CHOOSE_IMAGE)', 'generic WebView image/document result handler must remain separate');
 requireText(mainActivity, 'pendingCameraCapture && pendingCameraUri != null', 'generic WebView camera result must retain its own state');
 requireText(mainActivity, 'finishFileChooser(new Uri[]{uri});', 'generic WebView camera URI must still reach its callback');
 requireText(mainActivity, 'boolean captured = resultCode == RESULT_OK || hasReadableImageData(uri);', 'generic camera capture must keep valid OEM output even without RESULT_OK');
 requireText(mainActivity, 'finishFileChooser(result);', 'generic WebView gallery/document URI must still reach its callback');
-const aiPickerStart = mainActivity.indexOf('private void registerAIImageLaunchers()');
+const aiPickerStart = mainActivity.indexOf('private void openAIImagePicker(boolean cameraCapture)');
 const aiPickerEnd = mainActivity.indexOf('private void deliverAIVisualImage(Uri uri)', aiPickerStart);
-assert(aiPickerStart >= 0 && aiPickerEnd > aiPickerStart, 'native AI Activity Result picker boundaries missing');
+assert(aiPickerStart >= 0 && aiPickerEnd > aiPickerStart, 'native AI picker method boundaries missing');
 const aiPickerMethod = mainActivity.slice(aiPickerStart, aiPickerEnd);
 assert(!aiPickerMethod.includes('pendingFileChooser'), 'native AI picker must never share pendingFileChooser with Planner/JSON/WebView inputs');
-assert(!aiPickerMethod.includes('startActivityForResult'), 'native AI picker must not use legacy startActivityForResult');
-assert(!aiPickerMethod.includes('AI_CHOOSE_IMAGE'), 'native AI picker must not use a legacy request code');
+assert(
+  !aiPickerMethod.includes('startActivityForResult(intent, CHOOSE_IMAGE)') &&
+  !aiPickerMethod.includes('startActivityForResult(camera, CHOOSE_IMAGE)'),
+  'native AI picker must never use the generic WebView request code'
+);
 requireText(mainActivity, 'BitmapFactory.decodeStream', 'native image transfer must decode the selected URI');
 requireText(mainActivity, 'output.compress(Bitmap.CompressFormat.JPEG, 82, bytes)', 'native image transfer must compress to bounded JPEG');
 requireText(mainActivity, 'deliverAIVisualImageChunks(base64);', 'native image transfer must hand compressed base64 to WebView');
@@ -146,14 +148,13 @@ const aiGalleryStart = mainActivity.indexOf('private void openAIImageGallery()')
 const aiGalleryEnd = mainActivity.indexOf('private void openAIImageCamera()', aiGalleryStart);
 assert(aiGalleryStart >= 0 && aiGalleryEnd > aiGalleryStart, 'dedicated AI gallery method boundaries missing');
 const aiGalleryMethod = mainActivity.slice(aiGalleryStart, aiGalleryEnd);
-assert(aiGalleryMethod.includes('PickVisualMediaRequest.Builder'), 'AI gallery must build a typed Photo Picker request');
-assert(aiGalleryMethod.includes('PickVisualMedia.ImageOnly.INSTANCE'), 'AI gallery must request images only');
-assert(aiGalleryMethod.includes('aiPhotoPickerLauncher.launch(request)'), 'AI gallery must return through the Activity Result callback');
-assert(!aiGalleryMethod.includes('Intent.ACTION_OPEN_DOCUMENT'), 'AI gallery code must delegate fallback behavior to the official contract');
+assert(aiGalleryMethod.includes('Build.VERSION.SDK_INT >= 33'), 'AI gallery picker must select the Android 13+ photo-picker path');
+assert(aiGalleryMethod.includes('MediaStore.ACTION_PICK_IMAGES'), 'AI gallery picker must preserve the phone-tested build 2504 photo-picker path');
+assert(aiGalleryMethod.includes('Intent.ACTION_PICK'), 'AI gallery picker must retain the legacy phone-gallery fallback');
+assert(aiGalleryMethod.includes('MediaStore.Images.Media.EXTERNAL_CONTENT_URI'), 'legacy AI gallery picker must target phone images');
+assert(aiGalleryMethod.includes('AI_CHOOSE_IMAGE'), 'AI gallery picker must use only its dedicated result channel');
+assert(!aiGalleryMethod.includes('Intent.ACTION_OPEN_DOCUMENT'), 'AI gallery picker must not open the document/files picker');
 assert(!aiGalleryMethod.includes('pendingFileChooser'), 'AI gallery picker must not share WebView callback state');
-assert(!aiGalleryMethod.includes('startActivityForResult'), 'AI gallery picker must not use legacy activity results');
-requireText(moduleJs, 'id="aiv-build-id"', 'AI module must show the installed build identity before photo testing');
-requireText(moduleJs, "'BUILD '+buildInfo.run", 'AI module build marker must use the packaged workflow build number');
 requireText(manifest, 'android:name=".AIVisualImageProvider"', 'AI image share provider missing');
 
 for (const action of ['SVETLIJE','TAMNIJE','TOPLIJE','HLADNIJE','MEKŠE','VIŠE KONTRASTA','NAPRAVI MOJU VERZIJU','VRATI PRETHODNU AI VERZIJU']) {

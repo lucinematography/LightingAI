@@ -2,11 +2,8 @@ package com.lightingai.app;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import androidx.activity.ComponentActivity;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.PickVisualMediaRequest;
-import androidx.activity.result.contract.ActivityResultContracts;
 import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -56,7 +53,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class MainActivity extends ComponentActivity {
+public class MainActivity extends Activity {
     private WebView webView;
     private FrameLayout rootView;
     private View startupSplash;
@@ -67,9 +64,8 @@ public class MainActivity extends ComponentActivity {
     private boolean pendingPhotoCapturePermission = false;
     private boolean pendingGalleryPersistable = false;
     private Uri pendingAIImageCameraUri = null;
+    private boolean pendingAIImageCameraCapture = false;
     private boolean pendingAIImageCameraPermission = false;
-    private ActivityResultLauncher<PickVisualMediaRequest> aiPhotoPickerLauncher;
-    private ActivityResultLauncher<Uri> aiCameraLauncher;
     private NativeSunLocation nativeSunLocation;
     private NativeSunCompass nativeSunCompass;
     private boolean pendingNativeSunLocation = false;
@@ -102,11 +98,11 @@ public class MainActivity extends ComponentActivity {
     private static final int SPEECH_INPUT = 506;
     private static final int BLE_PERMISSION = 507;
     private static final int AUDIO_PERMISSION = 508;
+    private static final int AI_CHOOSE_IMAGE = 509;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        registerAIImageLaunchers();
         getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
         rootView = new FrameLayout(this);
@@ -379,34 +375,9 @@ public class MainActivity extends ComponentActivity {
             null));
     }
 
-    private void registerAIImageLaunchers() {
-        aiPhotoPickerLauncher = registerForActivityResult(
-            new ActivityResultContracts.PickVisualMedia(),
-            uri -> {
-                if (uri != null) notifyAIVisualImageStage("result");
-                deliverAIVisualImage(uri);
-            }
-        );
-        aiCameraLauncher = registerForActivityResult(
-            new ActivityResultContracts.TakePicture(),
-            success -> {
-                Uri uri = pendingAIImageCameraUri;
-                boolean captured = uri != null && (Boolean.TRUE.equals(success) || hasReadableImageData(uri));
-                pendingAIImageCameraPermission = false;
-                if (captured) {
-                    pendingAIImageCameraUri = null;
-                    notifyAIVisualImageStage("result");
-                    deliverAIVisualImage(uri);
-                } else {
-                    deletePendingAIImageCameraUri();
-                    deliverAIVisualImage(null);
-                }
-            }
-        );
-    }
-
     private void openAIImagePicker(boolean cameraCapture) {
         deletePendingAIImageCameraUri();
+        pendingAIImageCameraCapture = cameraCapture;
         pendingAIImageCameraPermission = false;
         if (cameraCapture) {
             if (!hasCameraPermission()) {
@@ -421,27 +392,35 @@ public class MainActivity extends ComponentActivity {
     }
 
     private void openAIImageGallery() {
-        if (aiPhotoPickerLauncher == null) {
-            deliverAIVisualImage(null);
-            return;
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= 33) {
+            intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+            intent.setType("image/*");
+        } else {
+            intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
         }
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
-            PickVisualMediaRequest request = new PickVisualMediaRequest.Builder()
-                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
-                .build();
-            aiPhotoPickerLauncher.launch(request);
-        } catch (Exception ignored) {
-            deliverAIVisualImage(null);
+            startActivityForResult(intent, AI_CHOOSE_IMAGE);
+        } catch (ActivityNotFoundException primaryError) {
+            try {
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                fallback.setType("image/*");
+                fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivityForResult(fallback, AI_CHOOSE_IMAGE);
+            } catch (Exception ignored) {
+                pendingAIImageCameraCapture = false;
+                deliverAIVisualImage(null);
+            }
         }
     }
 
     private void openAIImageCamera() {
         pendingAIImageCameraPermission = false;
         deletePendingAIImageCameraUri();
-        if (aiCameraLauncher == null) {
-            deliverAIVisualImage(null);
-            return;
-        }
+        Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         try {
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.DISPLAY_NAME, "LightingAI_AI_scene_" + System.currentTimeMillis() + ".jpg");
@@ -451,9 +430,23 @@ public class MainActivity extends ComponentActivity {
             }
             pendingAIImageCameraUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
             if (pendingAIImageCameraUri == null) throw new IllegalStateException("Could not create AI camera output URI");
-            aiCameraLauncher.launch(pendingAIImageCameraUri);
+
+            camera.putExtra(MediaStore.EXTRA_OUTPUT, pendingAIImageCameraUri);
+            camera.setClipData(ClipData.newRawUri("LightingAI AI scene", pendingAIImageCameraUri));
+            camera.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            for (ResolveInfo info : getPackageManager().queryIntentActivities(camera, PackageManager.MATCH_DEFAULT_ONLY)) {
+                if (info != null && info.activityInfo != null && info.activityInfo.packageName != null) {
+                    grantUriPermission(
+                        info.activityInfo.packageName,
+                        pendingAIImageCameraUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    );
+                }
+            }
+            startActivityForResult(camera, AI_CHOOSE_IMAGE);
         } catch (Exception e) {
             deletePendingAIImageCameraUri();
+            pendingAIImageCameraCapture = false;
             deliverAIVisualImage(null);
         }
     }
@@ -1305,7 +1298,10 @@ public class MainActivity extends ComponentActivity {
             if (pendingAIImageCameraPermission) {
                 pendingAIImageCameraPermission = false;
                 if (granted) openAIImageCamera();
-                else deliverAIVisualImage(null);
+                else {
+                    pendingAIImageCameraCapture = false;
+                    deliverAIVisualImage(null);
+                }
             }
         } else if (requestCode == LOCATION_PERMISSION) {
             if (pendingNativeSunLocation) {
@@ -1381,6 +1377,44 @@ public class MainActivity extends ComponentActivity {
             return;
         }
 
+        if (requestCode == AI_CHOOSE_IMAGE) {
+            if (pendingAIImageCameraCapture) {
+                Uri uri = pendingAIImageCameraUri;
+                boolean captured = uri != null && (resultCode == RESULT_OK || hasReadableImageData(uri));
+                pendingAIImageCameraCapture = false;
+                pendingAIImageCameraPermission = false;
+                if (captured) {
+                    pendingAIImageCameraUri = null;
+                    notifyAIVisualImageStage("result");
+                    deliverAIVisualImage(uri);
+                } else {
+                    deletePendingAIImageCameraUri();
+                    deliverAIVisualImage(null);
+                }
+                return;
+            }
+
+            Uri uri = null;
+            if (resultCode == RESULT_OK) {
+                if (data != null && data.getData() != null) {
+                    uri = data.getData();
+                }
+                if (uri == null && data != null && data.getClipData() != null && data.getClipData().getItemCount() > 0) {
+                    ClipData.Item item = data.getClipData().getItemAt(0);
+                    if (item != null) uri = item.getUri();
+                }
+                if (uri == null) {
+                    Uri[] parsed = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                    if (parsed != null && parsed.length > 0) uri = parsed[0];
+                }
+            }
+            pendingAIImageCameraCapture = false;
+            pendingAIImageCameraPermission = false;
+            if (uri != null) notifyAIVisualImageStage("result");
+            deliverAIVisualImage(uri);
+            return;
+        }
+
         if (requestCode == CHOOSE_IMAGE) {
             if (pendingCameraCapture && pendingCameraUri != null) {
                 Uri uri = pendingCameraUri;
@@ -1430,6 +1464,7 @@ public class MainActivity extends ComponentActivity {
         artNetLiveEngine.stopAll();
         if (pendingFileChooser != null) finishFileChooser(null);
         deletePendingAIImageCameraUri();
+        pendingAIImageCameraCapture = false;
         pendingAIImageCameraPermission = false;
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();

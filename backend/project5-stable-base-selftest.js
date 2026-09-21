@@ -236,7 +236,7 @@ for (const marker of [
 
 const blockingDesigner = git(['show', 'HEAD:app/src/main/assets/blocking-camera-designer.js']);
 for (const marker of [
-  "window.LightingAIBlocking={version:'0.4-persist-framing'",
+  "window.LightingAIBlocking={version:'0.5-compact-tracking'",
   'requestAnimationFrame(tick)',
   'function addPoint()',
   'function pointerMove(ev)',
@@ -246,6 +246,8 @@ for (const marker of [
   'prepareTrackingOffsets()',
   "FRAMING_KEY='lighting_blocking_camera_framing_v1'",
   'function persistFraming()',
+  'blocking-track-quick',
+  'box.innerHTML=tracking+',
   "renderControls();pathMarkup()",
   'a.setPreview(buildPreview'
 ]) {

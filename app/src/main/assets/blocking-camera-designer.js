@@ -84,13 +84,17 @@ function buildPreview(progress){
 function maxDuration(){
  const s=scene();if(!s)return 0;let m=0;s.objects.forEach(o=>{const b=o.blocking;if(usable(o)&&b&&Array.isArray(b.path)&&b.path.length>=2)m=Math.max(m,Number(b.durationSec)||5)});return m;
 }
+function finishAtEnd(total){
+ cancelAnimationFrame(raf);playing=false;paused=false;pauseAt=0;
+ const a=api();renderControls();if(a&&a.setPreview)a.setPreview(buildPreview({animationTime:total}));updateTime(total,total);
+}
 function tick(now){
  if(!playing||paused)return;
  const total=maxDuration();if(!(total>0)){stop(true);status(t().need);return}
  const elapsed=(now-startMs)/1000;
  const a=api();if(a&&a.setPreview)a.setPreview(buildPreview({animationTime:Math.min(elapsed,total)}));
  updateTime(Math.min(elapsed,total),total);
- if(elapsed>=total){stop(true);return}
+ if(elapsed>=total){finishAtEnd(total);return}
  raf=requestAnimationFrame(tick);
 }
 function play(){

@@ -48,8 +48,26 @@ var SAPA_POWER=[
 {id:'sapa-monofazni-kablovi',name:'Monofazni Kablovi'},{id:'sapa-trofazni-kablovi',name:'Trofazni Kablovi'},{id:'sapa-suko-razvodnik',name:'Šuko Razvodnik'},{id:'sapa-adapter-32a-220v-3x16a-220v',name:'Adapter 32A 220V/3x16A 220V'},{id:'sapa-razvodna-125-2x63-125',name:'Razvodna Tabla 125A 380V/2x63A 380V/125A 380V'},{id:'sapa-razvodna-125-2x63',name:'Razvodna Tabla 125A 380V/2x63A 380V'},{id:'sapa-razvodna-125-2x125-2x63-125',name:'Razvodna Tabla 125A 380V/2x125A 220V/2x63A 380V/125A 380V'},{id:'sapa-razvodna-63-6x32-63-63',name:'Razvodna Tabla 63A 380V/6x32A 220V/63A 380V/63A 220V'},{id:'sapa-razvodna-63-63-32-3x32-4x16',name:'Razvodna Tabla 63A 380V/63A 380V/32A 380V/3x32A 220V/4x16A 220V'},{id:'sapa-razvodna-63-2x32-6x16-63',name:'Razvodna Tabla 63A 380V/2x32A 380V/6x16A 220V/63A 380V'},{id:'sapa-razvodna-63-2x32',name:'Razvodna Tabla 63A 380V/2x32A 380V'},{id:'sapa-razvodna-63-6x32-63',name:'Razvodna Tabla 63A 380V/6x32A 220V/63A 380V'},{id:'sapa-razvodna-63-3x32',name:'Razvodna Tabla 63A 380V/3x32A 380V'},{id:'sapa-razvodna-63-3x63-220',name:'Razvodna Tabla 63A 380V/3x63A 220V'},{id:'sapa-racva-63-2x63',name:'Račva 63A 380V/2x63A 380V'},{id:'sapa-razvodna-32-3x32-a',name:'Razvodna Tabla 32A 380V / 3x32A 220V'},{id:'sapa-razvodna-32-3x32-b',name:'Razvodna Tabla 32A 380V / 3x32A 220V'},{id:'sapa-razvodna-32-6x16',name:'Razvodna Tabla 32A 380V / 6x16A 220V'},{id:'sapa-adapter-125-2x63',name:'Adapter 125A 380V/2x63A 380V'},{id:'sapa-adapter-125-63',name:'Adapter 125A 380V/63A 380V'},{id:'sapa-adapter-125-125-220-l2',name:'Adapter 125A/125A 220V L2'},{id:'sapa-adapter-125-220-2x63-220',name:'Adapter 125A 220V/2x63A 220V'},{id:'sapa-adapter-380-63-32',name:'Adapter 380V/63A na 32A 380V'},{id:'sapa-adapter-63-380-2x32-380',name:'Adapter 63A 380V/2x32A 380V'},{id:'sapa-adapter-63-220-2x32-220',name:'Adapter 63A 220V/2x32A 220V'},{id:'sapa-adapter-63-220-32-380',name:'Adapter 63A 220V/32A 380V'},{id:'sapa-adapter-32-380-2x16-380',name:'Adapter 32A 380V/2x16A 380V'},{id:'sapa-kontra-63-380-125-380',name:'Kontra Adapter 63A 380V/125A 380V'},{id:'sapa-adapter-32-380-32-220',name:'Adapter 32A 380V/32A 220V'},{id:'sapa-adapter-32-380-2x32-220',name:'Adapter 32A 380V/2x32A 220V'},{id:'sapa-kontra-16-220-32-220',name:'Kontra Adapter 16A 220V/32A 220V'},{id:'sapa-kontra-32-220-63-220',name:'Kontra Adapter 32A 220V/63A 220V'},{id:'sapa-kontra-32-380-63-380',name:'Kontra Adapter 32A 380V/63A 380V'},{id:'sapa-agregat-eu20',name:'Agregat EU20'},{id:'sapa-agregat-eu30',name:'Agregat EU30'},{id:'sapa-bmz-power2go',name:'BMZ POWER2GO'},{id:'sapa-agregat-eu70',name:'Agregat EU70'},{id:'sapa-cross-cable',name:'Cross Cable'}
 ];
 var SAPA_STANDS=[
-{id:'sapa-dedolight-stand',name:'Dedolight Stand'}
-];
+{id:'sapa-c-stand-mali',name:'C-Stand Mali'},
+{id:'sapa-c-stand-srednji',name:'C-Stand Srednji'},
+{id:'sapa-c-stand-veliki',name:'C-Stand Veliki'},
+{id:'sapa-combo-stand-35',name:'Combo Stand 35'},
+{id:'sapa-combo-stand-45',name:'Combo Stand 45'},
+{id:'sapa-baby-stand-45',name:'Baby Stand 45'},
+{id:'sapa-low-boy',name:'Low Boy'},
+{id:'sapa-mini-low-boy',name:'Mini Low Boy'},
+{id:'sapa-manfroto-junior-stand',name:'Manfroto Junior Stand'},
+{id:'sapa-manfroto-senior-stand',name:'Manfroto Senior Stand'},
+{id:'sapa-super-wind-up-stands',name:'Super Wind Up Stands'},
+{id:'sapa-wind-up-stands',name:'Wind Up Stands'},
+{id:'sapa-overhead-large-wide-base',name:'Overhead Large Wide Base'},
+{id:'sapa-overhead-medium-roller',name:'Overhead Medium Roller'},
+{id:'sapa-long-john',name:'Long John'},
+{id:'sapa-long-john-junior',name:'Long John Junior'},
+{id:'sapa-strato-safe-4-riser',name:'Strato Safe 4 Riser'},
+{id:'sapa-strato-safe-stand-43',name:'Strato Safe Stand 43'},
+{id:'sapa-strato-safe-baby',name:'Strato Safe Baby'}
+]
 var SAPA_DIMMERS=[
 {id:'sapa-dimer-12x16a-220v',name:'Dimer 12x16A 220V'},{id:'sapa-dimer-16a-220v-a',name:'Dimer 16A 220V'},{id:'sapa-dimer-16a-220v-b',name:'Dimer 16A 220V'},{id:'sapa-dimer-25a-220v',name:'Dimer 25A 220V'},{id:'sapa-dimer-3x63a-220v',name:'Dimer 3x63A 220V'},{id:'sapa-dimer-63a-220v',name:'Dimer 63A 220V'},{id:'sapa-dimer-6x16a-220v',name:'Dimer 6x16A 220V'},{id:'sapa-dimer-6x32a-220v',name:'Dimer 6x32A 220V'}
 ];

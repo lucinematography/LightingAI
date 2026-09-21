@@ -156,19 +156,25 @@ function pathMarkup(){
   const sp=pts.map(p=>a.screenXY(p.x,p.y)),selectedId=a.getSelectedId&&a.getSelectedId(),sel=o.id===selectedId,col=o.type==='camera'?'#89c7ff':'#f5c542';
   if(sp.length>1){const poly=document.createElementNS('http://www.w3.org/2000/svg','polyline');poly.setAttribute('points',sp.map(p=>p.x+','+p.y).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke',col);poly.setAttribute('stroke-width',sel?'4':'2.5');poly.setAttribute('stroke-dasharray','10 7');poly.setAttribute('opacity',sel?'.95':'.55');poly.setAttribute('pointer-events','none');root.appendChild(poly)}
    const vo=a.getVisualObject?a.getVisualObject(o):o;
-   sp.forEach((p,i)=>{const c=document.createElementNS('http://www.w3.org/2000/svg','circle'),overObject=vo&&Math.hypot((Number(pts[i].x)||0)-(Number(vo.x)||0),(Number(pts[i].y)||0)-(Number(vo.y)||0))<0.12;c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',sel?'13':'9');c.setAttribute('fill','#11151b');c.setAttribute('stroke',col);c.setAttribute('stroke-width',sel?'4':'2');c.setAttribute('data-blocking-object',o.id);c.setAttribute('data-blocking-point',String(i));c.style.cursor=overObject&&!previewActive?'default':'grab';if(overObject&&!previewActive)c.setAttribute('pointer-events','none');root.appendChild(c);if(sel){const tx=document.createElementNS('http://www.w3.org/2000/svg','text');tx.setAttribute('x',p.x);tx.setAttribute('y',p.y-20);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size','16');tx.setAttribute('font-weight','800');tx.setAttribute('fill',col);tx.setAttribute('pointer-events','none');tx.textContent=(i===0?'START ':i===sp.length-1?'END ':'')+(i+1);root.appendChild(tx)}});
+   sp.forEach((p,i)=>{
+    const overObject=vo&&Math.hypot((Number(pts[i].x)||0)-(Number(vo.x)||0),(Number(pts[i].y)||0)-(Number(vo.y)||0))<0.18,handleDx=overObject?58:0,handleDy=overObject?-6:0,hx=p.x+handleDx,hy=p.y+handleDy;
+    if(overObject){const link=document.createElementNS('http://www.w3.org/2000/svg','line');link.setAttribute('x1',p.x);link.setAttribute('y1',p.y);link.setAttribute('x2',hx);link.setAttribute('y2',hy);link.setAttribute('stroke',col);link.setAttribute('stroke-width','2.5');link.setAttribute('stroke-dasharray','5 4');link.setAttribute('opacity','.85');link.setAttribute('pointer-events','none');root.appendChild(link)}
+    const hit=document.createElementNS('http://www.w3.org/2000/svg','circle');hit.setAttribute('cx',hx);hit.setAttribute('cy',hy);hit.setAttribute('r',sel?'22':'18');hit.setAttribute('fill','transparent');hit.setAttribute('data-blocking-object',o.id);hit.setAttribute('data-blocking-point',String(i));hit.setAttribute('data-handle-dx',String(handleDx));hit.setAttribute('data-handle-dy',String(handleDy));hit.style.cursor='grab';root.appendChild(hit);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('cx',hx);c.setAttribute('cy',hy);c.setAttribute('r',sel?'13':'9');c.setAttribute('fill','#11151b');c.setAttribute('stroke',col);c.setAttribute('stroke-width',sel?'4':'2');c.setAttribute('pointer-events','none');root.appendChild(c);
+    if(sel){const tx=document.createElementNS('http://www.w3.org/2000/svg','text');tx.setAttribute('x',hx);tx.setAttribute('y',hy-20);tx.setAttribute('text-anchor','middle');tx.setAttribute('font-size','16');tx.setAttribute('font-weight','800');tx.setAttribute('fill',col);tx.setAttribute('stroke','#0d0f12');tx.setAttribute('stroke-width','4');tx.setAttribute('paint-order','stroke');tx.setAttribute('pointer-events','none');tx.textContent=(i===0?'START ':i===sp.length-1?'END ':'')+(i+1);root.appendChild(tx)}
+   });
  });
  svg.appendChild(root);
 }
 function renderAll(){renderControls();setTimeout(pathMarkup,0)}
 function pointerDown(ev){
  const target=ev.target,n=target&&target.getAttribute&&target.getAttribute('data-blocking-point')!==null?target:(target&&target.closest?target.closest('[data-blocking-point]'):null);if(!n){if(!playing){previewActive=false;const a=api();if(a&&a.clearPreview)a.clearPreview()}return;}
- dragWaypoint={objectId:n.getAttribute('data-blocking-object'),index:Number(n.getAttribute('data-blocking-point')),pointerId:ev.pointerId};
+  dragWaypoint={objectId:n.getAttribute('data-blocking-object'),index:Number(n.getAttribute('data-blocking-point')),pointerId:ev.pointerId,handleDx:Number(n.getAttribute('data-handle-dx'))||0,handleDy:Number(n.getAttribute('data-handle-dy'))||0};
  const svg=E('setSketchSvg');try{svg.setPointerCapture(ev.pointerId)}catch(e){}ev.preventDefault();ev.stopPropagation();
 }
 function pointerMove(ev){
  if(!dragWaypoint||dragWaypoint.pointerId!==ev.pointerId)return;const s=scene(),a=api();if(!s||!a||!a.roomPointFromClient)return;
- const o=s.objects.find(x=>x.id===dragWaypoint.objectId),p=a.roomPointFromClient(ev.clientX,ev.clientY);if(!o||!p)return;
+  const svg=E('setSketchSvg'),rect=svg&&svg.getBoundingClientRect?svg.getBoundingClientRect():null,dx=rect?dragWaypoint.handleDx/1000*rect.width:0,dy=rect?dragWaypoint.handleDy/700*rect.height:0,o=s.objects.find(x=>x.id===dragWaypoint.objectId),p=a.roomPointFromClient(ev.clientX-dx,ev.clientY-dy);if(!o||!p)return;
  const b=ensureBlocking(o);if(!b.path[dragWaypoint.index])return;b.path[dragWaypoint.index]={x:p.x,y:p.y};save();pathMarkup();ev.preventDefault();ev.stopPropagation();
 }
 function pointerEnd(ev){

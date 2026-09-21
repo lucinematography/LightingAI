@@ -57,11 +57,12 @@ for(const marker of [
 ]) assert.ok(sun.includes(marker), 'SUNCE contract missing: '+marker);
 
 for(const marker of [
-  "window.LightingAIBlockingAI={version:'1.0-confirmed-proposals'",
+  "window.LightingAIBlockingAI={version:'1.1-launcher-open'",
   'function applyProposal(id,quiet)',
   'if(!confirm(t().confirmAll))return'
 ]) assert.ok(ai.includes(marker), 'AI confirmation contract missing: '+marker);
 assert.ok(!ai.includes('applyAll();analyze('), 'AI proposals must not auto-apply');
+assert.ok(ai.includes('LightingAIVisualSceneLauncher'), 'Blocking AI must fall back to the AI Visual Scene launcher');
 
 for(const marker of [
   "window.LightingAIShotList={version:'1.2-shot-restore'",

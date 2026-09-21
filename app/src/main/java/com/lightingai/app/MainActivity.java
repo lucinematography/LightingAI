@@ -191,6 +191,9 @@ public class MainActivity extends Activity {
                     }
                     return openCameraForWebView();
                 }
+                if (requiresDocumentPicker(fileChooserParams)) {
+                    return openDocumentForWebView(fileChooserParams);
+                }
                 return openGalleryForWebView(fileChooserParams);
             }
         });
@@ -460,6 +463,62 @@ public class MainActivity extends Activity {
             webView.evaluateJavascript(
                 "window.LightingAIVisualImageTransferEnd&&window.LightingAIVisualImageTransferEnd();", null);
         });
+    }
+
+    private boolean requiresDocumentPicker(WebChromeClient.FileChooserParams params) {
+        if (params == null) return false;
+        String[] acceptTypes = params.getAcceptTypes();
+        if (acceptTypes == null || acceptTypes.length == 0) return false;
+        for (String accept : acceptTypes) {
+            if (accept == null) continue;
+            for (String raw : accept.split(",")) {
+                String type = raw == null ? "" : raw.trim().toLowerCase(java.util.Locale.US);
+                if (type.isEmpty() || "*/*".equals(type)) continue;
+                if ("image/*".equals(type) || type.startsWith("image/")) continue;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String documentMimeType(WebChromeClient.FileChooserParams params) {
+        if (params == null) return "*/*";
+        String[] acceptTypes = params.getAcceptTypes();
+        if (acceptTypes == null) return "*/*";
+        for (String accept : acceptTypes) {
+            if (accept == null) continue;
+            for (String raw : accept.split(",")) {
+                String type = raw == null ? "" : raw.trim().toLowerCase(java.util.Locale.US);
+                if (".json".equals(type) || type.endsWith("+json")) return "application/json";
+                if (type.contains("/") && !type.startsWith("image/") && !"*/*".equals(type)) return type;
+            }
+        }
+        return "*/*";
+    }
+
+    private boolean openDocumentForWebView(WebChromeClient.FileChooserParams params) {
+        pendingGalleryPersistable = true;
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType(documentMimeType(params));
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        try {
+            startActivityForResult(intent, CHOOSE_IMAGE);
+            return true;
+        } catch (ActivityNotFoundException primaryError) {
+            try {
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                fallback.setType(documentMimeType(params));
+                fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                pendingGalleryPersistable = false;
+                startActivityForResult(fallback, CHOOSE_IMAGE);
+                return true;
+            } catch (Exception ignored) {
+                finishFileChooser(null);
+                return false;
+            }
+        }
     }
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {

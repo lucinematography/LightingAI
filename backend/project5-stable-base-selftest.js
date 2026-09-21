@@ -278,9 +278,22 @@ for (const marker of [
   'function cameraFraming()',
   'function blockingSun()',
   'function blockingAi()',
+  "documentType:'shot_setup'",
+  'function savePdf()',
+  'function sharePdf()',
   "['shotSetupBlockingLightsTile','BLOCKING LIGHT MAP']"
 ]) {
   if (!shotSetupBlocking.includes(marker)) fail(`Blocking Shot Setup marker missing: ${marker}`);
+}
+
+const imageBridgeBlocking = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/AIVisualImageBridge.java']);
+for (const marker of [
+  'if ("shot_setup".equals(payload.optString("documentType", ""))) return renderShotSetup();',
+  'private byte[] renderShotSetup() throws Exception',
+  'BLOCKING / CAMERA DESIGNER — SHOT SETUP',
+  'AI BLOCKING PROPOSALS — NOT APPLIED AUTOMATICALLY'
+]) {
+  if (!imageBridgeBlocking.includes(marker)) fail(`Blocking Shot Setup PDF marker missing: ${marker}`);
 }
 
 const cameraSetupsBlocking = git(['show', 'HEAD:app/src/main/assets/camera-setup-snapshots.js']);

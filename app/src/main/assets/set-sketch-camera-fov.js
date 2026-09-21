@@ -5,8 +5,8 @@ const KEY='lighting_set_sketch_v1';
 const E=id=>document.getElementById(id);
 const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
 const TXT={
-  sr:{title:'KADAR KAMERE / FOV',focal:'ŽIŽNA DALJINA (mm)',sensor:'ŠIRINA SENZORA (mm)',angle:'HORIZONTALNI FOV',width3:'ŠIRINA KADRA NA 3 m',width5:'ŠIRINA KADRA NA 5 m',presets:'BRZI OBJEKTIVI',actorPlane:'RAVAN GLUMCA',actorFrame:'KADAR KOD GLUMCA',inside:'U KADRU',outside:'VAN KADRA',hint:'Geometrijski horizontalni kadar na tlocrtu. Stvarna slika zavisi i od faktora izreza, odnosa stranica i kadriranja.'},
-  en:{title:'CAMERA FRAME / FOV',focal:'FOCAL LENGTH (mm)',sensor:'SENSOR WIDTH (mm)',angle:'HORIZONTAL FOV',width3:'FRAME WIDTH AT 3 m',width5:'FRAME WIDTH AT 5 m',presets:'QUICK LENSES',actorPlane:'ACTOR PLANE',actorFrame:'FRAME AT ACTOR',inside:'IN FRAME',outside:'OUT OF FRAME',hint:'Geometric horizontal frame on the floor plan. The real image also depends on crop factor, aspect ratio and framing.'}
+  sr:{title:'KADAR KAMERE / FOV',focal:'ŽIŽNA DALJINA (mm)',sensor:'ŠIRINA SENZORA (mm)',angle:'HORIZONTALNI FOV',width3:'ŠIRINA KADRA NA 3 m',width5:'ŠIRINA KADRA NA 5 m',presets:'BRZI OBJEKTIVI',actorPlane:'RAVAN GLUMCA',actorFrame:'KADAR KOD GLUMCA',inside:'U KADRU',outside:'VAN KADRA',centerOffset:'ODSTUPANJE OD CENTRA',edgeMargin:'REZERVA DO IVICE',centered:'CENTRIRAN',hint:'Geometrijski horizontalni kadar na tlocrtu. Stvarna slika zavisi i od faktora izreza, odnosa stranica i kadriranja.'},
+  en:{title:'CAMERA FRAME / FOV',focal:'FOCAL LENGTH (mm)',sensor:'SENSOR WIDTH (mm)',angle:'HORIZONTAL FOV',width3:'FRAME WIDTH AT 3 m',width5:'FRAME WIDTH AT 5 m',presets:'QUICK LENSES',actorPlane:'ACTOR PLANE',actorFrame:'FRAME AT ACTOR',inside:'IN FRAME',outside:'OUT OF FRAME',centerOffset:'CENTER OFFSET',edgeMargin:'EDGE MARGIN',centered:'CENTERED',hint:'Geometric horizontal frame on the floor plan. The real image also depends on crop factor, aspect ratio and framing.'}
 };
 const t=()=>TXT[lang()];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -56,8 +56,8 @@ function subjectInfo(scene,camera,angle){
     return {o,depth:v.x*dx+v.y*dy,lateral:v.x*px+v.y*py};
   }).filter(x=>x.depth>0.01).sort((a,b)=>a.depth-b.depth);
   if(!rows.length)return null;
-  const row=rows[0],frame=widthAt(angle,row.depth);
-  return {depth:row.depth,frame,inside:Math.abs(row.lateral)<=frame/2};
+  const row=rows[0],frame=widthAt(angle,row.depth),half=frame/2,offset=Math.abs(row.lateral),margin=half-offset;
+  return {depth:row.depth,frame,inside:offset<=half,lateral:row.lateral,centerOffset:offset,edgeMargin:margin,centered:offset<=Math.max(0.05,half*0.10),subjectId:row.o.id,subjectLabel:row.o.label||null};
 }
 function draw(){
   const svg=E('setSketchSvg'),bundle=activeBundle();if(!svg||!bundle)return;
@@ -76,7 +76,7 @@ function selectedCamera(){
 }
 function subjectMarkup(scene,camera,angle){
   const info=subjectInfo(scene,camera,angle);if(!info)return '';
-  return '<div id="setSketchSubjectFov" class="set-camera-subject-info"><div class="set-readout"><small>'+t().actorPlane+'</small><b>'+info.depth.toFixed(2)+' m</b></div><div class="set-readout"><small>'+t().actorFrame+'</small><b>'+info.frame.toFixed(2)+' m · '+(info.inside?t().inside:t().outside)+'</b></div></div>';
+  return '<div id="setSketchSubjectFov" class="set-camera-subject-info"><div class="set-readout"><small>'+t().actorPlane+'</small><b>'+info.depth.toFixed(2)+' m</b></div><div class="set-readout"><small>'+t().actorFrame+'</small><b>'+info.frame.toFixed(2)+' m · '+(info.inside?t().inside:t().outside)+'</b></div><div class="set-readout"><small>'+t().centerOffset+'</small><b>'+info.centerOffset.toFixed(2)+' m · '+(info.centered?t().centered:'')+'</b></div><div class="set-readout"><small>'+t().edgeMargin+'</small><b>'+(info.edgeMargin>=0?'+':'')+info.edgeMargin.toFixed(2)+' m</b></div></div>';
 }
 function refreshReadouts(){
   const picked=selectedCamera();if(!picked)return;
@@ -84,6 +84,7 @@ function refreshReadouts(){
   if(E('setSketchFovAngle'))E('setSketchFovAngle').textContent=a.toFixed(1)+'°';
   if(E('setSketchFovW3'))E('setSketchFovW3').textContent=widthAt(a,3).toFixed(2)+' m';
   if(E('setSketchFovW5'))E('setSketchFovW5').textContent=widthAt(a,5).toFixed(2)+' m';
+  const info=subjectInfo(picked.bundle.scene,picked.camera,a);window.LightingAICameraFramingSnapshot=()=>info?Object.assign({cameraId:picked.camera.id,focalLengthMm:fl,sensorWidthMm:sw,horizontalFovDeg:a},info):null;
   const old=E('setSketchSubjectFov');if(old)old.remove();
   const box=E('setSketchCameraFovBox');if(box){const note=box.querySelector('.set-sketch-note');if(note)note.insertAdjacentHTML('beforebegin',subjectMarkup(picked.bundle.scene,picked.camera,a));}
 }
@@ -135,5 +136,6 @@ function install(){
   setInterval(()=>{if(E('setSketchSvg')){draw();refreshReadouts()}},700);
   draw();return true;
 }
+window.LightingAICameraFov={version:'1.1-framing-metrics',snapshot:function(){const picked=selectedCamera();if(!picked)return null;const fl=clamp(Number(picked.camera.focalLengthMm)||35,8,300),sw=clamp(Number(picked.camera.sensorWidthMm)||36,5,70),a=fov(sw,fl),info=subjectInfo(picked.bundle.scene,picked.camera,a);return info?Object.assign({cameraId:picked.camera.id,focalLengthMm:fl,sensorWidthMm:sw,horizontalFovDeg:a},info):null;}};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>120)clearInterval(timer)},100);
 })();

@@ -9,21 +9,21 @@ const TXT={
   title:'BLOCKING / CAMERA DESIGNER',intro:'Putanje glumaca i kamera na postojećoj Skici seta. Scene, svetla, zidovi i FOV ostaju isti sistem.',
   select:'IZABRANI ELEMENT',none:'Izaberi kameru ili glumca na tlocrtu.',path:'PUTANJA KRETANJA',duration:'TRAJANJE (s)',
   addPoint:'DODAJ WAYPOINT',clear:'OBRIŠI PUTANJU',play:'▶ PLAY',pause:'Ⅱ PAUSE',stop:'■ STOP',reset:'↺ POČETAK',
-  tracking:'CAMERA TRACKING',trackSubject:'PRATI GLUMCA',off:'ISKLJUČENO',framing:'ODRŽAVAJ SMER KA SUBJEKTU',
+  tracking:'CAMERA TRACKING',trackSubject:'PRATI GLUMCA',off:'ISKLJUČENO',framing:'UKLJUČI TRACKING',framingMode:'FRAMING',framingCenter:'CENTRIRAJ GLUMCA',framingPreserve:'ZADRŽI TRENUTNI FRAMING',framingOffset:'HORIZONTALNI OFFSET',
   hint:'Waypoint dodaje trenutnu poziciju izabranog elementa. Zatim pomeri element prstom i dodaj sledeći waypoint. Tačke se mogu pomerati direktno na tlocrtu.',
   need:'Za animaciju su potrebna najmanje 2 waypoint-a.',actorOnly:'Putanja je dostupna za kameru i glumca.',statusPlay:'Animacija scene je pokrenuta.',
   statusPause:'Animacija je pauzirana.',statusStop:'Animacija je vraćena na početak.',pointAdded:'Waypoint je dodat.',pointMoved:'Waypoint je pomeren.',
-  pathCleared:'Putanja je obrisana.',trackingHint:'Tracking menja samo smer kamere tokom pregleda; nije obavezno automatsko ponašanje.',cameraTools:'KAMERA / KADAR',saveShot:'DODAJ U SHOT LIST',setupA:'SAČUVAJ A',setupB:'SAČUVAJ B',setupC:'SAČUVAJ C',shotSaved:'Kadar je dodat u Shot List.',setupSaved:'Camera Setup je sačuvan.'
+  pathCleared:'Putanja je obrisana.',trackingHint:'CENTAR drži glumca u sredini kadra. ZADRŽI FRAMING čuva njegov trenutni horizontalni položaj u kadru. Obe opcije su samo preview i uvek su opcione.',cameraTools:'KAMERA / KADAR',saveShot:'DODAJ U SHOT LIST',setupA:'SAČUVAJ A',setupB:'SAČUVAJ B',setupC:'SAČUVAJ C',shotSaved:'Kadar je dodat u Shot List.',setupSaved:'Camera Setup je sačuvan.'
  },
  en:{
   title:'BLOCKING / CAMERA DESIGNER',intro:'Actor and camera paths on the existing Set Sketch. Scenes, lights, walls and FOV remain in the same system.',
   select:'SELECTED ITEM',none:'Select a camera or actor on the floor plan.',path:'MOVEMENT PATH',duration:'DURATION (s)',
   addPoint:'ADD WAYPOINT',clear:'CLEAR PATH',play:'▶ PLAY',pause:'Ⅱ PAUSE',stop:'■ STOP',reset:'↺ START',
-  tracking:'CAMERA TRACKING',trackSubject:'TRACK ACTOR',off:'OFF',framing:'KEEP CAMERA AIMED AT SUBJECT',
+  tracking:'CAMERA TRACKING',trackSubject:'TRACK ACTOR',off:'OFF',framing:'ENABLE TRACKING',framingMode:'FRAMING',framingCenter:'CENTER ACTOR',framingPreserve:'PRESERVE CURRENT FRAMING',framingOffset:'HORIZONTAL OFFSET',
   hint:'A waypoint stores the selected item current position. Move the item, then add the next waypoint. Waypoints can also be dragged directly on the floor plan.',
   need:'At least 2 waypoints are required for animation.',actorOnly:'Paths are available for cameras and actors.',statusPlay:'Scene animation started.',
   statusPause:'Animation paused.',statusStop:'Animation returned to start.',pointAdded:'Waypoint added.',pointMoved:'Waypoint moved.',
-  pathCleared:'Path cleared.',trackingHint:'Tracking changes camera direction only during preview; it is always optional.',cameraTools:'CAMERA / SHOT',saveShot:'ADD TO SHOT LIST',setupA:'SAVE A',setupB:'SAVE B',setupC:'SAVE C',shotSaved:'Shot added to Shot List.',setupSaved:'Camera Setup saved.'
+  pathCleared:'Path cleared.',trackingHint:'CENTER keeps the actor in the middle. PRESERVE FRAMING keeps the actor at the current horizontal position in frame. Both are preview-only and always optional.',cameraTools:'CAMERA / SHOT',saveShot:'ADD TO SHOT LIST',setupA:'SAVE A',setupB:'SAVE B',setupC:'SAVE C',shotSaved:'Shot added to Shot List.',setupSaved:'Camera Setup saved.'
  }
 };
 const t=()=>TXT[lang()];
@@ -40,6 +40,7 @@ function ensureBlocking(o){
  if(!o.blocking||typeof o.blocking!=='object')o.blocking={};
  if(!Array.isArray(o.blocking.path))o.blocking.path=[];
  if(!(Number(o.blocking.durationSec)>0))o.blocking.durationSec=5;
+ if(o.type==='camera'&&o.blocking.trackFramingMode!=='preserve')o.blocking.trackFramingMode='center';
  return o.blocking;
 }
 function usable(o){return !!(o&&(o.type==='camera'||o.type==='subject'))}
@@ -57,6 +58,14 @@ function trackingRotation(cameraPos,targetPos){
  const dx=targetPos.x-cameraPos.x,dy=targetPos.y-cameraPos.y;
  return ((Math.atan2(dx,-dy)*180/Math.PI)%360+360)%360;
 }
+function signedAngle(v){let a=((Number(v)||0)%360+360)%360;return a>180?a-360:a}
+function cameraHalfFov(cam){const focal=clamp(Number(cam&&cam.focalLengthMm)||35,8,300),sensor=clamp(Number(cam&&cam.sensorWidthMm)||36,5,70);return Math.atan(sensor/(2*focal))*180/Math.PI}
+function captureTrackingOffset(cam,target){
+ if(!cam||!target)return 0;const bearing=trackingRotation(cam,target),raw=signedAngle(bearing-(Number(cam.rot)||0)),limit=Math.max(1,cameraHalfFov(cam)*0.92);return clamp(raw,-limit,limit);
+}
+function prepareTrackingOffsets(){
+ const s=scene();if(!s)return;s.objects.filter(o=>o.type==='camera').forEach(cam=>{const b=ensureBlocking(cam);if(!b.trackSubjectId||b.trackFramingMode!=='preserve')return;const target=s.objects.find(o=>o.id===b.trackSubjectId&&o.type==='subject');if(!target)return;const a=api(),cp=a&&a.getVisualObject?a.getVisualObject(cam):cam,tp=a&&a.getVisualObject?a.getVisualObject(target):target;b.trackOffsetDeg=captureTrackingOffset(cp,tp)});save();
+}
 function buildPreview(progress){
  const s=scene(),map=Object.create(null);if(!s)return map;
  s.objects.forEach(o=>{
@@ -67,8 +76,8 @@ function buildPreview(progress){
  s.objects.filter(o=>o.type==='camera').forEach(cam=>{
   const b=cam.blocking;if(!b||!b.trackSubjectId)return;
   const target=s.objects.find(o=>o.id===b.trackSubjectId&&o.type==='subject');if(!target)return;
-  const cp=Object.assign({},cam,map[cam.id]||{}),tp=Object.assign({},target,map[target.id]||{});
-  map[cam.id]=Object.assign({},map[cam.id]||{},{rot:trackingRotation(cp,tp)});
+  const cp=Object.assign({},cam,map[cam.id]||{}),tp=Object.assign({},target,map[target.id]||{}),bearing=trackingRotation(cp,tp),offset=b.trackFramingMode==='preserve'?Number(b.trackOffsetDeg)||0:0;
+  map[cam.id]=Object.assign({},map[cam.id]||{},{rot:((bearing-offset)%360+360)%360});
  });
  return map;
 }
@@ -87,7 +96,7 @@ function tick(now){
 function play(){
  const total=maxDuration();if(!(total>0)){status(t().need);return}
  if(playing&&paused){paused=false;startMs=performance.now()-pauseAt*1000;raf=requestAnimationFrame(tick);renderControls();status(t().statusPlay);return}
- playing=true;paused=false;startMs=performance.now();pauseAt=0;raf=requestAnimationFrame(tick);renderControls();status(t().statusPlay);
+ prepareTrackingOffsets();playing=true;paused=false;startMs=performance.now();pauseAt=0;raf=requestAnimationFrame(tick);renderControls();status(t().statusPlay);
 }
 function pause(){
  if(!playing||paused)return;paused=true;cancelAnimationFrame(raf);pauseAt=(performance.now()-startMs)/1000;renderControls();status(t().statusPause);
@@ -117,7 +126,8 @@ function renderControls(){
  let tracking='';
  if(o.type==='camera'){
   const options='<option value="">'+esc(x.off)+'</option>'+subjects().map(s=>'<option value="'+esc(s.id)+'" '+(b.trackSubjectId===s.id?'selected':'')+'>'+esc(s.label||'Glumac')+'</option>').join('');
-  tracking='<div class="blocking-track"><h4>'+esc(x.tracking)+'</h4><label>'+esc(x.trackSubject)+'<select id="blockingTrackSubject">'+options+'</select></label><label class="blocking-check"><input id="blockingTrackingEnabled" type="checkbox" '+(b.trackSubjectId?'checked':'')+'> '+esc(x.framing)+'</label><div class="blocking-note">'+esc(x.trackingHint)+'</div></div><div class="blocking-track"><h4>'+esc(x.cameraTools)+'</h4><div class="blocking-camera-actions"><button id="blockingSaveShot" class="btn primary" type="button">'+esc(x.saveShot)+'</button><button class="btn secondary blocking-save-setup" data-slot="A" type="button">'+esc(x.setupA)+'</button><button class="btn secondary blocking-save-setup" data-slot="B" type="button">'+esc(x.setupB)+'</button><button class="btn secondary blocking-save-setup" data-slot="C" type="button">'+esc(x.setupC)+'</button></div></div>';
+  const framingMode=b.trackFramingMode==='preserve'?'preserve':'center',offset=Number(b.trackOffsetDeg)||0;
+  tracking='<div class="blocking-track"><h4>'+esc(x.tracking)+'</h4><label>'+esc(x.trackSubject)+'<select id="blockingTrackSubject">'+options+'</select></label><label class="blocking-check"><input id="blockingTrackingEnabled" type="checkbox" '+(b.trackSubjectId?'checked':'')+'> '+esc(x.framing)+'</label><label class="blocking-framing-mode">'+esc(x.framingMode)+'<select id="blockingFramingMode"><option value="center" '+(framingMode==='center'?'selected':'')+'>'+esc(x.framingCenter)+'</option><option value="preserve" '+(framingMode==='preserve'?'selected':'')+'>'+esc(x.framingPreserve)+'</option></select></label><div class="blocking-framing-readout"><small>'+esc(x.framingOffset)+'</small><b>'+(framingMode==='preserve'?(offset>=0?'+':'')+offset.toFixed(1)+'°':'0.0°')+'</b></div><div class="blocking-note">'+esc(x.trackingHint)+'</div></div><div class="blocking-track"><h4>'+esc(x.cameraTools)+'</h4><div class="blocking-camera-actions"><button id="blockingSaveShot" class="btn primary" type="button">'+esc(x.saveShot)+'</button><button class="btn secondary blocking-save-setup" data-slot="A" type="button">'+esc(x.setupA)+'</button><button class="btn secondary blocking-save-setup" data-slot="B" type="button">'+esc(x.setupB)+'</button><button class="btn secondary blocking-save-setup" data-slot="C" type="button">'+esc(x.setupC)+'</button></div></div>';
  }
  box.innerHTML='<div class="blocking-head"><div><small>'+esc(x.select)+'</small><b>'+esc(o.label||o.type)+'</b></div><div id="blockingTime">0.0 / '+maxDuration().toFixed(1)+' s</div></div>'+
  '<div class="blocking-grid"><label>'+esc(x.duration)+'<input id="blockingDuration" type="number" min="0.2" max="120" step="0.1" value="'+Number(b.durationSec||5).toFixed(1)+'"></label><div><small>'+esc(x.path)+'</small><b>'+pts.length+' waypoint</b></div></div>'+
@@ -126,8 +136,9 @@ function renderControls(){
  tracking+'<div class="blocking-note">'+esc(x.hint)+'</div>';
  E('blockingDuration').onchange=ev=>{b.durationSec=clamp(Number(ev.target.value)||5,.2,120);save();renderAll()};
  E('blockingAddPoint').onclick=addPoint;E('blockingClearPath').onclick=clearPath;E('blockingPlay').onclick=play;E('blockingPause').onclick=pause;E('blockingStop').onclick=()=>stop(false);E('blockingReset').onclick=reset;
- if(E('blockingTrackSubject'))E('blockingTrackSubject').onchange=ev=>{b.trackSubjectId=ev.target.value||'';save();renderAll()};
- if(E('blockingTrackingEnabled'))E('blockingTrackingEnabled').onchange=ev=>{if(!ev.target.checked)b.trackSubjectId='';else if(!b.trackSubjectId&&subjects()[0])b.trackSubjectId=subjects()[0].id;save();renderAll()};
+ if(E('blockingTrackSubject'))E('blockingTrackSubject').onchange=ev=>{b.trackSubjectId=ev.target.value||'';if(b.trackSubjectId&&b.trackFramingMode==='preserve'){const target=subjects().find(s=>s.id===b.trackSubjectId);if(target)b.trackOffsetDeg=captureTrackingOffset(o,target)}save();renderAll()};
+ if(E('blockingTrackingEnabled'))E('blockingTrackingEnabled').onchange=ev=>{if(!ev.target.checked)b.trackSubjectId='';else if(!b.trackSubjectId&&subjects()[0])b.trackSubjectId=subjects()[0].id;if(b.trackSubjectId&&b.trackFramingMode==='preserve'){const target=subjects().find(s=>s.id===b.trackSubjectId);if(target)b.trackOffsetDeg=captureTrackingOffset(o,target)}save();renderAll()};
+ if(E('blockingFramingMode'))E('blockingFramingMode').onchange=ev=>{b.trackFramingMode=ev.target.value==='preserve'?'preserve':'center';if(b.trackFramingMode==='preserve'&&b.trackSubjectId){const target=subjects().find(s=>s.id===b.trackSubjectId);if(target)b.trackOffsetDeg=captureTrackingOffset(o,target)}else b.trackOffsetDeg=0;save();renderAll()};
  if(E('blockingSaveShot'))E('blockingSaveShot').onclick=()=>{const s=window.LightingAIShotList;if(s&&typeof s.addCurrent==='function'){s.addCurrent();status(t().shotSaved)}};
  box.querySelectorAll('.blocking-save-setup').forEach(btn=>btn.onclick=()=>{const a=window.LightingAICameraSetups;if(a&&typeof a.saveCurrentToSlot==='function'&&a.saveCurrentToSlot(btn.dataset.slot,o.id))status(t().setupSaved)});
 }
@@ -159,7 +170,7 @@ function pointerEnd(ev){
 }
 function install(){
  const card=E('setSketchCard'),svg=E('setSketchSvg');if(!card||!svg||!api())return false;
- if(!E('blockingStyle')){const st=document.createElement('style');st.id='blockingStyle';st.textContent='.blocking-shell{margin-top:14px;padding:12px;background:#0e1217;border:1px solid #3a424d;border-radius:14px}.blocking-shell h3{margin:0;color:#f5c542}.blocking-intro,.blocking-note,.blocking-empty{color:#9299a3;font-size:12px;line-height:1.45}.blocking-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:10px 0}.blocking-head small,.blocking-grid small{display:block;color:#9299a3;font-size:10px}.blocking-head b{display:block;margin-top:3px}.blocking-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.blocking-grid>div,.blocking-grid label{background:#15191e;border:1px solid #30343b;border-radius:10px;padding:9px;font-size:11px}.blocking-grid input{margin-top:5px}.blocking-actions,.blocking-transport{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:8px}.blocking-transport{grid-template-columns:repeat(4,1fr)}.blocking-track{margin-top:10px;padding:10px;border:1px solid #30343b;border-radius:11px;background:#12161b}.blocking-track h4{margin:0 0 8px}.blocking-check{display:block;margin-top:8px;font-size:12px}.blocking-camera-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.blocking-note{margin-top:8px}@media(max-width:520px){.blocking-transport{grid-template-columns:repeat(2,1fr)}}';document.head.appendChild(st)}
+ if(!E('blockingStyle')){const st=document.createElement('style');st.id='blockingStyle';st.textContent='.blocking-shell{margin-top:14px;padding:12px;background:#0e1217;border:1px solid #3a424d;border-radius:14px}.blocking-shell h3{margin:0;color:#f5c542}.blocking-intro,.blocking-note,.blocking-empty{color:#9299a3;font-size:12px;line-height:1.45}.blocking-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:10px 0}.blocking-head small,.blocking-grid small{display:block;color:#9299a3;font-size:10px}.blocking-head b{display:block;margin-top:3px}.blocking-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.blocking-grid>div,.blocking-grid label{background:#15191e;border:1px solid #30343b;border-radius:10px;padding:9px;font-size:11px}.blocking-grid input{margin-top:5px}.blocking-actions,.blocking-transport{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:8px}.blocking-transport{grid-template-columns:repeat(4,1fr)}.blocking-track{margin-top:10px;padding:10px;border:1px solid #30343b;border-radius:11px;background:#12161b}.blocking-track h4{margin:0 0 8px}.blocking-check{display:block;margin-top:8px;font-size:12px}.blocking-framing-mode{display:block;margin-top:8px;font-size:11px;color:#9299a3}.blocking-framing-mode select{margin-top:5px}.blocking-framing-readout{margin-top:7px;padding:8px;background:#15191e;border:1px solid #30343b;border-radius:9px}.blocking-framing-readout small{display:block;color:#9299a3;font-size:10px}.blocking-framing-readout b{display:block;color:#89c7ff;margin-top:3px}.blocking-camera-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.blocking-note{margin-top:8px}@media(max-width:520px){.blocking-transport{grid-template-columns:repeat(2,1fr)}}';document.head.appendChild(st)}
  const shell=document.createElement('div');shell.id='blockingShell';shell.className='blocking-shell';shell.innerHTML='<h3 id="blockingTitle"></h3><div id="blockingIntro" class="blocking-intro"></div><div id="blockingControls"></div><div id="blockingStatus" class="set-sketch-status"></div>';
  const stage=E('setSketchStage');if(stage&&stage.parentNode)stage.parentNode.insertBefore(shell,stage.nextSibling);else card.appendChild(shell);
  svg.addEventListener('pointerdown',pointerDown,true);svg.addEventListener('pointermove',pointerMove,true);svg.addEventListener('pointerup',pointerEnd,true);svg.addEventListener('pointercancel',pointerEnd,true);
@@ -169,6 +180,6 @@ function install(){
  translate();renderAll();return true;
 }
 function translate(){if(!E('blockingShell'))return;E('blockingTitle').textContent=t().title;E('blockingIntro').textContent=t().intro;renderAll()}
-window.LightingAIBlocking={version:'0.2-storyboard-camera-link',play:play,pause:pause,stop:()=>stop(false),reset:reset,render:renderAll};
+window.LightingAIBlocking={version:'0.3-preserve-framing',play:play,pause:pause,stop:()=>stop(false),reset:reset,render:renderAll,prepareTrackingOffsets:prepareTrackingOffsets};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 })();

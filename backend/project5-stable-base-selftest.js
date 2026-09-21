@@ -315,9 +315,10 @@ for (const marker of [
 
 const blockingAi = git(['show', 'HEAD:app/src/main/assets/blocking-ai-integration.js']);
 for (const marker of [
-  "window.LightingAIBlockingAI={version:'1.0-confirmed-proposals'",
+  "window.LightingAIBlockingAI={version:'1.1-launcher-open'",
   'function applyProposal(id,quiet)',
   'if(!confirm(t().confirmAll))return',
+  'LightingAIVisualSceneLauncher',
   "window.addEventListener('lightingai-visual-plan-ready'"
 ]) {
   if (!blockingAi.includes(marker)) fail(`Blocking AI marker missing: ${marker}`);

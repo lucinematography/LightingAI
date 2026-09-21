@@ -2,6 +2,7 @@
 'use strict';
 
 const KEY='lighting_set_sketch_v1';
+const FRAMING_KEY='lighting_blocking_camera_framing_v1';
 const E=id=>document.getElementById(id);
 const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
 const TXT={
@@ -33,15 +34,30 @@ let playing=false,paused=false,previewActive=false,startMs=0,pauseAt=0,raf=0,dra
 function api(){return window.LightingAISetSketch||null}
 function scene(){const a=api();return a&&a.getActiveScene?a.getActiveScene():null}
 function selected(){const a=api(),s=scene(),id=a&&a.getSelectedId?a.getSelectedId():null;return s&&id?s.objects.find(o=>o.id===id)||null:null}
-function save(){const a=api();if(a&&a.persist)a.persist()}
+function framingState(){try{const v=JSON.parse(localStorage.getItem(FRAMING_KEY));return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch(e){return {}}}
+function framingId(o){const s=scene();return s&&o?s.id+'::'+o.id:''}
+function restoreFraming(o,b){
+ if(!o||o.type!=='camera'||!b)return;const id=framingId(o),row=id&&framingState()[id];if(!row||typeof row!=='object')return;
+ b.trackFramingMode=row.mode==='preserve'?'preserve':'center';b.trackOffsetDeg=b.trackFramingMode==='preserve'&&Number.isFinite(Number(row.offsetDeg))?Number(row.offsetDeg):0;
+}
+function persistFraming(){
+ const s=scene();if(!s)return;const v=framingState();
+ s.objects.filter(o=>o.type==='camera').forEach(o=>{const b=o.blocking&&typeof o.blocking==='object'?o.blocking:null;if(!b)return;v[s.id+'::'+o.id]={mode:b.trackFramingMode==='preserve'?'preserve':'center',offsetDeg:b.trackFramingMode==='preserve'&&Number.isFinite(Number(b.trackOffsetDeg))?Number(b.trackOffsetDeg):0};});
+ localStorage.setItem(FRAMING_KEY,JSON.stringify(v));
+}
+function save(){const a=api();if(a&&a.persist)a.persist();persistFraming()}
 function status(msg){const el=E('blockingStatus');if(!el)return;el.textContent=msg||'';clearTimeout(statusTimer);statusTimer=setTimeout(()=>{if(el)el.textContent=''},2600)}
 function ensureBlocking(o){
  if(!o)return null;
  if(!o.blocking||typeof o.blocking!=='object')o.blocking={};
  if(!Array.isArray(o.blocking.path))o.blocking.path=[];
  if(!(Number(o.blocking.durationSec)>0))o.blocking.durationSec=5;
- if(o.type==='camera'&&o.blocking.trackFramingMode!=='preserve')o.blocking.trackFramingMode='center';
- if(o.type==='camera'&&typeof o.blocking.trackingEnabled!=='boolean')o.blocking.trackingEnabled=!!o.blocking.trackSubjectId;
+ if(o.type==='camera'){
+  restoreFraming(o,o.blocking);
+  if(o.blocking.trackFramingMode!=='preserve')o.blocking.trackFramingMode='center';
+  if(o.blocking.trackFramingMode!=='preserve')o.blocking.trackOffsetDeg=0;
+  if(typeof o.blocking.trackingEnabled!=='boolean')o.blocking.trackingEnabled=!!o.blocking.trackSubjectId;
+ }
  return o.blocking;
 }
 function usable(o){return !!(o&&(o.type==='camera'||o.type==='subject'))}
@@ -192,6 +208,6 @@ function install(){
  translate();renderAll();return true;
 }
 function translate(){if(!E('blockingShell'))return;E('blockingTitle').textContent=t().title;E('blockingIntro').textContent=t().intro;renderAll()}
-window.LightingAIBlocking={version:'0.3-preserve-framing',play:play,pause:pause,stop:()=>stop(false),reset:reset,render:renderAll,prepareTrackingOffsets:prepareTrackingOffsets};
+window.LightingAIBlocking={version:'0.4-persist-framing',play:play,pause:pause,stop:()=>stop(false),reset:reset,render:renderAll,prepareTrackingOffsets:prepareTrackingOffsets};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 })();

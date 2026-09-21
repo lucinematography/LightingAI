@@ -255,10 +255,12 @@ for (const marker of [
 
 const shotListBlocking = git(['show', 'HEAD:app/src/main/assets/shot-list-planner.js']);
 for (const marker of [
-  "window.LightingAIShotList={version:'1.1-blocking-storyboard'",
+  "window.LightingAIShotList={version:'1.2-shot-restore'",
   'referenceImage:null',
   'horizontalFovDeg:cam?hfov:null',
   'framing:framing?JSON.parse(JSON.stringify(framing)):null',
+  'function restoreSetup(rowId)',
+  'restoreSetup:restoreSetup',
   'blocking:cam&&cam.blocking'
 ]) {
   if (!shotListBlocking.includes(marker)) fail(`Blocking Shot List marker missing: ${marker}`);

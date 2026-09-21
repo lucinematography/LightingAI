@@ -150,6 +150,15 @@ function startVoiceDirect(target){
   return false;
 }
 window.LightingAIStartVoiceDirect=startVoiceDirect;
+function photoDiag(stage,detail){
+ var status=document.getElementById('aiv-photo-status'),box=document.getElementById('aiv-photo-diagnostic');
+ if(!box&&status&&status.parentNode){box=document.createElement('div');box.id='aiv-photo-diagnostic';box.style.cssText='margin-top:8px;padding:9px;border:1px solid #66571f;border-radius:9px;background:#101216;color:#f5c542;font:700 11px/1.45 monospace;white-space:pre-wrap';status.parentNode.insertBefore(box,status.nextSibling);}
+ if(!box)return;
+ var line=String(stage||'UNKNOWN')+(detail?' • '+String(detail):'');
+ var rows=(box.textContent||'').split('\n').filter(Boolean);
+ if(!rows.length||rows[rows.length-1]!==line)rows.push(line);
+ box.textContent=rows.slice(-12).join('\n');
+}
 window.LightingAIOpenSceneImage=function(mode){
  photoDiag('AI_CLICK',mode);
  var status=document.getElementById('aiv-photo-status');
@@ -193,15 +202,6 @@ function descriptionWithMeasurements(){var description=document.getElementById('
 function renderEquipment(){var box=document.getElementById('aiv-equipment');box.innerHTML=state.equipment.length?state.equipment.map(function(e,i){return '<label style="display:flex;gap:8px;align-items:flex-start;background:#0f1115;border:1px solid #30343b;border-radius:11px;padding:10px"><input class="aiv-eq" data-index="'+i+'" type="checkbox" checked style="width:auto;margin-top:2px"><span>'+esc(e.name||e.model||e.id)+' × '+esc(e.qty||1)+'</span></label>';}).join(''):'<div style="color:#f5dd91">'+t.noEquipment+'</div>';}
 function chosenEquipment(){return Array.prototype.slice.call(document.querySelectorAll('.aiv-eq:checked')).map(function(x){return state.equipment[Number(x.getAttribute('data-index'))];}).filter(Boolean);}
 function resetGenerated(){state.plan=null;var r=document.getElementById('aiv-result');if(r)r.style.display='none';var p=document.getElementById('aiv-real-preview-img');if(p){p.style.display='none';p.removeAttribute('src');}var b=document.getElementById('aiv-real-preview-box');if(b)b.style.display='none';}
-function photoDiag(stage,detail){
- var status=document.getElementById('aiv-photo-status'),box=document.getElementById('aiv-photo-diagnostic');
- if(!box&&status&&status.parentNode){box=document.createElement('div');box.id='aiv-photo-diagnostic';box.style.cssText='margin-top:8px;padding:9px;border:1px solid #66571f;border-radius:9px;background:#101216;color:#f5c542;font:700 11px/1.45 monospace;white-space:pre-wrap';status.parentNode.insertBefore(box,status.nextSibling);}
- if(!box)return;
- var line=String(stage||'UNKNOWN')+(detail?' • '+String(detail):'');
- var rows=(box.textContent||'').split('\n').filter(Boolean);
- if(!rows.length||rows[rows.length-1]!==line)rows.push(line);
- box.textContent=rows.slice(-12).join('\n');
-}
 function setPhoto(src){photoDiag('SETPHOTO',src?'OK':'EMPTY');resetGenerated();state.photo=src||'';var img=document.getElementById('aiv-photo'),empty=document.getElementById('aiv-photo-empty'),remove=document.getElementById('aiv-remove');img.src=state.photo;img.style.display=state.photo?'block':'none';empty.style.display=state.photo?'none':'block';remove.style.display=state.photo?'block':'none';document.getElementById('aiv-overlay').innerHTML='';document.getElementById('aiv-photo-status').textContent=state.photo?t.photoReady:'';}
 function receiveFile(ev){
  photoDiag('ONCHANGE');

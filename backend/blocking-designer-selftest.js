@@ -18,7 +18,7 @@ for(const marker of [
 ]) assert.ok(sketch.includes(marker), 'Set Sketch contract missing: '+marker);
 
 for(const marker of [
-  "window.LightingAIBlocking={version:'0.3-preserve-framing'",
+  "window.LightingAIBlocking={version:'0.4-persist-framing'",
   'requestAnimationFrame(tick)','function prepareTrackingOffsets()',
   "b.trackFramingMode==='preserve'",'function addAllEquipmentLights'
 ].filter(x=>x!=='function addAllEquipmentLights')) assert.ok(blocking.includes(marker), 'Blocking contract missing: '+marker);
@@ -34,6 +34,8 @@ assert.ok(blocking.includes("handleDx=overObject?58:0"), 'Waypoint handle must o
 assert.ok(blocking.includes("hit.setAttribute('r',sel?'22':'18')"), 'Waypoint drag target must remain large and separate');
 assert.ok(blocking.includes("data-handle-dx"), 'Waypoint drag must preserve visual handle offset');
 assert.ok(blocking.includes('trackingEnabled'), 'Tracking enable state must remain independent from subject selection');
+assert.ok(blocking.includes("FRAMING_KEY='lighting_blocking_camera_framing_v1'"), 'Camera framing persistence key missing');
+assert.ok(blocking.includes('function persistFraming()'), 'Camera framing persistence function missing');
 assert.ok(!blocking.includes('id="blockingTrackSubject"'), 'Native tracking subject select must not return');
 assert.ok(blocking.includes('blocking-framing-buttons'), 'Framing chooser must use stable large buttons');
 assert.ok(blocking.includes('blocking-framing-choice'), 'Framing buttons must be directly clickable');

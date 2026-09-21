@@ -24,6 +24,7 @@ for(const marker of [
 ].filter(x=>x!=='function addAllEquipmentLights')) assert.ok(blocking.includes(marker), 'Blocking contract missing: '+marker);
 
 assert.ok(blocking.includes('a.setPreview(buildPreview'), 'Blocking animation must use preview layer');
+assert.ok(blocking.includes('finishAtEnd(total)'), 'Playback must remain at final waypoint until reset');
 assert.ok(!blocking.includes('localStorage.setItem(KEY,JSON.stringify(buildPreview'), 'Animation preview must not persist frame positions');
 
 for(const marker of [

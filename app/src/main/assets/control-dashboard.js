@@ -53,14 +53,22 @@ function render(){
  var title=sr()?'IZABRANA RASVETA':'SELECTED FIXTURES';
  var empty=sr()?'Nema izabranih rasvetnih tela. Dodaj ih u Oprema pa se vrati u Kontrolu.':'No selected fixtures. Add them in Equipment, then return to Control.';
  var patched=rows.filter(function(row){return !!patchForFixture(row.fixture)}).length,verified=rows.filter(function(row){var p=patchForFixture(row.fixture);return !!(p&&profileForPatch(row.fixture,p))}).length,live=liveStatus();
- card.innerHTML='<div class="card" style="border-color:#66571f;background:linear-gradient(180deg,#191b20,#13161b)">'+
-   '<div style="font-size:20px;font-weight:900;color:#f5c542">'+title+' <span style="font-size:13px;color:#9299a3">('+count+')</span></div>'+
-   '<div class="muted small" style="margin-top:6px">'+(sr()?'Ovaj ekran koristi stvarno izabranu opremu iz kataloga i prikazuje samo verifikovane kontrolne puteve.':'This screen uses the actual selected catalog equipment and shows only verified control routes.')+'</div>'+
-   '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px"><div style="padding:8px;border:1px solid #30343b;border-radius:10px;text-align:center"><b>'+count+'</b><div class="muted small">'+(sr()?'Izabrano':'Selected')+'</div></div><div style="padding:8px;border:1px solid #30343b;border-radius:10px;text-align:center"><b>'+patched+'</b><div class="muted small">DMX Patch</div></div><div style="padding:8px;border:1px solid #30343b;border-radius:10px;text-align:center"><b>'+verified+'</b><div class="muted small">'+(sr()?'Verifikovano':'Verified')+'</div></div></div>'+
-   '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:8px;padding:8px 10px;border-radius:10px;background:'+(live.armed?'#10251d':'#20191a')+'"><span class="muted small">'+(sr()?'IZLAZ':'OUTPUT')+' · '+esc(live.protocol)+'</span><b style="font-size:11px;color:'+(live.armed?'#b8f0d1':'#ffb5b5')+'">'+(live.armed?(sr()?'AKTIVAN':'ARMED'):(sr()?'ZAKLJUČAN':'LOCKED'))+'</b></div>'+
-   '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px"><button id="controlJumpFixtures" class="btn secondary" type="button">'+(sr()?'UREĐAJI':'FIXTURES')+'</button><button id="controlJumpGroups" class="btn secondary" type="button">'+(sr()?'GRUPE':'GROUPS')+'</button><button id="controlJumpScenes" class="btn secondary" type="button">'+(sr()?'SCENE':'SCENES')+'</button><button id="controlJumpProtocols" class="btn secondary" type="button">'+(sr()?'PROTOKOLI':'PROTOCOLS')+'</button></div>'+
+ card.innerHTML='<div class="card" style="border-color:#66571f;background:linear-gradient(180deg,#191b20,#13161b);padding:16px">'+
+   '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><div style="font-size:21px;font-weight:900;color:#f5c542">'+(sr()?'KONTROLA RASVETE':'LIGHTING CONTROL')+'</div><div class="muted small" style="margin-top:5px">'+(sr()?'Pregled opreme, DMX povezanosti i bezbednog izlaza na jednom mestu.':'Equipment, DMX mapping and safe output status in one place.')+'</div></div><div style="padding:6px 9px;border-radius:999px;background:'+(live.armed?'#10251d':'#24191b')+';color:'+(live.armed?'#b8f0d1':'#ffb5b5')+';font-size:10px;font-weight:900;white-space:nowrap">'+(live.armed?(sr()?'IZLAZ AKTIVAN':'OUTPUT ARMED'):(sr()?'IZLAZ ZAKLJUČAN':'OUTPUT LOCKED'))+'</div></div>'+
+   '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px">'+
+    '<div style="padding:11px 8px;border:1px solid #30343b;border-radius:11px;text-align:center;background:#101318"><div style="font-size:20px;font-weight:900">'+count+'</div><div class="muted small">'+(sr()?'IZABRANO':'SELECTED')+'</div></div>'+
+    '<div style="padding:11px 8px;border:1px solid #30343b;border-radius:11px;text-align:center;background:#101318"><div style="font-size:20px;font-weight:900">'+patched+'</div><div class="muted small">DMX PATCH</div></div>'+
+    '<div style="padding:11px 8px;border:1px solid #30343b;border-radius:11px;text-align:center;background:#101318"><div style="font-size:20px;font-weight:900">'+verified+'</div><div class="muted small">'+(sr()?'VERIFIKOVANO':'VERIFIED')+'</div></div>'+
+   '</div>'+
+   '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px">'+
+    '<div style="padding:9px;border:1px solid #30343b;border-radius:10px;background:#0f1115"><div style="font-size:10px;color:#8f96a0;font-weight:800">'+(sr()?'1. OPREMA':'1. FIXTURES')+'</div><div style="margin-top:3px;font-size:12px;font-weight:800">'+(count?(sr()?'SPREMNA ZA PROVERU':'READY TO REVIEW'):(sr()?'NEMA IZBORA':'NONE SELECTED'))+'</div></div>'+
+    '<div style="padding:9px;border:1px solid #30343b;border-radius:10px;background:#0f1115"><div style="font-size:10px;color:#8f96a0;font-weight:800">2. DMX</div><div style="margin-top:3px;font-size:12px;font-weight:800">'+(patched?(patched+'/'+count+' '+(sr()?'POVEZANO':'MAPPED')):(sr()?'NIJE POVEZANO':'NOT MAPPED'))+'</div></div>'+
+    '<div style="padding:9px;border:1px solid '+(live.armed?'#24543d':'#5a3034')+';border-radius:10px;background:'+(live.armed?'#10251d':'#1a1113')+'"><div style="font-size:10px;color:#8f96a0;font-weight:800">'+(sr()?'3. IZLAZ':'3. OUTPUT')+'</div><div style="margin-top:3px;font-size:12px;font-weight:900;color:'+(live.armed?'#b8f0d1':'#ffb5b5')+'">'+esc(live.protocol)+' · '+(live.armed?(sr()?'AKTIVAN':'ARMED'):(sr()?'ZAKLJUČAN':'LOCKED'))+'</div></div>'+
+   '</div>'+
+   '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:13px"><button id="controlJumpFixtures" class="btn secondary" type="button">'+(sr()?'UREĐAJI':'FIXTURES')+'</button><button id="controlJumpGroups" class="btn secondary" type="button">'+(sr()?'GRUPE':'GROUPS')+'</button><button id="controlJumpScenes" class="btn secondary" type="button">'+(sr()?'SCENE':'SCENES')+'</button><button id="controlJumpProtocols" class="btn secondary" type="button">'+(sr()?'PROTOKOLI':'PROTOCOLS')+'</button></div>'+
    '<div class="actions" style="margin-top:8px"><button id="controlJumpNetwork" class="btn primary" type="button">'+(sr()?'MREŽNA KONTROLA':'NETWORK CONTROL')+'</button><button id="controlJumpBle" class="btn secondary" type="button">BLE</button></div>'+
    '</div>'+
+   '<div style="margin:12px 0 8px;font-size:12px;font-weight:900;color:#c5cad2">'+title+' <span style="color:#7f8791">('+count+')</span></div>'+
    (rows.length?rows.map(fixtureCard).join(''):'<div class="card"><div class="muted small">'+empty+'</div></div>');
  var n=E('controlJumpNetwork'),b=E('controlJumpBle'),jf=E('controlJumpFixtures'),jg=E('controlJumpGroups'),js=E('controlJumpScenes'),jp=E('controlJumpProtocols');
  if(n)n.onclick=function(){jump('artnetCard')};
@@ -72,7 +80,7 @@ function render(){
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl;if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.5-output-status'};
+window.LightingAIControlDashboard={render:render,version:'0.6-control-overview'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(render,900);
 var old=window.setLanguage;

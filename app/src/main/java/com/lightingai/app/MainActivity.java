@@ -503,8 +503,22 @@ public class MainActivity extends Activity {
 
     private void notifyVoiceInputResult(String targetId, String text) {
         if (webView == null) return;
-        final String targetJs = JSONObject.quote(targetId == null ? "aiv-dp-request" : targetId);
+        final String target = targetId == null ? "aiv-dp-request" : targetId;
+        final String targetJs = JSONObject.quote(target);
         final String textJs = JSONObject.quote(text == null ? "" : text);
+        if ("aiv-dp-request".equals(target) || "aiv-desc".equals(target)) {
+            final String statusIdJs = JSONObject.quote("aiv-desc".equals(target) ? "aiv-desc-voice-status" : "aiv-dp-voice-status");
+            final String successJs = JSONObject.quote("aiv-desc".equals(target) ? "Glasovni opis je dodat u opis scene." : "Glasovni zahtev je dodat u polje DP-a.");
+            webView.post(() -> webView.evaluateJavascript(
+                "(function(){var f=document.getElementById(" + targetJs + ");" +
+                "var spoken=String(" + textJs + "||'').trim();" +
+                "if(f&&spoken){var existing=String(f.value||'').trim();f.value=existing?(existing+' '+spoken):spoken;" +
+                "f.dispatchEvent(new Event('input',{bubbles:true}));var s=document.getElementById(" + statusIdJs + ");" +
+                "if(s){s.textContent=" + successJs + ";s.style.color='#b8f0d1';}return true;}" +
+                "if(window.LightingAIVoiceInputResult){window.LightingAIVoiceInputResult(" + targetJs + "," + textJs + ");return true;}return false;})();",
+                null));
+            return;
+        }
         webView.post(() -> webView.evaluateJavascript(
             "window.LightingAIVoiceInputResult&&window.LightingAIVoiceInputResult(" + targetJs + "," + textJs + ");",
             null));
@@ -606,8 +620,19 @@ public class MainActivity extends Activity {
 
     private void notifyVoiceInputError(String targetId, String code) {
         if (webView == null) return;
-        final String targetJs = JSONObject.quote(targetId == null ? "aiv-dp-request" : targetId);
+        final String target = targetId == null ? "aiv-dp-request" : targetId;
+        final String targetJs = JSONObject.quote(target);
         final String codeJs = JSONObject.quote(code == null ? "error" : code);
+        if ("aiv-dp-request".equals(target) || "aiv-desc".equals(target)) {
+            final String statusIdJs = JSONObject.quote("aiv-desc".equals(target) ? "aiv-desc-voice-status" : "aiv-dp-voice-status");
+            webView.post(() -> webView.evaluateJavascript(
+                "(function(){var s=document.getElementById(" + statusIdJs + ");" +
+                "if(s){var c=" + codeJs + ";s.textContent=c==='cancelled'?'Glasovni unos je otkazan.':(c==='empty'?'Nije prepoznat govor. Pokušaj ponovo.':'Glasovni unos nije dostupan na ovom telefonu.');" +
+                "s.style.color=c==='cancelled'?'#b8f0d1':'#ffb5b5';return true;}" +
+                "if(window.LightingAIVoiceInputError){window.LightingAIVoiceInputError(" + targetJs + "," + codeJs + ");return true;}return false;})();",
+                null));
+            return;
+        }
         webView.post(() -> webView.evaluateJavascript(
             "window.LightingAIVoiceInputError&&window.LightingAIVoiceInputError(" + targetJs + "," + codeJs + ");",
             null));

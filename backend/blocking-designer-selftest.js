@@ -35,6 +35,9 @@ assert.ok(blocking.includes("hit.setAttribute('r',sel?'22':'18')"), 'Waypoint dr
 assert.ok(blocking.includes("data-handle-dx"), 'Waypoint drag must preserve visual handle offset');
 assert.ok(blocking.includes('trackingEnabled'), 'Tracking enable state must remain independent from subject selection');
 assert.ok(!blocking.includes('id="blockingTrackSubject"'), 'Native tracking subject select must not return');
+assert.ok(blocking.includes('blocking-framing-buttons'), 'Framing chooser must use stable large buttons');
+assert.ok(blocking.includes('blocking-framing-choice'), 'Framing buttons must be directly clickable');
+assert.ok(!blocking.includes('id="blockingFramingMode"'), 'Native framing select must not return');
 assert.ok(blocking.includes("hit.setAttribute('data-blocking-point'"), 'Separated waypoint drag handle must own waypoint pointer events');
 assert.ok(blocking.includes('previewActive=false;const a=api();if(a&&a.clearPreview)a.clearPreview()'), 'Clearing path must exit preview mode');
 assert.ok(!blocking.includes('localStorage.setItem(KEY,JSON.stringify(buildPreview'), 'Animation preview must not persist frame positions');

@@ -243,6 +243,7 @@ for (const marker of [
   'function captureTrackingOffset(cam,target)',
   "b.trackFramingMode==='preserve'",
   'prepareTrackingOffsets()',
+  "renderControls();pathMarkup()",
   'a.setPreview(buildPreview'
 ]) {
   if (!blockingDesigner.includes(marker)) fail(`Blocking Camera Designer marker missing: ${marker}`);

@@ -193,6 +193,7 @@ const exactAllowed = new Set([
   'app/src/main/assets/set-sketch-camera-fov.js',
   'app/src/main/assets/blocking-camera-designer.js',
   'app/src/main/assets/blocking-sun-integration.js',
+  'app/src/main/assets/blocking-ai-integration.js',
   'app/src/main/assets/set-sketch-sun.js',
   'app/src/main/assets/shot-list-planner.js',
   'app/src/main/assets/camera-setup-snapshots.js',
@@ -287,6 +288,16 @@ for (const marker of [
   if (!cameraSetupsBlocking.includes(marker)) fail(`Blocking Camera Setup marker missing: ${marker}`);
 }
 
+const blockingAi = git(['show', 'HEAD:app/src/main/assets/blocking-ai-integration.js']);
+for (const marker of [
+  "window.LightingAIBlockingAI={version:'1.0-confirmed-proposals'",
+  'function applyProposal(id,quiet)',
+  'if(!confirm(t().confirmAll))return',
+  "window.addEventListener('lightingai-visual-plan-ready'"
+]) {
+  if (!blockingAi.includes(marker)) fail(`Blocking AI marker missing: ${marker}`);
+}
+
 const blockingSun = git(['show', 'HEAD:app/src/main/assets/blocking-sun-integration.js']);
 for (const marker of [
   "window.LightingAIBlockingSun={version:'1.0'",
@@ -303,6 +314,9 @@ if (!blockingLoader.includes("blocking-camera-designer.js")) {
 }
 if (!blockingLoader.includes("set-sketch-sun.js") || !blockingLoader.includes("blocking-sun-integration.js")) {
   fail('Blocking SUNCE loaders missing from MainActivity');
+}
+if (!blockingLoader.includes("blocking-ai-integration.js")) {
+  fail('Blocking AI loader missing from MainActivity');
 }
 
 const manifestPath = 'app/src/main/AndroidManifest.xml';

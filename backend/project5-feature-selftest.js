@@ -81,10 +81,12 @@ requireText(imageProvider, 'ParcelFileDescriptor.MODE_READ_ONLY', 'shared image 
 requireText(imageProvider, 'file.getParentFile().equals(root)', 'shared image provider must reject path traversal');
 requireText(mainActivity, 'new AIVisualImageBridge(this), "LightingAIImages"', 'native image bridge registration missing');
 requireText(mainActivity, 's.setAllowContentAccess(true)', 'WebView content URI access must remain enabled for gallery files');
-requireText(mainActivity, 'new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)', 'gallery picker must open phone images/gallery');
+requireText(mainActivity, 'new Intent(MediaStore.ACTION_PICK_IMAGES)', 'Android 13+ gallery picker must use the phone-tested system photo picker');
+requireText(mainActivity, 'new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)', 'pre-Android-13 gallery picker must retain the MediaStore fallback');
 requireText(mainActivity, 'Intent.FLAG_GRANT_READ_URI_PERMISSION', 'gallery picker must request read access');
 requireText(mainActivity, 'data.getData()', 'gallery result must accept a direct returned URI');
 requireText(mainActivity, 'data.getClipData()', 'gallery result must accept ClipData returned by OEM pickers');
+requireText(mainActivity, 'hasReadableImageData(uri)', 'camera result must accept a written image even when an OEM camera returns a non-standard result code');
 requireText(moduleJs, "input.value='';", 'file-input fallback must reset so the same image can be chosen again');
 requireText(moduleJs, 'input.click();', 'AI scene image action must retain the WebView file chooser fallback');
 requireText(moduleJs, "document.getElementById('aiv-gallery').onchange=receiveFile", 'gallery fallback must feed the AI scene photo handler');
@@ -97,6 +99,7 @@ requireText(mainActivity, 'deliverAIVisualImage(uri);', 'native AI picker result
 requireText(mainActivity, 'if (requestCode == CHOOSE_IMAGE)', 'Android image result handler missing');
 requireText(mainActivity, 'pendingCameraCapture && pendingCameraUri != null', 'camera result must use the captured MediaStore URI');
 requireText(mainActivity, 'finishFileChooser(new Uri[]{uri});', 'camera URI must be delivered to the pending image callback');
+requireText(mainActivity, 'boolean captured = resultCode == RESULT_OK || hasReadableImageData(uri);', 'camera capture must keep valid OEM output even without RESULT_OK');
 requireText(mainActivity, 'finishFileChooser(result);', 'gallery URI must be delivered to the pending image callback');
 requireText(mainActivity, 'BitmapFactory.decodeStream', 'native image transfer must decode the selected URI');
 requireText(mainActivity, 'output.compress(Bitmap.CompressFormat.JPEG, 82, bytes)', 'native image transfer must compress to bounded JPEG');
@@ -122,8 +125,10 @@ const galleryMethodStart = mainActivity.indexOf('private boolean openGalleryForW
 const galleryMethodEnd = mainActivity.indexOf('private boolean openCameraForWebView', galleryMethodStart);
 assert(galleryMethodStart >= 0 && galleryMethodEnd > galleryMethodStart, 'gallery picker method boundaries missing');
 const galleryMethod = mainActivity.slice(galleryMethodStart, galleryMethodEnd);
-assert(galleryMethod.includes('Intent.ACTION_PICK'), 'AI gallery picker must use the phone gallery image flow');
-assert(galleryMethod.includes('MediaStore.Images.Media.EXTERNAL_CONTENT_URI'), 'AI gallery picker must target phone images');
+assert(galleryMethod.includes('Build.VERSION.SDK_INT >= 33'), 'AI gallery picker must select the Android 13+ photo-picker path');
+assert(galleryMethod.includes('MediaStore.ACTION_PICK_IMAGES'), 'AI gallery picker must preserve the phone-tested build 2504 photo-picker path');
+assert(galleryMethod.includes('Intent.ACTION_PICK'), 'AI gallery picker must retain the legacy phone-gallery fallback');
+assert(galleryMethod.includes('MediaStore.Images.Media.EXTERNAL_CONTENT_URI'), 'legacy AI gallery picker must target phone images');
 assert(!galleryMethod.includes('Intent.ACTION_OPEN_DOCUMENT'), 'AI gallery picker must not open the document/files picker');
 requireText(manifest, 'android:name=".AIVisualImageProvider"', 'AI image share provider missing');
 

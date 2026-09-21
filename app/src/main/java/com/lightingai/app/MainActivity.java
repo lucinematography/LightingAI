@@ -523,24 +523,24 @@ public class MainActivity extends Activity {
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
         pendingGalleryPersistable = false;
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        intent.setType("image/*");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        if (params != null && params.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE) {
-            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= 33) {
+            intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+            intent.setType("image/*");
+        } else {
+            intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
         }
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
             startActivityForResult(intent, CHOOSE_IMAGE);
             return true;
         } catch (ActivityNotFoundException primaryError) {
             try {
                 Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
-                fallback.addCategory(Intent.CATEGORY_OPENABLE);
                 fallback.setType("image/*");
+                fallback.addCategory(Intent.CATEGORY_OPENABLE);
                 fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                if (params != null && params.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE) {
-                    fallback.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                }
                 startActivityForResult(fallback, CHOOSE_IMAGE);
                 return true;
             } catch (Exception ignored) {
@@ -603,6 +603,15 @@ public class MainActivity extends Activity {
         pendingPhotoCapturePermission = false;
         pendingGalleryPersistable = false;
         if (callback != null) callback.onReceiveValue(result);
+    }
+
+    private boolean hasReadableImageData(Uri uri) {
+        if (uri == null) return false;
+        try (InputStream input = getContentResolver().openInputStream(uri)) {
+            return input != null && input.read() != -1;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private void deletePendingCameraUri() {
@@ -1285,33 +1294,36 @@ public class MainActivity extends Activity {
         }
 
         if (requestCode == CHOOSE_IMAGE) {
-            if (resultCode == RESULT_OK) {
-                if (pendingCameraCapture && pendingCameraUri != null) {
-                    Uri uri = pendingCameraUri;
+            if (pendingCameraCapture && pendingCameraUri != null) {
+                Uri uri = pendingCameraUri;
+                boolean captured = resultCode == RESULT_OK || hasReadableImageData(uri);
+                if (captured) {
                     pendingCameraUri = null;
                     finishFileChooser(new Uri[]{uri});
                 } else {
-                    Uri[] result = null;
-                    if (data != null && data.getData() != null) {
-                        result = new Uri[]{data.getData()};
-                    }
-                    if ((result == null || result.length == 0) && data != null && data.getClipData() != null) {
-                        ClipData clip = data.getClipData();
-                        ArrayList<Uri> picked = new ArrayList<>();
-                        for (int i = 0; i < clip.getItemCount(); i++) {
-                            Uri pickedUri = clip.getItemAt(i) == null ? null : clip.getItemAt(i).getUri();
-                            if (pickedUri != null && !picked.contains(pickedUri)) picked.add(pickedUri);
-                        }
-                        if (!picked.isEmpty()) result = picked.toArray(new Uri[0]);
-                    }
-                    if (result == null || result.length == 0) {
-                        result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-                    }
-                    persistGalleryAccess(data, result);
-                    finishFileChooser(result);
+                    deletePendingCameraUri();
+                    finishFileChooser(null);
                 }
+                return;
+            }
+
+            if (resultCode == RESULT_OK) {
+                Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                if ((result == null || result.length == 0) && data != null && data.getData() != null) {
+                    result = new Uri[]{data.getData()};
+                }
+                if ((result == null || result.length == 0) && data != null && data.getClipData() != null) {
+                    ClipData clip = data.getClipData();
+                    ArrayList<Uri> picked = new ArrayList<>();
+                    for (int i = 0; i < clip.getItemCount(); i++) {
+                        Uri pickedUri = clip.getItemAt(i) == null ? null : clip.getItemAt(i).getUri();
+                        if (pickedUri != null && !picked.contains(pickedUri)) picked.add(pickedUri);
+                    }
+                    if (!picked.isEmpty()) result = picked.toArray(new Uri[0]);
+                }
+                persistGalleryAccess(data, result);
+                finishFileChooser(result);
             } else {
-                deletePendingCameraUri();
                 finishFileChooser(null);
             }
             return;

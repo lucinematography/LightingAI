@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -383,7 +384,7 @@ public class MainActivity extends Activity {
         if (webView == null) return;
         if (uri == null) {
             webView.post(() -> webView.evaluateJavascript(
-                "window.LightingAIVisualPickedData&&window.LightingAIVisualPickedData(null);", null));
+                "window.LightingAIVisualImageTransferError&&window.LightingAIVisualImageTransferError();", null));
             return;
         }
         new Thread(() -> {
@@ -396,9 +397,10 @@ public class MainActivity extends Activity {
                     if (input == null) throw new IllegalStateException("Image input unavailable");
                     BitmapFactory.decodeStream(input, null, bounds);
                 }
+
                 int maxSide = Math.max(bounds.outWidth, bounds.outHeight);
                 int sample = 1;
-                while (maxSide > 0 && maxSide / sample > 2200) sample *= 2;
+                while (maxSide > 0 && maxSide / sample > 1800) sample *= 2;
 
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inSampleSize = Math.max(1, sample);
@@ -413,8 +415,8 @@ public class MainActivity extends Activity {
                 int height = bitmap.getHeight();
                 int longest = Math.max(width, height);
                 Bitmap output = bitmap;
-                if (longest > 1600) {
-                    float scale = 1600f / longest;
+                if (longest > 1280) {
+                    float scale = 1280f / longest;
                     int outW = Math.max(1, Math.round(width * scale));
                     int outH = Math.max(1, Math.round(height * scale));
                     scaled = Bitmap.createScaledBitmap(bitmap, outW, outH, true);
@@ -422,21 +424,42 @@ public class MainActivity extends Activity {
                 }
 
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                if (!output.compress(Bitmap.CompressFormat.JPEG, 86, bytes)) {
+                if (!output.compress(Bitmap.CompressFormat.JPEG, 82, bytes)) {
                     throw new IllegalStateException("Image compression failed");
                 }
-                String dataUrl = "data:image/jpeg;base64," + Base64.encodeToString(bytes.toByteArray(), Base64.NO_WRAP);
-                String quoted = JSONObject.quote(dataUrl);
-                webView.post(() -> webView.evaluateJavascript(
-                    "window.LightingAIVisualPickedData&&window.LightingAIVisualPickedData(" + quoted + ");", null));
+                String base64 = Base64.encodeToString(bytes.toByteArray(), Base64.NO_WRAP);
+                deliverAIVisualImageChunks(base64);
             } catch (Exception e) {
                 webView.post(() -> webView.evaluateJavascript(
-                    "window.LightingAIVisualPickedData&&window.LightingAIVisualPickedData(null);", null));
+                    "window.LightingAIVisualImageTransferError&&window.LightingAIVisualImageTransferError();", null));
             } finally {
                 if (scaled != null && scaled != bitmap && !scaled.isRecycled()) scaled.recycle();
                 if (bitmap != null && !bitmap.isRecycled()) bitmap.recycle();
             }
         }, "LightingAI-AI-Image").start();
+    }
+
+    private void deliverAIVisualImageChunks(String base64) {
+        if (webView == null || base64 == null || base64.isEmpty()) {
+            if (webView != null) webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAIVisualImageTransferError&&window.LightingAIVisualImageTransferError();", null));
+            return;
+        }
+        final int chunkSize = 48000;
+        final int total = (base64.length() + chunkSize - 1) / chunkSize;
+        webView.post(() -> {
+            webView.evaluateJavascript(
+                "window.LightingAIVisualImageTransferBegin&&window.LightingAIVisualImageTransferBegin(" + total + ");", null);
+            for (int i = 0; i < total; i++) {
+                int from = i * chunkSize;
+                int to = Math.min(base64.length(), from + chunkSize);
+                String chunk = JSONObject.quote(base64.substring(from, to));
+                webView.evaluateJavascript(
+                    "window.LightingAIVisualImageTransferChunk&&window.LightingAIVisualImageTransferChunk(" + i + "," + chunk + ");", null);
+            }
+            webView.evaluateJavascript(
+                "window.LightingAIVisualImageTransferEnd&&window.LightingAIVisualImageTransferEnd();", null);
+        });
     }
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
@@ -489,6 +512,15 @@ public class MainActivity extends Activity {
             camera.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
             camera.setClipData(ClipData.newRawUri("LightingAI scene", pendingCameraUri));
             camera.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            for (ResolveInfo info : getPackageManager().queryIntentActivities(camera, PackageManager.MATCH_DEFAULT_ONLY)) {
+                if (info != null && info.activityInfo != null && info.activityInfo.packageName != null) {
+                    grantUriPermission(
+                        info.activityInfo.packageName,
+                        pendingCameraUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    );
+                }
+            }
             startActivityForResult(camera, CHOOSE_IMAGE);
             return true;
         } catch (Exception e) {

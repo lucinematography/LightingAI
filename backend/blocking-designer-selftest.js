@@ -30,6 +30,9 @@ assert.ok(blocking.includes('previewActive'), 'Blocking must track active previe
 assert.ok(blocking.includes("c.setAttribute('r',sel?'13':'9')"), 'Waypoint markers must stay enlarged for readability');
 assert.ok(blocking.includes("tx.setAttribute('font-size','16')"), 'Waypoint labels must stay enlarged for readability');
 assert.ok(blocking.includes('blocking-subject-buttons'), 'Tracking subject chooser must use stable large buttons');
+assert.ok(blocking.includes("handleDx=overObject?58:0"), 'Waypoint handle must offset away from overlapping object');
+assert.ok(blocking.includes("hit.setAttribute('r',sel?'22':'18')"), 'Waypoint drag target must remain large and separate');
+assert.ok(blocking.includes("data-handle-dx"), 'Waypoint drag must preserve visual handle offset');
 assert.ok(blocking.includes('trackingEnabled'), 'Tracking enable state must remain independent from subject selection');
 assert.ok(!blocking.includes('id="blockingTrackSubject"'), 'Native tracking subject select must not return');
 assert.ok(blocking.includes("overObject&&!previewActive"), 'Preview waypoint must remain draggable without moving the object');

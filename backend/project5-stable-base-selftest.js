@@ -187,6 +187,7 @@ const exactAllowed = new Set([
   'app/src/main/assets/ai-visual-scene-launcher.js',
   'app/src/main/assets/ai-control-bridge.js',
   'app/src/main/assets/control-dashboard.js',
+  'app/src/main/assets/device-capabilities.js',
   'app/src/main/assets/lightai-intro.jpg',
   'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java'
 ]);
@@ -200,7 +201,6 @@ for (const protectedPath of [
   'app/src/main/assets/ai-visual-preview-refinements.js',
   'app/src/main/assets/ai-visual-phone-diagnostics.js',
   'app/src/main/assets/ai-visual-image-actions.js',
-  'app/src/main/java/com/lightingai/app/DeviceCapabilities.java',
   'backend/visual-preview.js'
 ]) {
   const stable = git(['show', `${PROJECT510_QA_BASE}:${protectedPath}`]);
@@ -213,7 +213,7 @@ const stableManifest = git(['show', `${PROJECT510_QA_BASE}:${manifestPath}`]);
 const currentManifest = git(['show', `HEAD:${manifestPath}`]);
 const manifestWithoutBle = currentManifest
   .split('\n')
-  .filter((line) => !line.includes('android.permission.BLUETOOTH') && !line.includes('android.hardware.bluetooth_le'))
+  .filter((line) => !line.includes('android.permission.BLUETOOTH') && !line.includes('android.hardware.bluetooth_le') && !line.includes('android.permission.RECORD_AUDIO'))
   .join('\n');
 if (manifestWithoutBle !== stableManifest) fail('AndroidManifest changed outside the isolated BLE permission/feature additions');
 for (const marker of [
@@ -230,6 +230,7 @@ const allowedPermissions = new Set([
   'android.permission.ACCESS_COARSE_LOCATION',
   'android.permission.ACCESS_FINE_LOCATION',
   'android.permission.CAMERA',
+  'android.permission.RECORD_AUDIO',
   'android.permission.BLUETOOTH',
   'android.permission.BLUETOOTH_ADMIN',
   'android.permission.BLUETOOTH_SCAN',

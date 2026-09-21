@@ -24,6 +24,7 @@ function widthAt(angle,d){return 2*d*Math.tan((angle*Math.PI/180)/2)}
 function screenXY(scene,x,y){const left=55,top=45,w=890,h=610;return {x:left+x/scene.roomW*w,y:top+y/scene.roomH*h}}
 function roomXY(scene,sx,sy){const left=55,top=45,w=890,h=610;return {x:(sx-left)/w*scene.roomW,y:(sy-top)/h*scene.roomH}}
 function livePosition(scene,o){
+  try{if(window.LightingAISetSketch&&typeof window.LightingAISetSketch.getVisualObject==='function')o=window.LightingAISetSketch.getVisualObject(o)||o}catch(e){}
   const svg=E('setSketchSvg');if(!svg)return o;
   const g=svg.querySelector('[data-object-id="'+o.id+'"]');if(!g)return o;
   const tr=String(g.getAttribute('transform')||''),m=tr.match(/translate\(([-\d.]+)[ ,]+([-\d.]+)\)/);
@@ -47,8 +48,10 @@ function cameraCone(scene,source){
   return '<polygon class="set-camera-fov-cone" points="'+p0.x.toFixed(1)+','+p0.y.toFixed(1)+' '+p1.x.toFixed(1)+','+p1.y.toFixed(1)+' '+p2.x.toFixed(1)+','+p2.y.toFixed(1)+'" fill="#89c7ff" fill-opacity="'+(selected?'0.16':'0.07')+'" stroke="#89c7ff" stroke-opacity="'+(selected?'0.8':'0.35')+'" stroke-width="1.5" clip-path="url(#setSketchClip)" pointer-events="none"/>';
 }
 function subjectInfo(scene,camera,angle){
+  camera=livePosition(scene,camera);
   const r=(camera.rot||0)*Math.PI/180,dx=Math.sin(r),dy=-Math.cos(r),px=-dy,py=dx;
   const rows=scene.objects.filter(o=>o.type==='subject').map(o=>{
+    o=livePosition(scene,o);
     const v={x:o.x-camera.x,y:o.y-camera.y};
     return {o,depth:v.x*dx+v.y*dy,lateral:v.x*px+v.y*py};
   }).filter(x=>x.depth>0.01).sort((a,b)=>a.depth-b.depth);
@@ -125,6 +128,7 @@ function install(){
   svg.addEventListener('pointermove',()=>draw());
   svg.addEventListener('pointerup',()=>{draw();setTimeout(()=>enhanceSelected(false),0)});
   svg.addEventListener('pointercancel',()=>draw());
+  svg.addEventListener('lightingai:set-sketch-rendered',()=>{draw();refreshReadouts()});
   document.addEventListener('click',ev=>{const id=String(ev.target&&ev.target.id||'');if(id.indexOf('setSketch')!==0)return;selectAfterAction(id);setTimeout(()=>{draw();enhanceSelected(false)},0)});
   document.addEventListener('change',ev=>{const id=String(ev.target&&ev.target.id||'');if(id==='setSketchObjectName')setTimeout(()=>enhanceSelected(false),0)});
   if(typeof window.setLanguage==='function'&&!window.__lightingaiFovLanguageHook){const old=window.setLanguage;window.__lightingaiFovLanguageHook=true;window.setLanguage=function(l){old(l);setTimeout(()=>enhanceSelected(true),0)}}

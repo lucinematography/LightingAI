@@ -80,6 +80,26 @@ requireText(imageBridge, 'MAX_IMAGE_BYTES = 20 * 1024 * 1024', 'native image bri
 requireText(imageProvider, 'ParcelFileDescriptor.MODE_READ_ONLY', 'shared image provider must remain read-only');
 requireText(imageProvider, 'file.getParentFile().equals(root)', 'shared image provider must reject path traversal');
 requireText(mainActivity, 'new AIVisualImageBridge(this), "LightingAIImages"', 'native image bridge registration missing');
+requireText(mainActivity, 's.setAllowContentAccess(true)', 'WebView content URI access must remain enabled for gallery files');
+requireText(mainActivity, 'new Intent(Intent.ACTION_OPEN_DOCUMENT)', 'gallery picker must use the proven Android document picker');
+requireText(mainActivity, 'Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION', 'gallery picker must request persistable read access');
+requireText(mainActivity, 'takePersistableUriPermission', 'selected gallery URI access must be retained');
+requireText(mainActivity, 'data.getData()', 'gallery result must accept a direct returned URI');
+requireText(mainActivity, 'data.getClipData()', 'gallery result must accept ClipData returned by OEM pickers');
+requireText(moduleJs, "input.value='';", 'gallery input must reset so the same image can be chosen again');
+requireText(moduleJs, 'input.click();', 'AI scene image action must invoke the WebView file chooser');
+requireText(moduleJs, "document.getElementById('aiv-gallery').onchange=receiveFile", 'gallery selection must feed the AI scene photo handler');
+requireText(moduleJs, 'optimizeImage(f).then(setPhoto)', 'selected gallery file must be rendered into the AI scene');
+assert(
+  moduleJs.indexOf('input.click();') >= 0 &&
+  moduleJs.indexOf('input.click();') < moduleJs.indexOf('Android.openImagePicker(mode);'),
+  'AI image selection must prefer the proven WebView chooser before the native fallback'
+);
+const galleryMethodStart = mainActivity.indexOf('private boolean openGalleryForWebView');
+const galleryMethodEnd = mainActivity.indexOf('private boolean openCameraForWebView', galleryMethodStart);
+assert(galleryMethodStart >= 0 && galleryMethodEnd > galleryMethodStart, 'gallery picker method boundaries missing');
+const galleryMethod = mainActivity.slice(galleryMethodStart, galleryMethodEnd);
+assert(!galleryMethod.includes('ACTION_PICK_IMAGES'), 'AI gallery picker must not regress to ACTION_PICK_IMAGES on this phone flow');
 requireText(manifest, 'android:name=".AIVisualImageProvider"', 'AI image share provider missing');
 
 for (const action of ['SVETLIJE','TAMNIJE','TOPLIJE','HLADNIJE','MEKŠE','VIŠE KONTRASTA','NAPRAVI MOJU VERZIJU','VRATI PRETHODNU AI VERZIJU']) {

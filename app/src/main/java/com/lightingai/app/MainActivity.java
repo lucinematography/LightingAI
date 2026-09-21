@@ -523,16 +523,14 @@ public class MainActivity extends Activity {
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
         pendingGalleryPersistable = false;
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.setType("image/*");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         if (params != null && params.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE) {
             intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         }
         try {
             startActivityForResult(intent, CHOOSE_IMAGE);
-            pendingGalleryPersistable = true;
             return true;
         } catch (ActivityNotFoundException primaryError) {
             try {
@@ -544,7 +542,6 @@ public class MainActivity extends Activity {
                     fallback.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 }
                 startActivityForResult(fallback, CHOOSE_IMAGE);
-                pendingGalleryPersistable = false;
                 return true;
             } catch (Exception ignored) {
                 finishFileChooser(null);

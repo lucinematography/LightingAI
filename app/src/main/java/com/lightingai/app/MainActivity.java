@@ -182,6 +182,7 @@ public class MainActivity extends Activity {
                 ValueCallback<Uri[]> filePathCallback,
                 FileChooserParams fileChooserParams
             ) {
+                notifyAIVisualImageStage("FILE_CHOOSER_OPEN");
                 if (pendingFileChooser != null) pendingFileChooser.onReceiveValue(null);
                 pendingFileChooser = filePathCallback;
                 pendingCameraCapture = fileChooserParams != null && fileChooserParams.isCaptureEnabled();
@@ -672,6 +673,7 @@ public class MainActivity extends Activity {
         pendingCameraCapture = false;
         pendingPhotoCapturePermission = false;
         pendingGalleryPersistable = false;
+        notifyAIVisualImageStage(callback == null ? "ERROR_WEBVIEW_CALLBACK_MISSING" : (result != null && result.length > 0 ? "WEBVIEW_CALLBACK" : "ERROR_WEBVIEW_CALLBACK_EMPTY"));
         if (callback != null) callback.onReceiveValue(result);
     }
 
@@ -1416,6 +1418,7 @@ public class MainActivity extends Activity {
         }
 
         if (requestCode == CHOOSE_IMAGE) {
+            notifyAIVisualImageStage(resultCode == RESULT_OK ? "ANDROID_RESULT" : "ERROR_ANDROID_RESULT_CANCELLED");
             if (pendingCameraCapture && pendingCameraUri != null) {
                 Uri uri = pendingCameraUri;
                 boolean captured = resultCode == RESULT_OK || hasReadableImageData(uri);

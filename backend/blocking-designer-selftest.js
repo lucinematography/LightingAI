@@ -25,6 +25,7 @@ for(const marker of [
 
 assert.ok(blocking.includes('a.setPreview(buildPreview'), 'Blocking animation must use preview layer');
 assert.ok(blocking.includes('finishAtEnd(total)'), 'Playback must remain at final waypoint until reset');
+assert.ok(blocking.includes("pointer-events','none'"), 'Overlapping waypoint must allow selected object drag');
 assert.ok(!blocking.includes('localStorage.setItem(KEY,JSON.stringify(buildPreview'), 'Animation preview must not persist frame positions');
 
 for(const marker of [

@@ -354,6 +354,30 @@ public class MainActivity extends Activity {
             null));
     }
 
+    private void openAIImagePicker(boolean cameraCapture) {
+        if (pendingFileChooser != null) finishFileChooser(null);
+        pendingCameraCapture = cameraCapture;
+        pendingGalleryPersistable = false;
+        pendingFileChooser = uris -> {
+            if (webView == null) return;
+            String value = "";
+            if (uris != null && uris.length > 0 && uris[0] != null) value = JSONObject.quote(uris[0].toString());
+            final String jsValue = value.isEmpty() ? "null" : value;
+            webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAIVisualPickedUri&&window.LightingAIVisualPickedUri(" + jsValue + ");", null));
+        };
+        if (cameraCapture) {
+            if (!hasCameraPermission()) {
+                pendingPhotoCapturePermission = true;
+                requestCameraPermission();
+                return;
+            }
+            openCameraForWebView();
+            return;
+        }
+        openGalleryForWebView(null);
+    }
+
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
         pendingGalleryPersistable = false;
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -802,6 +826,10 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void requestCameraPermission() {
             runOnUiThread(() -> MainActivity.this.requestCameraPermission());
+        }
+
+        @JavascriptInterface public void openImagePicker(String mode) {
+            runOnUiThread(() -> MainActivity.this.openAIImagePicker("camera".equals(mode)));
         }
 
         @JavascriptInterface public boolean hasCameraPermission() {

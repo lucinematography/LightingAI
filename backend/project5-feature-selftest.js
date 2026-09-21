@@ -100,7 +100,7 @@ requireText(moduleJs, 'aiVisualGalleryInput.onchange=receiveFile', 'persistent g
 requireText(moduleJs, 'aiVisualCameraInput.onchange=receiveFile', 'persistent camera selection must feed the AI scene photo handler');
 forbidText(moduleJs, 'id="aiv-gallery"', 'AI module must not create a transient gallery file input');
 forbidText(moduleJs, 'id="aiv-camera"', 'AI module must not create a transient camera file input');
-requireText(moduleJs, 'optimizeImage(f).then(setPhoto)', 'selected WebView file must be optimized and rendered into the AI scene');
+requireText(moduleJs, "optimizeImage(f).then(function(src){photoDiag('OPTIMIZE_OK');setPhoto(src);})", 'selected WebView file must be optimized, diagnosed and rendered into the AI scene');
 requireText(mainActivity, '@JavascriptInterface public void openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
 requireText(mainActivity, 'MainActivity.this.openAIImagePicker("camera".equals(mode))', 'native AI image picker bridge must route gallery/camera mode');
 requireText(mainActivity, 'AI_CHOOSE_IMAGE = 509', 'native AI image picker must use a dedicated Android request code');

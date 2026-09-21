@@ -65,6 +65,10 @@ function render(){
   const note=E('deviceCapabilitiesNote');if(note)note.textContent=x.note;
   const info=E('deviceCapabilitiesReportInfo');if(info)info.textContent=x.reportInfo;
 }
+window.LightingAIRefreshDeviceCapabilities=render;
+window.addEventListener('focus',()=>setTimeout(render,150));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(render,150)});
+
 function buildReport(){
   const c=probe();
   return {

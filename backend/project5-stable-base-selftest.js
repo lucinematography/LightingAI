@@ -79,6 +79,7 @@ const exactAllowed = new Set([
   mainActivityPath,
   imageBridgePath,
   'app/build.gradle',
+  '.github/workflows/build-apk.yml',
   '.github/workflows/release-apk.yml',
   'app/src/main/assets/index.html',
   'app/src/main/assets/sun-native-bridge.js',

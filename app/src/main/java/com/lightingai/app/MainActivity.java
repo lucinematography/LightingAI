@@ -18,6 +18,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
+import android.speech.RecognitionListener;
+import android.speech.SpeechRecognizer;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -59,6 +61,8 @@ public class MainActivity extends Activity {
     private NativeSunCompass nativeSunCompass;
     private boolean pendingNativeSunLocation = false;
     private String pendingVoiceTarget = null;
+    private String pendingVoiceLanguage = "sr";
+    private SpeechRecognizer speechRecognizer;
     private final AtomicInteger artNetSequence = new AtomicInteger(1);
     private final AtomicInteger sacnSequence = new AtomicInteger(0);
     private final AtomicInteger sacnPriority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
@@ -84,6 +88,7 @@ public class MainActivity extends Activity {
     private static final int MEASURE_SCENE = 505;
     private static final int SPEECH_INPUT = 506;
     private static final int BLE_PERMISSION = 507;
+    private static final int AUDIO_PERMISSION = 508;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -608,18 +613,90 @@ public class MainActivity extends Activity {
             null));
     }
 
+    private boolean hasAudioPermission() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+            checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestAudioPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !hasAudioPermission()) {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, AUDIO_PERMISSION);
+        }
+    }
+
     private void startSpeechInput(String language, String targetId) {
         String target = (targetId == null || targetId.trim().isEmpty()) ? "aiv-dp-request" : targetId.trim();
+        pendingVoiceTarget = target;
+        pendingVoiceLanguage = "en".equals(language) ? "en" : "sr";
+        if (!hasAudioPermission()) {
+            requestAudioPermission();
+            return;
+        }
+        startNativeSpeechInput(pendingVoiceLanguage, target);
+    }
+
+    private void startNativeSpeechInput(String language, String target) {
+        String locale = "en".equals(language) ? "en-US" : "sr-RS";
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            startExternalSpeechInput(language, target);
+            return;
+        }
+        try {
+            if (speechRecognizer != null) {
+                try { speechRecognizer.destroy(); } catch (Exception ignored) {}
+            }
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+            speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                @Override public void onReadyForSpeech(Bundle params) {}
+                @Override public void onBeginningOfSpeech() {}
+                @Override public void onRmsChanged(float rmsdB) {}
+                @Override public void onBufferReceived(byte[] buffer) {}
+                @Override public void onEndOfSpeech() {}
+                @Override public void onPartialResults(Bundle partialResults) {}
+                @Override public void onEvent(int eventType, Bundle params) {}
+                @Override public void onError(int error) {
+                    String activeTarget = pendingVoiceTarget;
+                    pendingVoiceTarget = null;
+                    if (activeTarget == null) activeTarget = target;
+                    String code = (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) ? "empty" :
+                        (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ? "denied" : "error");
+                    notifyVoiceInputError(activeTarget, code);
+                }
+                @Override public void onResults(Bundle results) {
+                    String activeTarget = pendingVoiceTarget;
+                    pendingVoiceTarget = null;
+                    if (activeTarget == null) activeTarget = target;
+                    ArrayList<String> matches = results == null ? null : results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    if (matches != null && !matches.isEmpty() && matches.get(0) != null && !matches.get(0).trim().isEmpty()) {
+                        notifyVoiceInputResult(activeTarget, matches.get(0).trim());
+                    } else {
+                        notifyVoiceInputError(activeTarget, "empty");
+                    }
+                }
+            });
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
+            intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+            intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false);
+            speechRecognizer.startListening(intent);
+        } catch (Exception e) {
+            startExternalSpeechInput(language, target);
+        }
+    }
+
+    private void startExternalSpeechInput(String language, String target) {
         String locale = "en".equals(language) ? "en-US" : "sr-RS";
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, locale);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
-        boolean sceneDescription = "aiv-desc".equals(target);
+        boolean sceneDescription = "aiv-desc".equals(target) || "planner-description".equals(target);
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
             sceneDescription
-                ? ("en".equals(language) ? "Describe the scene look" : "Opiši izgled scene")
+                ? ("en".equals(language) ? "Describe the scene" : "Opiši scenu")
                 : ("en".equals(language) ? "Describe the DP lighting request" : "Izgovori zahtev DP-a za rasvetu"));
         pendingVoiceTarget = target;
         try {
@@ -918,6 +995,12 @@ public class MainActivity extends Activity {
                 if (hasBlePermission()) startBleDiscovery(pendingId, pendingTimeout);
                 else notifyBleDiscovery(pendingId, new JSONArray(), "ble_permission_denied");
             }
+        } else if (requestCode == AUDIO_PERMISSION) {
+            String target = pendingVoiceTarget;
+            if (target != null) {
+                if (hasAudioPermission()) startNativeSpeechInput(pendingVoiceLanguage, target);
+                else { pendingVoiceTarget = null; notifyVoiceInputError(target, "denied"); }
+            }
         }
     }
 
@@ -1000,10 +1083,29 @@ public class MainActivity extends Activity {
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
+        if (speechRecognizer != null) {
+            try { speechRecognizer.destroy(); } catch (Exception ignored) {}
+            speechRecognizer = null;
+        }
         super.onDestroy();
     }
 
+    private void finishBackFallback() {
+        if (webView != null && webView.canGoBack()) webView.goBack();
+        else super.onBackPressed();
+    }
+
     @Override public void onBackPressed() {
-        if (webView.canGoBack()) webView.goBack(); else super.onBackPressed();
+        if (webView == null) {
+            super.onBackPressed();
+            return;
+        }
+        webView.evaluateJavascript(
+            "(function(){try{return !!(window.LightingAIHandleBack&&window.LightingAIHandleBack());}catch(e){return false;}})();",
+            value -> {
+                if ("true".equals(value)) return;
+                finishBackFallback();
+            }
+        );
     }
 }

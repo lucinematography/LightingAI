@@ -257,6 +257,16 @@ for (const marker of [
   if (!shotListBlocking.includes(marker)) fail(`Blocking Shot List marker missing: ${marker}`);
 }
 
+const shotSetupBlocking = git(['show', 'HEAD:app/src/main/assets/shot-setup-report.js']);
+for (const marker of [
+  "schema:'lightingai-shot-setup-v2-blocking'",
+  'blockingLighting:blockingLighting()',
+  "'BLOCKING LIGHT MAP:'",
+  "['shotSetupBlockingLightsTile','BLOCKING LIGHT MAP']"
+]) {
+  if (!shotSetupBlocking.includes(marker)) fail(`Blocking Shot Setup marker missing: ${marker}`);
+}
+
 const cameraSetupsBlocking = git(['show', 'HEAD:app/src/main/assets/camera-setup-snapshots.js']);
 for (const marker of [
   "window.LightingAICameraSetups={version:'1.1-blocking-link'",

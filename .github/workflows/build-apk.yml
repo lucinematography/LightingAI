@@ -169,6 +169,7 @@ jobs:
             'assets/blocking-ai-integration.js'
             'assets/shot-list-planner.js'
             'assets/shot-setup-report.js'
+            'assets/shot-setup-recovery.js'
             'assets/camera-setup-snapshots.js'
           )
 

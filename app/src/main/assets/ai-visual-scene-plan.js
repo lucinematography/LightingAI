@@ -168,7 +168,9 @@ window.LightingAIOpenSceneImage=function(mode){
    photoDiag('NATIVE_PICKER_REQUEST',mode);
    var bridgeResult=Android.openImagePicker(mode);
    photoDiag('NATIVE_BRIDGE_RETURN',bridgeResult==null?'NULL':String(bridgeResult));
-   return false;
+   if(bridgeResult&&String(bridgeResult).indexOf('STARTED_')===0)return false;
+   if(bridgeResult==='WAITING_CAMERA_PERMISSION')return false;
+   photoDiag('NATIVE_PICKER_FALLBACK',bridgeResult==null?'NULL':String(bridgeResult));
   }
  }catch(e){photoDiag('ERROR_NATIVE_PICKER',e&&e.message?e.message:'native');}
  try{

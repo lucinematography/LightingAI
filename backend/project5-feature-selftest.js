@@ -103,11 +103,11 @@ forbidText(moduleJs, 'id="aiv-gallery"', 'AI module must not create a transient 
 forbidText(moduleJs, 'id="aiv-camera"', 'AI module must not create a transient camera file input');
 requireText(moduleJs, "optimizeImage(f).then(function(src){photoDiag('OPTIMIZE_OK');setPhoto(src);})", 'selected WebView file must be optimized, diagnosed and rendered into the AI scene');
 requireText(mainActivity, '@JavascriptInterface public String openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
-requireText(mainActivity, 'outcome.set(MainActivity.this.openAIImagePicker(cameraCapture))', 'native AI image picker bridge must return the actual picker launch result');
-requireText(mainActivity, 'STARTED_GALLERY', 'native AI image picker must report a started gallery launch');
+requireText(mainActivity, 'runOnUiThread(() -> {', 'native AI image picker bridge must queue picker launch on the UI thread');
+requireText(mainActivity, 'window.LightingAINativePickerLaunchResult&&window.LightingAINativePickerLaunchResult', 'native AI picker launch result callback missing');
 requireText(mainActivity, 'FAILED_GALLERY', 'native AI image picker must report gallery launch failure');
 requireText(moduleJs, "photoDiag('NATIVE_BRIDGE_RETURN'", 'AI image action must display the synchronous native bridge result');
-requireText(moduleJs, "photoDiag('NATIVE_PICKER_FALLBACK'", 'AI image action must expose fallback after a failed native picker launch');
+requireText(moduleJs, 'window.LightingAINativePickerLaunchResult=function(result)', 'AI module must expose asynchronous native picker launch result diagnostics');
 requireText(mainActivity, 'notifyAIVisualImageStage("result")', 'AI image result must report that Android returned the URI');
 requireText(mainActivity, 'deliverAIVisualImage(uri);', 'AI chooser result must enter the image decode/transfer path');
 requireText(mainActivity, 'if (requestCode == CHOOSE_IMAGE)', 'shared phone-tested image chooser result handler missing');

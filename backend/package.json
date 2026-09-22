@@ -23,7 +23,7 @@
     "audit:sources": "node source-audit.js",
     "audit:dependencies": "npm audit --audit-level=high",
     "catalog:status": "node -e \"import('./catalog-status.js').then(({catalogStatus})=>console.log(JSON.stringify(catalogStatus(),null,2)))\"",
-    "check": "npm run test:gels && npm run test:gels:integration && npm run test:simple-mode && npm run validate:catalog && npm run test:catalog && npm run test:desisti && npm run test:godox && npm run test:aladdin && npm run test:litemat && npm run test:evlight && npm run test:kinoflo && npm run test:ls && npm run test:storm && npm run test:storm:photometrics && npm run test:electro && npm run test:aputure:complete && npm run test:aputure:review && npm run test:visual-preview && npm run test:server-syntax && npm run audit:sources",
+    "check": "npm run test:gels && npm run test:gels:integration && npm run test:simple-mode && npm run test:tools-compact && npm run validate:catalog && npm run test:catalog && npm run test:desisti && npm run test:godox && npm run test:aladdin && npm run test:litemat && npm run test:evlight && npm run test:kinoflo && npm run test:ls && npm run test:storm && npm run test:storm:photometrics && npm run test:electro && npm run test:aputure:complete && npm run test:aputure:review && npm run test:visual-preview && npm run test:server-syntax && npm run audit:sources",
     "test:desisti": "node desisti-catalog-selftest.js",
     "test:godox": "node godox-catalog-selftest.js",
     "test:aladdin": "node aladdin-catalog-selftest.js",
@@ -34,7 +34,8 @@
     "build:gels": "node build-gel-filter-catalog.js",
     "test:gels": "node gel-filter-selftest.js",
     "test:gels:integration": "node gel-filter-integration-selftest.js",
-    "test:simple-mode": "node simple-mode-selftest.js"
+    "test:simple-mode": "node simple-mode-selftest.js",
+    "test:tools-compact": "node tools-compact-selftest.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

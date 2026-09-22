@@ -166,6 +166,7 @@ jobs:
             'assets/feature-build-info.js'
             'assets/catalog.js'
             'assets/gel-filter-catalog.js'
+            'assets/gel-filter-ui.js'
             'assets/set-sketch.js'
             'assets/set-sketch-camera-fov.js'
             'assets/blocking-camera-designer.js'

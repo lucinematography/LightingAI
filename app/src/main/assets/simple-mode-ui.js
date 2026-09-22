@@ -2,6 +2,7 @@
 'use strict';
 var MODE_KEY='lightingai_ui_mode_v1';
 var SIMPLE='simple', ADVANCED='advanced';
+var guideCollapsed=false, guideStep=0;
 
 function isSr(){
   try{return (localStorage.getItem('lighting_language_v1')||'sr')!=='en';}catch(e){return true;}
@@ -35,13 +36,13 @@ function action(page,target,nav){
 function labels(){
   var sr=isSr();
   return sr?{
-    simple:'JEDNOSTAVNO',advanced:'NAPREDNO',guide:'VODI ME',
+    simple:'JEDNOSTAVNO',advanced:'NAPREDNO',guide:'VODI ME',step:'Korak',
     title:'BRZI POČETAK',intro:'LightingAI te vodi kroz osnovni tok. Sve profesionalne funkcije ostaju sačuvane u režimu NAPREDNO.',
     s1:'1. NOVI PROJEKAT',s2:'2. IZABERI OPREMU',s3:'3. DODAJ SCENU',s4:'4. NAPRAVI AI PLAN',s5:'5. SAČUVAJ / IZVEZI',
     help:'? KAKO SE KORISTI',close:'ZATVORI',
     advancedNote:'Za DMX, Sunce, DOF, Flicker, Cue, Camera Setup, Blocking detalje i ostale profesionalne alate izaberi NAPREDNO.'
   }:{
-    simple:'SIMPLE',advanced:'ADVANCED',guide:'GUIDE ME',
+    simple:'SIMPLE',advanced:'ADVANCED',guide:'GUIDE ME',step:'Step',
     title:'QUICK START',intro:'LightingAI guides you through the basic workflow. All professional functions remain available in ADVANCED mode.',
     s1:'1. NEW PROJECT',s2:'2. CHOOSE EQUIPMENT',s3:'3. ADD SCENE',s4:'4. CREATE AI PLAN',s5:'5. SAVE / EXPORT',
     help:'? HOW TO USE',close:'CLOSE',
@@ -92,6 +93,8 @@ function addStyles(){
     '#lightingaiQuickStart p{margin-top:6px;margin-bottom:8px}'+
     '#lightingaiQuickStart .simpleSteps{display:grid;gap:6px;margin-top:9px}'+
     '#lightingaiQuickStart .simpleSteps button{width:100%;text-align:left;min-height:44px;font-size:13px;font-weight:900;padding:10px 13px}'+
+    '#lightingaiQuickStart.lightingaiGuideCollapsed{padding:0;border-color:#6d5921;background:#18150d}'+
+    '#lightingaiQuickStart .guideCollapsedBtn{width:100%;min-height:48px;text-align:left;font-size:13px;font-weight:900;border-radius:13px}'+
     '.lightingaiPageHelp{margin:0 0 12px}'+
     '.lightingaiPageHelp button{width:100%;text-align:left}'+
     '.lightingaiHelpBody{display:none;margin-top:8px;padding:10px;border:1px solid #30343b;border-radius:11px;background:#0f1115}'+
@@ -127,22 +130,41 @@ function addQuickStart(){
   card.id='lightingaiQuickStart';card.className='card';
   if(title&&title.nextSibling)planner.insertBefore(card,title.nextSibling);else planner.insertBefore(card,planner.firstChild);
 }
+function guideStepTitle(L,step){
+  return [L.s1,L.s2,L.s3,L.s4,L.s5][Math.max(0,Math.min(4,step-1))]||L.s1;
+}
+function collapseGuide(step){
+  guideStep=Math.max(1,Math.min(5,Number(step)||1));
+  guideCollapsed=true;
+  renderQuickStart();
+}
+function expandGuide(){
+  guideCollapsed=false;
+  renderQuickStart();
+}
 function renderQuickStart(){
   var card=document.getElementById('lightingaiQuickStart');if(!card)return;
   var L=labels();
+  card.classList.toggle('lightingaiGuideCollapsed',guideCollapsed);
+  if(guideCollapsed){
+    var title=guideStepTitle(L,guideStep).replace(/^\d+\.\s*/,'');
+    card.innerHTML='<button type="button" class="btn secondary guideCollapsedBtn">'+L.guide+' · '+L.step+' '+guideStep+'/5 - '+title+' ▼</button>';
+    card.querySelector('.guideCollapsedBtn').onclick=expandGuide;
+    return;
+  }
   card.innerHTML='<h2 style="margin-top:0">'+L.guide+' - '+L.title+'</h2><p class="muted small">'+L.intro+'</p>'+
     '<div class="simpleSteps">'+
-    '<button class="btn primary" data-step="project">'+L.s1+'</button>'+
-    '<button class="btn secondary" data-step="equipment">'+L.s2+'</button>'+
-    '<button class="btn secondary" data-step="scene">'+L.s3+'</button>'+
-    '<button class="btn secondary" data-step="ai">'+L.s4+'</button>'+
-    '<button class="btn secondary" data-step="save">'+L.s5+'</button>'+
+    '<button class="btn primary" data-step="1">'+L.s1+'</button>'+
+    '<button class="btn secondary" data-step="2">'+L.s2+'</button>'+
+    '<button class="btn secondary" data-step="3">'+L.s3+'</button>'+
+    '<button class="btn secondary" data-step="4">'+L.s4+'</button>'+
+    '<button class="btn secondary" data-step="5">'+L.s5+'</button>'+
     '</div><p class="muted small" style="margin-bottom:0;margin-top:12px">'+L.advancedNote+'</p>';
-  card.querySelector('[data-step="project"]').onclick=function(){action('planner','projectName');setTimeout(function(){var e=document.getElementById('projectName');if(e)e.focus();},220);};
-  card.querySelector('[data-step="equipment"]').onclick=function(){action('equipment','equipmentList');};
-  card.querySelector('[data-step="scene"]').onclick=function(){action('planner','description');};
-  card.querySelector('[data-step="ai"]').onclick=function(){action('ai','aiContent');};
-  card.querySelector('[data-step="save"]').onclick=function(){applyMode(ADVANCED);action('tools','projectBackupCard','tools');};
+  card.querySelector('[data-step="1"]').onclick=function(){collapseGuide(1);action('planner','projectName');setTimeout(function(){var e=document.getElementById('projectName');if(e)e.focus();},220);};
+  card.querySelector('[data-step="2"]').onclick=function(){collapseGuide(2);action('equipment','equipmentList');};
+  card.querySelector('[data-step="3"]').onclick=function(){collapseGuide(3);action('planner','description');};
+  card.querySelector('[data-step="4"]').onclick=function(){collapseGuide(4);action('ai','aiContent');};
+  card.querySelector('[data-step="5"]').onclick=function(){collapseGuide(5);applyMode(ADVANCED);action('tools','projectBackupCard','tools');};
 }
 function addHelp(page){
   var section=document.getElementById(page);if(!section||section.querySelector(':scope > .lightingaiPageHelp'))return;
@@ -176,6 +198,6 @@ function install(){
   refreshText();applyMode(currentMode());
   ['langSr','langEn'].forEach(function(id){var b=document.getElementById(id);if(b)b.addEventListener('click',function(){setTimeout(refreshText,0);});});
 }
-window.LightingAISimpleMode={setMode:applyMode,getMode:currentMode,version:'1.0'};
+window.LightingAISimpleMode={setMode:applyMode,getMode:currentMode,collapseGuide:collapseGuide,expandGuide:expandGuide,version:'1.1'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();

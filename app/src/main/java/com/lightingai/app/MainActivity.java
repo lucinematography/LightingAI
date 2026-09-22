@@ -66,6 +66,7 @@ public class MainActivity extends Activity {
     private boolean pendingCameraCapture = false;
     private boolean pendingPhotoCapturePermission = false;
     private boolean pendingGalleryPersistable = false;
+    private boolean pendingAIExternalPickerLaunch = false;
     private Uri pendingAIImageCameraUri = null;
     private boolean pendingAIImageCameraCapture = false;
     private boolean pendingAIImageCameraPermission = false;
@@ -397,7 +398,10 @@ public class MainActivity extends Activity {
             }
             return openCameraForWebView() ? "STARTED_CAMERA" : "FAILED_CAMERA";
         }
-        return openGalleryForWebView(null) ? "STARTED_GALLERY" : "FAILED_GALLERY";
+        pendingAIExternalPickerLaunch = true;
+        boolean started = openGalleryForWebView(null);
+        if (!started) pendingAIExternalPickerLaunch = false;
+        return started ? "STARTED_GALLERY" : "FAILED_GALLERY";
     }
 
     private void openAIImageGallery() {
@@ -1360,11 +1364,21 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onPause() {
+        if (pendingAIExternalPickerLaunch) notifyAIVisualImageStage("PICKER_ACTIVITY_PAUSE");
         stopNativeSunCompass();
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
         super.onPause();
+    }
+
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (pendingAIExternalPickerLaunch && !hasFocus) {
+            notifyAIVisualImageStage("PICKER_FOCUS_LOST");
+        } else if (pendingAIExternalPickerLaunch && hasFocus) {
+            notifyAIVisualImageStage("PICKER_FOCUS_RETURNED");
+        }
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -1441,6 +1455,10 @@ public class MainActivity extends Activity {
         }
 
         if (requestCode == CHOOSE_IMAGE) {
+            if (pendingAIExternalPickerLaunch) {
+                notifyAIVisualImageStage(resultCode == RESULT_OK ? "PICKER_RESULT_OK" : "PICKER_RESULT_CANCELLED");
+                pendingAIExternalPickerLaunch = false;
+            }
             notifyAIVisualImageStage(resultCode == RESULT_OK ? "ANDROID_RESULT" : "ERROR_ANDROID_RESULT_CANCELLED");
             if (pendingCameraCapture && pendingCameraUri != null) {
                 Uri uri = pendingCameraUri;

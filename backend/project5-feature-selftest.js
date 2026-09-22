@@ -102,6 +102,10 @@ requireText(moduleJs, 'aiVisualCameraInput.onchange=receiveFile', 'persistent ca
 forbidText(moduleJs, 'id="aiv-gallery"', 'AI module must not create a transient gallery file input');
 forbidText(moduleJs, 'id="aiv-camera"', 'AI module must not create a transient camera file input');
 requireText(moduleJs, "optimizeImage(f).then(function(src){photoDiag('OPTIMIZE_OK');setPhoto(src);})", 'selected WebView file must be optimized, diagnosed and rendered into the AI scene');
+requireText(moduleJs, 'id="aiv-gallery-direct-input" type="file" accept="image/*"', 'AI gallery must expose a direct trusted file input over the visible button');
+requireText(moduleJs, "directGalleryInput.onpointerdown=function()", 'AI gallery direct input must preserve the physical user gesture');
+requireText(moduleJs, "directGalleryInput.onchange=receiveFile", 'AI gallery direct input must feed the AI scene photo handler');
+requireText(moduleJs, "photoDiag('DIRECT_INPUT_TAP','gallery')", 'AI gallery direct input must expose trusted-tap diagnostics');
 requireText(mainActivity, '@JavascriptInterface public String openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
 requireText(mainActivity, 'runOnUiThread(() -> {', 'native AI image picker bridge must queue picker launch on the UI thread');
 requireText(mainActivity, 'window.LightingAINativePickerLaunchResult&&window.LightingAINativePickerLaunchResult', 'native AI picker launch result callback missing');

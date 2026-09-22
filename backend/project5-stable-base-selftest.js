@@ -85,6 +85,12 @@ const exactAllowed = new Set([
   'app/src/main/assets/sun-native-bridge.js',
   'app/src/main/assets/planner-layout-lock.js',
   'app/src/main/assets/catalog.js',
+  'app/src/main/assets/gel-filter-catalog.js',
+  serverPath,
+  'backend/build-gel-filter-catalog.js',
+  'backend/gel-filter-catalog-builder.js',
+  'backend/gel-filter-integration-selftest.js',
+  'backend/gel-filter-selftest.js',
   'backend/catalog-runtime.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
@@ -206,7 +212,7 @@ const exactAllowed = new Set([
   'app/src/main/res/values/styles.xml'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
-if (unexpected.length) fail(`files changed outside the isolated Project 5.4 camera-distance surface: ${unexpected.join(', ')}`);
+if (unexpected.length) fail(`files changed outside the approved isolated Project 5.4 feature surfaces: ${unexpected.join(', ')}`);
 
 for (const protectedPath of [
   'app/src/main/assets/scene-measure.js',

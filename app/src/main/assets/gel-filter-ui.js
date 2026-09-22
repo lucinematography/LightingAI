@@ -1,6 +1,6 @@
 (function(){
 var ROOT_ID='gelFilterFolder', EQ_KEY='lighting_equipment_v1';
-var activeGroup='', query='';
+var activeGroup='', query='', folderOpen=false;
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c;});}
 function sr(){try{return (localStorage.getItem('lighting_language_v1')||'sr')!=='en';}catch(e){return true;}}
 function catalog(){var c=window.LightingAIGelCatalog;return c&&Array.isArray(c.filters)?c.filters:[];}
@@ -47,12 +47,12 @@ function render(){
   '<div class="muted small" style="margin:10px 0">'+(isSr?'Izabrano':'Selected')+': '+selectedCount+' • '+(isSr?'Rezultati':'Results')+': '+list.length+'</div>'+
   '<div id="gelFilterRows">'+(activeGroup||q?rows(list):'<div class="muted small" style="padding:8px 0">'+(isSr?'Izaberi proizvođača/liniju ili upiši pretragu.':'Choose a manufacturer/line or enter a search.')+'</div>')+'</div></div></details>';
  var details=root.querySelector('#gelFilterDetails');
- if(details)details.open=true;
+ if(details){details.open=folderOpen;details.addEventListener('toggle',function(){folderOpen=details.open;});}
  var search=root.querySelector('#gelFilterSearch');
  if(search)search.addEventListener('input',function(){query=this.value||'';render();var n=document.getElementById('gelFilterSearch');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){}}});
  root.querySelectorAll('[data-gel-group]').forEach(function(b){b.addEventListener('click',function(){activeGroup=this.getAttribute('data-gel-group')||'';render();});});
  root.querySelectorAll('[data-gel-id]').forEach(function(b){b.addEventListener('click',function(){toggle(this.getAttribute('data-gel-id'));});});
 }
-window.LightingAIGelFilterUI={render:render,toggle:toggle,version:'1.0-isolated'};
+window.LightingAIGelFilterUI={render:render,toggle:toggle,version:'1.1-isolated'};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',render);else render();
 })();

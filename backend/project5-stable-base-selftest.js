@@ -93,6 +93,7 @@ const exactAllowed = new Set([
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',
   'backend/gel-filter-selftest.js',
+  'backend/simple-mode-selftest.js',
   'backend/catalog-runtime.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',

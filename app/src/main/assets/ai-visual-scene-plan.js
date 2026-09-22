@@ -13,6 +13,7 @@ function clamp(v,min,max){v=Number(v);return Number.isFinite(v)?Math.max(min,Mat
 function availableEquipment(){if(typeof window.selected==='function'){try{return window.selected()||[];}catch(e){}}return Array.isArray(window.equipment)?window.equipment.slice():[];}
 function currentLanguage(){return window.currentLang==='en'?'en':'sr';}
 function sceneMeasurements(){try{var value=JSON.parse(localStorage.getItem(SCENE_MEASURE_KEY)||'[]');return Array.isArray(value)?value.filter(function(x){return x&&Number.isFinite(Number(x.distance))&&Number(x.distance)>0;}):[];}catch(e){return[];}}
+function readLocal(key,fallback){try{var v=JSON.parse(localStorage.getItem(key)||'null');return v==null?fallback:v;}catch(e){return fallback;}}
 function latestMeasurementByTarget(items,target){for(var i=0;i<items.length;i++){if(items[i]&&items[i].target===target)return items[i];}return null;}
 function measurementContext(items){
  var labels=currentLanguage()==='sr'?{subject:'Kamera do glumca',wall:'Kamera do zida',background:'Kamera do pozadine',derived:'Glumac do pozadine',estimate:'geometrijska procena'}:{subject:'Camera to actor',wall:'Camera to wall',background:'Camera to background',derived:'Actor to background',estimate:'geometric estimate'};
@@ -227,7 +228,7 @@ function receiveFile(ev){
  photoDiag('OPTIMIZE_START');
  optimizeImage(f).then(function(src){photoDiag('OPTIMIZE_OK');setPhoto(src);}).catch(function(err){photoDiag('ERROR_OPTIMIZE',err&&err.message?err.message:'failed');document.getElementById('aiv-photo-status').textContent=t.error;});
 }
-function readLocal(key,fallback){try{var v=JSON.parse(localStorage.getItem(key)||'null');return v==null?fallback:v;}catch(e){return fallback;}}
+
 function domValue(id){var e=document.getElementById(id);return e?String(e.value!=null?e.value:e.textContent||'').trim():'';}
 function pdfEquipment(){var catalog=Array.isArray(window.catalogFixtures)?window.catalogFixtures:[];return chosenEquipment().map(function(e){var f=catalog.find(function(x){return x.id===e.id||x.id===e.fixtureId;})||{};return {id:e.id||e.fixtureId||f.id||'',name:e.name||((f.manufacturer||'')+' '+(f.model||f.id||'')).trim(),qty:Math.max(1,Number(e.qty)||1),powerDrawW:Number.isFinite(Number(f.powerDrawW))?Number(f.powerDrawW):undefined,cctK:f.cctK&&typeof f.cctK==='object'?f.cctK:undefined,colorMode:f.colorMode||undefined};});}
 function pdfTechnicalSnapshot(){var sun=chosenSunContext()||activeSunContext()||{};sun=Object.assign({},sun,{lat:domValue('sunLat'),lon:domValue('sunLon')});return {dmx:readLocal('lighting_dmx_patch_v1',{rows:[]}),power:readLocal('lighting_power_calculator_v1',{}),cctGel:readLocal('lighting_cct_gel_v1',{}),sun:sun};}
@@ -240,7 +241,12 @@ function mapAction(action){if(!state.plan){mapStatus(t.mapError,false);return;}m
 function pdfPayload(){var preview=document.getElementById('aiv-real-preview-img');return {language:currentLanguage(),generatedAt:new Date().toISOString(),dpRequest:(document.getElementById('aiv-dp-request')||{}).value||'',description:(document.getElementById('aiv-desc')||{}).value||'',measurements:chosenMeasurementContext(),equipment:pdfEquipment(),plan:state.plan||{},scenePhoto:state.photo||'',aiPreview:(preview&&preview.style.display!=='none'&&/^data:image\//.test(preview.src||''))?preview.src:'',setSketch:readLocal('lighting_set_sketch_v1',{}),technical:pdfTechnicalSnapshot()};}
 window.LightingAIPdfExportResult=function(ok,filename){var a=document.getElementById('aiv-pdf-export'),b=document.getElementById('aiv-pdf-share');if(a)a.disabled=false;if(b)b.disabled=false;pdfStatus(ok?(t.pdfSaved+(filename?' '+filename:'')):t.pdfError,!!ok);};
 function checkVisualPreviewCapability(){fetch(API_BASE+'/api/visual-preview',{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('Unavailable');return r.json();}).then(function(v){if(!v||!v.ok)return;state.visualPreviewAvailable=true;if(state.plan)document.getElementById('aiv-real-preview-box').style.display='block';}).catch(function(){});}
-renderMeasurements();renderSunContext();renderDmxContext();renderEquipment();checkVisualPreviewCapability();
+function safeInit(label,fn){try{fn();}catch(e){photoDiag('ERROR_'+label+'_INIT',e&&e.message?e.message:'failed');}}
+safeInit('MEASUREMENTS',renderMeasurements);
+safeInit('SUN',renderSunContext);
+safeInit('DMX',renderDmxContext);
+safeInit('EQUIPMENT',renderEquipment);
+checkVisualPreviewCapability();
 document.getElementById('aiv-close').addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();closeModule();},true);
 if(!window.__lightingAICloseCaptureInstalled){
   window.__lightingAICloseCaptureInstalled=true;

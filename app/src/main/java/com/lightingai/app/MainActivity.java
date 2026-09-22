@@ -378,19 +378,24 @@ public class MainActivity extends Activity {
 
     private void openAIImagePicker(boolean cameraCapture) {
         notifyAIVisualImageStage("NATIVE_PICKER_OPEN");
-        deletePendingAIImageCameraUri();
-        pendingAIImageCameraCapture = cameraCapture;
-        pendingAIImageCameraPermission = false;
+        if (pendingFileChooser != null) finishFileChooser(null);
+        pendingCameraCapture = cameraCapture;
+        pendingGalleryPersistable = false;
+        pendingFileChooser = uris -> {
+            Uri uri = uris != null && uris.length > 0 ? uris[0] : null;
+            if (uri != null) notifyAIVisualImageStage("result");
+            deliverAIVisualImage(uri);
+        };
         if (cameraCapture) {
             if (!hasCameraPermission()) {
-                pendingAIImageCameraPermission = true;
+                pendingPhotoCapturePermission = true;
                 requestCameraPermission();
                 return;
             }
-            openAIImageCamera();
+            openCameraForWebView();
             return;
         }
-        openAIImageGallery();
+        openGalleryForWebView(null);
     }
 
     private void openAIImageGallery() {

@@ -164,13 +164,21 @@ window.LightingAIOpenSceneImage=function(mode){
  var status=document.getElementById('aiv-photo-status');
  if(status)status.textContent=mode==='camera'?(currentLanguage()==='sr'?'Otvaram kameru…':'Opening camera…'):(currentLanguage()==='sr'?'Otvaram galeriju…':'Opening gallery…');
  try{
+  if(window.Android&&typeof Android.openImagePicker==='function'){
+   photoDiag('NATIVE_PICKER_REQUEST',mode);
+   Android.openImagePicker(mode);
+   return false;
+  }
+ }catch(e){photoDiag('ERROR_NATIVE_PICKER',e&&e.message?e.message:'native');}
+ try{
   var input=document.getElementById(mode==='camera'?'aiVisualCameraInput':'aiVisualGalleryInput');
   if(input){
+   photoDiag('FILE_INPUT_FALLBACK',mode);
    input.value='';
    input.click();
    return false;
   }
- }catch(e){photoDiag('ERROR_INPUT_CLICK',e&&e.message?e.message:'click');}
+ }catch(e2){photoDiag('ERROR_INPUT_CLICK',e2&&e2.message?e2.message:'click');}
  photoDiag('ERROR_INPUT_MISSING',mode);
  if(status)status.textContent=currentLanguage()==='sr'?'Izbor slike nije dostupan.':'Image picker unavailable.';
  return false;

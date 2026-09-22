@@ -1,39 +1,12 @@
 export const GEL_FILTER_SOURCES = [
   {
-    key: 'lee-colour-effect',
+    key: 'lee-lighting-filters',
     manufacturer: 'LEE Filters',
-    line: 'Colour Effect',
-    category: 'color-effect',
-    url: 'https://leefilters.com/lighting/colour-effect-lighting-filters/',
+    line: 'Lighting Filters',
+    category: 'lighting-filter',
+    url: 'https://leefilters.com/lighting/lee-lighting-filters-colour-comparison-tool/',
     parser: 'lee',
-    minCount: 120
-  },
-  {
-    key: 'lee-technical',
-    manufacturer: 'LEE Filters',
-    line: 'Technical',
-    category: 'technical',
-    url: 'https://leefilters.com/lighting/technical-filters/',
-    parser: 'lee',
-    minCount: 20
-  },
-  {
-    key: 'lee-diffusion',
-    manufacturer: 'LEE Filters',
-    line: 'Diffusion',
-    category: 'diffusion',
-    url: 'https://leefilters.com/lighting/diffusion-packs/',
-    parser: 'lee',
-    minCount: 20
-  },
-  {
-    key: 'lee-zircon',
-    manufacturer: 'LEE Filters',
-    line: 'Zircon',
-    category: 'led-filter',
-    url: 'https://leefilters.com/lighting/zircon-led-lighting-filters/',
-    parser: 'lee',
-    minCount: 5
+    minCount: 300
   },
   {
     key: 'rosco-supergel',
@@ -129,7 +102,7 @@ export function parseLeeHtml(html, source) {
   let match;
   while ((match = h3.exec(String(html)))) {
     const text = cleanName(match[1]);
-    const m = text.match(/^([0-9]{3}[A-Z]?)\s+(.+)$/i);
+    const m = text.match(/^((?:[0-9]{3}[A-Z]?|SC[0-9]{2}))\s+(.+)$/i);
     if (!m) continue;
     const item = record(source, m[1], m[2]);
     if (item) out.push(item);
@@ -137,7 +110,7 @@ export function parseLeeHtml(html, source) {
   if (out.length) return uniqueRecords(out);
 
   const text = stripTags(html);
-  const rx = /\b([0-9]{3}[A-Z]?)\s+([A-Z][A-Za-z0-9+/'().,& -]{2,80}?)(?=\s+[0-9]{3}[A-Z]?\s+|$)/g;
+  const rx = /\b((?:[0-9]{3}[A-Z]?|SC[0-9]{2}))\s+([A-Z][A-Za-z0-9+/'().,& -]{2,80}?)(?=\s+(?:[0-9]{3}[A-Z]?|SC[0-9]{2})\s+|$)/g;
   while ((match = rx.exec(text))) {
     const item = record(source, match[1], match[2]);
     if (item) out.push(item);

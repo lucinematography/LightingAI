@@ -106,6 +106,10 @@ requireText(mainActivity, '@JavascriptInterface public String openImagePicker(St
 requireText(mainActivity, 'runOnUiThread(() -> {', 'native AI image picker bridge must queue picker launch on the UI thread');
 requireText(mainActivity, 'window.LightingAINativePickerLaunchResult&&window.LightingAINativePickerLaunchResult', 'native AI picker launch result callback missing');
 requireText(mainActivity, 'FAILED_GALLERY', 'native AI image picker must report gallery launch failure');
+requireText(mainActivity, 'PICKER_ACTIVITY_PAUSE', 'AI picker diagnostics must report Activity pause when the system picker takes over');
+requireText(mainActivity, 'PICKER_FOCUS_LOST', 'AI picker diagnostics must report focus loss when the system picker takes over');
+requireText(mainActivity, 'PICKER_RESULT_OK', 'AI picker diagnostics must report a successful picker result');
+requireText(mainActivity, 'PICKER_RESULT_CANCELLED', 'AI picker diagnostics must report a cancelled picker result');
 requireText(moduleJs, "photoDiag('NATIVE_BRIDGE_RETURN'", 'AI image action must display the synchronous native bridge result');
 requireText(moduleJs, 'window.LightingAINativePickerLaunchResult=function(result)', 'AI module must expose asynchronous native picker launch result diagnostics');
 requireText(mainActivity, 'notifyAIVisualImageStage("result")', 'AI image result must report that Android returned the URI');
@@ -120,7 +124,11 @@ const aiPickerEnd = mainActivity.indexOf('private void openAIImageGallery()', ai
 assert(aiPickerStart >= 0 && aiPickerEnd > aiPickerStart, 'native AI picker method boundaries missing');
 const aiPickerMethod = mainActivity.slice(aiPickerStart, aiPickerEnd);
 assert(aiPickerMethod.includes('pendingFileChooser = uris ->'), 'AI picker must reuse the phone-tested WebView chooser callback path from build 2504');
-assert(aiPickerMethod.includes('return openGalleryForWebView(null) ? "STARTED_GALLERY" : "FAILED_GALLERY";'), 'AI gallery must report the real result of the phone-tested Planner gallery launcher');
+assert(
+  aiPickerMethod.includes('boolean started = openGalleryForWebView(null);') &&
+  aiPickerMethod.includes('return started ? "STARTED_GALLERY" : "FAILED_GALLERY";'),
+  'AI gallery must report the real result of the phone-tested Planner gallery launcher'
+);
 assert(aiPickerMethod.includes('return openCameraForWebView() ? "STARTED_CAMERA" : "FAILED_CAMERA";'), 'AI camera must report the real result of the phone-tested WebView camera launcher');
 assert(aiPickerMethod.includes('deliverAIVisualImage(uri);'), 'shared chooser callback must route the selected URI into AI image transfer');
 requireText(mainActivity, 'BitmapFactory.decodeStream', 'native image transfer must decode the selected URI');

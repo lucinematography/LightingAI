@@ -87,9 +87,11 @@ function addStyles(){
   s.textContent=
     '#lightingaiModeBar{margin:10px 0 14px;padding:10px;border:1px solid #30343b;border-radius:14px;background:#111318;display:grid;grid-template-columns:1fr 1fr;gap:8px}'+
     '#lightingaiModeBar .modeBtn{min-height:42px;font-size:12px;font-weight:900}'+
-    '#lightingaiQuickStart{border:1px solid #6d5921;background:linear-gradient(135deg,#17150e,#26200f)}'+
-    '#lightingaiQuickStart .simpleSteps{display:grid;gap:8px;margin-top:12px}'+
-    '#lightingaiQuickStart .simpleSteps button{width:100%;text-align:left;min-height:50px;font-size:14px;font-weight:900}'+
+    '#lightingaiQuickStart{border:1px solid #6d5921;background:linear-gradient(135deg,#17150e,#26200f);padding:14px}'+
+    '#lightingaiQuickStart h2{font-size:19px;margin-bottom:8px}'+
+    '#lightingaiQuickStart p{margin-top:6px;margin-bottom:8px}'+
+    '#lightingaiQuickStart .simpleSteps{display:grid;gap:6px;margin-top:9px}'+
+    '#lightingaiQuickStart .simpleSteps button{width:100%;text-align:left;min-height:44px;font-size:13px;font-weight:900;padding:10px 13px}'+
     '.lightingaiPageHelp{margin:0 0 12px}'+
     '.lightingaiPageHelp button{width:100%;text-align:left}'+
     '.lightingaiHelpBody{display:none;margin-top:8px;padding:10px;border:1px solid #30343b;border-radius:11px;background:#0f1115}'+
@@ -97,7 +99,9 @@ function addStyles(){
     '.lightingaiHelpBody ol{margin:6px 0 0;padding-left:22px;line-height:1.7}'+
     'body.lightingai-simple-mode nav button[data-page="control"],body.lightingai-simple-mode nav button[data-page="tools"]{display:none!important}'+
     'body.lightingai-simple-mode nav{grid-template-columns:repeat(3,1fr)!important}'+
-    'body.lightingai-simple-mode #toolsIntro,body.lightingai-simple-mode #controlIntro{display:none}';
+    'body.lightingai-simple-mode #toolsIntro,body.lightingai-simple-mode #controlIntro{display:none}'+
+    'body.lightingai-simple-mode #shotSetupCard,body.lightingai-simple-mode #shotSetupRecoveryCard{display:none!important}'+
+    'body.lightingai-simple-mode #planner>.pageBack:disabled{display:none!important}';
   document.head.appendChild(s);
 }
 function addModeBar(){

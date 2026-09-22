@@ -87,6 +87,7 @@ const exactAllowed = new Set([
   'app/src/main/assets/catalog.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'app/src/main/assets/gel-filter-ui.js',
+  'app/src/main/assets/simple-mode-ui.js',
   serverPath,
   'backend/build-gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',

@@ -377,6 +377,7 @@ public class MainActivity extends Activity {
     }
 
     private void openAIImagePicker(boolean cameraCapture) {
+        notifyAIVisualImageStage("NATIVE_PICKER_OPEN");
         deletePendingAIImageCameraUri();
         pendingAIImageCameraCapture = cameraCapture;
         pendingAIImageCameraPermission = false;

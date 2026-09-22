@@ -1078,24 +1078,21 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public String openImagePicker(String mode) {
             final boolean cameraCapture = "camera".equals(mode);
-            final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<String> outcome = new AtomicReference<>("BRIDGE_TIMEOUT");
             runOnUiThread(() -> {
+                String result;
                 try {
-                    outcome.set(MainActivity.this.openAIImagePicker(cameraCapture));
+                    result = MainActivity.this.openAIImagePicker(cameraCapture);
                 } catch (Throwable error) {
-                    outcome.set("BRIDGE_ERROR:" + error.getClass().getSimpleName());
-                } finally {
-                    latch.countDown();
+                    result = "BRIDGE_ERROR:" + error.getClass().getSimpleName();
+                }
+                final String resultJs = JSONObject.quote(result == null ? "NULL" : result);
+                if (webView != null) {
+                    webView.post(() -> webView.evaluateJavascript(
+                        "window.LightingAINativePickerLaunchResult&&window.LightingAINativePickerLaunchResult(" + resultJs + ");",
+                        null));
                 }
             });
-            try {
-                if (!latch.await(1500, TimeUnit.MILLISECONDS)) return "BRIDGE_TIMEOUT";
-            } catch (InterruptedException interrupted) {
-                Thread.currentThread().interrupt();
-                return "BRIDGE_INTERRUPTED";
-            }
-            return outcome.get();
+            return "QUEUED";
         }
 
         @JavascriptInterface public boolean hasCameraPermission() {

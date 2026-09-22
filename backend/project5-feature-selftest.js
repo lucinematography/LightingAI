@@ -115,7 +115,7 @@ requireText(mainActivity, 'pendingCameraCapture && pendingCameraUri != null', 's
 requireText(mainActivity, 'finishFileChooser(new Uri[]{uri});', 'shared camera URI must still reach its callback');
 requireText(mainActivity, 'boolean captured = resultCode == RESULT_OK || hasReadableImageData(uri);', 'shared camera capture must keep valid OEM output even without RESULT_OK');
 requireText(mainActivity, 'finishFileChooser(result);', 'shared gallery/document URI must still reach its callback');
-const aiPickerStart = mainActivity.indexOf('private void openAIImagePicker(boolean cameraCapture)');
+const aiPickerStart = mainActivity.indexOf('private String openAIImagePicker(boolean cameraCapture)');
 const aiPickerEnd = mainActivity.indexOf('private void openAIImageGallery()', aiPickerStart);
 assert(aiPickerStart >= 0 && aiPickerEnd > aiPickerStart, 'native AI picker method boundaries missing');
 const aiPickerMethod = mainActivity.slice(aiPickerStart, aiPickerEnd);

@@ -50,6 +50,9 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -1074,8 +1077,27 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.requestCameraPermission());
         }
 
-        @JavascriptInterface public void openImagePicker(String mode) {
-            runOnUiThread(() -> MainActivity.this.openAIImagePicker("camera".equals(mode)));
+        @JavascriptInterface public String openImagePicker(String mode) {
+            final boolean cameraCapture = "camera".equals(mode);
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicReference<String> outcome = new AtomicReference<>("BRIDGE_TIMEOUT");
+            runOnUiThread(() -> {
+                try {
+                    MainActivity.this.openAIImagePicker(cameraCapture);
+                    outcome.set("BRIDGE_EXECUTED");
+                } catch (Throwable error) {
+                    outcome.set("BRIDGE_ERROR:" + error.getClass().getSimpleName());
+                } finally {
+                    latch.countDown();
+                }
+            });
+            try {
+                if (!latch.await(1500, TimeUnit.MILLISECONDS)) return "BRIDGE_TIMEOUT";
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                return "BRIDGE_INTERRUPTED";
+            }
+            return outcome.get();
         }
 
         @JavascriptInterface public boolean hasCameraPermission() {

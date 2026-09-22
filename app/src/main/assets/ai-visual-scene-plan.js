@@ -166,7 +166,8 @@ window.LightingAIOpenSceneImage=function(mode){
  try{
   if(window.Android&&typeof Android.openImagePicker==='function'){
    photoDiag('NATIVE_PICKER_REQUEST',mode);
-   Android.openImagePicker(mode);
+   var bridgeResult=Android.openImagePicker(mode);
+   photoDiag('NATIVE_BRIDGE_RETURN',bridgeResult==null?'NULL':String(bridgeResult));
    return false;
   }
  }catch(e){photoDiag('ERROR_NATIVE_PICKER',e&&e.message?e.message:'native');}

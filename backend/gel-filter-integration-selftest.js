@@ -17,7 +17,9 @@ requireText(index,'id="gelFilterFolder"','Equipment must expose isolated FILTERI
 requireText(index,'gel-filter-ui.js','Isolated FILTERI/GEL UI script must load');
 requireText(gelUi,'FILTERI / GEL','Isolated FILTERI/GEL folder missing');
 requireText(gelUi,"equipmentType:'gel'",'Selected gels must be typed as gel modifiers');
-requireText(gelUi,"version:'1.0-isolated'",'FILTERI/GEL UI must remain isolated from lighting catalog');
+requireText(gelUi,"version:'1.1-isolated'",'FILTERI/GEL UI must remain isolated from lighting catalog');
+requireText(gelUi,'folderOpen=false','FILTERI/GEL folder must start collapsed');
+if(gelUi.includes('details.open=true'))throw new Error('FILTERI/GEL folder must not be forced open on render');
 if(catalog.includes('FILTERI / GEL')||catalog.includes("equipmentType:'gel'"))throw new Error('Stable lighting catalog must not contain FILTERI/GEL UI logic');
 requireText(ai,'gelCatalog:gelCatalog','AI Visual Plan must send the gel catalog');
 requireText(ai,'gel_recommendations','AI result must render gel recommendations');

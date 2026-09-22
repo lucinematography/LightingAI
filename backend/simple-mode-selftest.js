@@ -23,7 +23,10 @@ requireText(simple,'lightingai-simple-mode','Simple mode body class missing');
 requireText(simple,'data-page="control"','Simple mode must only hide Control navigation, not delete it');
 requireText(simple,'data-page="tools"','Simple mode must only hide Tools navigation, not delete it');
 requireText(simple,"window.LightingAISimpleMode",'Simple mode public API missing');
-requireText(simple,"version:'1.0'",'Simple mode version marker missing');
+requireText(simple,'collapseGuide','VODI ME collapse behavior missing');
+requireText(simple,'guideCollapsedBtn','Collapsed VODI ME bar missing');
+requireText(simple,"guideStep+'/5'",'VODI ME step indicator missing');
+requireText(simple,"version:'1.1'",'Simple mode version marker missing');
 requireText(workflow,"'assets/simple-mode-ui.js'",'APK must package Simple mode UI');
 
 if(catalog.includes('lightingai_ui_mode_v1')||catalog.includes('LightingAISimpleMode')){

@@ -106,6 +106,13 @@ requireText(moduleJs, 'id="aiv-gallery-direct-input" type="file" accept="image/*
 requireText(moduleJs, "directGalleryInput.onpointerdown=function()", 'AI gallery direct input must preserve the physical user gesture');
 requireText(moduleJs, "directGalleryInput.onchange=receiveFile", 'AI gallery direct input must feed the AI scene photo handler');
 requireText(moduleJs, "photoDiag('DIRECT_INPUT_TAP','gallery')", 'AI gallery direct input must expose trusted-tap diagnostics');
+const readLocalPos = moduleJs.indexOf('function readLocal(key,fallback)');
+const activeSunPos = moduleJs.indexOf('function activeSunContext()');
+const activeDmxPos = moduleJs.indexOf('function activeDmxContext()');
+assert(readLocalPos >= 0 && readLocalPos < activeSunPos && readLocalPos < activeDmxPos, 'AI localStorage helper must be module-scoped before SUN/DMX context readers');
+assert(moduleJs.split('function readLocal(key,fallback)').length === 2, 'AI localStorage helper must have exactly one declaration');
+requireText(moduleJs, "safeInit('SUN',renderSunContext)", 'SUN initialization must not be able to abort AI photo bindings');
+requireText(moduleJs, "safeInit('DMX',renderDmxContext)", 'DMX initialization must not be able to abort AI photo bindings');
 requireText(mainActivity, '@JavascriptInterface public String openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
 requireText(mainActivity, 'runOnUiThread(() -> {', 'native AI image picker bridge must queue picker launch on the UI thread');
 requireText(mainActivity, 'window.LightingAINativePickerLaunchResult&&window.LightingAINativePickerLaunchResult', 'native AI picker launch result callback missing');

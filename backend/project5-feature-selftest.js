@@ -102,8 +102,10 @@ requireText(moduleJs, 'aiVisualCameraInput.onchange=receiveFile', 'persistent ca
 forbidText(moduleJs, 'id="aiv-gallery"', 'AI module must not create a transient gallery file input');
 forbidText(moduleJs, 'id="aiv-camera"', 'AI module must not create a transient camera file input');
 requireText(moduleJs, "optimizeImage(f).then(function(src){photoDiag('OPTIMIZE_OK');setPhoto(src);})", 'selected WebView file must be optimized, diagnosed and rendered into the AI scene');
-requireText(mainActivity, '@JavascriptInterface public void openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
-requireText(mainActivity, 'MainActivity.this.openAIImagePicker("camera".equals(mode))', 'native AI image picker bridge must route gallery/camera mode');
+requireText(mainActivity, '@JavascriptInterface public String openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
+requireText(mainActivity, 'MainActivity.this.openAIImagePicker(cameraCapture);', 'native AI image picker bridge must route gallery/camera mode');
+requireText(mainActivity, 'BRIDGE_EXECUTED', 'native AI image picker bridge must synchronously report UI execution');
+requireText(moduleJs, "photoDiag('NATIVE_BRIDGE_RETURN'", 'AI image action must display the synchronous native bridge result');
 requireText(mainActivity, 'notifyAIVisualImageStage("result")', 'AI image result must report that Android returned the URI');
 requireText(mainActivity, 'deliverAIVisualImage(uri);', 'AI chooser result must enter the image decode/transfer path');
 requireText(mainActivity, 'if (requestCode == CHOOSE_IMAGE)', 'shared phone-tested image chooser result handler missing');

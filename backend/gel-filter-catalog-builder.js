@@ -158,6 +158,19 @@ function cleanRoscoSegment(value = '') {
 
 export function parseRoscoHtml(html, source) {
   const out = [];
+  const anchor = /<a\b[^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+  while ((match = anchor.exec(String(html)))) {
+    const text = cleanName(match[1]);
+    const m = source.codePrefix === 'E'
+      ? text.match(/^(E\d{3})\s+(.+)$/i)
+      : text.match(/^(R\d{2,4})\s+(.+)$/i);
+    if (!m) continue;
+    const item = record(source, m[1], m[2]);
+    if (item) out.push(item);
+  }
+  if (out.length) return uniqueRecords(out);
+
   const text = stripTags(html);
   const rx = roscoCodeRegex(source);
   const matches = [...text.matchAll(rx)];
@@ -200,8 +213,19 @@ async function loadSource(source, fetchImpl) {
   let emptyPages = 0;
   for (let page = 0; page < (source.maxPages || 1); page++) {
     const u = new URL(source.url);
-    u.searchParams.set('items_per_page', '100');
+    u.searchParams.set('items_per_page', '20');
     u.searchParams.set('page', String(page));
+    u.searchParams.set('search', '');
+    u.searchParams.set('sort_order', 'ASC');
+    if (source.key === 'rosco-ecolour-plus') {
+      u.searchParams.set('field_brand_target_id', '43');
+      u.searchParams.set('field_type_target_id', 'All');
+      u.searchParams.set('sort_by', 'field_ecolour_sort_order_value');
+    } else if (source.key === 'rosco-cinegel') {
+      u.searchParams.set('field_brand_target_id', '44');
+      u.searchParams.set('field_type_target_id', 'All');
+      u.searchParams.set('sort_by', 'field_cinegel_sort_order_value');
+    }
     const pageItems = parseSource(await fetchText(fetchImpl, u.toString()), source);
     const before = uniqueRecords(all).length;
     all.push(...pageItems);

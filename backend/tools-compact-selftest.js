@@ -10,7 +10,7 @@ const workflow=read('../.github/workflows/build-apk.yml');
 need(index,'tools-compact-ui.js','Compact Tools UI must load');
 need(tools,"window.LightingAIToolsCompact",'Compact Tools public API missing');
 need(tools,"version:VERSION",'Compact Tools version marker missing');
-need(tools,"nav button[data-page="tools"]",'Tools navigation hook missing');
+need(tools,'nav button[data-page="tools"]','Tools navigation hook missing');
 need(tools,'setTimeout(home,0)','Tools must reset to top on navigation');
 need(tools,'card.hidden=true','Tools cards must collapse without deletion');
 need(tools,'openTool','Tools open function missing');

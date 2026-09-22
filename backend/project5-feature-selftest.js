@@ -149,11 +149,12 @@ const imageActionEnd = moduleJs.indexOf('function create()', imageActionStart);
 assert(imageActionStart >= 0 && imageActionEnd > imageActionStart, 'AI image action boundaries missing');
 const imageAction = moduleJs.slice(imageActionStart, imageActionEnd);
 assert(
+  imageAction.indexOf('Android.openImagePicker(mode);') >= 0 &&
   imageAction.indexOf('input.click();') >= 0 &&
   imageAction.indexOf('aiVisualGalleryInput') >= 0 &&
   imageAction.indexOf('aiVisualCameraInput') >= 0 &&
-  imageAction.indexOf('Android.openImagePicker(mode);') < 0,
-  'AI image selection must use persistent WebView file inputs and never the native AI picker'
+  imageAction.indexOf('Android.openImagePicker(mode);') < imageAction.indexOf('input.click();'),
+  'AI image selection must use the phone-tested native picker first and retain persistent WebView file inputs as fallback'
 );
 forbidText(moduleJs, 'function openSceneImage(mode)', 'unused native-first AI image opener must remain removed');
 const webGalleryStart = mainActivity.indexOf('private boolean openGalleryForWebView');

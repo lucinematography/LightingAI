@@ -151,7 +151,7 @@ function roscoCodeRegex(source) {
 
 function cleanRoscoSegment(value = '') {
   let text = String(value);
-  text = text.split(/\b(?:Roscolux|Supergel|Cinegel|e-colour\+|Filters and Diffusions Resources|Guide To Color Filters|myColor|Add to myColor|Compare|View Product)\b/i)[0];
+  text = text.split(/(?:\b(?:Roscolux|Supergel|Cinegel|Filters and Diffusions Resources|Guide To Color Filters|myColor|Add to myColor|Compare|View Product)\b|\be-colour\+)/i)[0];
   text = text.replace(/^\s*[-–—:|•]+/, '').replace(/\s+/g, ' ').trim();
   return text;
 }

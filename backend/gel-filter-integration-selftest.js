@@ -6,15 +6,19 @@ function requireText(text, needle, message){
 }
 
 const catalog=read('../app/src/main/assets/catalog.js');
+const gelUi=read('../app/src/main/assets/gel-filter-ui.js');
 const ai=read('../app/src/main/assets/ai-visual-scene-plan.js');
 const index=read('../app/src/main/assets/index.html');
 const server=read('./server.js');
 const workflow=read('../.github/workflows/build-apk.yml');
 
 requireText(index,'gel-filter-catalog.js','FILTERI/GEL asset must load in the Android UI');
-requireText(catalog,'FILTERI / GEL','Equipment must expose FILTERI / GEL folder');
-requireText(catalog,"equipmentType:'gel'",'Selected gels must be typed as gel modifiers');
-requireText(catalog,'confirmGelFilter','Equipment gel selection handler missing');
+requireText(index,'id="gelFilterFolder"','Equipment must expose isolated FILTERI / GEL mount point');
+requireText(index,'gel-filter-ui.js','Isolated FILTERI/GEL UI script must load');
+requireText(gelUi,'FILTERI / GEL','Isolated FILTERI/GEL folder missing');
+requireText(gelUi,"equipmentType:'gel'",'Selected gels must be typed as gel modifiers');
+requireText(gelUi,"version:'1.0-isolated'",'FILTERI/GEL UI must remain isolated from lighting catalog');
+if(catalog.includes('FILTERI / GEL')||catalog.includes("equipmentType:'gel'"))throw new Error('Stable lighting catalog must not contain FILTERI/GEL UI logic');
 requireText(ai,'gelCatalog:gelCatalog','AI Visual Plan must send the gel catalog');
 requireText(ai,'gel_recommendations','AI result must render gel recommendations');
 requireText(server,'formatGelCatalogForAI','Backend gel catalog formatter missing');
@@ -23,6 +27,7 @@ requireText(server,'GEL/FILTER RULES: filters and gels are modifiers, never fixt
 requireText(server,'gel_recommendations','Backend schema must expose gel recommendations');
 requireText(workflow,'npm run build:gels','CI must build official gel catalog');
 requireText(workflow,"'assets/gel-filter-catalog.js'",'APK must package gel catalog');
+requireText(workflow,"'assets/gel-filter-ui.js'",'APK must package isolated gel UI');
 
 const loadGel=index.indexOf('gel-filter-catalog.js');
 const loadCatalog=index.indexOf('catalog.js');

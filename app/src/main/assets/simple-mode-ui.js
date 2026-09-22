@@ -164,7 +164,14 @@ function renderQuickStart(){
   card.querySelector('[data-step="2"]').onclick=function(){collapseGuide(2);action('equipment','equipmentList');};
   card.querySelector('[data-step="3"]').onclick=function(){collapseGuide(3);action('planner','description');};
   card.querySelector('[data-step="4"]').onclick=function(){collapseGuide(4);action('ai','aiContent');};
-  card.querySelector('[data-step="5"]').onclick=function(){collapseGuide(5);applyMode(ADVANCED);action('tools','projectBackupCard','tools');};
+  card.querySelector('[data-step="5"]').onclick=function(){
+    collapseGuide(5);applyMode(ADVANCED);openPage('tools','tools');
+    setTimeout(function(){
+      if(window.LightingAIToolsCompact&&typeof window.LightingAIToolsCompact.openTool==='function'){
+        window.LightingAIToolsCompact.openTool('projectBackupCard');
+      }else scrollToId('projectBackupCard');
+    },220);
+  };
 }
 function addHelp(page){
   var section=document.getElementById(page);if(!section||section.querySelector(':scope > .lightingaiPageHelp'))return;

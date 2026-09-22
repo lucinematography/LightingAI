@@ -379,7 +379,7 @@ public class MainActivity extends Activity {
             null));
     }
 
-    private void openAIImagePicker(boolean cameraCapture) {
+    private String openAIImagePicker(boolean cameraCapture) {
         notifyAIVisualImageStage("NATIVE_PICKER_OPEN");
         if (pendingFileChooser != null) finishFileChooser(null);
         pendingCameraCapture = cameraCapture;
@@ -393,12 +393,11 @@ public class MainActivity extends Activity {
             if (!hasCameraPermission()) {
                 pendingPhotoCapturePermission = true;
                 requestCameraPermission();
-                return;
+                return "WAITING_CAMERA_PERMISSION";
             }
-            openCameraForWebView();
-            return;
+            return openCameraForWebView() ? "STARTED_CAMERA" : "FAILED_CAMERA";
         }
-        openGalleryForWebView(null);
+        return openGalleryForWebView(null) ? "STARTED_GALLERY" : "FAILED_GALLERY";
     }
 
     private void openAIImageGallery() {
@@ -1083,8 +1082,7 @@ public class MainActivity extends Activity {
             final AtomicReference<String> outcome = new AtomicReference<>("BRIDGE_TIMEOUT");
             runOnUiThread(() -> {
                 try {
-                    MainActivity.this.openAIImagePicker(cameraCapture);
-                    outcome.set("BRIDGE_EXECUTED");
+                    outcome.set(MainActivity.this.openAIImagePicker(cameraCapture));
                 } catch (Throwable error) {
                     outcome.set("BRIDGE_ERROR:" + error.getClass().getSimpleName());
                 } finally {

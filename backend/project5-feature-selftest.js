@@ -104,32 +104,21 @@ forbidText(moduleJs, 'id="aiv-camera"', 'AI module must not create a transient c
 requireText(moduleJs, "optimizeImage(f).then(function(src){photoDiag('OPTIMIZE_OK');setPhoto(src);})", 'selected WebView file must be optimized, diagnosed and rendered into the AI scene');
 requireText(mainActivity, '@JavascriptInterface public void openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
 requireText(mainActivity, 'MainActivity.this.openAIImagePicker("camera".equals(mode))', 'native AI image picker bridge must route gallery/camera mode');
-requireText(mainActivity, 'AI_CHOOSE_IMAGE = 509', 'native AI image picker must use a dedicated Android request code');
-requireText(mainActivity, 'pendingAIImageCameraUri', 'native AI camera must keep a dedicated output URI');
-requireText(mainActivity, 'pendingAIImageCameraCapture', 'native AI picker must keep dedicated capture state');
-requireText(mainActivity, 'pendingAIImageCameraPermission', 'native AI picker must keep dedicated permission state');
-requireText(mainActivity, 'private void openAIImageGallery()', 'native AI gallery path must be isolated from WebView file chooser state');
-requireText(mainActivity, 'private void openAIImageCamera()', 'native AI camera path must be isolated from WebView file chooser state');
-requireText(mainActivity, 'startActivityForResult(intent, AI_CHOOSE_IMAGE)', 'native AI gallery must return through its dedicated request');
-requireText(mainActivity, 'startActivityForResult(camera, AI_CHOOSE_IMAGE)', 'native AI camera must return through its dedicated request');
-requireText(mainActivity, 'if (requestCode == AI_CHOOSE_IMAGE)', 'dedicated Android AI image result handler missing');
 requireText(mainActivity, 'notifyAIVisualImageStage("result")', 'AI image result must report that Android returned the URI');
-requireText(mainActivity, 'deliverAIVisualImage(uri);', 'native AI picker result must enter the image decode/transfer path directly');
-requireText(mainActivity, 'if (requestCode == CHOOSE_IMAGE)', 'generic WebView image/document result handler must remain separate');
-requireText(mainActivity, 'pendingCameraCapture && pendingCameraUri != null', 'generic WebView camera result must retain its own state');
-requireText(mainActivity, 'finishFileChooser(new Uri[]{uri});', 'generic WebView camera URI must still reach its callback');
-requireText(mainActivity, 'boolean captured = resultCode == RESULT_OK || hasReadableImageData(uri);', 'generic camera capture must keep valid OEM output even without RESULT_OK');
-requireText(mainActivity, 'finishFileChooser(result);', 'generic WebView gallery/document URI must still reach its callback');
+requireText(mainActivity, 'deliverAIVisualImage(uri);', 'AI chooser result must enter the image decode/transfer path');
+requireText(mainActivity, 'if (requestCode == CHOOSE_IMAGE)', 'shared phone-tested image chooser result handler missing');
+requireText(mainActivity, 'pendingCameraCapture && pendingCameraUri != null', 'shared camera result must retain its capture state');
+requireText(mainActivity, 'finishFileChooser(new Uri[]{uri});', 'shared camera URI must still reach its callback');
+requireText(mainActivity, 'boolean captured = resultCode == RESULT_OK || hasReadableImageData(uri);', 'shared camera capture must keep valid OEM output even without RESULT_OK');
+requireText(mainActivity, 'finishFileChooser(result);', 'shared gallery/document URI must still reach its callback');
 const aiPickerStart = mainActivity.indexOf('private void openAIImagePicker(boolean cameraCapture)');
-const aiPickerEnd = mainActivity.indexOf('private void deliverAIVisualImage(Uri uri)', aiPickerStart);
+const aiPickerEnd = mainActivity.indexOf('private void openAIImageGallery()', aiPickerStart);
 assert(aiPickerStart >= 0 && aiPickerEnd > aiPickerStart, 'native AI picker method boundaries missing');
 const aiPickerMethod = mainActivity.slice(aiPickerStart, aiPickerEnd);
-assert(!aiPickerMethod.includes('pendingFileChooser'), 'native AI picker must never share pendingFileChooser with Planner/JSON/WebView inputs');
-assert(
-  !aiPickerMethod.includes('startActivityForResult(intent, CHOOSE_IMAGE)') &&
-  !aiPickerMethod.includes('startActivityForResult(camera, CHOOSE_IMAGE)'),
-  'native AI picker must never use the generic WebView request code'
-);
+assert(aiPickerMethod.includes('pendingFileChooser = uris ->'), 'AI picker must reuse the phone-tested WebView chooser callback path from build 2504');
+assert(aiPickerMethod.includes('openGalleryForWebView(null);'), 'AI gallery must reuse the phone-tested Planner gallery launcher');
+assert(aiPickerMethod.includes('openCameraForWebView();'), 'AI camera must reuse the phone-tested WebView camera launcher');
+assert(aiPickerMethod.includes('deliverAIVisualImage(uri);'), 'shared chooser callback must route the selected URI into AI image transfer');
 requireText(mainActivity, 'BitmapFactory.decodeStream', 'native image transfer must decode the selected URI');
 requireText(mainActivity, 'output.compress(Bitmap.CompressFormat.JPEG, 82, bytes)', 'native image transfer must compress to bounded JPEG');
 requireText(mainActivity, 'deliverAIVisualImageChunks(base64);', 'native image transfer must hand compressed base64 to WebView');

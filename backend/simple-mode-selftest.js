@@ -25,7 +25,7 @@ requireText(simple,'data-page="tools"','Simple mode must only hide Tools navigat
 requireText(simple,"window.LightingAISimpleMode",'Simple mode public API missing');
 requireText(simple,'collapseGuide','VODI ME collapse behavior missing');
 requireText(simple,'guideCollapsedBtn','Collapsed VODI ME bar missing');
-requireText(simple,"guideStep+'/5'",'VODI ME step indicator missing');
+requireText(simple,"guideStep+'/5 - '",'VODI ME step indicator missing');
 requireText(simple,"version:'1.1'",'Simple mode version marker missing');
 requireText(workflow,"'assets/simple-mode-ui.js'",'APK must package Simple mode UI');
 

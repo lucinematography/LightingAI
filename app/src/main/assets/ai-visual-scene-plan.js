@@ -159,6 +159,9 @@ function photoDiag(stage,detail){
  if(!rows.length||rows[rows.length-1]!==line)rows.push(line);
  box.textContent=rows.slice(-12).join('\n');
 }
+window.LightingAINativePickerLaunchResult=function(result){
+ photoDiag('NATIVE_UI_RESULT',result==null?'NULL':String(result));
+};
 window.LightingAIOpenSceneImage=function(mode){
  photoDiag('AI_CLICK',mode);
  var status=document.getElementById('aiv-photo-status');
@@ -168,6 +171,7 @@ window.LightingAIOpenSceneImage=function(mode){
    photoDiag('NATIVE_PICKER_REQUEST',mode);
    var bridgeResult=Android.openImagePicker(mode);
    photoDiag('NATIVE_BRIDGE_RETURN',bridgeResult==null?'NULL':String(bridgeResult));
+   if(bridgeResult==='QUEUED')return false;
    if(bridgeResult&&String(bridgeResult).indexOf('STARTED_')===0)return false;
    if(bridgeResult==='WAITING_CAMERA_PERMISSION')return false;
    photoDiag('NATIVE_PICKER_FALLBACK',bridgeResult==null?'NULL':String(bridgeResult));

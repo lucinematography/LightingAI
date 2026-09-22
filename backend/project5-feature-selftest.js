@@ -91,7 +91,8 @@ requireText(mainActivity, 'data.getData()', 'gallery result must accept a direct
 requireText(mainActivity, 'data.getClipData()', 'gallery result must accept ClipData returned by OEM pickers');
 requireText(mainActivity, 'hasReadableImageData(uri)', 'camera result must accept a written image even when an OEM camera returns a non-standard result code');
 requireText(moduleJs, "input.value='';", 'file-input fallback must reset so the same image can be chosen again');
-requireText(moduleJs, 'input.click();', 'AI scene image action must use the proven WebView file chooser');
+requireText(moduleJs, "Android.openImagePicker(mode)", 'AI scene image action must use the phone-tested native Android picker first');
+requireText(moduleJs, 'input.click();', 'AI scene image action must retain WebView file chooser as fallback');
 requireText(indexHtml, 'id="aiVisualGalleryInput" type="file" accept="image/*" hidden', 'persistent AI gallery input missing');
 requireText(indexHtml, 'id="aiVisualCameraInput" type="file" accept="image/*" capture="environment" hidden', 'persistent AI camera input missing');
 requireText(moduleJs, "document.getElementById('aiVisualGalleryInput')", 'AI gallery must bind the persistent file input');

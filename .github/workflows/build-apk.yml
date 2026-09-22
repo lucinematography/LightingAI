@@ -40,6 +40,10 @@ jobs:
           BUILT_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           printf 'window.LightingAIFeatureBuild={run:"%s",sha:"%s",branch:"%s",builtAt:"%s"};\n' "$GITHUB_RUN_NUMBER" "$SHORT_SHA" "$GITHUB_REF_NAME" "$BUILT_AT" > app/src/main/assets/feature-build-info.js
 
+      - name: Build official FILTERI GEL catalog
+        working-directory: backend
+        run: npm run build:gels
+
       - name: Validate complete LightingAI equipment catalog
         working-directory: backend
         run: npm run check
@@ -161,6 +165,7 @@ jobs:
             'assets/ai-visual-phone-test.js'
             'assets/feature-build-info.js'
             'assets/catalog.js'
+            'assets/gel-filter-catalog.js'
             'assets/set-sketch.js'
             'assets/set-sketch-camera-fov.js'
             'assets/blocking-camera-designer.js'

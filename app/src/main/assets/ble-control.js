@@ -75,8 +75,8 @@ function transport(){
    return false;
   },
   inspect:function(request){
-   if(androidReady&&typeof Android.bleInspectGatt==='function'){Android.bleInspectGatt(request.id,request.address,request.timeoutMs||8000);return true}
-   if(iosReady){iosHandler.postMessage({action:'bleInspectGatt',id:request.id,address:request.address,timeoutMs:request.timeoutMs||8000});return true}
+   if(androidReady&&typeof Android.bleInspectGatt==='function'){Android.bleInspectGatt(request.id,request.address,request.name||'',request.timeoutMs||8000);return true}
+   if(iosReady){iosHandler.postMessage({action:'bleInspectGatt',id:request.id,address:request.address,name:request.name||'',timeoutMs:request.timeoutMs||8000});return true}
    return false;
   }
  };
@@ -109,7 +109,7 @@ function deviceTag(d){
  if(n.includes('MESH DEVICE'))return t().likelyMesh;
  return '';
 }
-function inspectDevice(address,targetId){
+function inspectDevice(address,name,targetId){
  const tr=transport();
  if(!tr.available||!address){status(t().unavailable,false);return}
  const id='gatt_'+Date.now()+'_'+(++seq);
@@ -117,7 +117,7 @@ function inspectDevice(address,targetId){
  if(target)target.innerHTML='<div class="muted small">'+esc(t().inspecting)+'</div>';
  window.__lightingAIGattTargets=window.__lightingAIGattTargets||{};
  window.__lightingAIGattTargets[id]=targetId;
- try{if(!tr.inspect({id:id,address:address,timeoutMs:9000})&&target)target.innerHTML='<div class="muted small" style="color:#ffb5b5">'+esc(t().inspectFail)+'</div>'}
+ try{if(!tr.inspect({id:id,address:address,name:name||'',timeoutMs:15000})&&target)target.innerHTML='<div class="muted small" style="color:#ffb5b5">'+esc(t().inspectFail)+'</div>'}
  catch(e){if(target)target.innerHTML='<div class="muted small" style="color:#ffb5b5">'+esc(t().inspectFail)+'</div>'}
 }
 function renderGatt(profile){
@@ -159,10 +159,10 @@ function render(devices){
     (address?'<div class="muted small">'+esc(t().address)+': '+esc(address)+'</div>':'')+
     '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
     ((serviceData.length||manufacturerIds.length)?'<div class="muted small">'+esc(t().fingerprint)+': '+esc((serviceData.length?('SD '+serviceData.join(', ')):'')+(serviceData.length&&manufacturerIds.length?' · ':'')+(manufacturerIds.length?('MFG '+manufacturerIds.join(', ')):''))+'</div>':'')+
-    (address&&d&&d.connectable?'<button class="btn secondary ble-gatt-btn" style="margin-top:7px" type="button" data-address="'+esc(address)+'" data-target="'+targetId+'">'+esc(t().inspect)+'</button><div id="'+targetId+'"></div>':'')+
+    (address&&d&&d.connectable?'<button class="btn secondary ble-gatt-btn" style="margin-top:7px" type="button" data-address="'+esc(address)+'" data-name="'+esc(name)+'" data-target="'+targetId+'">'+esc(t().inspect)+'</button><div id="'+targetId+'"></div>':'')+
    '</div>';
   }).join('');
- box.querySelectorAll('.ble-gatt-btn').forEach(btn=>btn.addEventListener('click',()=>inspectDevice(btn.dataset.address,btn.dataset.target)));
+ box.querySelectorAll('.ble-gatt-btn').forEach(btn=>btn.addEventListener('click',()=>inspectDevice(btn.dataset.address,btn.dataset.name||'',btn.dataset.target)));
 }
 window.LightingAIBleDiscoveryResult=function(id,devices,error){
  if(error){render([]);status(errorText(error),false);return}

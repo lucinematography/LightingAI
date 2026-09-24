@@ -79,11 +79,23 @@ const exactAllowed = new Set([
   mainActivityPath,
   imageBridgePath,
   'app/build.gradle',
+  '.github/workflows/build-apk.yml',
   '.github/workflows/release-apk.yml',
   'app/src/main/assets/index.html',
   'app/src/main/assets/sun-native-bridge.js',
   'app/src/main/assets/planner-layout-lock.js',
   'app/src/main/assets/catalog.js',
+  'app/src/main/assets/gel-filter-catalog.js',
+  'app/src/main/assets/gel-filter-ui.js',
+  'app/src/main/assets/simple-mode-ui.js',
+  'app/src/main/assets/tools-compact-ui.js',
+  serverPath,
+  'backend/build-gel-filter-catalog.js',
+  'backend/gel-filter-catalog-builder.js',
+  'backend/gel-filter-integration-selftest.js',
+  'backend/gel-filter-selftest.js',
+  'backend/simple-mode-selftest.js',
+  'backend/tools-compact-selftest.js',
   'backend/catalog-runtime.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
@@ -182,6 +194,8 @@ const exactAllowed = new Set([
   'app/src/test/java/com/lightingai/app/ArtNetProtocolTest.java',
   'app/src/test/java/com/lightingai/app/SacnProtocolTest.java',
   'backend/project5-stable-base-selftest.js',
+  'backend/project-backup-selftest.js',
+  'backend/blocking-designer-selftest.js',
   'backend/project5-feature-selftest.js',
   'backend/project52-release-gate-selftest.js',
   'app/src/main/assets/ai-visual-scene-launcher.js',
@@ -189,12 +203,21 @@ const exactAllowed = new Set([
   'app/src/main/assets/control-dashboard.js',
   'app/src/main/assets/device-capabilities.js',
   'app/src/main/assets/shot-setup-report.js',
+  'app/src/main/assets/shot-setup-recovery.js',
+  'app/src/main/assets/set-sketch.js',
+  'app/src/main/assets/set-sketch-camera-fov.js',
+  'app/src/main/assets/blocking-camera-designer.js',
+  'app/src/main/assets/blocking-sun-integration.js',
+  'app/src/main/assets/blocking-ai-integration.js',
+  'app/src/main/assets/set-sketch-sun.js',
+  'app/src/main/assets/shot-list-planner.js',
+  'app/src/main/assets/camera-setup-snapshots.js',
   'app/src/main/assets/lightai-intro.jpg',
   'app/src/main/java/com/lightingai/app/AIVisualImageProvider.java',
   'app/src/main/res/values/styles.xml'
 ]);
 const unexpected = changed.filter((path) => !exactAllowed.has(path));
-if (unexpected.length) fail(`files changed outside the isolated Project 5.4 camera-distance surface: ${unexpected.join(', ')}`);
+if (unexpected.length) fail(`files changed outside the approved isolated Project 5.4 feature surfaces: ${unexpected.join(', ')}`);
 
 for (const protectedPath of [
   'app/src/main/assets/scene-measure.js',
@@ -208,6 +231,129 @@ for (const protectedPath of [
   const stable = git(['show', `${PROJECT510_QA_BASE}:${protectedPath}`]);
   const current = git(['show', `HEAD:${protectedPath}`]);
   if (stable !== current) fail(`build 767 protected file changed unexpectedly: ${protectedPath}`);
+}
+
+const setSketch = git(['show', 'HEAD:app/src/main/assets/set-sketch.js']);
+for (const marker of [
+  "window.LightingAISetSketch={version:'1.2-blocking-lighting'",
+  'setPreview:setPreview',
+  'clearPreview:clearPreview',
+  'addAllEquipmentLights:addAllEquipmentLights',
+  'getLightingSnapshot:lightingSnapshot',
+  "new CustomEvent('lightingai:set-sketch-rendered')"
+]) {
+  if (!setSketch.includes(marker)) fail(`Blocking Set Sketch preview marker missing: ${marker}`);
+}
+
+const blockingDesigner = git(['show', 'HEAD:app/src/main/assets/blocking-camera-designer.js']);
+for (const marker of [
+  "window.LightingAIBlocking={version:'0.5-compact-tracking'",
+  'requestAnimationFrame(tick)',
+  'function addPoint()',
+  'function pointerMove(ev)',
+  'function trackingRotation(cameraPos,targetPos)',
+  'function captureTrackingOffset(cam,target)',
+  "b.trackFramingMode==='preserve'",
+  'prepareTrackingOffsets()',
+  "FRAMING_KEY='lighting_blocking_camera_framing_v1'",
+  'function persistFraming()',
+  'blocking-track-quick',
+  'box.innerHTML=tracking+',
+  "renderControls();pathMarkup()",
+  'a.setPreview(buildPreview'
+]) {
+  if (!blockingDesigner.includes(marker)) fail(`Blocking Camera Designer marker missing: ${marker}`);
+}
+
+const setSketchFov = git(['show', 'HEAD:app/src/main/assets/set-sketch-camera-fov.js']);
+for (const marker of [
+  "window.LightingAISetSketch&&typeof window.LightingAISetSketch.getVisualObject==='function'",
+  "svg.addEventListener('lightingai:set-sketch-rendered'",
+  "window.LightingAICameraFov={version:'1.1-framing-metrics'",
+  'edgeMargin:margin',
+  'centerOffset:offset'
+]) {
+  if (!setSketchFov.includes(marker)) fail(`Blocking Camera FOV integration marker missing: ${marker}`);
+}
+
+const shotListBlocking = git(['show', 'HEAD:app/src/main/assets/shot-list-planner.js']);
+for (const marker of [
+  "window.LightingAIShotList={version:'1.2-shot-restore'",
+  'referenceImage:null',
+  'horizontalFovDeg:cam?hfov:null',
+  'framing:framing?JSON.parse(JSON.stringify(framing)):null',
+  'function restoreSetup(rowId)',
+  'restoreSetup:restoreSetup',
+  'blocking:cam&&cam.blocking'
+]) {
+  if (!shotListBlocking.includes(marker)) fail(`Blocking Shot List marker missing: ${marker}`);
+}
+
+const shotSetupBlocking = git(['show', 'HEAD:app/src/main/assets/shot-setup-report.js']);
+for (const marker of [
+  "schema:'lightingai-shot-setup-v3-blocking-designer'",
+  'blocking:{motion:blockingMotion(scene),lighting:blockingLighting(),framing:cameraFraming(),sunCamera:blockingSun(),ai:blockingAi()}',
+  'function blockingMotion(scene)',
+  'function cameraFraming()',
+  'function blockingSun()',
+  'function blockingAi()',
+  "documentType:'shot_setup'",
+  'function savePdf()',
+  'function sharePdf()',
+  "['shotSetupBlockingLightsTile','BLOCKING LIGHT MAP']"
+]) {
+  if (!shotSetupBlocking.includes(marker)) fail(`Blocking Shot Setup marker missing: ${marker}`);
+}
+
+const imageBridgeBlocking = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/AIVisualImageBridge.java']);
+for (const marker of [
+  'if ("shot_setup".equals(payload.optString("documentType", ""))) return renderShotSetup();',
+  'private byte[] renderShotSetup() throws Exception',
+  'BLOCKING / CAMERA DESIGNER — SHOT SETUP',
+  'AI BLOCKING PROPOSALS — NOT APPLIED AUTOMATICALLY'
+]) {
+  if (!imageBridgeBlocking.includes(marker)) fail(`Blocking Shot Setup PDF marker missing: ${marker}`);
+}
+
+const cameraSetupsBlocking = git(['show', 'HEAD:app/src/main/assets/camera-setup-snapshots.js']);
+for (const marker of [
+  "window.LightingAICameraSetups={version:'1.1-blocking-link'",
+  'selectedSketchCameraId()',
+  'saveCurrentToSlot:function(slot,id)'
+]) {
+  if (!cameraSetupsBlocking.includes(marker)) fail(`Blocking Camera Setup marker missing: ${marker}`);
+}
+
+const blockingAi = git(['show', 'HEAD:app/src/main/assets/blocking-ai-integration.js']);
+for (const marker of [
+  "window.LightingAIBlockingAI={version:'1.1-launcher-open'",
+  'function applyProposal(id,quiet)',
+  'if(!confirm(t().confirmAll))return',
+  'LightingAIVisualSceneLauncher',
+  "window.addEventListener('lightingai-visual-plan-ready'"
+]) {
+  if (!blockingAi.includes(marker)) fail(`Blocking AI marker missing: ${marker}`);
+}
+
+const blockingSun = git(['show', 'HEAD:app/src/main/assets/blocking-sun-integration.js']);
+for (const marker of [
+  "window.LightingAIBlockingSun={version:'1.0'",
+  'function shiftTime(delta)',
+  'cameraHeadingDeg:cameraHeading',
+  'relativeAngleDeg:relative'
+]) {
+  if (!blockingSun.includes(marker)) fail(`Blocking SUNCE marker missing: ${marker}`);
+}
+
+const blockingLoader = git(['show', `HEAD:${mainActivityPath}`]);
+if (!blockingLoader.includes("blocking-camera-designer.js")) {
+  fail('Blocking Camera Designer loader missing from MainActivity');
+}
+if (!blockingLoader.includes("set-sketch-sun.js") || !blockingLoader.includes("blocking-sun-integration.js")) {
+  fail('Blocking SUNCE loaders missing from MainActivity');
+}
+if (!blockingLoader.includes("blocking-ai-integration.js")) {
+  fail('Blocking AI loader missing from MainActivity');
 }
 
 const manifestPath = 'app/src/main/AndroidManifest.xml';

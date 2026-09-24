@@ -890,7 +890,7 @@ public class MainActivity extends Activity {
         });
     }
 
-    private void startBleGattInspection(String requestId, String address, int timeoutMs) {
+    private void startBleGattInspection(String requestId, String address, String name, int timeoutMs) {
         final String id = requestId == null ? "" : requestId;
         final int boundedTimeout = Math.max(2500, Math.min(15000, timeoutMs));
         if (!hasBlePermission()) {
@@ -898,7 +898,7 @@ public class MainActivity extends Activity {
             return;
         }
         if (bleGattInspector == null) bleGattInspector = new BleGattInspector(this);
-        bleGattInspector.inspect(address, boundedTimeout, new BleGattInspector.Callback() {
+        bleGattInspector.inspect(address, name, boundedTimeout, new BleGattInspector.Callback() {
             @Override public void onComplete(JSONObject profile) {
                 notifyBleGattInspection(id, profile, "");
             }
@@ -1171,8 +1171,8 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
         }
 
-        @JavascriptInterface public void bleInspectGatt(String requestId, String address, int timeoutMs) {
-            runOnUiThread(() -> MainActivity.this.startBleGattInspection(requestId, address, timeoutMs));
+        @JavascriptInterface public void bleInspectGatt(String requestId, String address, String name, int timeoutMs) {
+            runOnUiThread(() -> MainActivity.this.startBleGattInspection(requestId, address, name, timeoutMs));
         }
 
         @JavascriptInterface public String networkDmxDiagnostics() {

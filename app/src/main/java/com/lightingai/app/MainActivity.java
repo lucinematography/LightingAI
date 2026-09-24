@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -50,6 +51,9 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -63,6 +67,10 @@ public class MainActivity extends Activity {
     private boolean pendingCameraCapture = false;
     private boolean pendingPhotoCapturePermission = false;
     private boolean pendingGalleryPersistable = false;
+    private boolean pendingAIExternalPickerLaunch = false;
+    private Uri pendingAIImageCameraUri = null;
+    private boolean pendingAIImageCameraCapture = false;
+    private boolean pendingAIImageCameraPermission = false;
     private NativeSunLocation nativeSunLocation;
     private NativeSunCompass nativeSunCompass;
     private boolean pendingNativeSunLocation = false;
@@ -84,6 +92,7 @@ public class MainActivity extends Activity {
     private byte[] sacnCid;
     private SacnLiveEngine sacnLiveEngine;
     private BleDeviceScanner bleDeviceScanner;
+    private BleGattInspector bleGattInspector;
     private String pendingBleDiscoveryRequestId = null;
     private int pendingBleDiscoveryTimeoutMs = 3000;
 
@@ -95,10 +104,12 @@ public class MainActivity extends Activity {
     private static final int SPEECH_INPUT = 506;
     private static final int BLE_PERMISSION = 507;
     private static final int AUDIO_PERMISSION = 508;
+    private static final int AI_CHOOSE_IMAGE = 509;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        applyScreenClassOrientation();
         getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
         rootView = new FrameLayout(this);
@@ -121,6 +132,7 @@ public class MainActivity extends Activity {
         sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
         sacnLiveEngine.setPriority(sacnPriority.get());
         bleDeviceScanner = new BleDeviceScanner(this);
+        bleGattInspector = new BleGattInspector(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -178,6 +190,7 @@ public class MainActivity extends Activity {
                 ValueCallback<Uri[]> filePathCallback,
                 FileChooserParams fileChooserParams
             ) {
+                notifyAIVisualImageStage("FILE_CHOOSER_OPEN");
                 if (pendingFileChooser != null) pendingFileChooser.onReceiveValue(null);
                 pendingFileChooser = filePathCallback;
                 pendingCameraCapture = fileChooserParams != null && fileChooserParams.isCaptureEnabled();
@@ -191,6 +204,9 @@ public class MainActivity extends Activity {
                     }
                     return openCameraForWebView();
                 }
+                if (requiresDocumentPicker(fileChooserParams)) {
+                    return openDocumentForWebView(fileChooserParams);
+                }
                 return openGalleryForWebView(fileChooserParams);
             }
         });
@@ -201,6 +217,16 @@ public class MainActivity extends Activity {
             3350
         );
         webView.requestApplyInsets();
+    }
+
+    private void applyScreenClassOrientation() {
+        int smallestWidthDp = getResources().getConfiguration().smallestScreenWidthDp;
+        boolean wideScreen = smallestWidthDp >= 600;
+        setRequestedOrientation(
+            wideScreen
+                ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        );
     }
 
     private View createStartupSplash() {
@@ -360,24 +386,96 @@ public class MainActivity extends Activity {
             null));
     }
 
-    private void openAIImagePicker(boolean cameraCapture) {
+    private void notifyAIVisualImageStage(String stage) {
+        if (webView == null) return;
+        final String stageJs = JSONObject.quote(stage == null ? "" : stage);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIVisualImageTransferStage&&window.LightingAIVisualImageTransferStage(" + stageJs + ");",
+            null));
+    }
+
+    private String openAIImagePicker(boolean cameraCapture) {
+        notifyAIVisualImageStage("NATIVE_PICKER_OPEN");
         if (pendingFileChooser != null) finishFileChooser(null);
         pendingCameraCapture = cameraCapture;
         pendingGalleryPersistable = false;
         pendingFileChooser = uris -> {
             Uri uri = uris != null && uris.length > 0 ? uris[0] : null;
+            if (uri != null) notifyAIVisualImageStage("result");
             deliverAIVisualImage(uri);
         };
         if (cameraCapture) {
             if (!hasCameraPermission()) {
                 pendingPhotoCapturePermission = true;
                 requestCameraPermission();
-                return;
+                return "WAITING_CAMERA_PERMISSION";
             }
-            openCameraForWebView();
-            return;
+            return openCameraForWebView() ? "STARTED_CAMERA" : "FAILED_CAMERA";
         }
-        openGalleryForWebView(null);
+        pendingAIExternalPickerLaunch = true;
+        boolean started = openGalleryForWebView(null);
+        if (!started) pendingAIExternalPickerLaunch = false;
+        return started ? "STARTED_GALLERY" : "FAILED_GALLERY";
+    }
+
+    private void openAIImageGallery() {
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= 33) {
+            intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+            intent.setType("image/*");
+        } else {
+            intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
+        }
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivityForResult(intent, AI_CHOOSE_IMAGE);
+        } catch (ActivityNotFoundException primaryError) {
+            try {
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                fallback.setType("image/*");
+                fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivityForResult(fallback, AI_CHOOSE_IMAGE);
+            } catch (Exception ignored) {
+                pendingAIImageCameraCapture = false;
+                deliverAIVisualImage(null);
+            }
+        }
+    }
+
+    private void openAIImageCamera() {
+        pendingAIImageCameraPermission = false;
+        deletePendingAIImageCameraUri();
+        Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        try {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, "LightingAI_AI_scene_" + System.currentTimeMillis() + ".jpg");
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/LightingAI");
+            }
+            pendingAIImageCameraUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            if (pendingAIImageCameraUri == null) throw new IllegalStateException("Could not create AI camera output URI");
+
+            camera.putExtra(MediaStore.EXTRA_OUTPUT, pendingAIImageCameraUri);
+            camera.setClipData(ClipData.newRawUri("LightingAI AI scene", pendingAIImageCameraUri));
+            camera.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            for (ResolveInfo info : getPackageManager().queryIntentActivities(camera, PackageManager.MATCH_DEFAULT_ONLY)) {
+                if (info != null && info.activityInfo != null && info.activityInfo.packageName != null) {
+                    grantUriPermission(
+                        info.activityInfo.packageName,
+                        pendingAIImageCameraUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    );
+                }
+            }
+            startActivityForResult(camera, AI_CHOOSE_IMAGE);
+        } catch (Exception e) {
+            deletePendingAIImageCameraUri();
+            pendingAIImageCameraCapture = false;
+            deliverAIVisualImage(null);
+        }
     }
 
     private void deliverAIVisualImage(Uri uri) {
@@ -387,6 +485,7 @@ public class MainActivity extends Activity {
                 "window.LightingAIVisualImageTransferError&&window.LightingAIVisualImageTransferError();", null));
             return;
         }
+        notifyAIVisualImageStage("decode");
         new Thread(() -> {
             Bitmap bitmap = null;
             Bitmap scaled = null;
@@ -428,6 +527,7 @@ public class MainActivity extends Activity {
                     throw new IllegalStateException("Image compression failed");
                 }
                 String base64 = Base64.encodeToString(bytes.toByteArray(), Base64.NO_WRAP);
+                notifyAIVisualImageStage("transfer");
                 deliverAIVisualImageChunks(base64);
             } catch (Exception e) {
                 webView.post(() -> webView.evaluateJavascript(
@@ -460,6 +560,62 @@ public class MainActivity extends Activity {
             webView.evaluateJavascript(
                 "window.LightingAIVisualImageTransferEnd&&window.LightingAIVisualImageTransferEnd();", null);
         });
+    }
+
+    private boolean requiresDocumentPicker(WebChromeClient.FileChooserParams params) {
+        if (params == null) return false;
+        String[] acceptTypes = params.getAcceptTypes();
+        if (acceptTypes == null || acceptTypes.length == 0) return false;
+        for (String accept : acceptTypes) {
+            if (accept == null) continue;
+            for (String raw : accept.split(",")) {
+                String type = raw == null ? "" : raw.trim().toLowerCase(java.util.Locale.US);
+                if (type.isEmpty() || "*/*".equals(type)) continue;
+                if ("image/*".equals(type) || type.startsWith("image/")) continue;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String documentMimeType(WebChromeClient.FileChooserParams params) {
+        if (params == null) return "*/*";
+        String[] acceptTypes = params.getAcceptTypes();
+        if (acceptTypes == null) return "*/*";
+        for (String accept : acceptTypes) {
+            if (accept == null) continue;
+            for (String raw : accept.split(",")) {
+                String type = raw == null ? "" : raw.trim().toLowerCase(java.util.Locale.US);
+                if (".json".equals(type) || type.endsWith("+json")) return "application/json";
+                if (type.contains("/") && !type.startsWith("image/") && !"*/*".equals(type)) return type;
+            }
+        }
+        return "*/*";
+    }
+
+    private boolean openDocumentForWebView(WebChromeClient.FileChooserParams params) {
+        pendingGalleryPersistable = true;
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType(documentMimeType(params));
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        try {
+            startActivityForResult(intent, CHOOSE_IMAGE);
+            return true;
+        } catch (ActivityNotFoundException primaryError) {
+            try {
+                Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
+                fallback.addCategory(Intent.CATEGORY_OPENABLE);
+                fallback.setType(documentMimeType(params));
+                fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                pendingGalleryPersistable = false;
+                startActivityForResult(fallback, CHOOSE_IMAGE);
+                return true;
+            } catch (Exception ignored) {
+                finishFileChooser(null);
+                return false;
+            }
+        }
     }
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
@@ -543,13 +699,29 @@ public class MainActivity extends Activity {
         pendingCameraCapture = false;
         pendingPhotoCapturePermission = false;
         pendingGalleryPersistable = false;
+        notifyAIVisualImageStage(callback == null ? "ERROR_WEBVIEW_CALLBACK_MISSING" : (result != null && result.length > 0 ? "WEBVIEW_CALLBACK" : "ERROR_WEBVIEW_CALLBACK_EMPTY"));
         if (callback != null) callback.onReceiveValue(result);
+    }
+
+    private boolean hasReadableImageData(Uri uri) {
+        if (uri == null) return false;
+        try (InputStream input = getContentResolver().openInputStream(uri)) {
+            return input != null && input.read() != -1;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private void deletePendingCameraUri() {
         if (pendingCameraUri == null) return;
         try { getContentResolver().delete(pendingCameraUri, null, null); } catch (Exception ignored) {}
         pendingCameraUri = null;
+    }
+
+    private void deletePendingAIImageCameraUri() {
+        if (pendingAIImageCameraUri == null) return;
+        try { getContentResolver().delete(pendingAIImageCameraUri, null, null); } catch (Exception ignored) {}
+        pendingAIImageCameraUri = null;
     }
 
     private void applyNavigationInset() {
@@ -578,10 +750,14 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-cct-gel-script')){var g=document.createElement('script');g.id='lightingai-cct-gel-script';g.src='file:///android_asset/cct-gel-calculator.js';document.body.appendChild(g);}" +
             "if(!document.getElementById('lightingai-set-sketch-script')){var q=document.createElement('script');q.id='lightingai-set-sketch-script';q.src='file:///android_asset/set-sketch.js';document.body.appendChild(q);}" +
             "if(!document.getElementById('lightingai-set-sketch-camera-fov-script')){var f=document.createElement('script');f.id='lightingai-set-sketch-camera-fov-script';f.src='file:///android_asset/set-sketch-camera-fov.js';document.body.appendChild(f);}" +
+            "if(!document.getElementById('lightingai-blocking-camera-designer-script')){var bc=document.createElement('script');bc.id='lightingai-blocking-camera-designer-script';bc.src='file:///android_asset/blocking-camera-designer.js';document.body.appendChild(bc);}" +
+            "if(!document.getElementById('lightingai-set-sketch-sun-script')){var bcs=document.createElement('script');bcs.id='lightingai-set-sketch-sun-script';bcs.src='file:///android_asset/set-sketch-sun.js';document.body.appendChild(bcs);}" +
+            "if(!document.getElementById('lightingai-blocking-sun-integration-script')){var bsi=document.createElement('script');bsi.id='lightingai-blocking-sun-integration-script';bsi.src='file:///android_asset/blocking-sun-integration.js';document.body.appendChild(bsi);}" +
+            "if(!document.getElementById('lightingai-blocking-ai-integration-script')){var bai=document.createElement('script');bai.id='lightingai-blocking-ai-integration-script';bai.src='file:///android_asset/blocking-ai-integration.js';document.body.appendChild(bai);}" +
             "if(!document.getElementById('lightingai-device-capabilities-script')){var d=document.createElement('script');d.id='lightingai-device-capabilities-script';d.src='file:///android_asset/device-capabilities.js';document.body.appendChild(d);}" +
             "if(!document.getElementById('lightingai-sun-native-bridge-script')){var n=document.createElement('script');n.id='lightingai-sun-native-bridge-script';n.src='file:///android_asset/sun-native-bridge.js';document.body.appendChild(n);}" +
             "if(!document.getElementById('lightingai-artnet-control-script')){var a=document.createElement('script');a.id='lightingai-artnet-control-script';a.src='file:///android_asset/artnet-control.js';document.body.appendChild(a);}" +
-            "if(!document.getElementById('lightingai-ble-control-script')){var b=document.createElement('script');b.id='lightingai-ble-control-script';b.src='file:///android_asset/ble-control.js';document.body.appendChild(b);}if(!document.getElementById('lightingai-control-dashboard-script')){var h=document.createElement('script');h.id='lightingai-control-dashboard-script';h.src='file:///android_asset/control-dashboard.js';document.body.appendChild(h);}if(!document.getElementById('lightingai-ai-control-bridge-script')){var j=document.createElement('script');j.id='lightingai-ai-control-bridge-script';j.src='file:///android_asset/ai-control-bridge.js';document.body.appendChild(j);}if(!document.getElementById('lightingai-dmx-patch-script')){var x1=document.createElement('script');x1.id='lightingai-dmx-patch-script';x1.src='file:///android_asset/dmx-patch-planner.js';document.body.appendChild(x1);}if(!document.getElementById('lightingai-dmx-export-script')){var x2=document.createElement('script');x2.id='lightingai-dmx-export-script';x2.src='file:///android_asset/dmx-export.js';document.body.appendChild(x2);}if(!document.getElementById('lightingai-dof-script')){var x3=document.createElement('script');x3.id='lightingai-dof-script';x3.src='file:///android_asset/dof-planner.js';document.body.appendChild(x3);}if(!document.getElementById('lightingai-flicker-script')){var x4=document.createElement('script');x4.id='lightingai-flicker-script';x4.src='file:///android_asset/flicker-shutter-planner.js';document.body.appendChild(x4);}if(!document.getElementById('lightingai-continuity-script')){var x5=document.createElement('script');x5.id='lightingai-continuity-script';x5.src='file:///android_asset/continuity-match-shot.js';document.body.appendChild(x5);}if(!document.getElementById('lightingai-shot-list-script')){var x6=document.createElement('script');x6.id='lightingai-shot-list-script';x6.src='file:///android_asset/shot-list-planner.js';document.body.appendChild(x6);}if(!document.getElementById('lightingai-shot-list-export-script')){var x7=document.createElement('script');x7.id='lightingai-shot-list-export-script';x7.src='file:///android_asset/shot-list-export.js';document.body.appendChild(x7);}if(!document.getElementById('lightingai-cue-script')){var x8=document.createElement('script');x8.id='lightingai-cue-script';x8.src='file:///android_asset/lighting-cue-planner.js';document.body.appendChild(x8);}if(!document.getElementById('lightingai-cue-export-script')){var x9=document.createElement('script');x9.id='lightingai-cue-export-script';x9.src='file:///android_asset/lighting-cue-export.js';document.body.appendChild(x9);}if(!document.getElementById('lightingai-beam-report-script')){var x10=document.createElement('script');x10.id='lightingai-beam-report-script';x10.src='file:///android_asset/beam-coverage-report.js';document.body.appendChild(x10);}if(!document.getElementById('lightingai-camera-snapshots-script')){var x11=document.createElement('script');x11.id='lightingai-camera-snapshots-script';x11.src='file:///android_asset/camera-setup-snapshots.js';document.body.appendChild(x11);}if(!document.getElementById('lightingai-camera-report-script')){var x12=document.createElement('script');x12.id='lightingai-camera-report-script';x12.src='file:///android_asset/camera-setup-report.js';document.body.appendChild(x12);}if(!document.getElementById('lightingai-ratio-script')){var x13=document.createElement('script');x13.id='lightingai-ratio-script';x13.src='file:///android_asset/lighting-ratio.js';document.body.appendChild(x13);}if(!document.getElementById('lightingai-shot-setup-report-script')){var x14=document.createElement('script');x14.id='lightingai-shot-setup-report-script';x14.src='file:///android_asset/shot-setup-report.js';document.body.appendChild(x14);}if(!document.getElementById('lightingai-backup-script')){var x15=document.createElement('script');x15.id='lightingai-backup-script';x15.src='file:///android_asset/project-backup-export.js';document.body.appendChild(x15);}" +
+            "if(!document.getElementById('lightingai-ble-control-script')){var b=document.createElement('script');b.id='lightingai-ble-control-script';b.src='file:///android_asset/ble-control.js';document.body.appendChild(b);}if(!document.getElementById('lightingai-control-dashboard-script')){var h=document.createElement('script');h.id='lightingai-control-dashboard-script';h.src='file:///android_asset/control-dashboard.js';document.body.appendChild(h);}if(!document.getElementById('lightingai-ai-control-bridge-script')){var j=document.createElement('script');j.id='lightingai-ai-control-bridge-script';j.src='file:///android_asset/ai-control-bridge.js';document.body.appendChild(j);}if(!document.getElementById('lightingai-dmx-patch-script')){var x1=document.createElement('script');x1.id='lightingai-dmx-patch-script';x1.src='file:///android_asset/dmx-patch-planner.js';document.body.appendChild(x1);}if(!document.getElementById('lightingai-dmx-export-script')){var x2=document.createElement('script');x2.id='lightingai-dmx-export-script';x2.src='file:///android_asset/dmx-export.js';document.body.appendChild(x2);}if(!document.getElementById('lightingai-dof-script')){var x3=document.createElement('script');x3.id='lightingai-dof-script';x3.src='file:///android_asset/dof-planner.js';document.body.appendChild(x3);}if(!document.getElementById('lightingai-flicker-script')){var x4=document.createElement('script');x4.id='lightingai-flicker-script';x4.src='file:///android_asset/flicker-shutter-planner.js';document.body.appendChild(x4);}if(!document.getElementById('lightingai-continuity-script')){var x5=document.createElement('script');x5.id='lightingai-continuity-script';x5.src='file:///android_asset/continuity-match-shot.js';document.body.appendChild(x5);}if(!document.getElementById('lightingai-shot-list-script')){var x6=document.createElement('script');x6.id='lightingai-shot-list-script';x6.src='file:///android_asset/shot-list-planner.js';document.body.appendChild(x6);}if(!document.getElementById('lightingai-shot-list-export-script')){var x7=document.createElement('script');x7.id='lightingai-shot-list-export-script';x7.src='file:///android_asset/shot-list-export.js';document.body.appendChild(x7);}if(!document.getElementById('lightingai-cue-script')){var x8=document.createElement('script');x8.id='lightingai-cue-script';x8.src='file:///android_asset/lighting-cue-planner.js';document.body.appendChild(x8);}if(!document.getElementById('lightingai-cue-export-script')){var x9=document.createElement('script');x9.id='lightingai-cue-export-script';x9.src='file:///android_asset/lighting-cue-export.js';document.body.appendChild(x9);}if(!document.getElementById('lightingai-beam-report-script')){var x10=document.createElement('script');x10.id='lightingai-beam-report-script';x10.src='file:///android_asset/beam-coverage-report.js';document.body.appendChild(x10);}if(!document.getElementById('lightingai-camera-snapshots-script')){var x11=document.createElement('script');x11.id='lightingai-camera-snapshots-script';x11.src='file:///android_asset/camera-setup-snapshots.js';document.body.appendChild(x11);}if(!document.getElementById('lightingai-camera-report-script')){var x12=document.createElement('script');x12.id='lightingai-camera-report-script';x12.src='file:///android_asset/camera-setup-report.js';document.body.appendChild(x12);}if(!document.getElementById('lightingai-ratio-script')){var x13=document.createElement('script');x13.id='lightingai-ratio-script';x13.src='file:///android_asset/lighting-ratio.js';document.body.appendChild(x13);}if(!document.getElementById('lightingai-shot-setup-report-script')){var x14=document.createElement('script');x14.id='lightingai-shot-setup-report-script';x14.src='file:///android_asset/shot-setup-report.js';document.body.appendChild(x14);}if(!document.getElementById('lightingai-backup-script')){var x15=document.createElement('script');x15.id='lightingai-backup-script';x15.src='file:///android_asset/project-backup-export.js';document.body.appendChild(x15);}if(!document.getElementById('lightingai-shot-setup-recovery-script')){var x16=document.createElement('script');x16.id='lightingai-shot-setup-recovery-script';x16.src='file:///android_asset/shot-setup-recovery.js';document.body.appendChild(x16);}" +
             "})();", null);
     }
 
@@ -712,6 +888,35 @@ public class MainActivity extends Activity {
                 notifyBleDiscovery(id, new JSONArray(), code);
             }
         });
+    }
+
+    private void startBleGattInspection(String requestId, String address, String name, int timeoutMs) {
+        final String id = requestId == null ? "" : requestId;
+        final int boundedTimeout = Math.max(2500, Math.min(15000, timeoutMs));
+        if (!hasBlePermission()) {
+            notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
+            return;
+        }
+        if (bleGattInspector == null) bleGattInspector = new BleGattInspector(this);
+        bleGattInspector.inspect(address, name, boundedTimeout, new BleGattInspector.Callback() {
+            @Override public void onComplete(JSONObject profile) {
+                notifyBleGattInspection(id, profile, "");
+            }
+
+            @Override public void onError(String code) {
+                notifyBleGattInspection(id, new JSONObject(), code);
+            }
+        });
+    }
+
+    private void notifyBleGattInspection(String requestId, JSONObject profile, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String profileJs = profile == null ? "{}" : profile.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIBleGattInspectionResult&&window.LightingAIBleGattInspectionResult(" + idJs + "," + profileJs + "," + errJs + ");",
+            null));
     }
 
     private void notifyBleDiscovery(String requestId, JSONArray devices, String error) {
@@ -918,8 +1123,23 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.requestCameraPermission());
         }
 
-        @JavascriptInterface public void openImagePicker(String mode) {
-            runOnUiThread(() -> MainActivity.this.openAIImagePicker("camera".equals(mode)));
+        @JavascriptInterface public String openImagePicker(String mode) {
+            final boolean cameraCapture = "camera".equals(mode);
+            runOnUiThread(() -> {
+                String result;
+                try {
+                    result = MainActivity.this.openAIImagePicker(cameraCapture);
+                } catch (Throwable error) {
+                    result = "BRIDGE_ERROR:" + error.getClass().getSimpleName();
+                }
+                final String resultJs = JSONObject.quote(result == null ? "NULL" : result);
+                if (webView != null) {
+                    webView.post(() -> webView.evaluateJavascript(
+                        "window.LightingAINativePickerLaunchResult&&window.LightingAINativePickerLaunchResult(" + resultJs + ");",
+                        null));
+                }
+            });
+            return "QUEUED";
         }
 
         @JavascriptInterface public boolean hasCameraPermission() {
@@ -949,6 +1169,10 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void bleDiscover(String requestId, int timeoutMs) {
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
+        }
+
+        @JavascriptInterface public void bleInspectGatt(String requestId, String address, String name, int timeoutMs) {
+            runOnUiThread(() -> MainActivity.this.startBleGattInspection(requestId, address, name, timeoutMs));
         }
 
         @JavascriptInterface public String networkDmxDiagnostics() {
@@ -1147,6 +1371,14 @@ public class MainActivity extends Activity {
                 if (granted && pendingFileChooser != null) openCameraForWebView();
                 else finishFileChooser(null);
             }
+            if (pendingAIImageCameraPermission) {
+                pendingAIImageCameraPermission = false;
+                if (granted) openAIImageCamera();
+                else {
+                    pendingAIImageCameraCapture = false;
+                    deliverAIVisualImage(null);
+                }
+            }
         } else if (requestCode == LOCATION_PERMISSION) {
             if (pendingNativeSunLocation) {
                 if (hasLocationPermission()) requestNativeSunLocation();
@@ -1179,11 +1411,22 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onPause() {
+        if (pendingAIExternalPickerLaunch) notifyAIVisualImageStage("PICKER_ACTIVITY_PAUSE");
         stopNativeSunCompass();
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
+        if (bleGattInspector != null) bleGattInspector.close();
         super.onPause();
+    }
+
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (pendingAIExternalPickerLaunch && !hasFocus) {
+            notifyAIVisualImageStage("PICKER_FOCUS_LOST");
+        } else if (pendingAIExternalPickerLaunch && hasFocus) {
+            notifyAIVisualImageStage("PICKER_FOCUS_RETURNED");
+        }
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -1221,22 +1464,80 @@ public class MainActivity extends Activity {
             return;
         }
 
-        if (requestCode == CHOOSE_IMAGE) {
+        if (requestCode == AI_CHOOSE_IMAGE) {
+            if (pendingAIImageCameraCapture) {
+                Uri uri = pendingAIImageCameraUri;
+                boolean captured = uri != null && (resultCode == RESULT_OK || hasReadableImageData(uri));
+                pendingAIImageCameraCapture = false;
+                pendingAIImageCameraPermission = false;
+                if (captured) {
+                    pendingAIImageCameraUri = null;
+                    notifyAIVisualImageStage("result");
+                    deliverAIVisualImage(uri);
+                } else {
+                    deletePendingAIImageCameraUri();
+                    deliverAIVisualImage(null);
+                }
+                return;
+            }
+
+            Uri uri = null;
             if (resultCode == RESULT_OK) {
-                if (pendingCameraCapture && pendingCameraUri != null) {
-                    Uri uri = pendingCameraUri;
+                if (data != null && data.getData() != null) {
+                    uri = data.getData();
+                }
+                if (uri == null && data != null && data.getClipData() != null && data.getClipData().getItemCount() > 0) {
+                    ClipData.Item item = data.getClipData().getItemAt(0);
+                    if (item != null) uri = item.getUri();
+                }
+                if (uri == null) {
+                    Uri[] parsed = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                    if (parsed != null && parsed.length > 0) uri = parsed[0];
+                }
+            }
+            pendingAIImageCameraCapture = false;
+            pendingAIImageCameraPermission = false;
+            if (uri != null) notifyAIVisualImageStage("result");
+            deliverAIVisualImage(uri);
+            return;
+        }
+
+        if (requestCode == CHOOSE_IMAGE) {
+            if (pendingAIExternalPickerLaunch) {
+                notifyAIVisualImageStage(resultCode == RESULT_OK ? "PICKER_RESULT_OK" : "PICKER_RESULT_CANCELLED");
+                pendingAIExternalPickerLaunch = false;
+            }
+            notifyAIVisualImageStage(resultCode == RESULT_OK ? "ANDROID_RESULT" : "ERROR_ANDROID_RESULT_CANCELLED");
+            if (pendingCameraCapture && pendingCameraUri != null) {
+                Uri uri = pendingCameraUri;
+                boolean captured = resultCode == RESULT_OK || hasReadableImageData(uri);
+                if (captured) {
                     pendingCameraUri = null;
                     finishFileChooser(new Uri[]{uri});
                 } else {
-                    Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-                    if ((result == null || result.length == 0) && data != null && data.getData() != null) {
-                        result = new Uri[]{data.getData()};
-                    }
-                    persistGalleryAccess(data, result);
-                    finishFileChooser(result);
+                    deletePendingCameraUri();
+                    finishFileChooser(null);
                 }
+                return;
+            }
+
+            if (resultCode == RESULT_OK) {
+                Uri[] result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                if ((result == null || result.length == 0) && data != null && data.getData() != null) {
+                    result = new Uri[]{data.getData()};
+                }
+                if ((result == null || result.length == 0) && data != null && data.getClipData() != null) {
+                    ClipData clip = data.getClipData();
+                    ArrayList<Uri> picked = new ArrayList<>();
+                    for (int i = 0; i < clip.getItemCount(); i++) {
+                        Uri pickedUri = clip.getItemAt(i) == null ? null : clip.getItemAt(i).getUri();
+                        if (pickedUri != null && !picked.contains(pickedUri)) picked.add(pickedUri);
+                    }
+                    if (!picked.isEmpty()) result = picked.toArray(new Uri[0]);
+                }
+                persistGalleryAccess(data, result);
+                finishFileChooser(result);
             } else {
-                deletePendingCameraUri();
                 finishFileChooser(null);
             }
             return;
@@ -1254,6 +1555,9 @@ public class MainActivity extends Activity {
     @Override protected void onDestroy() {
         artNetLiveEngine.stopAll();
         if (pendingFileChooser != null) finishFileChooser(null);
+        deletePendingAIImageCameraUri();
+        pendingAIImageCameraCapture = false;
+        pendingAIImageCameraPermission = false;
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();

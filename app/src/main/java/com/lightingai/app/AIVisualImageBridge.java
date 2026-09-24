@@ -200,6 +200,7 @@ public final class AIVisualImageBridge {
 
         byte[] render() throws Exception {
             try {
+                if ("shot_setup".equals(payload.optString("documentType", ""))) return renderShotSetup();
                 newPage();
                 title(sr ? "AI PREDLOG POSTAVKE RASVETE" : "AI LIGHTING SETUP PROPOSAL");
                 small(sr ? "Profesionalni LightingAI izvoz" : "Professional LightingAI export", MUTED);
@@ -275,6 +276,183 @@ public final class AIVisualImageBridge {
             } finally {
                 try { document.close(); } catch (Exception ignored) {}
             }
+        }
+
+        private byte[] renderShotSetup() throws Exception {
+            JSONObject report = payload.optJSONObject("report");
+            if (report == null) report = new JSONObject();
+
+            newPage();
+            title(sr ? "BLOCKING / CAMERA DESIGNER — SHOT SETUP" : "BLOCKING / CAMERA DESIGNER — SHOT SETUP");
+            small(sr ? "Profesionalni tehnički LightingAI paket scene" : "Professional LightingAI scene technical package", MUTED);
+
+            JSONObject scene = report.optJSONObject("scene");
+            if (scene != null) {
+                section(sr ? "SCENA / SET" : "SCENE / SET");
+                paragraph(scene.optString("name", sr ? "Scena" : "Scene") +
+                    " | " + String.format(Locale.US, "%.1f x %.1f m", scene.optDouble("widthM", 0), scene.optDouble("lengthM", 0)), 10.5f, true);
+            }
+
+            String notes = report.optString("notes", "");
+            if (!notes.trim().isEmpty()) {
+                section(sr ? "BELEŠKE SCENE" : "SCENE NOTES");
+                paragraph(notes, 10f, false);
+            }
+
+            drawPlannerSetSketch(payload.optJSONObject("setSketch"), payload.optJSONObject("technical"));
+
+            newPage();
+            title(sr ? "KAMERA / BLOCKING / FRAMING" : "CAMERA / BLOCKING / FRAMING");
+            if (scene != null) {
+                JSONArray objects = scene.optJSONArray("objects");
+                boolean hasCamera = false;
+                if (objects != null) {
+                    for (int i = 0; i < objects.length(); i++) {
+                        JSONObject o = objects.optJSONObject(i);
+                        if (o == null || !"camera".equals(o.optString("type", ""))) continue;
+                        hasCamera = true;
+                        String line = "- " + o.optString("label", sr ? "Kamera" : "Camera") +
+                            " | " + String.format(Locale.US, "%.0f mm", o.optDouble("focalLengthMm", 35)) +
+                            " | sensor " + String.format(Locale.US, "%.1f mm", o.optDouble("sensorWidthMm", 36)) +
+                            " | x " + String.format(Locale.US, "%.2f m", o.optDouble("xM", 0)) +
+                            " | y " + String.format(Locale.US, "%.2f m", o.optDouble("yM", 0)) +
+                            " | " + String.format(Locale.US, "%.0f°", o.optDouble("directionDeg", 0));
+                        paragraph(line, 10f, false);
+                    }
+                }
+                if (!hasCamera) paragraph(sr ? "Nema kamere u aktivnoj sceni." : "No camera in active scene.", 10f, false);
+            }
+
+            JSONObject blocking = report.optJSONObject("blocking");
+            if (blocking == null) blocking = new JSONObject();
+            JSONArray motion = blocking.optJSONArray("motion");
+            section(sr ? "PUTANJE KRETANJA" : "MOVEMENT PATHS");
+            if (motion == null || motion.length() == 0) {
+                paragraph(sr ? "Nema sačuvanih Blocking putanja." : "No saved Blocking paths.", 10f, false);
+            } else {
+                for (int i = 0; i < motion.length(); i++) {
+                    JSONObject m = motion.optJSONObject(i);
+                    if (m == null) continue;
+                    JSONArray path = m.optJSONArray("path");
+                    String line = "- " + m.optString("label", m.optString("type", "Object")) +
+                        " | " + (path == null ? 0 : path.length()) + " waypoint" +
+                        " | " + String.format(Locale.US, "%.1f s", m.optDouble("durationSec", 5));
+                    String target = m.optString("trackSubjectId", "");
+                    if (!target.isEmpty()) {
+                        line += " | tracking " + m.optString("trackFramingMode", "center");
+                        if (m.has("trackOffsetDeg") && !m.isNull("trackOffsetDeg")) {
+                            line += " | " + String.format(Locale.US, "%+.1f°", m.optDouble("trackOffsetDeg", 0));
+                        }
+                    }
+                    paragraph(line, 9.8f, false);
+                    if (path != null) {
+                        List<String> pts = new ArrayList<>();
+                        for (int p = 0; p < path.length(); p++) {
+                            JSONObject point = path.optJSONObject(p);
+                            if (point == null) continue;
+                            pts.add(String.format(Locale.US, "#%d %.2f/%.2f m",
+                                point.optInt("index", p + 1), point.optDouble("xM", 0), point.optDouble("yM", 0)));
+                        }
+                        if (!pts.isEmpty()) paragraph(join(pts, " | "), 8.8f, false);
+                    }
+                }
+            }
+
+            JSONObject framing = blocking.optJSONObject("framing");
+            if (framing != null && framing.length() > 0) {
+                section(sr ? "CAMERA FOV / FRAMING" : "CAMERA FOV / FRAMING");
+                paragraph((framing.optBoolean("inside", false) ? (sr ? "U KADRU" : "IN FRAME") : (sr ? "VAN KADRA" : "OUT OF FRAME")) +
+                    " | H-FOV " + String.format(Locale.US, "%.1f°", framing.optDouble("horizontalFovDeg", 0)) +
+                    " | " + (sr ? "odstupanje od centra " : "center offset ") + String.format(Locale.US, "%.2f m", framing.optDouble("centerOffset", 0)) +
+                    " | " + (sr ? "rezerva do ivice " : "edge margin ") + String.format(Locale.US, "%+.2f m", framing.optDouble("edgeMargin", 0)), 10f, false);
+            }
+
+            newPage();
+            title(sr ? "RASVETA / SUNCE / AI PREDLOZI" : "LIGHTING / SUN / AI PROPOSALS");
+            JSONArray lighting = blocking.optJSONArray("lighting");
+            section(sr ? "BLOCKING LIGHT MAP" : "BLOCKING LIGHT MAP");
+            if (lighting == null || lighting.length() == 0) {
+                paragraph(sr ? "Nema Blocking rasvete." : "No Blocking lighting.", 10f, false);
+            } else {
+                for (int i = 0; i < lighting.length(); i++) {
+                    JSONObject l = lighting.optJSONObject(i);
+                    if (l == null) continue;
+                    String line = "- " + l.optString("label", "Light " + (i + 1)) +
+                        " | x " + String.format(Locale.US, "%.2f m", l.optDouble("x", 0)) +
+                        " | y " + String.format(Locale.US, "%.2f m", l.optDouble("y", 0)) +
+                        " | " + String.format(Locale.US, "%.0f°", l.optDouble("directionDeg", 0));
+                    if (l.has("beamAngleDeg") && !l.isNull("beamAngleDeg")) line += " | beam " + String.format(Locale.US, "%.1f°", l.optDouble("beamAngleDeg", 0));
+                    JSONObject cov = l.optJSONObject("coverage");
+                    if (cov != null) {
+                        line += " | " + cov.optString("subjectLabel", sr ? "Glumac" : "Actor") +
+                            " " + String.format(Locale.US, "%.2f m", cov.optDouble("distanceM", 0));
+                        if (cov.has("insideBeam") && !cov.isNull("insideBeam")) line += cov.optBoolean("insideBeam") ? " | IN BEAM" : " | OUT OF BEAM";
+                        if (cov.has("offsetM") && !cov.isNull("offsetM")) line += " | offset " + String.format(Locale.US, "%.2f m", Math.abs(cov.optDouble("offsetM", 0)));
+                    }
+                    paragraph(line, 9.4f, false);
+                }
+            }
+
+            JSONObject sunCamera = blocking.optJSONObject("sunCamera");
+            if (sunCamera != null && sunCamera.length() > 0) {
+                section(sr ? "SUNCE PREMA KAMERI" : "SUN RELATIVE TO CAMERA");
+                paragraph(sunCamera.optString("lightType", "-") +
+                    " | " + sunCamera.optString("relation", "-") +
+                    " | relative " + String.format(Locale.US, "%+.0f°", sunCamera.optDouble("relativeAngleDeg", 0)) +
+                    " | sun az " + String.format(Locale.US, "%.0f°", sunCamera.optDouble("sunAzimuthDeg", 0)) +
+                    " | el " + String.format(Locale.US, "%.1f°", sunCamera.optDouble("sunElevationDeg", 0)), 10f, false);
+            }
+
+            JSONObject ai = blocking.optJSONObject("ai");
+            JSONArray proposals = ai == null ? null : ai.optJSONArray("proposals");
+            if (proposals != null && proposals.length() > 0) {
+                section(sr ? "AI BLOCKING PREDLOZI — NISU AUTOMATSKI PRIMENJENI" : "AI BLOCKING PROPOSALS — NOT APPLIED AUTOMATICALLY");
+                for (int i = 0; i < proposals.length(); i++) {
+                    JSONObject p = proposals.optJSONObject(i);
+                    if (p == null) continue;
+                    String line = "- " + p.optString("role", p.optString("fixture", "AI")) +
+                        (p.optString("lightLabel", "").isEmpty() ? "" : " -> " + p.optString("lightLabel")) +
+                        " | x " + String.format(Locale.US, "%.2f m", p.optDouble("xM", 0)) +
+                        " | y " + String.format(Locale.US, "%.2f m", p.optDouble("yM", 0));
+                    if (p.has("moveM") && !p.isNull("moveM")) line += " | move " + String.format(Locale.US, "%.2f m", p.optDouble("moveM", 0));
+                    if (p.has("directionDeg") && !p.isNull("directionDeg")) line += " | " + String.format(Locale.US, "%.0f°", p.optDouble("directionDeg", 0));
+                    paragraph(line, 9.4f, false);
+                }
+            }
+
+            JSONArray measurements = report.optJSONArray("measurements");
+            if (measurements != null && measurements.length() > 0) {
+                section(sr ? "PRO MERENJA" : "PRO MEASUREMENTS");
+                for (int i = 0; i < measurements.length(); i++) {
+                    JSONObject m = measurements.optJSONObject(i);
+                    if (m == null) continue;
+                    paragraph("- " + m.optString("target", "-") + " | " +
+                        String.format(Locale.US, "%.2f m", m.optDouble("distanceM", 0)) +
+                        " | " + m.optString("method", "-"), 9.6f, false);
+                }
+            }
+
+            JSONArray equipment = report.optJSONArray("equipment");
+            if (equipment != null && equipment.length() > 0) {
+                section(sr ? "OPREMA" : "EQUIPMENT");
+                for (int i = 0; i < equipment.length(); i++) {
+                    JSONObject e = equipment.optJSONObject(i);
+                    if (e == null) continue;
+                    paragraph("- " + e.optString("name", e.optString("id", "Fixture")) + " x" + Math.max(1, e.optInt("qty", 1)), 9.6f, false);
+                }
+            }
+
+            JSONObject power = report.optJSONObject("power");
+            if (power != null && power.length() > 0) {
+                section(sr ? "NAPAJANJE" : "POWER");
+                paragraph(String.format(Locale.US, "%.0f W | %.2f A @ %.0f V | circuits %d",
+                    power.optDouble("totalW", 0), power.optDouble("currentA", 0), power.optDouble("voltageV", 230), power.optInt("circuitsNeeded", 0)), 10f, false);
+            }
+
+            finishPage();
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            document.writeTo(output);
+            return output.toByteArray();
         }
 
         private void drawTechnical(JSONObject technical) {
@@ -431,6 +609,25 @@ public final class AIVisualImageBridge {
                     double rad = Math.toRadians(rot);
                     float dx = (float) Math.sin(rad);
                     float dy = (float) -Math.cos(rad);
+
+                    JSONObject blocking = o.optJSONObject("blocking");
+                    JSONArray path = blocking == null ? null : blocking.optJSONArray("path");
+                    if (path != null && path.length() > 0 && ("camera".equals(type) || "subject".equals(type))) {
+                        Paint pathPaint = paint("camera".equals(type) ? Color.rgb(70, 145, 205) : Color.rgb(168, 113, 190), Paint.Style.STROKE, 1.5f);
+                        Paint pointPaint = paint("camera".equals(type) ? Color.rgb(70, 145, 205) : Color.rgb(168, 113, 190), Paint.Style.FILL, 1f);
+                        float previousX = Float.NaN, previousY = Float.NaN;
+                        for (int p = 0; p < path.length(); p++) {
+                            JSONObject point = path.optJSONObject(p);
+                            if (point == null) continue;
+                            double xM = Math.max(0, Math.min(roomW, point.optDouble("x", ox)));
+                            double yM = Math.max(0, Math.min(roomH, point.optDouble("y", oy)));
+                            float pathX = mapLeft + (float) (xM / roomW) * mapW;
+                            float pathY = mapTop + (float) (yM / roomH) * mapH;
+                            if (!Float.isNaN(previousX)) canvas.drawLine(previousX, previousY, pathX, pathY, pathPaint);
+                            canvas.drawCircle(pathX, pathY, p == 0 || p == path.length() - 1 ? 4.2f : 3.2f, pointPaint);
+                            previousX = pathX; previousY = pathY;
+                        }
+                    }
 
                     if ("wall".equals(type) || "background".equals(type)) {
                         float half = 26f;

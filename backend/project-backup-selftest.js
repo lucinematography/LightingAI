@@ -16,6 +16,8 @@ const blockedKeys = ['lighting_language_v1', 'lighting_backend_v1', 'lighting_ap
   'lighting_photo_v1', 'lighting_image_v1', 'other_app_data', 'lightingai_unrelated_v1'];
 const stored = new Map();
 plannerKeys.forEach(key => stored.set(key, JSON.stringify({sceneId:'scene-1', value:42})));
+stored.set('lighting_set_sketch_v1', JSON.stringify({activeId:'scene-1',scenes:[{id:'scene-1',name:'Blocking test',roomW:10,roomH:8,objects:[{id:'cam1',type:'camera',label:'Kamera',x:2,y:6,rot:0,blocking:{durationSec:6,trackSubjectId:'actor1',trackFramingMode:'preserve',trackOffsetDeg:12,path:[{x:2,y:6},{x:4,y:5}]}},{id:'actor1',type:'subject',label:'Glumac',x:5,y:4,rot:0,blocking:{durationSec:6,path:[{x:5,y:4},{x:6,y:3}]}}]}]}));
+stored.set('lighting_shot_list_v1', JSON.stringify({rows:[{id:'shot1',name:'Kadar 1',referenceImage:'data:image/jpeg;base64,PRIVATE',setup:{cameraId:'cam1',blocking:{durationSec:6,path:[{x:2,y:6},{x:4,y:5}]},framing:{centerOffset:0.25,edgeMargin:1.1}}}]}));
 sunKeys.forEach(key => stored.set(key, JSON.stringify([{name:'Lokacija', lat:44.8, lon:20.5}])));
 blockedKeys.forEach(key => stored.set(key, JSON.stringify('excluded')));
 stored.set('lighting_projects_v1', JSON.stringify([{id:'p1', project:'Scena 12',
@@ -66,7 +68,15 @@ for (const includeSun of [false, true]) {
   const backup = snapshot();
   assert.equal(backup.restoreSupported, true);
   assert.equal(backup.includesSunLocationData, includeSun);
-  for (const key of plannerKeys) assert.deepEqual(backup.storage[key], JSON.parse(stored.get(key)), key);
+  for (const key of plannerKeys) {
+    if (key==='lighting_shot_list_v1') continue;
+    assert.deepEqual(backup.storage[key], JSON.parse(stored.get(key)), key);
+  }
+  assert.equal(backup.storage.lighting_set_sketch_v1.scenes[0].objects[0].blocking.trackFramingMode, 'preserve');
+  assert.deepEqual(backup.storage.lighting_set_sketch_v1.scenes[0].objects[0].blocking.path, [{x:2,y:6},{x:4,y:5}]);
+  assert.equal(backup.storage.lighting_shot_list_v1.rows[0].referenceImage, undefined, 'Storyboard/reference images must stay excluded');
+  assert.deepEqual(backup.storage.lighting_shot_list_v1.rows[0].setup.blocking.path, [{x:2,y:6},{x:4,y:5}], 'Shot Blocking path must be preserved');
+  assert.equal(backup.storage.lighting_shot_list_v1.rows[0].setup.framing.edgeMargin, 1.1, 'Shot framing metrics must be preserved');
   for (const key of blockedKeys) assert.equal(Object.hasOwn(backup.storage, key), false, key);
   for (const key of sunKeys) {
     assert.equal(Object.hasOwn(backup.storage, key), includeSun, key);

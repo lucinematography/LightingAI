@@ -11,11 +11,13 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
+import android.util.SparseArray;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class BleDeviceScanner {
     public interface Callback {
@@ -117,9 +119,25 @@ public final class BleDeviceScanner {
                 try { address = result.getDevice().getAddress(); } catch (Exception ignored) {}
 
                 JSONArray services = new JSONArray();
+                JSONArray serviceDataUuids = new JSONArray();
+                JSONArray manufacturerIds = new JSONArray();
                 if (record != null && record.getServiceUuids() != null) {
                     for (ParcelUuid uuid : record.getServiceUuids()) {
                         if (uuid != null) services.put(uuid.toString());
+                    }
+                }
+                if (record != null && record.getServiceData() != null) {
+                    Set<ParcelUuid> keys = record.getServiceData().keySet();
+                    if (keys != null) {
+                        for (ParcelUuid uuid : keys) {
+                            if (uuid != null) serviceDataUuids.put(uuid.toString());
+                        }
+                    }
+                }
+                if (record != null) {
+                    SparseArray<byte[]> data = record.getManufacturerSpecificData();
+                    if (data != null) {
+                        for (int i = 0; i < data.size(); i++) manufacturerIds.put(data.keyAt(i));
                     }
                 }
 
@@ -129,6 +147,8 @@ public final class BleDeviceScanner {
                 item.put("rssi", result.getRssi());
                 item.put("connectable", android.os.Build.VERSION.SDK_INT < 26 || result.isConnectable());
                 item.put("serviceUuids", services);
+                item.put("serviceDataUuids", serviceDataUuids);
+                item.put("manufacturerIds", manufacturerIds);
 
                 String key = address == null || address.isEmpty()
                     ? (item.optString("name") + "|" + services.toString())

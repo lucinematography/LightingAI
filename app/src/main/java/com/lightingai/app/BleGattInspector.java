@@ -422,6 +422,7 @@ public final class BleGattInspector {
         return text;
     }
 
+    @SuppressLint("MissingPermission")
     private JSONObject buildProfile(BluetoothGatt gatt) {
         JSONObject root = new JSONObject();
         JSONArray servicesJson = new JSONArray();

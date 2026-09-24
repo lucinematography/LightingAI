@@ -188,6 +188,7 @@ const exactAllowed = new Set([
   'app/src/main/java/com/lightingai/app/SacnSender.java',
   'app/src/main/java/com/lightingai/app/SacnLiveEngine.java',
   'app/src/main/java/com/lightingai/app/BleDeviceScanner.java',
+  'app/src/main/java/com/lightingai/app/BleGattInspector.java',
   'app/src/main/java/com/lightingai/app/NetworkInterfaceInspector.java',
   'app/src/main/assets/ble-control.js',
   'app/src/main/AndroidManifest.xml',

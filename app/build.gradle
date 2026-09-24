@@ -30,7 +30,7 @@ android { namespace 'com.lightingai.app'; compileSdk 35
 
     buildTypes {
         debug {
-            applicationIdSuffix '.review13'
+            applicationIdSuffix '.bledirecttest'
             versionNameSuffix '-review13'
             if (hasReleaseSigning) signingConfig signingConfigs.release
         }

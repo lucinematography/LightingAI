@@ -69,6 +69,11 @@ function transport(){
    if(androidReady){Android.bleDiscover(request.id,request.timeoutMs||3000);return true}
    if(iosReady){iosHandler.postMessage({action:'bleDiscover',id:request.id,timeoutMs:request.timeoutMs||3000});return true}
    return false;
+  },
+  inspect:function(request){
+   if(androidReady&&typeof Android.bleInspectGatt==='function'){Android.bleInspectGatt(request.id,request.address,request.timeoutMs||8000);return true}
+   if(iosReady){iosHandler.postMessage({action:'bleInspectGatt',id:request.id,address:request.address,timeoutMs:request.timeoutMs||8000});return true}
+   return false;
   }
  };
 }

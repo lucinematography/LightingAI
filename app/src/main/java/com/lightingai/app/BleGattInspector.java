@@ -10,6 +10,10 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanRecord;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
@@ -23,9 +27,9 @@ import java.util.List;
 /**
  * Read-only BLE GATT profile inspector used by LightingAI Direct Control research.
  *
- * This class never writes a characteristic, enables notifications, pairs, bonds,
- * provisions, or changes fixture state. It only connects long enough to discover
- * the public GATT service/characteristic layout exposed by a device.
+ * The inspector may rescan and retry a failed Android GATT connection, but it never
+ * writes characteristics, enables notifications, bonds, provisions, or changes
+ * fixture state.
  */
 public final class BleGattInspector {
     public interface Callback {
@@ -33,34 +37,46 @@ public final class BleGattInspector {
         void onError(String code);
     }
 
+    private static final int MAX_CONNECT_ATTEMPTS = 3;
+    private static final int TARGET_SCAN_MS = 1800;
+
     private final Context context;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Object lock = new Object();
 
     private BluetoothGatt activeGatt;
+    private BluetoothLeScanner activeScanner;
+    private ScanCallback activeScanCallback;
     private Runnable timeoutRunnable;
+    private Runnable scanFallbackRunnable;
+    private Runnable retryRunnable;
     private Callback activeCallback;
     private String activeAddress = "";
+    private String activeName = "";
+    private long deadlineMs = 0L;
+    private int connectAttempt = 0;
 
     public BleGattInspector(Context context) {
         this.context = context.getApplicationContext();
     }
 
     @SuppressLint("MissingPermission")
-    public void inspect(String address, int timeoutMs, Callback callback) {
-        final int boundedTimeout = Math.max(2500, Math.min(15000, timeoutMs));
+    public void inspect(String address, String name, int timeoutMs, Callback callback) {
+        final int boundedTimeout = Math.max(5000, Math.min(20000, timeoutMs));
         synchronized (lock) {
-            closeLocked(null, false);
+            finishLocked();
             activeCallback = callback;
             activeAddress = address == null ? "" : address.trim();
+            activeName = name == null ? "" : name.trim();
+            deadlineMs = System.currentTimeMillis() + boundedTimeout;
+            connectAttempt = 0;
 
-            if (activeAddress.isEmpty()) {
-                finishErrorLocked("ble_invalid_address");
+            if (activeAddress.isEmpty() && activeName.isEmpty()) {
+                finishErrorLocked("ble_invalid_target");
                 return;
             }
 
-            BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-            BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
+            BluetoothAdapter adapter = getAdapter();
             if (adapter == null) {
                 finishErrorLocked("bluetooth_unavailable");
                 return;
@@ -70,79 +86,214 @@ public final class BleGattInspector {
                 return;
             }
 
-            final BluetoothDevice device;
-            try {
-                device = adapter.getRemoteDevice(activeAddress);
-            } catch (Exception e) {
-                finishErrorLocked("ble_invalid_address");
-                return;
-            }
-
-            BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
-                @Override
-                public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-                    synchronized (lock) {
-                        if (gatt != activeGatt) return;
-                        if (status != BluetoothGatt.GATT_SUCCESS) {
-                            finishErrorLocked("ble_gatt_connect_" + status);
-                            return;
-                        }
-                        if (newState == BluetoothProfile.STATE_CONNECTED) {
-                            try {
-                                if (!gatt.discoverServices()) finishErrorLocked("ble_gatt_discovery_start_failed");
-                            } catch (Exception e) {
-                                finishErrorLocked("ble_gatt_discovery_start_failed");
-                            }
-                        } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                            finishErrorLocked("ble_gatt_disconnected");
-                        }
-                    }
-                }
-
-                @Override
-                public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-                    synchronized (lock) {
-                        if (gatt != activeGatt) return;
-                        if (status != BluetoothGatt.GATT_SUCCESS) {
-                            finishErrorLocked("ble_gatt_discovery_" + status);
-                            return;
-                        }
-                        JSONObject profile = buildProfile(gatt);
-                        finishSuccessLocked(profile);
-                    }
-                }
-            };
-
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    activeGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
-                } else {
-                    activeGatt = device.connectGatt(context, false, gattCallback);
-                }
-            } catch (Exception e) {
-                activeGatt = null;
-                finishErrorLocked("ble_gatt_connect_failed");
-                return;
-            }
-
-            if (activeGatt == null) {
-                finishErrorLocked("ble_gatt_connect_failed");
-                return;
-            }
-
             timeoutRunnable = () -> {
                 synchronized (lock) {
                     finishErrorLocked("ble_gatt_timeout");
                 }
             };
             handler.postDelayed(timeoutRunnable, boundedTimeout);
+            startTargetScanLocked();
         }
     }
 
     public void close() {
         synchronized (lock) {
-            closeLocked(null, false);
+            finishLocked();
         }
+    }
+
+    private BluetoothAdapter getAdapter() {
+        BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        return manager == null ? null : manager.getAdapter();
+    }
+
+    @SuppressLint("MissingPermission")
+    private void startTargetScanLocked() {
+        if (activeCallback == null) return;
+        if (System.currentTimeMillis() >= deadlineMs) {
+            finishErrorLocked("ble_gatt_timeout");
+            return;
+        }
+
+        stopScanLocked();
+        closeGattLocked();
+
+        BluetoothAdapter adapter = getAdapter();
+        if (adapter == null || !adapter.isEnabled()) {
+            finishErrorLocked(adapter == null ? "bluetooth_unavailable" : "bluetooth_disabled");
+            return;
+        }
+
+        BluetoothLeScanner scanner = adapter.getBluetoothLeScanner();
+        if (scanner == null) {
+            connectByKnownAddressLocked();
+            return;
+        }
+
+        activeScanner = scanner;
+        activeScanCallback = new ScanCallback() {
+            @Override public void onScanResult(int callbackType, ScanResult result) {
+                synchronized (lock) {
+                    if (activeScanCallback == null || result == null || result.getDevice() == null) return;
+                    String address = "";
+                    String name = "";
+                    try { address = result.getDevice().getAddress(); } catch (Exception ignored) {}
+                    try {
+                        ScanRecord record = result.getScanRecord();
+                        name = record == null ? "" : record.getDeviceName();
+                        if (name == null || name.trim().isEmpty()) name = result.getDevice().getName();
+                    } catch (Exception ignored) {}
+                    if (!matchesTarget(address, name)) return;
+
+                    BluetoothDevice target = result.getDevice();
+                    stopScanLocked();
+                    handler.postDelayed(() -> {
+                        synchronized (lock) {
+                            connectLocked(target);
+                        }
+                    }, 180);
+                }
+            }
+
+            @Override public void onScanFailed(int errorCode) {
+                synchronized (lock) {
+                    stopScanLocked();
+                    connectByKnownAddressLocked();
+                }
+            }
+        };
+
+        try {
+            activeScanner.startScan(activeScanCallback);
+        } catch (Exception e) {
+            stopScanLocked();
+            connectByKnownAddressLocked();
+            return;
+        }
+
+        scanFallbackRunnable = () -> {
+            synchronized (lock) {
+                stopScanLocked();
+                connectByKnownAddressLocked();
+            }
+        };
+        handler.postDelayed(scanFallbackRunnable, TARGET_SCAN_MS);
+    }
+
+    private boolean matchesTarget(String address, String name) {
+        String a = address == null ? "" : address.trim();
+        String n = name == null ? "" : name.trim();
+        if (!activeAddress.isEmpty() && activeAddress.equalsIgnoreCase(a)) return true;
+        return !activeName.isEmpty() && activeName.equalsIgnoreCase(n);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void connectByKnownAddressLocked() {
+        if (activeCallback == null) return;
+        BluetoothAdapter adapter = getAdapter();
+        if (adapter == null || !adapter.isEnabled()) {
+            finishErrorLocked(adapter == null ? "bluetooth_unavailable" : "bluetooth_disabled");
+            return;
+        }
+        if (activeAddress.isEmpty()) {
+            retryOrFailLocked("ble_target_not_seen");
+            return;
+        }
+        try {
+            connectLocked(adapter.getRemoteDevice(activeAddress));
+        } catch (Exception e) {
+            retryOrFailLocked("ble_invalid_address");
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void connectLocked(BluetoothDevice device) {
+        if (activeCallback == null || device == null) return;
+        if (activeGatt != null) return;
+        if (System.currentTimeMillis() >= deadlineMs) {
+            finishErrorLocked("ble_gatt_timeout");
+            return;
+        }
+
+        connectAttempt++;
+        final int attemptNumber = connectAttempt;
+
+        BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+            @Override
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+                synchronized (lock) {
+                    if (gatt != activeGatt) return;
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        retryOrFailLocked("ble_gatt_connect_" + status + "_attempt_" + attemptNumber);
+                        return;
+                    }
+                    if (newState == BluetoothProfile.STATE_CONNECTED) {
+                        handler.postDelayed(() -> {
+                            synchronized (lock) {
+                                if (gatt != activeGatt || activeCallback == null) return;
+                                try {
+                                    if (!gatt.discoverServices()) retryOrFailLocked("ble_gatt_discovery_start_failed_attempt_" + attemptNumber);
+                                } catch (Exception e) {
+                                    retryOrFailLocked("ble_gatt_discovery_start_failed_attempt_" + attemptNumber);
+                                }
+                            }
+                        }, 350);
+                    } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                        retryOrFailLocked("ble_gatt_disconnected_attempt_" + attemptNumber);
+                    }
+                }
+            }
+
+            @Override
+            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                synchronized (lock) {
+                    if (gatt != activeGatt) return;
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        retryOrFailLocked("ble_gatt_discovery_" + status + "_attempt_" + attemptNumber);
+                        return;
+                    }
+                    JSONObject profile = buildProfile(gatt);
+                    try {
+                        profile.put("connectAttempts", attemptNumber);
+                        profile.put("targetName", activeName);
+                    } catch (Exception ignored) {}
+                    finishSuccessLocked(profile);
+                }
+            }
+        };
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                activeGatt = device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE);
+            } else {
+                activeGatt = device.connectGatt(context, false, gattCallback);
+            }
+        } catch (Exception e) {
+            activeGatt = null;
+            retryOrFailLocked("ble_gatt_connect_failed_attempt_" + attemptNumber);
+            return;
+        }
+
+        if (activeGatt == null) retryOrFailLocked("ble_gatt_connect_failed_attempt_" + attemptNumber);
+    }
+
+    private void retryOrFailLocked(String lastCode) {
+        closeGattLocked();
+        stopScanLocked();
+
+        long remaining = deadlineMs - System.currentTimeMillis();
+        if (activeCallback != null && connectAttempt < MAX_CONNECT_ATTEMPTS && remaining > 1800L) {
+            long delay = connectAttempt == 1 ? 550L : 1100L;
+            retryRunnable = () -> {
+                synchronized (lock) {
+                    retryRunnable = null;
+                    startTargetScanLocked();
+                }
+            };
+            handler.postDelayed(retryRunnable, delay);
+            return;
+        }
+        finishErrorLocked(lastCode);
     }
 
     private JSONObject buildProfile(BluetoothGatt gatt) {
@@ -208,30 +359,54 @@ public final class BleGattInspector {
 
     private void finishSuccessLocked(JSONObject profile) {
         Callback callback = activeCallback;
-        closeLocked(null, true);
+        finishLocked();
         if (callback != null) callback.onComplete(profile == null ? new JSONObject() : profile);
     }
 
     private void finishErrorLocked(String code) {
         Callback callback = activeCallback;
-        closeLocked(null, true);
+        finishLocked();
         if (callback != null) callback.onError(code == null ? "ble_gatt_failed" : code);
     }
 
     @SuppressLint("MissingPermission")
-    private void closeLocked(String ignored, boolean keepCallbackDetached) {
+    private void stopScanLocked() {
+        if (scanFallbackRunnable != null) {
+            handler.removeCallbacks(scanFallbackRunnable);
+            scanFallbackRunnable = null;
+        }
+        if (activeScanner != null && activeScanCallback != null) {
+            try { activeScanner.stopScan(activeScanCallback); } catch (Exception ignored) {}
+        }
+        activeScanner = null;
+        activeScanCallback = null;
+    }
+
+    @SuppressLint("MissingPermission")
+    private void closeGattLocked() {
+        BluetoothGatt gatt = activeGatt;
+        activeGatt = null;
+        if (gatt != null) {
+            try { gatt.disconnect(); } catch (Exception ignored) {}
+            try { gatt.close(); } catch (Exception ignored) {}
+        }
+    }
+
+    private void finishLocked() {
         if (timeoutRunnable != null) {
             handler.removeCallbacks(timeoutRunnable);
             timeoutRunnable = null;
         }
-        BluetoothGatt gatt = activeGatt;
-        activeGatt = null;
-        activeAddress = "";
-        if (!keepCallbackDetached) activeCallback = null;
-        if (gatt != null) {
-            try { gatt.disconnect(); } catch (Exception ignoredDisconnect) {}
-            try { gatt.close(); } catch (Exception ignoredClose) {}
+        if (retryRunnable != null) {
+            handler.removeCallbacks(retryRunnable);
+            retryRunnable = null;
         }
-        if (keepCallbackDetached) activeCallback = null;
+        stopScanLocked();
+        closeGattLocked();
+        activeCallback = null;
+        activeAddress = "";
+        activeName = "";
+        deadlineMs = 0L;
+        connectAttempt = 0;
     }
 }

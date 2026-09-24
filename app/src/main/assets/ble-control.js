@@ -122,14 +122,17 @@ function inspectDevice(address,name,targetId){
 }
 function renderGatt(profile){
  const services=Array.isArray(profile&&profile.services)?profile.services:[];
- if(!services.length)return '<div class="muted small">No exposed GATT services.</div>';
- return services.map(s=>{
+ const reads=Array.isArray(profile&&profile.readValues)?profile.readValues:[];
+ const serviceHtml=services.length?services.map(s=>{
   const chars=Array.isArray(s&&s.characteristics)?s.characteristics:[];
   return '<div style="margin-top:7px;padding:7px;border:1px solid #2d333a;border-radius:8px">'+
    '<div class="muted small"><b>'+esc(s&&s.uuid||'')+'</b></div>'+
    chars.map(ch=>'<div class="muted small" style="margin-top:3px">'+esc(ch&&ch.uuid||'')+' · '+esc(Array.isArray(ch&&ch.properties)?ch.properties.join('/'):'')+'</div>').join('')+
   '</div>';
- }).join('');
+ }).join(''):'<div class="muted small">No exposed GATT services.</div>';
+ const readHtml=reads.length?'<div class="caption" style="margin-top:10px">READ-ONLY VALUES</div>'+
+  reads.map(r=>'<div class="muted small" style="margin-top:4px"><b>'+esc(r&&r.uuid||'')+'</b> · HEX '+esc(r&&r.hex||'—')+(r&&r.text?(' · TEXT '+esc(r.text)):'')+(r&&r.error?(' · '+esc(r.error)):'')+'</div>').join(''):'';
+ return serviceHtml+readHtml;
 }
 window.LightingAIBleGattInspectionResult=function(id,profile,error){
  const map=window.__lightingAIGattTargets||{};

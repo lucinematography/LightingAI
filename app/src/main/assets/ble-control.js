@@ -23,7 +23,9 @@ const TXT={
   inspecting:'Čitam BLE GATT profil…',
   inspectFail:'GATT profil nije pročitan.',
   likelyAstera:'VEROVATNO ASTERA',
-  likelyMesh:'BLE MESH UREĐAJ'
+  likelyMesh:'BLE MESH UREĐAJ',
+  meshProxy:'BLE MESH PROXY',
+  fingerprint:'OTISAK OGLASA'
  },
  en:{
   title:'📶 BLUETOOTH / BLE',
@@ -45,7 +47,9 @@ const TXT={
   inspecting:'Reading BLE GATT profile…',
   inspectFail:'GATT profile could not be read.',
   likelyAstera:'LIKELY ASTERA',
-  likelyMesh:'BLE MESH DEVICE'
+  likelyMesh:'BLE MESH DEVICE',
+  meshProxy:'BLE MESH PROXY',
+  fingerprint:'ADVERTISEMENT FINGERPRINT'
  }
 };
 const t=()=>TXT[lang()];
@@ -93,9 +97,15 @@ function errorText(code){
  if(code==='ble_scan_cancelled')return t().cancelled;
  return t().error+(code?' ('+code+')':'');
 }
+function hasService(d,shortHex){
+ const list=Array.isArray(d&&d.serviceUuids)?d.serviceUuids:[];
+ const needle=String(shortHex||'').toLowerCase();
+ return list.some(v=>String(v||'').toLowerCase().includes(needle));
+}
 function deviceTag(d){
  const n=String(d&&d.name||'').toUpperCase();
  if(/^TITAN\b/.test(n)||n.includes('ASTERA'))return t().likelyAstera;
+ if(hasService(d,'00001828'))return t().meshProxy;
  if(n.includes('MESH DEVICE'))return t().likelyMesh;
  return '';
 }
@@ -139,6 +149,8 @@ function render(devices){
    const name=(d&&d.name)||('BLE '+(i+1));
    const address=(d&&d.address)||'';
    const services=Array.isArray(d&&d.serviceUuids)?d.serviceUuids:[];
+   const serviceData=Array.isArray(d&&d.serviceDataUuids)?d.serviceDataUuids:[];
+   const manufacturerIds=Array.isArray(d&&d.manufacturerIds)?d.manufacturerIds:[];
    const tag=deviceTag(d);
    const targetId='bleGatt_'+i;
    return '<div style="padding:10px 0;border-top:1px solid #2d333a">'+
@@ -146,6 +158,7 @@ function render(devices){
     (tag?'<div class="caption" style="margin-top:3px">'+esc(tag)+'</div>':'')+
     (address?'<div class="muted small">'+esc(t().address)+': '+esc(address)+'</div>':'')+
     '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
+    ((serviceData.length||manufacturerIds.length)?'<div class="muted small">'+esc(t().fingerprint)+': '+esc((serviceData.length?('SD '+serviceData.join(', ')):'')+(serviceData.length&&manufacturerIds.length?' · ':'')+(manufacturerIds.length?('MFG '+manufacturerIds.join(', ')):''))+'</div>':'')+
     (address&&d&&d.connectable?'<button class="btn secondary ble-gatt-btn" style="margin-top:7px" type="button" data-address="'+esc(address)+'" data-target="'+targetId+'">'+esc(t().inspect)+'</button><div id="'+targetId+'"></div>':'')+
    '</div>';
   }).join('');

@@ -92,6 +92,7 @@ public class MainActivity extends Activity {
     private byte[] sacnCid;
     private SacnLiveEngine sacnLiveEngine;
     private BleDeviceScanner bleDeviceScanner;
+    private BleGattInspector bleGattInspector;
     private String pendingBleDiscoveryRequestId = null;
     private int pendingBleDiscoveryTimeoutMs = 3000;
 
@@ -131,6 +132,7 @@ public class MainActivity extends Activity {
         sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
         sacnLiveEngine.setPriority(sacnPriority.get());
         bleDeviceScanner = new BleDeviceScanner(this);
+        bleGattInspector = new BleGattInspector(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -888,6 +890,35 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void startBleGattInspection(String requestId, String address, int timeoutMs) {
+        final String id = requestId == null ? "" : requestId;
+        final int boundedTimeout = Math.max(2500, Math.min(15000, timeoutMs));
+        if (!hasBlePermission()) {
+            notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
+            return;
+        }
+        if (bleGattInspector == null) bleGattInspector = new BleGattInspector(this);
+        bleGattInspector.inspect(address, boundedTimeout, new BleGattInspector.Callback() {
+            @Override public void onComplete(JSONObject profile) {
+                notifyBleGattInspection(id, profile, "");
+            }
+
+            @Override public void onError(String code) {
+                notifyBleGattInspection(id, new JSONObject(), code);
+            }
+        });
+    }
+
+    private void notifyBleGattInspection(String requestId, JSONObject profile, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String profileJs = profile == null ? "{}" : profile.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIBleGattInspectionResult&&window.LightingAIBleGattInspectionResult(" + idJs + "," + profileJs + "," + errJs + ");",
+            null));
+    }
+
     private void notifyBleDiscovery(String requestId, JSONArray devices, String error) {
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
@@ -1140,6 +1171,10 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
         }
 
+        @JavascriptInterface public void bleInspectGatt(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> MainActivity.this.startBleGattInspection(requestId, address, timeoutMs));
+        }
+
         @JavascriptInterface public String networkDmxDiagnostics() {
             try {
                 JSONObject out = new JSONObject();
@@ -1381,6 +1416,7 @@ public class MainActivity extends Activity {
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
+        if (bleGattInspector != null) bleGattInspector.close();
         super.onPause();
     }
 

@@ -698,12 +698,15 @@ for (const marker of [
 
 const bleControl = git(['show', 'HEAD:app/src/main/assets/ble-control.js']);
 for (const marker of [
-  "version:'0.1-ble-discovery'",
+  "version:'0.2-direct-control-foundation'",
   'function startScan()',
   'Android.bleDiscover',
+  'Android.bleInspectGatt',
   'window.LightingAIBleDiscoveryResult',
+  'window.LightingAIBleGattInspectionResult',
   "action:'bleDiscover'",
-  'verified official protocol / SDK'
+  "action:'bleInspectGatt'",
+  'verified protocol'
 ]) {
   if (!bleControl.includes(marker)) fail(`BLE control marker missing: ${marker}`);
 }
@@ -715,9 +718,27 @@ for (const marker of [
   'activeScanner.stopScan(activeCallback)',
   'result.getRssi()',
   'record.getServiceUuids()',
+  'record.getServiceData()',
+  'record.getManufacturerSpecificData()',
   'ble_scan_cancelled'
 ]) {
   if (!bleScanner.includes(marker)) fail(`BLE scanner marker missing: ${marker}`);
+}
+
+const bleGattInspector = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/BleGattInspector.java']);
+for (const marker of [
+  'public final class BleGattInspector',
+  'device.connectGatt',
+  'gatt.discoverServices()',
+  'gatt.getServices()',
+  'characteristic.getProperties()',
+  'gatt.disconnect()',
+  'gatt.close()'
+]) {
+  if (!bleGattInspector.includes(marker)) fail(`BLE GATT inspector marker missing: ${marker}`);
+}
+if (bleGattInspector.includes('.writeCharacteristic(') || bleGattInspector.includes('setCharacteristicNotification(')) {
+  fail('BLE GATT inspector must remain read-only in the direct-control foundation phase');
 }
 
 const networkInterfaceInspector = git(['show', 'HEAD:app/src/main/java/com/lightingai/app/NetworkInterfaceInspector.java']);

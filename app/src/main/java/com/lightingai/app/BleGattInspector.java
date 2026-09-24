@@ -168,21 +168,6 @@ public final class BleGattInspector {
                     connectByKnownAddressLocked();
                 }
             }
-
-            @Override
-            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-                synchronized (lock) {
-                    byte[] value = characteristic == null ? null : characteristic.getValue();
-                    handleCharacteristicReadLocked(gatt, characteristic, value, status);
-                }
-            }
-
-            @Override
-            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value, int status) {
-                synchronized (lock) {
-                    handleCharacteristicReadLocked(gatt, characteristic, value, status);
-                }
-            }
         };
 
         try {
@@ -280,6 +265,21 @@ public final class BleGattInspector {
                         profile.put("targetName", activeName);
                     } catch (Exception ignored) {}
                     beginReadableSnapshotLocked(gatt, profile);
+                }
+            }
+
+            @Override
+            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+                synchronized (lock) {
+                    byte[] value = characteristic == null ? null : characteristic.getValue();
+                    handleCharacteristicReadLocked(gatt, characteristic, value, status);
+                }
+            }
+
+            @Override
+            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value, int status) {
+                synchronized (lock) {
+                    handleCharacteristicReadLocked(gatt, characteristic, value, status);
                 }
             }
         };

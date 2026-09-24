@@ -428,6 +428,13 @@ public final class BleGattInspector {
         try {
             root.put("address", activeAddress);
             root.put("timestampMs", System.currentTimeMillis());
+            BluetoothDevice device = gatt.getDevice();
+            if (device != null) {
+                int bondState = device.getBondState();
+                root.put("bondState", bondState);
+                root.put("bondStateName", bondState == BluetoothDevice.BOND_BONDED ? "BONDED" :
+                    bondState == BluetoothDevice.BOND_BONDING ? "BONDING" : "NONE");
+            }
             List<BluetoothGattService> services = gatt.getServices();
             if (services != null) {
                 for (BluetoothGattService service : services) {

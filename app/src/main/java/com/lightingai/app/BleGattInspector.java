@@ -485,8 +485,14 @@ public final class BleGattInspector {
 
     private void finishSuccessLocked(JSONObject profile) {
         Callback callback = activeCallback;
+        JSONObject safeProfile;
+        try {
+            safeProfile = profile == null ? new JSONObject() : new JSONObject(profile.toString());
+        } catch (Exception e) {
+            safeProfile = new JSONObject();
+        }
         finishLocked();
-        if (callback != null) callback.onComplete(profile == null ? new JSONObject() : profile);
+        if (callback != null) callback.onComplete(safeProfile);
     }
 
     private void finishErrorLocked(String code) {

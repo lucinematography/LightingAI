@@ -22,6 +22,8 @@ import android.os.Looper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,6 +57,11 @@ public final class BleGattInspector {
     private String activeName = "";
     private long deadlineMs = 0L;
     private int connectAttempt = 0;
+    private JSONObject activeProfile;
+    private final List<BluetoothGattCharacteristic> readableCharacteristics = new ArrayList<>();
+    private final JSONArray readValues = new JSONArray();
+    private int readIndex = 0;
+    private BluetoothGattCharacteristic activeReadCharacteristic;
 
     public BleGattInspector(Context context) {
         this.context = context.getApplicationContext();
@@ -161,6 +168,21 @@ public final class BleGattInspector {
                     connectByKnownAddressLocked();
                 }
             }
+
+            @Override
+            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+                synchronized (lock) {
+                    byte[] value = characteristic == null ? null : characteristic.getValue();
+                    handleCharacteristicReadLocked(gatt, characteristic, value, status);
+                }
+            }
+
+            @Override
+            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value, int status) {
+                synchronized (lock) {
+                    handleCharacteristicReadLocked(gatt, characteristic, value, status);
+                }
+            }
         };
 
         try {
@@ -257,7 +279,7 @@ public final class BleGattInspector {
                         profile.put("connectAttempts", attemptNumber);
                         profile.put("targetName", activeName);
                     } catch (Exception ignored) {}
-                    finishSuccessLocked(profile);
+                    beginReadableSnapshotLocked(gatt, profile);
                 }
             }
         };
@@ -294,6 +316,110 @@ public final class BleGattInspector {
             return;
         }
         finishErrorLocked(lastCode);
+    }
+
+
+    @SuppressLint("MissingPermission")
+    private void beginReadableSnapshotLocked(BluetoothGatt gatt, JSONObject profile) {
+        activeProfile = profile;
+        readableCharacteristics.clear();
+        while (readValues.length() > 0) readValues.remove(readValues.length() - 1);
+        readIndex = 0;
+        activeReadCharacteristic = null;
+
+        List<BluetoothGattService> services = gatt == null ? null : gatt.getServices();
+        if (services != null) {
+            for (BluetoothGattService service : services) {
+                if (service == null || service.getCharacteristics() == null) continue;
+                for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
+                    if (characteristic == null) continue;
+                    if ((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_READ) != 0) {
+                        readableCharacteristics.add(characteristic);
+                    }
+                }
+            }
+        }
+        readNextCharacteristicLocked(gatt);
+    }
+
+    @SuppressLint("MissingPermission")
+    private void readNextCharacteristicLocked(BluetoothGatt gatt) {
+        if (gatt != activeGatt || activeCallback == null) return;
+        while (readIndex < readableCharacteristics.size()) {
+            BluetoothGattCharacteristic characteristic = readableCharacteristics.get(readIndex);
+            try {
+                if (gatt.readCharacteristic(characteristic)) {
+                    activeReadCharacteristic = characteristic;
+                    return;
+                }
+                appendReadValue(characteristic, null, -1, "read_start_failed");
+            } catch (Exception e) {
+                appendReadValue(characteristic, null, -1, "read_exception");
+            }
+            readIndex++;
+        }
+
+        try {
+            if (activeProfile == null) activeProfile = new JSONObject();
+            activeProfile.put("readValues", readValues);
+        } catch (Exception ignored) {}
+        finishSuccessLocked(activeProfile);
+    }
+
+    private void handleCharacteristicReadLocked(
+        BluetoothGatt gatt,
+        BluetoothGattCharacteristic characteristic,
+        byte[] value,
+        int status
+    ) {
+        if (gatt != activeGatt || activeCallback == null || characteristic == null) return;
+        if (activeReadCharacteristic != characteristic) return;
+        appendReadValue(characteristic, value, status, status == BluetoothGatt.GATT_SUCCESS ? "" : "read_status_" + status);
+        activeReadCharacteristic = null;
+        readIndex++;
+        readNextCharacteristicLocked(gatt);
+    }
+
+    private void appendReadValue(
+        BluetoothGattCharacteristic characteristic,
+        byte[] value,
+        int status,
+        String error
+    ) {
+        try {
+            JSONObject item = new JSONObject();
+            BluetoothGattService service = characteristic == null ? null : characteristic.getService();
+            item.put("serviceUuid", service == null || service.getUuid() == null ? "" : service.getUuid().toString());
+            item.put("uuid", characteristic == null || characteristic.getUuid() == null ? "" : characteristic.getUuid().toString());
+            item.put("status", status);
+            item.put("hex", toHex(value));
+            String text = printableUtf8(value);
+            if (!text.isEmpty()) item.put("text", text);
+            if (error != null && !error.isEmpty()) item.put("error", error);
+            readValues.put(item);
+        } catch (Exception ignored) {}
+    }
+
+    private String toHex(byte[] value) {
+        if (value == null || value.length == 0) return "";
+        StringBuilder out = new StringBuilder(value.length * 2);
+        for (byte b : value) out.append(String.format("%02x", b & 0xff));
+        return out.toString();
+    }
+
+    private String printableUtf8(byte[] value) {
+        if (value == null || value.length == 0) return "";
+        String text;
+        try {
+            text = new String(value, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return "";
+        }
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (ch < 0x20 || ch > 0x7e) return "";
+        }
+        return text;
     }
 
     private JSONObject buildProfile(BluetoothGatt gatt) {
@@ -408,5 +534,10 @@ public final class BleGattInspector {
         activeName = "";
         deadlineMs = 0L;
         connectAttempt = 0;
+        activeProfile = null;
+        readableCharacteristics.clear();
+        while (readValues.length() > 0) readValues.remove(readValues.length() - 1);
+        readIndex = 0;
+        activeReadCharacteristic = null;
     }
 }

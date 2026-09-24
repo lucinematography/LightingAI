@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -107,6 +108,7 @@ public class MainActivity extends Activity {
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        applyScreenClassOrientation();
         getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
         rootView = new FrameLayout(this);
@@ -213,6 +215,16 @@ public class MainActivity extends Activity {
             3350
         );
         webView.requestApplyInsets();
+    }
+
+    private void applyScreenClassOrientation() {
+        int smallestWidthDp = getResources().getConfiguration().smallestScreenWidthDp;
+        boolean wideScreen = smallestWidthDp >= 600;
+        setRequestedOrientation(
+            wideScreen
+                ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        );
     }
 
     private View createStartupSplash() {

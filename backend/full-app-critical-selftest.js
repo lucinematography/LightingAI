@@ -107,6 +107,7 @@ expect(patch.includes("const u=integerOrNull(r&&r.universe),start=integerOrNull(
 
 const control=read('app/src/main/assets/artnet-control.js');
 expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
+expect(control.includes('legacyContextStorageKey')&&control.includes('::ctxv2_')&&control.includes('item.contextSignature===signature'),'Control storage must verify the exact project/scene context and migrate legacy hashed keys safely');
 expect(control.includes("version:'0.47-arm-patch-bound'"),'ARM patch-bound control version missing');
 expect(control.includes('armedPatchSignature')&&control.includes('patchSignature()!==armedPatchSignature'),'ARM patch signature guard missing');
 expect(control.includes('fadePatchSignature!==patchSignature()'),'Fade patch-change abort guard missing');

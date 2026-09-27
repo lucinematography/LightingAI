@@ -88,15 +88,15 @@ public final class SacnLiveEngine {
         return lastError == null ? "" : lastError;
     }
 
-    public void stopAll() {
-        stopAll(true);
+    public boolean stopAll() {
+        return stopAll(true);
     }
 
     private void abortAll() {
         stopAll(false);
     }
 
-    private void stopAll(boolean sendTerminationPackets) {
+    private boolean stopAll(boolean sendTerminationPackets) {
         synchronized (lock) {
             if (task != null) {
                 task.cancel(false);
@@ -139,6 +139,7 @@ public final class SacnLiveEngine {
                 socket = null;
             }
             networkSignature = "";
+            return lastError == null || lastError.isEmpty();
         }
     }
 

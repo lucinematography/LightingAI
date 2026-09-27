@@ -494,14 +494,28 @@ function patchSignature(){
 function rowKey(r){
  return [r&&r.fixtureId||'',r&&r.mode||'',rawPatchNumber(r&&r.universe),rawPatchNumber(r&&r.start),rawPatchNumber(r&&r.channels),Array.isArray(r&&r.flags)?r.flags.slice().sort().join(','):''].join('|');
 }
+function controlContextSignature(){
+ const project=String(E('projectName')&&E('projectName').value||'').trim().toLowerCase();
+ const scene=String(E('sceneName')&&E('sceneName').value||'').trim().toLowerCase();
+ return JSON.stringify({project:project,scene:scene});
+}
+function contextHash(value){
+ let h=2166136261>>>0;
+ const s=String(value||'');
+ for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}
+ return h.toString(16).padStart(8,'0');
+}
+function contextStorageKey(base){
+ return base+'::ctx_'+contextHash(controlContextSignature());
+}
 function readGroups(){
  try{
-  const value=JSON.parse(localStorage.getItem(GROUPS_KEY)||'[]');
+  const value=JSON.parse(localStorage.getItem(contextStorageKey(GROUPS_KEY))||'[]');
   return Array.isArray(value)?value:[];
  }catch(e){return []}
 }
 function writeGroups(items){
- try{localStorage.setItem(GROUPS_KEY,JSON.stringify(items.slice(0,MAX_GROUPS)));return true}catch(e){return false}
+ try{localStorage.setItem(contextStorageKey(GROUPS_KEY),JSON.stringify(items.slice(0,MAX_GROUPS)));return true}catch(e){return false}
 }
 function groupEligibleRows(){
  return rows().map((r,index)=>{
@@ -519,7 +533,7 @@ function saveControlGroup(){
  const members=Array.prototype.slice.call(document.querySelectorAll('.artnet-group-member:checked')).map(el=>el.dataset.key).filter(Boolean);
  if(!members.length){status(t().groupNeedMember,false);return}
  const groups=readGroups(),existing=groups.findIndex(group=>group&&group.name===name);
- const item={version:1,name:name,patchSignature:patchSignature(),members:Array.from(new Set(members))};
+ const item={version:2,name:name,contextSignature:controlContextSignature(),patchSignature:patchSignature(),members:Array.from(new Set(members))};
  if(existing>=0)groups[existing]=item;
  else{
   if(groups.length>=MAX_GROUPS){status(t().groupLimit,false);return}
@@ -570,21 +584,21 @@ function renderControlGroups(){
 }
 function readScenes(){
  try{
-  const value=JSON.parse(localStorage.getItem(SCENES_KEY)||'[]');
+  const value=JSON.parse(localStorage.getItem(contextStorageKey(SCENES_KEY))||'[]');
   return Array.isArray(value)?value:[];
  }catch(e){return []}
 }
 function writeScenes(items){
- try{localStorage.setItem(SCENES_KEY,JSON.stringify(items.slice(0,MAX_SCENES)));return true}catch(e){return false}
+ try{localStorage.setItem(contextStorageKey(SCENES_KEY),JSON.stringify(items.slice(0,MAX_SCENES)));return true}catch(e){return false}
 }
 function readCues(){
  try{
-  const value=JSON.parse(localStorage.getItem(CUES_KEY)||'[]');
+  const value=JSON.parse(localStorage.getItem(contextStorageKey(CUES_KEY))||'[]');
   return Array.isArray(value)?value:[];
  }catch(e){return []}
 }
 function writeCues(items){
- try{localStorage.setItem(CUES_KEY,JSON.stringify(items.slice(0,MAX_CUES)));return true}catch(e){return false}
+ try{localStorage.setItem(contextStorageKey(CUES_KEY),JSON.stringify(items.slice(0,MAX_CUES)));return true}catch(e){return false}
 }
 function sceneIndexByName(name){
  return readScenes().findIndex(scene=>scene&&scene.name===name);
@@ -598,7 +612,7 @@ function addCue(){
  if(!name){status(t().cueMissing,false);return}
  const cues=readCues();
  if(cues.length>=MAX_CUES){status(t().cueLimit,false);return}
- cues.push({version:1,sceneName:name,fadeSeconds:cueFadeSecondsValue()});
+ cues.push({version:2,sceneName:name,contextSignature:controlContextSignature(),fadeSeconds:cueFadeSecondsValue()});
  if(!writeCues(cues)){status(t().error,false);return}
  renderCueStack();status(t().cueAdded,true);
 }
@@ -728,7 +742,7 @@ function saveScene(){
  const raw=input&&input.value?input.value.trim():'';
  const name=raw||('Scene '+(scenes.length+1));
  const replacement=scenes.findIndex(scene=>scene&&scene.name===name);
- const item={version:1,name:name,savedAt:Date.now(),patchSignature:patchSignature(),frames:current};
+ const item={version:2,name:name,savedAt:Date.now(),contextSignature:controlContextSignature(),patchSignature:patchSignature(),frames:current};
  if(replacement>=0)scenes[replacement]=item;
  else{
   if(scenes.length>=MAX_SCENES){status(t().sceneLimit,false);return}
@@ -1416,7 +1430,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.39-truthful-cue-ai-status',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.40-project-scoped-control-state',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

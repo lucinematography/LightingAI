@@ -60,6 +60,7 @@ expect(main.includes('ble_location_disabled'),'BLE Location/GPS disabled result 
 
 const bleScanner=read('app/src/main/java/com/lightingai/app/BleDeviceScanner.java');
 expect(bleScanner.includes('SCAN_MODE_LOW_LATENCY'),'Manual BLE scan must use low-latency mode');
+expect(bleScanner.includes('scanEpoch')&&bleScanner.includes('thisScanEpoch')&&bleScanner.includes('callbackEpoch != scanEpoch'),'BLE scan callbacks must be isolated by scan epoch');
 expect(bleScanner.includes('ble_scan_failed_'),'BLE scan failure code propagation missing');
 
 const bleUi=read('app/src/main/assets/ble-control.js');

@@ -123,7 +123,7 @@ const control=read('app/src/main/assets/artnet-control.js');
 expect(control.includes('activeDiscoveryRequestId')&&control.includes("String(id||'')!==activeDiscoveryRequestId"),'Art-Net discovery must ignore stale callbacks by request id');
 expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
 expect(control.includes('legacyContextStorageKey')&&control.includes('::ctxv2_')&&control.includes('item.contextSignature===signature'),'Control storage must verify the exact project/scene context and migrate legacy hashed keys safely');
-expect(control.includes("version:'0.51-canonical-scene-universes'"),'Known-frame-required control version missing');
+expect(control.includes("version:'0.52-strict-scene-frame-values'"),'Known-frame-required control version missing');
 expect(control.includes('armedPatchSignature')&&control.includes('patchSignature()!==armedPatchSignature'),'ARM patch signature guard missing');
 expect(control.includes("function artNetTargetIsAuto(value)")&&control.includes("target==='255.255.255.255'")&&control.includes("const auto=artNetTargetIsAuto(target);")&&control.includes("const ip=artNetTargetIsAuto(rawTarget)?'AUTO':rawTarget;"),'Art-Net preflight and sender must use identical AUTO target semantics');
 expect(control.includes('u!=null&&u>=1&&u<=999')&&control.includes('start+channels-1<=512'),'Control layer must independently revalidate patch universe/start/footprint');
@@ -143,6 +143,7 @@ expect(control.includes('const restoreIsExact=universes.every(u=>Array.isArray(f
 expect(control.includes('function applyScene(index)')&&control.includes('if(!accepted){')&&control.includes('setOutputArmed(false,true);')&&control.includes('return false;'),'Transactional scene failure disarm missing');
 expect(control.includes('function sceneUniverseSetIsSafe(values)')&&control.includes('if(!sceneUniverseSetIsSafe(Array.from(universeSet)))')&&control.includes('if(!sceneUniverseSetIsSafe(sceneUniverses))'),'Scene/fade must preflight every universe before any multi-universe send');
 expect(control.includes("source.length!==512")&&control.includes("!Number.isInteger(value)||value<0||value>255")&&control.includes("if(!next){setOutputArmed(false,true);status(t().error,false);return false}"),'Imported CONTROL scenes must reject malformed or incomplete 512-channel frames');
+expect(control.includes("typeof value!=='number'||!Number.isInteger(value)||value<0||value>255"),'Imported CONTROL scene frame values must already be numeric integers and must not rely on JS coercion');
 expect(control.includes("if(!/^\\d+$/.test(u))return null;")&&control.includes("String(universe)!==u"),'Imported CONTROL scenes must reject noncanonical universe keys');
 expect(control.includes('function bridgeUniverseSetAllowed(values,protocol)')&&control.includes('function operationUniverseSetIsSafe(values,protocolOverride)'),'Bridge universe-set validation helper missing');
 expect(!control.includes("else if(Number.isFinite(limit)&&limit>0&&universes.length>limit)failure=t().preflightBridgeMulti"),'ARM preflight must not treat all patched universes as simultaneously active');

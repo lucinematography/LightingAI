@@ -34,7 +34,7 @@ for (const marker of ['artNetSendDmx','artNetSetLiveDmx','sacnSendDmx','sacnSetL
 }
 
 const routing = fs.readFileSync(path.join(root,'app/src/main/assets/control-routing.js'),'utf8');
-expect(routing.includes("version:'1.2-system-driver-gated'"), 'Production control router version marker missing');
+expect(routing.includes("version:'1.3-conservative-system-driver-gated'"), 'Production control router version marker missing');
 
 console.log(JSON.stringify({ok:failures.length===0,fixture:'astera-titantube-fp1',verifiedModes:verifiedModes.length,routes:routes.length,failures},null,2));
 if (failures.length) process.exit(1);

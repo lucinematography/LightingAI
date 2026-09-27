@@ -52,6 +52,9 @@ jobs:
       - name: Validate backup model
         run: node backend/project-backup-selftest.js
 
+      - name: Validate full-app critical regression surface
+        run: node backend/full-app-critical-selftest.js
+
       - name: Validate production control routing
         working-directory: backend
         run: node control-production-selftest.js

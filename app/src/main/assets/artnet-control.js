@@ -513,17 +513,36 @@ function contextHash(value){
  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}
  return h.toString(16).padStart(8,'0');
 }
-function contextStorageKey(base){
+function legacyContextStorageKey(base){
  return base+'::ctx_'+contextHash(controlContextSignature());
 }
-function readGroups(){
+function contextStorageKey(base){
+ return base+'::ctxv2_'+encodeURIComponent(controlContextSignature());
+}
+function readContextItems(base){
+ const signature=controlContextSignature();
  try{
-  const value=JSON.parse(localStorage.getItem(contextStorageKey(GROUPS_KEY))||'[]');
-  return Array.isArray(value)?value:[];
+  const raw=localStorage.getItem(contextStorageKey(base));
+  if(raw!=null){
+   const value=JSON.parse(raw);
+   return Array.isArray(value)?value.filter(item=>item&&item.contextSignature===signature):[];
+  }
+  const legacy=JSON.parse(localStorage.getItem(legacyContextStorageKey(base))||'[]');
+  const filtered=Array.isArray(legacy)?legacy.filter(item=>item&&item.contextSignature===signature):[];
+  if(filtered.length)localStorage.setItem(contextStorageKey(base),JSON.stringify(filtered));
+  return filtered;
  }catch(e){return []}
 }
+function writeContextItems(base,items,limit){
+ const signature=controlContextSignature();
+ const safe=(Array.isArray(items)?items:[]).filter(item=>item&&item.contextSignature===signature).slice(0,limit);
+ try{localStorage.setItem(contextStorageKey(base),JSON.stringify(safe));return true}catch(e){return false}
+}
+function readGroups(){
+ return readContextItems(GROUPS_KEY);
+}
 function writeGroups(items){
- try{localStorage.setItem(contextStorageKey(GROUPS_KEY),JSON.stringify(items.slice(0,MAX_GROUPS)));return true}catch(e){return false}
+ return writeContextItems(GROUPS_KEY,items,MAX_GROUPS);
 }
 function groupEligibleRows(){
  return rows().map((r,index)=>{
@@ -591,22 +610,16 @@ function renderControlGroups(){
  box.querySelectorAll('.artnet-group-delete').forEach(btn=>btn.addEventListener('click',()=>deleteControlGroup(Number(btn.dataset.index))));
 }
 function readScenes(){
- try{
-  const value=JSON.parse(localStorage.getItem(contextStorageKey(SCENES_KEY))||'[]');
-  return Array.isArray(value)?value:[];
- }catch(e){return []}
+ return readContextItems(SCENES_KEY);
 }
 function writeScenes(items){
- try{localStorage.setItem(contextStorageKey(SCENES_KEY),JSON.stringify(items.slice(0,MAX_SCENES)));return true}catch(e){return false}
+ return writeContextItems(SCENES_KEY,items,MAX_SCENES);
 }
 function readCues(){
- try{
-  const value=JSON.parse(localStorage.getItem(contextStorageKey(CUES_KEY))||'[]');
-  return Array.isArray(value)?value:[];
- }catch(e){return []}
+ return readContextItems(CUES_KEY);
 }
 function writeCues(items){
- try{localStorage.setItem(contextStorageKey(CUES_KEY),JSON.stringify(items.slice(0,MAX_CUES)));return true}catch(e){return false}
+ return writeContextItems(CUES_KEY,items,MAX_CUES);
 }
 function sceneIndexByName(name){
  return readScenes().findIndex(scene=>scene&&scene.name===name);

@@ -7,6 +7,7 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -87,7 +88,11 @@ public final class BleDeviceScanner {
             };
 
             try {
-                activeScanner.startScan(activeCallback);
+                ScanSettings settings = new ScanSettings.Builder()
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    .setReportDelay(0L)
+                    .build();
+                activeScanner.startScan(null, settings, activeCallback);
                 handler.postDelayed(stopRunnable, boundedTimeout);
             } catch (Exception e) {
                 finishErrorLocked("ble_scan_start_failed");

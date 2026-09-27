@@ -73,6 +73,7 @@ public class MainActivity extends Activity {
     private final AtomicInteger artNetSequence = new AtomicInteger(1);
     private final AtomicInteger sacnSequence = new AtomicInteger(0);
     private final AtomicInteger artNetLiveEpoch = new AtomicInteger(0);
+    private final AtomicInteger artNetDiscoveryEpoch = new AtomicInteger(0);
     private final AtomicInteger sacnLiveEpoch = new AtomicInteger(0);
     private final AtomicInteger networkDmxSendEpoch = new AtomicInteger(0);
     private final Object artNetLiveControlLock = new Object();
@@ -1159,6 +1160,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void artNetDiscover(String requestId, int timeoutMs) {
             final String id = requestId == null ? "" : requestId;
+            final int epoch = artNetDiscoveryEpoch.incrementAndGet();
             new Thread(() -> {
                 JSONArray result = new JSONArray();
                 String error = "";
@@ -1173,6 +1175,7 @@ public class MainActivity extends Activity {
                 } catch (Exception e) {
                     error = e.getMessage() == null ? "Art-Net discovery failed" : e.getMessage();
                 }
+                if (epoch != artNetDiscoveryEpoch.get()) return;
                 notifyArtNetDiscovery(id, result, error);
             }, "LightingAI-ArtNet-Discovery").start();
         }
@@ -1316,6 +1319,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onPause() {
+        artNetDiscoveryEpoch.incrementAndGet();
         stopNativeSunCompass();
         pendingBleDiscoveryRequestId = null;
         synchronized (networkDmxSendLock) {
@@ -1406,6 +1410,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        artNetDiscoveryEpoch.incrementAndGet();
         pendingBleDiscoveryRequestId = null;
         synchronized (networkDmxSendLock) {
             networkDmxSendEpoch.incrementAndGet();

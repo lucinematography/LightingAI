@@ -7,8 +7,8 @@ import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 
 public class ArtNetProtocolTest {
-    @Test public void dmxPacketUsesArtNetHeaderUniverseAndEvenLength() {
-        byte[] packet = ArtNetSender.buildDmxPacket(1, new int[]{255, 128, 1}, 7);
+    @Test public void dmxPacketUsesArtNetHeaderPortAddressAndEvenLength() {
+        byte[] packet = ArtNetSender.buildDmxPacket(0, new int[]{255, 128, 1}, 7);
         assertEquals(22, packet.length);
         assertEquals("Art-Net\0", new String(packet, 0, 8, StandardCharsets.US_ASCII));
         assertEquals(0x00, packet[8] & 0xff);
@@ -26,17 +26,17 @@ public class ArtNetProtocolTest {
         assertEquals(0, packet[21] & 0xff);
     }
 
-    @Test public void dmxPacketMapsOneBasedUiUniverseToPortAddress() {
-        byte[] packet = ArtNetSender.buildDmxPacket(258, new int[]{1, 2}, 1);
+    @Test public void dmxPacketUsesExplicitPortAddress() {
+        byte[] packet = ArtNetSender.buildDmxPacket(257, new int[]{1, 2}, 1);
         assertEquals(1, packet[14] & 0xff);
         assertEquals(1, packet[15] & 0x7f);
     }
 
-    @Test public void invalidArtNetUniverseIsRejected() {
-        assertThrows(IllegalArgumentException.class, () -> ArtNetSender.buildDmxPacket(0, new int[]{1}, 1));
-        assertThrows(IllegalArgumentException.class, () -> ArtNetSender.buildDmxPacket(32769, new int[]{1}, 1));
-        assertEquals(1, ArtNetSender.validateUniverse(1));
-        assertEquals(32768, ArtNetSender.validateUniverse(32768));
+    @Test public void invalidArtNetPortAddressIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> ArtNetSender.buildDmxPacket(-1, new int[]{1}, 1));
+        assertThrows(IllegalArgumentException.class, () -> ArtNetSender.buildDmxPacket(32768, new int[]{1}, 1));
+        assertEquals(0, ArtNetSender.validatePortAddress(0));
+        assertEquals(32767, ArtNetSender.validatePortAddress(32767));
     }
 
     @Test public void automaticDmxTargetMigratesLimitedBroadcastToAuto() {

@@ -53,6 +53,7 @@ let lastBlackoutSnapshot=null;
 let outputArmed=false;
 let pendingArmPreflightId=null;
 let armGeneration=0;
+let armedNetworkSignature='';
 const frames={};
 function controlTransport(){
  if(window.LightingAIControlTransport&&typeof window.LightingAIControlTransport.sendDmx==='function')return window.LightingAIControlTransport;
@@ -320,15 +321,48 @@ function finishArmPreflight(id,payload,error){
   return true;
  }
  armGeneration++;
+ armedNetworkSignature=signature;
  outputArmed=true;
  if(toggle)toggle.checked=true;
  status(t().armOn,true);
  return true;
 }
+function finishHealthCheck(id,payload,error){
+ const resultId=String(id||'');
+ const match=resultId.match(/^network_health_g(\d+)_/);
+ if(!match)return false;
+ if(Number(match[1])!==armGeneration)return true;
+ if(!outputArmed)return true;
+ const native=payload&&typeof payload==='object'?payload:null;
+ const signature=native&&typeof native.networkSignature==='string'?native.networkSignature:'';
+ const protocol=selectedProtocol(),metrics=native&&(protocol==='sacn'?native.sacn:native.artNet)||null;
+ const expectedLiveFrames=Object.keys(frames).length;
+ const liveFrames=metrics?Number(metrics.liveFrames)||0:0;
+ const liveError=metrics?String(metrics.liveLastError||''):'';
+ if(error||!native||!armedNetworkSignature||signature!==armedNetworkSignature||
+    (liveEnabled&&expectedLiveFrames>0&&(liveFrames===0||!!liveError))){
+  setOutputArmed(false,true);
+  status(t().preflightFailed,false);
+ }
+ return true;
+}
 window.LightingAINetworkDmxDiagnosticsResult=function(id,payload,error){
  if(finishArmPreflight(id,payload,error||''))return;
+ if(finishHealthCheck(id,payload,error||''))return;
  renderDiagnostics(payload,error||'');
 };
+function runControlHealthCheck(){
+ if(!outputArmed)return;
+ const transport=controlTransport();
+ const id='network_health_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
+ try{
+  if(typeof transport.diagnostics!=='function'||!transport.diagnostics({id:id})){
+   setOutputArmed(false,true);status(t().preflightFailed,false);
+  }
+ }catch(e){
+  setOutputArmed(false,true);status(t().preflightFailed,false);
+ }
+}
 function requireOutputArmed(){
  if(outputArmed)return true;
  status(t().armRequired,false);
@@ -338,6 +372,7 @@ function setOutputArmed(enabled,quiet){
  const next=!!enabled,toggle=E('artnetOutputArm');
  if(!next){
   armGeneration++;
+  armedNetworkSignature='';
   pendingArmPreflightId=null;
   try{const transport=controlTransport();if(typeof transport.clearArmSignature==='function')transport.clearArmSignature()}catch(e){}
   outputArmed=false;
@@ -1186,6 +1221,7 @@ function setLiveEnabled(enabled){
  if(enabled){
   if(!requireOutputArmed()){liveEnabled=false;if(toggle)toggle.checked=false;return false}
   const protocol=selectedProtocol(),universes=Object.keys(frames).map(Number);
+  if(!universes.length){liveEnabled=false;if(toggle)toggle.checked=false;status(t().sceneNeedFrame,false);return false}
   if(typeof transport.supportsLive!=='function'||!transport.supportsLive(protocol)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().native,false);return false}
   if(universes.some(u=>validUniverseForProtocol(u,protocol)==null)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().error,false);return false}
   liveProtocol=protocol;liveEnabled=true;if(toggle)toggle.checked=true;
@@ -1213,6 +1249,7 @@ function stopLiveForBackground(){
 }
 function forceLifecycleDisarm(){
  armGeneration++;
+ armedNetworkSignature='';
  pendingArmPreflightId=null;
  outputArmed=false;
  liveEnabled=false;
@@ -1375,9 +1412,10 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.37-sacn-route-fail-closed',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.38-control-health-watchdog',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
+setInterval(runControlHealthCheck,1000);
 const old=window.setLanguage;if(typeof old==='function'&&!window.__artNetLangHook){window.__artNetLangHook=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}
 })();

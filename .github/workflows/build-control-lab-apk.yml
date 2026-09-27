@@ -60,6 +60,10 @@ jobs:
         working-directory: backend
         run: node control-catalog-audit.js
 
+      - name: Validate control system driver families
+        working-directory: backend
+        run: node control-system-drivers-selftest.js
+
       - name: Verify control lab assets exist
         shell: bash
         run: |

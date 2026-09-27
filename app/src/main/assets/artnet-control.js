@@ -1274,6 +1274,7 @@ function setLiveEnabled(enabled){
  const transport=controlTransport(),toggle=E('artnetLiveToggle');
  if(enabled){
   if(!requireOutputArmed()){liveEnabled=false;if(toggle)toggle.checked=false;return false}
+  armGeneration++;
   const protocol=selectedProtocol(),universes=Object.keys(frames).map(Number);
   if(!universes.length){liveEnabled=false;if(toggle)toggle.checked=false;status(t().sceneNeedFrame,false);return false}
   if(typeof transport.supportsLive!=='function'||!transport.supportsLive(protocol)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().native,false);return false}
@@ -1285,17 +1286,24 @@ function setLiveEnabled(enabled){
    liveEnabled=false;if(toggle)toggle.checked=false;
    const id='networkdmx_stop_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
    try{if(typeof transport.stopLive==='function')transport.stopLive({id:id,protocol:protocol})}catch(e){}
+   setOutputArmed(false,true);
    status(t().error,false);return false;
   }
   status(t().liveOn,true);return true;
  }else{
   const protocol=liveProtocol||selectedProtocol();
+  armGeneration++;
   liveEnabled=false;if(toggle)toggle.checked=false;
   const id='networkdmx_stop_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
   let accepted=true;
   try{if(typeof transport.stopLive!=='function'||!transport.stopLive({id:id,protocol:protocol}))accepted=false}catch(e){accepted=false}
-  status(accepted?t().liveOff:t().error,accepted?undefined:false);
-  return accepted;
+  if(!accepted){
+   setOutputArmed(false,true);
+   status(t().error,false);
+   return false;
+  }
+  status(t().liveOff);
+  return true;
  }
 }
 function stopLiveForBackground(){
@@ -1467,7 +1475,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.44-transactional-single-writes',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.45-live-generation-fail-closed',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

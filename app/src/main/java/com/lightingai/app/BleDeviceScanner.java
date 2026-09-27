@@ -12,10 +12,12 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
+import android.util.SparseArray;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public final class BleDeviceScanner {
@@ -128,12 +130,31 @@ public final class BleDeviceScanner {
                     }
                 }
 
+                JSONObject manufacturerData = new JSONObject();
+                JSONObject serviceData = new JSONObject();
+                if (record != null) {
+                    SparseArray<byte[]> manufacturer = record.getManufacturerSpecificData();
+                    if (manufacturer != null) {
+                        for (int i = 0; i < manufacturer.size(); i++) {
+                            manufacturerData.put(String.valueOf(manufacturer.keyAt(i)), hex(manufacturer.valueAt(i)));
+                        }
+                    }
+                    Map<ParcelUuid, byte[]> advertisedServiceData = record.getServiceData();
+                    if (advertisedServiceData != null) {
+                        for (Map.Entry<ParcelUuid, byte[]> entry : advertisedServiceData.entrySet()) {
+                            if (entry.getKey() != null) serviceData.put(entry.getKey().toString(), hex(entry.getValue()));
+                        }
+                    }
+                }
+
                 JSONObject item = new JSONObject();
                 item.put("name", name == null ? "" : name.trim());
                 item.put("address", address == null ? "" : address);
                 item.put("rssi", result.getRssi());
                 item.put("connectable", android.os.Build.VERSION.SDK_INT < 26 || result.isConnectable());
                 item.put("serviceUuids", services);
+                item.put("manufacturerData", manufacturerData);
+                item.put("serviceData", serviceData);
 
                 String key = address == null || address.isEmpty()
                     ? (item.optString("name") + "|" + services.toString())
@@ -146,6 +167,13 @@ public final class BleDeviceScanner {
                 // Ignore one malformed advertisement and keep scanning.
             }
         }
+    }
+
+    private static String hex(byte[] data) {
+        if (data == null || data.length == 0) return "";
+        StringBuilder out = new StringBuilder(data.length * 2);
+        for (byte b : data) out.append(String.format(Locale.US, "%02X", b & 0xff));
+        return out.toString();
     }
 
     @SuppressLint("MissingPermission")

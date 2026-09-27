@@ -51,6 +51,12 @@ expect(astera.length>0,'Astera catalog empty');
 expect(aputure.length>0,'Aputure catalog empty');
 expect(astera.some(f=>Array.isArray(f.dmxModes)&&f.dmxModes.some(m=>m?.verified===true)),'No verified Astera DMX profile');
 expect(aputure.some(f=>Array.isArray(f.dmxModes)&&f.dmxModes.some(m=>m?.verified===true)),'No verified Aputure DMX profile');
+const pb12=fixtures.find(f=>f.id==='aputure-infinibar-pb12');
+expect(!!pb12,'Aputure INFINIBAR PB12 fixture missing');
+const pb12Resolved=pb12&&api.resolve(pb12);
+expect(pb12Resolved?.productionDriver?.id==='standards-dmx-gateway','PB12 standard DMX/CRMX route missing');
+expect((pb12?.dmxModes||[]).some(m=>m?.name==='Mode 2 CCT 4ch'&&m?.verified===true&&m?.channels===4),'PB12 verified Mode 2 CCT profile missing');
+expect((pb12?.dmxModes||[]).some(m=>m?.name==='Mode 4 RGB 5ch'&&m?.verified===true&&m?.channels===5),'PB12 verified Mode 4 RGB profile missing');
 
 for(const id of ['arri-skypanel-x21','arri-skypanel-x22','arri-skypanel-x23']){
   const fixture=fixtures.find(f=>f.id===id);

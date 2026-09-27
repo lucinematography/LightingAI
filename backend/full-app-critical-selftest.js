@@ -147,6 +147,7 @@ expect(control.includes("id:'astera-fp3-datalink'")&&control.includes('artNetUni
 expect(control.includes("id:'astera-fp3-datalink'")&&control.includes("artNetPortAddressOffset:0"),'Astera FP3 Art-Net universe mapping must use Astera Universe ID semantics');
 expect(control.includes('if(!accepted){cancelSceneFade(false);setOutputArmed(false,true);status(t().error,false);return}'),'Transactional fade failure disarm missing');
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('cancelSceneFade(false);'),'Lifecycle disarm must cancel the active scene fade timer');
+expect(control.includes('function forceLifecycleDisarm()')&&control.includes('invalidateCachedOutputState();'),'Lifecycle disarm must invalidate runtime DMX output state');
 expect(control.includes('function invalidateCachedOutputState()')&&control.includes('Object.keys(frames).forEach(key=>delete frames[key]);')&&control.includes('invalidateCachedOutputState();')&&control.includes('setOutputArmed(false,true);'),'Async transport failure must invalidate cached DMX state before disarm');
 expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.48-route-state-separated'"),'Route changes must invalidate only route-bound runtime output state');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');

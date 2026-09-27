@@ -101,7 +101,7 @@ expect(patch.includes('invalid-universe')&&patch.includes('invalid-start')&&patc
 
 const control=read('app/src/main/assets/artnet-control.js');
 expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
-expect(control.includes("version:'0.42-transactional-scenes-blackout'"),'Transactional scene/blackout control version missing');
+expect(control.includes("version:'0.43-transactional-fades'"),'Transactional fade control version missing');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
 expect(control.includes("setOutputArmed(false,true);status(t().error,false);return false"),'Transactional scene failure disarm missing');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');

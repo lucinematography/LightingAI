@@ -705,7 +705,7 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || hasBlePermission()) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             requestPermissions(
-                new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_FINE_LOCATION},
+                new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                 BLE_PERMISSION
             );
         } else {

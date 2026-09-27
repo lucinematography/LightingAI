@@ -82,6 +82,7 @@ expect(bleGatt.includes('discoverServices()'),'BLE GATT service discovery missin
 expect(!bleGatt.includes('writeCharacteristic')&&!bleGatt.includes('writeDescriptor')&&!bleGatt.includes('setCharacteristicNotification'),'Read-only BLE GATT inspector must not write or subscribe');
 expect(bleGatt.includes('connectGatt')&&bleGatt.includes('closeGattOnlyLocked'),'BLE GATT lifecycle close missing');
 expect(bleGatt.includes('MAX_ATTEMPTS = 3')&&bleGatt.includes('retryOrFailLocked'),'BLE GATT retry protection missing');
+expect(bleGatt.includes('inspectionEpoch')&&bleGatt.includes('thisInspectionEpoch')&&bleGatt.includes('retryEpoch != inspectionEpoch'),'BLE GATT timeout/retry callbacks must be isolated by inspection epoch');
 expect(bleGatt.includes('PROPERTY_READ')&&bleGatt.includes('readCharacteristic'),'BLE GATT read-only snapshot missing');
 expect(!bleGatt.includes('createBond'),'BLE GATT diagnostics must not use Android bonding');
 expect(bleUi.includes('scanCooldownUntil')&&bleUi.includes('scanActive'),'BLE scan spam guard missing');

@@ -97,7 +97,8 @@ expect(patch.includes('invalid-universe')&&patch.includes('invalid-start')&&patc
 
 const control=read('app/src/main/assets/artnet-control.js');
 expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
-expect(control.includes("version:'0.40-project-scoped-control-state'"),'Project-scoped control state version missing');
+expect(control.includes("version:'0.41-transactional-master-groups'"),'Transactional master control version missing');
+expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
 for(const marker of ['ARM OUTPUT','globalBlackout','restoreBeforeBlackout','fadeToScene','setLiveEnabled','armGeneration']){
  expect(control.includes(marker),'Control critical contract missing: '+marker);
 }

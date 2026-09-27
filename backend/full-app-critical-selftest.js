@@ -55,6 +55,7 @@ expect(sacnLive.includes('terminationFailed')&&sacnLive.includes('terminationErr
 expect(sacnLive.includes('public boolean stopAll()')&&sacnLive.includes('return lastError == null || lastError.isEmpty();'),'sACN live stop must report termination failure');
 expect(main.includes('ok = sacnLiveEngine.stopAll();')&&main.includes('notifyArtNetResult(id, ok, message);'),'sACN live stop bridge must propagate termination failure');
 expect(main.includes('LightingAINetworkDmxLifecyclePause'),'Network DMX pause fail-safe missing');
+expect(control.includes('activeDiscoveryRequestId')&&control.includes("String(id||'')!==activeDiscoveryRequestId"),'Art-Net discovery must ignore stale callbacks by request id');
 expect(main.includes('LightingAINetworkDmxLifecycleResume'),'Network DMX resume fail-safe missing');
 expect(main.includes("file:///android_asset/control-bootstrap.js"),'Deterministic control bootstrap injection missing');
 expect(main.includes('isBleLocationServiceReady'),'BLE Android 11-and-older Location/GPS service guard missing');

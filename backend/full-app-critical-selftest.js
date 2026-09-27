@@ -163,7 +163,7 @@ expect(control.includes('if(!accepted){cancelSceneFade(false);setOutputArmed(fal
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('cancelSceneFade(false);'),'Lifecycle disarm must cancel the active scene fade timer');
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('invalidateCachedOutputState();'),'Lifecycle disarm must invalidate runtime DMX output state');
 expect(control.includes('function invalidateCachedOutputState()')&&control.includes('Object.keys(frames).forEach(key=>delete frames[key]);')&&control.includes('invalidateCachedOutputState();')&&control.includes('setOutputArmed(false,true);'),'Async transport failure must invalidate cached DMX state before disarm');
-expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.51-canonical-scene-universes'"),'Route changes must invalidate only route-bound runtime output state');
+expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.52-strict-scene-frame-values'"),'Route changes must invalidate only route-bound runtime output state');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
 for(const marker of ['ARM OUTPUT','globalBlackout','restoreBeforeBlackout','fadeToScene','setLiveEnabled','armGeneration']){
  expect(control.includes(marker),'Control critical contract missing: '+marker);

@@ -57,6 +57,10 @@ const pb12Resolved=pb12&&api.resolve(pb12);
 expect(pb12Resolved?.productionDriver?.id==='standards-dmx-gateway','PB12 standard DMX/CRMX route missing');
 expect((pb12?.dmxModes||[]).some(m=>m?.name==='Mode 2 CCT 4ch'&&m?.verified===true&&m?.channels===4),'PB12 verified Mode 2 CCT profile missing');
 expect((pb12?.dmxModes||[]).some(m=>m?.name==='Mode 4 RGB 5ch'&&m?.verified===true&&m?.channels===5),'PB12 verified Mode 4 RGB profile missing');
+const storm80c=fixtures.find(f=>f.id==='aputure-storm-80c');
+expect(!!storm80c,'Aputure STORM 80c fixture missing');
+expect((storm80c?.dmxModes||[]).some(m=>m?.name==='Profile 27 CCT+ 8 Bit 3ch'&&m?.verified===true&&m?.channels===3),'STORM 80c verified CCT+ profile missing');
+expect((storm80c?.dmxModes||[]).some(m=>m?.name==='Profile 23 iRGB 8 Bit 4ch'&&m?.verified===true&&m?.channels===4),'STORM 80c verified iRGB profile missing');
 
 for(const id of ['arri-skypanel-x21','arri-skypanel-x22','arri-skypanel-x23']){
   const fixture=fixtures.find(f=>f.id===id);

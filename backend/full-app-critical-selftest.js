@@ -40,9 +40,10 @@ expect(main.includes('LightingAINetworkDmxLifecyclePause'),'Network DMX pause fa
 expect(main.includes('LightingAINetworkDmxLifecycleResume'),'Network DMX resume fail-safe missing');
 
 const backup=read('app/src/main/assets/project-backup-export.js');
-for(const marker of ['LightingAIProjectBackupSnapshot','LightingAIProjectBackupImport','lighting_dmx_patch_v1','lighting_scene_measurements_v1']){
+for(const marker of ['LightingAIProjectBackupSnapshot','LightingAIProjectBackupImport',"if(!/^lighting_/i.test(k)","restoreAllowed(k,allowSun)"]){
  expect(backup.includes(marker),'Backup critical contract missing: '+marker);
 }
+expect(!/dmx|measure/i.test((backup.match(/const BLOCK=([^;]+)/)||[])[1]||''),'Backup deny-list must not block DMX or measurement planner data');
 
 const measure=read('app/src/main/assets/scene-measure.js');
 expect(measure.includes('LightingAISceneMeasureNativeResult'),'Scene measurement native result hook missing');

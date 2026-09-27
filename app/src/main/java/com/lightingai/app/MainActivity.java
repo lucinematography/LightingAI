@@ -960,13 +960,23 @@ public class MainActivity extends Activity {
 
         bleBondReceiver = new BroadcastReceiver() {
             @Override public void onReceive(Context receiverContext, Intent intent) {
-                if (intent == null || !BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(intent.getAction())) return;
+                if (intent == null) return;
+                String action = intent.getAction();
                 BluetoothDevice changed = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if (changed == null || changed.getAddress() == null || !targetAddress.equalsIgnoreCase(changed.getAddress())) return;
 
+                if (BluetoothDevice.ACTION_PAIRING_REQUEST.equals(action)) {
+                    int variant = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, -1);
+                    int key = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_KEY, -1);
+                    notifyBleBondTest(id, true, changed.getBondState(), initialState,
+                        "pairing_request:variant=" + variant + (key >= 0 ? (":key=" + key) : ""));
+                    return;
+                }
+
+                if (!BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)) return;
                 int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE);
                 int previous = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.BOND_NONE);
-                notifyBleBondTest(id, true, state, previous, "");
+                notifyBleBondTest(id, true, state, previous, "bond_state_changed");
 
                 if (state == BluetoothDevice.BOND_BONDED ||
                     (state == BluetoothDevice.BOND_NONE && previous == BluetoothDevice.BOND_BONDING)) {
@@ -976,7 +986,9 @@ public class MainActivity extends Activity {
         };
 
         try {
-            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+            filter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST);
             if (Build.VERSION.SDK_INT >= 33) registerReceiver(bleBondReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
             else registerReceiver(bleBondReceiver, filter);
         } catch (Exception e) {
@@ -1001,7 +1013,7 @@ public class MainActivity extends Activity {
             return;
         }
 
-        notifyBleBondTest(id, true, device.getBondState(), initialState, "");
+        notifyBleBondTest(id, true, device.getBondState(), initialState, "createBond_return:true");
 
         bleBondTimeoutRunnable = () -> {
             int state;

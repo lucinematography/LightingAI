@@ -21,6 +21,7 @@ const requiredAssets=[
  'app/src/main/assets/camera-setup-report.js',
  'app/src/main/assets/dmx-patch-planner.js',
  'app/src/main/assets/dmx-export.js',
+ 'app/src/main/assets/control-bootstrap.js',
  'app/src/main/assets/artnet-control.js'
 ];
 for(const p of requiredAssets){
@@ -38,6 +39,18 @@ for(const marker of [
 expect(main.includes('if (sacnLiveEngine != null) sacnLiveEngine.stopAll();'),'sACN lifecycle shutdown missing');
 expect(main.includes('LightingAINetworkDmxLifecyclePause'),'Network DMX pause fail-safe missing');
 expect(main.includes('LightingAINetworkDmxLifecycleResume'),'Network DMX resume fail-safe missing');
+expect(main.includes("file:///android_asset/control-bootstrap.js"),'Deterministic control bootstrap injection missing');
+expect(!main.includes("file:///android_asset/control-system-drivers.js"),'MainActivity must not directly race-load control driver assets');
+
+const bootstrap=read('app/src/main/assets/control-bootstrap.js');
+const order=['dmx-patch-planner.js','dmx-export.js','control-system-drivers.js','control-routing.js','artnet-control.js','ble-control.js','control-dashboard.js','ai-control-bridge.js'];
+let last=-1;
+for(const name of order){
+ const next=bootstrap.indexOf(name);
+ expect(next>last,'Control bootstrap order invalid at '+name);
+ last=next;
+}
+expect(bootstrap.includes('await loadOne(item)'),'Control bootstrap must await each dependency');
 
 const backup=read('app/src/main/assets/project-backup-export.js');
 for(const marker of ['LightingAIProjectBackupSnapshot','LightingAIProjectBackupImport',"if(!/^lighting_/i.test(k)","restoreAllowed(k,allowSun)"]){

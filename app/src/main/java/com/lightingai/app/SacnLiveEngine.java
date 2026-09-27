@@ -89,12 +89,20 @@ public final class SacnLiveEngine {
     }
 
     public void stopAll() {
+        stopAll(true);
+    }
+
+    private void abortAll() {
+        stopAll(false);
+    }
+
+    private void stopAll(boolean sendTerminationPackets) {
         synchronized (lock) {
             if (task != null) {
                 task.cancel(false);
                 task = null;
             }
-            if (socket != null && !socket.isClosed() && !frames.isEmpty()) {
+            if (sendTerminationPackets && socket != null && !socket.isClosed() && !frames.isEmpty()) {
                 for (int repeat = 0; repeat < 3; repeat++) {
                     for (Frame frame : frames.values()) {
                         try {
@@ -159,7 +167,7 @@ public final class SacnLiveEngine {
         if (networkSignature.isEmpty() || currentNetwork.isEmpty() || !networkSignature.equals(currentNetwork)) {
             packetsFailed.incrementAndGet();
             lastError = "Network changed; re-arm required";
-            stopAll();
+            abortAll();
             return;
         }
 

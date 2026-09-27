@@ -13,9 +13,9 @@ const MAX_SCENES=12;
 const MAX_CUES=64;
 const MAX_GROUPS=24;
 const VERIFIED_BRIDGES=[
- {id:'',manufacturer:'',model:'',protocols:['artnet','sacn'],transport:'',output:'',sourceUrl:''},
- {id:'aputure-sidus-one',manufacturer:'Aputure',model:'Sidus One',protocols:['artnet','sacn'],transport:'Wi-Fi',output:'DMX / CRMX',universeMin:1,universeMax:4,maxActiveUniverses:1,sourceUrl:'https://help.aputure.com/en/sidus-one/art-net/sacn-over-wi-fi-in'},
- {id:'astera-fp3-datalink',manufacturer:'Astera',model:'FP3 DataLink',protocols:['artnet','sacn'],transport:'Ethernet / RJ45',output:'DMX via XLR / Astera power-data',sourceUrl:'https://astera-led.com/wp-content/uploads/FP3_DataLink_Datasheet_V2-1.pdf'}
+ {id:'',manufacturer:'',model:'',protocols:['artnet','sacn'],transport:'',output:'',artNetPortAddressOffset:-1,sourceUrl:''},
+ {id:'aputure-sidus-one',manufacturer:'Aputure',model:'Sidus One',protocols:['artnet','sacn'],transport:'Wi-Fi',output:'DMX / CRMX',universeMin:1,universeMax:4,maxActiveUniverses:1,artNetPortAddressOffset:0,sourceUrl:'https://help.aputure.com/en/sidus-one/art-net/sacn-over-wi-fi-in'},
+ {id:'astera-fp3-datalink',manufacturer:'Astera',model:'FP3 DataLink',protocols:['artnet','sacn'],transport:'Ethernet / RJ45',output:'DMX via XLR / Astera power-data',artNetPortAddressOffset:-1,sourceUrl:'https://astera-led.com/wp-content/uploads/FP3_DataLink_Datasheet_V2-1.pdf'}
 ];
 const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
 const TXT={
@@ -383,6 +383,23 @@ function protocolUniverseLimit(protocol){return protocol==='sacn'?63999:32768}
 function validUniverseForProtocol(value,protocol){
  const u=Number(value),limit=protocolUniverseLimit(protocol);
  return Number.isInteger(u)&&u>=1&&u<=limit?u:null;
+}
+function bridgeUniverseAllowed(universe,protocol){
+ const bridge=selectedBridge();
+ if(!bridge||!bridge.id)return true;
+ if(Array.isArray(bridge.protocols)&&!bridge.protocols.includes(protocol))return false;
+ const u=Number(universe),min=Number(bridge.universeMin),max=Number(bridge.universeMax);
+ if(Number.isFinite(min)&&u<min)return false;
+ if(Number.isFinite(max)&&u>max)return false;
+ return true;
+}
+function artNetPortAddressForUniverse(universe){
+ const u=validUniverseForProtocol(universe,'artnet');
+ if(u==null)return null;
+ const bridge=selectedBridge();
+ const offset=Number.isInteger(Number(bridge&&bridge.artNetPortAddressOffset))?Number(bridge.artNetPortAddressOffset):-1;
+ const portAddress=u+offset;
+ return Number.isInteger(portAddress)&&portAddress>=0&&portAddress<=32767?portAddress:null;
 }
 function sacnMulticastAddress(universe){
  const u=validUniverseForProtocol(universe,'sacn');
@@ -1125,7 +1142,9 @@ function sendFrame(channels,universe,source){
  const transport=controlTransport(),protocol=selectedProtocol();
  if(!transport.isAvailable()){status(t().native,false);return false}
  const u=validUniverseForProtocol(universe,protocol);
- if(u==null){status(t().error,false);return false}
+ if(u==null||!bridgeUniverseAllowed(u,protocol)){status(t().error,false);return false}
+ const artNetPortAddress=protocol==='artnet'?artNetPortAddressForUniverse(u):null;
+ if(protocol==='artnet'&&artNetPortAddress==null){status(t().error,false);return false}
  const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();
  const ip=!rawTarget||rawTarget==='255.255.255.255'?'AUTO':rawTarget;
  if(protocol==='artnet'){try{localStorage.setItem(TARGET_KEY,ip)}catch(e){}}
@@ -1133,7 +1152,7 @@ function sendFrame(channels,universe,source){
  const id=prefix+'g'+armGeneration+'_'+Date.now()+'_'+(++seq);
  if(!quiet)status(t().sending);
  try{
-  const request={id:id,targetIp:ip,universe:u,channels:channels};
+  const request={id:id,targetIp:ip,universe:protocol==='artnet'?artNetPortAddress:u,uiUniverse:u,channels:channels};
   let ok=false;
   if(protocol==='sacn'){
    ok=liveEnabled&&typeof transport.supportsLive==='function'&&transport.supportsLive('sacn')?transport.setSacnLiveDmx(request):transport.sendSacnDmx(request);
@@ -1248,12 +1267,12 @@ function install(){
  E('artnetUniverse').value=defaultUniverse();
  E('networkDmxProtocol').addEventListener('change',()=>{setOutputArmed(false,true);try{localStorage.setItem(PROTOCOL_KEY,selectedProtocol())}catch(e){}if(selectedProtocol()==='sacn')applySacnPriority();updateProtocolUi();status(t().armOff)});
  E('networkDmxBridge').addEventListener('change',()=>{setOutputArmed(false,true);try{localStorage.setItem(BRIDGE_KEY,E('networkDmxBridge').value||'')}catch(e){}renderBridge();status(t().armOff)});
- E('artnetUniverse').addEventListener('change',updateProtocolUi);
+ E('artnetUniverse').addEventListener('change',()=>{setOutputArmed(false,true);updateProtocolUi();status(t().armOff)});
  E('sacnPriority').addEventListener('change',()=>{setOutputArmed(false,true);applySacnPriority();requestDiagnostics();status(t().armOff)});
  E('artnetTarget').addEventListener('change',()=>setOutputArmed(false,true));
  E('artnetRouteSelect').addEventListener('change',()=>{setOutputArmed(false,true);const v=E('artnetRouteSelect').value||'AUTO';E('artnetTarget').value=v;try{localStorage.setItem(TARGET_KEY,v)}catch(e){}status(t().armOff)});
  E('artnetValue').addEventListener('input',()=>{E('artnetValueReadout').textContent=E('artnetValue').value+' / 255'});
- E('artnetPatchDevice').addEventListener('change',()=>{choosePatch();if(E('artnetPatchDevice').value==='')renderVerifiedControls(null)});
+ E('artnetPatchDevice').addEventListener('change',()=>{setOutputArmed(false,true);choosePatch();if(E('artnetPatchDevice').value==='')renderVerifiedControls(null);status(t().armOff)});
  E('artnetDiscover').addEventListener('click',discoverNodes);
  E('artnetDiscoveredNodes').addEventListener('change',()=>{if(E('artnetDiscoveredNodes').value){setOutputArmed(false,true);E('artnetTarget').value=E('artnetDiscoveredNodes').value;status(t().armOff)}});
  E('artnetRefreshPatch').addEventListener('click',()=>{setOutputArmed(false,true);renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();status(t().armOff)});
@@ -1352,7 +1371,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.35-patch-ownership-safe',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.36-bridge-universe-policy',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

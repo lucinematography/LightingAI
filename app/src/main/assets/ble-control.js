@@ -214,7 +214,7 @@ function install(){
  translate();
  return true;
 }
-window.LightingAIBleControl={version:'0.3-raw-advertisement-diagnostics',discover:startScan,inspect:inspectDevice};
+window.LightingAIBleControl={version:'0.2-direct-control-foundation',diagnostics:'raw-advertisement-v1',discover:startScan,inspect:inspectDevice};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

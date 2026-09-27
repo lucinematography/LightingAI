@@ -63,6 +63,7 @@ const TXT={
 const t=()=>TXT[lang()];
 let seq=0;
 let scanActive=false;
+let gattActive=false;
 let scanCooldownUntil=0;
 
 function status(message,ok){
@@ -112,7 +113,7 @@ function setScanBusy(busy){
 function startScan(){
  const tr=transport();
  if(!tr.available){status(t().unavailable,false);return}
- if(scanActive){status(t().alreadyScanning,false);return}
+ if(scanActive||gattActive){status(t().alreadyScanning,false);return}
  if(Date.now()<scanCooldownUntil){status(t().tooFrequent,false);return}
  const id='ble_'+Date.now()+'_'+(++seq);
  E('bleResults').innerHTML='';
@@ -157,22 +158,32 @@ function render(devices){
 function inspectGatt(address,button){
  const tr=transport();
  if(!address||typeof tr.inspectGatt!=='function'){status(t().unavailable,false);return}
+ if(scanActive||gattActive){status(t().alreadyScanning,false);return}
  const id='ble_gatt_'+Date.now()+'_'+(++seq);
+ gattActive=true;
+ const scanButton=E('bleScan');if(scanButton)scanButton.disabled=true;
+ document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=true);
  if(button)button.disabled=true;
  const result=document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(address)+'"]');
  if(result)result.textContent=t().inspecting;
  status(t().inspecting);
  try{
   if(!tr.inspectGatt({id:id,address:address,timeoutMs:8000})){
-   if(button)button.disabled=false;
+   gattActive=false;
+   if(scanButton)scanButton.disabled=false;
+   document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
    status(t().unavailable,false);
   }
  }catch(e){
-  if(button)button.disabled=false;
+  gattActive=false;
+  if(scanButton)scanButton.disabled=false;
+  document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
   status(t().gattError,false);
  }
 }
 window.LightingAIBleGattInspectionResult=function(id,payload,error){
+ gattActive=false;
+ const scanButton=E('bleScan');if(scanButton)scanButton.disabled=Date.now()<scanCooldownUntil;
  document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
  const address=payload&&payload.address?String(payload.address):'';
  const result=address?document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(address)+'"]'):null;
@@ -222,13 +233,14 @@ function install(){
 }
 function resetBleUiLifecycle(){
  scanActive=false;
+ gattActive=false;
  scanCooldownUntil=0;
  const button=E('bleScan');if(button)button.disabled=false;
  document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.4-ble-mesh-diagnostics',discover:startScan,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',discover:startScan,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

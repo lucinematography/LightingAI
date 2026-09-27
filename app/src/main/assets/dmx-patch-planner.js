@@ -47,8 +47,8 @@ function autoPatch(){let u=1,a=1;state.rows.forEach(r=>{const c=Math.max(0,Math.
 function findFreeDmxSlot(channels){
  const c=Math.min(512,Math.max(1,Math.round(Number(channels)||1))),used=new Set();
  state.rows.forEach(r=>{
-  const u=Math.max(1,Math.round(Number(r.universe)||1)),start=Math.min(512,Math.max(1,Math.round(Number(r.start)||1))),count=Math.min(512,Math.max(0,Math.round(Number(r.channels)||0)));
-  if(!(count>0)||start+count-1>512)return;
+  const u=integerOrNull(r&&r.universe),start=integerOrNull(r&&r.start),count=integerOrNull(r&&r.channels);
+  if(u==null||u<1||u>999||start==null||start<1||start>512||count==null||count<=0||count>512||start+count-1>512)return;
   for(let ch=start;ch<start+count;ch++)used.add(u+':'+ch);
  });
  for(let u=1;u<=999;u++){

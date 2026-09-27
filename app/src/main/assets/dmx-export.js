@@ -9,11 +9,44 @@ const TXT={
 };
 const t=()=>TXT[lang()];
 function read(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&Array.isArray(v.rows)?v.rows:[]}catch(e){return[]}}
-function endAddr(r){const c=Math.max(0,Math.round(Number(r.channels)||0));return c>0?Math.round(Number(r.start)||1)+c-1:null}
-function validate(rows){const map=new Map(),flags={};rows.forEach(r=>{flags[r.id]=[];const c=Math.max(0,Math.round(Number(r.channels)||0)),u=Math.max(1,Math.round(Number(r.universe)||1)),s=Math.min(512,Math.max(1,Math.round(Number(r.start)||1)));if(!(c>0)){flags[r.id].push('missing');return}const end=s+c-1;if(end>512)flags[r.id].push('overflow');for(let ch=s;ch<=Math.min(512,end);ch++){const k=u+':'+ch;if(map.has(k)){flags[r.id].push('overlap');flags[map.get(k)].push('overlap')}else map.set(k,r.id)}});Object.keys(flags).forEach(k=>flags[k]=[...new Set(flags[k])]);return flags}
-function snapshot(){const rows=read(),flags=validate(rows);const items=rows.map((r,index)=>{const universe=Math.max(1,Math.round(Number(r.universe)||1)),start=Math.min(512,Math.max(1,Math.round(Number(r.start)||1))),channels=Math.max(0,Math.round(Number(r.channels)||0));return {index:index+1,fixtureId:r.fixtureId||null,name:String(r.name||''),mode:String(r.mode||''),universe,start,channels,end:channels>0?start+channels-1:null,flags:flags[r.id]||[]}});const universes=[...new Set(items.map(r=>r.universe))].sort((a,b)=>a-b);const warningCount=items.filter(r=>r.flags.length).length;return {schema:'lightingai-dmx-patch-v1',generatedAt:new Date().toISOString(),deviceCount:items.length,universeCount:universes.length,universes,warningCount,rows:items}}
+function integerOrNull(value){const n=Number(value);return Number.isFinite(n)&&Number.isInteger(n)?n:null}
+function endAddr(r){const c=integerOrNull(r&&r.channels),s=integerOrNull(r&&r.start);return c!=null&&c>0&&s!=null?s+c-1:null}
+function validate(rows){
+ const map=new Map(),flags={};
+ rows.forEach((r,index)=>{
+  const key=r&&r.id!=null?String(r.id):'row_'+index;
+  flags[key]=[];
+  const c=integerOrNull(r&&r.channels),u=integerOrNull(r&&r.universe),s=integerOrNull(r&&r.start);
+  if(u==null||u<1)flags[key].push('invalid-universe');
+  if(s==null||s<1||s>512)flags[key].push('invalid-start');
+  if(c==null||c<0||c>512)flags[key].push('invalid-channels');
+  if(c===0)flags[key].push('missing');
+  if(flags[key].length||!(c>0))return;
+  const end=s+c-1;
+  if(end>512){flags[key].push('overflow');return}
+  for(let ch=s;ch<=end;ch++){
+   const slot=u+':'+ch;
+   if(map.has(slot)){flags[key].push('overlap');flags[map.get(slot)].push('overlap')}
+   else map.set(slot,key);
+  }
+ });
+ Object.keys(flags).forEach(k=>flags[k]=[...new Set(flags[k])]);
+ return flags;
+}
+function snapshot(){
+ const rows=read(),flags=validate(rows);
+ const items=rows.map((r,index)=>{
+  const key=r&&r.id!=null?String(r.id):'row_'+index;
+  const universe=integerOrNull(r&&r.universe),start=integerOrNull(r&&r.start),channels=integerOrNull(r&&r.channels);
+  const end=channels!=null&&channels>0&&start!=null?start+channels-1:null;
+  return {index:index+1,fixtureId:r&&r.fixtureId||null,name:String(r&&r.name||''),mode:String(r&&r.mode||''),universe,start,channels,end,flags:flags[key]||[]};
+ });
+ const universes=[...new Set(items.filter(r=>r.flags.length===0&&Number.isInteger(r.universe)&&r.universe>=1).map(r=>r.universe))].sort((a,b)=>a-b);
+ const warningCount=items.filter(r=>r.flags.length).length;
+ return {schema:'lightingai-dmx-patch-v1',generatedAt:new Date().toISOString(),deviceCount:items.length,universeCount:universes.length,universes,warningCount,rows:items};
+}
 window.LightingAIDmxSnapshot=snapshot;
-function flagText(flags){const x=t();return flags.map(f=>f==='overlap'?x.overlap:f==='overflow'?x.overflow:f==='missing'?x.missing:f).join(' + ')||'OK'}
+function flagText(flags){const x=t();return flags.map(f=>f==='overlap'?x.overlap:f==='overflow'?x.overflow:f==='missing'?x.missing:f==='invalid-universe'?x.invalidUniverse:f==='invalid-start'?x.invalidStart:f==='invalid-channels'?x.invalidChannels:f).join(' + ')||'OK'}
 function textReport(){const s=snapshot(),x=t(),lines=['LightingAI — '+x.dmx,''];if(!s.rows.length){lines.push(x.empty);return lines.join('\n')}s.rows.forEach(r=>lines.push('U'+r.universe+' · '+r.start+'-'+(r.end==null?'—':r.end)+' · '+(r.channels||'—')+' ch · '+(r.name||'—')+(r.mode?' · '+r.mode:'')+' · '+flagText(r.flags)));lines.push('',s.deviceCount+' '+x.devices+' · '+s.universeCount+' '+x.universes+' · '+(s.warningCount?s.warningCount+' '+x.warnings:x.ok));return lines.join('\n')}
 function csvEscape(v){const s=String(v==null?'':v);return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
 function csvReport(){const s=snapshot(),lines=[['Universe','Start','End','Channels','Device','DMX Mode','Status'].join(',')];s.rows.forEach(r=>lines.push([r.universe,r.start,r.end==null?'':r.end,r.channels||'',r.name,r.mode,flagText(r.flags)].map(csvEscape).join(',')));return '\ufeff'+lines.join('\r\n')}

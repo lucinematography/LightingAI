@@ -57,6 +57,11 @@ const pb12Resolved=pb12&&api.resolve(pb12);
 expect(pb12Resolved?.productionDriver?.id==='standards-dmx-gateway','PB12 standard DMX/CRMX route missing');
 expect((pb12?.dmxModes||[]).some(m=>m?.name==='Mode 2 CCT 4ch'&&m?.verified===true&&m?.channels===4),'PB12 verified Mode 2 CCT profile missing');
 expect((pb12?.dmxModes||[]).some(m=>m?.name==='Mode 4 RGB 5ch'&&m?.verified===true&&m?.channels===5),'PB12 verified Mode 4 RGB profile missing');
+const storm400x=fixtures.find(f=>f.id==='aputure-storm-400x');
+expect(!!storm400x,'Aputure STORM 400x fixture missing');
+expect((storm400x?.dmxModes||[]).some(m=>m?.name==='Profile 1 CCT+ 8 Bit 3ch'&&m?.verified===true&&m?.channels===3),'STORM 400x verified CCT+ profile missing');
+expect((storm400x?.dmxModes||[]).some(m=>Array.isArray(m?.requiredChannels)&&m.requiredChannels.some(r=>r?.channel===3&&r?.value===133)),'STORM 400x neutral green requirement missing');
+
 const storm80c=fixtures.find(f=>f.id==='aputure-storm-80c');
 expect(!!storm80c,'Aputure STORM 80c fixture missing');
 expect((storm80c?.dmxModes||[]).some(m=>m?.name==='Profile 27 CCT+ 8 Bit 3ch'&&m?.verified===true&&m?.channels===3),'STORM 80c verified CCT+ profile missing');

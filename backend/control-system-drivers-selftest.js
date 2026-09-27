@@ -61,6 +61,12 @@ const storm80c=fixtures.find(f=>f.id==='aputure-storm-80c');
 expect(!!storm80c,'Aputure STORM 80c fixture missing');
 expect((storm80c?.dmxModes||[]).some(m=>m?.name==='Profile 27 CCT+ 8 Bit 3ch'&&m?.verified===true&&m?.channels===3),'STORM 80c verified CCT+ profile missing');
 expect((storm80c?.dmxModes||[]).some(m=>m?.name==='Profile 23 iRGB 8 Bit 4ch'&&m?.verified===true&&m?.channels===4),'STORM 80c verified iRGB profile missing');
+const m600r=fixtures.find(f=>f.id==='godox-m600r');
+expect(!!m600r,'Godox M600R fixture missing');
+const m600rResolved=m600r&&api.resolve(m600r);
+expect(m600rResolved?.productionDriver?.id==='standards-native-network','Godox M600R native Art-Net/sACN route missing');
+expect((m600r?.dmxModes||[]).some(m=>m?.name==='01 CCT 8Bit 3ch'&&m?.verified===true&&m?.channels===3),'Godox M600R verified CCT profile missing');
+expect((m600r?.dmxModes||[]).some(m=>m?.name==='03 RGB 8Bit 4ch'&&m?.verified===true&&m?.channels===4),'Godox M600R verified RGB profile missing');
 
 for(const id of ['arri-skypanel-x21','arri-skypanel-x22','arri-skypanel-x23']){
   const fixture=fixtures.find(f=>f.id===id);

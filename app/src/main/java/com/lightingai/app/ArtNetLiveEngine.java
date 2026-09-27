@@ -16,12 +16,12 @@ public final class ArtNetLiveEngine {
 
     private static final class Frame {
         final String targetIp;
-        final int universe;
+        final int portAddress;
         final int[] channels;
 
-        Frame(String targetIp, int universe, int[] channels) {
+        Frame(String targetIp, int portAddress, int[] channels) {
             this.targetIp = targetIp;
-            this.universe = universe;
+            this.portAddress = portAddress;
             this.channels = channels;
         }
     }
@@ -39,9 +39,9 @@ public final class ArtNetLiveEngine {
     private ScheduledFuture<?> task;
     private DatagramSocket socket;
 
-    public void setFrame(String targetIp, int universe, int[] channels) throws Exception {
+    public void setFrame(String targetIp, int portAddress, int[] channels) throws Exception {
         String ip = normalizeIp(targetIp);
-        int u = ArtNetSender.validateUniverse(universe);
+        int u = ArtNetSender.validatePortAddress(portAddress);
         String currentNetwork = NetworkInterfaceInspector.signature();
         if (currentNetwork.isEmpty()) throw new IllegalStateException("No active network for Art-Net");
         int[] copy = channels == null ? new int[0] : Arrays.copyOf(channels, Math.min(512, channels.length));
@@ -55,8 +55,8 @@ public final class ArtNetLiveEngine {
         }
     }
 
-    public void removeFrame(String targetIp, int universe) {
-        frames.remove(key(normalizeIp(targetIp), Math.max(1, universe)));
+    public void removeFrame(String targetIp, int portAddress) {
+        frames.remove(key(normalizeIp(targetIp), ArtNetSender.validatePortAddress(portAddress)));
         stopIfIdle();
     }
 
@@ -138,7 +138,7 @@ public final class ArtNetLiveEngine {
         for (Frame frame : frames.values()) {
             try {
                 int seq = sequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
-                ArtNetSender.sendDmx(activeSocket, frame.targetIp, frame.universe, frame.channels, seq);
+                ArtNetSender.sendDmx(activeSocket, frame.targetIp, frame.portAddress, frame.channels, seq);
                 packetsSent.incrementAndGet();
                 lastSendAtMs.set(System.currentTimeMillis());
                 lastError = "";
@@ -154,7 +154,7 @@ public final class ArtNetLiveEngine {
         return ArtNetSender.normalizeTarget(targetIp);
     }
 
-    private static String key(String targetIp, int universe) {
-        return normalizeIp(targetIp) + "|" + Math.max(1, universe);
+    private static String key(String targetIp, int portAddress) {
+        return normalizeIp(targetIp) + "|" + ArtNetSender.validatePortAddress(portAddress);
     }
 }

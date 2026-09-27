@@ -27,6 +27,9 @@ expect(ASTERA_TITANTUBE_ACCESSORIES.some(a => a.id === 'astera-fp3-dtl'), 'Aster
 const patch = fs.readFileSync(path.join(root,'app/src/main/assets/dmx-patch-planner.js'),'utf8');
 expect(patch.includes('defaultMode=verified.length===1?verified[0]:null'), 'DMX patch automatic verified-profile selection missing');
 expect(patch.includes('function findFreeDmxSlot(channels)'), 'DMX patch free-slot allocator missing');
+expect(patch.includes('invalid-universe') && patch.includes('invalid-start') && patch.includes('invalid-channels'), 'DMX patch fail-closed address validation missing');
+const dmxExport = fs.readFileSync(path.join(root,'app/src/main/assets/dmx-export.js'),'utf8');
+expect(dmxExport.includes('invalid-universe') && dmxExport.includes('integerOrNull'), 'DMX snapshot fail-closed validation missing');
 
 const main = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/MainActivity.java'),'utf8');
 for (const marker of ['artNetSendDmx','artNetSetLiveDmx','sacnSendDmx','sacnSetLiveDmx','networkDmxDiagnostics']) {

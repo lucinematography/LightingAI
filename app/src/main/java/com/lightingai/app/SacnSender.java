@@ -34,7 +34,7 @@ public final class SacnSender {
 
     public static void sendDmx(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
-        int u = normalizeUniverse(universe);
+        int u = validateUniverse(universe);
         byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0, priority);
         InetAddress address = InetAddress.getByName(multicastAddress(u));
         socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
@@ -49,7 +49,7 @@ public final class SacnSender {
     }
 
     static byte[] buildDmxPacket(int universe, int[] channels, int sequence, byte[] cid, String sourceName, int options, int priority) {
-        int u = normalizeUniverse(universe);
+        int u = validateUniverse(universe);
         int[] safeChannels = channels == null ? new int[0] : Arrays.copyOf(channels, Math.min(512, channels.length));
         int slotCount = safeChannels.length;
         int packetLength = 126 + slotCount;
@@ -105,19 +105,22 @@ public final class SacnSender {
 
     static void sendTermination(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
-        int u = normalizeUniverse(universe);
+        int u = validateUniverse(universe);
         byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0x40, priority);
         InetAddress address = InetAddress.getByName(multicastAddress(u));
         socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
     }
 
     static String multicastAddress(int universe) {
-        int u = normalizeUniverse(universe);
+        int u = validateUniverse(universe);
         return "239.255." + ((u >> 8) & 0xff) + "." + (u & 0xff);
     }
 
-    private static int normalizeUniverse(int universe) {
-        return Math.max(MIN_UNIVERSE, Math.min(MAX_UNIVERSE, universe));
+    static int validateUniverse(int universe) {
+        if (universe < MIN_UNIVERSE || universe > MAX_UNIVERSE) {
+            throw new IllegalArgumentException("sACN universe out of range: " + universe);
+        }
+        return universe;
     }
 
     static int normalizePriority(int priority) {

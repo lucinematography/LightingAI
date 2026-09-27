@@ -28,15 +28,22 @@ function patchMatchForRow(row){
  patchRows().forEach(function(r,index){if(r&&r.fixtureId===id)matches.push({patch:r,index:index})});
  return matches[wanted]||null;
 }
-function profileForPatch(f,p){if(!p)return null;var modes=dmXModes(f),want=String(p.mode||'').trim();if(want){var exact=modes.find(function(m){return m&&String(m.name||'').trim()===want});if(exact)return exact}var ch=Number(p.channels)||0;return modes.find(function(m){return m&&Number(m.channels)===ch})||null}
+function profileForPatch(f,p){
+ if(!p)return null;
+ var modes=dmXModes(f).filter(function(m){return !!(m&&m.verified===true&&Number(m.channels)>0)}),want=String(p.mode||'').trim(),ch=Number(p.channels)||0,start=Number(p.start)||0;
+ var profile=null;
+ if(want)profile=modes.find(function(m){return String(m.name||'').trim()===want})||null;
+ if(!profile)profile=modes.find(function(m){return Number(m.channels)===ch})||null;
+ if(!profile||Number(profile.channels)!==ch||!Number.isInteger(start)||start<1||start+ch-1>512)return null;
+ return profile;
+}
 function controlSummary(profile){var controls=profile&&Array.isArray(profile.controls)?profile.controls:[],keys=controls.map(function(x){return String(x&&x.key||'').toLowerCase()});var out=[];if(keys.indexOf('dimmer')>=0)out.push('DIM');if(keys.indexOf('cct')>=0)out.push('CCT');if(['red','green','blue'].every(function(k){return keys.indexOf(k)>=0}))out.push('RGB');if(keys.indexOf('hue')>=0||keys.indexOf('saturation')>=0)out.push('HSI');return out}
 function statusBadge(routes){
  var p=routes&&routes.production;
- if(p&&p.route==='native-network')return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#163025;color:#b8f0d1;font-size:11px;font-weight:800">'+(sr()?'DIREKTNO ART-NET / sACN':'DIRECT ART-NET / sACN')+'</span>';
- if(p&&p.route==='gateway')return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#163025;color:#b8f0d1;font-size:11px;font-weight:800">'+(sr()?'STANDARDNA RUTA':'STANDARD ROUTE')+'</span>';
+ if(p&&p.semanticReady===true&&p.route==='native-network')return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#163025;color:#b8f0d1;font-size:11px;font-weight:800">'+(sr()?'ART-NET/sACN + PROFIL OK':'ART-NET/sACN + PROFILE OK')+'</span>';
+ if(p&&p.semanticReady===true&&p.route==='gateway')return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#163025;color:#b8f0d1;font-size:11px;font-weight:800">'+(sr()?'STANDARDNA RUTA + PROFIL OK':'STANDARD ROUTE + PROFILE OK')+'</span>';
+ if(p&&p.transportReady===true&&p.semanticReady!==true)return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#342e18;color:#f5dd91;font-size:11px;font-weight:800">'+(sr()?'RUTA POSTOJI · PROFIL NIJE VERIFIKOVAN':'ROUTE EXISTS · PROFILE NOT VERIFIED')+'</span>';
  if(p&&p.route==='vendor-wireless')return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#342e18;color:#f5dd91;font-size:11px;font-weight:800">'+(sr()?'VENDOR BEŽIČNO':'VENDOR WIRELESS')+'</span>';
- if(routes.direct.length)return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#163025;color:#b8f0d1;font-size:11px;font-weight:800">'+(sr()?'DIREKTNA RUTA':'DIRECT ROUTE')+'</span>';
- if(routes.wired.length||routes.wireless.length)return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#342e18;color:#f5dd91;font-size:11px;font-weight:800">'+(sr()?'PREKO INTERFEJSA':'VIA INTERFACE')+'</span>';
  return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#382124;color:#ffb5b5;font-size:11px;font-weight:800">'+(sr()?'NEMA VERIFIKOVANE RUTE':'NO VERIFIED ROUTE')+'</span>';
 }
 function fixtureCard(row){
@@ -46,8 +53,8 @@ function fixtureCard(row){
  if(r.production&&r.production.route==='vendor-wireless'&&!r.direct.length)direct=sr()?'Vlasnički bežični protokol — koristi se samo kroz verifikovan vendor adapter.':'Proprietary wireless protocol — used only through a verified vendor adapter.';
  var ext=r.external.length?'<div class="muted small" style="margin-top:7px"><b>'+(sr()?'Potreban interfejs: ':'Interface required: ')+'</b>'+esc(r.external.join(' • '))+'</div>':'';
  var mode=modes.length?'<div class="muted small" style="margin-top:7px"><b>'+(sr()?'DMX profili: ':'DMX profiles: ')+'</b>'+modes.length+'</div>':'';
- var mapped=patch?'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#10251d;color:#b8f0d1;font-size:11px"><b>'+(sr()?'DMX PATCH POVEZAN':'DMX PATCH MAPPED')+'</b> · U'+Number(patch.universe||1)+' · '+(sr()?'adresa ':'address ')+Number(patch.start||1)+(patch.mode?' · '+esc(patch.mode):'')+(controls.length?' · '+esc(controls.join(' / ')):'')+'</div>':'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#342e18;color:#f5dd91;font-size:11px">'+(sr()?'Nije povezan sa DMX Patch-om.':'Not mapped in DMX Patch.')+'</div>';
- var open=patch?'<button class="btn secondary control-open-fixture" data-fixture="'+esc(f.id)+'" data-patch-index="'+Number(match.index)+'" type="button" style="width:100%;margin-top:8px">'+(sr()?'OTVORI KONTROLU UREĐAJA':'OPEN FIXTURE CONTROL')+'</button>':'';
+ var mapped=patch?(profile?'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#10251d;color:#b8f0d1;font-size:11px"><b>'+(sr()?'DMX PATCH + VERIFIKOVAN PROFIL':'DMX PATCH + VERIFIED PROFILE')+'</b> · U'+Number(patch.universe||1)+' · '+(sr()?'adresa ':'address ')+Number(patch.start||1)+(patch.mode?' · '+esc(patch.mode):'')+(controls.length?' · '+esc(controls.join(' / ')):'')+'</div>':'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#342e18;color:#f5dd91;font-size:11px"><b>'+(sr()?'DMX PATCH POSTOJI, ALI PROFIL NIJE VERIFIKOVAN':'DMX PATCH EXISTS, BUT PROFILE IS NOT VERIFIED')+'</b></div>'):'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#342e18;color:#f5dd91;font-size:11px">'+(sr()?'Nije povezan sa DMX Patch-om.':'Not mapped in DMX Patch.')+'</div>';
+ var open=patch&&profile?'<button class="btn secondary control-open-fixture" data-fixture="'+esc(f.id)+'" data-patch-index="'+Number(match.index)+'" type="button" style="width:100%;margin-top:8px">'+(sr()?'OTVORI KONTROLU UREĐAJA':'OPEN FIXTURE CONTROL')+'</button>':'';
  return '<div class="card" style="margin-bottom:10px;border-color:#303842">'+
    '<div style="display:flex;gap:10px;justify-content:space-between;align-items:flex-start"><div><div style="font-weight:900;font-size:16px">'+esc(name)+'</div><div class="muted small">'+esc(f.family||f.type||'')+'</div></div>'+statusBadge(r)+'</div>'+
    '<div style="margin-top:10px;font-size:12px;line-height:1.45"><b>'+(sr()?'LightingAI kontrola: ':'LightingAI control: ')+'</b>'+esc(direct)+'</div>'+
@@ -94,7 +101,7 @@ function render(){
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl,index=Number(btn.dataset.patchIndex);if(api&&typeof api.focusPatchIndex==='function'&&Number.isInteger(index)){api.focusPatchIndex(index);return}if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.6-control-overview'};
+window.LightingAIControlDashboard={render:render,version:'0.7-profile-gated'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(render,900);
 var old=window.setLanguage;

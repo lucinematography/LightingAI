@@ -1,12 +1,18 @@
 package com.lightingai.app;
 
 import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ActivityInfo;
@@ -93,6 +99,8 @@ public class MainActivity extends Activity {
     private SacnLiveEngine sacnLiveEngine;
     private BleDeviceScanner bleDeviceScanner;
     private BleGattInspector bleGattInspector;
+    private BroadcastReceiver bleBondReceiver;
+    private Runnable bleBondTimeoutRunnable;
     private String pendingBleDiscoveryRequestId = null;
     private int pendingBleDiscoveryTimeoutMs = 3000;
 
@@ -909,6 +917,137 @@ public class MainActivity extends Activity {
         });
     }
 
+    @SuppressLint("MissingPermission")
+    private void startBleBondTest(String requestId, String address, int timeoutMs) {
+        final String id = requestId == null ? "" : requestId;
+        final String targetAddress = address == null ? "" : address.trim();
+        final int boundedTimeout = Math.max(5000, Math.min(30000, timeoutMs));
+        stopBleBondTest();
+
+        if (!hasBlePermission()) {
+            notifyBleBondTest(id, false, BluetoothDevice.BOND_NONE, -1, "ble_permission_denied");
+            return;
+        }
+        if (targetAddress.isEmpty()) {
+            notifyBleBondTest(id, false, BluetoothDevice.BOND_NONE, -1, "ble_invalid_target");
+            return;
+        }
+
+        BluetoothManager manager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
+        if (adapter == null) {
+            notifyBleBondTest(id, false, BluetoothDevice.BOND_NONE, -1, "bluetooth_unavailable");
+            return;
+        }
+        if (!adapter.isEnabled()) {
+            notifyBleBondTest(id, false, BluetoothDevice.BOND_NONE, -1, "bluetooth_disabled");
+            return;
+        }
+
+        final BluetoothDevice device;
+        try {
+            device = adapter.getRemoteDevice(targetAddress);
+        } catch (Exception e) {
+            notifyBleBondTest(id, false, BluetoothDevice.BOND_NONE, -1, "ble_invalid_address");
+            return;
+        }
+
+        int initialState = device.getBondState();
+        if (initialState == BluetoothDevice.BOND_BONDED) {
+            notifyBleBondTest(id, false, initialState, initialState, "");
+            return;
+        }
+
+        bleBondReceiver = new BroadcastReceiver() {
+            @Override public void onReceive(Context receiverContext, Intent intent) {
+                if (intent == null || !BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(intent.getAction())) return;
+                BluetoothDevice changed = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (changed == null || changed.getAddress() == null || !targetAddress.equalsIgnoreCase(changed.getAddress())) return;
+
+                int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE);
+                int previous = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.BOND_NONE);
+                notifyBleBondTest(id, true, state, previous, "");
+
+                if (state == BluetoothDevice.BOND_BONDED ||
+                    (state == BluetoothDevice.BOND_NONE && previous == BluetoothDevice.BOND_BONDING)) {
+                    stopBleBondTest();
+                }
+            }
+        };
+
+        try {
+            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+            if (Build.VERSION.SDK_INT >= 33) registerReceiver(bleBondReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            else registerReceiver(bleBondReceiver, filter);
+        } catch (Exception e) {
+            bleBondReceiver = null;
+            notifyBleBondTest(id, false, initialState, initialState, "ble_bond_receiver_failed");
+            return;
+        }
+
+        final boolean started;
+        try {
+            started = device.createBond();
+        } catch (Exception e) {
+            stopBleBondTest();
+            notifyBleBondTest(id, false, device.getBondState(), initialState, "ble_bond_start_exception");
+            return;
+        }
+
+        if (!started) {
+            int state = device.getBondState();
+            stopBleBondTest();
+            notifyBleBondTest(id, false, state, initialState, "ble_bond_start_failed");
+            return;
+        }
+
+        notifyBleBondTest(id, true, device.getBondState(), initialState, "");
+
+        bleBondTimeoutRunnable = () -> {
+            int state;
+            try { state = device.getBondState(); }
+            catch (Exception e) { state = BluetoothDevice.BOND_NONE; }
+            notifyBleBondTest(id, true, state, initialState, "ble_bond_timeout");
+            stopBleBondTest();
+        };
+        if (webView != null) webView.postDelayed(bleBondTimeoutRunnable, boundedTimeout);
+    }
+
+    private String bondStateName(int state) {
+        if (state == BluetoothDevice.BOND_BONDED) return "BONDED";
+        if (state == BluetoothDevice.BOND_BONDING) return "BONDING";
+        return "NONE";
+    }
+
+    private void notifyBleBondTest(String requestId, boolean started, int state, int previousState, String error) {
+        if (webView == null) return;
+        try {
+            JSONObject result = new JSONObject();
+            result.put("started", started);
+            result.put("bondState", state);
+            result.put("bondStateName", bondStateName(state));
+            result.put("previousBondState", previousState);
+            result.put("previousBondStateName", previousState < 0 ? "" : bondStateName(previousState));
+            final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+            final String resultJs = result.toString();
+            final String errJs = JSONObject.quote(error == null ? "" : error);
+            webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAIBleBondResult&&window.LightingAIBleBondResult(" + idJs + "," + resultJs + "," + errJs + ");",
+                null));
+        } catch (Exception ignored) {}
+    }
+
+    private void stopBleBondTest() {
+        if (bleBondTimeoutRunnable != null && webView != null) {
+            try { webView.removeCallbacks(bleBondTimeoutRunnable); } catch (Exception ignored) {}
+        }
+        bleBondTimeoutRunnable = null;
+        if (bleBondReceiver != null) {
+            try { unregisterReceiver(bleBondReceiver); } catch (Exception ignored) {}
+            bleBondReceiver = null;
+        }
+    }
+
     private void notifyBleGattInspection(String requestId, JSONObject profile, String error) {
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
@@ -1175,6 +1314,10 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.startBleGattInspection(requestId, address, name, timeoutMs));
         }
 
+        @JavascriptInterface public void bleBondTest(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> MainActivity.this.startBleBondTest(requestId, address, timeoutMs));
+        }
+
         @JavascriptInterface public String networkDmxDiagnostics() {
             try {
                 JSONObject out = new JSONObject();
@@ -1416,6 +1559,7 @@ public class MainActivity extends Activity {
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
+        stopBleBondTest();
         if (bleGattInspector != null) bleGattInspector.close();
         super.onPause();
     }

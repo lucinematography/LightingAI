@@ -28,6 +28,7 @@ function hasAny(values, needles) {
 function hasStandardDmxTransport(values) {
   return values.some(v => {
     const s = String(v).toLowerCase();
+    if (/\b(unavailable|unsupported|not supported|not available|no dmx|without dmx)\b/.test(s)) return false;
     return /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(s) || s.includes('crmx') || s.includes('lumenradio');
   });
 }

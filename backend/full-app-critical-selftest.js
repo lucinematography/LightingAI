@@ -41,6 +41,10 @@ expect(main.includes('LightingAINetworkDmxLifecyclePause'),'Network DMX pause fa
 expect(main.includes('LightingAINetworkDmxLifecycleResume'),'Network DMX resume fail-safe missing');
 expect(main.includes("file:///android_asset/control-bootstrap.js"),'Deterministic control bootstrap injection missing');
 expect(main.includes('isBleLocationServiceReady'),'BLE Android 11-and-older Location/GPS service guard missing');
+expect(main.includes('Manifest.permission.ACCESS_FINE_LOCATION'),'Exhaustive BLE location permission check missing');
+const manifest=read('app/src/main/AndroidManifest.xml');
+expect(manifest.includes('android.permission.BLUETOOTH_SCAN'),'BLE scan manifest permission missing');
+expect(!manifest.includes('usesPermissionFlags="neverForLocation"'),'BLE scan must not filter devices with neverForLocation');
 expect(main.includes('ble_location_disabled'),'BLE Location/GPS disabled result missing');
 
 const bleScanner=read('app/src/main/java/com/lightingai/app/BleDeviceScanner.java');

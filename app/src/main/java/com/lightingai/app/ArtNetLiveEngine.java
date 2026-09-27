@@ -40,7 +40,7 @@ public final class ArtNetLiveEngine {
 
     public void setFrame(String targetIp, int universe, int[] channels) throws Exception {
         String ip = normalizeIp(targetIp);
-        int u = Math.max(1, universe);
+        int u = ArtNetSender.validateUniverse(universe);
         int[] copy = channels == null ? new int[0] : Arrays.copyOf(channels, Math.min(512, channels.length));
         synchronized (lock) {
             ensureRunningLocked();

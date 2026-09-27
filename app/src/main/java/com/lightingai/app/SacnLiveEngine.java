@@ -54,6 +54,7 @@ public final class SacnLiveEngine {
             if (!networkSignature.isEmpty() && !networkSignature.equals(currentNetwork)) {
                 throw new IllegalStateException("Network changed; re-arm required");
             }
+            if (frames.isEmpty()) lastError = "";
             networkSignature = currentNetwork;
             ensureRunningLocked();
             frames.put(u, new Frame(u, copy));

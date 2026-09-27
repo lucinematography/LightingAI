@@ -17,7 +17,7 @@ for(const marker of [
   "vendor-aputure-sidus",
   "vendor-godox-app",
   "vendor-aladdin-app",
-  "version:'1.1-conservative-system-families'"
+  "version:'1.2-rdm-management-separated'"
 ]) expect(src.includes(marker),'driver registry missing '+marker);
 
 const sandbox={window:{}};

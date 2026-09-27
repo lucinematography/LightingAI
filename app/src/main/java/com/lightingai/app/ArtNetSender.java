@@ -7,23 +7,23 @@ import java.nio.charset.StandardCharsets;
 
 public final class ArtNetSender {
     public static final int ARTNET_PORT = 6454;
-    public static final int MIN_UNIVERSE = 1;
-    public static final int MAX_UNIVERSE = 32768;
+    public static final int MIN_PORT_ADDRESS = 0;
+    public static final int MAX_PORT_ADDRESS = 32767;
     public static final String AUTO_TARGET = "AUTO";
 
     private ArtNetSender() {}
 
-    public static void sendDmx(String targetIp, int universe, int[] channels, int sequence) throws Exception {
+    public static void sendDmx(String targetIp, int portAddress, int[] channels, int sequence) throws Exception {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.setBroadcast(true);
-            sendDmx(socket, targetIp, universe, channels, sequence);
+            sendDmx(socket, targetIp, portAddress, channels, sequence);
         }
     }
 
-    public static void sendDmx(DatagramSocket socket, String targetIp, int universe, int[] channels, int sequence) throws Exception {
+    public static void sendDmx(DatagramSocket socket, String targetIp, int portAddress, int[] channels, int sequence) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
         String target = normalizeTarget(targetIp);
-        byte[] packet = buildDmxPacket(universe, channels, sequence);
+        byte[] packet = buildDmxPacket(portAddress, channels, sequence);
 
         if (isAutoTarget(target)) {
             java.util.List<InetAddress> broadcasts = ArtNetDiscovery.directedBroadcastTargets();
@@ -53,15 +53,15 @@ public final class ArtNetSender {
         return AUTO_TARGET.equalsIgnoreCase(normalizeTarget(targetIp));
     }
 
-    static int validateUniverse(int universe) {
-        if (universe < MIN_UNIVERSE || universe > MAX_UNIVERSE) {
-            throw new IllegalArgumentException("Art-Net universe out of range: " + universe);
+    static int validatePortAddress(int portAddress) {
+        if (portAddress < MIN_PORT_ADDRESS || portAddress > MAX_PORT_ADDRESS) {
+            throw new IllegalArgumentException("Art-Net Port-Address out of range: " + portAddress);
         }
-        return universe;
+        return portAddress;
     }
 
-    static byte[] buildDmxPacket(int universe, int[] channels, int sequence) {
-        int logicalUniverse = validateUniverse(universe) - 1;
+    static byte[] buildDmxPacket(int portAddress, int[] channels, int sequence) {
+        int logicalUniverse = validatePortAddress(portAddress);
         int length = Math.max(2, Math.min(512, channels == null ? 0 : channels.length));
         if ((length & 1) != 0) length++;
 

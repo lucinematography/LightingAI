@@ -1360,13 +1360,22 @@ function forceLifecycleDisarm(){
 }
 window.LightingAINetworkDmxLifecyclePause=forceLifecycleDisarm;
 window.LightingAINetworkDmxLifecycleResume=forceLifecycleDisarm;
+function invalidateCachedOutputState(){
+ Object.keys(frames).forEach(key=>delete frames[key]);
+ aiStagedFixture=null;
+ const action=E('artnetAiStageAction');if(action)action.remove();
+ clearBlackoutRestore();
+ currentCueIndex=-1;
+}
 window.LightingAIArtNetResult=function(id,ok,message){
  const resultId=String(id||'');
  const generationMatch=resultId.match(/_g(\d+)_/);
  if(generationMatch&&Number(generationMatch[1])!==armGeneration)return;
  if(!ok){
   if(resultId.indexOf('fade_')===0)cancelSceneFade(false);
+  invalidateCachedOutputState();
   setOutputArmed(false,true);
+  renderCueStack();
   status(message||t().error,false);
   return;
  }

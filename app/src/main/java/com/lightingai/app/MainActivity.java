@@ -86,6 +86,7 @@ public class MainActivity extends Activity {
     private byte[] sacnCid;
     private SacnLiveEngine sacnLiveEngine;
     private BleDeviceScanner bleDeviceScanner;
+    private BleGattInspector bleGattInspector;
     private String pendingBleDiscoveryRequestId = null;
     private int pendingBleDiscoveryTimeoutMs = 3000;
 
@@ -123,6 +124,7 @@ public class MainActivity extends Activity {
         sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
         sacnLiveEngine.setPriority(sacnPriority.get());
         bleDeviceScanner = new BleDeviceScanner(this);
+        bleGattInspector = new BleGattInspector(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -740,6 +742,16 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void notifyBleGattInspection(String requestId, JSONObject result, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String resultJs = result == null ? "{}" : result.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIBleGattInspectionResult&&window.LightingAIBleGattInspectionResult(" + idJs + "," + resultJs + "," + errJs + ");",
+            null));
+    }
+
     private void notifyBleDiscovery(String requestId, JSONArray devices, String error) {
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
@@ -975,6 +987,25 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void bleDiscover(String requestId, int timeoutMs) {
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
+        }
+
+        @JavascriptInterface public void bleInspectGatt(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> {
+                final String id = requestId == null ? "" : requestId;
+                if (!hasBlePermission()) {
+                    notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
+                    return;
+                }
+                if (bleGattInspector == null) bleGattInspector = new BleGattInspector(MainActivity.this);
+                bleGattInspector.inspect(address, timeoutMs, new BleGattInspector.Callback() {
+                    @Override public void onComplete(JSONObject result) {
+                        notifyBleGattInspection(id, result, "");
+                    }
+                    @Override public void onError(String code) {
+                        notifyBleGattInspection(id, new JSONObject(), code);
+                    }
+                });
+            });
         }
 
         @JavascriptInterface public String networkDmxNetworkSignature() {
@@ -1246,6 +1277,7 @@ public class MainActivity extends Activity {
                 null));
         }
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
+        if (bleGattInspector != null) bleGattInspector.cancel();
         super.onPause();
     }
 
@@ -1322,6 +1354,7 @@ public class MainActivity extends Activity {
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
+        if (bleGattInspector != null) bleGattInspector.cancel();
         if (speechRecognizer != null) {
             try { speechRecognizer.destroy(); } catch (Exception ignored) {}
             speechRecognizer = null;

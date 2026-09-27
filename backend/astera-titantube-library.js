@@ -19,11 +19,11 @@ export const ASTERA_TITANTUBE_FIXTURES = [
     ipRating: 'IP65',
     batteryPowered: true,
     control: {
-      wireless: ['CRMX receiver', 'Astera UHF', 'Bluetooth on FP1-BTB variant'],
-      wired: ['DMX via FP1-PWB / FP3-DTL', 'Art-Net via FP3-DTL', 'sACN via FP3-DTL'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'Wireless DMX', 'CRMX receiver', 'Astera UHF', 'Bluetooth on FP1-BTB variant'],
+      wired: ['DMX via PowerBox', 'Art-Net via PowerBox', 'sACN via PowerBox', 'DMX via FP1-PWB / FP3-DTL', 'Art-Net via FP3-DTL', 'sACN via FP3-DTL'],
       builtInCRMX: true,
       builtInBTBVariant: 'FP1-BTB',
-      directLightingAI: ['Art-Net via FP3-DTL', 'sACN via FP3-DTL'],
+      directLightingAI: ['Art-Net via PowerBox', 'sACN via PowerBox', 'Art-Net via FP3-DTL', 'sACN via FP3-DTL'],
       standardRoutes: [
         {
           id: 'astera-titan-wired-network',
@@ -43,11 +43,17 @@ export const ASTERA_TITANTUBE_FIXTURES = [
         }
       ],
       externalInterfaceRequired: [
+        'Astera PowerBox for wired DMX, Art-Net or sACN control',
+        'Wireless DMX transmitter for wireless DMX control',
+        'AsteraBox for AsteraApp/UHF control',
         'Astera FP3 DataLink for direct Art-Net/sACN wired control',
         'CRMX transmitter for wireless DMX control',
         'AsteraBox only for AsteraApp/UHF vendor control'
       ],
-      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF protocol is proprietary and is not used as a production LightingAI transport'],
+      unavailableDirectProtocols: [
+        'AsteraApp/UHF protocol is not publicly documented for third-party direct control',
+        'AsteraApp Bluetooth/UHF protocol is proprietary and is not used as a production LightingAI transport'
+      ],
       sourceUrls: [
         'https://astera-led.com/products/titantube/',
         'https://astera-led.com/wp-content/uploads/FP3_DataLink_Datasheet_V2-1.pdf',

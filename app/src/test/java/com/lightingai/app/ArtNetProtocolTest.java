@@ -32,6 +32,13 @@ public class ArtNetProtocolTest {
         assertEquals(1, packet[15] & 0x7f);
     }
 
+    @Test public void invalidArtNetUniverseIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> ArtNetSender.buildDmxPacket(0, new int[]{1}, 1));
+        assertThrows(IllegalArgumentException.class, () -> ArtNetSender.buildDmxPacket(32769, new int[]{1}, 1));
+        assertEquals(1, ArtNetSender.validateUniverse(1));
+        assertEquals(32768, ArtNetSender.validateUniverse(32768));
+    }
+
     @Test public void automaticDmxTargetMigratesLimitedBroadcastToAuto() {
         assertEquals("AUTO", ArtNetSender.normalizeTarget(null));
         assertEquals("AUTO", ArtNetSender.normalizeTarget(""));

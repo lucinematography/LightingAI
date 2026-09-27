@@ -55,6 +55,7 @@ let currentCueIndex=-1;
 let lastBlackoutSnapshot=null;
 let outputArmed=false;
 let pendingArmPreflightId=null;
+let activeDiscoveryRequestId='';
 let armGeneration=0;
 let armedNetworkSignature='';
 let armedContextSignature='';
@@ -491,8 +492,17 @@ function discoverNodes(){
  const transport=controlTransport();
  if(!transport.isAvailable()||typeof transport.discover!=='function'){status(t().native,false);return}
  const id='artnet_discovery_'+Date.now()+'_'+(++seq);
+ activeDiscoveryRequestId=id;
  status(t().discovering);
- try{if(!transport.discover({id:id,timeoutMs:900}))status(t().native,false)}catch(e){status(t().error,false)}
+ try{
+  if(!transport.discover({id:id,timeoutMs:900})){
+   if(activeDiscoveryRequestId===id)activeDiscoveryRequestId='';
+   status(t().native,false);
+  }
+ }catch(e){
+  if(activeDiscoveryRequestId===id)activeDiscoveryRequestId='';
+  status(t().error,false);
+ }
 }
 function renderDiscoveredNodes(nodes){
  const select=E('artnetDiscoveredNodes');if(!select)return;
@@ -502,6 +512,8 @@ function renderDiscoveredNodes(nodes){
  select.disabled=!list.length;
 }
 window.LightingAIArtNetDiscoveryResult=function(id,nodes,error){
+ if(String(id||'')!==activeDiscoveryRequestId)return;
+ activeDiscoveryRequestId='';
  if(error){renderDiscoveredNodes([]);status(error,false);return}
  renderDiscoveredNodes(nodes);
  status((Array.isArray(nodes)&&nodes.length)?(t().nodes+': '+nodes.length):t().noNodes,Array.isArray(nodes)&&nodes.length>0);
@@ -1380,6 +1392,7 @@ function stopLiveForBackground(){
  setOutputArmed(false,true);
 }
 function forceLifecycleDisarm(){
+ activeDiscoveryRequestId='';
  armGeneration++;
  armedNetworkSignature='';
  armedContextSignature='';

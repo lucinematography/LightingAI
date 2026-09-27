@@ -45,7 +45,7 @@ public final class SacnLiveEngine {
     }
 
     public void setFrame(int universe, int[] channels) throws Exception {
-        int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
+        int u = SacnSender.validateUniverse(universe);
         int[] copy = channels == null ? new int[0] : Arrays.copyOf(channels, Math.min(512, channels.length));
         synchronized (lock) {
             ensureRunningLocked();

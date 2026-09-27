@@ -49,6 +49,7 @@ public final class ArtNetLiveEngine {
             if (!networkSignature.isEmpty() && !networkSignature.equals(currentNetwork)) {
                 throw new IllegalStateException("Network changed; re-arm required");
             }
+            if (frames.isEmpty()) lastError = "";
             networkSignature = currentNetwork;
             ensureRunningLocked();
             frames.put(key(ip, u), new Frame(ip, u, copy));

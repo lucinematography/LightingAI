@@ -26,7 +26,12 @@ const TXT={
   likelyMesh:'BLE MESH UREĐAJ',
   meshProxy:'BLE MESH PROXY',
   fingerprint:'OTISAK OGLASA',
-  diag:'DIJAGNOSTIKA OGLASA'
+  diag:'DIJAGNOSTIKA OGLASA',
+  bondTest:'TEST UPRARIVANJA',
+  bondTesting:'Pokrećem Android BLE uparivanje…',
+  bondNone:'Nije upareno',
+  bondBonding:'Uparivanje je u toku',
+  bondBonded:'Upareno'
  },
  en:{
   title:'📶 BLUETOOTH / BLE',
@@ -51,7 +56,12 @@ const TXT={
   likelyMesh:'BLE MESH DEVICE',
   meshProxy:'BLE MESH PROXY',
   fingerprint:'ADVERTISEMENT FINGERPRINT',
-  diag:'ADVERTISEMENT DIAGNOSTICS'
+  diag:'ADVERTISEMENT DIAGNOSTICS',
+  bondTest:'BOND TEST',
+  bondTesting:'Starting Android BLE bond…',
+  bondNone:'Not bonded',
+  bondBonding:'Bonding in progress',
+  bondBonded:'Bonded'
  }
 };
 const t=()=>TXT[lang()];
@@ -79,6 +89,10 @@ function transport(){
   inspect:function(request){
    if(androidReady&&typeof Android.bleInspectGatt==='function'){Android.bleInspectGatt(request.id,request.address,request.name||'',request.timeoutMs||8000);return true}
    if(iosReady){iosHandler.postMessage({action:'bleInspectGatt',id:request.id,address:request.address,name:request.name||'',timeoutMs:request.timeoutMs||8000});return true}
+   return false;
+  },
+  bond:function(request){
+   if(androidReady&&typeof Android.bleBondTest==='function'){Android.bleBondTest(request.id,request.address,request.timeoutMs||20000);return true}
    return false;
   }
  };
@@ -122,6 +136,31 @@ function inspectDevice(address,name,targetId){
  try{if(!tr.inspect({id:id,address:address,name:name||'',timeoutMs:15000})&&target)target.innerHTML='<div class="muted small" style="color:#ffb5b5">'+esc(t().inspectFail)+'</div>'}
  catch(e){if(target)target.innerHTML='<div class="muted small" style="color:#ffb5b5">'+esc(t().inspectFail)+'</div>'}
 }
+function bondDevice(address,targetId){
+ const tr=transport();
+ if(!address){status(t().unavailable,false);return}
+ const id='bond_'+Date.now()+'_'+(++seq);
+ const target=E(targetId);
+ if(target)target.innerHTML='<div class="muted small">'+esc(t().bondTesting)+'</div>';
+ window.__lightingAIBondTargets=window.__lightingAIBondTargets||{};
+ window.__lightingAIBondTargets[id]=targetId;
+ try{if(!tr.bond({id:id,address:address,timeoutMs:20000})&&target)target.innerHTML='<div class="muted small" style="color:#ffb5b5">'+esc(t().unavailable)+'</div>'}
+ catch(e){if(target)target.innerHTML='<div class="muted small" style="color:#ffb5b5">'+esc(t().error)+'</div>'}
+}
+window.LightingAIBleBondResult=function(id,result,error){
+ const map=window.__lightingAIBondTargets||{};
+ const targetId=map[id];
+ const target=E(targetId);
+ if(!target)return;
+ let label=t().bondNone;
+ if(result&&result.bondStateName==='BONDING')label=t().bondBonding;
+ if(result&&result.bondStateName==='BONDED')label=t().bondBonded;
+ target.innerHTML='<div class="muted small"><b>BOND:</b> '+esc(result&&result.bondStateName||'NONE')+' ('+esc(result&&result.bondState!=null?result.bondState:'—')+')'+
+  (result&&result.previousBondStateName?(' · PREV '+esc(result.previousBondStateName)):'')+
+  (error?(' · '+esc(error)):'')+
+  '<br>'+esc(label)+'</div>';
+ if((result&&result.bondStateName==='BONDED')||error==='ble_bond_timeout'||(result&&result.bondStateName==='NONE'&&result.previousBondStateName==='BONDING')) delete map[id];
+};
 function renderGatt(profile){
  const services=Array.isArray(profile&&profile.services)?profile.services:[];
  const reads=Array.isArray(profile&&profile.readValues)?profile.readValues:[];
@@ -178,9 +217,11 @@ function render(devices){
       (manufacturerPayloads.map(x=>'<div><b>MFG '+esc(x&&x.id||'')+':</b> '+esc(x&&x.hex||'')+'</div>').join(''))+
       '<div><b>FLAGS:</b> '+esc(d&&d.advertiseFlags!=null?d.advertiseFlags:'—')+' · <b>TX:</b> '+esc(d&&d.txPowerLevel!=null?d.txPowerLevel:'—')+' · <b>CONNECTABLE:</b> '+esc(d&&d.connectable)+'</div>'+
      '</div></details>':'')+
-    (address&&d&&d.connectable?'<button class="btn secondary ble-gatt-btn" style="margin-top:7px" type="button" data-address="'+esc(address)+'" data-name="'+esc(name)+'" data-target="'+targetId+'">'+esc(t().inspect)+'</button><div id="'+targetId+'"></div>':'')+
+    (address&&d&&d.connectable?'<button class="btn secondary ble-bond-btn" style="margin-top:7px" type="button" data-address="'+esc(address)+'" data-target="'+targetId+'_bond">'+esc(t().bondTest)+'</button><div id="'+targetId+'_bond"></div>'+
+    '<button class="btn secondary ble-gatt-btn" style="margin-top:7px" type="button" data-address="'+esc(address)+'" data-name="'+esc(name)+'" data-target="'+targetId+'">'+esc(t().inspect)+'</button><div id="'+targetId+'"></div>':'')+
    '</div>';
   }).join('');
+ box.querySelectorAll('.ble-bond-btn').forEach(btn=>btn.addEventListener('click',()=>bondDevice(btn.dataset.address,btn.dataset.target)));
  box.querySelectorAll('.ble-gatt-btn').forEach(btn=>btn.addEventListener('click',()=>inspectDevice(btn.dataset.address,btn.dataset.name||'',btn.dataset.target)));
 }
 window.LightingAIBleDiscoveryResult=function(id,devices,error){

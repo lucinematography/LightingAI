@@ -14,8 +14,9 @@ const MAX_CUES=64;
 const MAX_GROUPS=24;
 const VERIFIED_BRIDGES=[
  {id:'',manufacturer:'',model:'',protocols:['artnet','sacn'],transport:'',output:'',artNetPortAddressOffset:-1,sourceUrl:''},
- {id:'aputure-sidus-one',manufacturer:'Aputure',model:'Sidus One',protocols:['artnet','sacn'],transport:'Wi-Fi',output:'DMX / CRMX',universeMin:1,universeMax:4,maxActiveUniverses:1,artNetPortAddressOffset:0,sourceUrl:'https://help.aputure.com/en/sidus-one/art-net/sacn-over-wi-fi-in'},
- {id:'astera-fp3-datalink',manufacturer:'Astera',model:'FP3 DataLink',protocols:['artnet','sacn'],transport:'Ethernet / RJ45',output:'DMX via XLR / Astera power-data',artNetPortAddressOffset:-1,sourceUrl:'https://astera-led.com/wp-content/uploads/FP3_DataLink_Datasheet_V2-1.pdf'}
+ {id:'aputure-sidus-one',manufacturer:'Aputure',model:'Sidus One',protocols:['artnet','sacn'],transport:'Wi-Fi',output:'1 x DMX / 1 x CRMX',artNetUniverseMin:1,artNetUniverseMax:4,sacnUniverseMin:1,sacnUniverseMax:4,maxActiveUniverses:1,artNetPortAddressOffset:0,sourceUrl:'https://help.aputure.com/en/sidus-one/art-net/sacn-over-wi-fi-in'},
+ {id:'aputure-sidus-four',manufacturer:'Aputure',model:'Sidus Four',protocols:['artnet','sacn'],transport:'Ethernet / Wi-Fi',output:'4 x CRMX + 4 x bidirectional DMX',artNetUniverseMin:1,artNetUniverseMax:32767,sacnUniverseMin:1,sacnUniverseMax:63999,maxActiveUniverses:8,artNetPortAddressOffset:0,sourceUrl:'https://help.aputure.com/en/sidus-four/technical-specification'},
+ {id:'astera-fp3-datalink',manufacturer:'Astera',model:'FP3 DataLink',protocols:['artnet','sacn'],transport:'Ethernet / RJ45',output:'1 universe DMX via XLR / Astera power-data',maxActiveUniverses:1,artNetPortAddressOffset:-1,sourceUrl:'https://astera-led.com/wp-content/uploads/FP3_DataLink_Datasheet_V2-1.pdf'}
 ];
 const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
 const TXT={
@@ -439,9 +440,13 @@ function bridgeUniverseAllowed(universe,protocol){
  const bridge=selectedBridge();
  if(!bridge||!bridge.id)return true;
  if(Array.isArray(bridge.protocols)&&!bridge.protocols.includes(protocol))return false;
- const u=Number(universe),min=Number(bridge.universeMin),max=Number(bridge.universeMax);
- if(Number.isFinite(min)&&u<min)return false;
- if(Number.isFinite(max)&&u>max)return false;
+ const u=Number(universe);
+ const min=Number(protocol==='sacn'?bridge.sacnUniverseMin:bridge.artNetUniverseMin);
+ const max=Number(protocol==='sacn'?bridge.sacnUniverseMax:bridge.artNetUniverseMax);
+ const legacyMin=Number(bridge.universeMin),legacyMax=Number(bridge.universeMax);
+ const effectiveMin=Number.isFinite(min)?min:legacyMin,effectiveMax=Number.isFinite(max)?max:legacyMax;
+ if(Number.isFinite(effectiveMin)&&u<effectiveMin)return false;
+ if(Number.isFinite(effectiveMax)&&u>effectiveMax)return false;
  return true;
 }
 function bridgeUniverseSetAllowed(values,protocol){

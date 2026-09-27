@@ -37,6 +37,8 @@ for(const marker of [
  expect(main.includes(marker),'MainActivity critical bridge missing: '+marker);
 }
 expect(main.includes('if (sacnLiveEngine != null) sacnLiveEngine.stopAll();'),'sACN lifecycle shutdown missing');
+expect(main.includes('artNetLiveEpoch')&&main.includes('sacnLiveEpoch'),'Native live epoch guards missing');
+expect(main.includes('Stale Art-Net live update ignored')&&main.includes('Stale sACN live update ignored'),'Native stale live-update rejection missing');
 const artNetLive=read('app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java');
 const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
 expect(artNetLive.includes('tickFailed')&&artNetLive.includes('tickError'),'Art-Net partial live failure aggregation missing');

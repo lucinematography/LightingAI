@@ -112,6 +112,8 @@ expect(control.includes('fadePatchSignature!==patchSignature()'),'Fade patch-cha
 expect(control.includes('armedContextSignature')&&control.includes('controlContextSignature()!==armedContextSignature'),'ARM project/scene context guard missing');
 expect(control.includes("const id='networkdmx_stop_g'+armGeneration")&&control.includes('armGeneration++;'),'LIVE callback generation isolation missing');
 expect(control.includes('frames[String(u)]=staged'),'Transactional single-write frame commit missing');
+expect(control.includes("const u=validUniverseForProtocol(Number(r.universe),selectedProtocol());")&&control.includes("if(u==null||!bridgeUniverseAllowed(u,selectedProtocol())"),'AI staged apply must fail closed on invalid universe/bridge route');
+expect(control.includes("const current=frames[String(u)]||new Array(512).fill(0),target=current.slice(0,512);")&&control.includes("if(!sendFrame(target.slice(),u)){setOutputArmed(false,true);status(t().error,false);return false}")&&control.includes("frames[String(u)]=target;"),'AI staged apply must commit frame only after accepted send');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
 expect(control.includes('if(!accepted){setOutputArmed(false,true);status(t().error,false);return}'),'Transactional blackout failure disarm missing');
 expect(control.includes('function applyScene(index)')&&control.includes('if(!accepted){')&&control.includes('setOutputArmed(false,true);')&&control.includes('return false;'),'Transactional scene failure disarm missing');

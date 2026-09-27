@@ -631,7 +631,8 @@ function goCue(index){
  const cue=cues[target],sceneIndex=sceneIndexByName(cue.sceneName);
  if(sceneIndex<0){status(t().cueMissing,false);return}
  const fade=Math.max(0,Math.min(60,Number(cue.fadeSeconds)||0));
- if(fade>0)fadeToScene(sceneIndex,fade);else applyScene(sceneIndex);
+ const accepted=fade>0?fadeToScene(sceneIndex,fade):applyScene(sceneIndex);
+ if(!accepted)return;
  currentCueIndex=target;renderCueStack();
 }
 function previousCue(){
@@ -758,13 +759,13 @@ function cancelSceneFade(showStatus){
  if(showStatus)status(t().sceneFadeCancelled);
 }
 function fadeToScene(index,secondsOverride){
- if(!requireOutputArmed())return;
+ if(!requireOutputArmed())return false;
  clearBlackoutRestore();
  const scenes=readScenes(),scene=scenes[index];
- if(!scene||!scene.frames)return;
- if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return}
+ if(!scene||!scene.frames)return false;
+ if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return false}
  const next=normalizedSceneFrames(scene),universeSet=new Set(Object.keys(frames).concat(Object.keys(next)));
- if(!universeSet.size){status(t().sceneNeedFrame,false);return}
+ if(!universeSet.size){status(t().sceneNeedFrame,false);return false}
  cancelSceneFade(false);
  const start={},target={},universes=Array.from(universeSet),snapChannels=fadeSnapChannels();
  universes.forEach(u=>{
@@ -800,12 +801,13 @@ function fadeToScene(index,secondsOverride){
  activeSceneFade={timer:setInterval(tick,33),sceneIndex:index};
  status(t().sceneFading);
  tick();
+ return !!activeSceneFade;
 }
 function applyScene(index){
- if(!requireOutputArmed())return;
+ if(!requireOutputArmed())return false;
  const scenes=readScenes(),scene=scenes[index];
- if(!scene||!scene.frames)return;
- if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return}
+ if(!scene||!scene.frames)return false;
+ if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return false}
  cancelSceneFade(false);
  const next=normalizedSceneFrames(scene);
  const oldUniverses=Object.keys(frames),wasLive=liveEnabled;
@@ -818,6 +820,7 @@ function applyScene(index){
   if(!setLiveEnabled(true))accepted=false;
  }else Object.keys(frames).forEach(u=>{if(!sendFrame(frames[u].slice(),Number(u)))accepted=false});
  if(accepted)status(t().sceneApplied,true);else status(t().error,false);
+ return accepted;
 }
 function deleteScene(index){
  const scenes=readScenes();
@@ -1405,14 +1408,15 @@ function applyStagedFixture(fixtureId){
   if(writeControlToFrame(target,address,ctrl,item.value))wrote=true;
  });
  if(!wrote){status(t().error,false);return false}
- sendFrame(target.slice(),Math.max(1,Number(r.universe)||1));
+ const sent=sendFrame(target.slice(),Math.max(1,Number(r.universe)||1));
+ if(!sent){status(t().error,false);return false}
  aiStagedFixture=null;
  const action=E('artnetAiStageAction');if(action)action.remove();
  status(lang()==='sr'?'AI vrednosti su poslate verifikovanim DMX putem.':'AI values sent through the verified DMX path.',true);
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.38-control-health-watchdog',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.39-truthful-cue-ai-status',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

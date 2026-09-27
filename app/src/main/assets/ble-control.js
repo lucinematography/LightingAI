@@ -14,6 +14,10 @@ const TXT={
   disabled:'Bluetooth je isključen na telefonu.',
   unavailable:'Ovaj uređaj nema podržan BLE skener.',
   cancelled:'BLE pretraga je zaustavljena.',
+  locationDisabled:'Za BLE pretragu na ovom Android uređaju uključi Location/GPS servis.',
+  alreadyScanning:'BLE pretraga je već u toku.',
+  tooFrequent:'Bluetooth je privremeno odbio novo skeniranje jer su pretrage pokretane prečesto. Sačekaj nekoliko sekundi i pokušaj ponovo.',
+  resources:'Bluetooth nema dovoljno sistemskih resursa za novo skeniranje. Isključi/uključi Bluetooth i pokušaj ponovo.',
   error:'BLE pretraga nije uspela.',
   rssi:'SIGNAL',
   services:'SERVISI',
@@ -31,6 +35,10 @@ const TXT={
   disabled:'Bluetooth is disabled on this phone.',
   unavailable:'This device does not provide a supported BLE scanner.',
   cancelled:'BLE scan stopped.',
+  locationDisabled:'Enable Location/GPS service for BLE discovery on this Android device.',
+  alreadyScanning:'BLE discovery is already running.',
+  tooFrequent:'Bluetooth temporarily rejected a new scan because scans were started too frequently. Wait a few seconds and try again.',
+  resources:'Bluetooth has insufficient system resources for a new scan. Toggle Bluetooth off/on and try again.',
   error:'BLE discovery failed.',
   rssi:'SIGNAL',
   services:'SERVICES',
@@ -40,6 +48,8 @@ const TXT={
 };
 const t=()=>TXT[lang()];
 let seq=0;
+let scanActive=false;
+let scanCooldownUntil=0;
 
 function status(message,ok){
  const el=E('bleStatus');if(!el)return;
@@ -62,20 +72,33 @@ function transport(){
   }
  };
 }
+function setScanBusy(busy){
+ scanActive=!!busy;
+ const button=E('bleScan');
+ if(button)button.disabled=scanActive||Date.now()<scanCooldownUntil;
+}
 function startScan(){
  const tr=transport();
  if(!tr.available){status(t().unavailable,false);return}
+ if(scanActive){status(t().alreadyScanning,false);return}
+ if(Date.now()<scanCooldownUntil){status(t().tooFrequent,false);return}
  const id='ble_'+Date.now()+'_'+(++seq);
  E('bleResults').innerHTML='';
+ setScanBusy(true);
  status(t().scanning);
- try{if(!tr.discover({id:id,timeoutMs:3500}))status(t().unavailable,false)}
- catch(e){status(t().error,false)}
+ try{
+  if(!tr.discover({id:id,timeoutMs:3500})){setScanBusy(false);status(t().unavailable,false)}
+ }catch(e){setScanBusy(false);status(t().error,false)}
 }
 function errorText(code){
  if(code==='ble_permission_denied')return t().permission;
  if(code==='bluetooth_disabled')return t().disabled;
  if(code==='bluetooth_unavailable'||code==='ble_scanner_unavailable')return t().unavailable;
  if(code==='ble_scan_cancelled')return t().cancelled;
+ if(code==='ble_location_disabled')return t().locationDisabled;
+ if(code==='ble_scan_failed_1')return t().alreadyScanning;
+ if(code==='ble_scan_failed_5')return t().resources;
+ if(code==='ble_scan_failed_6')return t().tooFrequent;
  return t().error+(code?' ('+code+')':'');
 }
 function render(devices){
@@ -96,6 +119,10 @@ function render(devices){
   }).join('');
 }
 window.LightingAIBleDiscoveryResult=function(id,devices,error){
+ scanCooldownUntil=Date.now()+2000;
+ setScanBusy(false);
+ const button=E('bleScan');
+ if(button)setTimeout(()=>{if(Date.now()>=scanCooldownUntil&&!scanActive)button.disabled=false},2050);
  if(error){render([]);status(errorText(error),false);return}
  render(devices);
  status((Array.isArray(devices)&&devices.length)?(t().found+': '+devices.length):t().none,Array.isArray(devices)&&devices.length>0);
@@ -126,7 +153,7 @@ function install(){
  translate();
  return true;
 }
-window.LightingAIBleControl={version:'0.1-ble-discovery',discover:startScan};
+window.LightingAIBleControl={version:'0.2-ble-scan-guarded',discover:startScan};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

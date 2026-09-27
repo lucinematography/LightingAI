@@ -37,6 +37,10 @@ for(const marker of [
  expect(main.includes(marker),'MainActivity critical bridge missing: '+marker);
 }
 expect(main.includes('if (sacnLiveEngine != null) sacnLiveEngine.stopAll();'),'sACN lifecycle shutdown missing');
+const artNetLive=read('app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java');
+const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
+expect(artNetLive.includes('tickFailed')&&artNetLive.includes('tickError'),'Art-Net partial live failure aggregation missing');
+expect(sacnLive.includes('tickFailed')&&sacnLive.includes('tickError'),'sACN partial live failure aggregation missing');
 expect(main.includes('LightingAINetworkDmxLifecyclePause'),'Network DMX pause fail-safe missing');
 expect(main.includes('LightingAINetworkDmxLifecycleResume'),'Network DMX resume fail-safe missing');
 expect(main.includes("file:///android_asset/control-bootstrap.js"),'Deterministic control bootstrap injection missing');

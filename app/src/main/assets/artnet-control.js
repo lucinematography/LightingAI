@@ -827,8 +827,8 @@ function normalizedSceneFrames(scene){
   if(!Array.isArray(source)||source.length!==512)return null;
   const frameValues=new Array(512);
   for(let i=0;i<512;i++){
-   const value=Number(source[i]);
-   if(!Number.isInteger(value)||value<0||value>255)return null;
+   const value=source[i];
+   if(typeof value!=='number'||!Number.isInteger(value)||value<0||value>255)return null;
    frameValues[i]=value;
   }
   next[String(universe)]=frameValues;
@@ -1601,7 +1601,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.51-canonical-scene-universes',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.52-strict-scene-frame-values',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

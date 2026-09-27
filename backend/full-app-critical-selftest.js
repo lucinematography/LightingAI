@@ -48,7 +48,12 @@ expect(bleScanner.includes('SCAN_MODE_LOW_LATENCY'),'Manual BLE scan must use lo
 expect(bleScanner.includes('ble_scan_failed_'),'BLE scan failure code propagation missing');
 
 const bleUi=read('app/src/main/assets/ble-control.js');
-expect(bleUi.includes("version:'0.2-ble-scan-guarded'"),'Guarded BLE scan UI missing');
+expect(bleUi.includes("version:'0.3-ble-readonly-gatt'"),'Read-only BLE GATT inspection UI missing');
+expect(bleUi.includes('bleInspectGatt')&&bleUi.includes('LightingAIBleGattInspectionResult'),'BLE GATT inspection bridge missing');
+const bleGatt=read('app/src/main/java/com/lightingai/app/BleGattInspector.java');
+expect(bleGatt.includes('discoverServices()'),'BLE GATT service discovery missing');
+expect(!bleGatt.includes('writeCharacteristic')&&!bleGatt.includes('writeDescriptor')&&!bleGatt.includes('setCharacteristicNotification'),'Read-only BLE GATT inspector must not write or subscribe');
+expect(bleGatt.includes('connectGatt')&&bleGatt.includes('closeGattLocked'),'BLE GATT lifecycle close missing');
 expect(bleUi.includes('scanCooldownUntil')&&bleUi.includes('scanActive'),'BLE scan spam guard missing');
 expect(bleUi.includes('ble_scan_failed_6')&&bleUi.includes('tooFrequent'),'BLE frequent-scan error handling missing');
 expect(!main.includes("file:///android_asset/control-system-drivers.js"),'MainActivity must not directly race-load control driver assets');

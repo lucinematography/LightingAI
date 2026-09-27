@@ -1188,11 +1188,15 @@ window.LightingAINetworkDmxLifecyclePause=forceLifecycleDisarm;
 window.LightingAINetworkDmxLifecycleResume=forceLifecycleDisarm;
 window.LightingAIArtNetResult=function(id,ok,message){
  const resultId=String(id||'');
- if(resultId.indexOf('fade_')===0||resultId.indexOf('panic_')===0||resultId.indexOf('restore_')===0){
-  if(!ok){if(resultId.indexOf('fade_')===0)cancelSceneFade(false);status(message||t().error,false)}
+ if(!ok){
+  if(resultId.indexOf('fade_')===0)cancelSceneFade(false);
+  setOutputArmed(false,true);
+  status(message||t().error,false);
   return;
  }
- status(ok?t().sent:(message||t().error),!!ok);
+ if(resultId.indexOf('networkdmx_stop_')===0)return;
+ if(resultId.indexOf('fade_')===0||resultId.indexOf('panic_')===0||resultId.indexOf('restore_')===0)return;
+ status(t().sent,true);
 };
 function translate(){
  if(!E('artnetCard'))return;
@@ -1329,7 +1333,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.32-dispatch-truthful-status',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.33-async-failure-disarms',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

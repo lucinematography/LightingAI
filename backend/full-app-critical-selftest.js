@@ -40,6 +40,17 @@ expect(main.includes('if (sacnLiveEngine != null) sacnLiveEngine.stopAll();'),'s
 expect(main.includes('LightingAINetworkDmxLifecyclePause'),'Network DMX pause fail-safe missing');
 expect(main.includes('LightingAINetworkDmxLifecycleResume'),'Network DMX resume fail-safe missing');
 expect(main.includes("file:///android_asset/control-bootstrap.js"),'Deterministic control bootstrap injection missing');
+expect(main.includes('isBleLocationServiceReady'),'BLE Android 11-and-older Location/GPS service guard missing');
+expect(main.includes('ble_location_disabled'),'BLE Location/GPS disabled result missing');
+
+const bleScanner=read('app/src/main/java/com/lightingai/app/BleDeviceScanner.java');
+expect(bleScanner.includes('SCAN_MODE_LOW_LATENCY'),'Manual BLE scan must use low-latency mode');
+expect(bleScanner.includes('ble_scan_failed_'),'BLE scan failure code propagation missing');
+
+const bleUi=read('app/src/main/assets/ble-control.js');
+expect(bleUi.includes("version:'0.2-ble-scan-guarded'"),'Guarded BLE scan UI missing');
+expect(bleUi.includes('scanCooldownUntil')&&bleUi.includes('scanActive'),'BLE scan spam guard missing');
+expect(bleUi.includes('ble_scan_failed_6')&&bleUi.includes('tooFrequent'),'BLE frequent-scan error handling missing');
 expect(!main.includes("file:///android_asset/control-system-drivers.js"),'MainActivity must not directly race-load control driver assets');
 
 const bootstrap=read('app/src/main/assets/control-bootstrap.js');

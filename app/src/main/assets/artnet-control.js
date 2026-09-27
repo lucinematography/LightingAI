@@ -271,6 +271,10 @@ function validIpv4(value){
  if(parts.length!==4)return false;
  return parts.every(part=>/^\d{1,3}$/.test(part)&&Number(part)>=0&&Number(part)<=255);
 }
+function artNetTargetIsAuto(value){
+ const target=String(value||'').trim();
+ return !target||target.toUpperCase()==='AUTO'||target==='255.255.255.255';
+}
 function finishArmPreflight(id,payload,error){
  if(!pendingArmPreflightId||id!==pendingArmPreflightId)return false;
  pendingArmPreflightId=null;
@@ -288,7 +292,7 @@ function finishArmPreflight(id,payload,error){
  }
  else if(selectedProtocol()==='artnet'){
   const target=String((E('artnetTarget')&&E('artnetTarget').value)||'AUTO').trim();
-  const auto=!target||target.toUpperCase()==='AUTO';
+  const auto=artNetTargetIsAuto(target);
   const broadcasts=interfaces.filter(item=>item&&item.broadcast);
   if(auto&&!broadcasts.length)failure=t().preflightNoBroadcast;
   else if(auto&&broadcasts.length>1)failure=t().preflightMultipleRoutes;
@@ -1264,7 +1268,7 @@ function sendFrame(channels,universe,source){
  const artNetPortAddress=protocol==='artnet'?artNetPortAddressForUniverse(u):null;
  if(protocol==='artnet'&&artNetPortAddress==null){status(t().error,false);return false}
  const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();
- const ip=!rawTarget||rawTarget==='255.255.255.255'?'AUTO':rawTarget;
+ const ip=artNetTargetIsAuto(rawTarget)?'AUTO':rawTarget;
  if(protocol==='artnet'){try{localStorage.setItem(TARGET_KEY,ip)}catch(e){}}
  const prefix=source==='fade'?'fade_':(source==='panic'?'panic_':(source==='restore'?'restore_':'networkdmx_'));
  const id=prefix+'g'+armGeneration+'_'+Date.now()+'_'+(++seq);

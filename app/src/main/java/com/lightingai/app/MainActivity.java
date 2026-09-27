@@ -74,8 +74,10 @@ public class MainActivity extends Activity {
     private final AtomicInteger sacnSequence = new AtomicInteger(0);
     private final AtomicInteger artNetLiveEpoch = new AtomicInteger(0);
     private final AtomicInteger sacnLiveEpoch = new AtomicInteger(0);
+    private final AtomicInteger networkDmxSendEpoch = new AtomicInteger(0);
     private final Object artNetLiveControlLock = new Object();
     private final Object sacnLiveControlLock = new Object();
+    private final Object networkDmxSendLock = new Object();
     private final AtomicInteger sacnPriority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
     private final AtomicLong artNetDirectSent = new AtomicLong(0);
     private final AtomicLong artNetDirectFailed = new AtomicLong(0);
@@ -1018,11 +1020,17 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void networkDmxSetArmSignature(String signature) {
-            networkDmxArmSignature = signature == null ? "" : signature.trim();
+            synchronized (networkDmxSendLock) {
+                networkDmxSendEpoch.incrementAndGet();
+                networkDmxArmSignature = signature == null ? "" : signature.trim();
+            }
         }
 
         @JavascriptInterface public void networkDmxClearArmSignature() {
-            networkDmxArmSignature = "";
+            synchronized (networkDmxSendLock) {
+                networkDmxSendEpoch.incrementAndGet();
+                networkDmxArmSignature = "";
+            }
         }
 
         @JavascriptInterface public String networkDmxDiagnostics() {
@@ -1075,17 +1083,21 @@ public class MainActivity extends Activity {
             final String id = requestId == null ? "" : requestId;
             final int u = universe;
             final String raw = channelsJson == null ? "[]" : channelsJson;
+            final int epoch = networkDmxSendEpoch.get();
             new Thread(() -> {
                 boolean ok = false;
                 String message = "";
                 try {
-                    requireNetworkDmxArmedRoute();
                     JSONArray a = new JSONArray(raw);
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
-                    int seq = sacnSequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
-                    SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get());
+                    synchronized (networkDmxSendLock) {
+                        if (epoch != networkDmxSendEpoch.get()) throw new IllegalStateException("Stale sACN direct send ignored");
+                        requireNetworkDmxArmedRoute();
+                        int seq = sacnSequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
+                        SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get());
+                    }
                     sacnDirectSent.incrementAndGet();
                     sacnDirectLastAtMs.set(System.currentTimeMillis());
                     sacnDirectLastError = "";
@@ -1165,17 +1177,21 @@ public class MainActivity extends Activity {
             final String ip = targetIp == null ? "" : targetIp;
             final int u = universe;
             final String raw = channelsJson == null ? "[]" : channelsJson;
+            final int epoch = networkDmxSendEpoch.get();
             new Thread(() -> {
                 boolean ok = false;
                 String message = "";
                 try {
-                    requireNetworkDmxArmedRoute();
                     JSONArray a = new JSONArray(raw);
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
-                    int seq = artNetSequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
-                    ArtNetSender.sendDmx(ip, u, channels, seq);
+                    synchronized (networkDmxSendLock) {
+                        if (epoch != networkDmxSendEpoch.get()) throw new IllegalStateException("Stale Art-Net direct send ignored");
+                        requireNetworkDmxArmedRoute();
+                        int seq = artNetSequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
+                        ArtNetSender.sendDmx(ip, u, channels, seq);
+                    }
                     artNetDirectSent.incrementAndGet();
                     artNetDirectLastAtMs.set(System.currentTimeMillis());
                     artNetDirectLastError = "";
@@ -1275,7 +1291,10 @@ public class MainActivity extends Activity {
         super.onResume();
         // Fail closed after any lifecycle transition. Native live engines must never
         // resume output until the WebView performs a fresh ARM preflight.
-        networkDmxArmSignature = "";
+        synchronized (networkDmxSendLock) {
+            networkDmxSendEpoch.incrementAndGet();
+            networkDmxArmSignature = "";
+        }
         synchronized (artNetLiveControlLock) {
             artNetLiveEpoch.incrementAndGet();
             artNetLiveEngine.stopAll();
@@ -1293,7 +1312,10 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() {
         stopNativeSunCompass();
-        networkDmxArmSignature = "";
+        synchronized (networkDmxSendLock) {
+            networkDmxSendEpoch.incrementAndGet();
+            networkDmxArmSignature = "";
+        }
         synchronized (artNetLiveControlLock) {
             artNetLiveEpoch.incrementAndGet();
             artNetLiveEngine.stopAll();
@@ -1378,7 +1400,10 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
-        networkDmxArmSignature = "";
+        synchronized (networkDmxSendLock) {
+            networkDmxSendEpoch.incrementAndGet();
+            networkDmxArmSignature = "";
+        }
         synchronized (artNetLiveControlLock) {
             artNetLiveEpoch.incrementAndGet();
             artNetLiveEngine.stopAll();

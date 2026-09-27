@@ -33,6 +33,7 @@ public final class BleGattInspector {
     private Runnable timeoutRunnable;
     private Runnable retryRunnable;
     private Callback callback;
+    private int inspectionEpoch = 0;
     private String activeAddress = "";
     private long deadlineMs = 0L;
     private int attempt = 0;
@@ -52,6 +53,7 @@ public final class BleGattInspector {
         final int boundedTimeout = Math.max(4000, Math.min(20000, timeoutMs));
         synchronized (lock) {
             cancelLocked();
+            final int thisInspectionEpoch = ++inspectionEpoch;
             callback = resultCallback;
             activeAddress = target;
             deadlineMs = System.currentTimeMillis() + boundedTimeout;
@@ -62,6 +64,7 @@ public final class BleGattInspector {
             }
             timeoutRunnable = () -> {
                 synchronized (lock) {
+                    if (thisInspectionEpoch != inspectionEpoch || callback == null) return;
                     finishErrorLocked("ble_gatt_timeout");
                 }
             };
@@ -207,9 +210,11 @@ public final class BleGattInspector {
         long remaining = deadlineMs - System.currentTimeMillis();
         if (callback != null && attempt < MAX_ATTEMPTS && remaining > 1500L) {
             long delay = attempt == 1 ? 500L : 1000L;
+            final int retryEpoch = inspectionEpoch;
             retryRunnable = () -> {
                 synchronized (lock) {
                     retryRunnable = null;
+                    if (retryEpoch != inspectionEpoch || callback == null) return;
                     connectAttemptLocked();
                 }
             };
@@ -310,6 +315,7 @@ public final class BleGattInspector {
 
     @SuppressLint("MissingPermission")
     private void cancelLocked() {
+        inspectionEpoch++;
         callback = null;
         cancelTimersLocked();
         closeGattOnlyLocked();

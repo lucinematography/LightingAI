@@ -45,9 +45,25 @@ for (const fixture of fixtures) {
   const b = bucket(maker);
   b.fixtures++;
 
+  const control = fixture.control && typeof fixture.control === 'object' && !Array.isArray(fixture.control) ? fixture.control : {};
   const controlStrings = textList(fixture.control);
-  const nativeNetwork = hasAny(controlStrings, ['art-net','artnet','sacn','e1.31','ethercon']);
-  const standardDmx = hasAny(controlStrings, ['dmx512','dmx','rdm','crmx','lumenradio']);
+  const directStrings = textList(control.directLightingAI);
+  const standardStrings = [
+    ...textList(control.directLightingAI),
+    ...textList(control.wired),
+    ...textList(control.wireless)
+  ];
+  const verifiedRoutes = Array.isArray(control.standardRoutes)
+    ? control.standardRoutes.filter(r => r && r.verified === true)
+    : [];
+  const routeInputs = verifiedRoutes.flatMap(r => textList(r.input));
+  const routeOutputs = verifiedRoutes.flatMap(r => textList(r.output));
+  const nativeNetwork =
+    hasAny(directStrings, ['art-net','artnet','sacn','e1.31']) ||
+    hasAny(routeInputs, ['art-net','artnet','sacn','e1.31']);
+  const standardDmx =
+    hasAny(standardStrings, ['dmx512','dmx','rdm','crmx','lumenradio']) ||
+    hasAny(routeOutputs, ['dmx512','dmx','rdm','crmx','lumenradio']);
   const proprietary = hasAny(controlStrings, ['sidus','bluetooth','ble','mesh','asteraapp','uhf','wifi','wi-fi']);
   if (nativeNetwork) b.nativeNetwork++;
   if (standardDmx) b.standardDmx++;
@@ -137,8 +153,8 @@ const summary = {
   fixtures: fixtures.length,
   manufacturers: Object.keys(manufacturers).length,
   verifiedDmxFixtures: fixtures.filter(f => Array.isArray(f.dmxModes) && f.dmxModes.some(m => m?.verified === true)).length,
-  nativeNetworkFixtures: fixtures.filter(f => hasAny(textList(f.control), ['art-net','artnet','sacn','e1.31','ethercon'])).length,
-  standardDmxFixtures: fixtures.filter(f => hasAny(textList(f.control), ['dmx512','dmx','rdm','crmx','lumenradio'])).length,
+  nativeNetworkFixtures: [...byManufacturer.values()].reduce((sum,b)=>sum+b.nativeNetwork,0),
+  standardDmxFixtures: [...byManufacturer.values()].reduce((sum,b)=>sum+b.standardDmx,0),
   warnings: warnings.length,
   failures,
   sampleWarnings: warnings.slice(0, 80),

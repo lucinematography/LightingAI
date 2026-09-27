@@ -7,6 +7,8 @@ import java.nio.charset.StandardCharsets;
 
 public final class ArtNetSender {
     public static final int ARTNET_PORT = 6454;
+    public static final int MIN_UNIVERSE = 1;
+    public static final int MAX_UNIVERSE = 32768;
     public static final String AUTO_TARGET = "AUTO";
 
     private ArtNetSender() {}
@@ -51,8 +53,15 @@ public final class ArtNetSender {
         return AUTO_TARGET.equalsIgnoreCase(normalizeTarget(targetIp));
     }
 
+    static int validateUniverse(int universe) {
+        if (universe < MIN_UNIVERSE || universe > MAX_UNIVERSE) {
+            throw new IllegalArgumentException("Art-Net universe out of range: " + universe);
+        }
+        return universe;
+    }
+
     static byte[] buildDmxPacket(int universe, int[] channels, int sequence) {
-        int logicalUniverse = Math.max(1, universe) - 1;
+        int logicalUniverse = validateUniverse(universe) - 1;
         int length = Math.max(2, Math.min(512, channels == null ? 0 : channels.length));
         if ((length & 1) != 0) length++;
 

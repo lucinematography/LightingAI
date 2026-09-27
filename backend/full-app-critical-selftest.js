@@ -123,7 +123,7 @@ const control=read('app/src/main/assets/artnet-control.js');
 expect(control.includes('activeDiscoveryRequestId')&&control.includes("String(id||'')!==activeDiscoveryRequestId"),'Art-Net discovery must ignore stale callbacks by request id');
 expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
 expect(control.includes('legacyContextStorageKey')&&control.includes('::ctxv2_')&&control.includes('item.contextSignature===signature'),'Control storage must verify the exact project/scene context and migrate legacy hashed keys safely');
-expect(control.includes("version:'0.48-route-state-separated'"),'Route-state separated control version missing');
+expect(control.includes("version:'0.49-known-frame-required'"),'Known-frame-required control version missing');
 expect(control.includes('armedPatchSignature')&&control.includes('patchSignature()!==armedPatchSignature'),'ARM patch signature guard missing');
 expect(control.includes("function artNetTargetIsAuto(value)")&&control.includes("target==='255.255.255.255'")&&control.includes("const auto=artNetTargetIsAuto(target);")&&control.includes("const ip=artNetTargetIsAuto(rawTarget)?'AUTO':rawTarget;"),'Art-Net preflight and sender must use identical AUTO target semantics');
 expect(control.includes('u!=null&&u>=1&&u<=999')&&control.includes('start+channels-1<=512'),'Control layer must independently revalidate patch universe/start/footprint');
@@ -135,6 +135,9 @@ expect(control.includes('frames[String(u)]=staged'),'Transactional single-write 
 expect(control.includes("const u=validUniverseForProtocol(Number(r.universe),selectedProtocol());")&&control.includes("if(u==null||!bridgeUniverseAllowed(u,selectedProtocol())"),'AI staged apply must fail closed on invalid universe/bridge route');
 expect(control.includes("const current=frames[String(u)]||new Array(512).fill(0),target=current.slice(0,512);")&&control.includes("if(!sendFrame(target.slice(),u)){setOutputArmed(false,true);status(t().error,false);return false}")&&control.includes("frames[String(u)]=target;"),'AI staged apply must commit frame only after accepted send');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
+expect(control.includes("if(!Array.isArray(known))return null;"),'MASTER partial writes must reject unknown universe baseline');
+expect(control.includes("if(!Array.isArray(current)){status(t().frameUnknown,false);return}")&&control.includes("if(!Array.isArray(current)){status(t().frameUnknown,false);return false}"),'Single/verified/AI partial writes must reject unknown universe baseline');
+expect(control.includes("if(universes.some(u=>!Array.isArray(frames[u]))){status(t().frameUnknown,false);return false}"),'Scene fade must require known start frame for every universe');
 expect(control.includes('if(!accepted){setOutputArmed(false,true);status(t().error,false);return}'),'Transactional blackout failure disarm missing');
 expect(control.includes('const restoreIsExact=universes.every(u=>Array.isArray(frames[String(u)]));')&&control.includes('panicDoneNoRestore'),'Global blackout restore must require exact known prior state for every universe');
 expect(control.includes('function applyScene(index)')&&control.includes('if(!accepted){')&&control.includes('setOutputArmed(false,true);')&&control.includes('return false;'),'Transactional scene failure disarm missing');
@@ -156,7 +159,7 @@ expect(control.includes('if(!accepted){cancelSceneFade(false);setOutputArmed(fal
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('cancelSceneFade(false);'),'Lifecycle disarm must cancel the active scene fade timer');
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('invalidateCachedOutputState();'),'Lifecycle disarm must invalidate runtime DMX output state');
 expect(control.includes('function invalidateCachedOutputState()')&&control.includes('Object.keys(frames).forEach(key=>delete frames[key]);')&&control.includes('invalidateCachedOutputState();')&&control.includes('setOutputArmed(false,true);'),'Async transport failure must invalidate cached DMX state before disarm');
-expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.48-route-state-separated'"),'Route changes must invalidate only route-bound runtime output state');
+expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.49-known-frame-required'"),'Route changes must invalidate only route-bound runtime output state');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
 for(const marker of ['ARM OUTPUT','globalBlackout','restoreBeforeBlackout','fadeToScene','setLiveEnabled','armGeneration']){
  expect(control.includes(marker),'Control critical contract missing: '+marker);

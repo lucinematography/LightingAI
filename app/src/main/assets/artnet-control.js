@@ -604,17 +604,19 @@ function globalBlackout(){
  cancelSceneFade(false);
  const universes=knownUniverseNumbers();
  if(!universes.length){status(t().panicEmpty,false);return}
+ if(universes.some(u=>validUniverseForProtocol(u,selectedProtocol())==null)){status(t().error,false);return}
  const saved={};
  universes.forEach(u=>{
   saved[String(u)]=(frames[String(u)]||new Array(512).fill(0)).slice(0,512);
   while(saved[String(u)].length<512)saved[String(u)].push(0);
  });
  lastBlackoutSnapshot={patchSignature:patchSignature(),frames:saved};
+ let accepted=true;
  universes.forEach(u=>{
   frames[String(u)]=new Array(512).fill(0);
-  sendFrame(frames[String(u)].slice(),u,'panic');
+  if(!sendFrame(frames[String(u)].slice(),u,'panic'))accepted=false;
  });
- status(t().panicDone,true);
+ if(accepted)status(t().panicDone,true);else status(t().error,false);
 }
 function restoreBeforeBlackout(){
  if(!requireOutputArmed())return;
@@ -622,11 +624,15 @@ function restoreBeforeBlackout(){
  if(lastBlackoutSnapshot.patchSignature!==patchSignature()){status(t().panicPatchChanged,false);return}
  cancelSceneFade(false);
  const saved=lastBlackoutSnapshot.frames;
+ const universes=Object.keys(saved).map(Number);
+ if(universes.some(u=>validUniverseForProtocol(u,selectedProtocol())==null)){status(t().error,false);return}
+ let accepted=true;
  Object.keys(saved).forEach(u=>{
   frames[String(u)]=saved[u].slice(0,512);
   while(frames[String(u)].length<512)frames[String(u)].push(0);
-  sendFrame(frames[String(u)].slice(),Number(u),'restore');
+  if(!sendFrame(frames[String(u)].slice(),Number(u),'restore'))accepted=false;
  });
+ if(!accepted){status(t().error,false);return}
  lastBlackoutSnapshot=null;
  status(t().panicRestored,true);
 }
@@ -700,12 +706,14 @@ function fadeToScene(index,secondsOverride){
  const tick=()=>{
   if(!activeSceneFade)return;
   const p=Math.min(1,(Date.now()-started)/duration);
+  let accepted=true;
   universes.forEach(u=>{
    const out=new Array(512);
    for(let i=0;i<512;i++)out[i]=fadeChannelValue(start[u][i],target[u][i],p,!!(snapChannels[u]&&snapChannels[u].has(i)));
    frames[u]=out;
-   sendFrame(out.slice(),Number(u),'fade');
+   if(!sendFrame(out.slice(),Number(u),'fade'))accepted=false;
   });
+  if(!accepted){cancelSceneFade(false);status(t().error,false);return}
   if(p>=1){
    if(activeSceneFade&&activeSceneFade.timer)clearInterval(activeSceneFade.timer);
    const wasLive=liveEnabled;
@@ -713,7 +721,7 @@ function fadeToScene(index,secondsOverride){
    if(wasLive)setLiveEnabled(false);
    Object.keys(frames).forEach(u=>delete frames[u]);
    Object.keys(next).forEach(u=>{frames[u]=next[u];});
-   if(wasLive)setLiveEnabled(true);
+   if(wasLive&&!setLiveEnabled(true)){status(t().error,false);return}
    status(t().sceneFadeDone,true);
   }
  };
@@ -730,11 +738,14 @@ function applyScene(index){
  const next=normalizedSceneFrames(scene);
  const oldUniverses=Object.keys(frames),wasLive=liveEnabled;
  if(wasLive)setLiveEnabled(false);
- if(!wasLive)oldUniverses.filter(u=>!next[u]).forEach(u=>sendFrame(new Array(512).fill(0),Number(u)));
+ let accepted=true;
+ if(!wasLive)oldUniverses.filter(u=>!next[u]).forEach(u=>{if(!sendFrame(new Array(512).fill(0),Number(u)))accepted=false});
  Object.keys(frames).forEach(u=>delete frames[u]);
  Object.keys(next).forEach(u=>{frames[u]=next[u];});
- if(wasLive)setLiveEnabled(true);else Object.keys(frames).forEach(u=>sendFrame(frames[u].slice(),Number(u)));
- status(t().sceneApplied,true);
+ if(wasLive){
+  if(!setLiveEnabled(true))accepted=false;
+ }else Object.keys(frames).forEach(u=>{if(!sendFrame(frames[u].slice(),Number(u)))accepted=false});
+ if(accepted)status(t().sceneApplied,true);else status(t().error,false);
 }
 function deleteScene(index){
  const scenes=readScenes();
@@ -1096,7 +1107,7 @@ function sendFrame(channels,universe,source){
  if(source!=='panic'&&source!=='restore'&&source!=='fade')clearBlackoutRestore();
  if(activeSceneFade&&!quiet)cancelSceneFade(false);
  const transport=controlTransport(),protocol=selectedProtocol();
- if(!transport.isAvailable()){status(t().native,false);return}
+ if(!transport.isAvailable()){status(t().native,false);return false}
  const u=validUniverseForProtocol(universe,protocol);
  if(u==null){status(t().error,false);return false}
  const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();
@@ -1113,38 +1124,49 @@ function sendFrame(channels,universe,source){
   }else{
    ok=liveEnabled&&typeof transport.supportsLive==='function'&&transport.supportsLive('artnet')?transport.setLiveDmx(request):transport.sendDmx(request);
   }
-  if(!ok){if(quiet)cancelSceneFade(false);status(t().native,false)}
- }catch(e){if(quiet)cancelSceneFade(false);status(t().error,false)}
+  if(!ok){if(quiet)cancelSceneFade(false);status(t().native,false);return false}
+  return true;
+ }catch(e){if(quiet)cancelSceneFade(false);status(t().error,false);return false}
 }
 function sendTest(){
  if(!requireOutputArmed())return;
- const u=Math.max(1,Number(E('artnetUniverse').value)||1);
- const ch=Math.min(512,Math.max(1,Number(E('artnetChannel').value)||1));
- const v=Math.min(255,Math.max(0,Number(E('artnetValue').value)||0));
+ const u=validUniverseForProtocol(Number(E('artnetUniverse').value),selectedProtocol());
+ const ch=Number(E('artnetChannel').value),v=Number(E('artnetValue').value);
+ if(u==null||!Number.isInteger(ch)||ch<1||ch>512||!Number.isInteger(v)||v<0||v>255){status(t().error,false);return}
  const f=frame(u);if(!f){status(t().error,false);return}f[ch-1]=v;sendFrame(f.slice(),u);
 }
 function blackout(){
  if(!requireOutputArmed())return;
- const u=Math.max(1,Number(E('artnetUniverse').value)||1);
- if(validUniverseForProtocol(u,selectedProtocol())==null){status(t().error,false);return}
+ const u=validUniverseForProtocol(Number(E('artnetUniverse').value),selectedProtocol());
+ if(u==null){status(t().error,false);return}
  frames[String(u)]=new Array(512).fill(0);
  sendFrame(frames[String(u)].slice(),u);
 }
 function setLiveEnabled(enabled){
  const transport=controlTransport(),toggle=E('artnetLiveToggle');
  if(enabled){
-  if(!requireOutputArmed()){liveEnabled=false;if(toggle)toggle.checked=false;return}
-  const protocol=selectedProtocol();
-  if(typeof transport.supportsLive!=='function'||!transport.supportsLive(protocol)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().native,false);return}
+  if(!requireOutputArmed()){liveEnabled=false;if(toggle)toggle.checked=false;return false}
+  const protocol=selectedProtocol(),universes=Object.keys(frames).map(Number);
+  if(typeof transport.supportsLive!=='function'||!transport.supportsLive(protocol)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().native,false);return false}
+  if(universes.some(u=>validUniverseForProtocol(u,protocol)==null)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().error,false);return false}
   liveProtocol=protocol;liveEnabled=true;if(toggle)toggle.checked=true;
-  Object.keys(frames).forEach(u=>sendFrame(frames[u].slice(),Number(u)));
-  status(t().liveOn,true);
+  let accepted=true;
+  universes.forEach(u=>{if(!sendFrame(frames[String(u)].slice(),u))accepted=false});
+  if(!accepted){
+   liveEnabled=false;if(toggle)toggle.checked=false;
+   const id='networkdmx_stop_'+Date.now()+'_'+(++seq);
+   try{if(typeof transport.stopLive==='function')transport.stopLive({id:id,protocol:protocol})}catch(e){}
+   status(t().error,false);return false;
+  }
+  status(t().liveOn,true);return true;
  }else{
   const protocol=liveProtocol||selectedProtocol();
   liveEnabled=false;if(toggle)toggle.checked=false;
   const id='networkdmx_stop_'+Date.now()+'_'+(++seq);
-  try{if(typeof transport.stopLive==='function')transport.stopLive({id:id,protocol:protocol})}catch(e){}
-  status(t().liveOff);
+  let accepted=true;
+  try{if(typeof transport.stopLive!=='function'||!transport.stopLive({id:id,protocol:protocol}))accepted=false}catch(e){accepted=false}
+  status(accepted?t().liveOff:t().error,accepted?undefined:false);
+  return accepted;
  }
 }
 function stopLiveForBackground(){
@@ -1307,7 +1329,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.31-armed-route-bound',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.32-dispatch-truthful-status',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

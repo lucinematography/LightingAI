@@ -1473,18 +1473,25 @@ function applyStagedFixture(fixtureId){
  if(!r||!profile||profile.name!==aiStagedFixture.profileName){status(t().patchWarn,false);return false}
  const confirmed=window.confirm(lang()==='sr'?'Poslati pripremljene AI vrednosti ovom rasvetnom telu?':'Send the staged AI values to this fixture?');
  if(!confirmed)return false;
- const target=frame(Math.max(1,Number(r.universe)||1));
- if(!applyProfileRequirements(target,r.start,profile)){status(t().error,false);return false}
- let wrote=false;
- aiStagedFixture.values.forEach(item=>{
+ const u=validUniverseForProtocol(Number(r.universe),selectedProtocol());
+ const start=Number(r.start);
+ if(u==null||!bridgeUniverseAllowed(u,selectedProtocol())||!Number.isInteger(start)||start<1||start+Number(profile.channels)-1>512){status(t().error,false);return false}
+ const current=frames[String(u)]||new Array(512).fill(0),target=current.slice(0,512);
+ while(target.length<512)target.push(0);
+ if(!applyProfileRequirements(target,start,profile)){status(t().error,false);return false}
+ let wrote=false,valid=true;
+ for(const item of aiStagedFixture.values){
   const ctrl=(profile.controls||[]).find(x=>x&&x.key===item.key);
-  if(!ctrl)return;
-  const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-  if(writeControlToFrame(target,address,ctrl,item.value))wrote=true;
- });
- if(!wrote){status(t().error,false);return false}
- const sent=sendFrame(target.slice(),Math.max(1,Number(r.universe)||1));
- if(!sent){status(t().error,false);return false}
+  if(!ctrl)continue;
+  const channel=Number(ctrl.channel);
+  if(!Number.isInteger(channel)||channel<1||channel>Number(profile.channels)){valid=false;break}
+  const address=start+channel-1;
+  if(!writeControlToFrame(target,address,ctrl,item.value)){valid=false;break}
+  wrote=true;
+ }
+ if(!valid||!wrote){status(t().error,false);return false}
+ if(!sendFrame(target.slice(),u)){setOutputArmed(false,true);status(t().error,false);return false}
+ frames[String(u)]=target;
  aiStagedFixture=null;
  const action=E('artnetAiStageAction');if(action)action.remove();
  status(lang()==='sr'?'AI vrednosti su poslate verifikovanim DMX putem.':'AI values sent through the verified DMX path.',true);

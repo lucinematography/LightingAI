@@ -715,11 +715,12 @@ function profileForRow(r){
  const f=fixtureForRow(r),modes=f&&Array.isArray(f.dmxModes)?f.dmxModes:[];
  if(!r||!r.mode)return null;
  const profile=modes.find(m=>m&&m.name===r.mode&&m.verified===true)||null;
- // Typed profiles must fit their Patch allocation before any direct or master control is exposed.
- if(profile&&Array.isArray(profile.controls)&&profile.controls.some(ctrl=>ctrl&&(ctrl.type==='enum'||ctrl.type==='piecewise'))){
-  if(!patchUsable(r)||Number(r.channels)!==Number(profile.channels)||
-     !Number.isInteger(Number(r.start))||Number(r.start)<1||Number(r.start)+Number(profile.channels)-1>512)return null;
- }
+ if(!profile)return null;
+ // Every verified profile must exactly fit the Patch allocation before any control is exposed.
+ // This prevents a stale/manual channel count from shifting writes into a neighbouring fixture.
+ if(!patchUsable(r)||Number(r.channels)!==Number(profile.channels)||
+    !Number.isInteger(Number(r.start))||Number(r.start)<1||
+    Number(r.start)+Number(profile.channels)-1>512)return null;
  return profile;
 }
 function selectedPatchRow(){

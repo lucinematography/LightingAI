@@ -36,6 +36,8 @@ const researchOnly=api&&api.resolve({manufacturer:'Astera',control:{wireless:['A
 expect(researchOnly?.vendorResearchOnly===true&&researchOnly?.productionReady===false,'Astera proprietary wireless must remain research-only without a standard route');
 const noSource=api&&api.resolve({control:{wired:['DMX512']},dmxModes:[{name:'Unsafe',channels:1,verified:true}]});
 expect(noSource?.productionReady===false,'verified DMX mode without source URL must fail closed');
+const rdmOnly=api&&api.resolve({control:{wired:['RDM']},dmxModes:[verifiedMode]});
+expect(rdmOnly?.productionReady===false&&rdmOnly?.transportKnown===false,'RDM-only fixture must not qualify as a level-control route');
 
 const {fixtures}=buildRuntimeCatalog();
 const manufacturers=new Set(fixtures.map(f=>f.manufacturer).filter(Boolean));

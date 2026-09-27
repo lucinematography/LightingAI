@@ -56,9 +56,11 @@ public class SacnProtocolTest {
         assertEquals(255, packet[111] & 0xff);
     }
 
-    @Test public void sacnUniverseIsClampedToStandardRange() {
-        assertEquals("239.255.0.1", SacnSender.multicastAddress(0));
-        assertEquals("239.255.249.255", SacnSender.multicastAddress(70000));
+    @Test public void sacnUniverseOutsideStandardRangeIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> SacnSender.multicastAddress(0));
+        assertThrows(IllegalArgumentException.class, () -> SacnSender.multicastAddress(70000));
+        assertEquals(1, SacnSender.validateUniverse(1));
+        assertEquals(63999, SacnSender.validateUniverse(63999));
     }
 
     @Test public void streamTerminationSetsOptionsBit() {

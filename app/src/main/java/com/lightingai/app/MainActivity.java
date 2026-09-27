@@ -1317,6 +1317,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() {
         stopNativeSunCompass();
+        pendingBleDiscoveryRequestId = null;
         synchronized (networkDmxSendLock) {
             networkDmxSendEpoch.incrementAndGet();
             networkDmxArmSignature = "";
@@ -1405,6 +1406,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        pendingBleDiscoveryRequestId = null;
         synchronized (networkDmxSendLock) {
             networkDmxSendEpoch.incrementAndGet();
             networkDmxArmSignature = "";

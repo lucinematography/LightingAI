@@ -96,6 +96,8 @@ const patch=read('app/src/main/assets/dmx-patch-planner.js');
 expect(patch.includes('invalid-universe')&&patch.includes('invalid-start')&&patch.includes('invalid-channels'),'DMX patch fail-closed validation missing');
 
 const control=read('app/src/main/assets/artnet-control.js');
+expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
+expect(control.includes("version:'0.40-project-scoped-control-state'"),'Project-scoped control state version missing');
 for(const marker of ['ARM OUTPUT','globalBlackout','restoreBeforeBlackout','fadeToScene','setLiveEnabled','armGeneration']){
  expect(control.includes(marker),'Control critical contract missing: '+marker);
 }

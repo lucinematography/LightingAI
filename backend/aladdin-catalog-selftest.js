@@ -206,7 +206,7 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
   };
   context.window=context;
   assert.match(appSource,/\}\)\(\);\s*$/,'App closure boundary changed');
-  const injected=appSource.replace(/\}\)\(\);\s*$/,'window.__mosaicTest={controlToDmx,controlFromDmx,writeControlToFrame,applyProfileRequirements,fadeChannelValue,fadeSnapChannels,sendVerifiedControl,renderVerifiedControls,patchSignature,fadeToScene,applyScene,frame,cloneFrames,armForTest:value=>{outputArmed=value;}};})();');
+  const injected=appSource.replace(/\}\)\(\);\s*$/,'window.__mosaicTest={controlToDmx,controlFromDmx,writeControlToFrame,applyProfileRequirements,fadeChannelValue,fadeSnapChannels,sendVerifiedControl,renderVerifiedControls,patchSignature,contextStorageKey,fadeToScene,applyScene,frame,cloneFrames,armForTest:value=>{outputArmed=value;}};})();');
   runInNewContext(injected,context,{timeout:1000});
   const app=context.__mosaicTest;
   for(const id of expectedIds){
@@ -328,7 +328,7 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
   // Fade must not select intervening effects or travel through correction dead bands.
   row.start=1;const initial=app.frame(1);initial.fill(0);initial[2]=11;initial[8]=10;
   const target=new Array(512).fill(255);target[2]=245;target[8]=70;
-  storage.set('lighting_artnet_scenes_v1',JSON.stringify([{name:'Target',patchSignature:app.patchSignature(),frames:{'1':target}}]));
+  storage.set(app.contextStorageKey('lighting_artnet_scenes_v1'),JSON.stringify([{version:2,name:'Target',contextSignature:'test',patchSignature:app.patchSignature(),frames:{'1':target}}]));
   now=0;app.fadeToScene(0,1);
   const tick=[...timers.values()].find(timer=>timer.ms===33).fn;
   for(const time of [0,10,100,500,990,999]){now=time;tick();assert.equal(sent.at(-1).channels[2],11);assert.equal(sent.at(-1).channels[8],10);}

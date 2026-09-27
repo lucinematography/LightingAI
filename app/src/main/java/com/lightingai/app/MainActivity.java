@@ -1300,6 +1300,7 @@ public class MainActivity extends Activity {
     @Override protected void onDestroy() {
         networkDmxArmSignature = "";
         artNetLiveEngine.stopAll();
+        if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         if (pendingFileChooser != null) finishFileChooser(null);
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();

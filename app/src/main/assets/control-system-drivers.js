@@ -17,6 +17,12 @@ function vendorControl(fixture){
 function includesAny(values,needles){
   return arr(values).some(function(v){var s=lower(v);return needles.some(function(n){return s.indexOf(n)>=0})})
 }
+function hasStandardDmxTransport(values){
+  return arr(values).some(function(v){
+    var s=lower(v);
+    return /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(s)||s.indexOf('crmx')>=0||s.indexOf('lumenradio')>=0;
+  });
+}
 function verifiedModes(fixture){
   return arr(fixture&&fixture.dmxModes).filter(function(m){
     return !!(m&&m.verified===true&&Number(m.channels||m.channelCount)>0&&String(m.sourceUrl||'').indexOf('http')===0)
@@ -38,10 +44,10 @@ var DRIVERS=[
     id:'standards-dmx-gateway',
     scope:'standard',
     status:'production',
-    label:'Art-Net/sACN → DMX/RDM/CRMX',
-    description:'LightingAI outputs Art-Net/sACN to a standards-based gateway; the downstream fixture is controlled by its verified DMX profile.',
+    label:'Art-Net/sACN → DMX/CRMX',
+    description:'LightingAI outputs Art-Net/sACN to a standards-based gateway; the downstream fixture is controlled by its verified DMX profile. RDM alone is management/configuration and does not qualify as a level-control transport.',
     match:function(f){
-      return includesAny(standardControl(f),['dmx512','dmx','rdm','crmx','lumenradio']);
+      return hasStandardDmxTransport(standardControl(f));
     }
   },
   {
@@ -106,5 +112,5 @@ function resolve(fixture){
   };
 }
 function listDrivers(){return DRIVERS.map(function(d){return {id:d.id,scope:d.scope,status:d.status,manufacturer:d.manufacturer||'',label:d.label,description:d.description}})}
-window.LightingAIControlSystemDrivers={version:'1.1-conservative-system-families',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
+window.LightingAIControlSystemDrivers={version:'1.2-rdm-management-separated',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
 })();

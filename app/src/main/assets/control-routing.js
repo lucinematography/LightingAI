@@ -11,7 +11,11 @@ function classify(fixture){
   var standardFields=direct.concat(wired,wireless);
   var nativeNetwork=hasAny(direct,['art-net','artnet','sacn','e1.31']);
   var standardNetwork=hasAny(standardFields,['art-net','artnet','sacn','e1.31']);
-  var dmx=hasAny(standardFields,['dmx512','dmx','rdm']);
+  var dmx=standardFields.some(function(v){
+    var s=lower(v);
+    if(/\b(unavailable|unsupported|not supported|not available|no dmx|without dmx)\b/.test(s))return false;
+    return /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(s);
+  });
   var crmx=hasAny(standardFields,['crmx','lumenradio']);
   var proprietaryBle=hasAny(standardFields.concat(external),['sidus','bluetooth','ble','mesh','asteraapp','uhf']);
   var verifiedModes=list(fixture&&fixture.dmxModes).filter(function(m){
@@ -59,5 +63,5 @@ function classify(fixture){
   };
 }
 function productionReady(fixture){return classify(fixture).semanticReady===true}
-window.LightingAIControlRouting={version:'1.3-conservative-system-driver-gated',classify:classify,productionReady:productionReady};
+window.LightingAIControlRouting={version:'1.4-rdm-fallback-separated',classify:classify,productionReady:productionReady};
 })();

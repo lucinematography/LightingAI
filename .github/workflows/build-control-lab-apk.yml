@@ -56,6 +56,10 @@ jobs:
         working-directory: backend
         run: node control-production-selftest.js
 
+      - name: Audit full fixture control catalog
+        working-directory: backend
+        run: node control-catalog-audit.js
+
       - name: Verify control lab assets exist
         shell: bash
         run: |

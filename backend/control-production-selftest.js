@@ -38,7 +38,7 @@ for (const marker of ['artNetSendDmx','artNetSetLiveDmx','sacnSendDmx','sacnSetL
 
 
 const artnet = fs.readFileSync(path.join(root,'app/src/main/assets/artnet-control.js'),'utf8');
-expect(artnet.includes("universeMin:1,universeMax:4,maxActiveUniverses:1"), 'Sidus One verified universe limits missing');
+expect(artnet.includes("universeMin:1,universeMax:4,maxActiveUniverses:1,artNetPortAddressOffset:0"), 'Sidus One verified universe/Port-Address policy missing');
 expect(artnet.includes('preflightBridgeUniverse') && artnet.includes('preflightBridgeMulti'), 'Bridge universe preflight safety missing');
 expect(artnet.includes('LightingAINetworkDmxLifecyclePause') && artnet.includes('LightingAINetworkDmxLifecycleResume'), 'Network DMX lifecycle fail-closed hooks missing');
 expect(artnet.includes('setArmSignature') && artnet.includes('clearArmSignature'), 'Native armed-route binding missing');
@@ -46,7 +46,8 @@ expect(main.includes('networkDmxSetArmSignature') && main.includes('requireNetwo
 
 const artnetSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/ArtNetSender.java'),'utf8');
 const sacnSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/SacnSender.java'),'utf8');
-expect(artnetSender.includes('validateUniverse') && artnetSender.includes('MAX_UNIVERSE = 32768'), 'Art-Net strict universe validation missing');
+expect(artnetSender.includes('validatePortAddress') && artnetSender.includes('MAX_PORT_ADDRESS = 32767'), 'Art-Net strict Port-Address validation missing');
+expect(artnet.includes('artNetPortAddressForUniverse') && artnet.includes('bridgeUniverseAllowed'), 'Per-bridge Art-Net universe policy missing');
 expect(sacnSender.includes('validateUniverse') && sacnSender.includes('MAX_UNIVERSE = 63999'), 'sACN strict universe validation missing');
 
 const networkInspector = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/NetworkInterfaceInspector.java'),'utf8');

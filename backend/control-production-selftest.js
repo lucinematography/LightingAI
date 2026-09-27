@@ -23,6 +23,9 @@ for (const key of ['dimmer','red','green','blue']) expect(keys.has(key), 'TitanT
 const routes = titan?.control?.standardRoutes || [];
 expect(routes.some(r => r?.verified === true && (r.input || []).includes('Art-Net') && (r.input || []).includes('sACN')), 'TitanTube verified network production route missing');
 expect(ASTERA_TITANTUBE_ACCESSORIES.some(a => a.id === 'astera-fp3-dtl'), 'Astera FP3 DataLink accessory missing');
+expect(ASTERA_TITANTUBE_ACCESSORIES.some(a => a.id === 'astera-art7'), 'Astera ART7 AsteraBox accessory missing');
+const art7Route = routes.find(r => r?.id === 'astera-titan-wireless-crmx');
+expect(art7Route?.verified === true && (art7Route?.input || []).includes('DMX512') && !(art7Route?.input || []).includes('Art-Net') && !(art7Route?.input || []).includes('sACN') && art7Route?.interface === 'AsteraBox ART7', 'Astera ART7 route must remain DMX512 -> ART7 -> CRMX, not a network-DMX route');
 
 const patch = fs.readFileSync(path.join(root,'app/src/main/assets/dmx-patch-planner.js'),'utf8');
 expect(patch.includes('defaultMode=verified.length===1?verified[0]:null'), 'DMX patch automatic verified-profile selection missing');

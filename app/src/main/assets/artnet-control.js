@@ -978,6 +978,29 @@ function applyProfileRequirements(targetFrame,fixtureStart,profile){
  });
  return ok;
 }
+function stagedFrameForUniverse(staged,universe){
+ const u=Number(universe);
+ if(!Number.isInteger(u)||u<1)return null;
+ const key=String(u);
+ if(!staged[key]){
+  staged[key]=(frames[key]||new Array(512).fill(0)).slice(0,512);
+  while(staged[key].length<512)staged[key].push(0);
+ }
+ return staged[key];
+}
+function commitStagedUniverseFrames(staged){
+ const keys=Object.keys(staged);
+ if(!keys.length){status(t().error,false);return false}
+ let accepted=true;
+ keys.forEach(key=>{if(!sendFrame(staged[key].slice(),Number(key)))accepted=false});
+ if(!accepted){
+  setOutputArmed(false,true);
+  status(t().error,false);
+  return false;
+ }
+ keys.forEach(key=>{frames[key]=staged[key].slice()});
+ return true;
+}
 function controlFromDmx(ctrl,raw){
  const maximum=controlBitDepth(ctrl)===16?65535:255;
  if(!Number.isInteger(raw)||raw<0||raw>maximum)return null;
@@ -1012,14 +1035,13 @@ function applyMasterDimmer(value){
  if(!requireOutputArmed())return;
  const entries=verifiedDimmerEntries(),selected=Array.prototype.slice.call(document.querySelectorAll('.artnet-master-device:checked')).map(el=>entries[Number(el.dataset.entry)]).filter(Boolean);
  if(!selected.length){status(t().masterEmpty,false);return}
- const universes=new Set();
- selected.forEach(entry=>{
-  const r=entry.row,ctrl=entry.control,u=Math.max(1,Number(r.universe)||1),target=frame(u);
-  const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-  if(applyProfileRequirements(target,r.start,entry.profile)&&writeControlToFrame(target,address,ctrl,value))universes.add(u);
- });
- if(!universes.size){status(t().error,false);return}
- universes.forEach(u=>sendFrame(frame(u).slice(),u));
+ const staged={};
+ for(const entry of selected){
+  const r=entry.row,ctrl=entry.control,u=Number(r.universe),target=stagedFrameForUniverse(staged,u);
+  const address=Number(r.start)+Number(ctrl.channel)-1;
+  if(!target||!applyProfileRequirements(target,r.start,entry.profile)||!writeControlToFrame(target,address,ctrl,value)){status(t().error,false);return}
+ }
+ if(!commitStagedUniverseFrames(staged))return;
  if(E('artnetMasterRange'))E('artnetMasterRange').value=String(Math.max(0,Math.min(100,Number(value)||0)));
  if(E('artnetMasterValue'))E('artnetMasterValue').textContent=Math.round(Math.max(0,Math.min(100,Number(value)||0)))+'%';
 }
@@ -1061,14 +1083,13 @@ function applyMasterCct(value){
  const bounds=cctBounds(selected);
  if(!bounds){status(t().masterCctNoCommon,false);return}
  const requested=Math.max(bounds.min,Math.min(bounds.max,Number(value)||bounds.min));
- const universes=new Set();
- selected.forEach(entry=>{
-  const r=entry.row,ctrl=entry.control,u=Math.max(1,Number(r.universe)||1),target=frame(u);
-  const address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-  if(applyProfileRequirements(target,r.start,entry.profile)&&writeControlToFrame(target,address,ctrl,requested))universes.add(u);
- });
- if(!universes.size){status(t().error,false);return}
- universes.forEach(u=>sendFrame(frame(u).slice(),u));
+ const staged={};
+ for(const entry of selected){
+  const r=entry.row,ctrl=entry.control,u=Number(r.universe),target=stagedFrameForUniverse(staged,u);
+  const address=Number(r.start)+Number(ctrl.channel)-1;
+  if(!target||!applyProfileRequirements(target,r.start,entry.profile)||!writeControlToFrame(target,address,ctrl,requested)){status(t().error,false);return}
+ }
+ if(!commitStagedUniverseFrames(staged))return;
  if(E('artnetMasterCctRange'))E('artnetMasterCctRange').value=String(requested);
  if(E('artnetMasterCctValue'))E('artnetMasterCctValue').textContent=Math.round(requested)+'K';
 }
@@ -1096,19 +1117,16 @@ function applyMasterRgb(redValue,greenValue,blueValue){
  const selected=selectedMasterRgbEntries();
  if(!selected.length){status(t().masterEmpty,false);return}
  const values={red:Math.max(0,Math.min(100,Number(redValue)||0)),green:Math.max(0,Math.min(100,Number(greenValue)||0)),blue:Math.max(0,Math.min(100,Number(blueValue)||0))};
- const universes=new Set();
- selected.forEach(entry=>{
-  const r=entry.row,u=Math.max(1,Number(r.universe)||1),target=frame(u);
-  if(!applyProfileRequirements(target,r.start,entry.profile))return;
-  let wrote=true;
-  [['red',entry.red],['green',entry.green],['blue',entry.blue]].forEach(pair=>{
-   const key=pair[0],ctrl=pair[1],address=Math.max(1,Number(r.start)||1)+Math.max(1,Number(ctrl.channel)||1)-1;
-   if(!writeControlToFrame(target,address,ctrl,values[key]))wrote=false;
-  });
-  if(wrote)universes.add(u);
- });
- if(!universes.size){status(t().error,false);return}
- universes.forEach(u=>sendFrame(frame(u).slice(),u));
+ const staged={};
+ for(const entry of selected){
+  const r=entry.row,u=Number(r.universe),target=stagedFrameForUniverse(staged,u);
+  if(!target||!applyProfileRequirements(target,r.start,entry.profile)){status(t().error,false);return}
+  for(const pair of [['red',entry.red],['green',entry.green],['blue',entry.blue]]){
+   const key=pair[0],ctrl=pair[1],address=Number(r.start)+Number(ctrl.channel)-1;
+   if(!writeControlToFrame(target,address,ctrl,values[key])){status(t().error,false);return}
+  }
+ }
+ if(!commitStagedUniverseFrames(staged))return;
 }
 function renderVerifiedControls(r){
  const box=E('artnetVerifiedControls');if(!box)return;
@@ -1430,7 +1448,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.40-project-scoped-control-state',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.41-transactional-master-groups',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

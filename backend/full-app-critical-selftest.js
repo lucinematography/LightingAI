@@ -38,6 +38,7 @@ for(const marker of [
 }
 expect(main.includes('if (sacnLiveEngine != null) sacnLiveEngine.stopAll();'),'sACN lifecycle shutdown missing');
 expect(main.includes('artNetLiveEpoch')&&main.includes('sacnLiveEpoch'),'Native live epoch guards missing');
+expect(main.includes('artNetDiscoveryEpoch')&&main.includes('if (epoch != artNetDiscoveryEpoch.get()) return;'),'Native Art-Net discovery must ignore stale sessions by epoch');
 expect(main.includes('networkDmxSendEpoch')&&main.includes('networkDmxSendLock'),'Native direct-send epoch guard missing');
 expect(main.includes('Stale Art-Net direct send ignored')&&main.includes('Stale sACN direct send ignored'),'Native stale direct-send rejection missing');
 expect(main.includes('Stale Art-Net live update ignored')&&main.includes('Stale sACN live update ignored'),'Native stale live-update rejection missing');

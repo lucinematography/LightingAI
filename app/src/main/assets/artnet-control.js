@@ -301,8 +301,8 @@ function finishArmPreflight(id,payload,error){
  if(!failure){
   const bridge=selectedBridge(),universes=knownUniverseNumbers();
   if(bridge&&bridge.id){
-   const min=Number(bridge.universeMin),max=Number(bridge.universeMax),limit=Number(bridge.maxActiveUniverses);
-   if(Number.isFinite(min)&&Number.isFinite(max)&&universes.some(u=>Number(u)<min||Number(u)>max))failure=t().preflightBridgeUniverse;
+   const limit=Number(bridge.maxActiveUniverses);
+   if(!universes.every(u=>bridgeUniverseAllowed(u,selectedProtocol())))failure=t().preflightBridgeUniverse;
    else if(Number.isFinite(limit)&&limit>0&&universes.length>limit)failure=t().preflightBridgeMulti;
   }
  }
@@ -443,6 +443,13 @@ function bridgeUniverseAllowed(universe,protocol){
  if(Number.isFinite(min)&&u<min)return false;
  if(Number.isFinite(max)&&u>max)return false;
  return true;
+}
+function bridgeUniverseSetAllowed(values,protocol){
+ const bridge=selectedBridge(),unique=Array.from(new Set((Array.isArray(values)?values:[]).map(Number).filter(Number.isInteger)));
+ if(!unique.every(u=>bridgeUniverseAllowed(u,protocol)))return false;
+ if(!bridge||!bridge.id)return true;
+ const limit=Number(bridge.maxActiveUniverses);
+ return !(Number.isFinite(limit)&&limit>0&&unique.length>limit);
 }
 function artNetPortAddressForUniverse(universe){
  const u=validUniverseForProtocol(universe,'artnet');
@@ -791,11 +798,8 @@ function normalizedSceneFrames(scene){
  return next;
 }
 function sceneUniverseSetIsSafe(values){
- const protocol=selectedProtocol();
- return values.every(value=>{
-  const u=validUniverseForProtocol(Number(value),protocol);
-  return u!=null&&bridgeUniverseAllowed(u,protocol);
- });
+ const protocol=selectedProtocol(),universes=values.map(value=>validUniverseForProtocol(Number(value),protocol));
+ return universes.every(u=>u!=null)&&bridgeUniverseSetAllowed(universes,protocol);
 }
 function fadeSeconds(){
  const input=E('artnetSceneFadeSeconds'),raw=input?Number(input.value):Number(localStorage.getItem(FADE_KEY)||2);
@@ -1273,7 +1277,8 @@ function sendFrame(channels,universe,source){
  const transport=controlTransport(),protocol=selectedProtocol();
  if(!transport.isAvailable()){status(t().native,false);return false}
  const u=validUniverseForProtocol(universe,protocol);
- if(u==null||!bridgeUniverseAllowed(u,protocol)){status(t().error,false);return false}
+ const prospectiveUniverses=Array.from(new Set(Object.keys(frames).map(Number).filter(Number.isInteger).concat([u])));
+ if(u==null||!bridgeUniverseSetAllowed(prospectiveUniverses,protocol)){status(t().error,false);return false}
  const artNetPortAddress=protocol==='artnet'?artNetPortAddressForUniverse(u):null;
  if(protocol==='artnet'&&artNetPortAddress==null){status(t().error,false);return false}
  const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();

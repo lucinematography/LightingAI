@@ -55,7 +55,6 @@ expect(sacnLive.includes('terminationFailed')&&sacnLive.includes('terminationErr
 expect(sacnLive.includes('public boolean stopAll()')&&sacnLive.includes('return lastError == null || lastError.isEmpty();'),'sACN live stop must report termination failure');
 expect(main.includes('ok = sacnLiveEngine.stopAll();')&&main.includes('notifyArtNetResult(id, ok, message);'),'sACN live stop bridge must propagate termination failure');
 expect(main.includes('LightingAINetworkDmxLifecyclePause'),'Network DMX pause fail-safe missing');
-expect(control.includes('activeDiscoveryRequestId')&&control.includes("String(id||'')!==activeDiscoveryRequestId"),'Art-Net discovery must ignore stale callbacks by request id');
 expect(main.includes('LightingAINetworkDmxLifecycleResume'),'Network DMX resume fail-safe missing');
 expect(main.includes("file:///android_asset/control-bootstrap.js"),'Deterministic control bootstrap injection missing');
 expect(main.includes('isBleLocationServiceReady'),'BLE Android 11-and-older Location/GPS service guard missing');
@@ -120,6 +119,7 @@ expect(read('app/src/main/assets/dmx-export.js').includes("if(u==null||u<1||u>99
 expect(patch.includes("const u=integerOrNull(r&&r.universe),start=integerOrNull(r&&r.start),count=integerOrNull(r&&r.channels);")&&patch.includes("if(u==null||u<1||u>999||start==null||start<1||start>512||count==null||count<=0||count>512||start+count-1>512)return;"),'Free-slot search must ignore invalid patch rows instead of normalizing them');
 
 const control=read('app/src/main/assets/artnet-control.js');
+expect(control.includes('activeDiscoveryRequestId')&&control.includes("String(id||'')!==activeDiscoveryRequestId"),'Art-Net discovery must ignore stale callbacks by request id');
 expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
 expect(control.includes('legacyContextStorageKey')&&control.includes('::ctxv2_')&&control.includes('item.contextSignature===signature'),'Control storage must verify the exact project/scene context and migrate legacy hashed keys safely');
 expect(control.includes("version:'0.48-route-state-separated'"),'Route-state separated control version missing');

@@ -72,6 +72,10 @@ public class MainActivity extends Activity {
     private SpeechRecognizer speechRecognizer;
     private final AtomicInteger artNetSequence = new AtomicInteger(1);
     private final AtomicInteger sacnSequence = new AtomicInteger(0);
+    private final AtomicInteger artNetLiveEpoch = new AtomicInteger(0);
+    private final AtomicInteger sacnLiveEpoch = new AtomicInteger(0);
+    private final Object artNetLiveControlLock = new Object();
+    private final Object sacnLiveControlLock = new Object();
     private final AtomicInteger sacnPriority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
     private final AtomicLong artNetDirectSent = new AtomicLong(0);
     private final AtomicLong artNetDirectFailed = new AtomicLong(0);
@@ -1099,6 +1103,7 @@ public class MainActivity extends Activity {
             final String id = requestId == null ? "" : requestId;
             final int u = universe;
             final String raw = channelsJson == null ? "[]" : channelsJson;
+            final int epoch = sacnLiveEpoch.get();
             new Thread(() -> {
                 boolean ok = false;
                 String message = "";
@@ -1108,9 +1113,12 @@ public class MainActivity extends Activity {
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
-                    if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
-                    sacnLiveEngine.setPriority(sacnPriority.get());
-                    sacnLiveEngine.setFrame(u, channels);
+                    synchronized (sacnLiveControlLock) {
+                        if (epoch != sacnLiveEpoch.get()) throw new IllegalStateException("Stale sACN live update ignored");
+                        if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+                        sacnLiveEngine.setPriority(sacnPriority.get());
+                        sacnLiveEngine.setFrame(u, channels);
+                    }
                     ok = true;
                 } catch (Exception e) {
                     message = e.getMessage() == null ? "sACN live refresh failed" : e.getMessage();
@@ -1121,7 +1129,10 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void sacnStopLive(String requestId) {
             final String id = requestId == null ? "" : requestId;
-            if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+            synchronized (sacnLiveControlLock) {
+                sacnLiveEpoch.incrementAndGet();
+                if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+            }
             notifyArtNetResult(id, true, "");
         }
 
@@ -1183,6 +1194,7 @@ public class MainActivity extends Activity {
             final String ip = targetIp == null ? "" : targetIp;
             final int u = universe;
             final String raw = channelsJson == null ? "[]" : channelsJson;
+            final int epoch = artNetLiveEpoch.get();
             new Thread(() -> {
                 boolean ok = false;
                 String message = "";
@@ -1192,7 +1204,10 @@ public class MainActivity extends Activity {
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
-                    artNetLiveEngine.setFrame(ip, u, channels);
+                    synchronized (artNetLiveControlLock) {
+                        if (epoch != artNetLiveEpoch.get()) throw new IllegalStateException("Stale Art-Net live update ignored");
+                        artNetLiveEngine.setFrame(ip, u, channels);
+                    }
                     ok = true;
                 } catch (Exception e) {
                     message = e.getMessage() == null ? "Art-Net live refresh failed" : e.getMessage();
@@ -1203,7 +1218,10 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void artNetStopLive(String requestId) {
             final String id = requestId == null ? "" : requestId;
-            artNetLiveEngine.stopAll();
+            synchronized (artNetLiveControlLock) {
+                artNetLiveEpoch.incrementAndGet();
+                artNetLiveEngine.stopAll();
+            }
             notifyArtNetResult(id, true, "");
         }
 
@@ -1258,8 +1276,14 @@ public class MainActivity extends Activity {
         // Fail closed after any lifecycle transition. Native live engines must never
         // resume output until the WebView performs a fresh ARM preflight.
         networkDmxArmSignature = "";
-        artNetLiveEngine.stopAll();
-        if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        synchronized (artNetLiveControlLock) {
+            artNetLiveEpoch.incrementAndGet();
+            artNetLiveEngine.stopAll();
+        }
+        synchronized (sacnLiveControlLock) {
+            sacnLiveEpoch.incrementAndGet();
+            if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        }
         if (webView != null) {
             webView.post(() -> webView.evaluateJavascript(
                 "window.LightingAINetworkDmxLifecycleResume&&window.LightingAINetworkDmxLifecycleResume();window.LightingAIBleLifecycleResume&&window.LightingAIBleLifecycleResume();",

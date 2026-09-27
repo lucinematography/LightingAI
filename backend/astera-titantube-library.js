@@ -35,8 +35,8 @@ export const ASTERA_TITANTUBE_FIXTURES = [
         },
         {
           id: 'astera-titan-wireless-crmx',
-          input: ['Art-Net', 'sACN'],
-          interface: 'Standards-based network DMX node plus CRMX transmitter',
+          input: ['DMX512'],
+          interface: 'AsteraBox ART7',
           output: 'CRMX to TitanTube receiver',
           verified: true,
           sourceUrl: 'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf'
@@ -92,6 +92,7 @@ export const ASTERA_TITANTUBE_ACCESSORIES = [
   { id: 'astera-fp1-chr', manufacturer: 'Astera', model: 'FP1-CHR Individual Charger', category: 'Charger', compatibleWith: TITAN_AND_LUNABULB, sourceUrl: MANUAL },
   { id: 'astera-fp1-pwb', manufacturer: 'Astera', model: 'FP1-PWB PowerBox', category: 'Power / DMX Interface', compatibleWith: TITAN, sourceUrl: MANUAL },
   { id: 'astera-fp3-dtl', manufacturer: 'Astera', model: 'FP3 DataLink', category: 'Art-Net / sACN / DMX Interface', compatibleWith: TITAN, sourceUrl: 'https://astera-led.com/wp-content/uploads/FP3_DataLink_Datasheet_V2-1.pdf' },
+  { id: 'astera-art7', manufacturer: 'Astera', model: 'ART7 AsteraBox', category: 'DMX / CRMX / AsteraApp Interface', compatibleWith: TITAN, sourceUrl: 'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf' },
   { id: 'astera-fp1-pwb-cab-5', manufacturer: 'Astera', model: 'FP1-PWB-CAB-5 Power/Data Combination Cable 5 m', category: 'Power / Data Cable', compatibleWith: TITAN, sourceUrl: MANUAL },
   { id: 'astera-fp1-pwb-cab-10', manufacturer: 'Astera', model: 'FP1-PWB-CAB-10 Power/Data Combination Cable 10 m', category: 'Power / Data Cable', compatibleWith: TITAN, sourceUrl: MANUAL },
   { id: 'astera-fp1-pwb-cab-15', manufacturer: 'Astera', model: 'FP1-PWB-CAB-15 Power/Data Combination Cable 15 m', category: 'Power / Data Cable', compatibleWith: TITAN, sourceUrl: MANUAL }

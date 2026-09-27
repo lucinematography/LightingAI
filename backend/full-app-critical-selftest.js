@@ -124,7 +124,7 @@ const control=read('app/src/main/assets/artnet-control.js');
 expect(control.includes('activeDiscoveryRequestId')&&control.includes("String(id||'')!==activeDiscoveryRequestId"),'Art-Net discovery must ignore stale callbacks by request id');
 expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
 expect(control.includes('legacyContextStorageKey')&&control.includes('::ctxv2_')&&control.includes('item.contextSignature===signature'),'Control storage must verify the exact project/scene context and migrate legacy hashed keys safely');
-expect(control.includes("version:'0.52-strict-scene-frame-values'"),'Known-frame-required control version missing');
+expect(control.includes("version:'0.53-artnet-route-fail-closed'"),'Known-frame-required control version missing');
 expect(control.includes('armedPatchSignature')&&control.includes('patchSignature()!==armedPatchSignature'),'ARM patch signature guard missing');
 expect(control.includes("function artNetTargetIsAuto(value)")&&control.includes("target==='255.255.255.255'")&&control.includes("const auto=artNetTargetIsAuto(target);")&&control.includes("const ip=artNetTargetIsAuto(rawTarget)?'AUTO':rawTarget;"),'Art-Net preflight and sender must use identical AUTO target semantics');
 expect(control.includes('u!=null&&u>=1&&u<=999')&&control.includes('start+channels-1<=512'),'Control layer must independently revalidate patch universe/start/footprint');
@@ -163,7 +163,8 @@ expect(control.includes('if(!accepted){cancelSceneFade(false);setOutputArmed(fal
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('cancelSceneFade(false);'),'Lifecycle disarm must cancel the active scene fade timer');
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('invalidateCachedOutputState();'),'Lifecycle disarm must invalidate runtime DMX output state');
 expect(control.includes('function invalidateCachedOutputState()')&&control.includes('Object.keys(frames).forEach(key=>delete frames[key]);')&&control.includes('invalidateCachedOutputState();')&&control.includes('setOutputArmed(false,true);'),'Async transport failure must invalidate cached DMX state before disarm');
-expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.52-strict-scene-frame-values'"),'Route changes must invalidate only route-bound runtime output state');
+expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.53-artnet-route-fail-closed'"),'Route changes must invalidate only route-bound runtime output state');
+expect(control.includes("selectedBroadcastRoutes")&&control.includes("!auto&&interfaces.length>1&&selectedBroadcastRoutes.length!==1"),'Manual Art-Net targets must fail closed on ambiguous multi-interface routing unless an exact broadcast route is selected');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
 for(const marker of ['ARM OUTPUT','globalBlackout','restoreBeforeBlackout','fadeToScene','setLiveEnabled','armGeneration']){
  expect(control.includes(marker),'Control critical contract missing: '+marker);

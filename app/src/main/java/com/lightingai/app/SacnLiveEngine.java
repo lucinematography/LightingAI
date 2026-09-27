@@ -103,6 +103,8 @@ public final class SacnLiveEngine {
                 task = null;
             }
             if (sendTerminationPackets && socket != null && !socket.isClosed() && !frames.isEmpty()) {
+                String terminationError = "";
+                boolean terminationFailed = false;
                 for (int repeat = 0; repeat < 3; repeat++) {
                     for (Frame frame : frames.values()) {
                         try {
@@ -117,14 +119,15 @@ public final class SacnLiveEngine {
                             );
                             packetsSent.incrementAndGet();
                             lastSendAtMs.set(System.currentTimeMillis());
-                            lastError = "";
                         } catch (Exception e) {
                             packetsFailed.incrementAndGet();
-                            lastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                            // Best-effort stream termination; still release local resources.
+                            terminationFailed = true;
+                            String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                            if (terminationError.isEmpty()) terminationError = message;
                         }
                     }
                 }
+                lastError = terminationFailed ? terminationError : "";
             }
             frames.clear();
             if (executor != null) {

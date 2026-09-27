@@ -38,6 +38,8 @@ const artnet = fs.readFileSync(path.join(root,'app/src/main/assets/artnet-contro
 expect(artnet.includes("universeMin:1,universeMax:4,maxActiveUniverses:1"), 'Sidus One verified universe limits missing');
 expect(artnet.includes('preflightBridgeUniverse') && artnet.includes('preflightBridgeMulti'), 'Bridge universe preflight safety missing');
 expect(artnet.includes('LightingAINetworkDmxLifecyclePause') && artnet.includes('LightingAINetworkDmxLifecycleResume'), 'Network DMX lifecycle fail-closed hooks missing');
+expect(artnet.includes('setArmSignature') && artnet.includes('clearArmSignature'), 'Native armed-route binding missing');
+expect(main.includes('networkDmxSetArmSignature') && main.includes('requireNetworkDmxArmedRoute'), 'Android armed-route enforcement missing');
 
 const artnetSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/ArtNetSender.java'),'utf8');
 const sacnSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/SacnSender.java'),'utf8');

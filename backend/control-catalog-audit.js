@@ -25,10 +25,16 @@ function hasAny(values, needles) {
     return needles.some(n => s.includes(n));
   });
 }
+function hasStandardDmxTransport(values) {
+  return values.some(v => {
+    const s = String(v).toLowerCase();
+    return /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(s) || s.includes('crmx') || s.includes('lumenradio');
+  });
+}
 function bucket(name) {
   if (!byManufacturer.has(name)) byManufacturer.set(name, {
     fixtures: 0, verifiedDmxFixtures: 0, verifiedModes: 0,
-    nativeNetwork: 0, standardDmx: 0, proprietaryWirelessOnly: 0,
+    nativeNetwork: 0, standardDmx: 0, rdmManagement: 0, proprietaryWirelessOnly: 0,
     noControlMetadata: 0, legacyControlArrays: 0
   });
   return byManufacturer.get(name);
@@ -64,11 +70,15 @@ for (const fixture of fixtures) {
     hasAny(directStrings, ['art-net','artnet','sacn','e1.31']) ||
     hasAny(routeInputs, ['art-net','artnet','sacn','e1.31']);
   const standardDmx =
-    hasAny(standardStrings, ['dmx512','dmx','rdm','crmx','lumenradio']) ||
-    hasAny(routeOutputs, ['dmx512','dmx','rdm','crmx','lumenradio']);
+    hasStandardDmxTransport(standardStrings) ||
+    hasStandardDmxTransport(routeOutputs);
+  const rdmManagement =
+    hasAny(standardStrings, ['rdm']) ||
+    hasAny(routeOutputs, ['rdm']);
   const proprietary = hasAny(controlStrings, ['sidus','bluetooth','ble','mesh','asteraapp','uhf','wifi','wi-fi']);
   if (nativeNetwork) b.nativeNetwork++;
   if (standardDmx) b.standardDmx++;
+  if (rdmManagement) b.rdmManagement++;
   if (!controlStrings.length) b.noControlMetadata++;
   if (proprietary && !nativeNetwork && !standardDmx) b.proprietaryWirelessOnly++;
 
@@ -146,6 +156,9 @@ for (const fixture of fixtures) {
 
   if ((nativeNetwork || standardDmx) && !verified.length) {
     pushWarning(fixture, 'standard control capability exists but no verified DMX mode is available to LightingAI');
+  }
+  if (rdmManagement && !standardDmx && !nativeNetwork) {
+    pushWarning(fixture, 'RDM management is documented but no DMX/CRMX/native-network level-control transport is documented');
   }
   if (legacyControlArray) {
     pushWarning(fixture, 'legacy control metadata array should be normalized to structured control families');

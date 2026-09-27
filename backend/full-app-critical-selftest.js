@@ -101,7 +101,8 @@ expect(patch.includes('invalid-universe')&&patch.includes('invalid-start')&&patc
 
 const control=read('app/src/main/assets/artnet-control.js');
 expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
-expect(control.includes("version:'0.44-transactional-single-writes'"),'Transactional single-write control version missing');
+expect(control.includes("version:'0.45-live-generation-fail-closed'"),'Live generation fail-closed control version missing');
+expect(control.includes("const id='networkdmx_stop_g'+armGeneration")&&control.includes('armGeneration++;'),'LIVE callback generation isolation missing');
 expect(control.includes('frames[String(u)]=staged'),'Transactional single-write frame commit missing');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
 expect(control.includes('if(!accepted){setOutputArmed(false,true);status(t().error,false);return}'),'Transactional blackout failure disarm missing');

@@ -377,9 +377,13 @@ function applySacnPriority(){
  return value;
 }
 function protocolUniverseLimit(protocol){return protocol==='sacn'?63999:32768}
+function validUniverseForProtocol(value,protocol){
+ const u=Number(value),limit=protocolUniverseLimit(protocol);
+ return Number.isInteger(u)&&u>=1&&u<=limit?u:null;
+}
 function sacnMulticastAddress(universe){
- const u=Math.max(1,Math.min(63999,Number(universe)||1));
- return '239.255.'+((u>>8)&255)+'.'+(u&255);
+ const u=validUniverseForProtocol(universe,'sacn');
+ return u==null?'—':'239.255.'+((u>>8)&255)+'.'+(u&255);
 }
 function updateProtocolUi(){
  const protocol=selectedProtocol(),target=E('artnetTargetBlock'),info=E('sacnMulticastInfo'),priorityBlock=E('sacnPriorityBlock'),universe=E('artnetUniverse');
@@ -387,7 +391,6 @@ function updateProtocolUi(){
  if(priorityBlock)priorityBlock.style.display=protocol==='sacn'?'':'none';
  if(universe){
   const limit=protocolUniverseLimit(protocol);universe.max=String(limit);
-  if(Number(universe.value)>limit)universe.value=String(limit);
  }
  if(info){
   info.style.display=protocol==='sacn'?'block':'none';
@@ -745,7 +748,11 @@ function deleteScene(index){
  renderScenes();renderCueStack();
 }
 function defaultUniverse(){const s=snapshot();return s&&Array.isArray(s.universes)&&s.universes.length?s.universes[0]:1}
-function frame(universe){const u=String(Math.max(1,Number(universe)||1));if(!frames[u])frames[u]=new Array(512).fill(0);return frames[u]}
+function frame(universe){
+ const protocol=selectedProtocol(),u=validUniverseForProtocol(universe,protocol);
+ if(u==null)return null;
+ const key=String(u);if(!frames[key])frames[key]=new Array(512).fill(0);return frames[key];
+}
 function patchLabel(r){const end=r.end==null?'?':r.end;return 'U'+r.universe+' · '+r.start+'-'+end+' · '+(r.name||r.fixtureId||('DMX '+r.index))+(r.mode?' · '+r.mode:'')}
 function patchUsable(r){return r&&Number(r.channels)>0&&Array.isArray(r.flags)&&r.flags.length===0}
 function fixtureForRow(r){
@@ -1090,7 +1097,8 @@ function sendFrame(channels,universe,source){
  if(activeSceneFade&&!quiet)cancelSceneFade(false);
  const transport=controlTransport(),protocol=selectedProtocol();
  if(!transport.isAvailable()){status(t().native,false);return}
- const limit=protocolUniverseLimit(protocol),u=Math.max(1,Math.min(limit,Number(universe)||1));
+ const u=validUniverseForProtocol(universe,protocol);
+ if(u==null){status(t().error,false);return false}
  const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();
  const ip=!rawTarget||rawTarget==='255.255.255.255'?'AUTO':rawTarget;
  if(protocol==='artnet'){try{localStorage.setItem(TARGET_KEY,ip)}catch(e){}}
@@ -1113,11 +1121,12 @@ function sendTest(){
  const u=Math.max(1,Number(E('artnetUniverse').value)||1);
  const ch=Math.min(512,Math.max(1,Number(E('artnetChannel').value)||1));
  const v=Math.min(255,Math.max(0,Number(E('artnetValue').value)||0));
- const f=frame(u);f[ch-1]=v;sendFrame(f.slice(),u);
+ const f=frame(u);if(!f){status(t().error,false);return}f[ch-1]=v;sendFrame(f.slice(),u);
 }
 function blackout(){
  if(!requireOutputArmed())return;
  const u=Math.max(1,Number(E('artnetUniverse').value)||1);
+ if(validUniverseForProtocol(u,selectedProtocol())==null){status(t().error,false);return}
  frames[String(u)]=new Array(512).fill(0);
  sendFrame(frames[String(u)].slice(),u);
 }

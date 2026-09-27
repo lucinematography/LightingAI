@@ -38,7 +38,15 @@ for (const marker of ['artNetSendDmx','artNetSetLiveDmx','sacnSendDmx','sacnSetL
 
 
 const artnet = fs.readFileSync(path.join(root,'app/src/main/assets/artnet-control.js'),'utf8');
-expect(artnet.includes("universeMin:1,universeMax:4,maxActiveUniverses:1,artNetPortAddressOffset:0"), 'Sidus One verified universe/Port-Address policy missing');
+expect(
+  artnet.includes("id:'aputure-sidus-one'") &&
+  artnet.includes('universeMin:1,universeMax:4') &&
+  artnet.includes('artNetUniverseMin:1,artNetUniverseMax:4') &&
+  artnet.includes('sacnUniverseMin:1,sacnUniverseMax:4') &&
+  artnet.includes('maxActiveUniverses:1') &&
+  artnet.includes('artNetPortAddressOffset:0'),
+  'Sidus One verified universe/Port-Address policy missing'
+);
 expect(artnet.includes('preflightBridgeUniverse') && artnet.includes('preflightBridgeMulti'), 'Bridge universe preflight safety missing');
 expect(artnet.includes('LightingAINetworkDmxLifecyclePause') && artnet.includes('LightingAINetworkDmxLifecycleResume'), 'Network DMX lifecycle fail-closed hooks missing');
 expect(artnet.includes('setArmSignature') && artnet.includes('clearArmSignature'), 'Native armed-route binding missing');

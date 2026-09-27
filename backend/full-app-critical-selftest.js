@@ -41,14 +41,14 @@ expect(main.includes('artNetLiveEpoch')&&main.includes('sacnLiveEpoch'),'Native 
 expect(main.includes('networkDmxSendEpoch')&&main.includes('networkDmxSendLock'),'Native direct-send epoch guard missing');
 expect(main.includes('Stale Art-Net direct send ignored')&&main.includes('Stale sACN direct send ignored'),'Native stale direct-send rejection missing');
 expect(main.includes('Stale Art-Net live update ignored')&&main.includes('Stale sACN live update ignored'),'Native stale live-update rejection missing');
+const artNetLive=read('app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java');
+const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
 expect(artNetLive.includes('stopAll();')&&artNetLive.includes('return;')&&artNetLive.includes('NetworkInterfaceInspector.signature()'),'Art-Net live engine must fail fast and recheck network route per frame');
 expect(sacnLive.includes('abortAll();')&&sacnLive.includes('return;')&&sacnLive.includes('NetworkInterfaceInspector.signature()'),'sACN live engine must fail fast and recheck network route per frame');
 expect(main.includes('synchronized (sacnLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'sACN live update must recheck network signature inside live lock');
 expect(main.includes('synchronized (artNetLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'Art-Net live update must recheck network signature inside live lock');
-const artNetLive=read('app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java');
-const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
-expect(artNetLive.includes('tickFailed')&&artNetLive.includes('tickError'),'Art-Net partial live failure aggregation missing');
-expect(sacnLive.includes('tickFailed')&&sacnLive.includes('tickError'),'sACN partial live failure aggregation missing');
+expect(!artNetLive.includes('tickFailed')&&!artNetLive.includes('tickError'),'Art-Net live engine must not continue after a packet failure');
+expect(!sacnLive.includes('tickFailed')&&!sacnLive.includes('tickError'),'sACN live engine must not continue after a packet failure');
 expect(sacnLive.includes('terminationFailed')&&sacnLive.includes('terminationError'),'sACN termination failure aggregation missing');
 expect(sacnLive.includes('public boolean stopAll()')&&sacnLive.includes('return lastError == null || lastError.isEmpty();'),'sACN live stop must report termination failure');
 expect(main.includes('ok = sacnLiveEngine.stopAll();')&&main.includes('notifyArtNetResult(id, ok, message);'),'sACN live stop bridge must propagate termination failure');

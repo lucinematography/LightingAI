@@ -171,17 +171,20 @@ public final class SacnLiveEngine {
             return;
         }
 
+        String tickError = "";
+        boolean tickFailed = false;
         for (Frame frame : frames.values()) {
             try {
                 SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(), cid, sourceName, priority.get());
                 packetsSent.incrementAndGet();
                 lastSendAtMs.set(System.currentTimeMillis());
-                lastError = "";
             } catch (Exception e) {
                 packetsFailed.incrementAndGet();
-                lastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                // Keep refreshing; transient Wi-Fi/network failures may recover.
+                tickFailed = true;
+                String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                if (tickError.isEmpty()) tickError = message;
             }
         }
+        lastError = tickFailed ? tickError : "";
     }
 }

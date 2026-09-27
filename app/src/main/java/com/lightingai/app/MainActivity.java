@@ -1048,7 +1048,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void sacnSetLiveDmx(String requestId, int universe, String channelsJson) {
             final String id = requestId == null ? "" : requestId;
-            final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
+            final int u = universe;
             final String raw = channelsJson == null ? "[]" : channelsJson;
             new Thread(() -> {
                 boolean ok = false;
@@ -1132,7 +1132,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void artNetSetLiveDmx(String requestId, String targetIp, int universe, String channelsJson) {
             final String id = requestId == null ? "" : requestId;
             final String ip = targetIp == null ? "" : targetIp;
-            final int u = Math.max(1, universe);
+            final int u = universe;
             final String raw = channelsJson == null ? "[]" : channelsJson;
             new Thread(() -> {
                 boolean ok = false;

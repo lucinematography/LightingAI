@@ -4,8 +4,10 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -55,5 +57,27 @@ public final class NetworkInterfaceInspector {
             // Diagnostics must never affect DMX output.
         }
         return out;
+    }
+
+    public static String signature() {
+        return signature(snapshot());
+    }
+
+    static String signature(JSONArray snapshot) {
+        if (snapshot == null || snapshot.length() == 0) return "";
+        List<String> rows = new ArrayList<>();
+        for (int i = 0; i < snapshot.length(); i++) {
+            JSONObject item = snapshot.optJSONObject(i);
+            if (item == null) continue;
+            String name = item.optString("name", "");
+            String ipv4 = item.optString("ipv4", "");
+            String broadcast = item.optString("broadcast", "");
+            int prefix = item.optInt("prefixLength", -1);
+            boolean multicast = item.optBoolean("multicast", false);
+            if (ipv4.isEmpty()) continue;
+            rows.add(name + "|" + ipv4 + "|" + broadcast + "|" + prefix + "|" + multicast);
+        }
+        Collections.sort(rows);
+        return String.join(";", rows);
     }
 }

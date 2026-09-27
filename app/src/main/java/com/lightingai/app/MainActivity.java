@@ -222,6 +222,22 @@ public class MainActivity extends Activity {
         }
     }
 
+    private static int[] parseFullDmxFrame(String channelsJson) throws Exception {
+        JSONArray values = new JSONArray(channelsJson == null ? "[]" : channelsJson);
+        if (values.length() != 512) throw new IllegalArgumentException("DMX frame must contain exactly 512 channels");
+        int[] channels = new int[512];
+        for (int i = 0; i < 512; i++) {
+            Object raw = values.get(i);
+            if (!(raw instanceof Number)) throw new IllegalArgumentException("DMX channel must be numeric");
+            double value = ((Number) raw).doubleValue();
+            if (!Double.isFinite(value) || value != Math.rint(value) || value < 0 || value > 255) {
+                throw new IllegalArgumentException("DMX channel out of range");
+            }
+            channels[i] = (int) value;
+        }
+        return channels;
+    }
+
     private View createStartupSplash() {
         FrameLayout splash = new FrameLayout(this);
         splash.setBackgroundColor(Color.BLACK);
@@ -1089,10 +1105,7 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
-                    JSONArray a = new JSONArray(raw);
-                    int count = Math.min(512, a.length());
-                    int[] channels = new int[count];
-                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
+                    int[] channels = parseFullDmxFrame(raw);
                     synchronized (networkDmxSendLock) {
                         if (epoch != networkDmxSendEpoch.get()) throw new IllegalStateException("Stale sACN direct send ignored");
                         requireNetworkDmxArmedRoute();
@@ -1121,10 +1134,7 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
-                    JSONArray a = new JSONArray(raw);
-                    int count = Math.min(512, a.length());
-                    int[] channels = new int[count];
-                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
+                    int[] channels = parseFullDmxFrame(raw);
                     synchronized (sacnLiveControlLock) {
                         if (epoch != sacnLiveEpoch.get()) throw new IllegalStateException("Stale sACN live update ignored");
                         requireNetworkDmxArmedRoute();
@@ -1190,10 +1200,7 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
-                    JSONArray a = new JSONArray(raw);
-                    int count = Math.min(512, a.length());
-                    int[] channels = new int[count];
-                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
+                    int[] channels = parseFullDmxFrame(raw);
                     synchronized (networkDmxSendLock) {
                         if (epoch != networkDmxSendEpoch.get()) throw new IllegalStateException("Stale Art-Net direct send ignored");
                         requireNetworkDmxArmedRoute();
@@ -1223,10 +1230,7 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
-                    JSONArray a = new JSONArray(raw);
-                    int count = Math.min(512, a.length());
-                    int[] channels = new int[count];
-                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
+                    int[] channels = parseFullDmxFrame(raw);
                     synchronized (artNetLiveControlLock) {
                         if (epoch != artNetLiveEpoch.get()) throw new IllegalStateException("Stale Art-Net live update ignored");
                         requireNetworkDmxArmedRoute();

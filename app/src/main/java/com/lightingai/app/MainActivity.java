@@ -15,6 +15,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -684,6 +685,19 @@ public class MainActivity extends Activity {
         return hasLocationPermission();
     }
 
+    private boolean isBleLocationServiceReady() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) return true;
+        try {
+            LocationManager manager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            if (manager == null) return false;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) return manager.isLocationEnabled();
+            return manager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
     private void requestBlePermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || hasBlePermission()) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -710,6 +724,10 @@ public class MainActivity extends Activity {
         }
 
         pendingBleDiscoveryRequestId = null;
+        if (!isBleLocationServiceReady()) {
+            notifyBleDiscovery(id, new JSONArray(), "ble_location_disabled");
+            return;
+        }
         if (bleDeviceScanner == null) bleDeviceScanner = new BleDeviceScanner(this);
         bleDeviceScanner.discover(boundedTimeout, new BleDeviceScanner.Callback() {
             @Override public void onComplete(JSONArray devices) {

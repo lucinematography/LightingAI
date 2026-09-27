@@ -61,7 +61,10 @@ expect(bleUi.includes("version:'0.4-ble-mesh-diagnostics'"),'BLE mesh diagnostic
 const bleGatt=read('app/src/main/java/com/lightingai/app/BleGattInspector.java');
 expect(bleGatt.includes('discoverServices()'),'BLE GATT service discovery missing');
 expect(!bleGatt.includes('writeCharacteristic')&&!bleGatt.includes('writeDescriptor')&&!bleGatt.includes('setCharacteristicNotification'),'Read-only BLE GATT inspector must not write or subscribe');
-expect(bleGatt.includes('connectGatt')&&bleGatt.includes('closeGattLocked'),'BLE GATT lifecycle close missing');
+expect(bleGatt.includes('connectGatt')&&bleGatt.includes('closeGattOnlyLocked'),'BLE GATT lifecycle close missing');
+expect(bleGatt.includes('MAX_ATTEMPTS = 3')&&bleGatt.includes('retryOrFailLocked'),'BLE GATT retry protection missing');
+expect(bleGatt.includes('PROPERTY_READ')&&bleGatt.includes('readCharacteristic'),'BLE GATT read-only snapshot missing');
+expect(!bleGatt.includes('createBond'),'BLE GATT diagnostics must not use Android bonding');
 expect(bleUi.includes('scanCooldownUntil')&&bleUi.includes('scanActive'),'BLE scan spam guard missing');
 expect(bleUi.includes('ble_scan_failed_6')&&bleUi.includes('tooFrequent'),'BLE frequent-scan error handling missing');
 expect(!main.includes("file:///android_asset/control-system-drivers.js"),'MainActivity must not directly race-load control driver assets');

@@ -698,12 +698,13 @@ function globalBlackout(){
   while(saved[String(u)].length<512)saved[String(u)].push(0);
  });
  lastBlackoutSnapshot={patchSignature:patchSignature(),frames:saved};
+ const staged={};
+ universes.forEach(u=>{staged[String(u)]=new Array(512).fill(0)});
  let accepted=true;
- universes.forEach(u=>{
-  frames[String(u)]=new Array(512).fill(0);
-  if(!sendFrame(frames[String(u)].slice(),u,'panic'))accepted=false;
- });
- if(accepted)status(t().panicDone,true);else status(t().error,false);
+ universes.forEach(u=>{if(!sendFrame(staged[String(u)].slice(),u,'panic'))accepted=false});
+ if(!accepted){setOutputArmed(false,true);status(t().error,false);return}
+ universes.forEach(u=>{frames[String(u)]=staged[String(u)].slice()});
+ status(t().panicDone,true);
 }
 function restoreBeforeBlackout(){
  if(!requireOutputArmed())return;
@@ -713,13 +714,15 @@ function restoreBeforeBlackout(){
  const saved=lastBlackoutSnapshot.frames;
  const universes=Object.keys(saved).map(Number);
  if(universes.some(u=>validUniverseForProtocol(u,selectedProtocol())==null)){status(t().error,false);return}
- let accepted=true;
+ const staged={};
  Object.keys(saved).forEach(u=>{
-  frames[String(u)]=saved[u].slice(0,512);
-  while(frames[String(u)].length<512)frames[String(u)].push(0);
-  if(!sendFrame(frames[String(u)].slice(),Number(u),'restore'))accepted=false;
+  staged[String(u)]=saved[u].slice(0,512);
+  while(staged[String(u)].length<512)staged[String(u)].push(0);
  });
- if(!accepted){status(t().error,false);return}
+ let accepted=true;
+ Object.keys(staged).forEach(u=>{if(!sendFrame(staged[u].slice(),Number(u),'restore'))accepted=false});
+ if(!accepted){setOutputArmed(false,true);status(t().error,false);return}
+ Object.keys(staged).forEach(u=>{frames[String(u)]=staged[u].slice()});
  lastBlackoutSnapshot=null;
  status(t().panicRestored,true);
 }
@@ -825,16 +828,21 @@ function applyScene(index){
  cancelSceneFade(false);
  const next=normalizedSceneFrames(scene);
  const oldUniverses=Object.keys(frames),wasLive=liveEnabled;
- if(wasLive)setLiveEnabled(false);
+ if(wasLive&&!setLiveEnabled(false)){status(t().error,false);return false}
  let accepted=true;
  if(!wasLive)oldUniverses.filter(u=>!next[u]).forEach(u=>{if(!sendFrame(new Array(512).fill(0),Number(u)))accepted=false});
+ if(!wasLive)Object.keys(next).forEach(u=>{if(!sendFrame(next[u].slice(),Number(u)))accepted=false});
+ if(!accepted){
+  if(wasLive)setLiveEnabled(true);
+  setOutputArmed(false,true);
+  status(t().error,false);
+  return false;
+ }
  Object.keys(frames).forEach(u=>delete frames[u]);
- Object.keys(next).forEach(u=>{frames[u]=next[u];});
- if(wasLive){
-  if(!setLiveEnabled(true))accepted=false;
- }else Object.keys(frames).forEach(u=>{if(!sendFrame(frames[u].slice(),Number(u)))accepted=false});
- if(accepted)status(t().sceneApplied,true);else status(t().error,false);
- return accepted;
+ Object.keys(next).forEach(u=>{frames[u]=next[u].slice()});
+ if(wasLive&&!setLiveEnabled(true)){status(t().error,false);return false}
+ status(t().sceneApplied,true);
+ return true;
 }
 function deleteScene(index){
  const scenes=readScenes();
@@ -1448,7 +1456,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.41-transactional-master-groups',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.42-transactional-scenes-blackout',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

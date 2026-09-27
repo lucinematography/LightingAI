@@ -790,6 +790,13 @@ function normalizedSceneFrames(scene){
  });
  return next;
 }
+function sceneUniverseSetIsSafe(values){
+ const protocol=selectedProtocol();
+ return values.every(value=>{
+  const u=validUniverseForProtocol(Number(value),protocol);
+  return u!=null&&bridgeUniverseAllowed(u,protocol);
+ });
+}
 function fadeSeconds(){
  const input=E('artnetSceneFadeSeconds'),raw=input?Number(input.value):Number(localStorage.getItem(FADE_KEY)||2);
  return Math.max(0.1,Math.min(60,Number.isFinite(raw)?raw:2));
@@ -808,6 +815,7 @@ function fadeToScene(index,secondsOverride){
  if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return false}
  const next=normalizedSceneFrames(scene),universeSet=new Set(Object.keys(frames).concat(Object.keys(next)));
  if(!universeSet.size){status(t().sceneNeedFrame,false);return false}
+ if(!sceneUniverseSetIsSafe(Array.from(universeSet))){setOutputArmed(false,true);status(t().error,false);return false}
  cancelSceneFade(false);
  const start={},target={},universes=Array.from(universeSet),snapChannels=fadeSnapChannels();
  universes.forEach(u=>{
@@ -860,7 +868,8 @@ function applyScene(index){
  if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return false}
  cancelSceneFade(false);
  const next=normalizedSceneFrames(scene);
- const oldUniverses=Object.keys(frames),wasLive=liveEnabled;
+ const oldUniverses=Object.keys(frames),sceneUniverses=Array.from(new Set(oldUniverses.concat(Object.keys(next)))),wasLive=liveEnabled;
+ if(!sceneUniverseSetIsSafe(sceneUniverses)){setOutputArmed(false,true);status(t().error,false);return false}
  if(wasLive&&!setLiveEnabled(false)){status(t().error,false);return false}
  let accepted=true;
  if(!wasLive)oldUniverses.filter(u=>!next[u]).forEach(u=>{if(!sendFrame(new Array(512).fill(0),Number(u)))accepted=false});

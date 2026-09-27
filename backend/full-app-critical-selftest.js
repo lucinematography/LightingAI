@@ -105,6 +105,7 @@ expect(sunBridge.includes('LightingAINativeSunLocation'),'SUNCE native location 
 
 const patch=read('app/src/main/assets/dmx-patch-planner.js');
 expect(patch.includes('invalid-universe')&&patch.includes('invalid-start')&&patch.includes('invalid-channels'),'DMX patch fail-closed validation missing');
+expect(read('app/src/main/assets/dmx-export.js').includes("if(u==null||u<1||u>999)flags[key].push('invalid-universe');"),'DMX snapshot must reject universes outside planner range');
 expect(patch.includes("const u=integerOrNull(r&&r.universe),start=integerOrNull(r&&r.start),count=integerOrNull(r&&r.channels);")&&patch.includes("if(u==null||u<1||u>999||start==null||start<1||start>512||count==null||count<=0||count>512||start+count-1>512)return;"),'Free-slot search must ignore invalid patch rows instead of normalizing them');
 
 const control=read('app/src/main/assets/artnet-control.js');
@@ -112,6 +113,7 @@ expect(control.includes('controlContextSignature')&&control.includes('contextSto
 expect(control.includes('legacyContextStorageKey')&&control.includes('::ctxv2_')&&control.includes('item.contextSignature===signature'),'Control storage must verify the exact project/scene context and migrate legacy hashed keys safely');
 expect(control.includes("version:'0.47-arm-patch-bound'"),'ARM patch-bound control version missing');
 expect(control.includes('armedPatchSignature')&&control.includes('patchSignature()!==armedPatchSignature'),'ARM patch signature guard missing');
+expect(control.includes('u!=null&&u>=1&&u<=999')&&control.includes('start+channels-1<=512'),'Control layer must independently revalidate patch universe/start/footprint');
 expect(control.includes('fadePatchSignature!==patchSignature()'),'Fade patch-change abort guard missing');
 expect(control.includes('armedContextSignature')&&control.includes('controlContextSignature()!==armedContextSignature'),'ARM project/scene context guard missing');
 expect(control.includes("const id='networkdmx_stop_g'+armGeneration")&&control.includes('armGeneration++;'),'LIVE callback generation isolation missing');

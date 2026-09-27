@@ -48,5 +48,13 @@ expect(aputure.length>0,'Aputure catalog empty');
 expect(astera.some(f=>Array.isArray(f.dmxModes)&&f.dmxModes.some(m=>m?.verified===true)),'No verified Astera DMX profile');
 expect(aputure.some(f=>Array.isArray(f.dmxModes)&&f.dmxModes.some(m=>m?.verified===true)),'No verified Aputure DMX profile');
 
+for(const id of ['arri-skypanel-x21','arri-skypanel-x22','arri-skypanel-x23']){
+  const fixture=fixtures.find(f=>f.id===id);
+  expect(!!fixture,'SkyPanel X fixture missing: '+id);
+  const resolved=fixture&&api.resolve(fixture);
+  expect(resolved?.productionDriver?.id==='standards-native-network','SkyPanel X native Art-Net/sACN route missing: '+id);
+  expect(resolved?.verifiedDmxModeCount>=1,'SkyPanel X verified DMX mode missing: '+id);
+}
+
 console.log(JSON.stringify({ok:failures.length===0,fixtures:fixtures.length,manufacturers:[...manufacturers].sort(),failures},null,2));
 if(failures.length)process.exit(1);

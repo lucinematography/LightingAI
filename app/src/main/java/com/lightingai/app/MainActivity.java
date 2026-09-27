@@ -1262,7 +1262,7 @@ public class MainActivity extends Activity {
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         if (webView != null) {
             webView.post(() -> webView.evaluateJavascript(
-                "window.LightingAINetworkDmxLifecycleResume&&window.LightingAINetworkDmxLifecycleResume();",
+                "window.LightingAINetworkDmxLifecycleResume&&window.LightingAINetworkDmxLifecycleResume();window.LightingAIBleLifecycleResume&&window.LightingAIBleLifecycleResume();",
                 null));
         }
     }
@@ -1274,7 +1274,7 @@ public class MainActivity extends Activity {
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         if (webView != null) {
             webView.post(() -> webView.evaluateJavascript(
-                "window.LightingAINetworkDmxLifecyclePause&&window.LightingAINetworkDmxLifecyclePause();",
+                "window.LightingAINetworkDmxLifecyclePause&&window.LightingAINetworkDmxLifecyclePause();window.LightingAIBleLifecyclePause&&window.LightingAIBleLifecyclePause();",
                 null));
         }
         if (bleDeviceScanner != null) bleDeviceScanner.stop();

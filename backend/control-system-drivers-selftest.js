@@ -41,6 +41,15 @@ expect(noSource?.productionReady===false,'verified DMX mode without source URL m
 const rdmOnly=api&&api.resolve({control:{wired:['RDM']},dmxModes:[verifiedMode]});
 expect(rdmOnly?.productionReady===false&&rdmOnly?.transportKnown===false,'RDM-only fixture must not qualify as a level-control route');
 
+const routingSrc=fs.readFileSync(path.join(root,'app/src/main/assets/control-routing.js'),'utf8');
+const routingSandbox={window:{}};
+vm.createContext(routingSandbox);
+vm.runInContext(routingSrc,routingSandbox);
+const routingApi=routingSandbox.window.LightingAIControlRouting;
+const rdmFallback=routingApi&&routingApi.classify({control:{wired:['RDM']},dmxModes:[verifiedMode]});
+expect(routingApi&&routingSrc.includes("version:'1.4-rdm-fallback-separated'"),'Fallback control router version marker missing');
+expect(rdmFallback?.dmx===false&&rdmFallback?.transportReady===false&&rdmFallback?.semanticReady===false,'Fallback router must not treat RDM-only metadata as level control');
+
 const {fixtures}=buildRuntimeCatalog();
 const manufacturers=new Set(fixtures.map(f=>f.manufacturer).filter(Boolean));
 for(const maker of ['Astera','Aputure','ARRI','Godox','Aladdin']) expect(manufacturers.has(maker),'catalog missing '+maker);

@@ -8,14 +8,14 @@ function hasAny(values,needles){
 function classify(fixture){
   var c=fixture&&fixture.control||{};
   var direct=list(c.directLightingAI),wired=list(c.wired),wireless=list(c.wireless),external=list(c.externalInterfaceRequired);
-  var all=direct.concat(wired,wireless);
+  var standardFields=direct.concat(wired,wireless);
   var nativeNetwork=hasAny(direct,['art-net','artnet','sacn','e1.31']);
-  var standardNetwork=hasAny(all,['art-net','artnet','sacn','e1.31']);
-  var dmx=hasAny(all,['dmx512','dmx','rdm']);
-  var crmx=hasAny(all,['crmx','lumenradio']);
-  var proprietaryBle=hasAny(all,['sidus','bluetooth','ble','mesh','asteraapp','uhf']);
+  var standardNetwork=hasAny(standardFields,['art-net','artnet','sacn','e1.31']);
+  var dmx=hasAny(standardFields,['dmx512','dmx','rdm']);
+  var crmx=hasAny(standardFields,['crmx','lumenradio']);
+  var proprietaryBle=hasAny(standardFields.concat(external),['sidus','bluetooth','ble','mesh','asteraapp','uhf']);
   var verifiedModes=list(fixture&&fixture.dmxModes).filter(function(m){
-    return !!(m&&m.verified===true&&Number(m.channels||m.channelCount)>0);
+    return !!(m&&m.verified===true&&Number(m.channels||m.channelCount)>0&&String(m.sourceUrl||'').indexOf('http')===0);
   });
   var system=null;
   try{
@@ -24,9 +24,19 @@ function classify(fixture){
     }
   }catch(e){}
   var route='unverified',label='NO VERIFIED ROUTE',requiresInterface=external.length>0;
-  if(nativeNetwork){route='native-network';label='DIRECT ART-NET / sACN';}
-  else if(standardNetwork||dmx||crmx){route='gateway';label='STANDARD CONTROL ROUTE';}
-  else if(proprietaryBle){route='vendor-wireless';label='VENDOR WIRELESS ADAPTER';}
+  if(system&&system.productionDriver){
+    if(system.productionDriver.id==='standards-native-network'){route='native-network';label='DIRECT ART-NET / sACN';}
+    else {route='gateway';label='STANDARD CONTROL ROUTE';}
+  }else if(system&&system.transportKnown){
+    route=nativeNetwork?'native-network':'gateway';
+    label='TRANSPORT KNOWN · PROFILE UNVERIFIED';
+  }else if(system&&system.vendorDrivers&&system.vendorDrivers.length){
+    route='vendor-wireless';label='VENDOR WIRELESS ADAPTER';
+  }else if(nativeNetwork||standardNetwork||dmx||crmx){
+    route=nativeNetwork?'native-network':'gateway';label='TRANSPORT KNOWN · PROFILE UNVERIFIED';
+  }else if(proprietaryBle){
+    route='vendor-wireless';label='VENDOR WIRELESS ADAPTER';
+  }
   var transportReady=system?!!system.transportKnown:(route==='native-network'||route==='gateway');
   var semanticReady=system?!!system.productionReady:(transportReady&&verifiedModes.length>0);
   return {
@@ -48,8 +58,6 @@ function classify(fixture){
     wireless:wireless
   };
 }
-function productionReady(fixture){
-  return classify(fixture).semanticReady===true;
-}
-window.LightingAIControlRouting={version:'1.2-system-driver-gated',classify:classify,productionReady:productionReady};
+function productionReady(fixture){return classify(fixture).semanticReady===true}
+window.LightingAIControlRouting={version:'1.3-conservative-system-driver-gated',classify:classify,productionReady:productionReady};
 })();

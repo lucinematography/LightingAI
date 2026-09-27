@@ -52,6 +52,7 @@ let currentCueIndex=-1;
 let lastBlackoutSnapshot=null;
 let outputArmed=false;
 let pendingArmPreflightId=null;
+let armGeneration=0;
 const frames={};
 function controlTransport(){
  if(window.LightingAIControlTransport&&typeof window.LightingAIControlTransport.sendDmx==='function')return window.LightingAIControlTransport;
@@ -314,6 +315,7 @@ function finishArmPreflight(id,payload,error){
   status(t().preflightFailed,false);
   return true;
  }
+ armGeneration++;
  outputArmed=true;
  if(toggle)toggle.checked=true;
  status(t().armOn,true);
@@ -331,6 +333,7 @@ function requireOutputArmed(){
 function setOutputArmed(enabled,quiet){
  const next=!!enabled,toggle=E('artnetOutputArm');
  if(!next){
+  armGeneration++;
   pendingArmPreflightId=null;
   try{const transport=controlTransport();if(typeof transport.clearArmSignature==='function')transport.clearArmSignature()}catch(e){}
   outputArmed=false;
@@ -1114,7 +1117,7 @@ function sendFrame(channels,universe,source){
  const ip=!rawTarget||rawTarget==='255.255.255.255'?'AUTO':rawTarget;
  if(protocol==='artnet'){try{localStorage.setItem(TARGET_KEY,ip)}catch(e){}}
  const prefix=source==='fade'?'fade_':(source==='panic'?'panic_':(source==='restore'?'restore_':'networkdmx_'));
- const id=prefix+Date.now()+'_'+(++seq);
+ const id=prefix+'g'+armGeneration+'_'+Date.now()+'_'+(++seq);
  if(!quiet)status(t().sending);
  try{
   const request={id:id,targetIp:ip,universe:u,channels:channels};
@@ -1154,7 +1157,7 @@ function setLiveEnabled(enabled){
   universes.forEach(u=>{if(!sendFrame(frames[String(u)].slice(),u))accepted=false});
   if(!accepted){
    liveEnabled=false;if(toggle)toggle.checked=false;
-   const id='networkdmx_stop_'+Date.now()+'_'+(++seq);
+   const id='networkdmx_stop_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
    try{if(typeof transport.stopLive==='function')transport.stopLive({id:id,protocol:protocol})}catch(e){}
    status(t().error,false);return false;
   }
@@ -1162,7 +1165,7 @@ function setLiveEnabled(enabled){
  }else{
   const protocol=liveProtocol||selectedProtocol();
   liveEnabled=false;if(toggle)toggle.checked=false;
-  const id='networkdmx_stop_'+Date.now()+'_'+(++seq);
+  const id='networkdmx_stop_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
   let accepted=true;
   try{if(typeof transport.stopLive!=='function'||!transport.stopLive({id:id,protocol:protocol}))accepted=false}catch(e){accepted=false}
   status(accepted?t().liveOff:t().error,accepted?undefined:false);
@@ -1173,6 +1176,7 @@ function stopLiveForBackground(){
  setOutputArmed(false,true);
 }
 function forceLifecycleDisarm(){
+ armGeneration++;
  pendingArmPreflightId=null;
  outputArmed=false;
  liveEnabled=false;
@@ -1188,6 +1192,8 @@ window.LightingAINetworkDmxLifecyclePause=forceLifecycleDisarm;
 window.LightingAINetworkDmxLifecycleResume=forceLifecycleDisarm;
 window.LightingAIArtNetResult=function(id,ok,message){
  const resultId=String(id||'');
+ const generationMatch=resultId.match(/_g(\d+)_/);
+ if(generationMatch&&Number(generationMatch[1])!==armGeneration)return;
  if(!ok){
   if(resultId.indexOf('fade_')===0)cancelSceneFade(false);
   setOutputArmed(false,true);
@@ -1333,7 +1339,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.33-async-failure-disarms',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.34-arm-generation-guard',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

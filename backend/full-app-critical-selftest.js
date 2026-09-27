@@ -133,12 +133,15 @@ expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStage
 expect(control.includes('if(!accepted){setOutputArmed(false,true);status(t().error,false);return}'),'Transactional blackout failure disarm missing');
 expect(control.includes('function applyScene(index)')&&control.includes('if(!accepted){')&&control.includes('setOutputArmed(false,true);')&&control.includes('return false;'),'Transactional scene failure disarm missing');
 expect(control.includes('function sceneUniverseSetIsSafe(values)')&&control.includes('if(!sceneUniverseSetIsSafe(Array.from(universeSet)))')&&control.includes('if(!sceneUniverseSetIsSafe(sceneUniverses))'),'Scene/fade must preflight every universe before any multi-universe send');
-expect(control.includes('function bridgeUniverseSetAllowed(values,protocol)')&&control.includes('prospectiveUniverses')&&control.includes('bridgeUniverseSetAllowed(prospectiveUniverses,protocol)'),'Bridge maxActiveUniverses must be enforced on every send, not only at ARM preflight');
+expect(control.includes('function bridgeUniverseSetAllowed(values,protocol)')&&control.includes('function operationUniverseSetIsSafe(values,protocolOverride)'),'Bridge universe-set validation helper missing');
+expect(control.includes('if(!operationUniverseSetIsSafe(keys))')&&control.includes('if(!operationUniverseSetIsSafe(universes))'),'Multi-universe operations must preflight their complete universe set');
+expect(control.includes('if(u==null||!bridgeUniverseAllowed(u,protocol))'),'Single-frame send must validate its own universe without treating cached history as active output');
 expect(control.includes("id:'aputure-sidus-four'")&&control.includes('artNetUniverseMax:32767')&&control.includes('sacnUniverseMax:63999')&&control.includes('maxActiveUniverses:4'),'Sidus Four verified bridge model missing protocol-specific limits/capacity');
 expect(control.includes("id:'astera-fp3-datalink'")&&control.includes('maxActiveUniverses:1'),'Astera FP3 DataLink must remain a one-universe network gateway');
 expect(control.includes('if(!accepted){cancelSceneFade(false);setOutputArmed(false,true);status(t().error,false);return}'),'Transactional fade failure disarm missing');
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('cancelSceneFade(false);'),'Lifecycle disarm must cancel the active scene fade timer');
 expect(control.includes('function invalidateCachedOutputState()')&&control.includes('Object.keys(frames).forEach(key=>delete frames[key]);')&&control.includes('invalidateCachedOutputState();')&&control.includes('setOutputArmed(false,true);'),'Async transport failure must invalidate cached DMX state before disarm');
+expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.48-route-state-separated'"),'Route changes must invalidate only route-bound runtime output state');
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
 for(const marker of ['ARM OUTPUT','globalBlackout','restoreBeforeBlackout','fadeToScene','setLiveEnabled','armGeneration']){
  expect(control.includes(marker),'Control critical contract missing: '+marker);

@@ -71,7 +71,7 @@ expect(artnetLive.includes('Network changed; re-arm required'), 'Art-Net network
 expect(sacnLive.includes('Network changed; re-arm required') && sacnLive.includes('abortAll()'), 'sACN network-change fail-safe missing');
 
 const routing = fs.readFileSync(path.join(root,'app/src/main/assets/control-routing.js'),'utf8');
-expect(routing.includes("version:'1.3-conservative-system-driver-gated'"), 'Production control router version marker missing');
+expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production control router version marker missing');
 
 console.log(JSON.stringify({ok:failures.length===0,fixture:'astera-titantube-fp1',verifiedModes:verifiedModes.length,routes:routes.length,failures},null,2));
 if (failures.length) process.exit(1);

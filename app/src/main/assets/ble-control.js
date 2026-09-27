@@ -25,7 +25,8 @@ const TXT={
   likelyAstera:'VEROVATNO ASTERA',
   likelyMesh:'BLE MESH UREĐAJ',
   meshProxy:'BLE MESH PROXY',
-  fingerprint:'OTISAK OGLASA'
+  fingerprint:'OTISAK OGLASA',
+  diag:'DIJAGNOSTIKA OGLASA'
  },
  en:{
   title:'📶 BLUETOOTH / BLE',
@@ -49,7 +50,8 @@ const TXT={
   likelyAstera:'LIKELY ASTERA',
   likelyMesh:'BLE MESH DEVICE',
   meshProxy:'BLE MESH PROXY',
-  fingerprint:'ADVERTISEMENT FINGERPRINT'
+  fingerprint:'ADVERTISEMENT FINGERPRINT',
+  diag:'ADVERTISEMENT DIAGNOSTICS'
  }
 };
 const t=()=>TXT[lang()];
@@ -159,6 +161,9 @@ function render(devices){
    const services=Array.isArray(d&&d.serviceUuids)?d.serviceUuids:[];
    const serviceData=Array.isArray(d&&d.serviceDataUuids)?d.serviceDataUuids:[];
    const manufacturerIds=Array.isArray(d&&d.manufacturerIds)?d.manufacturerIds:[];
+   const servicePayloads=Array.isArray(d&&d.serviceData)?d.serviceData:[];
+   const manufacturerPayloads=Array.isArray(d&&d.manufacturerData)?d.manufacturerData:[];
+   const rawAdv=String(d&&d.rawAdvertisementHex||'');
    const tag=deviceTag(d);
    const targetId='bleGatt_'+i;
    return '<div style="padding:10px 0;border-top:1px solid #2d333a">'+
@@ -167,6 +172,12 @@ function render(devices){
     (address?'<div class="muted small">'+esc(t().address)+': '+esc(address)+'</div>':'')+
     '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
     ((serviceData.length||manufacturerIds.length)?'<div class="muted small">'+esc(t().fingerprint)+': '+esc((serviceData.length?('SD '+serviceData.join(', ')):'')+(serviceData.length&&manufacturerIds.length?' · ':'')+(manufacturerIds.length?('MFG '+manufacturerIds.join(', ')):''))+'</div>':'')+
+    ((rawAdv||servicePayloads.length||manufacturerPayloads.length)?'<details style="margin-top:6px"><summary class="muted small" style="cursor:pointer">'+esc(t().diag)+'</summary><div class="muted small" style="margin-top:4px;word-break:break-all">'+
+      (rawAdv?('<div><b>RAW:</b> '+esc(rawAdv)+'</div>'):'')+
+      (servicePayloads.map(x=>'<div><b>SD '+esc(x&&x.uuid||'')+':</b> '+esc(x&&x.hex||'')+'</div>').join(''))+
+      (manufacturerPayloads.map(x=>'<div><b>MFG '+esc(x&&x.id||'')+':</b> '+esc(x&&x.hex||'')+'</div>').join(''))+
+      '<div><b>FLAGS:</b> '+esc(d&&d.advertiseFlags!=null?d.advertiseFlags:'—')+' · <b>TX:</b> '+esc(d&&d.txPowerLevel!=null?d.txPowerLevel:'—')+' · <b>CONNECTABLE:</b> '+esc(d&&d.connectable)+'</div>'+
+     '</div></details>':'')+
     (address&&d&&d.connectable?'<button class="btn secondary ble-gatt-btn" style="margin-top:7px" type="button" data-address="'+esc(address)+'" data-name="'+esc(name)+'" data-target="'+targetId+'">'+esc(t().inspect)+'</button><div id="'+targetId+'"></div>':'')+
    '</div>';
   }).join('');
@@ -203,7 +214,7 @@ function install(){
  translate();
  return true;
 }
-window.LightingAIBleControl={version:'0.2-direct-control-foundation',discover:startScan,inspect:inspectDevice};
+window.LightingAIBleControl={version:'0.3-raw-advertisement-diagnostics',discover:startScan,inspect:inspectDevice};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

@@ -33,6 +33,11 @@ for (const marker of ['artNetSendDmx','artNetSetLiveDmx','sacnSendDmx','sacnSetL
   expect(main.includes(marker), 'Native network control bridge missing: ' + marker);
 }
 
+
+const artnet = fs.readFileSync(path.join(root,'app/src/main/assets/artnet-control.js'),'utf8');
+expect(artnet.includes("universeMin:1,universeMax:4,maxActiveUniverses:1"), 'Sidus One verified universe limits missing');
+expect(artnet.includes('preflightBridgeUniverse') && artnet.includes('preflightBridgeMulti'), 'Bridge universe preflight safety missing');
+
 const routing = fs.readFileSync(path.join(root,'app/src/main/assets/control-routing.js'),'utf8');
 expect(routing.includes("version:'1.3-conservative-system-driver-gated'"), 'Production control router version marker missing');
 

@@ -32,6 +32,8 @@ const etherOnly=api&&api.resolve({control:{wired:['EtherCON']},dmxModes:[verifie
 expect(etherOnly?.productionReady===false,'EtherCON connector alone must not become production network control');
 const unavailableOnly=api&&api.resolve({control:{unavailableDirectProtocols:['DMX not available']},dmxModes:[verifiedMode]});
 expect(unavailableOnly?.productionReady===false,'unavailable protocol text must not create a production route');
+const legacyUnavailable=api&&api.resolve({control:['Bluetooth','DMX unavailable'],dmxModes:[verifiedMode]});
+expect(legacyUnavailable?.productionReady===false&&legacyUnavailable?.transportKnown===false,'negative legacy DMX text must not create a production route');
 const researchOnly=api&&api.resolve({manufacturer:'Astera',control:{wireless:['AsteraApp via Bluetooth']},dmxModes:[]});
 expect(researchOnly?.vendorResearchOnly===true&&researchOnly?.productionReady===false,'Astera proprietary wireless must remain research-only without a standard route');
 const noSource=api&&api.resolve({control:{wired:['DMX512']},dmxModes:[{name:'Unsafe',channels:1,verified:true}]});

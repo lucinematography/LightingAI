@@ -17,7 +17,7 @@ function validate(rows){
   const key=r&&r.id!=null?String(r.id):'row_'+index;
   flags[key]=[];
   const c=integerOrNull(r&&r.channels),u=integerOrNull(r&&r.universe),s=integerOrNull(r&&r.start);
-  if(u==null||u<1)flags[key].push('invalid-universe');
+  if(u==null||u<1||u>999)flags[key].push('invalid-universe');
   if(s==null||s<1||s>512)flags[key].push('invalid-start');
   if(c==null||c<0||c>512)flags[key].push('invalid-channels');
   if(c===0)flags[key].push('missing');

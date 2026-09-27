@@ -175,20 +175,22 @@ public final class SacnLiveEngine {
             return;
         }
 
-        String tickError = "";
-        boolean tickFailed = false;
         for (Frame frame : frames.values()) {
             try {
+                String routeNow = NetworkInterfaceInspector.signature();
+                if (networkSignature.isEmpty() || routeNow.isEmpty() || !networkSignature.equals(routeNow)) {
+                    throw new IllegalStateException("Network changed; re-arm required");
+                }
                 SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(), cid, sourceName, priority.get());
                 packetsSent.incrementAndGet();
                 lastSendAtMs.set(System.currentTimeMillis());
             } catch (Exception e) {
                 packetsFailed.incrementAndGet();
-                tickFailed = true;
-                String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                if (tickError.isEmpty()) tickError = message;
+                lastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                abortAll();
+                return;
             }
         }
-        lastError = tickFailed ? tickError : "";
+        lastError = "";
     }
 }

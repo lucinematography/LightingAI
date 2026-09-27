@@ -60,7 +60,12 @@ expect((pb12?.dmxModes||[]).some(m=>m?.name==='Mode 4 RGB 5ch'&&m?.verified===tr
 const storm400x=fixtures.find(f=>f.id==='aputure-storm-400x');
 expect(!!storm400x,'Aputure STORM 400x fixture missing');
 expect((storm400x?.dmxModes||[]).some(m=>m?.name==='Profile 1 CCT+ 8 Bit 3ch'&&m?.verified===true&&m?.channels===3),'STORM 400x verified CCT+ profile missing');
-expect((storm400x?.dmxModes||[]).some(m=>Array.isArray(m?.requiredChannels)&&m.requiredChannels.some(r=>r?.channel===3&&r?.value===133)),'STORM 400x neutral green requirement missing');
+expect((storm400x?.dmxModes||[]).some(m=>Array.isArray(m?.requiredChannels)&&m.requiredChannels.some(r=>r?.channel===3&&r?.value===137)),'STORM 400x neutral green requirement missing');
+
+const storm700x=fixtures.find(f=>f.id==='aputure-storm-700x');
+expect(!!storm700x,'Aputure STORM 700x fixture missing');
+expect((storm700x?.dmxModes||[]).some(m=>m?.name==='Profile 1 CCT+ 8 Bit 3ch'&&m?.verified===true&&m?.channels===3),'STORM 700x verified CCT+ profile missing');
+expect((storm700x?.dmxModes||[]).some(m=>Array.isArray(m?.requiredChannels)&&m.requiredChannels.some(r=>r?.channel===3&&r?.value===137)),'STORM 700x neutral green requirement missing');
 
 const storm80c=fixtures.find(f=>f.id==='aputure-storm-80c');
 expect(!!storm80c,'Aputure STORM 80c fixture missing');

@@ -20,6 +20,7 @@ function includesAny(values,needles){
 function hasStandardDmxTransport(values){
   return arr(values).some(function(v){
     var s=lower(v);
+    if(/\b(unavailable|unsupported|not supported|not available|no dmx|without dmx)\b/.test(s))return false;
     return /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(s)||s.indexOf('crmx')>=0||s.indexOf('lumenradio')>=0;
   });
 }

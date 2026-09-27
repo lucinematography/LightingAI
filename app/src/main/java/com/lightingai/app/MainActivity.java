@@ -80,6 +80,7 @@ public class MainActivity extends Activity {
     private final AtomicLong sacnDirectLastAtMs = new AtomicLong(0);
     private volatile String artNetDirectLastError = "";
     private volatile String sacnDirectLastError = "";
+    private volatile String networkDmxArmSignature = "";
     private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine();
     private byte[] sacnCid;
     private SacnLiveEngine sacnLiveEngine;
@@ -201,6 +202,14 @@ public class MainActivity extends Activity {
             3350
         );
         webView.requestApplyInsets();
+    }
+
+    private void requireNetworkDmxArmedRoute() {
+        String expected = networkDmxArmSignature == null ? "" : networkDmxArmSignature.trim();
+        String current = NetworkInterfaceInspector.signature();
+        if (expected.isEmpty() || current.isEmpty() || !expected.equals(current)) {
+            throw new IllegalStateException("Network changed; re-arm required");
+        }
     }
 
     private View createStartupSplash() {
@@ -955,6 +964,14 @@ public class MainActivity extends Activity {
             return NetworkInterfaceInspector.signature();
         }
 
+        @JavascriptInterface public void networkDmxSetArmSignature(String signature) {
+            networkDmxArmSignature = signature == null ? "" : signature.trim();
+        }
+
+        @JavascriptInterface public void networkDmxClearArmSignature() {
+            networkDmxArmSignature = "";
+        }
+
         @JavascriptInterface public String networkDmxDiagnostics() {
             try {
                 JSONObject out = new JSONObject();
@@ -1009,6 +1026,7 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
+                    requireNetworkDmxArmedRoute();
                     JSONArray a = new JSONArray(raw);
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
@@ -1036,6 +1054,7 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
+                    requireNetworkDmxArmedRoute();
                     JSONArray a = new JSONArray(raw);
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
@@ -1090,6 +1109,7 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
+                    requireNetworkDmxArmedRoute();
                     JSONArray a = new JSONArray(raw);
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
@@ -1118,6 +1138,7 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
+                    requireNetworkDmxArmedRoute();
                     JSONArray a = new JSONArray(raw);
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
@@ -1187,6 +1208,7 @@ public class MainActivity extends Activity {
         super.onResume();
         // Fail closed after any lifecycle transition. Native live engines must never
         // resume output until the WebView performs a fresh ARM preflight.
+        networkDmxArmSignature = "";
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         if (webView != null) {

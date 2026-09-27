@@ -998,7 +998,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void sacnSendDmx(String requestId, int universe, String channelsJson) {
             final String id = requestId == null ? "" : requestId;
-            final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
+            final int u = universe;
             final String raw = channelsJson == null ? "[]" : channelsJson;
             new Thread(() -> {
                 boolean ok = false;
@@ -1079,7 +1079,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void artNetSendDmx(String requestId, String targetIp, int universe, String channelsJson) {
             final String id = requestId == null ? "" : requestId;
             final String ip = targetIp == null ? "" : targetIp;
-            final int u = Math.max(1, universe);
+            final int u = universe;
             final String raw = channelsJson == null ? "[]" : channelsJson;
             new Thread(() -> {
                 boolean ok = false;
@@ -1178,10 +1178,28 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override protected void onResume() {
+        super.onResume();
+        // Fail closed after any lifecycle transition. Native live engines must never
+        // resume output until the WebView performs a fresh ARM preflight.
+        artNetLiveEngine.stopAll();
+        if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        if (webView != null) {
+            webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAINetworkDmxLifecycleResume&&window.LightingAINetworkDmxLifecycleResume();",
+                null));
+        }
+    }
+
     @Override protected void onPause() {
         stopNativeSunCompass();
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        if (webView != null) {
+            webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAINetworkDmxLifecyclePause&&window.LightingAINetworkDmxLifecyclePause();",
+                null));
+        }
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
         super.onPause();
     }

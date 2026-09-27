@@ -817,14 +817,20 @@ function saveScene(){
  renderScenes();renderCueStack();status(t().sceneSaved,true);
 }
 function normalizedSceneFrames(scene){
+ if(!scene||!scene.frames||typeof scene.frames!=='object')return null;
  const next={};
- if(!scene||!scene.frames)return next;
- Object.keys(scene.frames).forEach(u=>{
-  if(!Array.isArray(scene.frames[u]))return;
-  next[u]=scene.frames[u].slice(0,512).map(v=>Math.max(0,Math.min(255,Number(v)||0)));
-  while(next[u].length<512)next[u].push(0);
- });
- return next;
+ for(const u of Object.keys(scene.frames)){
+  const source=scene.frames[u];
+  if(!Array.isArray(source)||source.length!==512)return null;
+  const frameValues=new Array(512);
+  for(let i=0;i<512;i++){
+   const value=Number(source[i]);
+   if(!Number.isInteger(value)||value<0||value>255)return null;
+   frameValues[i]=value;
+  }
+  next[u]=frameValues;
+ }
+ return Object.keys(next).length?next:null;
 }
 function sceneUniverseSetIsSafe(values){
  return operationUniverseSetIsSafe(values);
@@ -845,7 +851,9 @@ function fadeToScene(index,secondsOverride){
  const scenes=readScenes(),scene=scenes[index];
  if(!scene||!scene.frames)return false;
  if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return false}
- const next=normalizedSceneFrames(scene),universeSet=new Set(Object.keys(frames).concat(Object.keys(next)));
+ const next=normalizedSceneFrames(scene);
+ if(!next){setOutputArmed(false,true);status(t().error,false);return false}
+ const universeSet=new Set(Object.keys(frames).concat(Object.keys(next)));
  if(!universeSet.size){status(t().sceneNeedFrame,false);return false}
  if(!sceneUniverseSetIsSafe(Array.from(universeSet))){setOutputArmed(false,true);status(t().error,false);return false}
  const universes=Array.from(universeSet);
@@ -902,6 +910,7 @@ function applyScene(index){
  if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return false}
  cancelSceneFade(false);
  const next=normalizedSceneFrames(scene);
+ if(!next){setOutputArmed(false,true);status(t().error,false);return false}
  const oldUniverses=Object.keys(frames),sceneUniverses=Array.from(new Set(oldUniverses.concat(Object.keys(next)))),wasLive=liveEnabled;
  if(!sceneUniverseSetIsSafe(sceneUniverses)){setOutputArmed(false,true);status(t().error,false);return false}
  if(wasLive&&!setLiveEnabled(false)){status(t().error,false);return false}
@@ -1589,7 +1598,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.49-known-frame-required',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.50-strict-scene-frames',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

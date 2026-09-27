@@ -1294,8 +1294,14 @@ public class MainActivity extends Activity {
     @Override protected void onPause() {
         stopNativeSunCompass();
         networkDmxArmSignature = "";
-        artNetLiveEngine.stopAll();
-        if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        synchronized (artNetLiveControlLock) {
+            artNetLiveEpoch.incrementAndGet();
+            artNetLiveEngine.stopAll();
+        }
+        synchronized (sacnLiveControlLock) {
+            sacnLiveEpoch.incrementAndGet();
+            if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        }
         if (webView != null) {
             webView.post(() -> webView.evaluateJavascript(
                 "window.LightingAINetworkDmxLifecyclePause&&window.LightingAINetworkDmxLifecyclePause();window.LightingAIBleLifecyclePause&&window.LightingAIBleLifecyclePause();",
@@ -1373,8 +1379,14 @@ public class MainActivity extends Activity {
 
     @Override protected void onDestroy() {
         networkDmxArmSignature = "";
-        artNetLiveEngine.stopAll();
-        if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        synchronized (artNetLiveControlLock) {
+            artNetLiveEpoch.incrementAndGet();
+            artNetLiveEngine.stopAll();
+        }
+        synchronized (sacnLiveControlLock) {
+            sacnLiveEpoch.incrementAndGet();
+            if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        }
         if (pendingFileChooser != null) finishFileChooser(null);
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();

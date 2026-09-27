@@ -1141,11 +1141,16 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void sacnStopLive(String requestId) {
             final String id = requestId == null ? "" : requestId;
+            boolean ok = true;
+            String message = "";
             synchronized (sacnLiveControlLock) {
                 sacnLiveEpoch.incrementAndGet();
-                if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+                if (sacnLiveEngine != null) {
+                    ok = sacnLiveEngine.stopAll();
+                    if (!ok) message = sacnLiveEngine.lastError();
+                }
             }
-            notifyArtNetResult(id, true, "");
+            notifyArtNetResult(id, ok, message);
         }
 
         @JavascriptInterface public int sacnLiveFrameCount() {

@@ -135,22 +135,24 @@ public final class ArtNetLiveEngine {
             return;
         }
 
-        String tickError = "";
-        boolean tickFailed = false;
         for (Frame frame : frames.values()) {
             try {
+                String routeNow = NetworkInterfaceInspector.signature();
+                if (networkSignature.isEmpty() || routeNow.isEmpty() || !networkSignature.equals(routeNow)) {
+                    throw new IllegalStateException("Network changed; re-arm required");
+                }
                 int seq = sequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
                 ArtNetSender.sendDmx(activeSocket, frame.targetIp, frame.portAddress, frame.channels, seq);
                 packetsSent.incrementAndGet();
                 lastSendAtMs.set(System.currentTimeMillis());
             } catch (Exception e) {
                 packetsFailed.incrementAndGet();
-                tickFailed = true;
-                String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                if (tickError.isEmpty()) tickError = message;
+                lastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                stopAll();
+                return;
             }
         }
-        lastError = tickFailed ? tickError : "";
+        lastError = "";
     }
 
     private static String normalizeIp(String targetIp) {

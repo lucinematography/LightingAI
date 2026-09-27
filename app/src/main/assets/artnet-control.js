@@ -891,7 +891,10 @@ function frame(universe){
  const key=String(u);if(!frames[key])frames[key]=new Array(512).fill(0);return frames[key];
 }
 function patchLabel(r){const end=r.end==null?'?':r.end;return 'U'+r.universe+' · '+r.start+'-'+end+' · '+(r.name||r.fixtureId||('DMX '+r.index))+(r.mode?' · '+r.mode:'')}
-function patchUsable(r){return r&&Number(r.channels)>0&&Array.isArray(r.flags)&&r.flags.length===0}
+function patchUsable(r){
+ const u=rawPatchNumber(r&&r.universe),start=rawPatchNumber(r&&r.start),channels=rawPatchNumber(r&&r.channels);
+ return !!(r&&u!=null&&u>=1&&u<=999&&start!=null&&start>=1&&start<=512&&channels!=null&&channels>0&&channels<=512&&start+channels-1<=512&&Array.isArray(r.flags)&&r.flags.length===0);
+}
 function fixtureForRow(r){
  const list=Array.isArray(window.catalogFixtures)?window.catalogFixtures:[];
  return r&&r.fixtureId?list.find(f=>f&&f.id===r.fixtureId):null;

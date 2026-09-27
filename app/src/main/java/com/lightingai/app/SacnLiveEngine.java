@@ -31,6 +31,7 @@ public final class SacnLiveEngine {
     private final AtomicLong packetsFailed = new AtomicLong(0);
     private final AtomicLong lastSendAtMs = new AtomicLong(0);
     private volatile String lastError = "";
+    private volatile String networkSignature = "";
     private final Object lock = new Object();
     private final byte[] cid;
     private final String sourceName;
@@ -46,8 +47,14 @@ public final class SacnLiveEngine {
 
     public void setFrame(int universe, int[] channels) throws Exception {
         int u = SacnSender.validateUniverse(universe);
+        String currentNetwork = NetworkInterfaceInspector.signature();
+        if (currentNetwork.isEmpty()) throw new IllegalStateException("No active network for sACN");
         int[] copy = channels == null ? new int[0] : Arrays.copyOf(channels, Math.min(512, channels.length));
         synchronized (lock) {
+            if (!networkSignature.isEmpty() && !networkSignature.equals(currentNetwork)) {
+                throw new IllegalStateException("Network changed; re-arm required");
+            }
+            networkSignature = currentNetwork;
             ensureRunningLocked();
             frames.put(u, new Frame(u, copy));
         }
@@ -120,6 +127,7 @@ public final class SacnLiveEngine {
                 socket.close();
                 socket = null;
             }
+            networkSignature = "";
         }
     }
 
@@ -147,6 +155,13 @@ public final class SacnLiveEngine {
             activeSocket = socket;
         }
         if (activeSocket == null || activeSocket.isClosed()) return;
+        String currentNetwork = NetworkInterfaceInspector.signature();
+        if (networkSignature.isEmpty() || currentNetwork.isEmpty() || !networkSignature.equals(currentNetwork)) {
+            packetsFailed.incrementAndGet();
+            lastError = "Network changed; re-arm required";
+            stopAll();
+            return;
+        }
 
         for (Frame frame : frames.values()) {
             try {

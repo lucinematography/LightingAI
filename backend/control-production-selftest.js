@@ -44,6 +44,13 @@ const sacnSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightin
 expect(artnetSender.includes('validateUniverse') && artnetSender.includes('MAX_UNIVERSE = 32768'), 'Art-Net strict universe validation missing');
 expect(sacnSender.includes('validateUniverse') && sacnSender.includes('MAX_UNIVERSE = 63999'), 'sACN strict universe validation missing');
 
+const networkInspector = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/NetworkInterfaceInspector.java'),'utf8');
+const artnetLive = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java'),'utf8');
+const sacnLive = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/SacnLiveEngine.java'),'utf8');
+expect(networkInspector.includes('String signature()'), 'Network route signature missing');
+expect(artnetLive.includes('Network changed; re-arm required'), 'Art-Net network-change fail-safe missing');
+expect(sacnLive.includes('Network changed; re-arm required') && sacnLive.includes('abortAll()'), 'sACN network-change fail-safe missing');
+
 const routing = fs.readFileSync(path.join(root,'app/src/main/assets/control-routing.js'),'utf8');
 expect(routing.includes("version:'1.3-conservative-system-driver-gated'"), 'Production control router version marker missing');
 

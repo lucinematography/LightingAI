@@ -1220,6 +1220,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() {
         stopNativeSunCompass();
+        networkDmxArmSignature = "";
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         if (webView != null) {
@@ -1297,6 +1298,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        networkDmxArmSignature = "";
         artNetLiveEngine.stopAll();
         if (pendingFileChooser != null) finishFileChooser(null);
         if (nativeSunCompass != null) nativeSunCompass.stop();

@@ -951,6 +951,10 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
         }
 
+        @JavascriptInterface public String networkDmxNetworkSignature() {
+            return NetworkInterfaceInspector.signature();
+        }
+
         @JavascriptInterface public String networkDmxDiagnostics() {
             try {
                 JSONObject out = new JSONObject();
@@ -958,6 +962,7 @@ public class MainActivity extends Activity {
                 out.put("timestampMs", System.currentTimeMillis());
 
                 out.put("interfaces", NetworkInterfaceInspector.snapshot());
+                out.put("networkSignature", NetworkInterfaceInspector.signature());
 
                 JSONObject artNet = new JSONObject();
                 artNet.put("directSent", artNetDirectSent.get());

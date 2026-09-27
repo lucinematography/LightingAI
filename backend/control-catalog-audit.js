@@ -29,7 +29,7 @@ function bucket(name) {
   if (!byManufacturer.has(name)) byManufacturer.set(name, {
     fixtures: 0, verifiedDmxFixtures: 0, verifiedModes: 0,
     nativeNetwork: 0, standardDmx: 0, proprietaryWirelessOnly: 0,
-    noControlMetadata: 0
+    noControlMetadata: 0, legacyControlArrays: 0
   });
   return byManufacturer.get(name);
 }
@@ -45,14 +45,16 @@ for (const fixture of fixtures) {
   const b = bucket(maker);
   b.fixtures++;
 
-  const control = fixture.control && typeof fixture.control === 'object' && !Array.isArray(fixture.control) ? fixture.control : {};
+  const legacyControlArray = Array.isArray(fixture.control);
+  const control = fixture.control && typeof fixture.control === 'object' && !legacyControlArray ? fixture.control : {};
   const controlStrings = textList(fixture.control);
   const directStrings = textList(control.directLightingAI);
-  const standardStrings = [
+  const standardStrings = legacyControlArray ? controlStrings : [
     ...textList(control.directLightingAI),
     ...textList(control.wired),
     ...textList(control.wireless)
   ];
+  if (legacyControlArray) b.legacyControlArrays++;
   const verifiedRoutes = Array.isArray(control.standardRoutes)
     ? control.standardRoutes.filter(r => r && r.verified === true)
     : [];
@@ -144,6 +146,9 @@ for (const fixture of fixtures) {
 
   if ((nativeNetwork || standardDmx) && !verified.length) {
     pushWarning(fixture, 'standard control capability exists but no verified DMX mode is available to LightingAI');
+  }
+  if (legacyControlArray) {
+    pushWarning(fixture, 'legacy control metadata array should be normalized to structured control families');
   }
 }
 

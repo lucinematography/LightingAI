@@ -65,6 +65,8 @@ let seq=0;
 let scanActive=false;
 let gattActive=false;
 let scanCooldownUntil=0;
+let activeScanRequestId='';
+let activeGattRequestId='';
 
 function status(message,ok){
  const el=E('bleStatus');if(!el)return;
@@ -116,6 +118,7 @@ function startScan(){
  if(scanActive||gattActive){status(t().alreadyScanning,false);return}
  if(Date.now()<scanCooldownUntil){status(t().tooFrequent,false);return}
  const id='ble_'+Date.now()+'_'+(++seq);
+ activeScanRequestId=id;
  E('bleResults').innerHTML='';
  setScanBusy(true);
  status(t().scanning);
@@ -160,6 +163,7 @@ function inspectGatt(address,button){
  if(!address||typeof tr.inspectGatt!=='function'){status(t().unavailable,false);return}
  if(scanActive||gattActive){status(t().alreadyScanning,false);return}
  const id='ble_gatt_'+Date.now()+'_'+(++seq);
+ activeGattRequestId=id;
  gattActive=true;
  const scanButton=E('bleScan');if(scanButton)scanButton.disabled=true;
  document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=true);
@@ -182,6 +186,8 @@ function inspectGatt(address,button){
  }
 }
 window.LightingAIBleGattInspectionResult=function(id,payload,error){
+ if(String(id||'')!==activeGattRequestId)return;
+ activeGattRequestId='';
  gattActive=false;
  const scanButton=E('bleScan');if(scanButton)scanButton.disabled=Date.now()<scanCooldownUntil;
  document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
@@ -197,6 +203,8 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
  status(t().inspected+': '+services.length,services.length>0);
 };
 window.LightingAIBleDiscoveryResult=function(id,devices,error){
+ if(String(id||'')!==activeScanRequestId)return;
+ activeScanRequestId='';
  scanCooldownUntil=Date.now()+2000;
  setScanBusy(false);
  const button=E('bleScan');
@@ -232,6 +240,8 @@ function install(){
  return true;
 }
 function resetBleUiLifecycle(){
+ activeScanRequestId='';
+ activeGattRequestId='';
  scanActive=false;
  gattActive=false;
  scanCooldownUntil=0;

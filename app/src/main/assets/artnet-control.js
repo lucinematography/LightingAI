@@ -1332,7 +1332,7 @@ function forceLifecycleDisarm(){
  outputArmed=false;
  liveEnabled=false;
  liveProtocol=selectedProtocol();
- activeSceneFade=null;
+ cancelSceneFade(false);
  clearBlackoutRestore();
  const arm=E('artnetOutputArm'),live=E('artnetLiveToggle');
  if(arm){arm.checked=false;arm.disabled=false}

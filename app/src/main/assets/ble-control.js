@@ -22,6 +22,10 @@ const TXT={
   rssi:'SIGNAL',
   services:'SERVISI',
   address:'ADRESA',
+  inspect:'PROVERI GATT',
+  inspecting:'Proveravam BLE servise bez slanja komandi…',
+  inspected:'GATT servisi',
+  gattError:'GATT provera nije uspela.',
   verified:'Direktna kontrola će biti uključena samo za modele sa verifikovanim zvaničnim protokolom / SDK-om.'
  },
  en:{
@@ -43,6 +47,10 @@ const TXT={
   rssi:'SIGNAL',
   services:'SERVICES',
   address:'ADDRESS',
+  inspect:'INSPECT GATT',
+  inspecting:'Inspecting BLE services without sending commands…',
+  inspected:'GATT services',
+  gattError:'GATT inspection failed.',
   verified:'Direct control will only be enabled for fixtures with a verified official protocol / SDK.'
  }
 };
@@ -68,6 +76,12 @@ function transport(){
   discover:function(request){
    if(androidReady){Android.bleDiscover(request.id,request.timeoutMs||3000);return true}
    if(iosReady){iosHandler.postMessage({action:'bleDiscover',id:request.id,timeoutMs:request.timeoutMs||3000});return true}
+   return false;
+  },
+  inspectGatt:function(request){
+   if(androidReady&&typeof Android.bleInspectGatt==='function'){
+    Android.bleInspectGatt(request.id,request.address,request.timeoutMs||8000);return true;
+   }
    return false;
   }
  };
@@ -115,9 +129,42 @@ function render(devices){
     '<div style="display:flex;justify-content:space-between;gap:10px"><b>'+esc(name)+'</b><span class="muted small">'+esc(t().rssi)+' '+Number(d&&d.rssi)+' dBm</span></div>'+
     (address?'<div class="muted small">'+esc(t().address)+': '+esc(address)+'</div>':'')+
     '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
+    (address?'<button class="btn secondary ble-gatt-inspect" data-address="'+esc(address)+'" type="button" style="margin-top:7px">'+esc(t().inspect)+'</button>':'')+
+    '<div class="muted small ble-gatt-result" data-address="'+esc(address)+'" style="margin-top:6px"></div>'+
    '</div>';
   }).join('');
+ box.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.addEventListener('click',()=>inspectGatt(btn.dataset.address,btn)));
 }
+function inspectGatt(address,button){
+ const tr=transport();
+ if(!address||typeof tr.inspectGatt!=='function'){status(t().unavailable,false);return}
+ const id='ble_gatt_'+Date.now()+'_'+(++seq);
+ if(button)button.disabled=true;
+ const result=document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(address)+'"]');
+ if(result)result.textContent=t().inspecting;
+ status(t().inspecting);
+ try{
+  if(!tr.inspectGatt({id:id,address:address,timeoutMs:8000})){
+   if(button)button.disabled=false;
+   status(t().unavailable,false);
+  }
+ }catch(e){
+  if(button)button.disabled=false;
+  status(t().gattError,false);
+ }
+}
+window.LightingAIBleGattInspectionResult=function(id,payload,error){
+ document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
+ const address=payload&&payload.address?String(payload.address):'';
+ const result=address?document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(address)+'"]'):null;
+ if(error){
+  if(result)result.textContent=t().gattError+' ('+error+')';
+  status(t().gattError,false);return;
+ }
+ const services=payload&&Array.isArray(payload.services)?payload.services:[];
+ if(result)result.textContent=t().inspected+': '+services.map(s=>String(s.uuid||'')+' ['+((s.characteristics||[]).length)+']').join(' · ');
+ status(t().inspected+': '+services.length,services.length>0);
+};
 window.LightingAIBleDiscoveryResult=function(id,devices,error){
  scanCooldownUntil=Date.now()+2000;
  setScanBusy(false);
@@ -153,7 +200,7 @@ function install(){
  translate();
  return true;
 }
-window.LightingAIBleControl={version:'0.2-ble-scan-guarded',discover:startScan};
+window.LightingAIBleControl={version:'0.3-ble-readonly-gatt',discover:startScan,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

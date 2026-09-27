@@ -144,6 +144,24 @@ function controlTransport(){
    }
    return false;
   },
+  setArmSignature:function(signature){
+   if(androidReady&&typeof Android.networkDmxSetArmSignature==='function'){
+    Android.networkDmxSetArmSignature(String(signature||''));return true;
+   }
+   if(iosReady){
+    iosHandler.postMessage({action:'networkDmxSetArmSignature',signature:String(signature||'')});return true;
+   }
+   return false;
+  },
+  clearArmSignature:function(){
+   if(androidReady&&typeof Android.networkDmxClearArmSignature==='function'){
+    Android.networkDmxClearArmSignature();return true;
+   }
+   if(iosReady){
+    iosHandler.postMessage({action:'networkDmxClearArmSignature'});return true;
+   }
+   return false;
+  },
   diagnostics:function(request){
    if(androidReady&&typeof Android.networkDmxDiagnostics==='function'){
     try{
@@ -282,6 +300,20 @@ function finishArmPreflight(id,payload,error){
   status(failure,false);
   return true;
  }
+ const signature=String(native.networkSignature||'');
+ if(!signature){
+  outputArmed=false;
+  if(toggle)toggle.checked=false;
+  status(t().preflightFailed,false);
+  return true;
+ }
+ const transport=controlTransport();
+ if(typeof transport.setArmSignature!=='function'||!transport.setArmSignature(signature)){
+  outputArmed=false;
+  if(toggle)toggle.checked=false;
+  status(t().preflightFailed,false);
+  return true;
+ }
  outputArmed=true;
  if(toggle)toggle.checked=true;
  status(t().armOn,true);
@@ -300,6 +332,7 @@ function setOutputArmed(enabled,quiet){
  const next=!!enabled,toggle=E('artnetOutputArm');
  if(!next){
   pendingArmPreflightId=null;
+  try{const transport=controlTransport();if(typeof transport.clearArmSignature==='function')transport.clearArmSignature()}catch(e){}
   outputArmed=false;
   if(toggle){toggle.checked=false;toggle.disabled=false}
   cancelSceneFade(false);
@@ -1265,7 +1298,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.30-lifecycle-fail-closed',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.31-armed-route-bound',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

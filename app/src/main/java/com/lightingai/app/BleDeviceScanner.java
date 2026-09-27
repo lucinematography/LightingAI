@@ -34,6 +34,7 @@ public final class BleDeviceScanner {
     private ScanCallback activeCallback;
     private Runnable stopRunnable;
     private Callback resultCallback;
+    private int scanEpoch = 0;
     private final Map<String, JSONObject> devices = new LinkedHashMap<>();
 
     public BleDeviceScanner(Context context) {
@@ -45,6 +46,7 @@ public final class BleDeviceScanner {
         final int boundedTimeout = Math.max(1000, Math.min(10000, timeoutMs));
         synchronized (lock) {
             stopLocked(false, null);
+            final int thisScanEpoch = ++scanEpoch;
             devices.clear();
             resultCallback = callback;
 
@@ -68,16 +70,17 @@ public final class BleDeviceScanner {
             activeScanner = scanner;
             activeCallback = new ScanCallback() {
                 @Override public void onScanResult(int callbackType, ScanResult result) {
-                    record(result);
+                    record(result, thisScanEpoch);
                 }
 
                 @Override public void onBatchScanResults(List<ScanResult> results) {
                     if (results == null) return;
-                    for (ScanResult result : results) record(result);
+                    for (ScanResult result : results) record(result, thisScanEpoch);
                 }
 
                 @Override public void onScanFailed(int errorCode) {
                     synchronized (lock) {
+                        if (thisScanEpoch != scanEpoch || activeCallback == null) return;
                         finishErrorLocked("ble_scan_failed_" + errorCode);
                     }
                 }
@@ -85,6 +88,7 @@ public final class BleDeviceScanner {
 
             stopRunnable = () -> {
                 synchronized (lock) {
+                    if (thisScanEpoch != scanEpoch || activeCallback == null) return;
                     stopLocked(true, null);
                 }
             };
@@ -110,10 +114,10 @@ public final class BleDeviceScanner {
     }
 
     @SuppressLint("MissingPermission")
-    private void record(ScanResult result) {
+    private void record(ScanResult result, int callbackEpoch) {
         if (result == null || result.getDevice() == null) return;
         synchronized (lock) {
-            if (activeCallback == null) return;
+            if (callbackEpoch != scanEpoch || activeCallback == null) return;
             try {
                 ScanRecord record = result.getScanRecord();
                 String name = record == null ? null : record.getDeviceName();
@@ -178,6 +182,7 @@ public final class BleDeviceScanner {
 
     @SuppressLint("MissingPermission")
     private void stopLocked(boolean deliverResults, String error) {
+        scanEpoch++;
         if (stopRunnable != null) {
             handler.removeCallbacks(stopRunnable);
             stopRunnable = null;

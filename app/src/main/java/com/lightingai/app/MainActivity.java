@@ -1120,13 +1120,13 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
-                    requireNetworkDmxArmedRoute();
                     JSONArray a = new JSONArray(raw);
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
                     synchronized (sacnLiveControlLock) {
                         if (epoch != sacnLiveEpoch.get()) throw new IllegalStateException("Stale sACN live update ignored");
+                        requireNetworkDmxArmedRoute();
                         if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
                         sacnLiveEngine.setPriority(sacnPriority.get());
                         sacnLiveEngine.setFrame(u, channels);
@@ -1220,13 +1220,13 @@ public class MainActivity extends Activity {
                 boolean ok = false;
                 String message = "";
                 try {
-                    requireNetworkDmxArmedRoute();
                     JSONArray a = new JSONArray(raw);
                     int count = Math.min(512, a.length());
                     int[] channels = new int[count];
                     for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
                     synchronized (artNetLiveControlLock) {
                         if (epoch != artNetLiveEpoch.get()) throw new IllegalStateException("Stale Art-Net live update ignored");
+                        requireNetworkDmxArmedRoute();
                         artNetLiveEngine.setFrame(ip, u, channels);
                     }
                     ok = true;

@@ -52,6 +52,10 @@ jobs:
       - name: Validate backup model
         run: node backend/project-backup-selftest.js
 
+      - name: Validate production control routing
+        working-directory: backend
+        run: node control-production-selftest.js
+
       - name: Verify control lab assets exist
         shell: bash
         run: |

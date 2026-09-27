@@ -1289,6 +1289,9 @@ function setLiveEnabled(enabled){
  if(enabled){
   if(!requireOutputArmed()){liveEnabled=false;if(toggle)toggle.checked=false;return false}
   armGeneration++;
+  if(!armedNetworkSignature||typeof transport.setArmSignature!=='function'||!transport.setArmSignature(armedNetworkSignature)){
+   setOutputArmed(false,true);liveEnabled=false;if(toggle)toggle.checked=false;status(t().preflightFailed,false);return false
+  }
   const protocol=selectedProtocol(),universes=Object.keys(frames).map(Number);
   if(!universes.length){liveEnabled=false;if(toggle)toggle.checked=false;status(t().sceneNeedFrame,false);return false}
   if(typeof transport.supportsLive!=='function'||!transport.supportsLive(protocol)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().native,false);return false}
@@ -1307,6 +1310,9 @@ function setLiveEnabled(enabled){
  }else{
   const protocol=liveProtocol||selectedProtocol();
   armGeneration++;
+  if(outputArmed&&(!armedNetworkSignature||typeof transport.setArmSignature!=='function'||!transport.setArmSignature(armedNetworkSignature))){
+   setOutputArmed(false,true);liveEnabled=false;if(toggle)toggle.checked=false;status(t().preflightFailed,false);return false
+  }
   liveEnabled=false;if(toggle)toggle.checked=false;
   const id='networkdmx_stop_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
   let accepted=true;

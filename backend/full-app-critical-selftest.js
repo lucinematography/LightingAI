@@ -125,6 +125,7 @@ expect(control.includes("const current=frames[String(u)]||new Array(512).fill(0)
 expect(control.includes('stagedFrameForUniverse')&&control.includes('commitStagedUniverseFrames'),'Transactional MASTER frame staging missing');
 expect(control.includes('if(!accepted){setOutputArmed(false,true);status(t().error,false);return}'),'Transactional blackout failure disarm missing');
 expect(control.includes('function applyScene(index)')&&control.includes('if(!accepted){')&&control.includes('setOutputArmed(false,true);')&&control.includes('return false;'),'Transactional scene failure disarm missing');
+expect(control.includes('function sceneUniverseSetIsSafe(values)')&&control.includes('if(!sceneUniverseSetIsSafe(Array.from(universeSet)))')&&control.includes('if(!sceneUniverseSetIsSafe(sceneUniverses))'),'Scene/fade must preflight every universe before any multi-universe send');
 expect(control.includes('if(!accepted){cancelSceneFade(false);setOutputArmed(false,true);status(t().error,false);return}'),'Transactional fade failure disarm missing');
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('cancelSceneFade(false);'),'Lifecycle disarm must cancel the active scene fade timer');
 expect(control.includes('function invalidateCachedOutputState()')&&control.includes('Object.keys(frames).forEach(key=>delete frames[key]);')&&control.includes('invalidateCachedOutputState();')&&control.includes('setOutputArmed(false,true);'),'Async transport failure must invalidate cached DMX state before disarm');

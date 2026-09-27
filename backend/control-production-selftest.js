@@ -50,7 +50,7 @@ expect(
   artnet.includes('artNetPortAddressOffset:0'),
   'Sidus One verified universe/Port-Address policy missing'
 );
-expect(artnet.includes('preflightBridgeUniverse') && artnet.includes('preflightBridgeMulti'), 'Bridge universe preflight safety missing');
+expect(artnet.includes('preflightBridgeUniverse') && artnet.includes('operationUniverseSetIsSafe') && artnet.includes('bridgeUniverseSetAllowed'), 'Bridge universe safety must validate range at ARM and simultaneous-universe limits at operation time');
 expect(artnet.includes('LightingAINetworkDmxLifecyclePause') && artnet.includes('LightingAINetworkDmxLifecycleResume'), 'Network DMX lifecycle fail-closed hooks missing');
 expect(artnet.includes('setArmSignature') && artnet.includes('clearArmSignature'), 'Native armed-route binding missing');
 expect(main.includes('networkDmxSetArmSignature') && main.includes('requireNetworkDmxArmedRoute'), 'Android armed-route enforcement missing');

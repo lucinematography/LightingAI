@@ -25,6 +25,9 @@ const TXT={
   inspect:'PROVERI GATT',
   inspecting:'Proveravam BLE servise bez slanja komandi…',
   inspected:'GATT servisi',
+  meshProvisioning:'Bluetooth Mesh: NEPROVISIONISAN / provisioning servis',
+  meshProxy:'Bluetooth Mesh: PROXY servis detektovan',
+  asteraPrivate:'Astera privatni GATT servis detektovan · komande još nisu verifikovane',
   gattError:'GATT provera nije uspela.',
   verified:'Direktna kontrola će biti uključena samo za modele sa verifikovanim zvaničnim protokolom / SDK-om.'
  },
@@ -50,6 +53,9 @@ const TXT={
   inspect:'INSPECT GATT',
   inspecting:'Inspecting BLE services without sending commands…',
   inspected:'GATT services',
+  meshProvisioning:'Bluetooth Mesh: UNPROVISIONED / provisioning service',
+  meshProxy:'Bluetooth Mesh: PROXY service detected',
+  asteraPrivate:'Astera private GATT service detected · commands are not verified yet',
   gattError:'GATT inspection failed.',
   verified:'Direct control will only be enabled for fixtures with a verified official protocol / SDK.'
  }
@@ -66,6 +72,18 @@ function status(message,ok){
 }
 function esc(v){
  return String(v==null?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+const BLE_MESH_PROVISIONING='00001827-0000-1000-8000-00805f9b34fb';
+const BLE_MESH_PROXY='00001828-0000-1000-8000-00805f9b34fb';
+const ASTERA_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65';
+function normalizedUuid(v){return String(v||'').toLowerCase()}
+function diagnosticLabelsFromServices(services){
+ const values=(Array.isArray(services)?services:[]).map(s=>normalizedUuid(typeof s==='string'?s:(s&&s.uuid)));
+ const labels=[];
+ if(values.includes(BLE_MESH_PROVISIONING))labels.push(t().meshProvisioning);
+ if(values.includes(BLE_MESH_PROXY))labels.push(t().meshProxy);
+ if(values.includes(ASTERA_PRIVATE_SERVICE))labels.push(t().asteraPrivate);
+ return labels;
 }
 function transport(){
  const androidReady=!!(window.Android&&typeof Android.bleDiscover==='function');
@@ -129,6 +147,7 @@ function render(devices){
     '<div style="display:flex;justify-content:space-between;gap:10px"><b>'+esc(name)+'</b><span class="muted small">'+esc(t().rssi)+' '+Number(d&&d.rssi)+' dBm</span></div>'+
     (address?'<div class="muted small">'+esc(t().address)+': '+esc(address)+'</div>':'')+
     '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
+    (diagnosticLabelsFromServices(services).length?'<div class="status warn" style="margin-top:6px">'+esc(diagnosticLabelsFromServices(services).join(' · '))+'</div>':'')+
     (address?'<button class="btn secondary ble-gatt-inspect" data-address="'+esc(address)+'" type="button" style="margin-top:7px">'+esc(t().inspect)+'</button>':'')+
     '<div class="muted small ble-gatt-result" data-address="'+esc(address)+'" style="margin-top:6px"></div>'+
    '</div>';
@@ -162,7 +181,8 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
   status(t().gattError,false);return;
  }
  const services=payload&&Array.isArray(payload.services)?payload.services:[];
- if(result)result.textContent=t().inspected+': '+services.map(s=>String(s.uuid||'')+' ['+((s.characteristics||[]).length)+']').join(' · ');
+ const labels=diagnosticLabelsFromServices(services);
+ if(result)result.textContent=t().inspected+': '+services.map(s=>String(s.uuid||'')+' ['+((s.characteristics||[]).length)+']').join(' · ')+(labels.length?' · '+labels.join(' · '):'');
  status(t().inspected+': '+services.length,services.length>0);
 };
 window.LightingAIBleDiscoveryResult=function(id,devices,error){
@@ -200,7 +220,15 @@ function install(){
  translate();
  return true;
 }
-window.LightingAIBleControl={version:'0.3-ble-readonly-gatt',discover:startScan,inspectGatt:inspectGatt};
+function resetBleUiLifecycle(){
+ scanActive=false;
+ scanCooldownUntil=0;
+ const button=E('bleScan');if(button)button.disabled=false;
+ document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
+}
+window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
+window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
+window.LightingAIBleControl={version:'0.4-ble-mesh-diagnostics',discover:startScan,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

@@ -54,6 +54,10 @@ expect(bleScanner.includes('ble_scan_failed_'),'BLE scan failure code propagatio
 const bleUi=read('app/src/main/assets/ble-control.js');
 expect(bleUi.includes("version:'0.3-ble-readonly-gatt'"),'Read-only BLE GATT inspection UI missing');
 expect(bleUi.includes('bleInspectGatt')&&bleUi.includes('LightingAIBleGattInspectionResult'),'BLE GATT inspection bridge missing');
+expect(bleUi.includes('00001827-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh provisioning service detection missing');
+expect(bleUi.includes('00001828-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh proxy service detection missing');
+expect(bleUi.includes('0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'),'Astera private GATT research service detection missing');
+expect(bleUi.includes("version:'0.4-ble-mesh-diagnostics'"),'BLE mesh diagnostic UI version missing');
 const bleGatt=read('app/src/main/java/com/lightingai/app/BleGattInspector.java');
 expect(bleGatt.includes('discoverServices()'),'BLE GATT service discovery missing');
 expect(!bleGatt.includes('writeCharacteristic')&&!bleGatt.includes('writeDescriptor')&&!bleGatt.includes('setCharacteristicNotification'),'Read-only BLE GATT inspector must not write or subscribe');

@@ -17,12 +17,18 @@ function classify(fixture){
   var verifiedModes=list(fixture&&fixture.dmxModes).filter(function(m){
     return !!(m&&m.verified===true&&Number(m.channels||m.channelCount)>0);
   });
+  var system=null;
+  try{
+    if(window.LightingAIControlSystemDrivers&&typeof window.LightingAIControlSystemDrivers.resolve==='function'){
+      system=window.LightingAIControlSystemDrivers.resolve(fixture);
+    }
+  }catch(e){}
   var route='unverified',label='NO VERIFIED ROUTE',requiresInterface=external.length>0;
   if(nativeNetwork){route='native-network';label='DIRECT ART-NET / sACN';}
   else if(standardNetwork||dmx||crmx){route='gateway';label='STANDARD CONTROL ROUTE';}
   else if(proprietaryBle){route='vendor-wireless';label='VENDOR WIRELESS ADAPTER';}
-  var transportReady=route==='native-network'||route==='gateway';
-  var semanticReady=transportReady&&verifiedModes.length>0;
+  var transportReady=system?!!system.transportKnown:(route==='native-network'||route==='gateway');
+  var semanticReady=system?!!system.productionReady:(transportReady&&verifiedModes.length>0);
   return {
     route:route,
     label:label,
@@ -34,6 +40,7 @@ function classify(fixture){
     transportReady:transportReady,
     semanticReady:semanticReady,
     verifiedDmxModeCount:verifiedModes.length,
+    system:system,
     requiresInterface:requiresInterface,
     externalInterfaces:external,
     direct:direct,
@@ -44,5 +51,5 @@ function classify(fixture){
 function productionReady(fixture){
   return classify(fixture).semanticReady===true;
 }
-window.LightingAIControlRouting={version:'1.1-profile-gated',classify:classify,productionReady:productionReady};
+window.LightingAIControlRouting={version:'1.2-system-driver-gated',classify:classify,productionReady:productionReady};
 })();

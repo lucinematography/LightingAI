@@ -44,6 +44,8 @@ expect(main.includes('Stale Art-Net live update ignored')&&main.includes('Stale 
 const artNetLive=read('app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java');
 const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
 expect(artNetLive.includes('stopAll();')&&artNetLive.includes('return;')&&artNetLive.includes('NetworkInterfaceInspector.signature()'),'Art-Net live engine must fail fast and recheck network route per frame');
+expect(artNetLive.includes('if (frames.isEmpty()) lastError = "";'),'New Art-Net live session must clear stale prior error state');
+expect(sacnLive.includes('if (frames.isEmpty()) lastError = "";'),'New sACN live session must clear stale prior error state');
 expect(sacnLive.includes('abortAll();')&&sacnLive.includes('return;')&&sacnLive.includes('NetworkInterfaceInspector.signature()'),'sACN live engine must fail fast and recheck network route per frame');
 expect(main.includes('synchronized (sacnLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'sACN live update must recheck network signature inside live lock');
 expect(main.includes('synchronized (artNetLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'Art-Net live update must recheck network signature inside live lock');

@@ -9,15 +9,20 @@ function classify(fixture){
   var c=fixture&&fixture.control||{};
   var direct=list(c.directLightingAI),wired=list(c.wired),wireless=list(c.wireless),external=list(c.externalInterfaceRequired);
   var all=direct.concat(wired,wireless);
-  var nativeNetwork=hasAny(direct,['art-net','artnet','sacn','sacn','e1.31']);
+  var nativeNetwork=hasAny(direct,['art-net','artnet','sacn','e1.31']);
   var standardNetwork=hasAny(all,['art-net','artnet','sacn','e1.31']);
   var dmx=hasAny(all,['dmx512','dmx','rdm']);
   var crmx=hasAny(all,['crmx','lumenradio']);
   var proprietaryBle=hasAny(all,['sidus','bluetooth','ble','mesh','asteraapp','uhf']);
+  var verifiedModes=list(fixture&&fixture.dmxModes).filter(function(m){
+    return !!(m&&m.verified===true&&Number(m.channels||m.channelCount)>0);
+  });
   var route='unverified',label='NO VERIFIED ROUTE',requiresInterface=external.length>0;
   if(nativeNetwork){route='native-network';label='DIRECT ART-NET / sACN';}
   else if(standardNetwork||dmx||crmx){route='gateway';label='STANDARD CONTROL ROUTE';}
   else if(proprietaryBle){route='vendor-wireless';label='VENDOR WIRELESS ADAPTER';}
+  var transportReady=route==='native-network'||route==='gateway';
+  var semanticReady=transportReady&&verifiedModes.length>0;
   return {
     route:route,
     label:label,
@@ -26,6 +31,9 @@ function classify(fixture){
     dmx:dmx,
     crmx:crmx,
     proprietaryBle:proprietaryBle,
+    transportReady:transportReady,
+    semanticReady:semanticReady,
+    verifiedDmxModeCount:verifiedModes.length,
     requiresInterface:requiresInterface,
     externalInterfaces:external,
     direct:direct,
@@ -34,8 +42,7 @@ function classify(fixture){
   };
 }
 function productionReady(fixture){
-  var r=classify(fixture);
-  return r.route==='native-network'||r.route==='gateway';
+  return classify(fixture).semanticReady===true;
 }
-window.LightingAIControlRouting={version:'1.0-standards-first',classify:classify,productionReady:productionReady};
+window.LightingAIControlRouting={version:'1.1-profile-gated',classify:classify,productionReady:productionReady};
 })();

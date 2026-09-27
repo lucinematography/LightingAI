@@ -1,1 +1,46 @@
-{"name":"lighting-ai-backend","version":"1.0.0","type":"module","engines":{"node":"22.x"},"scripts":{"start":"node render-bootstrap.js","validate:catalog":"node -e \"import('./catalog-validation.js').then(({validateCatalog})=>{const r=validateCatalog(); console.log(JSON.stringify(r,null,2)); if(!r.ok) process.exit(1);})\"","test:catalog":"node catalog-selftest.js","test:ls":"node ls-compatibility-selftest.js","test:storm":"node storm-compatibility-selftest.js","test:storm:photometrics":"node storm-photometric-selftest.js","test:electro":"node electro-storm-selftest.js","test:aputure:complete":"node aputure-completion-selftest.js","test:aputure:review":"node aputure-review-selftest.js","test:visual-preview":"node visual-preview-selftest.js","test:project5-safety":"node project5-feature-selftest.js","test:project5-base":"node project5-stable-base-selftest.js","test:project52-release":"node project52-release-gate-selftest.js","test:server-syntax":"node --check server.js","audit:sources":"node source-audit.js","audit:dependencies":"npm audit --audit-level=high","catalog:status":"node -e \"import('./catalog-status.js').then(({catalogStatus})=>console.log(JSON.stringify(catalogStatus(),null,2)))\"","check":"npm run validate:catalog && npm run test:catalog && npm run test:desisti && npm run test:godox && npm run test:aladdin && npm run test:litemat && npm run test:evlight && npm run test:kinoflo && npm run test:ls && npm run test:storm && npm run test:storm:photometrics && npm run test:electro && npm run test:aputure:complete && npm run test:aputure:review && npm run test:visual-preview && npm run test:server-syntax && npm run audit:sources","test:desisti":"node desisti-catalog-selftest.js","test:godox":"node godox-catalog-selftest.js","test:aladdin":"node aladdin-catalog-selftest.js","test:litemat":"node litegear-litemat-catalog-selftest.js","test:evlight":"node evlight-catalog-selftest.js","test:kinoflo":"node kinoflo-catalog-selftest.js"},"dependencies":{"cors":"^2.8.5","dotenv":"^16.4.5","express":"^4.21.1","openai":"^4.77.0"}}
+{
+  "name": "lighting-ai-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "start": "node render-bootstrap.js",
+    "validate:catalog": "node -e \"import('./catalog-validation.js').then(({validateCatalog})=>{const r=validateCatalog(); console.log(JSON.stringify(r,null,2)); if(!r.ok) process.exit(1);})\"",
+    "test:catalog": "node catalog-selftest.js",
+    "test:ls": "node ls-compatibility-selftest.js",
+    "test:storm": "node storm-compatibility-selftest.js",
+    "test:storm:photometrics": "node storm-photometric-selftest.js",
+    "test:electro": "node electro-storm-selftest.js",
+    "test:aputure:complete": "node aputure-completion-selftest.js",
+    "test:aputure:review": "node aputure-review-selftest.js",
+    "test:visual-preview": "node visual-preview-selftest.js",
+    "test:project5-safety": "node project5-feature-selftest.js",
+    "test:project5-base":"node project5-stable-base-selftest.js",
+    "test:project52-release": "node project52-release-gate-selftest.js",
+    "test:server-syntax": "node --check server.js",
+    "audit:sources": "node source-audit.js",
+    "audit:dependencies": "npm audit --audit-level=high",
+    "catalog:status": "node -e \"import('./catalog-status.js').then(({catalogStatus})=>console.log(JSON.stringify(catalogStatus(),null,2)))\"",
+    "check": "npm run test:gels && npm run test:gels:integration && npm run test:simple-mode && npm run test:tools-compact && npm run validate:catalog && npm run test:catalog && npm run test:desisti && npm run test:godox && npm run test:aladdin && npm run test:litemat && npm run test:evlight && npm run test:kinoflo && npm run test:ls && npm run test:storm && npm run test:storm:photometrics && npm run test:electro && npm run test:aputure:complete && npm run test:aputure:review && npm run test:visual-preview && npm run test:server-syntax && npm run audit:sources",
+    "test:desisti": "node desisti-catalog-selftest.js",
+    "test:godox": "node godox-catalog-selftest.js",
+    "test:aladdin": "node aladdin-catalog-selftest.js",
+    "test:litemat": "node litegear-litemat-catalog-selftest.js",
+    "test:evlight": "node evlight-catalog-selftest.js",
+    "test:kinoflo": "node kinoflo-catalog-selftest.js",
+    "test:blocking-designer": "node blocking-designer-selftest.js",
+    "build:gels": "node build-gel-filter-catalog.js",
+    "test:gels": "node gel-filter-selftest.js",
+    "test:gels:integration": "node gel-filter-integration-selftest.js",
+    "test:simple-mode": "node simple-mode-selftest.js",
+    "test:tools-compact": "node tools-compact-selftest.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "openai": "^4.77.0"
+  }
+}

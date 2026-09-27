@@ -25,6 +25,7 @@ const refinements = read('app/src/main/assets/ai-visual-preview-refinements.js')
 const imageBridge = read('app/src/main/java/com/lightingai/app/AIVisualImageBridge.java');
 const imageProvider = read('app/src/main/java/com/lightingai/app/AIVisualImageProvider.java');
 const mainActivity = read('app/src/main/java/com/lightingai/app/MainActivity.java');
+const indexHtml = read('app/src/main/assets/index.html');
 const manifest = read('app/src/main/AndroidManifest.xml');
 const phoneDiagnostics = read('app/src/main/assets/ai-visual-phone-diagnostics.js');
 const phoneTest = read('app/src/main/assets/ai-visual-phone-test.js');
@@ -51,8 +52,10 @@ requireText(launcher, "file:///android_asset/feature-build-info.js", 'embedded b
 forbidText(launcher, 'P5 TEST • BUILD ', 'release launcher must not expose visible Project 5 build diagnostics');
 requireText(launcher, 'LightingAIFeatureBuild', 'feature build metadata hook missing');
 
+requireText(indexHtml, 'id="galleryInput" type="file" accept="image/*" hidden onchange="handlePhoto(event)"', 'working Planner gallery input must remain unchanged');
+requireText(indexHtml, 'id="cameraInput" type="file" accept="image/*" capture="environment" hidden onchange="handlePhoto(event)"', 'working Planner camera input must remain unchanged');
 requireText(moduleJs, "var API_BASE='https://lightingai.onrender.com';", 'AI plan must keep production API base');
-requireText(moduleJs, "capture=\"environment\"", 'direct scene camera capture missing');
+requireText(indexHtml, 'id="aiVisualCameraInput" type="file" accept="image/*" capture="environment" hidden', 'persistent AI camera input missing');
 requireText(moduleJs, "visualPreviewAvailable:false", 'real photo preview must default to unavailable');
 requireText(moduleJs, "SCENE_MEASURE_KEY='lighting_scene_measurements_v1'", 'Planner measurement storage bridge missing');
 requireText(moduleJs, "id=\"aiv-use-measurements\"", 'Planner measurement opt-in control missing');
@@ -80,6 +83,112 @@ requireText(imageBridge, 'MAX_IMAGE_BYTES = 20 * 1024 * 1024', 'native image bri
 requireText(imageProvider, 'ParcelFileDescriptor.MODE_READ_ONLY', 'shared image provider must remain read-only');
 requireText(imageProvider, 'file.getParentFile().equals(root)', 'shared image provider must reject path traversal');
 requireText(mainActivity, 'new AIVisualImageBridge(this), "LightingAIImages"', 'native image bridge registration missing');
+requireText(mainActivity, 's.setAllowContentAccess(true)', 'WebView content URI access must remain enabled for gallery files');
+requireText(mainActivity, 'new Intent(MediaStore.ACTION_PICK_IMAGES)', 'Android 13+ gallery picker must use the phone-tested system photo picker');
+requireText(mainActivity, 'new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)', 'pre-Android-13 gallery picker must retain the MediaStore fallback');
+requireText(mainActivity, 'Intent.FLAG_GRANT_READ_URI_PERMISSION', 'gallery picker must request read access');
+requireText(mainActivity, 'data.getData()', 'gallery result must accept a direct returned URI');
+requireText(mainActivity, 'data.getClipData()', 'gallery result must accept ClipData returned by OEM pickers');
+requireText(mainActivity, 'hasReadableImageData(uri)', 'camera result must accept a written image even when an OEM camera returns a non-standard result code');
+requireText(moduleJs, "input.value='';", 'file-input fallback must reset so the same image can be chosen again');
+requireText(moduleJs, "Android.openImagePicker(mode)", 'AI scene image action must use the phone-tested native Android picker first');
+requireText(moduleJs, 'input.click();', 'AI scene image action must retain WebView file chooser as fallback');
+requireText(indexHtml, 'id="aiVisualGalleryInput" type="file" accept="image/*" hidden', 'persistent AI gallery input missing');
+requireText(indexHtml, 'id="aiVisualCameraInput" type="file" accept="image/*" capture="environment" hidden', 'persistent AI camera input missing');
+requireText(moduleJs, "document.getElementById('aiVisualGalleryInput')", 'AI gallery must bind the persistent file input');
+requireText(moduleJs, "document.getElementById('aiVisualCameraInput')", 'AI camera must bind the persistent file input');
+requireText(moduleJs, 'aiVisualGalleryInput.onchange=receiveFile', 'persistent gallery selection must feed the AI scene photo handler');
+requireText(moduleJs, 'aiVisualCameraInput.onchange=receiveFile', 'persistent camera selection must feed the AI scene photo handler');
+forbidText(moduleJs, 'id="aiv-gallery"', 'AI module must not create a transient gallery file input');
+forbidText(moduleJs, 'id="aiv-camera"', 'AI module must not create a transient camera file input');
+requireText(moduleJs, "optimizeImage(f).then(function(src){photoDiag('OPTIMIZE_OK');setPhoto(src);})", 'selected WebView file must be optimized, diagnosed and rendered into the AI scene');
+requireText(moduleJs, 'id="aiv-gallery-direct-input" type="file" accept="image/*"', 'AI gallery must expose a direct trusted file input over the visible button');
+requireText(moduleJs, "directGalleryInput.onpointerdown=function()", 'AI gallery direct input must preserve the physical user gesture');
+requireText(moduleJs, "directGalleryInput.onchange=receiveFile", 'AI gallery direct input must feed the AI scene photo handler');
+requireText(moduleJs, "photoDiag('DIRECT_INPUT_TAP','gallery')", 'AI gallery direct input must expose trusted-tap diagnostics');
+const readLocalPos = moduleJs.indexOf('function readLocal(key,fallback)');
+const activeSunPos = moduleJs.indexOf('function activeSunContext()');
+const activeDmxPos = moduleJs.indexOf('function activeDmxContext()');
+assert(readLocalPos >= 0 && readLocalPos < activeSunPos && readLocalPos < activeDmxPos, 'AI localStorage helper must be module-scoped before SUN/DMX context readers');
+assert(moduleJs.split('function readLocal(key,fallback)').length === 2, 'AI localStorage helper must have exactly one declaration');
+requireText(moduleJs, "safeInit('SUN',renderSunContext)", 'SUN initialization must not be able to abort AI photo bindings');
+requireText(moduleJs, "safeInit('DMX',renderDmxContext)", 'DMX initialization must not be able to abort AI photo bindings');
+requireText(mainActivity, '@JavascriptInterface public String openImagePicker(String mode)', 'native AI image picker bridge entry point missing');
+requireText(mainActivity, 'runOnUiThread(() -> {', 'native AI image picker bridge must queue picker launch on the UI thread');
+requireText(mainActivity, 'window.LightingAINativePickerLaunchResult&&window.LightingAINativePickerLaunchResult', 'native AI picker launch result callback missing');
+requireText(mainActivity, 'FAILED_GALLERY', 'native AI image picker must report gallery launch failure');
+requireText(mainActivity, 'PICKER_ACTIVITY_PAUSE', 'AI picker diagnostics must report Activity pause when the system picker takes over');
+requireText(mainActivity, 'PICKER_FOCUS_LOST', 'AI picker diagnostics must report focus loss when the system picker takes over');
+requireText(mainActivity, 'PICKER_RESULT_OK', 'AI picker diagnostics must report a successful picker result');
+requireText(mainActivity, 'PICKER_RESULT_CANCELLED', 'AI picker diagnostics must report a cancelled picker result');
+requireText(moduleJs, "photoDiag('NATIVE_BRIDGE_RETURN'", 'AI image action must display the synchronous native bridge result');
+requireText(moduleJs, 'window.LightingAINativePickerLaunchResult=function(result)', 'AI module must expose asynchronous native picker launch result diagnostics');
+requireText(mainActivity, 'notifyAIVisualImageStage("result")', 'AI image result must report that Android returned the URI');
+requireText(mainActivity, 'deliverAIVisualImage(uri);', 'AI chooser result must enter the image decode/transfer path');
+requireText(mainActivity, 'if (requestCode == CHOOSE_IMAGE)', 'shared phone-tested image chooser result handler missing');
+requireText(mainActivity, 'pendingCameraCapture && pendingCameraUri != null', 'shared camera result must retain its capture state');
+requireText(mainActivity, 'finishFileChooser(new Uri[]{uri});', 'shared camera URI must still reach its callback');
+requireText(mainActivity, 'boolean captured = resultCode == RESULT_OK || hasReadableImageData(uri);', 'shared camera capture must keep valid OEM output even without RESULT_OK');
+requireText(mainActivity, 'finishFileChooser(result);', 'shared gallery/document URI must still reach its callback');
+const aiPickerStart = mainActivity.indexOf('private String openAIImagePicker(boolean cameraCapture)');
+const aiPickerEnd = mainActivity.indexOf('private void openAIImageGallery()', aiPickerStart);
+assert(aiPickerStart >= 0 && aiPickerEnd > aiPickerStart, 'native AI picker method boundaries missing');
+const aiPickerMethod = mainActivity.slice(aiPickerStart, aiPickerEnd);
+assert(aiPickerMethod.includes('pendingFileChooser = uris ->'), 'AI picker must reuse the phone-tested WebView chooser callback path from build 2504');
+assert(
+  aiPickerMethod.includes('boolean started = openGalleryForWebView(null);') &&
+  aiPickerMethod.includes('return started ? "STARTED_GALLERY" : "FAILED_GALLERY";'),
+  'AI gallery must report the real result of the phone-tested Planner gallery launcher'
+);
+assert(aiPickerMethod.includes('return openCameraForWebView() ? "STARTED_CAMERA" : "FAILED_CAMERA";'), 'AI camera must report the real result of the phone-tested WebView camera launcher');
+assert(aiPickerMethod.includes('deliverAIVisualImage(uri);'), 'shared chooser callback must route the selected URI into AI image transfer');
+requireText(mainActivity, 'BitmapFactory.decodeStream', 'native image transfer must decode the selected URI');
+requireText(mainActivity, 'output.compress(Bitmap.CompressFormat.JPEG, 82, bytes)', 'native image transfer must compress to bounded JPEG');
+requireText(mainActivity, 'deliverAIVisualImageChunks(base64);', 'native image transfer must hand compressed base64 to WebView');
+requireText(mainActivity, 'LightingAIVisualImageTransferBegin&&window.LightingAIVisualImageTransferBegin', 'native image transfer begin callback missing');
+requireText(mainActivity, 'LightingAIVisualImageTransferChunk&&window.LightingAIVisualImageTransferChunk', 'native image transfer chunk callback missing');
+requireText(mainActivity, 'LightingAIVisualImageTransferEnd&&window.LightingAIVisualImageTransferEnd', 'native image transfer end callback missing');
+requireText(moduleJs, 'window.LightingAIVisualImageTransferStage=function(stage)', 'AI scene module must expose native image transfer stage diagnostics');
+requireText(moduleJs, "stage==='result'", 'AI image transfer must expose the Android-result stage');
+requireText(moduleJs, "stage==='decode'", 'AI image transfer must expose the decode stage');
+requireText(moduleJs, "stage==='transfer'", 'AI image transfer must expose the WebView transfer stage');
+requireText(moduleJs, "var dataUrl='data:image/jpeg;base64,'+nativeImageChunks.join('');", 'AI scene module must reconstruct native JPEG data');
+requireText(moduleJs, 'setPhoto(dataUrl);', 'native image transfer must finish at setPhoto');
+requireText(moduleJs, 'img.src=state.photo;', 'setPhoto must write the selected image into the preview DOM');
+requireText(moduleJs, "img.style.display=state.photo?'block':'none';", 'setPhoto must reveal the selected image in the preview DOM');
+const imageActionStart = moduleJs.indexOf('window.LightingAIOpenSceneImage=function(mode){');
+const imageActionEnd = moduleJs.indexOf('function create()', imageActionStart);
+assert(imageActionStart >= 0 && imageActionEnd > imageActionStart, 'AI image action boundaries missing');
+const imageAction = moduleJs.slice(imageActionStart, imageActionEnd);
+assert(
+  imageAction.indexOf('Android.openImagePicker(mode);') >= 0 &&
+  imageAction.indexOf('input.click();') >= 0 &&
+  imageAction.indexOf('aiVisualGalleryInput') >= 0 &&
+  imageAction.indexOf('aiVisualCameraInput') >= 0 &&
+  imageAction.indexOf('Android.openImagePicker(mode);') < imageAction.indexOf('input.click();'),
+  'AI image selection must use the phone-tested native picker first and retain persistent WebView file inputs as fallback'
+);
+forbidText(moduleJs, 'function openSceneImage(mode)', 'unused native-first AI image opener must remain removed');
+const webGalleryStart = mainActivity.indexOf('private boolean openGalleryForWebView');
+const webGalleryEnd = mainActivity.indexOf('private boolean openCameraForWebView', webGalleryStart);
+assert(webGalleryStart >= 0 && webGalleryEnd > webGalleryStart, 'working Planner/WebView gallery method boundaries missing');
+const webGalleryMethod = mainActivity.slice(webGalleryStart, webGalleryEnd);
+assert(webGalleryMethod.includes('Build.VERSION.SDK_INT >= 33'), 'Planner/WebView gallery must keep the Android 13+ picker branch');
+assert(webGalleryMethod.includes('MediaStore.ACTION_PICK_IMAGES'), 'Planner/WebView gallery must keep the phone-verified Android photo picker');
+assert(webGalleryMethod.includes('startActivityForResult(intent, CHOOSE_IMAGE)'), 'Planner/WebView gallery must return through the generic file chooser result path');
+requireText(moduleJs, 'aiv-build-id', 'AI visual plan must expose the running APK build marker before phone validation');
+requireText(moduleJs, 'window.LightingAIFeatureBuild', 'AI visual plan build marker must use embedded workflow identity');
+const aiGalleryStart = mainActivity.indexOf('private void openAIImageGallery()');
+const aiGalleryEnd = mainActivity.indexOf('private void openAIImageCamera()', aiGalleryStart);
+assert(aiGalleryStart >= 0 && aiGalleryEnd > aiGalleryStart, 'dedicated AI gallery method boundaries missing');
+const aiGalleryMethod = mainActivity.slice(aiGalleryStart, aiGalleryEnd);
+assert(aiGalleryMethod.includes('Build.VERSION.SDK_INT >= 33'), 'AI gallery picker must select the Android 13+ photo-picker path');
+assert(aiGalleryMethod.includes('MediaStore.ACTION_PICK_IMAGES'), 'AI gallery picker must preserve the phone-tested build 2504 photo-picker path');
+assert(aiGalleryMethod.includes('Intent.ACTION_PICK'), 'AI gallery picker must retain the legacy phone-gallery fallback');
+assert(aiGalleryMethod.includes('MediaStore.Images.Media.EXTERNAL_CONTENT_URI'), 'legacy AI gallery picker must target phone images');
+assert(aiGalleryMethod.includes('AI_CHOOSE_IMAGE'), 'AI gallery picker must use only its dedicated result channel');
+assert(!aiGalleryMethod.includes('Intent.ACTION_OPEN_DOCUMENT'), 'AI gallery picker must not open the document/files picker');
+assert(!aiGalleryMethod.includes('pendingFileChooser'), 'AI gallery picker must not share WebView callback state');
 requireText(manifest, 'android:name=".AIVisualImageProvider"', 'AI image share provider missing');
 
 for (const action of ['SVETLIJE','TAMNIJE','TOPLIJE','HLADNIJE','MEKŠE','VIŠE KONTRASTA','NAPRAVI MOJU VERZIJU','VRATI PRETHODNU AI VERZIJU']) {

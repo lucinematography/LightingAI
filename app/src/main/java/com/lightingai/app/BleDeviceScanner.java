@@ -11,11 +11,13 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelUuid;
+import android.util.SparseArray;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class BleDeviceScanner {
     public interface Callback {
@@ -117,9 +119,39 @@ public final class BleDeviceScanner {
                 try { address = result.getDevice().getAddress(); } catch (Exception ignored) {}
 
                 JSONArray services = new JSONArray();
+                JSONArray serviceDataUuids = new JSONArray();
+                JSONArray manufacturerIds = new JSONArray();
+                JSONArray serviceData = new JSONArray();
+                JSONArray manufacturerData = new JSONArray();
                 if (record != null && record.getServiceUuids() != null) {
                     for (ParcelUuid uuid : record.getServiceUuids()) {
                         if (uuid != null) services.put(uuid.toString());
+                    }
+                }
+                if (record != null && record.getServiceData() != null) {
+                    Set<ParcelUuid> keys = record.getServiceData().keySet();
+                    if (keys != null) {
+                        for (ParcelUuid uuid : keys) {
+                            if (uuid == null) continue;
+                            serviceDataUuids.put(uuid.toString());
+                            JSONObject payload = new JSONObject();
+                            payload.put("uuid", uuid.toString());
+                            payload.put("hex", toHex(record.getServiceData(uuid)));
+                            serviceData.put(payload);
+                        }
+                    }
+                }
+                if (record != null) {
+                    SparseArray<byte[]> data = record.getManufacturerSpecificData();
+                    if (data != null) {
+                        for (int i = 0; i < data.size(); i++) {
+                            int id = data.keyAt(i);
+                            manufacturerIds.put(id);
+                            JSONObject payload = new JSONObject();
+                            payload.put("id", id);
+                            payload.put("hex", toHex(data.valueAt(i)));
+                            manufacturerData.put(payload);
+                        }
                     }
                 }
 
@@ -129,6 +161,22 @@ public final class BleDeviceScanner {
                 item.put("rssi", result.getRssi());
                 item.put("connectable", android.os.Build.VERSION.SDK_INT < 26 || result.isConnectable());
                 item.put("serviceUuids", services);
+                item.put("serviceDataUuids", serviceDataUuids);
+                item.put("manufacturerIds", manufacturerIds);
+                item.put("serviceData", serviceData);
+                item.put("manufacturerData", manufacturerData);
+                item.put("rawAdvertisementHex", record == null ? "" : toHex(record.getBytes()));
+                item.put("advertiseFlags", record == null ? -1 : record.getAdvertiseFlags());
+                item.put("txPowerLevel", record == null ? Integer.MIN_VALUE : record.getTxPowerLevel());
+                item.put("timestampNanos", result.getTimestampNanos());
+                if (android.os.Build.VERSION.SDK_INT >= 26) {
+                    item.put("legacy", result.isLegacy());
+                    item.put("primaryPhy", result.getPrimaryPhy());
+                    item.put("secondaryPhy", result.getSecondaryPhy());
+                    item.put("advertisingSid", result.getAdvertisingSid());
+                    item.put("periodicAdvertisingInterval", result.getPeriodicAdvertisingInterval());
+                    item.put("dataStatus", result.getDataStatus());
+                }
 
                 String key = address == null || address.isEmpty()
                     ? (item.optString("name") + "|" + services.toString())
@@ -141,6 +189,13 @@ public final class BleDeviceScanner {
                 // Ignore one malformed advertisement and keep scanning.
             }
         }
+    }
+
+    private String toHex(byte[] value) {
+        if (value == null || value.length == 0) return "";
+        StringBuilder out = new StringBuilder(value.length * 2);
+        for (byte b : value) out.append(String.format("%02x", b & 0xff));
+        return out.toString();
     }
 
     @SuppressLint("MissingPermission")

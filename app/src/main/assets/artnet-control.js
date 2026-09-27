@@ -14,8 +14,8 @@ const MAX_CUES=64;
 const MAX_GROUPS=24;
 const VERIFIED_BRIDGES=[
  {id:'',manufacturer:'',model:'',protocols:['artnet','sacn'],transport:'',output:'',artNetPortAddressOffset:-1,sourceUrl:''},
- {id:'aputure-sidus-one',manufacturer:'Aputure',model:'Sidus One',protocols:['artnet','sacn'],transport:'Wi-Fi',output:'1 x DMX / 1 x CRMX',universeMin:1,universeMax:4,artNetUniverseMin:1,artNetUniverseMax:4,sacnUniverseMin:1,sacnUniverseMax:4,maxActiveUniverses:1,artNetPortAddressOffset:0,sourceUrl:'https://help.aputure.com/en/sidus-one/art-net/sacn-over-wi-fi-in'},
- {id:'aputure-sidus-four',manufacturer:'Aputure',model:'Sidus Four',protocols:['artnet','sacn'],transport:'Ethernet / Wi-Fi',output:'4 universes · 4 x CRMX + 4 x bidirectional DMX',artNetUniverseMin:1,artNetUniverseMax:32767,sacnUniverseMin:1,sacnUniverseMax:63999,maxActiveUniverses:4,artNetPortAddressOffset:0,sourceUrl:'https://help.aputure.com/en/sidus-four/technical-specification'},
+ {id:'aputure-sidus-one',manufacturer:'Aputure',model:'Sidus One',protocols:['artnet','sacn'],transport:'Wi-Fi',output:'1 x DMX / 1 x CRMX',universeMin:1,universeMax:4,artNetUniverseMin:1,artNetUniverseMax:4,sacnUniverseMin:1,sacnUniverseMax:4,maxActiveUniverses:1,artNetPortAddressOffset:0,protocolSwitchRequiresReset:true,protocolNote:'Locks to the first detected Art-Net or sACN source until network reset/source removal.',sourceUrl:'https://help.aputure.com/en/sidus-one/art-net/sacn-over-wi-fi-in'},
+ {id:'aputure-sidus-four',manufacturer:'Aputure',model:'Sidus Four',protocols:['artnet','sacn'],transport:'Ethernet / Wi-Fi',output:'4 universes · 4 x CRMX + 4 x bidirectional DMX',artNetUniverseMin:1,artNetUniverseMax:32767,sacnUniverseMin:1,sacnUniverseMax:63999,maxActiveUniverses:4,artNetPortAddressOffset:0,avoidMixedProtocolsOnUnmanagedNetwork:true,protocolNote:'Do not mix Art-Net and sACN on the same unmanaged lighting network.',sourceUrl:'https://help.aputure.com/en/sidus-four/technical-specification'},
  {id:'astera-fp1-powerbox',manufacturer:'Astera',model:'Titan PowerBox FP1-PWB',protocols:['artnet','sacn'],transport:'Ethernet / RJ45',output:'1 universe DMX via XLR / 10 power-data outputs',artNetUniverseMin:1,artNetUniverseMax:32767,sacnUniverseMin:1,sacnUniverseMax:63999,maxActiveUniverses:1,artNetPortAddressOffset:0,sourceUrl:'https://astera-led.com/wp-content/uploads/FP1-PWB_Titan_PowerBox_Datasheet_V2.pdf'},
  {id:'astera-pwb-2-86',manufacturer:'Astera',model:'PowerBox 2x86 PWB-2-86',protocols:['artnet','sacn'],transport:'Ethernet / RJ45',output:'1 universe DMX via XLR / 2 power-data outputs',artNetUniverseMin:1,artNetUniverseMax:32767,sacnUniverseMin:1,sacnUniverseMax:63999,maxActiveUniverses:1,artNetPortAddressOffset:0,sourceUrl:'https://astera-led.com/wp-content/uploads/PWB-2-86_PowerBox_2x86W_Datasheet_V2-1.pdf'},
  {id:'astera-fp3-datalink',manufacturer:'Astera',model:'FP3 DataLink',protocols:['artnet','sacn'],transport:'Ethernet / RJ45',output:'1 universe DMX via XLR / Astera power-data',artNetUniverseMin:1,artNetUniverseMax:32767,sacnUniverseMin:1,sacnUniverseMax:63999,maxActiveUniverses:1,artNetPortAddressOffset:0,sourceUrl:'https://astera-led.com/wp-content/uploads/FP3_DataLink_Datasheet_V2-1.pdf'}
@@ -200,10 +200,12 @@ function renderBridge(){
  const x=t(),bridge=selectedBridge();
  if(!bridge.id){box.innerHTML='<div class="muted small">'+esc(x.bridgeHint)+'</div>';return}
  const protocols=(bridge.protocols||[]).map(p=>p==='sacn'?'sACN (E1.31)':'Art-Net').join(' / ');
+ const protocolNote=bridge.protocolNote?'<div class="status warn small" style="margin-top:6px">'+esc(bridge.protocolNote)+'</div>':'';
  box.innerHTML='<div style="padding:8px 0"><b>'+esc(bridge.manufacturer+' '+bridge.model)+'</b>'+
   '<div class="muted small">'+esc(x.bridgeProtocols)+': '+esc(protocols)+'</div>'+
   '<div class="muted small">'+esc(x.bridgeTransport)+': '+esc(bridge.transport)+'</div>'+
   '<div class="muted small">'+esc(x.bridgeOutput)+': '+esc(bridge.output)+'</div>'+
+  protocolNote+
   (bridge.sourceUrl?'<a href="'+esc(bridge.sourceUrl)+'" target="_blank" rel="noopener" class="muted small">'+esc(x.bridgeDocs)+'</a>':'')+
   '</div><div class="muted small">'+esc(x.bridgeHint)+'</div>';
 }

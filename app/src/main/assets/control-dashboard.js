@@ -64,7 +64,7 @@ function fixtureCard(row){
    ext+mode+mapped+open+
    '</div>';
 }
-function jump(id){var x=E(id);if(x){x.open=true;x.scrollIntoView({behavior:'smooth',block:'start'})}}
+function jump(id){var x=E(id);if(!x)return;var details=x.tagName==='DETAILS'?x:(x.closest&&x.closest('details'));if(details)details.open=true;if(x.scrollIntoView)x.scrollIntoView({behavior:'smooth',block:'start'})}
 function liveStatus(){
  var api=window.LightingAIArtNetControl,armed=!!(api&&typeof api.isArmed==='function'&&api.isArmed()),protocol=E('networkDmxProtocol'),value=protocol?String(protocol.value||'artnet').toUpperCase():'—';
  return {armed:armed,protocol:value};

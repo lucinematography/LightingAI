@@ -1,6 +1,7 @@
 package com.lightingai.app;
 
 import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
@@ -87,6 +88,112 @@ public final class NetworkInterfaceInspector {
         }
         result.sort((a,b) -> String.valueOf(a.getName()).compareTo(String.valueOf(b.getName())));
         return result;
+    }
+
+    static List<NetworkInterface> multicastIpv6Interfaces() {
+        List<NetworkInterface> result = new ArrayList<>();
+        try {
+            Enumeration<NetworkInterface> raw = NetworkInterface.getNetworkInterfaces();
+            if (raw == null) return result;
+            for (NetworkInterface network : Collections.list(raw)) {
+                if (network == null) continue;
+                try {
+                    if (!network.isUp() || network.isLoopback() || !network.supportsMulticast()) continue;
+                    boolean hasIpv6 = false;
+                    for (InterfaceAddress interfaceAddress : network.getInterfaceAddresses()) {
+                        if (interfaceAddress == null) continue;
+                        InetAddress address = interfaceAddress.getAddress();
+                        if (address instanceof Inet6Address && !address.isLoopbackAddress()) {
+                            hasIpv6 = true;
+                            break;
+                        }
+                    }
+                    if (hasIpv6) result.add(network);
+                } catch (Exception ignored) {
+                    // Skip interfaces that cannot be inspected reliably.
+                }
+            }
+        } catch (Exception ignored) {
+            // Treat enumeration failure as no safe multicast route.
+        }
+        result.sort((a,b) -> String.valueOf(a.getName()).compareTo(String.valueOf(b.getName())));
+        return result;
+    }
+
+    static List<NetworkInterface> dualStackMulticastInterfaces() {
+        List<NetworkInterface> result = new ArrayList<>();
+        for (NetworkInterface v4 : multicastIpv4Interfaces()) {
+            String name = v4.getName();
+            for (NetworkInterface v6 : multicastIpv6Interfaces()) {
+                if (String.valueOf(name).equals(String.valueOf(v6.getName()))) {
+                    result.add(v4);
+                    break;
+                }
+            }
+        }
+        result.sort((a,b) -> String.valueOf(a.getName()).compareTo(String.valueOf(b.getName())));
+        return result;
+    }
+
+    static String normalizeSacnIpMode(String mode) {
+        String value = mode == null ? "" : mode.trim().toLowerCase(java.util.Locale.ROOT);
+        if ("ipv6".equals(value) || "dual".equals(value)) return value;
+        return "ipv4";
+    }
+
+    static List<NetworkInterface> sacnMulticastInterfaces(String mode) {
+        String normalized = normalizeSacnIpMode(mode);
+        if ("ipv6".equals(normalized)) return multicastIpv6Interfaces();
+        if ("dual".equals(normalized)) return dualStackMulticastInterfaces();
+        return multicastIpv4Interfaces();
+    }
+
+    public static int sacnMulticastInterfaceCount(String mode) {
+        return sacnMulticastInterfaces(mode).size();
+    }
+
+    public static String singleSacnMulticastInterfaceName(String mode) {
+        List<NetworkInterface> routes = sacnMulticastInterfaces(mode);
+        if (routes.size() != 1) return "";
+        String name = routes.get(0).getName();
+        return name == null ? "" : name;
+    }
+
+    static NetworkInterface requireSingleSacnMulticastInterface(String mode) {
+        String normalized = normalizeSacnIpMode(mode);
+        List<NetworkInterface> routes = sacnMulticastInterfaces(normalized);
+        if (routes.isEmpty()) throw new IllegalStateException("No active " + normalized + " multicast interface for sACN");
+        if (routes.size() != 1) throw new IllegalStateException("Multiple " + normalized + " multicast interfaces; re-arm on a dedicated lighting network");
+        return routes.get(0);
+    }
+
+    public static String sacnSignature(String mode) {
+        String normalized = normalizeSacnIpMode(mode);
+        List<NetworkInterface> routes = sacnMulticastInterfaces(normalized);
+        if (routes.size() != 1) return "";
+        NetworkInterface network = routes.get(0);
+        List<String> addresses = new ArrayList<>();
+        for (InterfaceAddress interfaceAddress : network.getInterfaceAddresses()) {
+            if (interfaceAddress == null) continue;
+            InetAddress address = interfaceAddress.getAddress();
+            if (address == null || address.isLoopbackAddress()) continue;
+            if ("ipv4".equals(normalized) && address instanceof Inet4Address) {
+                addresses.add("4:" + address.getHostAddress());
+            } else if ("ipv6".equals(normalized) && address instanceof Inet6Address) {
+                addresses.add("6:" + stripIpv6Scope(address.getHostAddress()));
+            } else if ("dual".equals(normalized) && (address instanceof Inet4Address || address instanceof Inet6Address)) {
+                addresses.add((address instanceof Inet4Address ? "4:" : "6:") + stripIpv6Scope(address.getHostAddress()));
+            }
+        }
+        Collections.sort(addresses);
+        if (addresses.isEmpty()) return "";
+        return normalized + "|" + String.valueOf(network.getName()) + "|" + String.join(",", addresses);
+    }
+
+    private static String stripIpv6Scope(String value) {
+        if (value == null) return "";
+        int percent = value.indexOf('%');
+        return percent >= 0 ? value.substring(0, percent) : value;
     }
 
     public static int multicastIpv4InterfaceCount() {

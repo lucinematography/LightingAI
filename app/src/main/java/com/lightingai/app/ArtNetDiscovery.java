@@ -106,10 +106,9 @@ public final class ArtNetDiscovery {
     }
 
     static List<InetAddress> broadcastTargets() throws Exception {
-        Set<InetAddress> targets = new LinkedHashSet<>(directedBroadcastTargets());
-        // ArtPoll may also use limited broadcast during initial discovery.
-        targets.add(InetAddress.getByName("255.255.255.255"));
-        return new ArrayList<>(targets);
+        // Art-Net discovery uses directed broadcast only. Limited broadcast
+        // (255.255.255.255) is intentionally excluded.
+        return directedBroadcastTargets();
     }
 
     static byte[] buildPollPacket() {

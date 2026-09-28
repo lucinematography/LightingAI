@@ -14,9 +14,7 @@ public final class ArtNetSender {
     private ArtNetSender() {}
 
     public static void sendDmx(String targetIp, int portAddress, int[] channels, int sequence) throws Exception {
-        try (DatagramSocket socket = new DatagramSocket()) {
-            sendDmx(socket, targetIp, portAddress, channels, sequence);
-        }
+        sendDmx(ArtNetSocketManager.socket(), targetIp, portAddress, channels, sequence);
     }
 
     public static void sendDmx(DatagramSocket socket, String targetIp, int portAddress, int[] channels, int sequence) throws Exception {

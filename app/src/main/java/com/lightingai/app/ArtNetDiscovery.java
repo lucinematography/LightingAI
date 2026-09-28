@@ -74,7 +74,10 @@ public final class ArtNetDiscovery {
                     continue;
                 }
                 Node node = parseReply(incoming.getData(), incoming.getLength(), incoming.getAddress());
-                if (node != null && !node.ip.isEmpty()) nodes.put(node.ip, node);
+                if (node != null && !node.ip.isEmpty()) {
+                    Node existing = nodes.get(node.ip);
+                    nodes.put(node.ip, existing == null ? node : mergeNode(existing, node));
+                }
             }
         }
         return new ArrayList<>(nodes.values());
@@ -153,6 +156,25 @@ public final class ArtNetDiscovery {
             ascii(data, 44, 64, length),
             new ArrayList<>(subscriptions),
             subscriptionDataPresent
+        );
+    }
+
+    static Node mergeNode(Node existing, Node incoming) {
+        if (existing == null) return incoming;
+        if (incoming == null) return existing;
+        if (!existing.ip.equals(incoming.ip)) {
+            throw new IllegalArgumentException("Art-Net node merge requires the same IP");
+        }
+        Set<Integer> merged = new LinkedHashSet<>(existing.subscriptions);
+        merged.addAll(incoming.subscriptions);
+        String shortName = existing.shortName == null || existing.shortName.isEmpty() ? incoming.shortName : existing.shortName;
+        String longName = existing.longName == null || existing.longName.isEmpty() ? incoming.longName : existing.longName;
+        return new Node(
+            existing.ip,
+            shortName,
+            longName,
+            new ArrayList<>(merged),
+            existing.subscriptionDataPresent || incoming.subscriptionDataPresent
         );
     }
 

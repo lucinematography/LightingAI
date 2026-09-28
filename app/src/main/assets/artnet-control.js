@@ -131,6 +131,20 @@ function controlTransport(){
    }
    return false;
   },
+  setKeepalive:function(request){
+   const protocol=request&&request.protocol==='sacn'?'sacn':'artnet';
+   if(protocol==='sacn'&&androidReady&&typeof Android.sacnSetKeepalive==='function'){
+    Android.sacnSetKeepalive(request.id);return true;
+   }
+   if(protocol==='artnet'&&androidReady&&typeof Android.artNetSetKeepalive==='function'){
+    Android.artNetSetKeepalive(request.id);return true;
+   }
+   if(iosReady){
+    iosHandler.postMessage({action:'networkDmxSetKeepalive',id:request.id,protocol:protocol});
+    return true;
+   }
+   return false;
+  },
   stopLive:function(request){
    const protocol=request&&request.protocol==='sacn'?'sacn':'artnet';
    if(protocol==='sacn'&&androidReady&&typeof Android.sacnStopLive==='function'){
@@ -376,7 +390,7 @@ function finishHealthCheck(id,payload,error){
  if(error||!native||!armedNetworkSignature||signature!==armedNetworkSignature||
     !armedContextSignature||controlContextSignature()!==armedContextSignature||
     !armedPatchSignature||patchSignature()!==armedPatchSignature||
-    (liveEnabled&&expectedLiveFrames>0&&(liveFrames===0||!!liveError))){
+    (expectedLiveFrames>0&&(liveFrames===0||!!liveError))){
   setOutputArmed(false,true);
   status(t().preflightFailed,false);
  }
@@ -1552,9 +1566,9 @@ function setLiveEnabled(enabled){
    setOutputArmed(false,true);liveEnabled=false;if(toggle)toggle.checked=false;status(t().preflightFailed,false);return false
   }
   liveEnabled=false;if(toggle)toggle.checked=false;
-  const id='networkdmx_stop_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
+  const id='networkdmx_keepalive_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
   let accepted=true;
-  try{if(typeof transport.stopLive!=='function'||!transport.stopLive({id:id,protocol:protocol}))accepted=false}catch(e){accepted=false}
+  try{if(typeof transport.setKeepalive!=='function'||!transport.setKeepalive({id:id,protocol:protocol}))accepted=false}catch(e){accepted=false}
   if(!accepted){
    setOutputArmed(false,true);
    status(t().error,false);
@@ -1761,7 +1775,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.62-artnet-poll-cadence',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.63-standards-keepalive',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

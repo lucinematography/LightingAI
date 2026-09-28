@@ -206,7 +206,7 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
   };
   context.window=context;
   assert.match(appSource,/\}\)\(\);\s*$/,'App closure boundary changed');
-  const injected=appSource.replace(/\}\)\(\);\s*$/,'window.__mosaicTest={controlToDmx,controlFromDmx,writeControlToFrame,applyProfileRequirements,fadeChannelValue,fadeSnapChannels,sendVerifiedControl,renderVerifiedControls,patchSignature,controlContextSignature,contextStorageKey,fadeToScene,applyScene,frame,cloneFrames,armForTest:value=>{outputArmed=value;}};})();');
+  const injected=appSource.replace(/\}\)\(\);\s*$/,'window.__mosaicTest={controlToDmx,controlFromDmx,writeControlToFrame,applyProfileRequirements,fadeChannelValue,fadeSnapChannels,sendVerifiedControl,renderVerifiedControls,patchSignature,controlContextSignature,contextStorageKey,fadeToScene,applyScene,cloneFrames,setKnownFrameForTest:(u,v)=>{frames[String(u)]=v.slice(0,512);},getKnownFrameForTest:u=>frames[String(u)],armForTest:value=>{outputArmed=value;}};})();');
   runInNewContext(injected,context,{timeout:1000});
   const app=context.__mosaicTest;
   for(const id of expectedIds){
@@ -280,7 +280,7 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
         assert.equal(snap.size,width===11?2:1);
       }
       patch[0].start=1;
-      app.frame(1).fill(0);
+      app.setKnownFrameForTest(1,new Array(512).fill(0));
       storage.set('lighting_language_v1','en');app.renderVerifiedControls(patch[0]);
       assert.match(box.innerHTML,/Green \/ magenta correction/);
       assert.equal((box.innerHTML.match(/artnet-verified-enum/g)||[]).length,width===11?1:0);
@@ -311,10 +311,10 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
   const fixture=fixtures.find(item=>item.id===expectedIds[0]),profile=fixture.dmxModes[1];
   const row={fixtureId:fixture.id,mode:profile.name,universe:1,start:502,channels:11,flags:[]};patch=[row];
   const correction=profile.controls[2],effect=profile.controls[8];
-  app.armForTest(true);app.frame(1).fill(77);
+  app.armForTest(true);app.setKnownFrameForTest(1,new Array(512).fill(77));
   const before=sent.length;
   for(const invalid of [11,-1,NaN,null])app.sendVerifiedControl(row,profile,effect,invalid);
-  assert.equal(sent.length,before);assert.ok(app.frame(1).every(value=>value===77),'Invalid selection mutated frame');
+  assert.equal(sent.length,before);assert.ok(app.getKnownFrameForTest(1).every(value=>value===77),'Invalid selection mutated frame');
   app.sendVerifiedControl(row,profile,correction,100);assert.equal(sent.at(-1).channels[503],245);
   app.sendVerifiedControl(row,profile,effect,7);assert.equal(sent.at(-1).channels[509],70);
   app.sendVerifiedControl(row,profile,profile.controls[0],50);
@@ -326,7 +326,7 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
   app.armForTest(false);app.sendVerifiedControl(row,profile,effect,0);assert.equal(sent.length,count);
   app.armForTest(true);
   // Fade must not select intervening effects or travel through correction dead bands.
-  row.start=1;const initial=app.frame(1);initial.fill(0);initial[2]=11;initial[8]=10;
+  row.start=1;const initial=new Array(512).fill(0);initial[2]=11;initial[8]=10;app.setKnownFrameForTest(1,initial);
   const target=new Array(512).fill(255);target[2]=245;target[8]=70;
   storage.set(app.contextStorageKey('lighting_artnet_scenes_v1'),JSON.stringify([{version:2,name:'Target',contextSignature:app.controlContextSignature(),patchSignature:app.patchSignature(),frames:{'1':target}}]));
   now=0;app.fadeToScene(0,1);

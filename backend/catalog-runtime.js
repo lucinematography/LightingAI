@@ -119,6 +119,7 @@ import { applyElectroStormCanonicalCorrections } from './electro-storm-canonical
 import { normalizeDeSistiControl } from './desisti-control-verification.js';
 import { normalizeGodoxControl } from './godox-control-verification.js';
 import { normalizeAladdinControl } from './aladdin-control-verification.js';
+import { qualifyLiteGearSpectrumG2Profiles } from './litegear-control-verification.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function unique(values = []) { return [...new Set(values)]; }
@@ -182,6 +183,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(LITEGEAR_LITEMAT_PLUS_FIXTURES));
   fixtures.push(...clone(LITEGEAR_LITEMAT_SPECTRUM_2019_FIXTURES));
   fixtures.push(...clone(LITEGEAR_LITEMAT_S2_FIXTURES));
+  qualifyLiteGearSpectrumG2Profiles(fixtures);
   fixtures.push(...clone(EVLIGHT_GEM_GEMX_FIXTURES));
   fixtures.push(...clone(EVLIGHT_FRESNEL_FIXTURES));
   fixtures.push(...clone(EVLIGHT_GEMX_HARD_FIXTURES));

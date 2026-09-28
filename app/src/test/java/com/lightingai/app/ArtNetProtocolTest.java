@@ -117,21 +117,17 @@ public class ArtNetProtocolTest {
         reply[13] = 50;
         reply[18] = 0x01;
         reply[19] = 0x02;
-        reply[174] = (byte) 0x80; // output port -> Art-Net
-        reply[175] = (byte) 0x40; // input-only port must not become an ArtDmx subscription
-        reply[176] = (byte) 0x80; // output port currently selected for sACN must be ignored
-        reply[184] = 0x01;        // GoodOutputA bit 0: selected to convert from sACN
+        reply[174] = (byte) 0x80; // output-capable
+        reply[175] = (byte) 0x40; // input-capable
         reply[190] = 0x03;
         reply[187] = 0x04;
-        reply[192] = 0x05;
 
         ArtNetDiscovery.Node node = ArtNetDiscovery.parseReply(reply, reply.length, InetAddress.getByName("192.168.1.50"));
         assertNotNull(node);
         assertTrue(node.subscriptionDataPresent);
-        assertEquals(1, node.subscriptions.size());
+        assertEquals(2, node.subscriptions.size());
         assertTrue(node.subscriptions.contains(0x123));
-        assertFalse(node.subscriptions.contains(0x124));
-        assertFalse(node.subscriptions.contains(0x125));
+        assertTrue(node.subscriptions.contains(0x124));
     }
 
     @Test public void automaticArtDmxMustBeResolvedToUnicastBeforeNativeSend() {

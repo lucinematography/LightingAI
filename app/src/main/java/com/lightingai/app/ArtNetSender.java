@@ -39,8 +39,8 @@ public final class ArtNetSender {
             return;
         }
 
-        if (!isIpv4Literal(target)) {
-            throw new IllegalArgumentException("Art-Net target must be AUTO or an IPv4 literal");
+        if (!isUsableIpv4Target(target)) {
+            throw new IllegalArgumentException("Art-Net target must be AUTO or a usable IPv4 literal");
         }
         InetAddress address = InetAddress.getByName(target);
         socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));
@@ -70,6 +70,16 @@ public final class ArtNetSender {
             try { n = Integer.parseInt(part); } catch (NumberFormatException e) { return false; }
             if (n < 0 || n > 255) return false;
         }
+        return true;
+    }
+
+    static boolean isUsableIpv4Target(String value) {
+        if (!isIpv4Literal(value)) return false;
+        String[] parts = value.trim().split("\\.", -1);
+        int first = Integer.parseInt(parts[0]);
+        if ("0.0.0.0".equals(value.trim())) return false;
+        if (first == 127) return false;
+        if (first >= 224 && first <= 239) return false;
         return true;
     }
 

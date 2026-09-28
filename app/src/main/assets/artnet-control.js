@@ -311,9 +311,11 @@ function finishArmPreflight(id,payload,error){
  if(error||!native)failure=t().preflightFailed;
  else if(!interfaces.length)failure=t().preflightNoNetwork;
  else if(selectedProtocol()==='sacn'){
-  const multicastRoutes=interfaces.filter(item=>item&&item.multicast===true&&item.ipv4);
-  if(!multicastRoutes.length)failure=t().preflightNoMulticast;
-  else if(multicastRoutes.length>1)failure=t().preflightMultipleSacnRoutes;
+  const nativeCount=Number(native.multicastInterfaceCount);
+  const uniqueFallback=new Set(interfaces.filter(item=>item&&item.multicast===true&&item.ipv4).map(item=>String(item.name||item.displayName||item.ipv4)));
+  const multicastRouteCount=Number.isInteger(nativeCount)&&nativeCount>=0?nativeCount:uniqueFallback.size;
+  if(multicastRouteCount<1)failure=t().preflightNoMulticast;
+  else if(multicastRouteCount>1)failure=t().preflightMultipleSacnRoutes;
  }
  else if(selectedProtocol()==='artnet'){
   const target=String((E('artnetTarget')&&E('artnetTarget').value)||'AUTO').trim();
@@ -1761,7 +1763,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.60-artnet-subscriber-unicast',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.61-sacn-bound-multicast-interface',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

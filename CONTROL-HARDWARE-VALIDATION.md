@@ -38,6 +38,8 @@ Official references:
 - Dedicated Wi-Fi network with VPN/mobile network routing disabled during the test.
 - Sidus One with current firmware.
 - One fixture with a verified LightingAI DMX profile.
+- Preferred single-fixture reference: Aputure LS 600c Pro II, because the current verified catalog exposes wired DMX/RDM, CRMX, direct Art-Net/sACN and a verified Mode 4 RGB 8-bit 5ch profile in one device.
+- If LS 600c Pro II is unavailable, use any fixture whose LightingAI card shows a verified profile; do not substitute a PROFILE HOLD fixture.
 - Prefer wired DMX first because it removes CRMX pairing as a variable.
 - Add CRMX as a second pass when a compatible receiver/fixture is available.
 - Use Universe 1 unless a different universe is required by the fixture setup.
@@ -51,6 +53,22 @@ Official references:
 5. LightingAI shows a verified profile, not PROFILE HOLD.
 6. Start with output LOCKED.
 7. Use one universe for the first pass.
+
+## Test 0 - direct native Art-Net/sACN
+
+Run this test when the selected fixture itself exposes a verified native Art-Net/sACN route (the preferred LS 600c Pro II does).
+
+1. Connect the fixture and phone to the same dedicated lighting network.
+2. Patch the fixture with the exact verified DMX mode and address.
+3. Test direct Art-Net first.
+4. Disarm/reset the source and test direct sACN.
+5. Verify dimmer and at least one additional verified semantic control when available (RGB on LS 600c Pro II).
+
+PASS:
+- No bridge is needed for the native route.
+- ARM/preflight still gates physical output.
+- Art-Net and sACN produce the same verified semantic mapping.
+- Protocol change requires fresh ARM and does not reuse stale route state.
 
 ## Test A - Art-Net -> wired DMX
 

@@ -19,7 +19,7 @@ import java.util.Enumeration;
 public final class ArtNetDiscovery {
     private static final byte[] ARTNET_ID = "Art-Net\0".getBytes(StandardCharsets.US_ASCII);
     private static final int POLL_PACKET_LENGTH = 14;
-    private static final int REPLY_MIN_LENGTH = 108;
+    private static final int REPLY_MIN_LENGTH = 207;
 
     public static final class Node {
         public final String ip;

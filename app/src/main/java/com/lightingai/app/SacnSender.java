@@ -232,7 +232,7 @@ public final class SacnSender {
     }
 
     static String multicastAddressIpv6(int universe) {
-        int u = validateUniverse(universe);
+        int u = universe == DISCOVERY_UNIVERSE ? DISCOVERY_UNIVERSE : validateUniverse(universe);
         return String.format(java.util.Locale.ROOT, "ff18::83:0:%x:%x", (u >> 8) & 0xff, u & 0xff);
     }
 

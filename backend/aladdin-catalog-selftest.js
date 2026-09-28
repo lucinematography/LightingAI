@@ -206,7 +206,7 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
   };
   context.window=context;
   assert.match(appSource,/\}\)\(\);\s*$/,'App closure boundary changed');
-  const injected=appSource.replace(/\}\)\(\);\s*$/,'window.__mosaicTest={controlToDmx,controlFromDmx,writeControlToFrame,applyProfileRequirements,fadeChannelValue,fadeSnapChannels,sendVerifiedControl,renderVerifiedControls,patchSignature,controlContextSignature,contextStorageKey,fadeToScene,applyScene,cloneFrames,setKnownFrameForTest:(u,v)=>{frames[String(u)]=v.slice(0,512);},getKnownFrameForTest:u=>frames[String(u)],armForTest:value=>{outputArmed=value;}};})();');
+  const injected=appSource.replace(/\}\)\(\);\s*$/,'window.__mosaicTest={controlToDmx,controlFromDmx,writeControlToFrame,applyProfileRequirements,profileAddressMetadataIsSafe,fadeChannelValue,fadeSnapChannels,sendVerifiedControl,renderVerifiedControls,patchSignature,controlContextSignature,contextStorageKey,fadeToScene,applyScene,cloneFrames,setKnownFrameForTest:(u,v)=>{frames[String(u)]=v.slice(0,512);},getKnownFrameForTest:u=>frames[String(u)],armForTest:value=>{outputArmed=value;}};})();');
   runInNewContext(injected,context,{timeout:1000});
   const app=context.__mosaicTest;
   for(const id of expectedIds){
@@ -319,6 +319,11 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
   const fixture=fixtures.find(item=>item.id===expectedIds[0]),profile=fixture.dmxModes[1];
   const row={fixtureId:fixture.id,mode:profile.name,universe:1,start:502,channels:11,flags:[]};patch=[row];
   const correction=profile.controls[2],effect=profile.controls[8];
+  assert.equal(app.profileAddressMetadataIsSafe(profile),true);
+  assert.equal(app.profileAddressMetadataIsSafe({...profile,channels:'11'}),false,'String profile channel count must be rejected');
+  assert.equal(app.profileAddressMetadataIsSafe({...profile,controls:profile.controls.map((ctrl,i)=>i===0?{...ctrl,channel:'1'}:ctrl)}),false,'String control channel must be rejected');
+  assert.equal(app.profileAddressMetadataIsSafe({...profile,controls:profile.controls.map((ctrl,i)=>i===0?{...ctrl,bits:'8'}:ctrl)}),false,'String bit depth must be rejected');
+  assert.equal(app.profileAddressMetadataIsSafe({...profile,controls:profile.controls.map((ctrl,i)=>i===0?{...ctrl,dmxMax:'255'}:ctrl)}),false,'String DMX maximum must be rejected');
   app.armForTest(true);app.setKnownFrameForTest(1,new Array(512).fill(77));
   const before=sent.length;
   for(const invalid of [11,-1,NaN,null])app.sendVerifiedControl(row,profile,effect,invalid);
@@ -330,7 +335,9 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
   const count=sent.length;
   for(const bad of [{...row,start:503},{...row,channels:10},{...row,flags:['overlap']}])app.sendVerifiedControl(bad,profile,effect,1);
   app.sendVerifiedControl(row,{...profile},effect,1);
-  assert.equal(sent.length,count,'Invalid/stale Patch or profile sent DMX');
+  app.sendVerifiedControl(row,{...profile},profile.controls[0],50);
+  app.sendVerifiedControl(row,profile,{...profile.controls[0]},50);
+  assert.equal(sent.length,count,'Invalid/stale Patch, profile or control sent DMX');
   app.armForTest(false);app.sendVerifiedControl(row,profile,effect,0);assert.equal(sent.length,count);
   app.armForTest(true);
   // Fade must not select intervening effects or travel through correction dead bands.

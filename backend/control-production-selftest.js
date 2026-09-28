@@ -6,6 +6,7 @@ import { ASTERA_TITANTUBE_FIXTURES, ASTERA_TITANTUBE_ACCESSORIES } from './aster
 import { FIXTURE_LIBRARY } from './fixture-library.js';
 import { ARRI_SKYPANEL_PRO_FIXTURES } from './arri-skypanel-pro-library.js';
 import { ARRI_ORBITER_FIXTURES } from './arri-orbiter-library.js';
+import { ARRI_SKYPANEL_CLASSIC_S30_FIXTURES } from './arri-skypanel-classic-s30-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -75,6 +76,14 @@ for (const [channel,value] of [[3,128],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0]]) {
 }
 expect(xt26Cct?.profileConfiguration?.motorizedAccessories === 'ON' && xt26Cct?.profileConfiguration?.functionConfiguration === 'ON', 'Electro Storm XT26 verified profile must reserve the manufacturer-default extension footprint');
 expect(String(xt26Cct?.sourceUrl || '').includes('Electro%20Storm%20XT26%20DMX%20Profile%20Specification%20V1.1.pdf'), 'Electro Storm XT26 verified DMX source missing');
+
+const s30Classic = ARRI_SKYPANEL_CLASSIC_S30_FIXTURES.find(f => f.id === 'arri-skypanel-s30-c');
+expect(!!s30Classic, 'ARRI SkyPanel S30-C missing');
+expect(hasAll(s30Classic?.control?.wired, ['DMX512','RDM','Ethernet']), 'SkyPanel S30-C wired standards routes missing');
+expect(hasAll(s30Classic?.control?.directLightingAI, ['Art-Net 4','sACN']), 'SkyPanel S30-C native Art-Net/sACN routes missing');
+const s30Verified = (s30Classic?.dmxModes || []).filter(mode => mode?.verified === true);
+expect(s30Verified.length === 1, 'SkyPanel S30-C must retain exactly one verified DMX profile');
+expect(s30Verified[0]?.name === 'Mode 1 CCT & RGBW 8 bit' && s30Verified[0]?.channels === 12, 'SkyPanel S30-C verified 12ch profile changed unexpectedly');
 
 const s60Pro = ARRI_SKYPANEL_PRO_FIXTURES.find(f => f.id === 'arri-skypanel-s60-pro');
 expect(!!s60Pro, 'ARRI SkyPanel S60 Pro missing');
@@ -175,6 +184,16 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+const s30Route = routingContext.window.LightingAIControlRouting.classify(s30Classic);
+expect(
+  s30Route?.route === 'native-network' &&
+  s30Route?.nativeNetwork === true &&
+  s30Route?.transportReady === true &&
+  s30Route?.semanticReady === true &&
+  s30Route?.verifiedDmxModeCount === 1,
+  'SkyPanel S30-C must route as production-ready native Art-Net/sACN using its existing verified DMX profile'
+);
+
 const orbiterRoute = routingContext.window.LightingAIControlRouting.classify(orbiter);
 expect(
   orbiterRoute?.route === 'native-network' &&

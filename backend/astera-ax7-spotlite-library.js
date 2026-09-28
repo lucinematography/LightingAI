@@ -39,10 +39,10 @@ export const ASTERA_AX7_SPOTLITE_FIXTURES = [
       ]
     },
     dmxModes: [{
-      name: 'Profile 4 DIM RGB 4ch',
+      name: 'DIM RGB 4ch (Strobe Off)',
       channels: 4,
       verified: true,
-      sourceUrl: 'https://v2lights.co.uk/perch/resources/equip_dl/ax3-dmx-profiles.pdf',
+      sourceUrl: 'https://astera-led.com/products/ax7-spotlite/',
       controls: [
         { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
         { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },

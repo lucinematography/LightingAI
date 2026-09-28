@@ -27,12 +27,22 @@ for (const fixture of [ls60d, ls60x]) {
 const ls600d = aputure('aputure-ls-600d');
 expect(hasAll(ls600d?.control?.wired, ['DMX512']), 'LS 600d documented wired DMX512 route missing');
 expect((ls600d?.control?.directLightingAI || []).length === 0, 'LS 600d must not claim Ethernet Art-Net/sACN');
+const ls600Verified = (ls600d?.dmxModes || []).filter(mode => mode?.verified === true);
+expect(ls600Verified.length === 1, 'LS 600d must expose exactly one verified default DMX profile');
+expect(ls600Verified[0]?.name === 'Lighting 1ch' && ls600Verified[0]?.channels === 1, 'LS 600d verified Lighting 1ch profile missing');
+expect((ls600Verified[0]?.controls || []).some(control => control?.key === 'dimmer' && control?.channel === 1), 'LS 600d verified dimmer channel missing');
+expect(String(ls600Verified[0]?.sourceUrl || '').includes('LS-600d-DMX-Profile-Specification-V1.0-.pdf'), 'LS 600d official DMX profile source missing');
 
 for (const id of ['aputure-ls-600d-pro','aputure-ls-600x-pro','aputure-storm-cs32','aputure-electro-storm-cs15','aputure-electro-storm-xt26']) {
   const fixture = aputure(id);
   expect(!!fixture, 'Aputure native-network fixture missing: ' + id);
   expect(hasAll(fixture?.control?.directLightingAI, ['Art-Net','sACN']), 'Aputure native Art-Net/sACN route missing: ' + id);
 }
+
+const cs32 = aputure('aputure-storm-cs32');
+expect(cs32?.dmxProfileVerification?.status === 'HOLD', 'STORM CS32 DMX profile must remain HOLD until its per-channel chart is locked');
+expect(!(cs32?.dmxModes || []).some(mode => mode?.verified === true), 'STORM CS32 must not expose an unverified DMX profile as verified');
+expect((cs32?.dmxProfileVerification?.sourceUrls || []).some(url => String(url).includes('STORM%20CS32%20DMX%20Profile%20Specification%20V1.0.pdf')), 'STORM CS32 HOLD must reference the official DMX chart');
 
 for (const id of ['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x']) {
   const fixture = aputure(id);
@@ -139,6 +149,25 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+const ls600Route = routingContext.window.LightingAIControlRouting.classify(ls600d);
+expect(
+  ls600Route?.route === 'gateway' &&
+  ls600Route?.transportReady === true &&
+  ls600Route?.semanticReady === true &&
+  ls600Route?.verifiedDmxModeCount === 1,
+  'LS 600d must route through the standards gateway with one verified DMX profile'
+);
+
+const cs32Route = routingContext.window.LightingAIControlRouting.classify(cs32);
+expect(
+  cs32Route?.route === 'native-network' &&
+  cs32Route?.nativeNetwork === true &&
+  cs32Route?.transportReady === true &&
+  cs32Route?.semanticReady === false &&
+  cs32Route?.verifiedDmxModeCount === 0,
+  'STORM CS32 transport must remain available but semantic control must fail closed while profile is HOLD'
+);
+
 const cs15Route = routingContext.window.LightingAIControlRouting.classify(cs15);
 expect(
   cs15Route?.route === 'native-network' &&

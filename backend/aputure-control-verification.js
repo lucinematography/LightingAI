@@ -26,6 +26,15 @@ const VERIFIED_OVERRIDES = {
 };
 
 const VERIFIED_DMX_PROFILES = {
+  'aputure-ls-600d': [{
+    name: 'Lighting 1ch',
+    channels: 1,
+    verified: true,
+    sourceUrl: 'https://docs.aputure.com/hubfs/Knowledge%20Base/Aputure/LS%20600d/All%20files/LS-600d-DMX-Profile-Specification-V1.0-.pdf',
+    controls: [
+      {key:'dimmer',label:'Intensity',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}
+    ]
+  }],
   'aputure-electro-storm-cs15': [{
     name: 'Mode 4 RGB 8-bit 5ch',
     channels: 5,
@@ -63,6 +72,17 @@ const VERIFIED_DMX_PROFILES = {
       rationale: 'Use the manufacturer-default maximum 9-channel footprint to avoid DMX address overlap when both extensions are enabled.'
     }
   }]
+};
+
+const DMX_PROFILE_HOLDS = {
+  'aputure-storm-cs32': {
+    status: 'HOLD',
+    reason: 'Aputure publishes a dedicated STORM CS32 DMX chart, but LightingAI has not yet locked a per-channel profile from that chart. Keep transport available while semantic control remains fail-closed.',
+    sourceUrls: [
+      'https://help.aputure.com/en/storm-cs32/dmx-settings',
+      'https://help.aputure.com/hubfs/Knowledge%20Base/Aputure/STORM%20CS32/Documents/STORM%20CS32%20DMX%20Profile%20Specification%20V1.0.pdf?hsLang=en'
+    ]
+  }
 };
 
 export function normalizeLegacyAputureControl(fixtures = []) {
@@ -113,6 +133,16 @@ export function normalizeLegacyAputureControl(fixtures = []) {
           controls: (mode.controls || []).map(control => ({...control}))
         }))
       ];
+    }
+
+    const hold = DMX_PROFILE_HOLDS[fixture.id];
+    const verifiedAfterPatch = Array.isArray(fixture.dmxModes) && fixture.dmxModes.some(mode => mode?.verified === true);
+    if (hold && !verifiedAfterPatch) {
+      fixture.dmxProfileVerification = {
+        status: hold.status,
+        reason: hold.reason,
+        sourceUrls: [...hold.sourceUrls]
+      };
     }
   }
   return fixtures;

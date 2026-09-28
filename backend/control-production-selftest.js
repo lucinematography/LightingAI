@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { ASTERA_TITANTUBE_FIXTURES, ASTERA_TITANTUBE_ACCESSORIES } from './astera-titantube-library.js';
 
@@ -80,6 +81,20 @@ expect(catalogAudit.includes("typeof channels !== 'number'")&&catalogAudit.inclu
 
 const routing = fs.readFileSync(path.join(root,'app/src/main/assets/control-routing.js'),'utf8');
 expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production control router version marker missing');
+const routingContext = { window:{} };
+vm.createContext(routingContext);
+vm.runInContext(routing, routingContext);
+const legacyRoute = routingContext.window.LightingAIControlRouting.classify({
+  control:['DMX512','On-board dimming'],
+  dmxModes:[{name:'Verified legacy dimmer',channels:1,verified:true,sourceUrl:'https://example.invalid/verified-dmx-profile'}]
+});
+expect(
+  legacyRoute?.route === 'gateway' &&
+  legacyRoute?.dmx === true &&
+  legacyRoute?.transportReady === true &&
+  legacyRoute?.semanticReady === true,
+  'Legacy control arrays with verified DMX profiles must remain routable through the standards gateway'
+);
 
 console.log(JSON.stringify({ok:failures.length===0,fixture:'astera-titantube-fp1',verifiedModes:verifiedModes.length,routes:routes.length,failures},null,2));
 if (failures.length) process.exit(1);

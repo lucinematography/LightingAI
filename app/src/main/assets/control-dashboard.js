@@ -3,7 +3,7 @@
 var CARD_ID='lightingai-control-dashboard';
 var deskPointerActive=false,deskInteractionUntil=0;
 function holdDeskInteraction(ms){deskInteractionUntil=Math.max(deskInteractionUntil,Date.now()+Math.max(250,Number(ms)||1200))}
-function periodicRender(){if(deskPointerActive||Date.now()<deskInteractionUntil)return;render()}
+function periodicRender(){var now=Date.now();if(deskPointerActive&&now<deskInteractionUntil)return;if(deskPointerActive)deskPointerActive=false;if(now<deskInteractionUntil)return;render()}
 function E(id){return document.getElementById(id)}
 function sr(){return (window.currentLang||'sr')!=='en'}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c})}
@@ -130,7 +130,7 @@ function render(){
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl,index=Number(btn.dataset.patchIndex);if(api&&typeof api.focusPatchIndex==='function'&&Number.isInteger(index)){api.focusPatchIndex(index);return}if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.10-operator-desk-interaction-safe'};
+window.LightingAIControlDashboard={render:render,version:'0.11-operator-desk-interaction-failsafe'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(periodicRender,900);
 var old=window.setLanguage;

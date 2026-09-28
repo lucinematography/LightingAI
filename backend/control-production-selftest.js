@@ -51,6 +51,19 @@ for (const key of ['dimmer','red','green','blue']) expect(cs15Keys.has(key), 'El
 expect((cs15Rgb?.requiredChannels || []).some(channel => channel?.channel === 5 && channel?.value === 0), 'Electro Storm CS15 verified profile must force strobe off on channel 5');
 expect(String(cs15Rgb?.sourceUrl || '').includes('Electro%20Storm%20CS15%20DMX%20Profile%20Specification%20V1.1.pdf'), 'Electro Storm CS15 verified DMX source missing');
 
+const xt26 = aputure('aputure-electro-storm-xt26');
+const xt26Verified = (xt26?.dmxModes || []).filter(mode => mode?.verified === true);
+expect(xt26Verified.length === 1, 'Electro Storm XT26 must expose exactly one verified default DMX profile');
+const xt26Cct = xt26Verified[0];
+expect(xt26Cct?.name === 'Mode 1 CCT 8-bit 9ch (default extensions on)' && xt26Cct?.channels === 9, 'Electro Storm XT26 safe 9ch CCT profile missing');
+const xt26Keys = new Set((xt26Cct?.controls || []).map(control => control?.key));
+for (const key of ['dimmer','cct']) expect(xt26Keys.has(key), 'Electro Storm XT26 verified profile missing control: ' + key);
+for (const [channel,value] of [[3,128],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0]]) {
+  expect((xt26Cct?.requiredChannels || []).some(item => item?.channel === channel && item?.value === value), 'Electro Storm XT26 safe required channel missing: ' + channel);
+}
+expect(xt26Cct?.profileConfiguration?.motorizedAccessories === 'ON' && xt26Cct?.profileConfiguration?.functionConfiguration === 'ON', 'Electro Storm XT26 verified profile must reserve the manufacturer-default extension footprint');
+expect(String(xt26Cct?.sourceUrl || '').includes('Electro%20Storm%20XT26%20DMX%20Profile%20Specification%20V1.1.pdf'), 'Electro Storm XT26 verified DMX source missing');
+
 const titan = ASTERA_TITANTUBE_FIXTURES.find(f => f.id === 'astera-titantube-fp1');
 expect(!!titan, 'TitanTube FP1 missing');
 
@@ -133,6 +146,15 @@ expect(
   cs15Route?.semanticReady === true &&
   cs15Route?.verifiedDmxModeCount === 1,
   'Electro Storm CS15 must route as production-ready native Art-Net/sACN with one verified DMX profile'
+);
+
+const xt26Route = routingContext.window.LightingAIControlRouting.classify(xt26);
+expect(
+  xt26Route?.route === 'native-network' &&
+  xt26Route?.nativeNetwork === true &&
+  xt26Route?.semanticReady === true &&
+  xt26Route?.verifiedDmxModeCount === 1,
+  'Electro Storm XT26 must route as production-ready native Art-Net/sACN with one verified DMX profile'
 );
 
 const legacyRoute = routingContext.window.LightingAIControlRouting.classify({

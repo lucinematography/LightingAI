@@ -38,6 +38,30 @@ const VERIFIED_DMX_PROFILES = {
       {key:'green',label:'Green',channel:3,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
       {key:'blue',label:'Blue',channel:4,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}
     ]
+  }],
+  'aputure-electro-storm-xt26': [{
+    name: 'Mode 1 CCT 8-bit 9ch (default extensions on)',
+    channels: 9,
+    verified: true,
+    sourceUrl: 'https://docs.aputure.com/hubfs/Knowledge%20Base/Aputure/Electro%20Storm%20XT26/Electro%20Storm%20XT26%20DMX%20Profile%20Specification%20V1.1.pdf',
+    requiredChannels: [
+      {channel:3,value:128,label:'Green/Magenta Neutral'},
+      {channel:4,value:0,label:'Strobe Off'},
+      {channel:5,value:0,label:'Zoom No Effect'},
+      {channel:6,value:0,label:'Pan No Effect'},
+      {channel:7,value:0,label:'Tilt No Effect'},
+      {channel:8,value:0,label:'Fan Smart'},
+      {channel:9,value:0,label:'Dimming Curve Linear'}
+    ],
+    controls: [
+      {key:'dimmer',label:'Intensity',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+      {key:'cct',label:'CCT',channel:2,type:'cct-linear',min:2700,max:6500,step:10,dmxMin:0,dmxMax:255}
+    ],
+    profileConfiguration: {
+      motorizedAccessories: 'ON',
+      functionConfiguration: 'ON',
+      rationale: 'Use the manufacturer-default maximum 9-channel footprint to avoid DMX address overlap when both extensions are enabled.'
+    }
   }]
 };
 

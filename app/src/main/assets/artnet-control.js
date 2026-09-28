@@ -734,7 +734,10 @@ function renderCueStack(){
 }
 function cloneFrames(){
  const out={};
- Object.keys(frames).forEach(u=>{out[u]=frames[u].slice(0,512).map(v=>Math.max(0,Math.min(255,Number(v)||0)))});
+ for(const u of Object.keys(frames)){
+  if(!isFullDmxFrame(frames[u]))return null;
+  out[u]=frames[u].slice();
+ }
  return out;
 }
 function knownUniverseNumbers(){
@@ -752,13 +755,10 @@ function globalBlackout(){
  const universes=knownUniverseNumbers();
  if(!universes.length){status(t().panicEmpty,false);return}
  if(!operationUniverseSetIsSafe(universes)){status(t().error,false);return}
- const restoreIsExact=universes.every(u=>Array.isArray(frames[String(u)]));
+ const restoreIsExact=universes.every(u=>isFullDmxFrame(frames[String(u)]));
  const saved={};
  if(restoreIsExact){
-  universes.forEach(u=>{
-   saved[String(u)]=frames[String(u)].slice(0,512);
-   while(saved[String(u)].length<512)saved[String(u)].push(0);
-  });
+  universes.forEach(u=>{saved[String(u)]=frames[String(u)].slice();});
   lastBlackoutSnapshot={patchSignature:patchSignature(),frames:saved};
  }else{
   lastBlackoutSnapshot=null;
@@ -779,11 +779,14 @@ function restoreBeforeBlackout(){
  const saved=lastBlackoutSnapshot.frames;
  const universes=Object.keys(saved).map(Number);
  if(!operationUniverseSetIsSafe(universes)){status(t().error,false);return}
+ if(Object.keys(saved).some(u=>!isFullDmxFrame(saved[u]))){
+  lastBlackoutSnapshot=null;
+  setOutputArmed(false,true);
+  status(t().error,false);
+  return;
+ }
  const staged={};
- Object.keys(saved).forEach(u=>{
-  staged[String(u)]=saved[u].slice(0,512);
-  while(staged[String(u)].length<512)staged[String(u)].push(0);
- });
+ Object.keys(saved).forEach(u=>{staged[String(u)]=saved[u].slice();});
  let accepted=true;
  Object.keys(staged).forEach(u=>{if(!sendFrame(staged[u].slice(),Number(u),'restore'))accepted=false});
  if(!accepted){setOutputArmed(false,true);status(t().error,false);return}
@@ -804,7 +807,9 @@ function renderScenes(){
  box.querySelectorAll('.artnet-scene-delete').forEach(btn=>btn.addEventListener('click',()=>deleteScene(Number(btn.dataset.index))));
 }
 function saveScene(){
- const current=cloneFrames(),universes=Object.keys(current);
+ const current=cloneFrames();
+ if(!current){setOutputArmed(false,true);status(t().error,false);return}
+ const universes=Object.keys(current);
  if(!universes.length){status(t().sceneNeedFrame,false);return}
  const scenes=readScenes(),input=E('artnetSceneName');
  const raw=input&&input.value?input.value.trim():'';
@@ -863,13 +868,12 @@ function fadeToScene(index,secondsOverride){
  const universes=Object.keys(next);
  if(!universes.length){status(t().sceneNeedFrame,false);return false}
  if(!sceneUniverseSetIsSafe(universes)){setOutputArmed(false,true);status(t().error,false);return false}
- if(universes.some(u=>!Array.isArray(frames[u]))){status(t().frameUnknown,false);return false}
+ if(universes.some(u=>!isFullDmxFrame(frames[u]))){status(t().frameUnknown,false);return false}
  cancelSceneFade(false);
  const start={},target={},snapChannels=fadeSnapChannels();
  universes.forEach(u=>{
-  start[u]=frames[u].slice(0,512);
-  while(start[u].length<512)start[u].push(0);
-  target[u]=next[u].slice(0,512);
+  start[u]=frames[u].slice();
+  target[u]=next[u].slice();
  });
  const seconds=secondsOverride==null?fadeSeconds():Math.max(0.1,Math.min(60,Number(secondsOverride)||fadeSeconds()));
  const duration=Math.max(100,Math.round(seconds*1000)),started=Date.now(),fadePatchSignature=patchSignature();
@@ -1075,11 +1079,8 @@ function stagedFrameForUniverse(staged,universe){
  const u=Number(universe);
  if(!Number.isInteger(u)||u<1)return null;
  const key=String(u),known=frames[key];
- if(!Array.isArray(known))return null;
- if(!staged[key]){
-  staged[key]=known.slice(0,512);
-  while(staged[key].length<512)staged[key].push(0);
- }
+ if(!isFullDmxFrame(known))return null;
+ if(!staged[key])staged[key]=known.slice();
  return staged[key];
 }
 function commitStagedUniverseFrames(staged){
@@ -1280,9 +1281,8 @@ function sendVerifiedControl(r,profile,ctrl,value){
  if(u==null||!Number.isInteger(start)||start<1||!Number.isInteger(channel)||channel<1){status(t().error,false);return}
  const address=start+channel-1;
  const current=frames[String(u)];
- if(!Array.isArray(current)){status(t().frameUnknown,false);return}
- const staged=current.slice(0,512);
- while(staged.length<512)staged.push(0);
+ if(!isFullDmxFrame(current)){status(t().frameUnknown,false);return}
+ const staged=current.slice();
  if(!applyProfileRequirements(staged,start,profile)||!writeControlToFrame(staged,address,ctrl,value)){status(t().error,false);return}
  if(!sendFrame(staged.slice(),u)){setOutputArmed(false,true);status(t().error,false);return}
  frames[String(u)]=staged;
@@ -1348,9 +1348,8 @@ function sendTest(){
  const ch=Number(E('artnetChannel').value),v=Number(E('artnetValue').value);
  if(u==null||!Number.isInteger(ch)||ch<1||ch>512||!Number.isInteger(v)||v<0||v>255){status(t().error,false);return}
  const current=frames[String(u)];
- if(!Array.isArray(current)){status(t().frameUnknown,false);return}
- const staged=current.slice(0,512);
- while(staged.length<512)staged.push(0);
+ if(!isFullDmxFrame(current)){status(t().frameUnknown,false);return}
+ const staged=current.slice();
  staged[ch-1]=v;
  if(!sendFrame(staged.slice(),u)){setOutputArmed(false,true);status(t().error,false);return}
  frames[String(u)]=staged;
@@ -1373,6 +1372,7 @@ function setLiveEnabled(enabled){
   }
   const protocol=selectedProtocol(),universes=Object.keys(frames).map(Number);
   if(!universes.length){liveEnabled=false;if(toggle)toggle.checked=false;status(t().sceneNeedFrame,false);return false}
+  if(universes.some(u=>!isFullDmxFrame(frames[String(u)]))){setOutputArmed(false,true);liveEnabled=false;if(toggle)toggle.checked=false;status(t().frameUnknown,false);return false}
   if(typeof transport.supportsLive!=='function'||!transport.supportsLive(protocol)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().native,false);return false}
   if(!operationUniverseSetIsSafe(universes,protocol)){liveEnabled=false;if(toggle)toggle.checked=false;status(t().error,false);return false}
   liveProtocol=protocol;liveEnabled=true;if(toggle)toggle.checked=true;
@@ -1576,9 +1576,8 @@ function applyStagedFixture(fixtureId){
  const start=Number(r.start);
  if(u==null||!bridgeUniverseAllowed(u,selectedProtocol())||!Number.isInteger(start)||start<1||start+Number(profile.channels)-1>512){status(t().error,false);return false}
  const current=frames[String(u)];
- if(!Array.isArray(current)){status(t().frameUnknown,false);return false}
- const target=current.slice(0,512);
- while(target.length<512)target.push(0);
+ if(!isFullDmxFrame(current)){status(t().frameUnknown,false);return false}
+ const target=current.slice();
  if(!applyProfileRequirements(target,start,profile)){status(t().error,false);return false}
  let wrote=false,valid=true;
  for(const item of aiStagedFixture.values){
@@ -1599,7 +1598,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.55-scene-owned-universes',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.56-strict-known-frame-baselines',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

@@ -59,7 +59,7 @@ let pendingArmDiscoveryId='';
 let activeDiscoveryRequestId='';
 let activeArtNetRefreshDiscoveryId='';
 let artNetAutoSubscribers={};
-let lastArtNetAutoDiscoveryAt=0;
+let lastArtNetAutoPollStartedAt=0;
 let armGeneration=0;
 let armedNetworkSignature='';
 let armedContextSignature='';
@@ -391,12 +391,13 @@ function runControlHealthCheck(){
  if(!outputArmed)return;
  const transport=controlTransport();
  const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();
- if(selectedProtocol()==='artnet'&&artNetTargetIsAuto(rawTarget)&&Date.now()-lastArtNetAutoDiscoveryAt>=5000&&
+ if(selectedProtocol()==='artnet'&&artNetTargetIsAuto(rawTarget)&&Date.now()-lastArtNetAutoPollStartedAt>=2500&&
     !activeArtNetRefreshDiscoveryId&&!pendingArmDiscoveryId&&!activeDiscoveryRequestId){
   const discoveryId='artnet_auto_refresh_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
   activeArtNetRefreshDiscoveryId=discoveryId;
+  lastArtNetAutoPollStartedAt=Date.now();
   try{
-   if(typeof transport.discover!=='function'||!transport.discover({id:discoveryId,timeoutMs:1200})){
+   if(typeof transport.discover!=='function'||!transport.discover({id:discoveryId,timeoutMs:2800})){
     activeArtNetRefreshDiscoveryId='';
     setOutputArmed(false,true);status(t().preflightNoBroadcast,false);return;
    }
@@ -448,7 +449,7 @@ function setOutputArmed(enabled,quiet){
   pendingArmDiscoveryId='';
   activeArtNetRefreshDiscoveryId='';
   artNetAutoSubscribers={};
-  lastArtNetAutoDiscoveryAt=0;
+  lastArtNetAutoPollStartedAt=0;
   try{const transport=controlTransport();if(typeof transport.clearArmSignature==='function')transport.clearArmSignature()}catch(e){}
   outputArmed=false;
   if(toggle){toggle.checked=false;toggle.disabled=false}
@@ -466,11 +467,11 @@ function setOutputArmed(enabled,quiet){
   pendingArmDiscoveryId=id;
   activeDiscoveryRequestId='';
   artNetAutoSubscribers={};
-  lastArtNetAutoDiscoveryAt=0;
+  lastArtNetAutoPollStartedAt=Date.now();
   if(toggle){toggle.checked=false;toggle.disabled=true}
   status(t().discovering);
   try{
-   if(typeof transport.discover!=='function'||!transport.discover({id:id,timeoutMs:1200})){
+   if(typeof transport.discover!=='function'||!transport.discover({id:id,timeoutMs:2800})){
     pendingArmDiscoveryId='';
     if(toggle)toggle.disabled=false;
     status(t().preflightNoBroadcast,false);
@@ -603,7 +604,7 @@ function discoverNodes(){
  activeDiscoveryRequestId=id;
  status(t().discovering);
  try{
-  if(!transport.discover({id:id,timeoutMs:900})){
+  if(!transport.discover({id:id,timeoutMs:2800})){
    if(activeDiscoveryRequestId===id)activeDiscoveryRequestId='';
    status(t().native,false);
   }
@@ -625,14 +626,13 @@ window.LightingAIArtNetDiscoveryResult=function(id,nodes,error){
   pendingArmDiscoveryId='';
   renderDiscoveredNodes(error?[]:nodes);
   if(error){
-   artNetAutoSubscribers={};lastArtNetAutoDiscoveryAt=0;
+   artNetAutoSubscribers={};lastArtNetAutoPollStartedAt=0;
    const toggle=E('artnetOutputArm');if(toggle){toggle.checked=false;toggle.disabled=false}
    status(t().preflightNoBroadcast,false);return;
   }
   artNetAutoSubscribers=buildArtNetSubscriberMap(nodes);
-  lastArtNetAutoDiscoveryAt=Date.now();
   if(!artNetAutoHasRequiredSubscribers(artNetAutoSubscribers)){
-   artNetAutoSubscribers={};lastArtNetAutoDiscoveryAt=0;
+   artNetAutoSubscribers={};lastArtNetAutoPollStartedAt=0;
    const toggle=E('artnetOutputArm');if(toggle){toggle.checked=false;toggle.disabled=false}
    status(t().preflightNoBroadcast,false);return;
   }
@@ -650,14 +650,12 @@ window.LightingAIArtNetDiscoveryResult=function(id,nodes,error){
    setOutputArmed(false,true);status(t().preflightNoBroadcast,false);return;
   }
   artNetAutoSubscribers=next;
-  lastArtNetAutoDiscoveryAt=Date.now();
   return;
  }
  if(resultId!==activeDiscoveryRequestId)return;
  activeDiscoveryRequestId='';
  if(error){renderDiscoveredNodes([]);status(error,false);return}
  artNetAutoSubscribers=buildArtNetSubscriberMap(nodes);
- lastArtNetAutoDiscoveryAt=Date.now();
  renderDiscoveredNodes(nodes);
  status((Array.isArray(nodes)&&nodes.length)?(t().nodes+': '+nodes.length):t().noNodes,Array.isArray(nodes)&&nodes.length>0);
 };
@@ -1574,7 +1572,7 @@ function forceLifecycleDisarm(){
  pendingArmDiscoveryId='';
  activeArtNetRefreshDiscoveryId='';
  artNetAutoSubscribers={};
- lastArtNetAutoDiscoveryAt=0;
+ lastArtNetAutoPollStartedAt=0;
  armGeneration++;
  armedNetworkSignature='';
  armedContextSignature='';
@@ -1763,7 +1761,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.61-sacn-bound-multicast-interface',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.62-artnet-poll-cadence',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

@@ -4,6 +4,7 @@ const E=id=>document.getElementById(id);
 const TARGET_KEY='lighting_artnet_target_v1';
 const PROTOCOL_KEY='lighting_network_dmx_protocol_v1';
 const SACN_PRIORITY_KEY='lighting_sacn_priority_v1';
+const SACN_IP_MODE_KEY='lighting_sacn_ip_mode_v1';
 const SCENES_KEY='lighting_artnet_scenes_v1';
 const FADE_KEY='lighting_control_fade_seconds_v1';
 const CUES_KEY='lighting_control_cues_v1';
@@ -128,6 +129,16 @@ function controlTransport(){
    }
    if(iosReady){
     iosHandler.postMessage({action:'sacnSetPriority',priority:value});return true;
+   }
+   return false;
+  },
+  setSacnIpMode:function(mode){
+   const value=mode==='ipv6'||mode==='dual'?mode:'ipv4';
+   if(androidReady&&typeof Android.sacnSetIpMode==='function'){
+    Android.sacnSetIpMode(value);return true;
+   }
+   if(iosReady){
+    iosHandler.postMessage({action:'sacnSetIpMode',mode:value});return true;
    }
    return false;
   },

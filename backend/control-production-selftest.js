@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { ASTERA_TITANTUBE_FIXTURES, ASTERA_TITANTUBE_ACCESSORIES } from './astera-titantube-library.js';
 import { FIXTURE_LIBRARY } from './fixture-library.js';
+import { ARRI_SKYPANEL_PRO_FIXTURES } from './arri-skypanel-pro-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -73,6 +74,14 @@ for (const [channel,value] of [[3,128],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0]]) {
 }
 expect(xt26Cct?.profileConfiguration?.motorizedAccessories === 'ON' && xt26Cct?.profileConfiguration?.functionConfiguration === 'ON', 'Electro Storm XT26 verified profile must reserve the manufacturer-default extension footprint');
 expect(String(xt26Cct?.sourceUrl || '').includes('Electro%20Storm%20XT26%20DMX%20Profile%20Specification%20V1.1.pdf'), 'Electro Storm XT26 verified DMX source missing');
+
+const s60Pro = ARRI_SKYPANEL_PRO_FIXTURES.find(f => f.id === 'arri-skypanel-s60-pro');
+expect(!!s60Pro, 'ARRI SkyPanel S60 Pro missing');
+expect(hasAll(s60Pro?.control?.wired, ['DMX512','RDM','Ethernet']), 'SkyPanel S60 Pro wired control routes missing');
+expect(hasAll(s60Pro?.control?.directLightingAI, ['Art-Net 4','sACN']), 'SkyPanel S60 Pro native Art-Net/sACN routes missing');
+expect((s60Pro?.control?.wireless || []).some(x => String(x).includes('CRMX')), 'SkyPanel S60 Pro CRMX route missing');
+expect(s60Pro?.dmxProfileVerification?.status === 'HOLD', 'SkyPanel S60 Pro semantic DMX profile must remain HOLD until a per-channel mode is locked');
+expect(!(s60Pro?.dmxModes || []).some(mode => mode?.verified === true), 'SkyPanel S60 Pro must not expose an unverified DMX mode as verified');
 
 const titan = ASTERA_TITANTUBE_FIXTURES.find(f => f.id === 'astera-titantube-fp1');
 expect(!!titan, 'TitanTube FP1 missing');
@@ -149,6 +158,16 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+const s60ProRoute = routingContext.window.LightingAIControlRouting.classify(s60Pro);
+expect(
+  s60ProRoute?.route === 'native-network' &&
+  s60ProRoute?.nativeNetwork === true &&
+  s60ProRoute?.transportReady === true &&
+  s60ProRoute?.semanticReady === false &&
+  s60ProRoute?.verifiedDmxModeCount === 0,
+  'SkyPanel S60 Pro transport must be native-network while semantic control remains fail-closed on HOLD'
+);
+
 const ls600Route = routingContext.window.LightingAIControlRouting.classify(ls600d);
 expect(
   ls600Route?.route === 'gateway' &&

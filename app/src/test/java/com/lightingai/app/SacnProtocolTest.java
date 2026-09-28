@@ -63,6 +63,15 @@ public class SacnProtocolTest {
         assertEquals(63999, SacnSender.validateUniverse(63999));
     }
 
+    @Test public void productionSenderRequiresFullStrictFrame() {
+        assertThrows(IllegalArgumentException.class, () -> SacnSender.validateFullFrame(null));
+        assertThrows(IllegalArgumentException.class, () -> SacnSender.validateFullFrame(new int[511]));
+        int[] invalid = new int[512];
+        invalid[101] = -1;
+        assertThrows(IllegalArgumentException.class, () -> SacnSender.validateFullFrame(invalid));
+        SacnSender.validateFullFrame(new int[512]);
+    }
+
     @Test public void streamTerminationSetsOptionsBit() {
         byte[] packet = SacnSender.buildDmxPacket(1, new int[]{1,2}, 3, CID, "LightingAI", 0x40);
         assertEquals(0x40, packet[112] & 0xff);

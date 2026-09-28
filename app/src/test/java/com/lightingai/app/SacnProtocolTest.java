@@ -101,6 +101,41 @@ public class SacnProtocolTest {
         assertEquals(1, tracker.next(2));
     }
 
+    @Test public void universeDiscoveryPacketAdvertisesSortedUniverses() {
+        byte[][] packets = SacnSender.buildUniverseDiscoveryPackets(new int[]{258,1,258,63999}, CID, "LightingAI");
+        assertEquals(1, packets.length);
+        byte[] packet = packets[0];
+        assertEquals(126, packet.length);
+        assertEquals(0x08, packet[21] & 0xff);
+        assertEquals(0x02, packet[43] & 0xff);
+        assertEquals(0x01, packet[117] & 0xff);
+        assertEquals(0, packet[118] & 0xff);
+        assertEquals(0, packet[119] & 0xff);
+        assertEquals(0, packet[120] & 0xff);
+        assertEquals(1, packet[121] & 0xff);
+        assertEquals(1, packet[122] & 0xff);
+        assertEquals(2, packet[123] & 0xff);
+        assertEquals(0xf9, packet[124] & 0xff);
+        assertEquals(0xff, packet[125] & 0xff);
+        assertEquals("239.255.250.214", SacnSender.DISCOVERY_MULTICAST_ADDRESS);
+        assertEquals(64214, SacnSender.DISCOVERY_UNIVERSE);
+    }
+
+    @Test public void universeDiscoveryPaginatesAt512Universes() {
+        int[] universes = new int[513];
+        for (int i = 0; i < universes.length; i++) universes[i] = i + 1;
+        byte[][] packets = SacnSender.buildUniverseDiscoveryPackets(universes, CID, "LightingAI");
+        assertEquals(2, packets.length);
+        assertEquals(1144, packets[0].length);
+        assertEquals(122, packets[1].length);
+        assertEquals(0, packets[0][118] & 0xff);
+        assertEquals(1, packets[0][119] & 0xff);
+        assertEquals(1, packets[1][118] & 0xff);
+        assertEquals(1, packets[1][119] & 0xff);
+        assertEquals(0x02, packets[1][120] & 0xff);
+        assertEquals(0x01, packets[1][121] & 0xff);
+    }
+
     @Test public void sourceNameIsLimitedToFramingField() {
         String longName = "LightingAI-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-extra";
         byte[] packet = SacnSender.buildDmxPacket(1, new int[]{0}, 1, CID, longName);

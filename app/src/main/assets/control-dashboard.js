@@ -70,6 +70,8 @@ function liveStatus(){
  return {armed:armed,protocol:value};
 }
 function render(){
+ var api=window.LightingAIArtNetControl||null;
+ if(api&&typeof api.ensureReady==='function'&&!api.ensureReady())return false;
  var host=E('controlContent');if(!host)return false;
  var card=E(CARD_ID);
  if(!card){card=document.createElement('div');card.id=CARD_ID;host.insertBefore(card,host.firstChild)}
@@ -135,7 +137,7 @@ function render(){
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl,index=Number(btn.dataset.patchIndex);if(api&&typeof api.focusPatchIndex==='function'&&Number.isInteger(index)){api.focusPatchIndex(index);return}if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.13-operator-cue-status-visible'};
+window.LightingAIControlDashboard={render:render,version:'0.14-operator-startup-deterministic'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(periodicRender,900);
 var old=window.setLanguage;

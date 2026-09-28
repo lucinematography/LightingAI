@@ -46,6 +46,7 @@ expect(main.includes('Stale Art-Net live update ignored')&&main.includes('Stale 
 const artNetLive=read('app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java');
 const artNetDiscovery=read('app/src/main/java/com/lightingai/app/ArtNetDiscovery.java');
 const artNetSender=read('app/src/main/java/com/lightingai/app/ArtNetSender.java');
+const artNetSequenceTracker=read('app/src/main/java/com/lightingai/app/ArtNetSequenceTracker.java');
 const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
 const sacnSequenceTracker=read('app/src/main/java/com/lightingai/app/SacnSequenceTracker.java');
 expect(artNetLive.includes('stopAll();')&&artNetLive.includes('return;')&&artNetLive.includes('NetworkInterfaceInspector.signature()'),'Art-Net live engine must fail fast and recheck network route per frame');
@@ -61,6 +62,7 @@ expect(main.includes('synchronized (artNetLiveControlLock)')&&main.includes('req
 expect(artNetDiscovery.includes('subscriptions')&&artNetDiscovery.includes('data[186 + i]')&&artNetDiscovery.includes('data[190 + i]'),'ArtPollReply ArtDmx subscriptions must include universes listed in either SwIn or SwOut');
 expect(main.includes('item.put("subscriptions", subscriptions)')&&main.includes('subscriptionDataPresent'),'Native Art-Net discovery must expose subscriber universe data to the control layer');
 expect(artNetSender.includes('Art-Net AUTO must resolve to subscriber unicast targets')&&!artNetSender.includes('socket.setBroadcast(true)'),'Native ArtDmx sender must never use AUTO/broadcast for DMX data');
+expect(artNetSequenceTracker.includes('ConcurrentHashMap<String, AtomicInteger>')&&artNetLive.includes('sequenceTracker.next(frame.targetIp, frame.portAddress)')&&main.includes('artNetSequenceTracker.next(ip, u)')&&main.includes('new ArtNetLiveEngine(artNetSequenceTracker)'),'ArtDmx sequence must be independent per unicast target/Port-Address and shared across direct/live sends');
 expect(!artNetLive.includes('tickFailed')&&!artNetLive.includes('tickError'),'Art-Net live engine must not continue after a packet failure');
 expect(!sacnLive.includes('tickFailed')&&!sacnLive.includes('tickError'),'sACN live engine must not continue after a packet failure');
 expect(sacnLive.includes('terminationFailed')&&sacnLive.includes('terminationError'),'sACN termination failure aggregation missing');

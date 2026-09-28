@@ -14,6 +14,7 @@ import { ARRI_TRUE_BLUE_D5_FIXTURES } from './arri-true-blue-d5-library.js';
 import { ARRI_TRUE_BLUE_D12_FIXTURES } from './arri-true-blue-d12-library.js';
 import { ARRI_TRUE_BLUE_D25_FIXTURES } from './arri-true-blue-d25-library.js';
 import { ARRI_TRUE_BLUE_D40_FIXTURES } from './arri-true-blue-d40-library.js';
+import { ARRI_ARRISUN_DISCONTINUED_FIXTURES } from './arri-daylight-discontinued-arrisun-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -145,6 +146,20 @@ const trueBlueEbMax = [
   ARRI_TRUE_BLUE_D5_FIXTURES.find(f => f.id === 'arri-true-blue-d5'),
   ARRI_TRUE_BLUE_D12_FIXTURES.find(f => f.id === 'arri-true-blue-d12')
 ];
+for (const item of arrisunEbMax) {
+  const fixture=item.fixture;
+  const route=routingContext.window.LightingAIControlRouting.classify(fixture);
+  expect(
+    route?.route==='gateway' &&
+    route?.nativeNetwork===false &&
+    route?.transportReady===true &&
+    route?.semanticReady===true &&
+    route?.verifiedDmxModeCount===1 &&
+    route?.requiresInterface===true,
+    'ARRISUN must route through a standards gateway to its required EB MAX ballast: '+(fixture?.id||'?')
+  );
+}
+
 for (const fixture of trueBlueEbMax) {
   expect(!!fixture, 'ARRI True Blue EB MAX fixture missing');
   expect((fixture?.control?.wired || []).some(x => String(x).includes('DMX512')), 'True Blue EB MAX DMX512 transport missing: ' + (fixture?.id || '?'));
@@ -183,6 +198,32 @@ for (const fixture of trueBlueEbMax25_4) {
   expect((power?.choices || []).some(choice => choice?.value === 0 && choice?.dmxValue === 0), 'True Blue EB MAX 2.5/4 safe OFF choice missing: ' + (fixture?.id || '?'));
   expect((power?.choices || []).some(choice => choice?.value === 1 && choice?.dmxValue === 128), 'True Blue EB MAX 2.5/4 Flicker Free 75 Hz ON choice missing: ' + (fixture?.id || '?'));
   expect(mode?.profileConfiguration?.channel3Unused === true && mode?.profileConfiguration?.defaultSafeState === 'OFF', 'True Blue EB MAX 2.5/4 safe profile qualification missing: ' + (fixture?.id || '?'));
+}
+
+const arrisunEbMax = [
+  ['arri-arrisun-5','EB MAX 1.8'],
+  ['arri-as-18','EB MAX 1.8'],
+  ['arri-as-40-25','EB MAX 2.5/4'],
+  ['arri-arrisun-60','EB MAX 6/9'],
+  ['arri-arrisun-120','EB MAX 12/18']
+].map(([id,ballast])=>({fixture:ARRI_ARRISUN_DISCONTINUED_FIXTURES.find(f=>f.id===id),ballast}));
+for (const item of arrisunEbMax) {
+  const fixture=item.fixture, ballast=item.ballast;
+  expect(!!fixture, 'ARRISUN EB MAX fixture missing: '+ballast);
+  expect((fixture?.control?.wired||[]).some(x=>String(x).includes('DMX512')), 'ARRISUN DMX512 transport missing: '+(fixture?.id||'?'));
+  expect((fixture?.control?.directLightingAI||[]).length===0, 'ARRISUN must not claim native Art-Net/sACN: '+(fixture?.id||'?'));
+  expect((fixture?.control?.externalInterfaceRequired||[]).includes('ARRI '+ballast+' ballast'), 'ARRISUN required ballast mismatch: '+(fixture?.id||'?'));
+  const verified=(fixture?.dmxModes||[]).filter(mode=>mode?.verified===true);
+  expect(verified.length===1, 'ARRISUN must expose exactly one verified EB MAX profile: '+(fixture?.id||'?'));
+  const mode=verified[0];
+  expect(mode?.name===ballast+' · Flicker Free 75 Hz · 2ch' && mode?.channels===2, 'ARRISUN safe EB MAX 2ch profile missing: '+(fixture?.id||'?'));
+  const dimmer=(mode?.controls||[]).find(control=>control?.key==='dimmer');
+  expect(dimmer?.channel===1 && dimmer?.min===50 && dimmer?.max===100 && dimmer?.dmxMin===128 && dimmer?.dmxMax===255, 'ARRISUN dimmer mapping must be 50-100% / DMX 128-255: '+(fixture?.id||'?'));
+  const power=(mode?.controls||[]).find(control=>control?.key==='powerMode');
+  expect(power?.channel===2 && power?.type==='enum', 'ARRISUN explicit power/mode control missing: '+(fixture?.id||'?'));
+  expect((power?.choices||[]).some(choice=>choice?.value===0 && choice?.dmxValue===0), 'ARRISUN safe OFF choice missing: '+(fixture?.id||'?'));
+  expect((power?.choices||[]).some(choice=>choice?.value===1 && choice?.dmxValue===128), 'ARRISUN Flicker Free 75 Hz ON choice missing: '+(fixture?.id||'?'));
+  expect(mode?.profileConfiguration?.channel3Unused===true && mode?.profileConfiguration?.defaultSafeState==='OFF', 'ARRISUN fail-safe profile qualification missing: '+(fixture?.id||'?'));
 }
 
 const s60Pro = ARRI_SKYPANEL_PRO_FIXTURES.find(f => f.id === 'arri-skypanel-s60-pro');

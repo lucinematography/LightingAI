@@ -116,6 +116,7 @@ import { KINOFLO_IMAGE_87_47_FIXTURES, KINOFLO_IMAGE_87_47_ACCESSORIES } from '.
 import { applyAccessoryCompatibilityOverrides } from './accessory-compatibility-overrides.js';
 import { applyCatalogCompatibilityCorrections } from './catalog-compatibility-corrections.js';
 import { applyElectroStormCanonicalCorrections } from './electro-storm-canonical-corrections.js';
+import { normalizeDeSistiControl } from './desisti-control-verification.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function unique(values = []) { return [...new Set(values)]; }
@@ -164,6 +165,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(DESISTI_TUNGSTEN_SOFT_BROAD_FIXTURES));
   fixtures.push(...clone(DESISTI_HMI_FIXTURES));
   fixtures.push(...clone(DESISTI_CONVENTIONAL_EXTRA_FIXTURES));
+  normalizeDeSistiControl(fixtures);
   fixtures.push(...clone(GODOX_CONTINUOUS_FIXTURES));
   fixtures.push(...clone(ALADDIN_MOSAIC_FIXTURES));
   fixtures.push(...clone(ALADDIN_FABRIC_LITE_FIXTURES));

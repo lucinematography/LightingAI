@@ -43,6 +43,39 @@ for(const id of expected) if(!fixtureIds.has(id)) failures.push('Missing require
 if(fixtures.length<expected.length) failures.push('De Sisti fixture count below locked baseline: '+fixtures.length+' < '+expected.length);
 if(accessories.length<175) failures.push('De Sisti accessory count below locked baseline: '+accessories.length+' < 175');
 
+const legacyControlFixtures=fixtures.filter(f=>Array.isArray(f.control));
+if(legacyControlFixtures.length) failures.push('De Sisti runtime catalog still contains legacy control arrays: '+legacyControlFixtures.map(f=>f.id).join(', '));
+
+function hasStandardDmxTransport(fixture){
+  const control=fixture?.control||{};
+  const values=[...(control.wired||[]),...(control.wireless||[])].map(value=>String(value).toLowerCase());
+  return values.some(value =>
+    /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(value) ||
+    value.includes('crmx') ||
+    value.includes('lumenradio')
+  );
+}
+for(const fixture of fixtures){
+  if(!hasStandardDmxTransport(fixture)) continue;
+  const verified=(fixture.dmxModes||[]).filter(mode=>mode?.verified===true);
+  const hold=fixture?.dmxProfileVerification?.status==='HOLD';
+  if(!verified.length&&!hold) failures.push('De Sisti DMX transport lacks verified profile or explicit HOLD: '+fixture.id);
+  if(verified.length&&hold) failures.push('De Sisti fixture cannot be verified and HOLD simultaneously: '+fixture.id);
+  if(hold){
+    const sources=fixture?.dmxProfileVerification?.sourceUrls||[];
+    if(!fixture?.dmxProfileVerification?.reason) failures.push('De Sisti HOLD lacks reason: '+fixture.id);
+    if(!sources.some(url=>String(url).startsWith('http'))) failures.push('De Sisti HOLD lacks source URL: '+fixture.id);
+  }
+}
+const f47t=fixtures.find(f=>f.id==='desisti-super-led-f47-t');
+if(!f47t||!Array.isArray(f47t.control?.wired)||!f47t.control.wired.includes('DMX512')) failures.push('Super LED F4.7 T structured DMX512 route missing');
+if((f47t?.dmxModes||[]).filter(mode=>mode?.verified===true).length!==2) failures.push('Super LED F4.7 T verified DMX modes changed during control normalization');
+const f20t=fixtures.find(f=>f.id==='desisti-super-led-f20-t');
+if(!f20t||(f20t.control?.wireless||[]).every(value=>!/lumenradio|wireless dmx/i.test(String(value)))) failures.push('Super LED F20 T wireless DMX route missing after normalization');
+const f47vwc=fixtures.find(f=>f.id==='desisti-super-led-f47-vwc');
+if(f47vwc?.dmxProfileVerification?.status!=='HOLD') failures.push('Super LED F4.7 VW+C must remain HOLD until an exact per-channel profile is sourced');
+if((f47vwc?.dmxModes||[]).some(mode=>mode?.verified===true)) failures.push('Super LED F4.7 VW+C must not expose an unsourced verified DMX profile');
+
 for(const f of fixtures){
   if(!/^https:\/\/(?:www\.)?desisti\.it\//i.test(f.sourceUrl||'')) failures.push('Non-official De Sisti fixture source: '+f.id);
   const direct=accessories.filter(a=>(a.compatibleWith||[]).includes(f.id));

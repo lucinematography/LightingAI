@@ -88,6 +88,19 @@ public class SacnProtocolTest {
         assertEquals(200, SacnSender.MAX_PRIORITY);
     }
 
+
+    @Test public void sacnSequenceIsIndependentPerUniverseAndWraps() {
+        SacnSequenceTracker tracker = new SacnSequenceTracker();
+        assertEquals(0, tracker.next(1));
+        assertEquals(1, tracker.next(1));
+        assertEquals(0, tracker.next(2));
+        for (int expected = 2; expected <= 255; expected++) {
+            assertEquals(expected, tracker.next(1));
+        }
+        assertEquals(0, tracker.next(1));
+        assertEquals(1, tracker.next(2));
+    }
+
     @Test public void sourceNameIsLimitedToFramingField() {
         String longName = "LightingAI-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789-abcdefghijklmnopqrstuvwxyz-extra";
         byte[] packet = SacnSender.buildDmxPacket(1, new int[]{0}, 1, CID, longName);

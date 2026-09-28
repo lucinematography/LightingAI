@@ -2,7 +2,6 @@ package com.lightingai.app;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
@@ -17,6 +16,7 @@ import java.util.Set;
 import java.util.Enumeration;
 
 public final class ArtNetDiscovery {
+    private static final Object DISCOVERY_LOCK = new Object();
     private static final byte[] ARTNET_ID = "Art-Net\0".getBytes(StandardCharsets.US_ASCII);
     private static final int POLL_PACKET_LENGTH = 14;
     private static final int REPLY_MIN_LENGTH = 207;
@@ -40,47 +40,51 @@ public final class ArtNetDiscovery {
     private ArtNetDiscovery() {}
 
     public static List<Node> discover(int timeoutMs) throws Exception {
-        int boundedTimeout = Math.max(250, Math.min(3000, timeoutMs));
-        Map<String, Node> nodes = new LinkedHashMap<>();
+        synchronized (DISCOVERY_LOCK) {
+            int boundedTimeout = Math.max(250, Math.min(3000, timeoutMs));
+            Map<String, Node> nodes = new LinkedHashMap<>();
+            DatagramSocket socket = ArtNetSocketManager.socket();
+            int previousTimeout = socket.getSoTimeout();
+            try {
+                socket.setSoTimeout(120);
 
-        try (DatagramSocket socket = new DatagramSocket(null)) {
-            socket.setReuseAddress(true);
-            socket.setBroadcast(true);
-            socket.bind(new InetSocketAddress(ArtNetSender.ARTNET_PORT));
-            socket.setSoTimeout(120);
+                byte[] poll = buildPollPacket();
+                for (InetAddress broadcast : broadcastTargets()) {
+                    try {
+                        DatagramPacket outgoing = new DatagramPacket(
+                            poll,
+                            poll.length,
+                            broadcast,
+                            ArtNetSender.ARTNET_PORT
+                        );
+                        socket.send(outgoing);
+                    } catch (Exception ignored) {
+                        // One interface may be unavailable while another is valid.
+                    }
+                }
 
-            byte[] poll = buildPollPacket();
-            for (InetAddress broadcast : broadcastTargets()) {
-                try {
-                    DatagramPacket outgoing = new DatagramPacket(
-                        poll,
-                        poll.length,
-                        broadcast,
-                        ArtNetSender.ARTNET_PORT
-                    );
-                    socket.send(outgoing);
-                } catch (Exception ignored) {
-                    // One interface may be unavailable while another is valid.
+                long deadline = System.currentTimeMillis() + boundedTimeout;
+                byte[] buffer = new byte[1024];
+                while (System.currentTimeMillis() < deadline) {
+                    DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
+                    try {
+                        socket.receive(incoming);
+                    } catch (SocketTimeoutException timeout) {
+                        continue;
+                    }
+                    Node node = parseReply(incoming.getData(), incoming.getLength(), incoming.getAddress());
+                    if (node != null && !node.ip.isEmpty()) {
+                        Node existing = nodes.get(node.ip);
+                        nodes.put(node.ip, existing == null ? node : mergeNode(existing, node));
+                    }
+                }
+            } finally {
+                if (!socket.isClosed()) {
+                    try { socket.setSoTimeout(previousTimeout); } catch (Exception ignored) {}
                 }
             }
-
-            long deadline = System.currentTimeMillis() + boundedTimeout;
-            byte[] buffer = new byte[1024];
-            while (System.currentTimeMillis() < deadline) {
-                DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
-                try {
-                    socket.receive(incoming);
-                } catch (SocketTimeoutException timeout) {
-                    continue;
-                }
-                Node node = parseReply(incoming.getData(), incoming.getLength(), incoming.getAddress());
-                if (node != null && !node.ip.isEmpty()) {
-                    Node existing = nodes.get(node.ip);
-                    nodes.put(node.ip, existing == null ? node : mergeNode(existing, node));
-                }
-            }
+            return new ArrayList<>(nodes.values());
         }
-        return new ArrayList<>(nodes.values());
     }
 
     static List<InetAddress> directedBroadcastTargets() throws Exception {

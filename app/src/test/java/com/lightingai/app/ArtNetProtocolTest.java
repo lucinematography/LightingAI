@@ -58,6 +58,15 @@ public class ArtNetProtocolTest {
         assertFalse(ArtNetSender.isAutoTarget("192.168.1.50"));
     }
 
+    @Test public void explicitTargetMustBeIpv4Literal() {
+        assertTrue(ArtNetSender.isIpv4Literal("192.168.1.50"));
+        assertTrue(ArtNetSender.isIpv4Literal("0.0.0.0"));
+        assertFalse(ArtNetSender.isIpv4Literal("lighting-node.local"));
+        assertFalse(ArtNetSender.isIpv4Literal("256.1.1.1"));
+        assertFalse(ArtNetSender.isIpv4Literal("192.168.1"));
+        assertFalse(ArtNetSender.isIpv4Literal("192.168.001.abc"));
+    }
+
     @Test public void artPollPacketHasCorrectOpcodeAndProtocolVersion() {
         byte[] packet = ArtNetDiscovery.buildPollPacket();
         assertEquals(14, packet.length);

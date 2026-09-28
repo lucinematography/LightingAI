@@ -25,7 +25,7 @@ public final class SacnLiveEngine {
     }
 
     private final Map<Integer, Frame> frames = new ConcurrentHashMap<>();
-    private final AtomicInteger sequence = new AtomicInteger(0);
+    private final SacnSequenceTracker sequenceTracker;
     private final AtomicInteger priority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
     private final AtomicLong packetsSent = new AtomicLong(0);
     private final AtomicLong packetsFailed = new AtomicLong(0);
@@ -41,8 +41,13 @@ public final class SacnLiveEngine {
     private DatagramSocket socket;
 
     public SacnLiveEngine(byte[] cid, String sourceName) {
+        this(cid, sourceName, new SacnSequenceTracker());
+    }
+
+    SacnLiveEngine(byte[] cid, String sourceName, SacnSequenceTracker sequenceTracker) {
         this.cid = cid == null ? new byte[16] : Arrays.copyOf(cid, 16);
         this.sourceName = sourceName == null || sourceName.trim().isEmpty() ? "LightingAI" : sourceName.trim();
+        this.sequenceTracker = sequenceTracker == null ? new SacnSequenceTracker() : sequenceTracker;
     }
 
     public void setFrame(int universe, int[] channels) throws Exception {
@@ -121,7 +126,7 @@ public final class SacnLiveEngine {
                                 socket,
                                 frame.universe,
                                 frame.channels,
-                                nextSequence(),
+                                nextSequence(frame.universe),
                                 cid,
                                 sourceName,
                                 priority.get()
@@ -166,8 +171,8 @@ public final class SacnLiveEngine {
         }
     }
 
-    private int nextSequence() {
-        return sequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
+    private int nextSequence(int universe) {
+        return sequenceTracker.next(universe);
     }
 
     private void tick() {
@@ -190,7 +195,7 @@ public final class SacnLiveEngine {
                 if (networkSignature.isEmpty() || routeNow.isEmpty() || !networkSignature.equals(routeNow)) {
                     throw new IllegalStateException("Network changed; re-arm required");
                 }
-                SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(), cid, sourceName, priority.get());
+                SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(frame.universe), cid, sourceName, priority.get());
                 packetsSent.incrementAndGet();
                 lastSendAtMs.set(System.currentTimeMillis());
             } catch (Exception e) {

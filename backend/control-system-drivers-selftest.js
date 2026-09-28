@@ -55,6 +55,13 @@ const manufacturers=new Set(fixtures.map(f=>f.manufacturer).filter(Boolean));
 for(const maker of ['Astera','Aputure','ARRI','Godox','Aladdin']) expect(manufacturers.has(maker),'catalog missing '+maker);
 
 const astera=fixtures.filter(f=>f.manufacturer==='Astera');
+for(const id of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar','astera-heliostube-fp2-btb','astera-hyperiontube-fp3','astera-hydrapanel-fp6']){
+  const fixture=fixtures.find(f=>f.id===id);
+  expect(!!fixture,'Astera fixture missing for source provenance: '+id);
+  for(const mode of (fixture?.dmxModes||[]).filter(m=>m?.verified===true)){
+    expect(String(mode.sourceUrl||'').startsWith('https://astera-led.com/'),'Verified Astera DMX mode must use official Astera source: '+id);
+  }
+}
 const aputure=fixtures.filter(f=>f.manufacturer==='Aputure');
 expect(astera.length>0,'Astera catalog empty');
 expect(aputure.length>0,'Aputure catalog empty');

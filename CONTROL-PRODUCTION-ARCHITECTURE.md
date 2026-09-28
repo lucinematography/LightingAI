@@ -49,3 +49,5 @@ Sidus Link/Sidus Mesh is a vendor-specific wireless path. Fixtures that expose D
 <!-- Operator desk regression retrigger after preserving 0.66 control safety invariant. -->
 
 <!-- Retrigger after operator desk v0.10 whole-card interaction guard. -->
+
+<!-- Retrigger after Android lifecycle fail-safe CI lock. -->

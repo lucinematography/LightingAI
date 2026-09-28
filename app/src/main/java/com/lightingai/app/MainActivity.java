@@ -70,7 +70,7 @@ public class MainActivity extends Activity {
     private String pendingVoiceTarget = null;
     private String pendingVoiceLanguage = "sr";
     private SpeechRecognizer speechRecognizer;
-    private final AtomicInteger artNetSequence = new AtomicInteger(1);
+    private final ArtNetSequenceTracker artNetSequenceTracker = new ArtNetSequenceTracker();
     private final SacnSequenceTracker sacnSequenceTracker = new SacnSequenceTracker();
     private final AtomicInteger artNetLiveEpoch = new AtomicInteger(0);
     private final AtomicInteger artNetDiscoveryEpoch = new AtomicInteger(0);
@@ -89,7 +89,7 @@ public class MainActivity extends Activity {
     private volatile String artNetDirectLastError = "";
     private volatile String sacnDirectLastError = "";
     private volatile String networkDmxArmSignature = "";
-    private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine();
+    private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine(artNetSequenceTracker);
     private byte[] sacnCid;
     private SacnLiveEngine sacnLiveEngine;
     private BleDeviceScanner bleDeviceScanner;
@@ -1210,7 +1210,7 @@ public class MainActivity extends Activity {
                     synchronized (networkDmxSendLock) {
                         if (epoch != networkDmxSendEpoch.get()) throw new IllegalStateException("Stale Art-Net direct send ignored");
                         requireNetworkDmxArmedRoute();
-                        int seq = artNetSequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
+                        int seq = artNetSequenceTracker.next(ip, u);
                         ArtNetSender.sendDmx(ip, u, channels, seq);
                     }
                     artNetDirectSent.incrementAndGet();

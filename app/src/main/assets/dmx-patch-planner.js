@@ -14,7 +14,7 @@ let state=read();
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function id(){return 'dmx_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
 function selectedEquipment(){const fs=Array.isArray(window.catalogFixtures)?window.catalogFixtures:[],sel=Array.isArray(window.equipment)?window.equipment:[];const out=[];sel.forEach(e=>{const f=fs.find(x=>x.id===e.id||x.id===e.fixtureId);if(!f)return;const modes=Array.isArray(f.dmxModes)?f.dmxModes:[],verified=modes.filter(m=>m&&m.verified===true&&Number(m.channels||m.channelCount)>0),defaultMode=verified.length===1?verified[0]:null;const q=Math.max(1,Math.round(Number(e.qty)||1));for(let i=0;i<q;i++)out.push({fixtureId:f.id,name:((f.manufacturer||'')+' '+(f.model||f.id)).trim()+(q>1?' #'+(i+1):''),dmxModes:modes,defaultMode:defaultMode})});return out}
-function integerOrNull(value){const n=Number(value);return Number.isFinite(n)&&Number.isInteger(n)?n:null}
+function integerOrNull(value){return typeof value==='number'&&Number.isFinite(value)&&Number.isInteger(value)?value:null}
 function addRow(data){state.rows.push({id:id(),fixtureId:data?.fixtureId||null,name:data?.name||t().manual,mode:data?.mode||'',universe:data?.universe??1,start:data?.start??1,channels:data?.channels??0,dmxModes:Array.isArray(data?.dmxModes)?data.dmxModes:[]});save();render()}
 function endAddr(r){const c=integerOrNull(r&&r.channels),s=integerOrNull(r&&r.start);return c!=null&&c>0&&s!=null?s+c-1:null}
 function validation(){

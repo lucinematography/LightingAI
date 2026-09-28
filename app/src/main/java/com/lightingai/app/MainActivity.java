@@ -1113,6 +1113,9 @@ public class MainActivity extends Activity {
                         requireNetworkDmxArmedRoute();
                         int seq = sacnSequenceTracker.next(u);
                         SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get());
+                        if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
+                        sacnLiveEngine.setPriority(sacnPriority.get());
+                        sacnLiveEngine.setKeepaliveFrame(u, channels);
                     }
                     sacnDirectSent.incrementAndGet();
                     sacnDirectLastAtMs.set(System.currentTimeMillis());
@@ -1142,7 +1145,7 @@ public class MainActivity extends Activity {
                         requireNetworkDmxArmedRoute();
                         if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
                         sacnLiveEngine.setPriority(sacnPriority.get());
-                        sacnLiveEngine.setFrame(u, channels);
+                        sacnLiveEngine.setLiveFrame(u, channels);
                     }
                     ok = true;
                 } catch (Exception e) {
@@ -1150,6 +1153,21 @@ public class MainActivity extends Activity {
                 }
                 notifyArtNetResult(id, ok, message);
             }, "LightingAI-sACN-Live-Update").start();
+        }
+
+        @JavascriptInterface public void sacnSetKeepalive(String requestId) {
+            final String id = requestId == null ? "" : requestId;
+            boolean ok = true;
+            String message = "";
+            synchronized (sacnLiveControlLock) {
+                try {
+                    if (sacnLiveEngine != null) sacnLiveEngine.setKeepaliveRate();
+                } catch (Exception e) {
+                    ok = false;
+                    message = e.getMessage() == null ? "sACN keepalive failed" : e.getMessage();
+                }
+            }
+            notifyArtNetResult(id, ok, message);
         }
 
         @JavascriptInterface public void sacnStopLive(String requestId) {
@@ -1214,6 +1232,7 @@ public class MainActivity extends Activity {
                         requireNetworkDmxArmedRoute();
                         int seq = artNetSequenceTracker.next(ip, u);
                         ArtNetSender.sendDmx(ip, u, channels, seq);
+                        artNetLiveEngine.setKeepaliveFrame(ip, u, channels);
                     }
                     artNetDirectSent.incrementAndGet();
                     artNetDirectLastAtMs.set(System.currentTimeMillis());
@@ -1242,7 +1261,7 @@ public class MainActivity extends Activity {
                     synchronized (artNetLiveControlLock) {
                         if (epoch != artNetLiveEpoch.get()) throw new IllegalStateException("Stale Art-Net live update ignored");
                         requireNetworkDmxArmedRoute();
-                        artNetLiveEngine.setFrame(ip, u, channels);
+                        artNetLiveEngine.setLiveFrame(ip, u, channels);
                     }
                     ok = true;
                 } catch (Exception e) {
@@ -1250,6 +1269,21 @@ public class MainActivity extends Activity {
                 }
                 notifyArtNetResult(id, ok, message);
             }, "LightingAI-ArtNet-Live-Update").start();
+        }
+
+        @JavascriptInterface public void artNetSetKeepalive(String requestId) {
+            final String id = requestId == null ? "" : requestId;
+            boolean ok = true;
+            String message = "";
+            synchronized (artNetLiveControlLock) {
+                try {
+                    artNetLiveEngine.setKeepaliveRate();
+                } catch (Exception e) {
+                    ok = false;
+                    message = e.getMessage() == null ? "Art-Net keepalive failed" : e.getMessage();
+                }
+            }
+            notifyArtNetResult(id, ok, message);
         }
 
         @JavascriptInterface public void artNetStopLive(String requestId) {

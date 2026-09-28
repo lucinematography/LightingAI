@@ -49,7 +49,7 @@ expect(artNetLive.includes('stopAll();')&&artNetLive.includes('return;')&&artNet
 expect(artNetLive.includes('if (frames.isEmpty()) lastError = "";'),'New Art-Net live session must clear stale prior error state');
 expect(sacnLive.includes('if (frames.isEmpty()) lastError = "";'),'New sACN live session must clear stale prior error state');
 expect(sacnLive.includes('abortAll();')&&sacnLive.includes('return;')&&sacnLive.includes('NetworkInterfaceInspector.signature()'),'sACN live engine must fail fast and recheck network route per frame');
-expect(artnetLive.includes('ArtNetSender.validateFullFrame(channels);')&&artnetLive.includes('Arrays.copyOf(channels, 512)'),'Art-Net live engine must reject malformed frames before mutating live state');
+expect(artNetLive.includes('ArtNetSender.validateFullFrame(channels);')&&artNetLive.includes('Arrays.copyOf(channels, 512)'),'Art-Net live engine must reject malformed frames before mutating live state');
 expect(sacnLive.includes('SacnSender.validateFullFrame(channels);')&&sacnLive.includes('Arrays.copyOf(channels, 512)'),'sACN live engine must reject malformed frames before mutating live state');
 expect(sacnLive.includes('terminationRouteSafe')&&sacnLive.includes('Network changed; sACN termination suppressed'),'sACN stream termination must be suppressed after a network-route change');
 expect(main.includes('synchronized (sacnLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'sACN live update must recheck network signature inside live lock');

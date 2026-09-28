@@ -102,6 +102,11 @@ function render(){
    '</div>'+
    '<div style="margin:12px 0 8px;font-size:12px;font-weight:900;color:#c5cad2">'+title+' <span style="color:#7f8791">('+count+')</span></div>'+
    (rows.length?rows.map(fixtureCard).join(''):'<div class="card"><div class="muted small">'+empty+'</div></div>');
+ card.onpointerdown=function(){deskPointerActive=true;holdDeskInteraction(5000)};
+ card.onpointerup=function(){deskPointerActive=false;holdDeskInteraction(900)};
+ card.onpointercancel=function(){deskPointerActive=false;holdDeskInteraction(900)};
+ card.onfocusin=function(){holdDeskInteraction(2500)};
+ card.onfocusout=function(){holdDeskInteraction(500)};
  var n=E('controlJumpNetwork'),jf=E('controlJumpFixtures'),jg=E('controlJumpGroups'),js=E('controlJumpScenes'),jp=E('controlJumpProtocols');
  var desk=window.LightingAIArtNetControl||{},dr=E('controlDeskDimmer'),dv=E('controlDeskDimmerValue'),da=E('controlDeskApplyMaster'),arm=E('controlDeskArm'),prev=E('controlDeskPrev'),go=E('controlDeskGo'),bo=E('controlDeskBlackout'),restore=E('controlDeskRestore');
  if(dr){
@@ -125,7 +130,7 @@ function render(){
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl,index=Number(btn.dataset.patchIndex);if(api&&typeof api.focusPatchIndex==='function'&&Number.isInteger(index)){api.focusPatchIndex(index);return}if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.9-operator-desk-interaction-safe'};
+window.LightingAIControlDashboard={render:render,version:'0.10-operator-desk-interaction-safe'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(periodicRender,900);
 var old=window.setLanguage;

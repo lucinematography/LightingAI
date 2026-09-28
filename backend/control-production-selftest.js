@@ -15,6 +15,7 @@ import { ARRI_TRUE_BLUE_D12_FIXTURES } from './arri-true-blue-d12-library.js';
 import { ARRI_TRUE_BLUE_D25_FIXTURES } from './arri-true-blue-d25-library.js';
 import { ARRI_TRUE_BLUE_D40_FIXTURES } from './arri-true-blue-d40-library.js';
 import { ARRI_ARRISUN_DISCONTINUED_FIXTURES } from './arri-daylight-discontinued-arrisun-library.js';
+import { ARRI_ARRISUN_EVENT_DISCONTINUED_FIXTURES } from './arri-arrisun-event-discontinued-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -212,6 +213,42 @@ for (const item of arrisunEbMax) {
   expect(mode?.profileConfiguration?.channel3Unused===true && mode?.profileConfiguration?.defaultSafeState==='OFF', 'ARRISUN fail-safe profile qualification missing: '+(fixture?.id||'?'));
 }
 
+const arrisunEvent = [
+  {
+    fixture: ARRI_ARRISUN_EVENT_DISCONTINUED_FIXTURES.find(f => f.id === 'arri-arrisun-5-event'),
+    modeName:'EVENT power unit · 2ch',
+    ballast:'ARRI EB 200/575/1200 MULTIPLE FUNCTION ballast',
+    extra:'Split Box EVENT SIX'
+  },
+  {
+    fixture: ARRI_ARRISUN_EVENT_DISCONTINUED_FIXTURES.find(f => f.id === 'arri-arrisun-18-event'),
+    modeName:'EVENT THREE power module · 2ch',
+    ballast:'ARRI EB 1200/1800 EVENT THREE ballast',
+    extra:'Split Box EVENT 1800'
+  }
+];
+for (const item of arrisunEvent) {
+  const fixture=item.fixture;
+  expect(!!fixture, 'ARRISUN Event fixture missing');
+  expect((fixture?.control?.wired||[]).some(x=>String(x).includes('DMX512')), 'ARRISUN Event DMX512 transport missing: '+(fixture?.id||'?'));
+  expect((fixture?.control?.directLightingAI||[]).length===0, 'ARRISUN Event must not claim native Art-Net/sACN: '+(fixture?.id||'?'));
+  expect((fixture?.control?.externalInterfaceRequired||[]).includes(item.ballast), 'ARRISUN Event required ballast missing: '+(fixture?.id||'?'));
+  expect((fixture?.control?.externalInterfaceRequired||[]).includes(item.extra), 'ARRISUN Event required distribution interface missing: '+(fixture?.id||'?'));
+  const verified=(fixture?.dmxModes||[]).filter(mode=>mode?.verified===true);
+  expect(verified.length===1, 'ARRISUN Event must expose exactly one verified DMX profile: '+(fixture?.id||'?'));
+  const mode=verified[0];
+  expect(mode?.name===item.modeName && mode?.channels===2, 'ARRISUN Event verified 2ch profile missing: '+(fixture?.id||'?'));
+  const dimmer=(mode?.controls||[]).find(control=>control?.key==='dimmer');
+  expect(dimmer?.channel===1 && dimmer?.min===50 && dimmer?.max===100 && dimmer?.dmxMin===127 && dimmer?.dmxMax===255, 'ARRISUN Event dimmer mapping must be 50-100% / DMX 127-255: '+(fixture?.id||'?'));
+  const power=(mode?.controls||[]).find(control=>control?.key==='powerMode');
+  expect(power?.channel===2 && power?.type==='enum', 'ARRISUN Event OFF/ON channel missing: '+(fixture?.id||'?'));
+  expect((power?.choices||[]).some(choice=>choice?.value===0 && choice?.dmxValue===0), 'ARRISUN Event safe OFF choice missing: '+(fixture?.id||'?'));
+  expect((power?.choices||[]).some(choice=>choice?.value===1 && choice?.dmxValue===128), 'ARRISUN Event ON choice missing: '+(fixture?.id||'?'));
+  expect(mode?.profileConfiguration?.defaultSafeState==='OFF', 'ARRISUN Event safe default qualification missing: '+(fixture?.id||'?'));
+}
+expect(arrisunEvent[0]?.fixture?.dmxModes?.[0]?.profileConfiguration?.remoteSwitchPosition==='OFF', 'ARRISUN 5 Event MULTIPLE FUNCTION remote control must require the power-unit switch in OFF position');
+expect(arrisunEvent[1]?.fixture?.dmxModes?.[0]?.profileConfiguration?.sharedBallastModules===3, 'ARRISUN 18 Event must record the three-module EVENT THREE ballast addressing constraint');
+
 const s60Pro = ARRI_SKYPANEL_PRO_FIXTURES.find(f => f.id === 'arri-skypanel-s60-pro');
 expect(!!s60Pro, 'ARRI SkyPanel S60 Pro missing');
 expect(hasAll(s60Pro?.control?.wired, ['DMX512','RDM','Ethernet']), 'SkyPanel S60 Pro wired control routes missing');
@@ -311,6 +348,20 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+for (const item of arrisunEvent) {
+  const fixture=item.fixture;
+  const route=routingContext.window.LightingAIControlRouting.classify(fixture);
+  expect(
+    route?.route==='gateway' &&
+    route?.nativeNetwork===false &&
+    route?.transportReady===true &&
+    route?.semanticReady===true &&
+    route?.verifiedDmxModeCount===1 &&
+    route?.requiresInterface===true,
+    'ARRISUN Event must route through a standards gateway to its required EVENT ballast: '+(fixture?.id||'?')
+  );
+}
+
 for (const item of arrisunEbMax) {
   const fixture=item.fixture;
   const route=routingContext.window.LightingAIControlRouting.classify(fixture);

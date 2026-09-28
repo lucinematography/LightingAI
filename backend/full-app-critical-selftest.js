@@ -235,5 +235,60 @@ for(const marker of ['ARM OUTPUT','globalBlackout','restoreBeforeBlackout','fade
  expect(control.includes(marker),'Control critical contract missing: '+marker);
 }
 
+
+// UI/language regression lock.
+// These checks intentionally cover the phone regressions that previously slipped past
+// the broader CONTROL audit: missing Guide Me/simple/advanced UI and partial SR/EN switching.
+const uiRegressionAssets=[
+ 'app/src/main/assets/index.html',
+ 'app/src/main/assets/simple-mode-ui.js',
+ 'app/src/main/assets/tools-compact-ui.js',
+ 'app/src/main/assets/catalog.js',
+ 'app/src/main/assets/control-dashboard.js',
+ 'app/src/main/assets/ai-control-bridge.js',
+ 'app/src/main/assets/ai-visual-scene-launcher.js'
+];
+for(const p of uiRegressionAssets){
+ expect(fs.existsSync(path.join(root,p)), 'Missing UI/language regression asset: '+p);
+}
+const uiIndex=read('app/src/main/assets/index.html');
+const uiSimple=read('app/src/main/assets/simple-mode-ui.js');
+const uiCatalog=read('app/src/main/assets/catalog.js');
+const uiControl=read('app/src/main/assets/control-dashboard.js');
+const uiAiBridge=read('app/src/main/assets/ai-control-bridge.js');
+const uiAiLauncher=read('app/src/main/assets/ai-visual-scene-launcher.js');
+
+expect(uiIndex.includes('window.currentLang=currentLang;'),
+ 'Initial language must be published through window.currentLang');
+expect(uiIndex.includes('currentLang=l;window.currentLang=l;localStorage.setItem(LS.lang,l);'),
+ 'setLanguage must keep local and global language state synchronized');
+expect(uiIndex.includes('window.LightingAIVisualSceneLauncher&&window.LightingAIVisualSceneLauncher.install&&window.LightingAIVisualSceneLauncher.install()'),
+ 'Language switch must refresh the localized AI visual launcher');
+
+const catalogScriptPos=uiIndex.indexOf('id="lightingai-catalog-script" src="catalog.js"');
+const simpleScriptPos=uiIndex.indexOf('id="lightingai-simple-mode-ui-script" src="simple-mode-ui.js"');
+const toolsScriptPos=uiIndex.indexOf('id="lightingai-tools-compact-ui-script" src="tools-compact-ui.js"');
+expect(catalogScriptPos>=0&&simpleScriptPos>catalogScriptPos&&toolsScriptPos>simpleScriptPos,
+ 'Catalog, simple-mode and compact-tools scripts must remain included in deterministic order');
+
+for(const marker of ['JEDNOSTAVNO','NAPREDNO','VODI ME','SIMPLE','ADVANCED','GUIDE ME']){
+ expect(uiSimple.includes(marker),'Simple/advanced/guide localization missing: '+marker);
+}
+expect(uiSimple.includes("localStorage.getItem('lighting_language_v1')")&&uiSimple.includes("setTimeout(refreshText,0)"),
+ 'Simple-mode UI must reread the selected language and refresh after language-button clicks');
+
+expect(uiCatalog.includes("(window.currentLang||'sr')==='sr'"),
+ 'Equipment catalog must read the shared global language');
+for(const marker of ['RASVETA I OPREMA','LIGHTING & EQUIPMENT','PRIBOR ZA RASVETU','LIGHTING ACCESSORIES','DIMERI','DIMMERS','STATIVI','STANDS']){
+ expect(uiCatalog.includes(marker),'Catalog bilingual marker missing: '+marker);
+}
+
+expect(uiControl.includes("(window.currentLang||'sr')!=='en'")&&uiControl.includes('KONTROLA RASVETE')&&uiControl.includes('LIGHTING CONTROL'),
+ 'CONTROL dashboard must remain bound to the shared SR/EN language state');
+expect(uiAiBridge.includes("(window.currentLang||'sr')!=='en'")&&uiAiBridge.includes('AI → KONTROLA')&&uiAiBridge.includes('AI → CONTROL'),
+ 'AI-to-CONTROL bridge must remain bound to the shared SR/EN language state');
+expect(uiAiLauncher.includes("window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN'"),
+ 'AI visual launcher must remain bound to the shared SR/EN language state');
+
 console.log(JSON.stringify({ok:failures.length===0,failures},null,2));
 if(failures.length)process.exit(1);

@@ -159,6 +159,17 @@ public class ArtNetProtocolTest {
         assertTrue(merged.subscriptions.contains(0x102));
     }
 
+    @Test public void artPollDiscoverySourceExcludesLimitedBroadcast() throws Exception {
+        String source = new String(
+            java.nio.file.Files.readAllBytes(
+                java.nio.file.Paths.get("src/main/java/com/lightingai/app/ArtNetDiscovery.java")
+            ),
+            java.nio.charset.StandardCharsets.UTF_8
+        );
+        assertTrue(source.contains("return directedBroadcastTargets();"));
+        assertFalse(source.contains("targets.add(InetAddress.getByName(\"255.255.255.255\"))"));
+    }
+
     @Test public void automaticArtDmxMustBeResolvedToUnicastBeforeNativeSend() {
         assertThrows(IllegalArgumentException.class, () ->
             ArtNetSender.sendDmx("AUTO", 0, new int[512], 1)

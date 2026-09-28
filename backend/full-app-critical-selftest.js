@@ -124,15 +124,17 @@ expect(patch.includes('invalid-universe')&&patch.includes('invalid-start')&&patc
 expect(dmxExport.includes("if(u==null||u<1||u>999)flags[key].push('invalid-universe');"),'DMX snapshot must reject universes outside planner range');
 expect(patch.includes("function integerOrNull(value){return typeof value==='number'")&&dmxExport.includes("function integerOrNull(value){return typeof value==='number'"),'DMX planner/snapshot must reject numeric strings instead of coercing imported patch values');
 expect(patch.includes("const u=integerOrNull(r&&r.universe),start=integerOrNull(r&&r.start),count=integerOrNull(r&&r.channels);")&&patch.includes("if(u==null||u<1||u>999||start==null||start<1||start>512||count==null||count<=0||count>512||start+count-1>512)return;"),'Free-slot search must ignore invalid patch rows instead of normalizing them');
+expect(patch.includes("function autoPatch(){let u=1,a=1;state.rows.forEach(r=>{const c=integerOrNull(r&&r.channels);if(c==null||c<=0||c>512)return;"),'AUTO PATCH must ignore invalid/string footprint rows instead of coercing them');
 
 const control=read('app/src/main/assets/artnet-control.js');
 expect(control.includes('activeDiscoveryRequestId')&&control.includes("String(id||'')!==activeDiscoveryRequestId"),'Art-Net discovery must ignore stale callbacks by request id');
 expect(control.includes('controlContextSignature')&&control.includes('contextStorageKey'),'Project-scoped control storage missing');
 expect(control.includes('legacyContextStorageKey')&&control.includes('::ctxv2_')&&control.includes('item.contextSignature===signature'),'Control storage must verify the exact project/scene context and migrate legacy hashed keys safely');
-expect(control.includes("version:'0.57-strict-profile-requirements'"),'Known-frame-required control version missing');
+expect(control.includes("version:'0.58-strict-patch-numeric-types'"),'Known-frame-required control version missing');
 expect(control.includes('armedPatchSignature')&&control.includes('patchSignature()!==armedPatchSignature'),'ARM patch signature guard missing');
 expect(control.includes("function artNetTargetIsAuto(value)")&&control.includes("target==='255.255.255.255'")&&control.includes("const auto=artNetTargetIsAuto(target);")&&control.includes("const ip=artNetTargetIsAuto(rawTarget)?'AUTO':rawTarget;"),'Art-Net preflight and sender must use identical AUTO target semantics');
 expect(control.includes('u!=null&&u>=1&&u<=999')&&control.includes('start+channels-1<=512'),'Control layer must independently revalidate patch universe/start/footprint');
+expect(control.includes("function rawPatchNumber(value){")&&control.includes("typeof value==='number'&&Number.isFinite(value)&&Number.isInteger(value)?value:null"),'Control layer must reject numeric strings in patch snapshots instead of coercing them');
 expect(control.includes('fadePatchSignature!==patchSignature()'),'Fade patch-change abort guard missing');
 expect(control.includes('armedContextSignature')&&control.includes('controlContextSignature()!==armedContextSignature'),'ARM project/scene context guard missing');
 expect(control.includes("const id='networkdmx_stop_g'+armGeneration")&&control.includes('armGeneration++;'),'LIVE callback generation isolation missing');
@@ -172,7 +174,7 @@ expect(control.includes('if(!accepted){cancelSceneFade(false);setOutputArmed(fal
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('cancelSceneFade(false);'),'Lifecycle disarm must cancel the active scene fade timer');
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('invalidateCachedOutputState();'),'Lifecycle disarm must invalidate runtime DMX output state');
 expect(control.includes('function invalidateCachedOutputState()')&&control.includes('Object.keys(frames).forEach(key=>delete frames[key]);')&&control.includes('invalidateCachedOutputState();')&&control.includes('setOutputArmed(false,true);'),'Async transport failure must invalidate cached DMX state before disarm');
-expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.57-strict-profile-requirements'"),'Route changes must invalidate only route-bound runtime output state');
+expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.58-strict-patch-numeric-types'"),'Route changes must invalidate only route-bound runtime output state');
 expect(control.includes("selectedBroadcastRoutes")&&control.includes("!auto&&interfaces.length>1&&selectedBroadcastRoutes.length!==1"),'Manual Art-Net targets must fail closed on ambiguous multi-interface routing unless an exact broadcast route is selected');
 expect(control.includes('function isFullDmxFrame(channels)')&&control.includes("channels.length===512")&&control.includes("typeof value==='number'&&Number.isInteger(value)&&value>=0&&value<=255")&&control.includes("if(!isFullDmxFrame(channels)){status(t().error,false);return false}"),'JS network transport must reject malformed or partial DMX frames before native dispatch');
 expect(control.includes("typeof channel!=='number'||!Number.isInteger(channel)||channel<1")&&control.includes("typeof value!=='number'||!Number.isInteger(value)||value<0||value>255"),'Verified profile requiredChannels metadata must be strict numeric integers without JS coercion');

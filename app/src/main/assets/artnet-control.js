@@ -860,18 +860,16 @@ function fadeToScene(index,secondsOverride){
  if(scene.patchSignature!==patchSignature()){status(t().scenePatchMismatch,false);return false}
  const next=normalizedSceneFrames(scene);
  if(!next){setOutputArmed(false,true);status(t().error,false);return false}
- const universeSet=new Set(Object.keys(frames).concat(Object.keys(next)));
- if(!universeSet.size){status(t().sceneNeedFrame,false);return false}
- if(!sceneUniverseSetIsSafe(Array.from(universeSet))){setOutputArmed(false,true);status(t().error,false);return false}
- const universes=Array.from(universeSet);
+ const universes=Object.keys(next);
+ if(!universes.length){status(t().sceneNeedFrame,false);return false}
+ if(!sceneUniverseSetIsSafe(universes)){setOutputArmed(false,true);status(t().error,false);return false}
  if(universes.some(u=>!Array.isArray(frames[u]))){status(t().frameUnknown,false);return false}
  cancelSceneFade(false);
  const start={},target={},snapChannels=fadeSnapChannels();
  universes.forEach(u=>{
   start[u]=frames[u].slice(0,512);
   while(start[u].length<512)start[u].push(0);
-  target[u]=(next[u]||new Array(512).fill(0)).slice(0,512);
-  while(target[u].length<512)target[u].push(0);
+  target[u]=next[u].slice(0,512);
  });
  const seconds=secondsOverride==null?fadeSeconds():Math.max(0.1,Math.min(60,Number(secondsOverride)||fadeSeconds()));
  const duration=Math.max(100,Math.round(seconds*1000)),started=Date.now(),fadePatchSignature=patchSignature();
@@ -899,8 +897,7 @@ function fadeToScene(index,secondsOverride){
    const wasLive=liveEnabled;
    activeSceneFade=null;
    if(wasLive)setLiveEnabled(false);
-   Object.keys(frames).forEach(u=>delete frames[u]);
-   Object.keys(next).forEach(u=>{frames[u]=next[u];});
+   Object.keys(next).forEach(u=>{frames[u]=next[u].slice();});
    if(wasLive&&!setLiveEnabled(true)){status(t().error,false);return}
    status(t().sceneFadeDone,true);
   }
@@ -918,20 +915,18 @@ function applyScene(index){
  cancelSceneFade(false);
  const next=normalizedSceneFrames(scene);
  if(!next){setOutputArmed(false,true);status(t().error,false);return false}
- const oldUniverses=Object.keys(frames),sceneUniverses=Array.from(new Set(oldUniverses.concat(Object.keys(next)))),wasLive=liveEnabled;
+ const sceneUniverses=Object.keys(next),wasLive=liveEnabled;
  if(!sceneUniverseSetIsSafe(sceneUniverses)){setOutputArmed(false,true);status(t().error,false);return false}
  if(wasLive&&!setLiveEnabled(false)){status(t().error,false);return false}
  let accepted=true;
- if(!wasLive)oldUniverses.filter(u=>!next[u]).forEach(u=>{if(!sendFrame(new Array(512).fill(0),Number(u)))accepted=false});
- if(!wasLive)Object.keys(next).forEach(u=>{if(!sendFrame(next[u].slice(),Number(u)))accepted=false});
+ if(!wasLive)sceneUniverses.forEach(u=>{if(!sendFrame(next[u].slice(),Number(u)))accepted=false});
  if(!accepted){
   if(wasLive)setLiveEnabled(true);
   setOutputArmed(false,true);
   status(t().error,false);
   return false;
  }
- Object.keys(frames).forEach(u=>delete frames[u]);
- Object.keys(next).forEach(u=>{frames[u]=next[u].slice()});
+ sceneUniverses.forEach(u=>{frames[u]=next[u].slice()});
  if(wasLive&&!setLiveEnabled(true)){status(t().error,false);return false}
  status(t().sceneApplied,true);
  return true;
@@ -948,11 +943,6 @@ function deleteScene(index){
  renderScenes();renderCueStack();
 }
 function defaultUniverse(){const s=snapshot();return s&&Array.isArray(s.universes)&&s.universes.length?s.universes[0]:1}
-function frame(universe){
- const protocol=selectedProtocol(),u=validUniverseForProtocol(universe,protocol);
- if(u==null)return null;
- const key=String(u);if(!frames[key])frames[key]=new Array(512).fill(0);return frames[key];
-}
 function patchLabel(r){const end=r.end==null?'?':r.end;return 'U'+r.universe+' · '+r.start+'-'+end+' · '+(r.name||r.fixtureId||('DMX '+r.index))+(r.mode?' · '+r.mode:'')}
 function patchUsable(r){
  const u=rawPatchNumber(r&&r.universe),start=rawPatchNumber(r&&r.start),channels=rawPatchNumber(r&&r.channels);
@@ -1609,7 +1599,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.54-strict-transport-frame',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.55-scene-owned-universes',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

@@ -8,7 +8,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class ArtNetLiveEngine {
@@ -27,7 +26,7 @@ public final class ArtNetLiveEngine {
     }
 
     private final Map<String, Frame> frames = new ConcurrentHashMap<>();
-    private final AtomicInteger sequence = new AtomicInteger(1);
+    private final ArtNetSequenceTracker sequenceTracker;
     private final AtomicLong packetsSent = new AtomicLong(0);
     private final AtomicLong packetsFailed = new AtomicLong(0);
     private final AtomicLong lastSendAtMs = new AtomicLong(0);
@@ -38,6 +37,14 @@ public final class ArtNetLiveEngine {
     private ScheduledExecutorService executor;
     private ScheduledFuture<?> task;
     private DatagramSocket socket;
+
+    public ArtNetLiveEngine() {
+        this(new ArtNetSequenceTracker());
+    }
+
+    ArtNetLiveEngine(ArtNetSequenceTracker sequenceTracker) {
+        this.sequenceTracker = sequenceTracker == null ? new ArtNetSequenceTracker() : sequenceTracker;
+    }
 
     public void setFrame(String targetIp, int portAddress, int[] channels) throws Exception {
         String ip = normalizeIp(targetIp);
@@ -142,7 +149,7 @@ public final class ArtNetLiveEngine {
                 if (networkSignature.isEmpty() || routeNow.isEmpty() || !networkSignature.equals(routeNow)) {
                     throw new IllegalStateException("Network changed; re-arm required");
                 }
-                int seq = sequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
+                int seq = sequenceTracker.next(frame.targetIp, frame.portAddress);
                 ArtNetSender.sendDmx(activeSocket, frame.targetIp, frame.portAddress, frame.channels, seq);
                 packetsSent.incrementAndGet();
                 lastSendAtMs.set(System.currentTimeMillis());

@@ -118,6 +118,7 @@ import { applyCatalogCompatibilityCorrections } from './catalog-compatibility-co
 import { applyElectroStormCanonicalCorrections } from './electro-storm-canonical-corrections.js';
 import { normalizeDeSistiControl } from './desisti-control-verification.js';
 import { normalizeGodoxControl } from './godox-control-verification.js';
+import { normalizeAladdinControl } from './aladdin-control-verification.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function unique(values = []) { return [...new Set(values)]; }
@@ -176,6 +177,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(ALADDIN_BASE_LITE_FIXTURES));
   fixtures.push(...clone(ALADDIN_ONBOARD_FIXTURES));
   fixtures.push(...clone(ALADDIN_BI_FABRIC_FIXTURES));
+  normalizeAladdinControl(fixtures);
   fixtures.push(...clone(LITEGEAR_LITEMAT_SPECTRUM_G2_FIXTURES));
   fixtures.push(...clone(LITEGEAR_LITEMAT_PLUS_FIXTURES));
   fixtures.push(...clone(LITEGEAR_LITEMAT_SPECTRUM_2019_FIXTURES));

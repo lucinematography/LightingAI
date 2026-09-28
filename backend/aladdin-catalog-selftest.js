@@ -145,7 +145,7 @@ const allInController='https://aladdin-lights.com/wp-content/uploads/2024/02/ALL
 for(const id of ['aladdin-all-in-one','aladdin-all-in-two']){
   const fixture=fixtures.find(item=>item.id===id);
   if(!fixture||!Array.isArray(fixture.dmxModes)||fixture.dmxModes.length!==2){failures.push('Missing Aladdin ALL-IN DMX modes: '+id);continue;}
-  if(!fixture.control?.includes('Optional DMX512')||!fixture.control?.includes('LumenRadio via ALL-WDIM')) failures.push('Missing ALL-IN verified remote-control path: '+id);
+  if(!fixture.control?.wired?.includes('Optional DMX512')||!fixture.control?.wireless?.includes('LumenRadio via ALL-WDIM')) failures.push('Missing ALL-IN verified remote-control path: '+id);
   if(!String(fixture.controlNotes||'').includes('Bluetooth app access')) failures.push('Missing ALL-IN Bluetooth/controller exclusivity note: '+id);
   const bi=fixture.dmxModes.find(mode=>mode?.name==='2ch White Bi-Color (optional DMX)');
   const rgb=fixture.dmxModes.find(mode=>mode?.name==='3ch RGB (optional DMX)');
@@ -167,8 +167,32 @@ for(const id of ['aladdin-all-in-one','aladdin-all-in-two']){
   }
 }
 
+const structuredControlFixtures=fixtures.filter(fixture=>fixture.control && !Array.isArray(fixture.control));
+const verifiedDmxFixtures=fixtures.filter(fixture=>(fixture.dmxModes||[]).some(mode=>mode?.verified===true));
+const verifiedModes=fixtures.flatMap(fixture=>(fixture.dmxModes||[]).filter(mode=>mode?.verified===true));
+const dmxProfileHolds=fixtures.filter(fixture=>fixture.dmxProfileVerification?.status==='HOLD');
+if(fixtures.some(fixture=>Array.isArray(fixture.control))) failures.push('Aladdin runtime fixture must not retain legacy control array');
+if(structuredControlFixtures.length!==16) failures.push('Aladdin structured control fixture count must remain 16, got '+structuredControlFixtures.length);
+if(verifiedDmxFixtures.length!==15) failures.push('Aladdin verified DMX fixture count must remain 15, got '+verifiedDmxFixtures.length);
+if(verifiedModes.length!==20) failures.push('Aladdin verified DMX mode count must remain 20, got '+verifiedModes.length);
+if(dmxProfileHolds.length!==0) failures.push('Aladdin verified DMX catalog must not gain profile HOLDs unexpectedly: '+dmxProfileHolds.map(fixture=>fixture.id).join(', '));
+for(const fixture of structuredControlFixtures){
+  for(const key of ['local','wired','wireless','directLightingAI','externalInterfaceRequired','sourceUrls','legacyLabels']){
+    if(!Array.isArray(fixture.control?.[key])) failures.push('Aladdin structured control array missing: '+fixture.id+' '+key);
+  }
+  const transport=[...(fixture.control?.wired||[]),...(fixture.control?.wireless||[])].join(' ').toLowerCase();
+  const hasDmx=/(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(transport)||transport.includes('lumenradio');
+  const fixtureVerified=(fixture.dmxModes||[]).filter(mode=>mode?.verified===true);
+  const hold=fixture.dmxProfileVerification?.status==='HOLD';
+  if(hasDmx&&!fixtureVerified.length&&!hold) failures.push('Aladdin standard control transport requires verified DMX mode or explicit HOLD: '+fixture.id);
+  if(fixtureVerified.length&&fixture.dmxProfileVerification) failures.push('Aladdin verified DMX mode must not coexist with profile HOLD: '+fixture.id);
+}
+{
+  const fixture=fixtures.find(item=>item.id==='aladdin-bi-flex-1');
+  if(fixture?.control?.wired?.length||fixture?.control?.wireless?.length) failures.push('BI-FLEX 1 must remain local-only after control normalization');
+}
 const unique=[...new Set(failures)];
-console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Aladdin',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,mosaicControls,failures:unique},null,2));
+console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Aladdin',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,structuredControlFixtures:structuredControlFixtures.length,verifiedDmxFixtures:verifiedDmxFixtures.length,verifiedModes:verifiedModes.length,dmxProfileHolds:dmxProfileHolds.length,mosaicControls,failures:unique},null,2));
 if(unique.length) process.exit(1);
 
 // Only test-local instrumentation exposes closure functions. No sender, network or native bridge runs.

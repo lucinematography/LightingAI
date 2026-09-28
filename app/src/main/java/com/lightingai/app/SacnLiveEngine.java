@@ -12,7 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class SacnLiveEngine {
-    private static final long PERIOD_MS = 33L;
+    private static final long LIVE_PERIOD_MS = 33L;
+    private static final long KEEPALIVE_PERIOD_MS = 900L;
 
     private static final class Frame {
         final int universe;
@@ -39,6 +40,7 @@ public final class SacnLiveEngine {
     private ScheduledExecutorService executor;
     private ScheduledFuture<?> task;
     private DatagramSocket socket;
+    private long periodMs = KEEPALIVE_PERIOD_MS;
 
     public SacnLiveEngine(byte[] cid, String sourceName) {
         this(cid, sourceName, new SacnSequenceTracker());
@@ -51,6 +53,24 @@ public final class SacnLiveEngine {
     }
 
     public void setFrame(int universe, int[] channels) throws Exception {
+        setLiveFrame(universe, channels);
+    }
+
+    public void setLiveFrame(int universe, int[] channels) throws Exception {
+        setFrameInternal(universe, channels, true);
+    }
+
+    public void setKeepaliveFrame(int universe, int[] channels) throws Exception {
+        setFrameInternal(universe, channels, false);
+    }
+
+    public void setKeepaliveRate() throws Exception {
+        synchronized (lock) {
+            ensureRunningLocked(false);
+        }
+    }
+
+    private void setFrameInternal(int universe, int[] channels, boolean liveRate) throws Exception {
         int u = SacnSender.validateUniverse(universe);
         String currentNetwork = NetworkInterfaceInspector.signature();
         if (currentNetwork.isEmpty()) throw new IllegalStateException("No active network for sACN");
@@ -62,8 +82,8 @@ public final class SacnLiveEngine {
             }
             if (frames.isEmpty()) lastError = "";
             networkSignature = currentNetwork;
-            ensureRunningLocked();
             frames.put(u, new Frame(u, copy));
+            ensureRunningLocked(liveRate);
         }
     }
 
@@ -157,7 +177,7 @@ public final class SacnLiveEngine {
         }
     }
 
-    private void ensureRunningLocked() throws Exception {
+    private void ensureRunningLocked(boolean liveRate) throws Exception {
         if (socket == null || socket.isClosed()) socket = SacnSender.openMulticastSocket();
         if (executor == null || executor.isShutdown()) {
             executor = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -166,8 +186,11 @@ public final class SacnLiveEngine {
                 return t;
             });
         }
-        if (task == null || task.isCancelled() || task.isDone()) {
-            task = executor.scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS);
+        long desired = liveRate ? LIVE_PERIOD_MS : KEEPALIVE_PERIOD_MS;
+        if (task == null || task.isCancelled() || task.isDone() || periodMs != desired) {
+            if (task != null) task.cancel(false);
+            periodMs = desired;
+            task = executor.scheduleAtFixedRate(this::tick, 0L, periodMs, TimeUnit.MILLISECONDS);
         }
     }
 

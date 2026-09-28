@@ -346,6 +346,16 @@ expect(
 const artnetSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/ArtNetSender.java'),'utf8');
 const sacnSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/SacnSender.java'),'utf8');
 expect(artnet.includes("id:'aputure-sidus-four'") && artnet.includes('artNetUniverseMax:32768') && artnet.includes('artNetPortAddressOffset:-1'), 'Sidus Four must map LightingAI U1-U32768 to Art-Net Port-Address 0-32767');
+expect(
+  artnet.includes("id:'aputure-sidus-one'") &&
+  artnet.includes('artNetUniverseMin:1,artNetUniverseMax:4') &&
+  artnet.includes('artNetPortAddressOffset:0'),
+  'Sidus One must remain 1-based: LightingAI U1-U4 -> Art-Net Port-Address 1-4'
+);
+expect(
+  (artnet.match(/manufacturer:'Astera'.*artNetPortAddressOffset:0/g)||[]).length>=3,
+  'Astera PowerBox/DataLink bridges must remain 1-based for Art-Net universe mapping'
+);
 expect(artnetSender.includes('validatePortAddress') && artnetSender.includes('MAX_PORT_ADDRESS = 32767'), 'Art-Net strict Port-Address validation missing');
 expect(artnetSender.includes('isUsableIpv4Target') && artnetSender.includes('Art-Net AUTO must resolve to subscriber unicast targets before native send') && artnetSender.includes('Art-Net target must be a usable IPv4 literal') && artnetSender.includes('ArtDmx broadcast targets are not allowed'), 'Native Art-Net must reject unresolved AUTO/broadcast and accept only a usable unicast IPv4 literal');
 expect(artnet.includes('artNetPortAddressForUniverse') && artnet.includes('bridgeUniverseAllowed'), 'Per-bridge Art-Net universe policy missing');

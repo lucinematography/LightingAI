@@ -47,6 +47,7 @@ const artNetLive=read('app/src/main/java/com/lightingai/app/ArtNetLiveEngine.jav
 const artNetDiscovery=read('app/src/main/java/com/lightingai/app/ArtNetDiscovery.java');
 const artNetSender=read('app/src/main/java/com/lightingai/app/ArtNetSender.java');
 const artNetSequenceTracker=read('app/src/main/java/com/lightingai/app/ArtNetSequenceTracker.java');
+const sacnSender=read('app/src/main/java/com/lightingai/app/SacnSender.java');
 const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
 const networkInspector=read('app/src/main/java/com/lightingai/app/NetworkInterfaceInspector.java');
 const sacnSequenceTracker=read('app/src/main/java/com/lightingai/app/SacnSequenceTracker.java');

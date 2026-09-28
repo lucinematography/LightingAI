@@ -238,6 +238,14 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
         }
         assert.equal(app.controlToDmx(control,min-100),0);assert.equal(app.controlToDmx(control,max+100),255);
       }
+      const strictFrame=new Array(512).fill(77);
+      assert.equal(app.writeControlToFrame(strictFrame,'1',mode.controls[0],50),false,'String DMX address must be rejected');
+      assert.equal(app.writeControlToFrame(new Array(511).fill(77),1,mode.controls[0],50),false,'Short DMX frame must be rejected before control write');
+      const beforeRequirements=JSON.stringify(strictFrame);
+      assert.equal(app.applyProfileRequirements(strictFrame,1,{requiredChannels:[{channel:'3',value:137}]}),false,'String required channel must be rejected');
+      assert.equal(app.applyProfileRequirements(strictFrame,1,{requiredChannels:[{channel:3,value:'137'}]}),false,'String required value must be rejected');
+      assert.equal(app.applyProfileRequirements(strictFrame,1,{requiredChannels:[{channel:3,value:null}]}),false,'Null required value must be rejected');
+      assert.equal(JSON.stringify(strictFrame),beforeRequirements,'Invalid profile requirements must not mutate the frame');
       const correction=mode.controls[2];
       assert.equal(correction.key,'greenCorrection');assert.equal(correction.type,'piecewise');
       assert.equal(correction.bits,8);assert.equal(correction.min,-100);assert.equal(correction.max,100);

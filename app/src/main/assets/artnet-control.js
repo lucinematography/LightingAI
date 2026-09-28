@@ -955,16 +955,28 @@ function fixtureForRow(r){
  const list=Array.isArray(window.catalogFixtures)?window.catalogFixtures:[];
  return r&&r.fixtureId?list.find(f=>f&&f.id===r.fixtureId):null;
 }
+function profileAddressMetadataIsSafe(profile){
+ const channels=profile&&profile.channels;
+ if(typeof channels!=='number'||!Number.isInteger(channels)||channels<1||channels>512)return false;
+ const controls=Array.isArray(profile.controls)?profile.controls:[];
+ return controls.every(ctrl=>{
+  if(!ctrl||typeof ctrl.channel!=='number'||!Number.isInteger(ctrl.channel)||ctrl.channel<1)return false;
+  if(ctrl.bits!=null&&ctrl.bits!==8&&ctrl.bits!==16)return false;
+  if(ctrl.dmxMax!=null&&(typeof ctrl.dmxMax!=='number'||!Number.isFinite(ctrl.dmxMax)))return false;
+  const width=ctrl.bits===16||(ctrl.bits==null&&typeof ctrl.dmxMax==='number'&&ctrl.dmxMax>255)?2:1;
+  return ctrl.channel+width-1<=channels;
+ });
+}
 function profileForRow(r){
  const f=fixtureForRow(r),modes=f&&Array.isArray(f.dmxModes)?f.dmxModes:[];
  if(!r||!r.mode)return null;
  const profile=modes.find(m=>m&&m.name===r.mode&&m.verified===true)||null;
- if(!profile)return null;
+ if(!profile||!profileAddressMetadataIsSafe(profile))return null;
  // Every verified profile must exactly fit the Patch allocation before any control is exposed.
  // This prevents a stale/manual channel count from shifting writes into a neighbouring fixture.
- if(!patchUsable(r)||Number(r.channels)!==Number(profile.channels)||
-    !Number.isInteger(Number(r.start))||Number(r.start)<1||
-    Number(r.start)+Number(profile.channels)-1>512)return null;
+ const rowChannels=rawPatchNumber(r.channels),start=rawPatchNumber(r.start);
+ if(!patchUsable(r)||rowChannels!==profile.channels||start==null||
+    start+profile.channels-1>512)return null;
  return profile;
 }
 function selectedPatchRow(){
@@ -1273,16 +1285,13 @@ function controlsInclude(profile,ctrl){
 function sendVerifiedControl(r,profile,ctrl,value){
  if(!requireOutputArmed())return;
  if(!patchUsable(r)||!profile||!ctrl)return;
- if(Array.isArray(profile.controls)&&profile.controls.some(control=>control&&(control.type==='enum'||control.type==='piecewise'))){
-  if(profileForRow(r)!==profile||!controlsInclude(profile,ctrl)||
-     !Number.isInteger(Number(r.start))||Number(r.start)<1||Number(r.start)+Number(profile.channels)-1>512||
-     !Number.isInteger(Number(ctrl.channel))||Number(ctrl.channel)<1||Number(ctrl.channel)>Number(profile.channels)||
-     !rows().some(row=>rowKey(row)===rowKey(r))||Number(r.channels)!==Number(profile.channels)||
-     controlToDmx(ctrl,value)==null)return;
-  cancelSceneFade(false);
- }
- const u=validUniverseForProtocol(Number(r.universe),selectedProtocol());
- const start=Number(r.start),channel=Number(ctrl.channel);
+ if(profileForRow(r)!==profile||!controlsInclude(profile,ctrl)||
+    !rows().some(row=>rowKey(row)===rowKey(r)))return;
+ const candidate=controlToDmx(ctrl,value);
+ if(!Number.isInteger(candidate))return;
+ cancelSceneFade(false);
+ const u=validUniverseForProtocol(rawPatchNumber(r.universe),selectedProtocol());
+ const start=rawPatchNumber(r.start),channel=ctrl.channel;
  if(u==null||!Number.isInteger(start)||start<1||!Number.isInteger(channel)||channel<1){status(t().error,false);return}
  const address=start+channel-1;
  const current=frames[String(u)];
@@ -1603,7 +1612,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.58-strict-patch-numeric-types',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.59-strict-verified-profile-identity',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

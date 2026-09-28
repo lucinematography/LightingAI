@@ -1359,6 +1359,7 @@ public class MainActivity extends Activity {
             sacnLiveEpoch.incrementAndGet();
             if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         }
+        ArtNetSocketManager.close();
         if (webView != null) {
             webView.post(() -> webView.evaluateJavascript(
                 "window.LightingAINetworkDmxLifecycleResume&&window.LightingAINetworkDmxLifecycleResume();window.LightingAIBleLifecycleResume&&window.LightingAIBleLifecycleResume();",
@@ -1382,6 +1383,7 @@ public class MainActivity extends Activity {
             sacnLiveEpoch.incrementAndGet();
             if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         }
+        ArtNetSocketManager.close();
         if (webView != null) {
             webView.post(() -> webView.evaluateJavascript(
                 "window.LightingAINetworkDmxLifecyclePause&&window.LightingAINetworkDmxLifecyclePause();window.LightingAIBleLifecyclePause&&window.LightingAIBleLifecyclePause();",
@@ -1472,6 +1474,7 @@ public class MainActivity extends Activity {
             sacnLiveEpoch.incrementAndGet();
             if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
         }
+        ArtNetSocketManager.close();
         if (pendingFileChooser != null) finishFileChooser(null);
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();

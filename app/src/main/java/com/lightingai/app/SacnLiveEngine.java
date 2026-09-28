@@ -103,7 +103,14 @@ public final class SacnLiveEngine {
                 task.cancel(false);
                 task = null;
             }
-            if (sendTerminationPackets && socket != null && !socket.isClosed() && !frames.isEmpty()) {
+            String currentNetwork = sendTerminationPackets ? NetworkInterfaceInspector.signature() : "";
+            boolean terminationRouteSafe = sendTerminationPackets &&
+                !networkSignature.isEmpty() &&
+                !currentNetwork.isEmpty() &&
+                networkSignature.equals(currentNetwork);
+            if (sendTerminationPackets && !frames.isEmpty() && !terminationRouteSafe) {
+                lastError = "Network changed; sACN termination suppressed";
+            } else if (sendTerminationPackets && socket != null && !socket.isClosed() && !frames.isEmpty()) {
                 String terminationError = "";
                 boolean terminationFailed = false;
                 for (int repeat = 0; repeat < 3; repeat++) {

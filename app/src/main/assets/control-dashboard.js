@@ -77,6 +77,7 @@ function render(){
  var title=sr()?'IZABRANA RASVETA':'SELECTED FIXTURES';
  var empty=sr()?'Nema izabranih rasvetnih tela. Dodaj ih u Oprema pa se vrati u Kontrolu.':'No selected fixtures. Add them in Equipment, then return to Control.';
  var patched=rows.filter(function(row){return !!patchMatchForRow(row)}).length,verified=rows.filter(function(row){var m=patchMatchForRow(row),p=m&&m.patch;return !!(p&&profileForPatch(row.fixture,p))}).length,live=liveStatus();
+ var scope={selected:0,total:0};try{var scopeApi=window.LightingAIArtNetControl;if(scopeApi&&typeof scopeApi.masterDimmerScope==='function')scope=scopeApi.masterDimmerScope()||scope}catch(e){}
  var deskRange=E('controlDeskDimmer'),deskValue=deskRange?Math.max(0,Math.min(100,Math.round(Number(deskRange.value)||0))):100;
  card.innerHTML='<div class="card" style="border-color:#66571f;background:linear-gradient(180deg,#191b20,#13161b);padding:16px">'+
    '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><div style="font-size:21px;font-weight:900;color:#f5c542">'+(sr()?'KONTROLA RASVETE':'LIGHTING CONTROL')+'</div><div class="muted small" style="margin-top:5px">'+(sr()?'Pregled opreme, DMX povezanosti i bezbednog izlaza na jednom mestu.':'Equipment, DMX mapping and safe output status in one place.')+'</div></div><div style="padding:6px 9px;border-radius:999px;background:'+(live.armed?'#10251d':'#24191b')+';color:'+(live.armed?'#b8f0d1':'#ffb5b5')+';font-size:10px;font-weight:900;white-space:nowrap">'+(live.armed?(sr()?'IZLAZ AKTIVAN':'OUTPUT ARMED'):(sr()?'IZLAZ ZAKLJUČAN':'OUTPUT LOCKED'))+'</div></div>'+
@@ -93,6 +94,7 @@ function render(){
    '<div style="margin-top:14px;padding:12px;border:1px solid #3c4652;border-radius:12px;background:#0d1117">'+
     '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div style="font-size:12px;font-weight:900;color:#cdd4dd">'+(sr()?'OPERATOR DESK':'OPERATOR DESK')+'</div><div style="font-size:10px;font-weight:900;color:'+(live.armed?'#b8f0d1':'#ffb5b5')+'">'+(live.armed?(sr()?'OUTPUT ARMED':'OUTPUT ARMED'):(sr()?'OUTPUT LOCKED':'OUTPUT LOCKED'))+'</div></div>'+
     '<div style="display:flex;justify-content:space-between;gap:10px;margin-top:12px"><b style="font-size:13px">'+(sr()?'MASTER DIMMER':'MASTER DIMMER')+'</b><span id="controlDeskDimmerValue" class="muted small">'+deskValue+'%</span></div>'+
+    '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:5px"><span class="muted small">'+(sr()?'OBIM MASTER-a: ':'MASTER SCOPE: ')+Number(scope.selected||0)+'/'+Number(scope.total||0)+'</span><button id="controlDeskSelectAll" class="btn secondary" type="button" style="padding:6px 9px">'+(sr()?'SVE':'ALL')+'</button></div>'+
     '<input id="controlDeskDimmer" type="range" min="0" max="100" step="1" value="'+deskValue+'" style="margin-top:8px;width:100%">'+
     '<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:7px;margin-top:9px"><button id="controlDeskApplyMaster" class="btn primary" type="button">'+(sr()?'PRIMENI MASTER':'APPLY MASTER')+'</button><button id="controlDeskArm" class="btn '+(live.armed?'danger':'secondary')+'" type="button">'+(live.armed?(sr()?'ZAKLJUČAJ IZLAZ':'LOCK OUTPUT'):(sr()?'ARM OUTPUT':'ARM OUTPUT'))+'</button></div>'+
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px"><button id="controlDeskPrev" class="btn secondary" type="button">'+(sr()?'PREV':'PREV')+'</button><button id="controlDeskGo" class="btn primary" type="button">GO</button><button id="controlDeskBlackout" class="btn danger" type="button">'+(sr()?'BLACKOUT':'BLACKOUT')+'</button><button id="controlDeskRestore" class="btn secondary" type="button">'+(sr()?'VRATI':'RESTORE')+'</button></div>'+
@@ -108,7 +110,7 @@ function render(){
  card.onfocusin=function(){holdDeskInteraction(2500)};
  card.onfocusout=function(){holdDeskInteraction(500)};
  var n=E('controlJumpNetwork'),jf=E('controlJumpFixtures'),jg=E('controlJumpGroups'),js=E('controlJumpScenes'),jp=E('controlJumpProtocols');
- var desk=window.LightingAIArtNetControl||{},dr=E('controlDeskDimmer'),dv=E('controlDeskDimmerValue'),da=E('controlDeskApplyMaster'),arm=E('controlDeskArm'),prev=E('controlDeskPrev'),go=E('controlDeskGo'),bo=E('controlDeskBlackout'),restore=E('controlDeskRestore');
+ var desk=window.LightingAIArtNetControl||{},dr=E('controlDeskDimmer'),dv=E('controlDeskDimmerValue'),da=E('controlDeskApplyMaster'),all=E('controlDeskSelectAll'),arm=E('controlDeskArm'),prev=E('controlDeskPrev'),go=E('controlDeskGo'),bo=E('controlDeskBlackout'),restore=E('controlDeskRestore');
  if(dr){
   dr.onpointerdown=function(){deskPointerActive=true;holdDeskInteraction(5000)};
   dr.onpointerup=function(){deskPointerActive=false;holdDeskInteraction(900)};
@@ -117,6 +119,7 @@ function render(){
   dr.onblur=function(){deskPointerActive=false;holdDeskInteraction(350)};
  }
  if(da)da.onclick=function(){if(typeof desk.masterDimmer==='function')desk.masterDimmer(Number(dr&&dr.value)||0)};
+ if(all)all.onclick=function(){if(typeof desk.selectAllMasterControls==='function'){desk.selectAllMasterControls();setTimeout(render,0)}};
  if(arm)arm.onclick=function(){if(typeof desk.arm==='function'){desk.arm(!(typeof desk.isArmed==='function'&&desk.isArmed()));setTimeout(render,250)}};
  if(prev)prev.onclick=function(){if(typeof desk.previousCue==='function')desk.previousCue()};
  if(go)go.onclick=function(){if(typeof desk.goCue==='function')desk.goCue()};
@@ -130,7 +133,7 @@ function render(){
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl,index=Number(btn.dataset.patchIndex);if(api&&typeof api.focusPatchIndex==='function'&&Number.isInteger(index)){api.focusPatchIndex(index);return}if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.11-operator-desk-interaction-failsafe'};
+window.LightingAIControlDashboard={render:render,version:'0.12-operator-desk-scope-visible'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(periodicRender,900);
 var old=window.setLanguage;

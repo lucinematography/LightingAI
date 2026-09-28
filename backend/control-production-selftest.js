@@ -61,6 +61,7 @@ expect(artnetSender.includes('validatePortAddress') && artnetSender.includes('MA
 expect(artnetSender.includes('isUsableIpv4Target') && artnetSender.includes('Art-Net AUTO must resolve to subscriber unicast targets before native send') && artnetSender.includes('Art-Net target must be a usable IPv4 literal') && artnetSender.includes('ArtDmx broadcast targets are not allowed'), 'Native Art-Net must reject unresolved AUTO/broadcast and accept only a usable unicast IPv4 literal');
 expect(artnet.includes('artNetPortAddressForUniverse') && artnet.includes('bridgeUniverseAllowed'), 'Per-bridge Art-Net universe policy missing');
 expect(artnet.includes('preflightMultipleSacnRoutes') && artnet.includes('multicastRouteCount>1') && artnet.includes('native.multicastInterfaceCount'), 'Ambiguous sACN multicast route guard missing');
+expect((artnet.match(/protocolNote:'Input priority: XLR > sACN > Art-Net\. Active XLR input disables network control; active sACN overrides Art-Net\.'/g)||[]).length===3,'Astera network bridges must expose documented XLR > sACN > Art-Net input priority');
 expect(artnet.includes("normalized==='0.0.0.0'||first===127||(first>=224&&first<=239)"),'Art-Net ARM preflight must reject unspecified, loopback and multicast explicit targets');
 expect(artnet.includes('runControlHealthCheck') && artnet.includes('armedNetworkSignature'), 'Network DMX health watchdog missing');
 expect(sacnSender.includes('validateUniverse') && sacnSender.includes('MAX_UNIVERSE = 63999'), 'sACN strict universe validation missing');

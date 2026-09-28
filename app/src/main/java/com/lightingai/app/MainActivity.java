@@ -1058,6 +1058,8 @@ public class MainActivity extends Activity {
 
                 out.put("interfaces", NetworkInterfaceInspector.snapshot());
                 out.put("networkSignature", NetworkInterfaceInspector.signature());
+                out.put("multicastInterfaceCount", NetworkInterfaceInspector.multicastIpv4InterfaceCount());
+                out.put("multicastInterfaceName", NetworkInterfaceInspector.singleMulticastIpv4InterfaceName());
 
                 JSONObject artNet = new JSONObject();
                 artNet.put("directSent", artNetDirectSent.get());

@@ -1,3 +1,4 @@
+// LiteGear Spectrum Gen 2 control verification: preserve documented LiteDimmer transport while semantic DMX profiles remain fail-closed until encoded.
 const SPECTRUM_G2_IDS = new Set([
   'litegear-litemat-spectrum-g2-1',
   'litegear-litemat-spectrum-g2-2',

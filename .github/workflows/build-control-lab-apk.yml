@@ -80,6 +80,10 @@ jobs:
         working-directory: backend
         run: node control-production-selftest.js
 
+      - name: Validate operator desk safety
+        working-directory: backend
+        run: node control-operator-desk-selftest.js
+
       - name: Audit full fixture control catalog
         working-directory: backend
         run: node control-catalog-audit.js

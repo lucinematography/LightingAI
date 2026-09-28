@@ -37,6 +37,7 @@ public final class SacnLiveEngine {
     private final Object lock = new Object();
     private final byte[] cid;
     private final String sourceName;
+    private volatile String ipMode = "ipv4";
 
     private ScheduledExecutorService executor;
     private ScheduledFuture<?> task;
@@ -74,7 +75,7 @@ public final class SacnLiveEngine {
 
     private void setFrameInternal(int universe, int[] channels, boolean liveRate) throws Exception {
         int u = SacnSender.validateUniverse(universe);
-        String currentNetwork = NetworkInterfaceInspector.signature();
+        String currentNetwork = NetworkInterfaceInspector.sacnSignature(ipMode);
         if (currentNetwork.isEmpty()) throw new IllegalStateException("No active network for sACN");
         SacnSender.validateFullFrame(channels);
         int[] copy = Arrays.copyOf(channels, 512);
@@ -95,6 +96,20 @@ public final class SacnLiveEngine {
 
     public void setPriority(int value) {
         priority.set(SacnSender.normalizePriority(value));
+    }
+
+    public void setIpMode(String mode) {
+        String normalized = NetworkInterfaceInspector.normalizeSacnIpMode(mode);
+        synchronized (lock) {
+            if (!frames.isEmpty() && !normalized.equals(ipMode)) {
+                throw new IllegalStateException("sACN IP mode changed; re-arm required");
+            }
+            ipMode = normalized;
+        }
+    }
+
+    public String ipMode() {
+        return ipMode;
     }
 
     public int priority() {
@@ -135,7 +150,7 @@ public final class SacnLiveEngine {
                 discoveryTask.cancel(false);
                 discoveryTask = null;
             }
-            String currentNetwork = sendTerminationPackets ? NetworkInterfaceInspector.signature() : "";
+            String currentNetwork = sendTerminationPackets ? NetworkInterfaceInspector.sacnSignature(ipMode) : "";
             boolean terminationRouteSafe = sendTerminationPackets &&
                 !networkSignature.isEmpty() &&
                 !currentNetwork.isEmpty() &&
@@ -155,7 +170,8 @@ public final class SacnLiveEngine {
                                 nextSequence(frame.universe),
                                 cid,
                                 sourceName,
-                                priority.get()
+                                priority.get(),
+                                ipMode
                             );
                             packetsSent.incrementAndGet();
                             lastSendAtMs.set(System.currentTimeMillis());
@@ -184,7 +200,7 @@ public final class SacnLiveEngine {
     }
 
     private void ensureRunningLocked(boolean liveRate) throws Exception {
-        if (socket == null || socket.isClosed()) socket = SacnSender.openMulticastSocket();
+        if (socket == null || socket.isClosed()) socket = SacnSender.openMulticastSocket(ipMode);
         if (executor == null || executor.isShutdown()) {
             executor = Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r, "LightingAI-sACN-Live");
@@ -216,7 +232,7 @@ public final class SacnLiveEngine {
             activeUniverses = frames.keySet().stream().mapToInt(Integer::intValue).sorted().toArray();
         }
         if (activeSocket == null || activeSocket.isClosed() || activeUniverses.length == 0) return;
-        String currentNetwork = NetworkInterfaceInspector.signature();
+        String currentNetwork = NetworkInterfaceInspector.sacnSignature(ipMode);
         if (networkSignature.isEmpty() || currentNetwork.isEmpty() || !networkSignature.equals(currentNetwork)) {
             packetsFailed.incrementAndGet();
             lastError = "Network changed; re-arm required";
@@ -224,7 +240,7 @@ public final class SacnLiveEngine {
             return;
         }
         try {
-            SacnSender.sendUniverseDiscovery(activeSocket, activeUniverses, cid, sourceName);
+            SacnSender.sendUniverseDiscovery(activeSocket, activeUniverses, cid, sourceName, ipMode);
         } catch (Exception e) {
             packetsFailed.incrementAndGet();
             lastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
@@ -238,7 +254,7 @@ public final class SacnLiveEngine {
             activeSocket = socket;
         }
         if (activeSocket == null || activeSocket.isClosed()) return;
-        String currentNetwork = NetworkInterfaceInspector.signature();
+        String currentNetwork = NetworkInterfaceInspector.sacnSignature(ipMode);
         if (networkSignature.isEmpty() || currentNetwork.isEmpty() || !networkSignature.equals(currentNetwork)) {
             packetsFailed.incrementAndGet();
             lastError = "Network changed; re-arm required";
@@ -248,11 +264,11 @@ public final class SacnLiveEngine {
 
         for (Frame frame : frames.values()) {
             try {
-                String routeNow = NetworkInterfaceInspector.signature();
+                String routeNow = NetworkInterfaceInspector.sacnSignature(ipMode);
                 if (networkSignature.isEmpty() || routeNow.isEmpty() || !networkSignature.equals(routeNow)) {
                     throw new IllegalStateException("Network changed; re-arm required");
                 }
-                SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(frame.universe), cid, sourceName, priority.get());
+                SacnSender.sendDmx(activeSocket, frame.universe, frame.channels, nextSequence(frame.universe), cid, sourceName, priority.get(), ipMode);
                 packetsSent.incrementAndGet();
                 lastSendAtMs.set(System.currentTimeMillis());
             } catch (Exception e) {

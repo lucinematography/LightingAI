@@ -72,6 +72,7 @@ public final class ArtNetDiscovery {
                     } catch (SocketTimeoutException timeout) {
                         continue;
                     }
+                    if (incoming.getPort() != ArtNetSender.ARTNET_PORT) continue;
                     Node node = parseReply(incoming.getData(), incoming.getLength(), incoming.getAddress());
                     if (node != null && !node.ip.isEmpty()) {
                         Node existing = nodes.get(node.ip);

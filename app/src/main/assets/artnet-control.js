@@ -25,24 +25,24 @@ const TXT={
  sr:{
   title:'📡 MREŽNA DMX KONTROLA',
   intro:'Kontroliši DMX preko mreže koristeći Art-Net ili sACN (E1.31). DMX Patch ostaje zajednički izvor za Universe i adrese.',
-  protocol:'MREŽNI PROTOKOL',artnet:'Art-Net',sacn:'sACN (E1.31)',sacnInfo:'sACN automatski koristi multicast adresu za izabrani Universe.',target:'ART-NET NODE / IP',artnetAutoHint:'AUTO koristi directed broadcast aktivne IPv4 mreže. Ako postoji više mreža, izaberi tačan izlaz ispod.',artnetRoute:'ART-NET MREŽNA RUTA',artnetRouteAuto:'AUTO / sve aktivne rute',artnetRouteNone:'Nema directed broadcast ruta.',discover:'PRONAĐI ART-NET NODE-OVE',nodes:'PRONAĐENI NODE-OVI',noNodes:'Nema pronađenih Art-Net node-ova.',discovering:'Tražim Art-Net node-ove…',patchDevice:'UREĐAJ IZ DMX PATCH-A',manual:'Ručno / bez Patch uređaja',refresh:'OSVEŽI PATCH',
+  protocol:'MREŽNI PROTOKOL',artnet:'Art-Net',sacn:'sACN (E1.31)',sacnInfo:'sACN automatski koristi multicast adresu za izabrani Universe.',target:'ART-NET NODE / IP',artnetAutoHint:'AUTO prvo pronalazi Art-Net pretplatnike za aktivne Universe-e i šalje ArtDmx samo unicastom odgovarajućim node-ovima.',artnetRoute:'ART-NET RUTIRANJE',artnetRouteAuto:'AUTO / subscription discovery + unicast',artnetRouteNone:'AUTO koristi ArtPoll discovery na aktivnoj IPv4 mreži.',discover:'PRONAĐI ART-NET NODE-OVE',nodes:'PRONAĐENI NODE-OVI',noNodes:'Nema pronađenih Art-Net node-ova.',discovering:'Tražim Art-Net node-ove…',patchDevice:'UREĐAJ IZ DMX PATCH-A',manual:'Ručno / bez Patch uređaja',refresh:'OSVEŽI PATCH',
   universe:'UNIVERSE',channel:'DMX KANAL',value:'VREDNOST',send:'POŠALJI TEST',blackout:'BLACKOUT UNIVERSE',
   ready:'Spremno za slanje.',sending:'Šaljem mrežni DMX…',sent:'DMX mrežni paket je poslat.',error:'Slanje nije uspelo.',
   native:'Mrežni DMX zahteva podržani native control bridge.',patch:'Universe i START adresa se preuzimaju iz postojećeg DMX Patch planera. Značenje konkretnog kanala mora biti verifikovano DMX profilom proizvođača.',
   patchEmpty:'Nema ispravnih uređaja u DMX Patch-u. Dodaj uređaj i unesi broj kanala.',patchLoaded:'Učitano iz Patch-a',patchWarn:'Ovaj Patch red ima upozorenje i nije bezbedan za automatsko učitavanje.',
   ownership:'TEST režim šalje kompletan Universe iz LightingAI-ja; kanali koje ovde nisi postavio ostaju 0. Ne koristi ga paralelno sa drugom DMX konzolom na istom Universe-u.',
-  verifiedTitle:'VERIFIKOVANE KONTROLE',verifiedNone:'Za ovaj uređaj i izabrani DMX mode još nema verifikovanih direktnih kontrola.',verifiedSource:'Profil verifikovan prema zvaničnoj DMX dokumentaciji.',dimmer:'DIMMER',masterTitle:'MASTER / GRUPA',masterHint:'Kontroliši zajedno sva označena Patch svetla koja imaju verifikovan DIMMER kanal.',masterApply:'PRIMENI DIMMER',masterBlackout:'BLACKOUT GRUPE',masterNone:'Nema Patch svetala sa verifikovanim DIMMER profilom.',masterEmpty:'Označi najmanje jedno svetlo.',masterCctTitle:'MASTER CCT',masterCctHint:'Zajedno promeni temperaturu boje na označenim svetlima koja imaju verifikovan CCT kanal.',masterCctApply:'PRIMENI CCT',masterCctNone:'Nema Patch svetala sa verifikovanim CCT profilom.',masterCctNoCommon:'Označena svetla nemaju zajednički CCT opseg.',masterRgbTitle:'MASTER RGB',masterRgbHint:'Zajedno postavi RGB na označenim svetlima koja imaju verifikovane R/G/B kanale.',masterRgbApply:'PRIMENI RGB',masterRgbNone:'Nema Patch svetala sa verifikovanim RGB profilom.',liveLabel:'LIVE DMX REFRESH · 30 Hz',liveHint:'Kada je uključeno, LightingAI neprekidno osvežava aktivne Universe-e preko izabranog mrežnog protokola dok je aplikacija u prvom planu. Automatski se zaustavlja kada napustiš aplikaciju.',liveOn:'LIVE mrežni DMX je uključen.',liveOff:'LIVE mrežni DMX je zaustavljen.',sceneTitle:'CONTROL SCENE',sceneHint:'Sačuvaj trenutno LightingAI stanje kanala i vrati ga kasnije. Scena radi samo ako DMX Patch ostane isti.',sceneName:'Naziv scene',sceneSave:'SAČUVAJ SCENU',sceneApply:'PRIMENI',sceneFade:'PRELAZ',sceneFadeSeconds:'PRELAZ (s)',sceneDelete:'OBRIŠI',sceneEmpty:'Nema sačuvanih CONTROL scena.',sceneSaved:'CONTROL scena je sačuvana.',sceneApplied:'CONTROL scena je primenjena.',sceneFading:'Prelaz scene…',sceneFadeDone:'Prelaz scene je završen.',sceneFadeCancelled:'Prelaz scene je zaustavljen.',scenePatchMismatch:'DMX Patch je promenjen od trenutka čuvanja scene. Primena je blokirana radi bezbednosti.',sceneNeedFrame:'Prvo uspostavi poznato LightingAI stanje Universe-a.',frameUnknown:'Pre parcijalne kontrole prvo inicijalizuj ovaj Universe eksplicitnim BLACKOUT-om ili primeni punu CONTROL scenu.',sceneLimit:'Možeš sačuvati najviše 12 CONTROL scena.',cueTitle:'CUE LISTA',cueHint:'Složi redosled CONTROL scena i pokreći ih redom jednim GO dugmetom.',cueScene:'SCENA',cueFade:'PRELAZ (s)',cueAdd:'DODAJ CUE',cueGo:'GO / SLEDEĆI',cuePrevious:'PRETHODNI',cueReset:'RESET',cueDelete:'OBRIŠI',cueUp:'GORE',cueDown:'DOLE',cueEmpty:'Cue lista je prazna.',cueMissing:'Cue scena više ne postoji.',cueAdded:'Cue je dodat.',cueCurrent:'AKTIVAN',cueEnd:'Kraj cue liste.',cueBusy:'Sačekaj da se trenutni prelaz završi.',cueLimit:'Možeš sačuvati najviše 64 cue-a.',panicTitle:'GLOBAL BLACKOUT',panicHint:'Odmah postavlja sve LightingAI poznate DMX Universe-e na 0. Koristi samo kada LightingAI kontroliše te Universe-e.',panicGo:'BLACKOUT SVE',panicRestore:'VRATI PRE BLACKOUTA',panicDone:'Global blackout je poslat.',panicDoneNoRestore:'Global blackout je poslat. Prethodno stanje nije bilo potpuno poznato, zato vraćanje nije dostupno.',panicRestored:'Stanje pre blackouta je vraćeno.',panicEmpty:'Nema poznatih DMX Universe-a za blackout.',panicRestoreEmpty:'Nema sačuvanog stanja za vraćanje.',panicPatchChanged:'DMX Patch je promenjen posle blackouta. Vraćanje je blokirano radi bezbednosti.',armLabel:'ARM OUTPUT',armHint:'Fizički DMX izlaz je zaključan dok ga namerno ne uključiš. Promena mreže, protokola, Patch-a ili odlazak aplikacije u pozadinu automatski ga zaključava.',armOn:'DMX izlaz je uključen.',armOff:'DMX izlaz je zaključan.',armRequired:'Prvo uključi ARM OUTPUT.',preflightRunning:'Proveravam mrežnu rutu pre uključivanja izlaza…',preflightNoNetwork:'Nema aktivne IPv4 mreže za DMX izlaz.',preflightNoBroadcast:'AUTO Art-Net nema dostupnu directed broadcast adresu.',preflightMultipleRoutes:'Otkriveno je više Art-Net mrežnih ruta. Izaberi tačnu rutu pre ARM OUTPUT.',preflightNoMulticast:'Aktivna mreža ne podržava multicast potreban za sACN.',preflightMultipleSacnRoutes:'Otkriveno je više multicast mrežnih ruta. Isključi dodatnu mrežu/VPN ili koristi jednu namensku lighting mrežu pre ARM OUTPUT.',preflightBadTarget:'Art-Net cilj nije važeća IPv4 adresa.',preflightBridgeUniverse:'Izabrani bridge ne podržava jedan ili više DMX Universe-a iz trenutnog Patch-a.',preflightFailed:'Mrežna provera nije uspela. DMX izlaz ostaje zaključan.',groupTitle:'CONTROL GRUPE',groupHint:'Sačuvaj izbor svetala iz DMX Patch-a i brzo ga primeni na MASTER DIMMER / CCT / RGB kontrole.',groupName:'Naziv grupe',groupSave:'SAČUVAJ GRUPU',groupApply:'PRIMENI GRUPU',groupDelete:'OBRIŠI',groupEmpty:'Nema sačuvanih CONTROL grupa.',groupNone:'Nema svetala sa verifikovanim kontrolama za grupu.',groupNeedName:'Unesi naziv grupe.',groupNeedMember:'Označi najmanje jedno svetlo.',groupSaved:'CONTROL grupa je sačuvana.',groupApplied:'CONTROL grupa je primenjena.',groupPatchMismatch:'DMX Patch je promenjen od trenutka čuvanja grupe. Primena je blokirana radi bezbednosti.',groupLimit:'Možeš sačuvati najviše 24 CONTROL grupe.',diagTitle:'DIJAGNOSTIKA KONTROLE',diagHint:'Prikazuje lokalno stanje Network DMX izlaza i brojače native sendera. Uspešno UDP slanje nije potvrda da je svetlo primilo paket.',diagRefresh:'OSVEŽI DIJAGNOSTIKU',diagPlatform:'PLATFORMA',diagProtocol:'PROTOKOL',diagArmed:'ARM',diagLive:'LIVE',diagUniverses:'UNIVERSE-I',diagDirect:'DIREKTNO POSLATO',diagLivePackets:'LIVE PAKETI',diagFailures:'GREŠKE',diagLast:'POSLEDNJE SLANJE',diagNoNative:'Native dijagnostika nije dostupna.',diagNoAck:'Art-Net/sACN izlaz ovde nema potvrdu prijema od svetla / node-a.',diagInterfaces:'LOKALNE MREŽE',diagBroadcast:'BROADCAST',diagMulticast:'MULTICAST',diagNoInterface:'Nema aktivne ne-loopback IPv4 mreže.',sacnPriority:'sACN PRIORITET',sacnPriorityHint:'0–200; podrazumevano 100. Viši prioritet ima prednost kada više sACN izvora šalje isti Universe.',bridgeTitle:'VERIFIKOVANI MREŽNI BRIDŽ',bridgeHint:'Opcionalno izaberi poznati standardni bridge/gateway. LightingAI i dalje šalje samo standardni Art-Net ili sACN; ne koristi neproverene proizvođačke BLE komande.',bridgeSelect:'BRIDGE / GATEWAY',bridgeNone:'Bez posebnog bridge profila',bridgeProtocols:'PROTOKOLI',bridgeTransport:'MREŽA',bridgeOutput:'IZLAZ',bridgeDocs:'DOKUMENTACIJA'
+  verifiedTitle:'VERIFIKOVANE KONTROLE',verifiedNone:'Za ovaj uređaj i izabrani DMX mode još nema verifikovanih direktnih kontrola.',verifiedSource:'Profil verifikovan prema zvaničnoj DMX dokumentaciji.',dimmer:'DIMMER',masterTitle:'MASTER / GRUPA',masterHint:'Kontroliši zajedno sva označena Patch svetla koja imaju verifikovan DIMMER kanal.',masterApply:'PRIMENI DIMMER',masterBlackout:'BLACKOUT GRUPE',masterNone:'Nema Patch svetala sa verifikovanim DIMMER profilom.',masterEmpty:'Označi najmanje jedno svetlo.',masterCctTitle:'MASTER CCT',masterCctHint:'Zajedno promeni temperaturu boje na označenim svetlima koja imaju verifikovan CCT kanal.',masterCctApply:'PRIMENI CCT',masterCctNone:'Nema Patch svetala sa verifikovanim CCT profilom.',masterCctNoCommon:'Označena svetla nemaju zajednički CCT opseg.',masterRgbTitle:'MASTER RGB',masterRgbHint:'Zajedno postavi RGB na označenim svetlima koja imaju verifikovane R/G/B kanale.',masterRgbApply:'PRIMENI RGB',masterRgbNone:'Nema Patch svetala sa verifikovanim RGB profilom.',liveLabel:'LIVE DMX REFRESH · 30 Hz',liveHint:'Kada je uključeno, LightingAI neprekidno osvežava aktivne Universe-e preko izabranog mrežnog protokola dok je aplikacija u prvom planu. Automatski se zaustavlja kada napustiš aplikaciju.',liveOn:'LIVE mrežni DMX je uključen.',liveOff:'LIVE mrežni DMX je zaustavljen.',sceneTitle:'CONTROL SCENE',sceneHint:'Sačuvaj trenutno LightingAI stanje kanala i vrati ga kasnije. Scena radi samo ako DMX Patch ostane isti.',sceneName:'Naziv scene',sceneSave:'SAČUVAJ SCENU',sceneApply:'PRIMENI',sceneFade:'PRELAZ',sceneFadeSeconds:'PRELAZ (s)',sceneDelete:'OBRIŠI',sceneEmpty:'Nema sačuvanih CONTROL scena.',sceneSaved:'CONTROL scena je sačuvana.',sceneApplied:'CONTROL scena je primenjena.',sceneFading:'Prelaz scene…',sceneFadeDone:'Prelaz scene je završen.',sceneFadeCancelled:'Prelaz scene je zaustavljen.',scenePatchMismatch:'DMX Patch je promenjen od trenutka čuvanja scene. Primena je blokirana radi bezbednosti.',sceneNeedFrame:'Prvo uspostavi poznato LightingAI stanje Universe-a.',frameUnknown:'Pre parcijalne kontrole prvo inicijalizuj ovaj Universe eksplicitnim BLACKOUT-om ili primeni punu CONTROL scenu.',sceneLimit:'Možeš sačuvati najviše 12 CONTROL scena.',cueTitle:'CUE LISTA',cueHint:'Složi redosled CONTROL scena i pokreći ih redom jednim GO dugmetom.',cueScene:'SCENA',cueFade:'PRELAZ (s)',cueAdd:'DODAJ CUE',cueGo:'GO / SLEDEĆI',cuePrevious:'PRETHODNI',cueReset:'RESET',cueDelete:'OBRIŠI',cueUp:'GORE',cueDown:'DOLE',cueEmpty:'Cue lista je prazna.',cueMissing:'Cue scena više ne postoji.',cueAdded:'Cue je dodat.',cueCurrent:'AKTIVAN',cueEnd:'Kraj cue liste.',cueBusy:'Sačekaj da se trenutni prelaz završi.',cueLimit:'Možeš sačuvati najviše 64 cue-a.',panicTitle:'GLOBAL BLACKOUT',panicHint:'Odmah postavlja sve LightingAI poznate DMX Universe-e na 0. Koristi samo kada LightingAI kontroliše te Universe-e.',panicGo:'BLACKOUT SVE',panicRestore:'VRATI PRE BLACKOUTA',panicDone:'Global blackout je poslat.',panicDoneNoRestore:'Global blackout je poslat. Prethodno stanje nije bilo potpuno poznato, zato vraćanje nije dostupno.',panicRestored:'Stanje pre blackouta je vraćeno.',panicEmpty:'Nema poznatih DMX Universe-a za blackout.',panicRestoreEmpty:'Nema sačuvanog stanja za vraćanje.',panicPatchChanged:'DMX Patch je promenjen posle blackouta. Vraćanje je blokirano radi bezbednosti.',armLabel:'ARM OUTPUT',armHint:'Fizički DMX izlaz je zaključan dok ga namerno ne uključiš. Promena mreže, protokola, Patch-a ili odlazak aplikacije u pozadinu automatski ga zaključava.',armOn:'DMX izlaz je uključen.',armOff:'DMX izlaz je zaključan.',armRequired:'Prvo uključi ARM OUTPUT.',preflightRunning:'Proveravam mrežnu rutu pre uključivanja izlaza…',preflightNoNetwork:'Nema aktivne IPv4 mreže za DMX izlaz.',preflightNoBroadcast:'AUTO Art-Net nije pronašao pretplatnika za svaki aktivni Universe.',preflightBroadcastTarget:'ArtDmx broadcast nije dozvoljen. Izaberi node IP ili AUTO.',preflightMultipleRoutes:'Art-Net cilj nema jednu nedvosmislenu IPv4 rutu. Isključi dodatnu mrežu/VPN ili koristi namensku lighting mrežu.',preflightNoMulticast:'Aktivna mreža ne podržava multicast potreban za sACN.',preflightMultipleSacnRoutes:'Otkriveno je više multicast mrežnih ruta. Isključi dodatnu mrežu/VPN ili koristi jednu namensku lighting mrežu pre ARM OUTPUT.',preflightBadTarget:'Art-Net cilj nije važeća IPv4 adresa.',preflightBridgeUniverse:'Izabrani bridge ne podržava jedan ili više DMX Universe-a iz trenutnog Patch-a.',preflightFailed:'Mrežna provera nije uspela. DMX izlaz ostaje zaključan.',groupTitle:'CONTROL GRUPE',groupHint:'Sačuvaj izbor svetala iz DMX Patch-a i brzo ga primeni na MASTER DIMMER / CCT / RGB kontrole.',groupName:'Naziv grupe',groupSave:'SAČUVAJ GRUPU',groupApply:'PRIMENI GRUPU',groupDelete:'OBRIŠI',groupEmpty:'Nema sačuvanih CONTROL grupa.',groupNone:'Nema svetala sa verifikovanim kontrolama za grupu.',groupNeedName:'Unesi naziv grupe.',groupNeedMember:'Označi najmanje jedno svetlo.',groupSaved:'CONTROL grupa je sačuvana.',groupApplied:'CONTROL grupa je primenjena.',groupPatchMismatch:'DMX Patch je promenjen od trenutka čuvanja grupe. Primena je blokirana radi bezbednosti.',groupLimit:'Možeš sačuvati najviše 24 CONTROL grupe.',diagTitle:'DIJAGNOSTIKA KONTROLE',diagHint:'Prikazuje lokalno stanje Network DMX izlaza i brojače native sendera. Uspešno UDP slanje nije potvrda da je svetlo primilo paket.',diagRefresh:'OSVEŽI DIJAGNOSTIKU',diagPlatform:'PLATFORMA',diagProtocol:'PROTOKOL',diagArmed:'ARM',diagLive:'LIVE',diagUniverses:'UNIVERSE-I',diagDirect:'DIREKTNO POSLATO',diagLivePackets:'LIVE PAKETI',diagFailures:'GREŠKE',diagLast:'POSLEDNJE SLANJE',diagNoNative:'Native dijagnostika nije dostupna.',diagNoAck:'Art-Net/sACN izlaz ovde nema potvrdu prijema od svetla / node-a.',diagInterfaces:'LOKALNE MREŽE',diagBroadcast:'BROADCAST',diagMulticast:'MULTICAST',diagNoInterface:'Nema aktivne ne-loopback IPv4 mreže.',sacnPriority:'sACN PRIORITET',sacnPriorityHint:'0–200; podrazumevano 100. Viši prioritet ima prednost kada više sACN izvora šalje isti Universe.',bridgeTitle:'VERIFIKOVANI MREŽNI BRIDŽ',bridgeHint:'Opcionalno izaberi poznati standardni bridge/gateway. LightingAI i dalje šalje samo standardni Art-Net ili sACN; ne koristi neproverene proizvođačke BLE komande.',bridgeSelect:'BRIDGE / GATEWAY',bridgeNone:'Bez posebnog bridge profila',bridgeProtocols:'PROTOKOLI',bridgeTransport:'MREŽA',bridgeOutput:'IZLAZ',bridgeDocs:'DOKUMENTACIJA'
  },
  en:{
   title:'📡 NETWORK DMX CONTROL',
   intro:'Control DMX over the network using Art-Net or sACN (E1.31). The existing DMX Patch remains the shared source for universes and addresses.',
-  protocol:'NETWORK PROTOCOL',artnet:'Art-Net',sacn:'sACN (E1.31)',sacnInfo:'sACN automatically uses the multicast address for the selected universe.',target:'ART-NET NODE / IP',artnetAutoHint:'AUTO uses active IPv4 directed broadcast routes. If multiple networks are active, choose the exact output below.',artnetRoute:'ART-NET NETWORK ROUTE',artnetRouteAuto:'AUTO / all active routes',artnetRouteNone:'No directed broadcast routes available.',discover:'DISCOVER ART-NET NODES',nodes:'DISCOVERED NODES',noNodes:'No Art-Net nodes found.',discovering:'Discovering Art-Net nodes…',patchDevice:'DEVICE FROM DMX PATCH',manual:'Manual / no Patch device',refresh:'REFRESH PATCH',
+  protocol:'NETWORK PROTOCOL',artnet:'Art-Net',sacn:'sACN (E1.31)',sacnInfo:'sACN automatically uses the multicast address for the selected universe.',target:'ART-NET NODE / IP',artnetAutoHint:'AUTO discovers Art-Net subscribers for active universes first, then sends ArtDmx only by unicast to the matching nodes.',artnetRoute:'ART-NET ROUTING',artnetRouteAuto:'AUTO / subscription discovery + unicast',artnetRouteNone:'AUTO uses ArtPoll discovery on the active IPv4 network.',discover:'DISCOVER ART-NET NODES',nodes:'DISCOVERED NODES',noNodes:'No Art-Net nodes found.',discovering:'Discovering Art-Net nodes…',patchDevice:'DEVICE FROM DMX PATCH',manual:'Manual / no Patch device',refresh:'REFRESH PATCH',
   universe:'UNIVERSE',channel:'DMX CHANNEL',value:'VALUE',send:'SEND TEST',blackout:'BLACKOUT UNIVERSE',
   ready:'Ready to send.',sending:'Sending network DMX…',sent:'Network DMX packet sent.',error:'Send failed.',
   native:'Network DMX requires a supported native control bridge.',patch:'Universe and START address come from the existing DMX Patch planner. The meaning of each channel must still be verified from the manufacturer DMX profile.',
   patchEmpty:'No valid devices in the DMX Patch. Add a device and enter its channel count.',patchLoaded:'Loaded from Patch',patchWarn:'This Patch row has a warning and is not safe to auto-load.',
   ownership:'TEST mode sends a complete Universe from LightingAI; channels not set here remain at 0. Do not use it in parallel with another DMX console on the same Universe.',
-  verifiedTitle:'VERIFIED CONTROLS',verifiedNone:'This fixture and selected DMX mode do not yet have verified direct controls.',verifiedSource:'Profile verified against official DMX documentation.',dimmer:'DIMMER',masterTitle:'MASTER / GROUP',masterHint:'Control all selected Patch fixtures that have a verified DIMMER channel together.',masterApply:'APPLY DIMMER',masterBlackout:'GROUP BLACKOUT',masterNone:'No Patch fixtures have a verified DIMMER profile.',masterEmpty:'Select at least one fixture.',masterCctTitle:'MASTER CCT',masterCctHint:'Change color temperature together on selected fixtures that have a verified CCT channel.',masterCctApply:'APPLY CCT',masterCctNone:'No Patch fixtures have a verified CCT profile.',masterCctNoCommon:'Selected fixtures do not share a common CCT range.',masterRgbTitle:'MASTER RGB',masterRgbHint:'Set RGB together on selected fixtures that have verified R/G/B channels.',masterRgbApply:'APPLY RGB',masterRgbNone:'No Patch fixtures have a verified RGB profile.',liveLabel:'LIVE DMX REFRESH · 30 Hz',liveHint:'When enabled, LightingAI continuously refreshes active universes over the selected network protocol while the app is in the foreground. It stops automatically when you leave the app.',liveOn:'LIVE network DMX is enabled.',liveOff:'LIVE network DMX stopped.',sceneTitle:'CONTROL SCENE',sceneHint:'Save the current LightingAI channel state and recall it later. A scene can only be recalled while the DMX Patch is unchanged.',sceneName:'Scene name',sceneSave:'SAVE SCENE',sceneApply:'APPLY',sceneFade:'FADE',sceneFadeSeconds:'FADE (s)',sceneDelete:'DELETE',sceneEmpty:'No saved CONTROL scenes.',sceneSaved:'CONTROL scene saved.',sceneApplied:'CONTROL scene applied.',sceneFading:'Scene fade in progress…',sceneFadeDone:'Scene fade complete.',sceneFadeCancelled:'Scene fade stopped.',scenePatchMismatch:'The DMX Patch changed after this scene was saved. Recall is blocked for safety.',sceneNeedFrame:'Establish a known LightingAI universe state first.',frameUnknown:'Before partial control, initialize this universe with an explicit BLACKOUT or apply a full CONTROL scene.',sceneLimit:'You can save up to 12 CONTROL scenes.',cueTitle:'CUE LIST',cueHint:'Arrange CONTROL scenes in order and trigger them sequentially with one GO button.',cueScene:'SCENE',cueFade:'FADE (s)',cueAdd:'ADD CUE',cueGo:'GO / NEXT',cuePrevious:'PREVIOUS',cueReset:'RESET',cueDelete:'DELETE',cueUp:'UP',cueDown:'DOWN',cueEmpty:'Cue list is empty.',cueMissing:'The cue scene no longer exists.',cueAdded:'Cue added.',cueCurrent:'ACTIVE',cueEnd:'End of cue list.',cueBusy:'Wait for the current fade to finish.',cueLimit:'You can save up to 64 cues.',panicTitle:'GLOBAL BLACKOUT',panicHint:'Immediately sets all LightingAI-known DMX universes to 0. Use only when LightingAI owns those universes.',panicGo:'BLACKOUT ALL',panicRestore:'RESTORE BEFORE BLACKOUT',panicDone:'Global blackout sent.',panicDoneNoRestore:'Global blackout sent. The previous state was not fully known, so restore is unavailable.',panicRestored:'Pre-blackout state restored.',panicEmpty:'No known DMX universes to black out.',panicRestoreEmpty:'No saved pre-blackout state to restore.',panicPatchChanged:'The DMX Patch changed after blackout. Restore is blocked for safety.',armLabel:'ARM OUTPUT',armHint:'Physical DMX output stays locked until you deliberately arm it. Changing network, protocol, Patch, or leaving the app automatically locks it again.',armOn:'DMX output armed.',armOff:'DMX output locked.',armRequired:'Arm DMX output first.',preflightRunning:'Checking the network route before arming output…',preflightNoNetwork:'No active IPv4 network is available for DMX output.',preflightNoBroadcast:'AUTO Art-Net has no directed broadcast address available.',preflightMultipleRoutes:'Multiple Art-Net network routes are active. Select the exact route before ARM OUTPUT.',preflightNoMulticast:'The active network does not support multicast required by sACN.',preflightBadTarget:'The Art-Net target is not a valid IPv4 address.',preflightBridgeUniverse:'The selected bridge does not support one or more DMX universes in the current Patch.',preflightFailed:'Network preflight failed. DMX output remains locked.',groupTitle:'CONTROL GROUPS',groupHint:'Save a DMX Patch fixture selection and quickly apply it to MASTER DIMMER / CCT / RGB controls.',groupName:'Group name',groupSave:'SAVE GROUP',groupApply:'APPLY GROUP',groupDelete:'DELETE',groupEmpty:'No saved CONTROL groups.',groupNone:'No fixtures with verified controls are available for grouping.',groupNeedName:'Enter a group name.',groupNeedMember:'Select at least one fixture.',groupSaved:'CONTROL group saved.',groupApplied:'CONTROL group applied.',groupPatchMismatch:'The DMX Patch changed after this group was saved. Apply is blocked for safety.',groupLimit:'You can save up to 24 CONTROL groups.',diagTitle:'CONTROL DIAGNOSTICS',diagHint:'Shows local Network DMX state and native sender counters. A successful UDP send is not proof that a fixture received the packet.',diagRefresh:'REFRESH DIAGNOSTICS',diagPlatform:'PLATFORM',diagProtocol:'PROTOCOL',diagArmed:'ARM',diagLive:'LIVE',diagUniverses:'UNIVERSES',diagDirect:'DIRECT SENT',diagLivePackets:'LIVE PACKETS',diagFailures:'FAILURES',diagLast:'LAST SEND',diagNoNative:'Native diagnostics are unavailable.',diagNoAck:'This Art-Net/sACN output has no fixture/node delivery acknowledgement.',diagInterfaces:'LOCAL NETWORKS',diagBroadcast:'BROADCAST',diagMulticast:'MULTICAST',diagNoInterface:'No active non-loopback IPv4 network.',sacnPriority:'sACN PRIORITY',sacnPriorityHint:'0–200; default 100. Higher priority wins when multiple sACN sources send the same universe.',bridgeTitle:'VERIFIED NETWORK BRIDGE',bridgeHint:'Optionally select a known standards-based bridge/gateway. LightingAI still sends only standard Art-Net or sACN and does not use unverified proprietary BLE commands.',bridgeSelect:'BRIDGE / GATEWAY',bridgeNone:'No dedicated bridge profile',bridgeProtocols:'PROTOCOLS',bridgeTransport:'NETWORK',bridgeOutput:'OUTPUT',bridgeDocs:'DOCUMENTATION'
+  verifiedTitle:'VERIFIED CONTROLS',verifiedNone:'This fixture and selected DMX mode do not yet have verified direct controls.',verifiedSource:'Profile verified against official DMX documentation.',dimmer:'DIMMER',masterTitle:'MASTER / GROUP',masterHint:'Control all selected Patch fixtures that have a verified DIMMER channel together.',masterApply:'APPLY DIMMER',masterBlackout:'GROUP BLACKOUT',masterNone:'No Patch fixtures have a verified DIMMER profile.',masterEmpty:'Select at least one fixture.',masterCctTitle:'MASTER CCT',masterCctHint:'Change color temperature together on selected fixtures that have a verified CCT channel.',masterCctApply:'APPLY CCT',masterCctNone:'No Patch fixtures have a verified CCT profile.',masterCctNoCommon:'Selected fixtures do not share a common CCT range.',masterRgbTitle:'MASTER RGB',masterRgbHint:'Set RGB together on selected fixtures that have verified R/G/B channels.',masterRgbApply:'APPLY RGB',masterRgbNone:'No Patch fixtures have a verified RGB profile.',liveLabel:'LIVE DMX REFRESH · 30 Hz',liveHint:'When enabled, LightingAI continuously refreshes active universes over the selected network protocol while the app is in the foreground. It stops automatically when you leave the app.',liveOn:'LIVE network DMX is enabled.',liveOff:'LIVE network DMX stopped.',sceneTitle:'CONTROL SCENE',sceneHint:'Save the current LightingAI channel state and recall it later. A scene can only be recalled while the DMX Patch is unchanged.',sceneName:'Scene name',sceneSave:'SAVE SCENE',sceneApply:'APPLY',sceneFade:'FADE',sceneFadeSeconds:'FADE (s)',sceneDelete:'DELETE',sceneEmpty:'No saved CONTROL scenes.',sceneSaved:'CONTROL scene saved.',sceneApplied:'CONTROL scene applied.',sceneFading:'Scene fade in progress…',sceneFadeDone:'Scene fade complete.',sceneFadeCancelled:'Scene fade stopped.',scenePatchMismatch:'The DMX Patch changed after this scene was saved. Recall is blocked for safety.',sceneNeedFrame:'Establish a known LightingAI universe state first.',frameUnknown:'Before partial control, initialize this universe with an explicit BLACKOUT or apply a full CONTROL scene.',sceneLimit:'You can save up to 12 CONTROL scenes.',cueTitle:'CUE LIST',cueHint:'Arrange CONTROL scenes in order and trigger them sequentially with one GO button.',cueScene:'SCENE',cueFade:'FADE (s)',cueAdd:'ADD CUE',cueGo:'GO / NEXT',cuePrevious:'PREVIOUS',cueReset:'RESET',cueDelete:'DELETE',cueUp:'UP',cueDown:'DOWN',cueEmpty:'Cue list is empty.',cueMissing:'The cue scene no longer exists.',cueAdded:'Cue added.',cueCurrent:'ACTIVE',cueEnd:'End of cue list.',cueBusy:'Wait for the current fade to finish.',cueLimit:'You can save up to 64 cues.',panicTitle:'GLOBAL BLACKOUT',panicHint:'Immediately sets all LightingAI-known DMX universes to 0. Use only when LightingAI owns those universes.',panicGo:'BLACKOUT ALL',panicRestore:'RESTORE BEFORE BLACKOUT',panicDone:'Global blackout sent.',panicDoneNoRestore:'Global blackout sent. The previous state was not fully known, so restore is unavailable.',panicRestored:'Pre-blackout state restored.',panicEmpty:'No known DMX universes to black out.',panicRestoreEmpty:'No saved pre-blackout state to restore.',panicPatchChanged:'The DMX Patch changed after blackout. Restore is blocked for safety.',armLabel:'ARM OUTPUT',armHint:'Physical DMX output stays locked until you deliberately arm it. Changing network, protocol, Patch, or leaving the app automatically locks it again.',armOn:'DMX output armed.',armOff:'DMX output locked.',armRequired:'Arm DMX output first.',preflightRunning:'Checking the network route before arming output…',preflightNoNetwork:'No active IPv4 network is available for DMX output.',preflightNoBroadcast:'AUTO Art-Net did not find a subscriber for every active universe.',preflightBroadcastTarget:'ArtDmx broadcast is not allowed. Select a node IP or AUTO.',preflightMultipleRoutes:'The Art-Net target does not have one unambiguous IPv4 route. Disable the extra network/VPN or use a dedicated lighting network.',preflightNoMulticast:'The active network does not support multicast required by sACN.',preflightBadTarget:'The Art-Net target is not a valid IPv4 address.',preflightBridgeUniverse:'The selected bridge does not support one or more DMX universes in the current Patch.',preflightFailed:'Network preflight failed. DMX output remains locked.',groupTitle:'CONTROL GROUPS',groupHint:'Save a DMX Patch fixture selection and quickly apply it to MASTER DIMMER / CCT / RGB controls.',groupName:'Group name',groupSave:'SAVE GROUP',groupApply:'APPLY GROUP',groupDelete:'DELETE',groupEmpty:'No saved CONTROL groups.',groupNone:'No fixtures with verified controls are available for grouping.',groupNeedName:'Enter a group name.',groupNeedMember:'Select at least one fixture.',groupSaved:'CONTROL group saved.',groupApplied:'CONTROL group applied.',groupPatchMismatch:'The DMX Patch changed after this group was saved. Apply is blocked for safety.',groupLimit:'You can save up to 24 CONTROL groups.',diagTitle:'CONTROL DIAGNOSTICS',diagHint:'Shows local Network DMX state and native sender counters. A successful UDP send is not proof that a fixture received the packet.',diagRefresh:'REFRESH DIAGNOSTICS',diagPlatform:'PLATFORM',diagProtocol:'PROTOCOL',diagArmed:'ARM',diagLive:'LIVE',diagUniverses:'UNIVERSES',diagDirect:'DIRECT SENT',diagLivePackets:'LIVE PACKETS',diagFailures:'FAILURES',diagLast:'LAST SEND',diagNoNative:'Native diagnostics are unavailable.',diagNoAck:'This Art-Net/sACN output has no fixture/node delivery acknowledgement.',diagInterfaces:'LOCAL NETWORKS',diagBroadcast:'BROADCAST',diagMulticast:'MULTICAST',diagNoInterface:'No active non-loopback IPv4 network.',sacnPriority:'sACN PRIORITY',sacnPriorityHint:'0–200; default 100. Higher priority wins when multiple sACN sources send the same universe.',bridgeTitle:'VERIFIED NETWORK BRIDGE',bridgeHint:'Optionally select a known standards-based bridge/gateway. LightingAI still sends only standard Art-Net or sACN and does not use unverified proprietary BLE commands.',bridgeSelect:'BRIDGE / GATEWAY',bridgeNone:'No dedicated bridge profile',bridgeProtocols:'PROTOCOLS',bridgeTransport:'NETWORK',bridgeOutput:'OUTPUT',bridgeDocs:'DOCUMENTATION'
  }
 };
 const t=()=>TXT[lang()];
@@ -55,7 +55,11 @@ let currentCueIndex=-1;
 let lastBlackoutSnapshot=null;
 let outputArmed=false;
 let pendingArmPreflightId=null;
+let pendingArmDiscoveryId='';
 let activeDiscoveryRequestId='';
+let activeArtNetRefreshDiscoveryId='';
+let artNetAutoSubscribers={};
+let lastArtNetAutoDiscoveryAt=0;
 let armGeneration=0;
 let armedNetworkSignature='';
 let armedContextSignature='';
@@ -217,17 +221,9 @@ function formatDiagTime(ms){
 }
 function renderArtNetRoutes(interfaces){
  const select=E('artnetRouteSelect');if(!select)return;
- const list=(Array.isArray(interfaces)?interfaces:[]).filter(item=>item&&item.broadcast);
- const current=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();
- let html='<option value="AUTO">'+esc(t().artnetRouteAuto)+'</option>';
- if(!list.length)html+='<option value="" disabled>'+esc(t().artnetRouteNone)+'</option>';
- list.forEach(item=>{
-  const name=item.displayName||item.name||'IPv4',ip=item.ipv4||'',broadcast=item.broadcast||'';
-  html+='<option value="'+esc(broadcast)+'">'+esc(name+' · '+ip+' → '+broadcast)+'</option>';
- });
- select.innerHTML=html;
- if(current&&current.toUpperCase()!=='AUTO'&&list.some(item=>item.broadcast===current))select.value=current;
- else select.value='AUTO';
+ select.innerHTML='<option value="AUTO">'+esc(t().artnetRouteAuto)+'</option>';
+ select.value='AUTO';
+ select.disabled=true;
 }
 function renderDiagnostics(nativePayload,error){
  const box=E('artnetDiagnosticsBody');if(!box)return;
@@ -279,6 +275,27 @@ function validIpv4(value){
  if(normalized==='0.0.0.0'||first===127||(first>=224&&first<=239))return false;
  return true;
 }
+function ipv4Number(value){
+ const parts=String(value||'').trim().split('.').map(Number);
+ if(parts.length!==4||parts.some(n=>!Number.isInteger(n)||n<0||n>255))return null;
+ return (((parts[0]<<24)>>>0)|(parts[1]<<16)|(parts[2]<<8)|parts[3])>>>0;
+}
+function interfaceMatchesTarget(item,target){
+ if(!item||!validIpv4(item.ipv4)||!validIpv4(target))return false;
+ const prefix=Number(item.prefixLength);
+ if(!Number.isInteger(prefix)||prefix<0||prefix>32)return false;
+ const local=ipv4Number(item.ipv4),remote=ipv4Number(target);
+ if(local==null||remote==null)return false;
+ const mask=prefix===0?0:((0xffffffff<<(32-prefix))>>>0);
+ return ((local&mask)>>>0)===((remote&mask)>>>0);
+}
+function targetRouteCount(target,interfaces){
+ return (Array.isArray(interfaces)?interfaces:[]).filter(item=>interfaceMatchesTarget(item,target)).length;
+}
+function artNetTargetIsLocalBroadcast(target,interfaces){
+ const value=String(target||'').trim();
+ return (Array.isArray(interfaces)?interfaces:[]).some(item=>item&&String(item.broadcast||'')===value);
+}
 function artNetTargetIsAuto(value){
  const target=String(value||'').trim();
  return !target||target.toUpperCase()==='AUTO'||target==='255.255.255.255';
@@ -301,12 +318,11 @@ function finishArmPreflight(id,payload,error){
  else if(selectedProtocol()==='artnet'){
   const target=String((E('artnetTarget')&&E('artnetTarget').value)||'AUTO').trim();
   const auto=artNetTargetIsAuto(target);
-  const broadcasts=interfaces.filter(item=>item&&item.broadcast);
-  const selectedBroadcastRoutes=broadcasts.filter(item=>String(item.broadcast||'')===target);
-  if(auto&&!broadcasts.length)failure=t().preflightNoBroadcast;
-  else if(auto&&broadcasts.length>1)failure=t().preflightMultipleRoutes;
+  if(auto&&!artNetAutoHasRequiredSubscribers(artNetAutoSubscribers))failure=t().preflightNoBroadcast;
+  else if(auto&&!artNetAutoTargetsHaveUniqueRoutes(artNetAutoSubscribers,interfaces))failure=t().preflightMultipleRoutes;
   else if(!auto&&!validIpv4(target))failure=t().preflightBadTarget;
-  else if(!auto&&interfaces.length>1&&selectedBroadcastRoutes.length!==1)failure=t().preflightMultipleRoutes;
+  else if(!auto&&artNetTargetIsLocalBroadcast(target,interfaces))failure=t().preflightBroadcastTarget;
+  else if(!auto&&targetRouteCount(target,interfaces)!==1)failure=t().preflightMultipleRoutes;
  }
  if(!failure){
   const bridge=selectedBridge(),universes=knownUniverseNumbers();
@@ -372,6 +388,21 @@ window.LightingAINetworkDmxDiagnosticsResult=function(id,payload,error){
 function runControlHealthCheck(){
  if(!outputArmed)return;
  const transport=controlTransport();
+ const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();
+ if(selectedProtocol()==='artnet'&&artNetTargetIsAuto(rawTarget)&&Date.now()-lastArtNetAutoDiscoveryAt>=5000&&
+    !activeArtNetRefreshDiscoveryId&&!pendingArmDiscoveryId&&!activeDiscoveryRequestId){
+  const discoveryId='artnet_auto_refresh_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
+  activeArtNetRefreshDiscoveryId=discoveryId;
+  try{
+   if(typeof transport.discover!=='function'||!transport.discover({id:discoveryId,timeoutMs:1200})){
+    activeArtNetRefreshDiscoveryId='';
+    setOutputArmed(false,true);status(t().preflightNoBroadcast,false);return;
+   }
+  }catch(e){
+   activeArtNetRefreshDiscoveryId='';
+   setOutputArmed(false,true);status(t().preflightNoBroadcast,false);return;
+  }
+ }
  const id='network_health_g'+armGeneration+'_'+Date.now()+'_'+(++seq);
  try{
   if(typeof transport.diagnostics!=='function'||!transport.diagnostics({id:id})){
@@ -386,25 +417,8 @@ function requireOutputArmed(){
  status(t().armRequired,false);
  return false;
 }
-function setOutputArmed(enabled,quiet){
- const next=!!enabled,toggle=E('artnetOutputArm');
- if(!next){
-  armGeneration++;
-  armedNetworkSignature='';
-  armedContextSignature='';
-  armedPatchSignature='';
-  pendingArmPreflightId=null;
-  try{const transport=controlTransport();if(typeof transport.clearArmSignature==='function')transport.clearArmSignature()}catch(e){}
-  outputArmed=false;
-  if(toggle){toggle.checked=false;toggle.disabled=false}
-  cancelSceneFade(false);
-  clearBlackoutRestore();
-  if(liveEnabled)setLiveEnabled(false);
-  if(!quiet)status(t().armOff);
-  return;
- }
- if(outputArmed){if(toggle)toggle.checked=true;return}
- const transport=controlTransport();
+function requestArmDiagnostics(){
+ const transport=controlTransport(),toggle=E('artnetOutputArm');
  const id='network_arm_'+Date.now()+'_'+(++seq);
  pendingArmPreflightId=id;
  if(toggle){toggle.checked=false;toggle.disabled=true}
@@ -420,6 +434,53 @@ function setOutputArmed(enabled,quiet){
   if(toggle)toggle.disabled=false;
   status(t().preflightFailed,false);
  }
+}
+function setOutputArmed(enabled,quiet){
+ const next=!!enabled,toggle=E('artnetOutputArm');
+ if(!next){
+  armGeneration++;
+  armedNetworkSignature='';
+  armedContextSignature='';
+  armedPatchSignature='';
+  pendingArmPreflightId=null;
+  pendingArmDiscoveryId='';
+  activeArtNetRefreshDiscoveryId='';
+  artNetAutoSubscribers={};
+  lastArtNetAutoDiscoveryAt=0;
+  try{const transport=controlTransport();if(typeof transport.clearArmSignature==='function')transport.clearArmSignature()}catch(e){}
+  outputArmed=false;
+  if(toggle){toggle.checked=false;toggle.disabled=false}
+  cancelSceneFade(false);
+  clearBlackoutRestore();
+  if(liveEnabled)setLiveEnabled(false);
+  if(!quiet)status(t().armOff);
+  return;
+ }
+ if(outputArmed){if(toggle)toggle.checked=true;return}
+ const transport=controlTransport();
+ const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();
+ if(selectedProtocol()==='artnet'&&artNetTargetIsAuto(rawTarget)){
+  const id='artnet_arm_discovery_'+Date.now()+'_'+(++seq);
+  pendingArmDiscoveryId=id;
+  activeDiscoveryRequestId='';
+  artNetAutoSubscribers={};
+  lastArtNetAutoDiscoveryAt=0;
+  if(toggle){toggle.checked=false;toggle.disabled=true}
+  status(t().discovering);
+  try{
+   if(typeof transport.discover!=='function'||!transport.discover({id:id,timeoutMs:1200})){
+    pendingArmDiscoveryId='';
+    if(toggle)toggle.disabled=false;
+    status(t().preflightNoBroadcast,false);
+   }
+  }catch(e){
+   pendingArmDiscoveryId='';
+   if(toggle)toggle.disabled=false;
+   status(t().preflightNoBroadcast,false);
+  }
+  return;
+ }
+ requestArmDiagnostics();
 }
 function selectedProtocol(){
  const select=E('networkDmxProtocol');
@@ -492,6 +553,47 @@ function updateProtocolUi(){
   info.textContent=protocol==='sacn'?(t().sacnInfo+' '+sacnMulticastAddress(universe&&universe.value)):t().sacnInfo;
  }
 }
+function buildArtNetSubscriberMap(nodes){
+ const map={};
+ (Array.isArray(nodes)?nodes:[]).forEach(node=>{
+  const ip=String(node&&node.ip||'').trim();
+  if(!validIpv4(ip)||!Array.isArray(node.subscriptions))return;
+  node.subscriptions.forEach(value=>{
+   const portAddress=Number(value);
+   if(!Number.isInteger(portAddress)||portAddress<0||portAddress>32767)return;
+   const key=String(portAddress);
+   if(!map[key])map[key]=[];
+   if(!map[key].includes(ip))map[key].push(ip);
+  });
+ });
+ Object.keys(map).forEach(key=>map[key].sort());
+ return map;
+}
+function artNetSubscriberMapSignature(map){
+ const source=map&&typeof map==='object'?map:{};
+ return JSON.stringify(Object.keys(source).sort((a,b)=>Number(a)-Number(b)).map(key=>[key,(source[key]||[]).slice().sort()]));
+}
+function artNetRequiredPortAddresses(){
+ const universes=new Set(knownUniverseNumbers());
+ const selected=validUniverseForProtocol(Number(E('artnetUniverse')&&E('artnetUniverse').value),'artnet');
+ if(selected!=null)universes.add(selected);
+ return Array.from(universes).map(artNetPortAddressForUniverse).filter(v=>Number.isInteger(v));
+}
+function artNetAutoHasRequiredSubscribers(map){
+ const source=map&&typeof map==='object'?map:{};
+ const required=artNetRequiredPortAddresses();
+ return required.length>0&&required.every(portAddress=>Array.isArray(source[String(portAddress)])&&source[String(portAddress)].length>0);
+}
+function artNetAutoTargetsHaveUniqueRoutes(map,interfaces){
+ const source=map&&typeof map==='object'?map:{};
+ const required=artNetRequiredPortAddresses(),targets=new Set();
+ required.forEach(portAddress=>(source[String(portAddress)]||[]).forEach(ip=>targets.add(ip)));
+ return targets.size>0&&Array.from(targets).every(ip=>targetRouteCount(ip,interfaces)===1);
+}
+function artNetTargetsForPortAddress(portAddress){
+ const list=artNetAutoSubscribers[String(portAddress)];
+ return Array.isArray(list)?list.slice():[];
+}
 function discoverNodes(){
  const transport=controlTransport();
  if(!transport.isAvailable()||typeof transport.discover!=='function'){status(t().native,false);return}
@@ -516,9 +618,44 @@ function renderDiscoveredNodes(nodes){
  select.disabled=!list.length;
 }
 window.LightingAIArtNetDiscoveryResult=function(id,nodes,error){
- if(String(id||'')!==activeDiscoveryRequestId)return;
+ const resultId=String(id||'');
+ if(resultId===pendingArmDiscoveryId){
+  pendingArmDiscoveryId='';
+  renderDiscoveredNodes(error?[]:nodes);
+  if(error){
+   artNetAutoSubscribers={};lastArtNetAutoDiscoveryAt=0;
+   const toggle=E('artnetOutputArm');if(toggle){toggle.checked=false;toggle.disabled=false}
+   status(t().preflightNoBroadcast,false);return;
+  }
+  artNetAutoSubscribers=buildArtNetSubscriberMap(nodes);
+  lastArtNetAutoDiscoveryAt=Date.now();
+  if(!artNetAutoHasRequiredSubscribers(artNetAutoSubscribers)){
+   artNetAutoSubscribers={};lastArtNetAutoDiscoveryAt=0;
+   const toggle=E('artnetOutputArm');if(toggle){toggle.checked=false;toggle.disabled=false}
+   status(t().preflightNoBroadcast,false);return;
+  }
+  requestArmDiagnostics();
+  return;
+ }
+ if(resultId===activeArtNetRefreshDiscoveryId){
+  activeArtNetRefreshDiscoveryId='';
+  const match=resultId.match(/^artnet_auto_refresh_g(\d+)_/);
+  if(!match||Number(match[1])!==armGeneration||!outputArmed)return;
+  if(error){setOutputArmed(false,true);status(t().preflightNoBroadcast,false);return}
+  const next=buildArtNetSubscriberMap(nodes);
+  if(!artNetAutoHasRequiredSubscribers(next)||
+     artNetSubscriberMapSignature(next)!==artNetSubscriberMapSignature(artNetAutoSubscribers)){
+   setOutputArmed(false,true);status(t().preflightNoBroadcast,false);return;
+  }
+  artNetAutoSubscribers=next;
+  lastArtNetAutoDiscoveryAt=Date.now();
+  return;
+ }
+ if(resultId!==activeDiscoveryRequestId)return;
  activeDiscoveryRequestId='';
  if(error){renderDiscoveredNodes([]);status(error,false);return}
+ artNetAutoSubscribers=buildArtNetSubscriberMap(nodes);
+ lastArtNetAutoDiscoveryAt=Date.now();
  renderDiscoveredNodes(nodes);
  status((Array.isArray(nodes)&&nodes.length)?(t().nodes+': '+nodes.length):t().noNodes,Array.isArray(nodes)&&nodes.length>0);
 };
@@ -1339,20 +1476,28 @@ function sendFrame(channels,universe,source){
  const artNetPortAddress=protocol==='artnet'?artNetPortAddressForUniverse(u):null;
  if(protocol==='artnet'&&artNetPortAddress==null){status(t().error,false);return false}
  const rawTarget=(E('artnetTarget')&&E('artnetTarget').value||'AUTO').trim();
- const ip=artNetTargetIsAuto(rawTarget)?'AUTO':rawTarget;
- if(protocol==='artnet'){try{localStorage.setItem(TARGET_KEY,ip)}catch(e){}}
+ const autoTarget=protocol==='artnet'&&artNetTargetIsAuto(rawTarget);
+ const storedTarget=autoTarget?'AUTO':rawTarget;
+ if(protocol==='artnet'){try{localStorage.setItem(TARGET_KEY,storedTarget)}catch(e){}}
  const prefix=source==='fade'?'fade_':(source==='panic'?'panic_':(source==='restore'?'restore_':'networkdmx_'));
  const id=prefix+'g'+armGeneration+'_'+Date.now()+'_'+(++seq);
  if(!quiet)status(t().sending);
  try{
-  const request={id:id,targetIp:ip,universe:protocol==='artnet'?artNetPortAddress:u,uiUniverse:u,channels:channels};
-  let ok=false;
   if(protocol==='sacn'){
-   ok=liveEnabled&&typeof transport.supportsLive==='function'&&transport.supportsLive('sacn')?transport.setSacnLiveDmx(request):transport.sendSacnDmx(request);
-  }else{
-   ok=liveEnabled&&typeof transport.supportsLive==='function'&&transport.supportsLive('artnet')?transport.setLiveDmx(request):transport.sendDmx(request);
+   const request={id:id,targetIp:'',universe:u,uiUniverse:u,channels:channels};
+   const ok=liveEnabled&&typeof transport.supportsLive==='function'&&transport.supportsLive('sacn')?transport.setSacnLiveDmx(request):transport.sendSacnDmx(request);
+   if(!ok){if(quiet)cancelSceneFade(false);status(t().native,false);return false}
+   return true;
   }
-  if(!ok){if(quiet)cancelSceneFade(false);status(t().native,false);return false}
+  const targets=autoTarget?artNetTargetsForPortAddress(artNetPortAddress):[rawTarget];
+  if(!targets.length){if(quiet)cancelSceneFade(false);status(t().preflightNoBroadcast,false);return false}
+  let accepted=true;
+  targets.forEach((target,index)=>{
+   const request={id:id+'_t'+(index+1),targetIp:target,universe:artNetPortAddress,uiUniverse:u,channels:channels};
+   const ok=liveEnabled&&typeof transport.supportsLive==='function'&&transport.supportsLive('artnet')?transport.setLiveDmx(request):transport.sendDmx(request);
+   if(!ok)accepted=false;
+  });
+  if(!accepted){if(quiet)cancelSceneFade(false);status(t().native,false);return false}
   return true;
  }catch(e){if(quiet)cancelSceneFade(false);status(t().error,false);return false}
 }
@@ -1424,6 +1569,10 @@ function stopLiveForBackground(){
 }
 function forceLifecycleDisarm(){
  activeDiscoveryRequestId='';
+ pendingArmDiscoveryId='';
+ activeArtNetRefreshDiscoveryId='';
+ artNetAutoSubscribers={};
+ lastArtNetAutoDiscoveryAt=0;
  armGeneration++;
  armedNetworkSignature='';
  armedContextSignature='';
@@ -1502,7 +1651,7 @@ function install(){
  E('artnetUniverse').addEventListener('change',()=>{setOutputArmed(false,true);invalidateRouteBoundOutputState();updateProtocolUi();status(t().armOff)});
  E('sacnPriority').addEventListener('change',()=>{setOutputArmed(false,true);applySacnPriority();requestDiagnostics();status(t().armOff)});
  E('artnetTarget').addEventListener('change',()=>{setOutputArmed(false,true);invalidateRouteBoundOutputState()});
- E('artnetRouteSelect').addEventListener('change',()=>{setOutputArmed(false,true);invalidateRouteBoundOutputState();const v=E('artnetRouteSelect').value||'AUTO';E('artnetTarget').value=v;try{localStorage.setItem(TARGET_KEY,v)}catch(e){}status(t().armOff)});
+ E('artnetRouteSelect').addEventListener('change',()=>{setOutputArmed(false,true);invalidateRouteBoundOutputState();E('artnetTarget').value='AUTO';try{localStorage.setItem(TARGET_KEY,'AUTO')}catch(e){}status(t().armOff)});
  E('artnetValue').addEventListener('input',()=>{E('artnetValueReadout').textContent=E('artnetValue').value+' / 255'});
  E('artnetPatchDevice').addEventListener('change',()=>{setOutputArmed(false,true);invalidateRouteBoundOutputState();choosePatch();if(E('artnetPatchDevice').value==='')renderVerifiedControls(null);status(t().armOff)});
  E('artnetDiscover').addEventListener('click',discoverNodes);
@@ -1612,7 +1761,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.59-strict-verified-profile-identity',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.60-artnet-subscriber-unicast',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

@@ -75,6 +75,18 @@ public class ArtNetProtocolTest {
         assertFalse(ArtNetSender.isUsableIpv4Target("239.255.0.1"));
     }
 
+    @Test public void artDmxSequenceIsIndependentPerTargetAndPortAddress() {
+        ArtNetSequenceTracker tracker = new ArtNetSequenceTracker();
+        assertEquals(1, tracker.next("192.168.1.10", 0));
+        assertEquals(2, tracker.next("192.168.1.10", 0));
+        assertEquals(1, tracker.next("192.168.1.11", 0));
+        assertEquals(1, tracker.next("192.168.1.10", 1));
+        for (int expected = 3; expected <= 255; expected++) {
+            assertEquals(expected, tracker.next("192.168.1.10", 0));
+        }
+        assertEquals(1, tracker.next("192.168.1.10", 0));
+    }
+
     @Test public void artPollPacketHasCorrectOpcodeAndProtocolVersion() {
         byte[] packet = ArtNetDiscovery.buildPollPacket();
         assertEquals(14, packet.length);

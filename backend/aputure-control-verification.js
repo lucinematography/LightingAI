@@ -25,6 +25,22 @@ const VERIFIED_OVERRIDES = {
   }
 };
 
+const VERIFIED_DMX_PROFILES = {
+  'aputure-electro-storm-cs15': [{
+    name: 'Mode 4 RGB 8-bit 5ch',
+    channels: 5,
+    verified: true,
+    sourceUrl: 'https://docs.aputure.com/hubfs/Knowledge%20Base/Aputure/Electro%20Storm%20CS15/Electro%20Storm%20CS15%20DMX%20Profile%20Specification%20V1.1.pdf',
+    requiredChannels: [{channel:5,value:0,label:'Strobe Off'}],
+    controls: [
+      {key:'dimmer',label:'Intensity',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+      {key:'red',label:'Red',channel:2,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+      {key:'green',label:'Green',channel:3,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},
+      {key:'blue',label:'Blue',channel:4,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255}
+    ]
+  }]
+};
+
 export function normalizeLegacyAputureControl(fixtures = []) {
   for (const fixture of fixtures) {
     if (fixture?.manufacturer !== 'Aputure' || !Array.isArray(fixture.control)) continue;
@@ -61,6 +77,19 @@ export function normalizeLegacyAputureControl(fixtures = []) {
       ]),
       legacyLabels: labels
     };
+
+    const verifiedProfiles = VERIFIED_DMX_PROFILES[fixture.id] || [];
+    const existingVerified = Array.isArray(fixture.dmxModes) && fixture.dmxModes.some(mode => mode?.verified === true);
+    if (verifiedProfiles.length && !existingVerified) {
+      fixture.dmxModes = [
+        ...(Array.isArray(fixture.dmxModes) ? fixture.dmxModes : []),
+        ...verifiedProfiles.map(mode => ({
+          ...mode,
+          requiredChannels: (mode.requiredChannels || []).map(channel => ({...channel})),
+          controls: (mode.controls || []).map(control => ({...control}))
+        }))
+      ];
+    }
   }
   return fixtures;
 }

@@ -41,6 +41,16 @@ for (const id of ['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x']
   expect((fixture?.control?.directLightingAI || []).length === 0, 'Aputure STORM fixture must not invent native network control: ' + id);
 }
 
+const cs15 = aputure('aputure-electro-storm-cs15');
+const cs15Verified = (cs15?.dmxModes || []).filter(mode => mode?.verified === true);
+expect(cs15Verified.length === 1, 'Electro Storm CS15 must expose exactly one verified default DMX profile');
+const cs15Rgb = cs15Verified[0];
+expect(cs15Rgb?.name === 'Mode 4 RGB 8-bit 5ch' && cs15Rgb?.channels === 5, 'Electro Storm CS15 verified RGB 5ch profile missing');
+const cs15Keys = new Set((cs15Rgb?.controls || []).map(control => control?.key));
+for (const key of ['dimmer','red','green','blue']) expect(cs15Keys.has(key), 'Electro Storm CS15 verified profile missing control: ' + key);
+expect((cs15Rgb?.requiredChannels || []).some(channel => channel?.channel === 5 && channel?.value === 0), 'Electro Storm CS15 verified profile must force strobe off on channel 5');
+expect(String(cs15Rgb?.sourceUrl || '').includes('Electro%20Storm%20CS15%20DMX%20Profile%20Specification%20V1.1.pdf'), 'Electro Storm CS15 verified DMX source missing');
+
 const titan = ASTERA_TITANTUBE_FIXTURES.find(f => f.id === 'astera-titantube-fp1');
 expect(!!titan, 'TitanTube FP1 missing');
 
@@ -116,6 +126,15 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+const cs15Route = routingContext.window.LightingAIControlRouting.classify(cs15);
+expect(
+  cs15Route?.route === 'native-network' &&
+  cs15Route?.nativeNetwork === true &&
+  cs15Route?.semanticReady === true &&
+  cs15Route?.verifiedDmxModeCount === 1,
+  'Electro Storm CS15 must route as production-ready native Art-Net/sACN with one verified DMX profile'
+);
+
 const legacyRoute = routingContext.window.LightingAIControlRouting.classify({
   control:['DMX512','On-board dimming'],
   dmxModes:[{name:'Verified legacy dimmer',channels:1,verified:true,sourceUrl:'https://example.invalid/verified-dmx-profile'}]

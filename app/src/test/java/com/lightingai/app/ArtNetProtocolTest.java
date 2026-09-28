@@ -105,6 +105,37 @@ public class ArtNetProtocolTest {
         assertEquals("LightingAI Test Node", node.longName);
     }
 
+    @Test public void artPollReplyParsesSubscriberPortAddresses() throws Exception {
+        byte[] reply = new byte[239];
+        byte[] id = "Art-Net\0".getBytes(StandardCharsets.US_ASCII);
+        System.arraycopy(id, 0, reply, 0, id.length);
+        reply[8] = 0x00;
+        reply[9] = 0x21;
+        reply[10] = (byte) 192;
+        reply[11] = (byte) 168;
+        reply[12] = 1;
+        reply[13] = 50;
+        reply[18] = 0x01;
+        reply[19] = 0x02;
+        reply[174] = (byte) 0x80;
+        reply[175] = (byte) 0x40;
+        reply[190] = 0x03;
+        reply[187] = 0x04;
+
+        ArtNetDiscovery.Node node = ArtNetDiscovery.parseReply(reply, reply.length, InetAddress.getByName("192.168.1.50"));
+        assertNotNull(node);
+        assertTrue(node.subscriptionDataPresent);
+        assertEquals(2, node.subscriptions.size());
+        assertTrue(node.subscriptions.contains(0x123));
+        assertTrue(node.subscriptions.contains(0x124));
+    }
+
+    @Test public void automaticArtDmxMustBeResolvedToUnicastBeforeNativeSend() {
+        assertThrows(IllegalArgumentException.class, () ->
+            ArtNetSender.sendDmx("AUTO", 0, new int[512], 1)
+        );
+    }
+
     @Test public void artPollReplyFallsBackToPacketSourceWhenReplyIpIsZero() throws Exception {
         byte[] reply = new byte[239];
         byte[] id = "Art-Net\0".getBytes(StandardCharsets.US_ASCII);

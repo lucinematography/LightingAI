@@ -39,6 +39,9 @@ public final class ArtNetSender {
             return;
         }
 
+        if (!isIpv4Literal(target)) {
+            throw new IllegalArgumentException("Art-Net target must be AUTO or an IPv4 literal");
+        }
         InetAddress address = InetAddress.getByName(target);
         socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));
     }
@@ -54,6 +57,20 @@ public final class ArtNetSender {
 
     static boolean isAutoTarget(String targetIp) {
         return AUTO_TARGET.equalsIgnoreCase(normalizeTarget(targetIp));
+    }
+
+    static boolean isIpv4Literal(String value) {
+        if (value == null) return false;
+        String[] parts = value.trim().split("\\.", -1);
+        if (parts.length != 4) return false;
+        for (String part : parts) {
+            if (part.isEmpty() || part.length() > 3) return false;
+            for (int i = 0; i < part.length(); i++) if (!Character.isDigit(part.charAt(i))) return false;
+            int n;
+            try { n = Integer.parseInt(part); } catch (NumberFormatException e) { return false; }
+            if (n < 0 || n > 255) return false;
+        }
+        return true;
     }
 
     static int validatePortAddress(int portAddress) {

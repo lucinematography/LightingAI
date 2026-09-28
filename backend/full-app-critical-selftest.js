@@ -48,6 +48,7 @@ const artNetDiscovery=read('app/src/main/java/com/lightingai/app/ArtNetDiscovery
 const artNetSender=read('app/src/main/java/com/lightingai/app/ArtNetSender.java');
 const artNetSequenceTracker=read('app/src/main/java/com/lightingai/app/ArtNetSequenceTracker.java');
 const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
+const networkInspector=read('app/src/main/java/com/lightingai/app/NetworkInterfaceInspector.java');
 const sacnSequenceTracker=read('app/src/main/java/com/lightingai/app/SacnSequenceTracker.java');
 expect(artNetLive.includes('stopAll();')&&artNetLive.includes('return;')&&artNetLive.includes('NetworkInterfaceInspector.signature()'),'Art-Net live engine must fail fast and recheck network route per frame');
 expect(artNetLive.includes('if (frames.isEmpty()) lastError = "";'),'New Art-Net live session must clear stale prior error state');
@@ -57,6 +58,8 @@ expect(artNetLive.includes('ArtNetSender.validateFullFrame(channels);')&&artNetL
 expect(sacnLive.includes('SacnSender.validateFullFrame(channels);')&&sacnLive.includes('Arrays.copyOf(channels, 512)'),'sACN live engine must reject malformed frames before mutating live state');
 expect(sacnLive.includes('terminationRouteSafe')&&sacnLive.includes('Network changed; sACN termination suppressed'),'sACN stream termination must be suppressed after a network-route change');
 expect(sacnSequenceTracker.includes('ConcurrentHashMap<Integer, AtomicInteger>')&&sacnSequenceTracker.includes('computeIfAbsent(u')&&sacnLive.includes('nextSequence(frame.universe)')&&main.includes('sacnSequenceTracker.next(u)')&&main.includes('new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker)'),'sACN sequence numbers must be maintained independently per universe and shared across direct/live sends');
+expect(networkInspector.includes('requireSingleMulticastIpv4Interface')&&networkInspector.includes('multicastIpv4InterfaceCount')&&main.includes('multicastInterfaceCount'),'Native sACN preflight must expose the exact safe multicast interface count');
+expect(sacnSender.includes('openMulticastSocket()')&&sacnSender.includes('socket.setNetworkInterface(route)')&&sacnLive.includes('SacnSender.openMulticastSocket()'),'sACN direct/live output must explicitly bind multicast to the single approved network interface');
 expect(main.includes('synchronized (sacnLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'sACN live update must recheck network signature inside live lock');
 expect(main.includes('synchronized (artNetLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'Art-Net live update must recheck network signature inside live lock');
 expect(artNetDiscovery.includes('subscriptions')&&artNetDiscovery.includes('data[186 + i]')&&artNetDiscovery.includes('data[190 + i]'),'ArtPollReply ArtDmx subscriptions must include universes listed in either SwIn or SwOut');
@@ -185,7 +188,7 @@ expect(control.includes('if(!accepted){cancelSceneFade(false);setOutputArmed(fal
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('cancelSceneFade(false);'),'Lifecycle disarm must cancel the active scene fade timer');
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('invalidateCachedOutputState();'),'Lifecycle disarm must invalidate runtime DMX output state');
 expect(control.includes('function invalidateCachedOutputState()')&&control.includes('Object.keys(frames).forEach(key=>delete frames[key]);')&&control.includes('invalidateCachedOutputState();')&&control.includes('setOutputArmed(false,true);'),'Async transport failure must invalidate cached DMX state before disarm');
-expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.60-artnet-subscriber-unicast'"),'Route changes must invalidate only route-bound runtime output state');
+expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.61-sacn-bound-multicast-interface'"),'Route changes must invalidate only route-bound runtime output state');
 expect(control.includes('function buildArtNetSubscriberMap(nodes)')&&control.includes('artNetAutoHasRequiredSubscribers')&&control.includes('artNetAutoTargetsHaveUniqueRoutes'),'AUTO Art-Net must resolve current ArtPollReply subscribers and fail closed when routing is ambiguous');
 expect(control.includes('artNetTargetIsLocalBroadcast(target,interfaces)')&&control.includes('preflightBroadcastTarget'),'Manual ArtDmx broadcast targets must be rejected');
 expect(control.includes("targets=autoTarget?artNetTargetsForPortAddress(artNetPortAddress):[rawTarget]")&&control.includes("request={id:id+'_t'+(index+1),targetIp:target"),'AUTO Art-Net must fan out ArtDmx only as per-subscriber unicast');

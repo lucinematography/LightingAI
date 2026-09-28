@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { ASTERA_TITANTUBE_FIXTURES, ASTERA_TITANTUBE_ACCESSORIES } from './astera-titantube-library.js';
 import { FIXTURE_LIBRARY } from './fixture-library.js';
 import { ARRI_SKYPANEL_PRO_FIXTURES } from './arri-skypanel-pro-library.js';
+import { ARRI_ORBITER_FIXTURES } from './arri-orbiter-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -83,6 +84,22 @@ expect((s60Pro?.control?.wireless || []).some(x => String(x).includes('CRMX')), 
 expect(s60Pro?.dmxProfileVerification?.status === 'HOLD', 'SkyPanel S60 Pro semantic DMX profile must remain HOLD until a per-channel mode is locked');
 expect(!(s60Pro?.dmxModes || []).some(mode => mode?.verified === true), 'SkyPanel S60 Pro must not expose an unverified DMX mode as verified');
 
+const orbiter = ARRI_ORBITER_FIXTURES.find(f => f.id === 'arri-orbiter');
+expect(!!orbiter, 'ARRI Orbiter missing');
+expect(hasAll(orbiter?.control?.wired, ['DMX512','RDM','Ethernet']), 'ARRI Orbiter wired control routes missing');
+expect(hasAll(orbiter?.control?.directLightingAI, ['Art-Net 4','sACN']), 'ARRI Orbiter native network routes missing');
+expect((orbiter?.control?.wireless || []).some(x => String(x).includes('CRMX')), 'ARRI Orbiter CRMX route missing');
+const orbiterVerified = (orbiter?.dmxModes || []).filter(mode => mode?.verified === true);
+expect(orbiterVerified.length === 1, 'ARRI Orbiter must expose exactly one verified default DMX profile');
+const orbiterCct = orbiterVerified[0];
+expect(orbiterCct?.name === 'Mode 1 CCT 8-bit 6ch · ECC OFF · Operation OFF' && orbiterCct?.channels === 6, 'ARRI Orbiter verified 6ch CCT profile missing');
+const orbiterKeys = new Set((orbiterCct?.controls || []).map(control => control?.key));
+for (const key of ['dimmer','cct']) expect(orbiterKeys.has(key), 'ARRI Orbiter verified profile missing control: ' + key);
+for (const [channel,value] of [[3,128],[4,0],[5,0],[6,0]]) {
+  expect((orbiterCct?.requiredChannels || []).some(item => item?.channel === channel && item?.value === value), 'ARRI Orbiter safe required channel missing: ' + channel);
+}
+expect(orbiterCct?.profileConfiguration?.ecc === 'OFF' && orbiterCct?.profileConfiguration?.operation === 'OFF', 'ARRI Orbiter safe profile must require ECC OFF and Operation OFF');
+
 const titan = ASTERA_TITANTUBE_FIXTURES.find(f => f.id === 'astera-titantube-fp1');
 expect(!!titan, 'TitanTube FP1 missing');
 
@@ -158,6 +175,16 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+const orbiterRoute = routingContext.window.LightingAIControlRouting.classify(orbiter);
+expect(
+  orbiterRoute?.route === 'native-network' &&
+  orbiterRoute?.nativeNetwork === true &&
+  orbiterRoute?.transportReady === true &&
+  orbiterRoute?.semanticReady === true &&
+  orbiterRoute?.verifiedDmxModeCount === 1,
+  'ARRI Orbiter must route as production-ready native Art-Net/sACN with one verified DMX profile'
+);
+
 const s60ProRoute = routingContext.window.LightingAIControlRouting.classify(s60Pro);
 expect(
   s60ProRoute?.route === 'native-network' &&

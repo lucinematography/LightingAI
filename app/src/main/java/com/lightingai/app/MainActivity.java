@@ -1180,6 +1180,12 @@ public class MainActivity extends Activity {
                         item.put("ip", node.ip);
                         item.put("shortName", node.shortName);
                         item.put("longName", node.longName);
+                        JSONArray subscriptions = new JSONArray();
+                        for (Integer portAddress : node.subscriptions) {
+                            if (portAddress != null) subscriptions.put(portAddress.intValue());
+                        }
+                        item.put("subscriptions", subscriptions);
+                        item.put("subscriptionDataPresent", node.subscriptionDataPresent);
                         result.put(item);
                     }
                 } catch (Exception e) {

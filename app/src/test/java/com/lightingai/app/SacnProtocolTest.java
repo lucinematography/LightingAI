@@ -101,6 +101,19 @@ public class SacnProtocolTest {
         assertEquals(1, tracker.next(2));
     }
 
+    @Test public void sacnIpv6MulticastAddressMatchesE131Mapping() {
+        assertEquals("ff18::83:0:0:1", SacnSender.multicastAddressIpv6(1));
+        assertEquals("ff18::83:0:1:2", SacnSender.multicastAddressIpv6(258));
+        assertEquals("ff18::83:0:fa:d6", SacnSender.multicastAddressIpv6(SacnSender.DISCOVERY_UNIVERSE));
+    }
+
+    @Test public void dualModeUsesIdenticalPacketOnBothTransports() throws Exception {
+        java.net.InetAddress[] addresses = SacnSender.multicastAddresses(258, "dual");
+        assertEquals(2, addresses.length);
+        assertEquals("239.255.1.2", addresses[0].getHostAddress());
+        assertTrue(addresses[1] instanceof java.net.Inet6Address);
+    }
+
     @Test public void universeDiscoveryPacketAdvertisesSortedUniverses() {
         byte[][] packets = SacnSender.buildUniverseDiscoveryPackets(new int[]{258,1,258,63999}, CID, "LightingAI");
         assertEquals(1, packets.length);

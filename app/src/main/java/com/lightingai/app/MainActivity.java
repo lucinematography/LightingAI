@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
     private String pendingVoiceLanguage = "sr";
     private SpeechRecognizer speechRecognizer;
     private final AtomicInteger artNetSequence = new AtomicInteger(1);
-    private final AtomicInteger sacnSequence = new AtomicInteger(0);
+    private final SacnSequenceTracker sacnSequenceTracker = new SacnSequenceTracker();
     private final AtomicInteger artNetLiveEpoch = new AtomicInteger(0);
     private final AtomicInteger artNetDiscoveryEpoch = new AtomicInteger(0);
     private final AtomicInteger sacnLiveEpoch = new AtomicInteger(0);
@@ -128,7 +128,7 @@ public class MainActivity extends Activity {
         nativeSunLocation = new NativeSunLocation(this);
         nativeSunCompass = new NativeSunCompass(this);
         sacnCid = loadOrCreateSacnCid();
-        sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+        sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
         sacnLiveEngine.setPriority(sacnPriority.get());
         bleDeviceScanner = new BleDeviceScanner(this);
         bleGattInspector = new BleGattInspector(this);
@@ -1092,7 +1092,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void sacnSetPriority(int priority) {
             int value = SacnSender.normalizePriority(priority);
             sacnPriority.set(value);
-            if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+            if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
             sacnLiveEngine.setPriority(value);
         }
 
@@ -1109,7 +1109,7 @@ public class MainActivity extends Activity {
                     synchronized (networkDmxSendLock) {
                         if (epoch != networkDmxSendEpoch.get()) throw new IllegalStateException("Stale sACN direct send ignored");
                         requireNetworkDmxArmedRoute();
-                        int seq = sacnSequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
+                        int seq = sacnSequenceTracker.next(u);
                         SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get());
                     }
                     sacnDirectSent.incrementAndGet();
@@ -1138,7 +1138,7 @@ public class MainActivity extends Activity {
                     synchronized (sacnLiveControlLock) {
                         if (epoch != sacnLiveEpoch.get()) throw new IllegalStateException("Stale sACN live update ignored");
                         requireNetworkDmxArmedRoute();
-                        if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+                        if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
                         sacnLiveEngine.setPriority(sacnPriority.get());
                         sacnLiveEngine.setFrame(u, channels);
                     }

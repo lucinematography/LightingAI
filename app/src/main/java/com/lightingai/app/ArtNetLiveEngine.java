@@ -11,7 +11,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class ArtNetLiveEngine {
-    private static final long PERIOD_MS = 33L;
+    private static final long LIVE_PERIOD_MS = 33L;
+    private static final long KEEPALIVE_PERIOD_MS = 900L;
 
     private static final class Frame {
         final String targetIp;
@@ -37,6 +38,7 @@ public final class ArtNetLiveEngine {
     private ScheduledExecutorService executor;
     private ScheduledFuture<?> task;
     private DatagramSocket socket;
+    private long periodMs = KEEPALIVE_PERIOD_MS;
 
     public ArtNetLiveEngine() {
         this(new ArtNetSequenceTracker());
@@ -47,6 +49,24 @@ public final class ArtNetLiveEngine {
     }
 
     public void setFrame(String targetIp, int portAddress, int[] channels) throws Exception {
+        setLiveFrame(targetIp, portAddress, channels);
+    }
+
+    public void setLiveFrame(String targetIp, int portAddress, int[] channels) throws Exception {
+        setFrameInternal(targetIp, portAddress, channels, true);
+    }
+
+    public void setKeepaliveFrame(String targetIp, int portAddress, int[] channels) throws Exception {
+        setFrameInternal(targetIp, portAddress, channels, false);
+    }
+
+    public void setKeepaliveRate() throws Exception {
+        synchronized (lock) {
+            ensureRunningLocked(false);
+        }
+    }
+
+    private void setFrameInternal(String targetIp, int portAddress, int[] channels, boolean liveRate) throws Exception {
         String ip = normalizeIp(targetIp);
         int u = ArtNetSender.validatePortAddress(portAddress);
         String currentNetwork = NetworkInterfaceInspector.signature();
@@ -59,8 +79,8 @@ public final class ArtNetLiveEngine {
             }
             if (frames.isEmpty()) lastError = "";
             networkSignature = currentNetwork;
-            ensureRunningLocked();
             frames.put(key(ip, u), new Frame(ip, u, copy));
+            ensureRunningLocked(liveRate);
         }
     }
 
@@ -110,7 +130,7 @@ public final class ArtNetLiveEngine {
         stopAll();
     }
 
-    private void ensureRunningLocked() throws Exception {
+    private void ensureRunningLocked(boolean liveRate) throws Exception {
         if (socket == null || socket.isClosed()) {
             socket = ArtNetSocketManager.socket();
         }
@@ -121,8 +141,11 @@ public final class ArtNetLiveEngine {
                 return t;
             });
         }
-        if (task == null || task.isCancelled() || task.isDone()) {
-            task = executor.scheduleAtFixedRate(this::tick, 0L, PERIOD_MS, TimeUnit.MILLISECONDS);
+        long desired = liveRate ? LIVE_PERIOD_MS : KEEPALIVE_PERIOD_MS;
+        if (task == null || task.isCancelled() || task.isDone() || periodMs != desired) {
+            if (task != null) task.cancel(false);
+            periodMs = desired;
+            task = executor.scheduleAtFixedRate(this::tick, 0L, periodMs, TimeUnit.MILLISECONDS);
         }
     }
 

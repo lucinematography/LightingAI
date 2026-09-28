@@ -1,3 +1,5 @@
+import { normalizeLegacyAputureControl } from './aputure-control-verification.js';
+
 export const FIXTURE_LIBRARY = [
   { id:'aputure-ls-60d', manufacturer:'Aputure', model:'LS 60d', category:'Light', sourceType:'Daylight LED Focusable', powerDrawW:90, outputPowerW:60, cctK:{min:5600,max:5600}, colorMode:'Daylight', cri:96, tlci:98, beamAngleDeg:{min:15,max:45}, mount:'LS 60 Mini Mount', control:['On-board','Sidus Link'], acInput:'19V DC power supply', batterySupport:'Sony NP-F or D-Tap', weatherproofing:true, weightKg:1.8, sourceUrl:'https://aputure.com/EN-US/products/ls-60d', sourceTypeLabel:'Official Aputure product page' },
   { id:'aputure-ls-60x', manufacturer:'Aputure', model:'LS 60x', category:'Light', sourceType:'Bi-Color LED Focusable', powerDrawW:90, outputPowerW:60, cctK:{min:2700,max:6500}, colorMode:'Bi-Color', cri:96, tlci:98, beamAngleDeg:{min:15,max:45}, mount:'LS 60 Mini Mount', control:['On-board','Sidus Link'], acInput:'19V DC power supply', batterySupport:'Sony NP-F or D-Tap', weatherproofing:true, weightKg:1.8, sourceUrl:'https://aputure.com/en-US/products/ls-60x', sourceTypeLabel:'Official Aputure product page' },
@@ -29,3 +31,6 @@ export const FIXTURE_LIBRARY = [
   { id:'aputure-electro-storm-cs15', manufacturer:'Aputure', model:'Electro Storm CS15', category:'Light', sourceType:'Full-Color LED', powerDrawW:2200, outputPowerW:1585, cctK:{min:2000,max:10000}, colorMode:'Full Color', cri:98, tlci:98, beamAngleDeg:62, reflectorBeamAnglesDeg:[20,35,50], mount:'Aputure Mount', control:['On-board','Sidus Link','DMX/RDM','CRMX','etherCON'], acInput:'100-240V AC, 50/60Hz', batterySupport:'48V DC', ipRating:'IP65', weightKg:18, sourceUrl:'https://aputure.com/EN-US/products/electro-storm-cs15', sourceTypeLabel:'Official Aputure product page' },
   { id:'aputure-electro-storm-xt26', manufacturer:'Aputure', model:'Electro Storm XT26', category:'Light', sourceType:'Bi-Color High-Output LED', powerDrawW:3500, outputPowerW:2600, cctK:{min:2700,max:6500}, colorMode:'Bi-Color', cri:97, tlci:98, beamAngleDeg:62, reflectorBeamAnglesDeg:[20,35,50], mount:'Aputure Mount', control:['On-board','Sidus Link','DMX/RDM','CRMX','etherCON'], acInput:'100-240V AC, 50/60Hz', batterySupport:'48V DC', ipRating:'IP65', weightKg:18, sourceUrl:'https://aputure.com/en-US/products/electro-storm-xt26', sourceTypeLabel:'Official Aputure product page' }
 ];
+
+normalizeLegacyAputureControl(FIXTURE_LIBRARY);
+

@@ -3,11 +3,43 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { ASTERA_TITANTUBE_FIXTURES, ASTERA_TITANTUBE_ACCESSORIES } from './astera-titantube-library.js';
+import { FIXTURE_LIBRARY } from './fixture-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const failures = [];
 const expect = (ok, msg) => { if (!ok) failures.push(msg); };
+
+const aputureFixtures = FIXTURE_LIBRARY.filter(f => f.manufacturer === 'Aputure');
+expect(aputureFixtures.every(f => !Array.isArray(f.control)), 'Aputure legacy control arrays must be normalized before production routing');
+
+function aputure(id) { return aputureFixtures.find(f => f.id === id); }
+function hasAll(values, expected) { return expected.every(value => (values || []).includes(value)); }
+
+const ls60d = aputure('aputure-ls-60d');
+const ls60x = aputure('aputure-ls-60x');
+for (const fixture of [ls60d, ls60x]) {
+  expect(!!fixture, 'Aputure LS 60 fixture missing');
+  expect((fixture?.control?.directLightingAI || []).length === 0, (fixture?.id || 'LS60') + ' must not claim native Art-Net/sACN');
+  expect(!(fixture?.control?.wired || []).includes('DMX512'), (fixture?.id || 'LS60') + ' must not invent wired DMX512');
+}
+
+const ls600d = aputure('aputure-ls-600d');
+expect(hasAll(ls600d?.control?.wired, ['DMX512']), 'LS 600d documented wired DMX512 route missing');
+expect((ls600d?.control?.directLightingAI || []).length === 0, 'LS 600d must not claim Ethernet Art-Net/sACN');
+
+for (const id of ['aputure-ls-600d-pro','aputure-ls-600x-pro','aputure-storm-cs32','aputure-electro-storm-cs15','aputure-electro-storm-xt26']) {
+  const fixture = aputure(id);
+  expect(!!fixture, 'Aputure native-network fixture missing: ' + id);
+  expect(hasAll(fixture?.control?.directLightingAI, ['Art-Net','sACN']), 'Aputure native Art-Net/sACN route missing: ' + id);
+}
+
+for (const id of ['aputure-storm-80c','aputure-storm-400x','aputure-storm-700x']) {
+  const fixture = aputure(id);
+  expect(!!fixture, 'Aputure STORM fixture missing: ' + id);
+  expect(hasAll(fixture?.control?.wired, ['DMX512','RDM']), 'Aputure STORM DMX/RDM route missing: ' + id);
+  expect((fixture?.control?.directLightingAI || []).length === 0, 'Aputure STORM fixture must not invent native network control: ' + id);
+}
 
 const titan = ASTERA_TITANTUBE_FIXTURES.find(f => f.id === 'astera-titantube-fp1');
 expect(!!titan, 'TitanTube FP1 missing');

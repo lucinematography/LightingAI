@@ -1111,8 +1111,10 @@ public class MainActivity extends Activity {
                     synchronized (networkDmxSendLock) {
                         if (epoch != networkDmxSendEpoch.get()) throw new IllegalStateException("Stale sACN direct send ignored");
                         requireNetworkDmxArmedRoute();
-                        int seq = sacnSequenceTracker.next(u);
-                        SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get());
+                        for (int repeat = 0; repeat < 3; repeat++) {
+                            int seq = sacnSequenceTracker.next(u);
+                            SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get());
+                        }
                         if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
                         sacnLiveEngine.setPriority(sacnPriority.get());
                         sacnLiveEngine.setKeepaliveFrame(u, channels);

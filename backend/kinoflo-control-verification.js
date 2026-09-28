@@ -1,3 +1,4 @@
+// Kino Flo control verification: normalize standards routes while preserving all verified DMX profiles and fail-closing unresolved profiles.
 function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
 }

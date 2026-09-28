@@ -1643,6 +1643,9 @@ function setLiveEnabled(enabled){
 }
 function stopLiveForBackground(){
  setOutputArmed(false,true);
+ invalidateCachedOutputState();
+ renderCueStack();
+ status(t().armOff);
 }
 function forceLifecycleDisarm(){
  activeDiscoveryRequestId='';

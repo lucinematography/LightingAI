@@ -137,7 +137,8 @@ public final class ArtNetDiscovery {
             (data[10] & 0xff) + "." + (data[11] & 0xff) + "." +
             (data[12] & 0xff) + "." + (data[13] & 0xff);
         String sourceIp = sourceAddress == null ? "" : sourceAddress.getHostAddress();
-        String ip = isUsableIp(packetIp) ? packetIp : sourceIp;
+        String ip = isUsableNodeIp(packetIp) ? packetIp : (isUsableNodeIp(sourceIp) ? sourceIp : "");
+        if (ip.isEmpty()) return null;
 
         boolean subscriptionDataPresent = length >= 194;
         Set<Integer> subscriptions = new LinkedHashSet<>();
@@ -199,8 +200,10 @@ public final class ArtNetDiscovery {
         return ((net & 0x7f) << 8) | ((subnet & 0x0f) << 4) | (universe & 0x0f);
     }
 
-    private static boolean isUsableIp(String ip) {
-        return ip != null && !ip.isEmpty() && !"0.0.0.0".equals(ip);
+    static boolean isUsableNodeIp(String ip) {
+        if (!ArtNetSender.isUsableIpv4Target(ip)) return false;
+        String value = ip == null ? "" : ip.trim();
+        return !"255.255.255.255".equals(value);
     }
 
     private static String ascii(byte[] data, int offset, int maxLength, int actualLength) {

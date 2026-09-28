@@ -145,19 +145,6 @@ const trueBlueEbMax = [
   ARRI_TRUE_BLUE_D5_FIXTURES.find(f => f.id === 'arri-true-blue-d5'),
   ARRI_TRUE_BLUE_D12_FIXTURES.find(f => f.id === 'arri-true-blue-d12')
 ];
-for (const fixture of trueBlueEbMax25_4) {
-  const route = routingContext.window.LightingAIControlRouting.classify(fixture);
-  expect(
-    route?.route === 'gateway' &&
-    route?.nativeNetwork === false &&
-    route?.transportReady === true &&
-    route?.semanticReady === true &&
-    route?.verifiedDmxModeCount === 1 &&
-    route?.requiresInterface === true,
-    'True Blue fixture must route through a standards gateway to EB MAX 2.5/4: ' + (fixture?.id || '?')
-  );
-}
-
 for (const fixture of trueBlueEbMax) {
   expect(!!fixture, 'ARRI True Blue EB MAX fixture missing');
   expect((fixture?.control?.wired || []).some(x => String(x).includes('DMX512')), 'True Blue EB MAX DMX512 transport missing: ' + (fixture?.id || '?'));
@@ -307,6 +294,19 @@ for (const fixture of trueBlueEbMax) {
     route?.verifiedDmxModeCount === 1 &&
     route?.requiresInterface === true,
     'True Blue fixture must route through a standards gateway to EB MAX 1.8: ' + (fixture?.id || '?')
+  );
+}
+
+for (const fixture of trueBlueEbMax25_4) {
+  const route = routingContext.window.LightingAIControlRouting.classify(fixture);
+  expect(
+    route?.route === 'gateway' &&
+    route?.nativeNetwork === false &&
+    route?.transportReady === true &&
+    route?.semanticReady === true &&
+    route?.verifiedDmxModeCount === 1 &&
+    route?.requiresInterface === true,
+    'True Blue fixture must route through a standards gateway to EB MAX 2.5/4: ' + (fixture?.id || '?')
   );
 }
 

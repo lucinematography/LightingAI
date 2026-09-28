@@ -176,6 +176,23 @@ public class ArtNetProtocolTest {
         );
     }
 
+    @Test public void artPollReplyRejectsUnusableNodeAddresses() throws Exception {
+        byte[] reply = new byte[239];
+        byte[] id = "Art-Net\0".getBytes(StandardCharsets.US_ASCII);
+        System.arraycopy(id, 0, reply, 0, id.length);
+        reply[8] = 0x00;
+        reply[9] = 0x21;
+
+        reply[10] = 127; reply[11] = 0; reply[12] = 0; reply[13] = 1;
+        assertNull(ArtNetDiscovery.parseReply(reply, reply.length, InetAddress.getByName("127.0.0.1")));
+
+        reply[10] = (byte)239; reply[11] = (byte)255; reply[12] = 0; reply[13] = 1;
+        assertNull(ArtNetDiscovery.parseReply(reply, reply.length, InetAddress.getByName("239.255.0.1")));
+
+        reply[10] = (byte)255; reply[11] = (byte)255; reply[12] = (byte)255; reply[13] = (byte)255;
+        assertNull(ArtNetDiscovery.parseReply(reply, reply.length, InetAddress.getByName("255.255.255.255")));
+    }
+
     @Test public void artPollReplyFallsBackToPacketSourceWhenReplyIpIsZero() throws Exception {
         byte[] reply = new byte[239];
         byte[] id = "Art-Net\0".getBytes(StandardCharsets.US_ASCII);

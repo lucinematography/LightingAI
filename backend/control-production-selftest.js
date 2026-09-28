@@ -72,6 +72,9 @@ expect(networkInspector.includes('String signature()'), 'Network route signature
 expect(artnetLive.includes('Network changed; re-arm required'), 'Art-Net network-change fail-safe missing');
 expect(sacnLive.includes('Network changed; re-arm required') && sacnLive.includes('abortAll()'), 'sACN network-change fail-safe missing');
 
+const catalogAudit = fs.readFileSync(path.join(root,'backend/control-catalog-audit.js'),'utf8');
+expect(catalogAudit.includes("typeof channels !== 'number'")&&catalogAudit.includes("typeof ch !== 'number'")&&catalogAudit.includes("typeof value !== 'number'"), 'Control catalog audit must reject string/coerced numeric DMX metadata');
+
 const routing = fs.readFileSync(path.join(root,'app/src/main/assets/control-routing.js'),'utf8');
 expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production control router version marker missing');
 

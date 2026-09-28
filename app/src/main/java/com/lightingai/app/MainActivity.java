@@ -1066,7 +1066,8 @@ public class MainActivity extends Activity {
                 out.put("sacnIpMode", sacnIpMode);
                 out.put("sacnMulticastInterfaceCount", NetworkInterfaceInspector.sacnMulticastInterfaceCount(sacnIpMode));
                 out.put("sacnMulticastInterfaceName", NetworkInterfaceInspector.singleSacnMulticastInterfaceName(sacnIpMode));
-                out.put("sacnNetworkSignature", NetworkInterfaceInspector.sacnSignature(sacnIpMode));
+                String sacnSignature = NetworkInterfaceInspector.sacnSignature(sacnIpMode);
+                out.put("sacnNetworkSignature", sacnSignature.isEmpty() ? "" : "sacn:" + sacnSignature);
 
                 JSONObject artNet = new JSONObject();
                 artNet.put("directSent", artNetDirectSent.get());

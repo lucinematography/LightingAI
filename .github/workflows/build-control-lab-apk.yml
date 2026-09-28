@@ -6,11 +6,32 @@ on:
     branches: [ "feature/production-control-routing" ]
 
 jobs:
+  latest-head:
+    runs-on: ubuntu-latest
+    outputs:
+      is_latest: ${{ steps.guard.outputs.is_latest }}
+    steps:
+      - name: Check current branch HEAD
+        id: guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          LATEST="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" "refs/heads/${GITHUB_REF_NAME}" | awk '{print $1}')"
+          if [ -n "$LATEST" ] && [ "$GITHUB_SHA" = "$LATEST" ]; then
+            echo "is_latest=true" >> "$GITHUB_OUTPUT"
+            echo "Testing latest branch HEAD: $GITHUB_SHA"
+          else
+            echo "is_latest=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale push $GITHUB_SHA; current HEAD is $LATEST"
+          fi
+
   control-lab-build:
+    needs: latest-head
+    if: needs.latest-head.outputs.is_latest == 'true'
     runs-on: ubuntu-latest
     concurrency:
-      group: lightingai-control-lab-${{ github.ref_name }}
-      cancel-in-progress: true
+      group: lightingai-control-lab-${{ github.ref_name }}-${{ github.sha }}
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v7

@@ -9,6 +9,7 @@ import { ARRI_ORBITER_FIXTURES } from './arri-orbiter-library.js';
 import { ARRI_SKYPANEL_CLASSIC_S30_FIXTURES } from './arri-skypanel-classic-s30-library.js';
 import { ARRI_SKYPANEL_DISCONTINUED_FIXTURES } from './arri-skypanel-discontinued-library.js';
 import { ARRI_CASTER_SERIES_DISCONTINUED_FIXTURES } from './arri-caster-series-discontinued-library.js';
+import { ARRI_M_SERIES_ARRIMAX_18_12_FIXTURES } from './arri-m-series-arrimax-18-12-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -119,6 +120,23 @@ for (const [key,channel] of [['dimmer',1],['cct',2],['greenMagenta',3]]) {
 expect((broadcasterMode?.requiredChannels || []).some(item => item?.channel === 4 && item?.value === 0), 'BroadCaster reserved fourth channel must be held at 0');
 expect(String(broadcasterMode?.sourceUrl || '').includes('arri-caster-user-manual-en-apr2015'), 'BroadCaster official manual source missing');
 
+const arrimax = ARRI_M_SERIES_ARRIMAX_18_12_FIXTURES.find(f => f.id === 'arri-arrimax-18-12');
+expect(!!arrimax, 'ARRI ARRIMAX 18/12 missing');
+expect((arrimax?.control?.wired || []).some(x => String(x).includes('DMX512')), 'ARRIMAX EB MAX DMX512 transport missing');
+expect((arrimax?.control?.directLightingAI || []).length === 0, 'ARRIMAX must not claim native Art-Net/sACN');
+expect((arrimax?.control?.externalInterfaceRequired || []).includes('ARRI EB MAX 12/18 ballast'), 'ARRIMAX must require EB MAX 12/18 ballast');
+const arrimaxVerified = (arrimax?.dmxModes || []).filter(mode => mode?.verified === true);
+expect(arrimaxVerified.length === 1, 'ARRIMAX must expose exactly one verified EB MAX profile');
+const arrimaxMode = arrimaxVerified[0];
+expect(arrimaxMode?.channels === 2 && arrimaxMode?.name === 'EB MAX 12/18 · Flicker Free 75 Hz · 2ch', 'ARRIMAX safe EB MAX 2ch profile missing');
+const arrimaxDimmer = (arrimaxMode?.controls || []).find(control => control?.key === 'dimmer');
+expect(arrimaxDimmer?.channel === 1 && arrimaxDimmer?.min === 50 && arrimaxDimmer?.max === 100 && arrimaxDimmer?.dmxMin === 128 && arrimaxDimmer?.dmxMax === 255, 'ARRIMAX EB MAX dimmer must map 50-100% to DMX 128-255');
+const arrimaxPower = (arrimaxMode?.controls || []).find(control => control?.key === 'powerMode');
+expect(arrimaxPower?.channel === 2 && arrimaxPower?.type === 'enum', 'ARRIMAX EB MAX explicit power/mode control missing');
+expect((arrimaxPower?.choices || []).some(choice => choice?.value === 0 && choice?.dmxValue === 0), 'ARRIMAX EB MAX safe OFF choice missing');
+expect((arrimaxPower?.choices || []).some(choice => choice?.value === 1 && choice?.dmxValue === 128), 'ARRIMAX EB MAX Flicker Free 75 Hz ON choice missing');
+expect(arrimaxMode?.profileConfiguration?.channel3Unused === true && arrimaxMode?.profileConfiguration?.defaultSafeState === 'OFF', 'ARRIMAX EB MAX safe profile qualification missing');
+
 const s60Pro = ARRI_SKYPANEL_PRO_FIXTURES.find(f => f.id === 'arri-skypanel-s60-pro');
 expect(!!s60Pro, 'ARRI SkyPanel S60 Pro missing');
 expect(hasAll(s60Pro?.control?.wired, ['DMX512','RDM','Ethernet']), 'SkyPanel S60 Pro wired control routes missing');
@@ -218,6 +236,17 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+const arrimaxRoute = routingContext.window.LightingAIControlRouting.classify(arrimax);
+expect(
+  arrimaxRoute?.route === 'gateway' &&
+  arrimaxRoute?.nativeNetwork === false &&
+  arrimaxRoute?.transportReady === true &&
+  arrimaxRoute?.semanticReady === true &&
+  arrimaxRoute?.verifiedDmxModeCount === 1 &&
+  arrimaxRoute?.requiresInterface === true,
+  'ARRIMAX must route through a standards gateway to the required EB MAX 12/18 ballast'
+);
+
 const broadcasterRoute = routingContext.window.LightingAIControlRouting.classify(broadcaster);
 expect(
   broadcasterRoute?.route === 'gateway' &&

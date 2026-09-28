@@ -145,7 +145,8 @@ public final class ArtNetLiveEngine {
         if (task == null || task.isCancelled() || task.isDone() || periodMs != desired) {
             if (task != null) task.cancel(false);
             periodMs = desired;
-            task = executor.scheduleAtFixedRate(this::tick, 0L, periodMs, TimeUnit.MILLISECONDS);
+            long initialDelay = liveRate ? 0L : KEEPALIVE_PERIOD_MS;
+            task = executor.scheduleAtFixedRate(this::tick, initialDelay, periodMs, TimeUnit.MILLISECONDS);
         }
     }
 

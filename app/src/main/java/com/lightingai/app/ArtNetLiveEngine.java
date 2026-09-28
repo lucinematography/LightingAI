@@ -44,7 +44,8 @@ public final class ArtNetLiveEngine {
         int u = ArtNetSender.validatePortAddress(portAddress);
         String currentNetwork = NetworkInterfaceInspector.signature();
         if (currentNetwork.isEmpty()) throw new IllegalStateException("No active network for Art-Net");
-        int[] copy = channels == null ? new int[0] : Arrays.copyOf(channels, Math.min(512, channels.length));
+        ArtNetSender.validateFullFrame(channels);
+        int[] copy = Arrays.copyOf(channels, 512);
         synchronized (lock) {
             if (!networkSignature.isEmpty() && !networkSignature.equals(currentNetwork)) {
                 throw new IllegalStateException("Network changed; re-arm required");

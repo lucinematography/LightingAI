@@ -60,7 +60,8 @@ const sacnSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightin
 expect(artnetSender.includes('validatePortAddress') && artnetSender.includes('MAX_PORT_ADDRESS = 32767'), 'Art-Net strict Port-Address validation missing');
 expect(artnetSender.includes('isUsableIpv4Target') && artnetSender.includes('Art-Net AUTO must resolve to subscriber unicast targets before native send') && artnetSender.includes('Art-Net target must be a usable IPv4 literal') && artnetSender.includes('ArtDmx broadcast targets are not allowed'), 'Native Art-Net must reject unresolved AUTO/broadcast and accept only a usable unicast IPv4 literal');
 expect(artnet.includes('artNetPortAddressForUniverse') && artnet.includes('bridgeUniverseAllowed'), 'Per-bridge Art-Net universe policy missing');
-expect(artnet.includes('preflightMultipleSacnRoutes') && artnet.includes('multicastRouteCount>1') && artnet.includes('native.multicastInterfaceCount'), 'Ambiguous sACN multicast route guard missing');
+expect(artnet.includes('preflightMultipleSacnRoutes') && artnet.includes('multicastRouteCount>1') && artnet.includes('native.sacnMulticastInterfaceCount'), 'Ambiguous sACN multicast route guard missing');
+expect(artnet.includes('SACN_IP_MODE_KEY') && artnet.includes("value=\"ipv6\"") && artnet.includes("value=\"dual\"") && artnet.includes('applySacnIpMode'), 'sACN IPv6/Dual transport selector missing');
 expect((artnet.match(/protocolNote:'Input priority: XLR > sACN > Art-Net\. Active XLR input disables network control; active sACN overrides Art-Net\.'/g)||[]).length===3,'Astera network bridges must expose documented XLR > sACN > Art-Net input priority');
 expect(artnet.includes("normalized==='0.0.0.0'||first===127||(first>=224&&first<=239)"),'Art-Net ARM preflight must reject unspecified, loopback and multicast explicit targets');
 expect(artnet.includes('runControlHealthCheck') && artnet.includes('armedNetworkSignature'), 'Network DMX health watchdog missing');

@@ -49,6 +49,7 @@ expect(artNetLive.includes('stopAll();')&&artNetLive.includes('return;')&&artNet
 expect(artNetLive.includes('if (frames.isEmpty()) lastError = "";'),'New Art-Net live session must clear stale prior error state');
 expect(sacnLive.includes('if (frames.isEmpty()) lastError = "";'),'New sACN live session must clear stale prior error state');
 expect(sacnLive.includes('abortAll();')&&sacnLive.includes('return;')&&sacnLive.includes('NetworkInterfaceInspector.signature()'),'sACN live engine must fail fast and recheck network route per frame');
+expect(sacnLive.includes('terminationRouteSafe')&&sacnLive.includes('Network changed; sACN termination suppressed'),'sACN stream termination must be suppressed after a network-route change');
 expect(main.includes('synchronized (sacnLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'sACN live update must recheck network signature inside live lock');
 expect(main.includes('synchronized (artNetLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'Art-Net live update must recheck network signature inside live lock');
 expect(!artNetLive.includes('tickFailed')&&!artNetLive.includes('tickError'),'Art-Net live engine must not continue after a packet failure');

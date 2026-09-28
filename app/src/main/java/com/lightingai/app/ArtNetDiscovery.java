@@ -25,11 +25,15 @@ public final class ArtNetDiscovery {
         public final String ip;
         public final String shortName;
         public final String longName;
+        public final List<Integer> subscriptions;
+        public final boolean subscriptionDataPresent;
 
-        Node(String ip, String shortName, String longName) {
+        Node(String ip, String shortName, String longName, List<Integer> subscriptions, boolean subscriptionDataPresent) {
             this.ip = ip;
             this.shortName = shortName;
             this.longName = longName;
+            this.subscriptions = subscriptions == null ? new ArrayList<>() : new ArrayList<>(subscriptions);
+            this.subscriptionDataPresent = subscriptionDataPresent;
         }
     }
 
@@ -127,7 +131,46 @@ public final class ArtNetDiscovery {
             (data[12] & 0xff) + "." + (data[13] & 0xff);
         String sourceIp = sourceAddress == null ? "" : sourceAddress.getHostAddress();
         String ip = isUsableIp(packetIp) ? packetIp : sourceIp;
-        return new Node(ip, ascii(data, 26, 18, length), ascii(data, 44, 64, length));
+
+        boolean subscriptionDataPresent = length >= 194;
+        Set<Integer> subscriptions = new LinkedHashSet<>();
+        if (subscriptionDataPresent) {
+            int net = data[18] & 0x7f;
+            int subnet = data[19] & 0x0f;
+            for (int i = 0; i < 4; i++) {
+                int portType = data[174 + i] & 0xff;
+                if ((portType & 0x40) != 0) {
+                    subscriptions.add(portAddress(net, subnet, data[186 + i] & 0x0f));
+                }
+                if ((portType & 0x80) != 0) {
+                    subscriptions.add(portAddress(net, subnet, data[190 + i] & 0x0f));
+                }
+            }
+        }
+        return new Node(
+            ip,
+            ascii(data, 26, 18, length),
+            ascii(data, 44, 64, length),
+            new ArrayList<>(subscriptions),
+            subscriptionDataPresent
+        );
+    }
+
+    static boolean isDirectedBroadcastTarget(String value) {
+        if (value == null || value.trim().isEmpty()) return false;
+        String target = value.trim();
+        try {
+            for (InetAddress address : directedBroadcastTargets()) {
+                if (target.equals(address.getHostAddress())) return true;
+            }
+        } catch (Exception ignored) {
+            // If interfaces cannot be inspected, the sender will still reject AUTO/limited broadcast.
+        }
+        return false;
+    }
+
+    private static int portAddress(int net, int subnet, int universe) {
+        return ((net & 0x7f) << 8) | ((subnet & 0x0f) << 4) | (universe & 0x0f);
     }
 
     private static boolean isUsableIp(String ip) {

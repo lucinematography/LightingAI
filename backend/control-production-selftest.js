@@ -8,6 +8,7 @@ import { ARRI_SKYPANEL_PRO_FIXTURES } from './arri-skypanel-pro-library.js';
 import { ARRI_ORBITER_FIXTURES } from './arri-orbiter-library.js';
 import { ARRI_SKYPANEL_CLASSIC_S30_FIXTURES } from './arri-skypanel-classic-s30-library.js';
 import { ARRI_SKYPANEL_DISCONTINUED_FIXTURES } from './arri-skypanel-discontinued-library.js';
+import { ARRI_CASTER_SERIES_DISCONTINUED_FIXTURES } from './arri-caster-series-discontinued-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -86,6 +87,17 @@ const s30Verified = (s30Classic?.dmxModes || []).filter(mode => mode?.verified =
 expect(s30Verified.length === 1, 'SkyPanel S30-C must retain exactly one verified DMX profile');
 expect(s30Verified[0]?.name === 'Mode 1 CCT & RGBW 8 bit' && s30Verified[0]?.channels === 12, 'SkyPanel S30-C verified 12ch profile changed unexpectedly');
 
+const broadcasterRoute = routingContext.window.LightingAIControlRouting.classify(broadcaster);
+expect(
+  broadcasterRoute?.route === 'gateway' &&
+  broadcasterRoute?.nativeNetwork === false &&
+  broadcasterRoute?.transportReady === true &&
+  broadcasterRoute?.semanticReady === true &&
+  broadcasterRoute?.verifiedDmxModeCount === 1 &&
+  broadcasterRoute?.requiresInterface === true,
+  'BroadCaster must route through the standards gateway via required PowerDMX interface'
+);
+
 for (const id of ['arri-skypanel-s30-rp','arri-skypanel-s60-rp']) {
   const fixture = ARRI_SKYPANEL_DISCONTINUED_FIXTURES.find(f => f.id === id);
   expect(!!fixture, 'ARRI SkyPanel RP fixture missing: ' + id);
@@ -102,6 +114,21 @@ for (const id of ['arri-skypanel-s30-rp','arri-skypanel-s60-rp']) {
   }
   expect(mode?.profileConfiguration?.dmxProtocol === '4.x' && mode?.profileConfiguration?.firmwareMin === '4.0', 'SkyPanel RP DMX v4.x qualification missing: ' + id);
 }
+
+const broadcaster = ARRI_CASTER_SERIES_DISCONTINUED_FIXTURES.find(f => f.id === 'arri-broadcaster-2-plus');
+expect(!!broadcaster, 'ARRI BroadCaster 2 Plus missing');
+expect((broadcaster?.control?.wired || []).some(x => String(x).includes('DMX512')), 'BroadCaster DMX512 transport missing');
+expect((broadcaster?.control?.directLightingAI || []).length === 0, 'BroadCaster must not claim native Art-Net/sACN');
+expect((broadcaster?.control?.externalInterfaceRequired || []).some(x => String(x).includes('24 V / 300 W')), 'BroadCaster PowerDMX supply requirement missing');
+const broadcasterVerified = (broadcaster?.dmxModes || []).filter(mode => mode?.verified === true);
+expect(broadcasterVerified.length === 1, 'BroadCaster must expose exactly one verified DMX profile');
+const broadcasterMode = broadcasterVerified[0];
+expect(broadcasterMode?.name === 'BroadCaster PowerDMX 4ch' && broadcasterMode?.channels === 4, 'BroadCaster verified 4ch profile missing');
+for (const [key,channel] of [['dimmer',1],['cct',2],['greenMagenta',3]]) {
+  expect((broadcasterMode?.controls || []).some(control => control?.key === key && control?.channel === channel), 'BroadCaster control channel missing: ' + key);
+}
+expect((broadcasterMode?.requiredChannels || []).some(item => item?.channel === 4 && item?.value === 0), 'BroadCaster reserved fourth channel must be held at 0');
+expect(String(broadcasterMode?.sourceUrl || '').includes('arri-caster-user-manual-en-apr2015'), 'BroadCaster official manual source missing');
 
 const s60Pro = ARRI_SKYPANEL_PRO_FIXTURES.find(f => f.id === 'arri-skypanel-s60-pro');
 expect(!!s60Pro, 'ARRI SkyPanel S60 Pro missing');

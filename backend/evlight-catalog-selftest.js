@@ -398,9 +398,17 @@ else{
   if(!control.externalInterfaceRequired?.includes('Wired DMX interface for DMX512/RDM control')) failures.push('EV Light SP350FC wired DMX/RDM interface requirement missing');
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('Art-Net or sACN'))) failures.push('EV Light SP350FC network-protocol limitation missing');
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('CRMX/LumenRadio'))) failures.push('EV Light SP350FC wireless-protocol limitation missing');
-  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightprofessional.com/quality-fresnel-led-63172212.html')) failures.push('EV Light SP350FC official model source missing');
-  if(!Array.isArray(sp350fc.dmxChannels)||!sp350fc.dmxChannels.includes(7)||!sp350fc.dmxChannels.includes(11)) failures.push('EV Light SP350FC DMX channel options must include 7 and 11');
-  if(sp350fc.dmxConnection!=='3-pin XLR in/out') failures.push('EV Light SP350FC DMX connector detail missing');
+  if(!Array.isArray(control.sourceUrls)||!control.sourceUrls.includes('https://www.evlightpro.com/fresnel-led/62970669.html')||!control.sourceUrls.includes('https://www.evlightpro.com/fresnel-led/63172212.html')) failures.push('EV Light SP350FC model/family control sources missing');
+  for(const ch of [5,6,7,8,9,10]) if(!Array.isArray(sp350fc.dmxChannels)||!sp350fc.dmxChannels.includes(ch)) failures.push('EV Light SP350FC model-specific DMX channel option missing: '+ch);
+  if(sp350fc.dmxChannels?.includes(11)) failures.push('EV Light SP350FC must not flatten conflicting family-table 11CH into model-specific DMX options');
+  if(!Array.isArray(sp350fc.dmxChannelVariants?.manualZoom)||sp350fc.dmxChannelVariants.manualZoom.join(',')!=='5,7,9') failures.push('EV Light SP350FC manual-zoom DMX channel variants must be 5/7/9CH');
+  if(!Array.isArray(sp350fc.dmxChannelVariants?.motorizedZoom)||sp350fc.dmxChannelVariants.motorizedZoom.join(',')!=='6,8,10') failures.push('EV Light SP350FC motorized-zoom DMX channel variants must be 6/8/10CH');
+  if(!Array.isArray(sp350fc.dmxChannelPublicationConflict?.familyPageChannels)||sp350fc.dmxChannelPublicationConflict.familyPageChannels.join(',')!=='7,11') failures.push('EV Light SP350FC family-page 7/11CH conflict record missing');
+  if(sp350fc.dmxChannelPublicationConflict?.sourceUrl!=='https://www.evlightpro.com/fresnel-led/63172212.html') failures.push('EV Light SP350FC conflicting family-page source missing');
+  if(sp350fc.dmxProfileVerification?.status!=='HOLD') failures.push('EV Light SP350FC DMX profile must remain HOLD while manufacturer channel publications conflict');
+  if(Array.isArray(sp350fc.dmxModes)&&sp350fc.dmxModes.some(m=>m?.verified===true)) failures.push('EV Light SP350FC must not expose a verified DMX mode without a per-channel function map');
+  if(sp350fc.dmxConnection!=='3-pin or 5-pin XLR in/out + RJ45') failures.push('EV Light SP350FC model-specific DMX connector detail missing');
+  if(sp350fc.pwm!=='1-20 kHz') failures.push('EV Light SP350FC model-specific PWM detail must be 1-20 kHz');
   if(Number(sp350fc.cctK?.min)!==2200||Number(sp350fc.cctK?.max)!==8500) failures.push('EV Light SP350FC CCT range must be 2200-8500K');
 }
 const sp500bi=fixtures.find(x=>x.id==='evlight-sp500bi');

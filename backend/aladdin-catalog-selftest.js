@@ -128,7 +128,7 @@ for(const id of ['aladdin-bi-flex-2','aladdin-bi-flex-4']){
   if(!dimmer||dimmer.channel!==1||dimmer.type!=='percent'||dimmer.min!==0||dimmer.max!==100||dimmer.dmxMin!==0||dimmer.dmxMax!==255) failures.push('Incorrect legacy BI-FLEX 2/4 dimmer mapping: '+id);
   if(!cct||cct.channel!==2||cct.type!=='cct-linear'||cct.min!==2900||cct.max!==6000||cct.dmxMin!==0||cct.dmxMax!==255) failures.push('Incorrect legacy BI-FLEX 2/4 CCT mapping: '+id);
   if(mode.controls?.length!==2||mode.requiredChannels?.length) failures.push('Unexpected legacy BI-FLEX 2/4 extra DMX mapping data: '+id);
-  if(!fixture.control?.includes('LumenRadio')) failures.push('Legacy BI-FLEX 2/4 LumenRadio path missing: '+id);
+  if(!fixture.control?.wireless?.includes('LumenRadio')) failures.push('Legacy BI-FLEX 2/4 LumenRadio path missing: '+id);
 }
 {
   const fixture=fixtures.find(item=>item.id==='aladdin-bi-flex-1');

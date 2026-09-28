@@ -46,6 +46,7 @@ expect(main.includes('Stale Art-Net live update ignored')&&main.includes('Stale 
 const artNetLive=read('app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java');
 const artNetDiscovery=read('app/src/main/java/com/lightingai/app/ArtNetDiscovery.java');
 const artNetSender=read('app/src/main/java/com/lightingai/app/ArtNetSender.java');
+const artNetSocketManager=read('app/src/main/java/com/lightingai/app/ArtNetSocketManager.java');
 const artNetSequenceTracker=read('app/src/main/java/com/lightingai/app/ArtNetSequenceTracker.java');
 const sacnSender=read('app/src/main/java/com/lightingai/app/SacnSender.java');
 const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
@@ -69,6 +70,7 @@ expect(artNetDiscovery.includes('return directedBroadcastTargets();')&&!artNetDi
 expect(artNetDiscovery.includes('REPLY_MIN_LENGTH = 207'),'ArtPollReply parser must reject packets shorter than the current 207-byte minimum');
 expect(main.includes('item.put("subscriptions", subscriptions)')&&main.includes('subscriptionDataPresent'),'Native Art-Net discovery must expose subscriber universe data to the control layer');
 expect(artNetSender.includes('Art-Net AUTO must resolve to subscriber unicast targets')&&!artNetSender.includes('socket.setBroadcast(true)'),'Native ArtDmx sender must never use AUTO/broadcast for DMX data');
+expect(artNetSocketManager.includes('created.bind(new InetSocketAddress(ArtNetSender.ARTNET_PORT))')&&artNetSocketManager.includes('created.setReuseAddress(true)')&&artNetSender.includes('ArtNetSocketManager.socket()')&&artNetLive.includes('ArtNetSocketManager.socket()')&&artNetDiscovery.includes('ArtNetSocketManager.socket()'),'Art-Net discovery/direct/live must share UDP source/destination port 6454 through one process socket');
 expect(artNetSequenceTracker.includes('ConcurrentHashMap<String, AtomicInteger>')&&artNetLive.includes('sequenceTracker.next(frame.targetIp, frame.portAddress)')&&main.includes('artNetSequenceTracker.next(ip, u)')&&main.includes('new ArtNetLiveEngine(artNetSequenceTracker)'),'ArtDmx sequence must be independent per unicast target/Port-Address and shared across direct/live sends');
 expect(!artNetLive.includes('tickFailed')&&!artNetLive.includes('tickError'),'Art-Net live engine must not continue after a packet failure');
 expect(!sacnLive.includes('tickFailed')&&!sacnLive.includes('tickError'),'sACN live engine must not continue after a packet failure');

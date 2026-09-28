@@ -7,6 +7,7 @@ import { FIXTURE_LIBRARY } from './fixture-library.js';
 import { ARRI_SKYPANEL_PRO_FIXTURES } from './arri-skypanel-pro-library.js';
 import { ARRI_ORBITER_FIXTURES } from './arri-orbiter-library.js';
 import { ARRI_SKYPANEL_CLASSIC_S30_FIXTURES } from './arri-skypanel-classic-s30-library.js';
+import { ARRI_SKYPANEL_DISCONTINUED_FIXTURES } from './arri-skypanel-discontinued-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -84,6 +85,23 @@ expect(hasAll(s30Classic?.control?.directLightingAI, ['Art-Net 4','sACN']), 'Sky
 const s30Verified = (s30Classic?.dmxModes || []).filter(mode => mode?.verified === true);
 expect(s30Verified.length === 1, 'SkyPanel S30-C must retain exactly one verified DMX profile');
 expect(s30Verified[0]?.name === 'Mode 1 CCT & RGBW 8 bit' && s30Verified[0]?.channels === 12, 'SkyPanel S30-C verified 12ch profile changed unexpectedly');
+
+for (const id of ['arri-skypanel-s30-rp','arri-skypanel-s60-rp']) {
+  const fixture = ARRI_SKYPANEL_DISCONTINUED_FIXTURES.find(f => f.id === id);
+  expect(!!fixture, 'ARRI SkyPanel RP fixture missing: ' + id);
+  expect(hasAll(fixture?.control?.wired, ['DMX512','RDM','Ethernet']), 'SkyPanel RP wired standards routes missing: ' + id);
+  expect(hasAll(fixture?.control?.directLightingAI, ['Art-Net 4']), 'SkyPanel RP native Art-Net route missing: ' + id);
+  expect(!(fixture?.control?.directLightingAI || []).includes('sACN'), 'SkyPanel RP must not claim model-specific sACN without an explicit manufacturer source: ' + id);
+  const verified = (fixture?.dmxModes || []).filter(mode => mode?.verified === true);
+  expect(verified.length === 1, 'SkyPanel RP must expose exactly one verified DMX profile: ' + id);
+  const mode = verified[0];
+  expect(mode?.name === 'Mode 1 Dimm 8-bit 5ch · DMX v4.x' && mode?.channels === 5, 'SkyPanel RP verified 5ch Mode 1 missing: ' + id);
+  expect((mode?.controls || []).some(control => control?.key === 'dimmer' && control?.channel === 1), 'SkyPanel RP dimmer channel missing: ' + id);
+  for (const [channel,value] of [[2,0],[3,0],[4,0],[5,0]]) {
+    expect((mode?.requiredChannels || []).some(item => item?.channel === channel && item?.value === value), 'SkyPanel RP safe required channel missing: ' + id + ' ch' + channel);
+  }
+  expect(mode?.profileConfiguration?.dmxProtocol === '4.x' && mode?.profileConfiguration?.firmwareMin === '4.0', 'SkyPanel RP DMX v4.x qualification missing: ' + id);
+}
 
 const s60Pro = ARRI_SKYPANEL_PRO_FIXTURES.find(f => f.id === 'arri-skypanel-s60-pro');
 expect(!!s60Pro, 'ARRI SkyPanel S60 Pro missing');
@@ -184,6 +202,19 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+for (const id of ['arri-skypanel-s30-rp','arri-skypanel-s60-rp']) {
+  const fixture = ARRI_SKYPANEL_DISCONTINUED_FIXTURES.find(f => f.id === id);
+  const route = routingContext.window.LightingAIControlRouting.classify(fixture);
+  expect(
+    route?.route === 'native-network' &&
+    route?.nativeNetwork === true &&
+    route?.transportReady === true &&
+    route?.semanticReady === true &&
+    route?.verifiedDmxModeCount === 1,
+    'SkyPanel RP must route as production-ready native Art-Net with one verified DMX profile: ' + id
+  );
+}
+
 const s30Route = routingContext.window.LightingAIControlRouting.classify(s30Classic);
 expect(
   s30Route?.route === 'native-network' &&

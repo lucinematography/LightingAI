@@ -274,8 +274,10 @@ function requestDiagnostics(){
 }
 function validIpv4(value){
  const parts=String(value||'').trim().split('.');
- if(parts.length!==4)return false;
- return parts.every(part=>/^\d{1,3}$/.test(part)&&Number(part)>=0&&Number(part)<=255);
+ if(parts.length!==4||!parts.every(part=>/^\d{1,3}$/.test(part)&&Number(part)>=0&&Number(part)<=255))return false;
+ const first=Number(parts[0]),normalized=parts.map(Number).join('.');
+ if(normalized==='0.0.0.0'||first===127||(first>=224&&first<=239))return false;
+ return true;
 }
 function artNetTargetIsAuto(value){
  const target=String(value||'').trim();

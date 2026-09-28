@@ -158,7 +158,7 @@ public final class SacnLiveEngine {
     }
 
     private void ensureRunningLocked() throws Exception {
-        if (socket == null || socket.isClosed()) socket = new DatagramSocket();
+        if (socket == null || socket.isClosed()) socket = SacnSender.openMulticastSocket();
         if (executor == null || executor.isShutdown()) {
             executor = Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r, "LightingAI-sACN-Live");

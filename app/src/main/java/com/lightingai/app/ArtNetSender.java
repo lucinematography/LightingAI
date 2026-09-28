@@ -22,6 +22,7 @@ public final class ArtNetSender {
 
     public static void sendDmx(DatagramSocket socket, String targetIp, int portAddress, int[] channels, int sequence) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
+        validateFullFrame(channels);
         String target = normalizeTarget(targetIp);
         byte[] packet = buildDmxPacket(portAddress, channels, sequence);
 
@@ -30,9 +31,11 @@ public final class ArtNetSender {
             if (broadcasts.isEmpty()) {
                 throw new IllegalStateException("No directed IPv4 broadcast target is available");
             }
-            for (InetAddress address : broadcasts) {
-                socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));
+            if (broadcasts.size() != 1) {
+                throw new IllegalStateException("Multiple directed IPv4 broadcast targets; select an explicit Art-Net route");
             }
+            InetAddress address = broadcasts.get(0);
+            socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));
             return;
         }
 
@@ -58,6 +61,15 @@ public final class ArtNetSender {
             throw new IllegalArgumentException("Art-Net Port-Address out of range: " + portAddress);
         }
         return portAddress;
+    }
+
+    static void validateFullFrame(int[] channels) {
+        if (channels == null || channels.length != 512) {
+            throw new IllegalArgumentException("DMX frame must contain exactly 512 channels");
+        }
+        for (int value : channels) {
+            if (value < 0 || value > 255) throw new IllegalArgumentException("DMX channel out of range");
+        }
     }
 
     static byte[] buildDmxPacket(int portAddress, int[] channels, int sequence) {

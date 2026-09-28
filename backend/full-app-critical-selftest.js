@@ -206,7 +206,7 @@ expect(!control.includes("else if(Number.isFinite(limit)&&limit>0&&universes.len
 expect(control.includes('if(!operationUniverseSetIsSafe(keys))')&&control.includes('if(!operationUniverseSetIsSafe(universes))'),'Operation-time multi-universe limits must remain fail-closed');
 expect(control.includes('if(!operationUniverseSetIsSafe(keys))')&&control.includes('if(!operationUniverseSetIsSafe(universes))'),'Multi-universe operations must preflight their complete universe set');
 expect(control.includes('if(u==null||!bridgeUniverseAllowed(u,protocol))'),'Single-frame send must validate its own universe without treating cached history as active output');
-expect(control.includes("id:'aputure-sidus-four'")&&control.includes('artNetUniverseMax:32767')&&control.includes('sacnUniverseMax:63999')&&control.includes('maxActiveUniverses:4'),'Sidus Four verified bridge model missing protocol-specific limits/capacity');
+expect(control.includes("id:'aputure-sidus-four'")&&control.includes('artNetUniverseMax:32768')&&control.includes('sacnUniverseMax:63999')&&control.includes('maxActiveUniverses:4')&&control.includes('artNetPortAddressOffset:-1'),'Sidus Four verified bridge must map LightingAI U1-U32768 to Art-Net Port-Address 0-32767');
 expect(control.includes('protocolSwitchRequiresReset:true')&&control.includes('avoidMixedProtocolsOnUnmanagedNetwork:true')&&control.includes('protocolNote'),'Sidus protocol-switch safety metadata/UI missing');
 expect(control.includes("id:'astera-fp3-datalink'")&&control.includes('maxActiveUniverses:1'),'Astera FP3 DataLink must remain a one-universe network gateway');
 expect(control.includes("id:'astera-fp1-powerbox'")&&control.includes("id:'astera-pwb-2-86'"),'Astera PowerBox bridge profiles missing');

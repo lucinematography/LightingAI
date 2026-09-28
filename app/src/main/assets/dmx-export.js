@@ -9,7 +9,7 @@ const TXT={
 };
 const t=()=>TXT[lang()];
 function read(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&Array.isArray(v.rows)?v.rows:[]}catch(e){return[]}}
-function integerOrNull(value){const n=Number(value);return Number.isFinite(n)&&Number.isInteger(n)?n:null}
+function integerOrNull(value){return typeof value==='number'&&Number.isFinite(value)&&Number.isInteger(value)?value:null}
 function endAddr(r){const c=integerOrNull(r&&r.channels),s=integerOrNull(r&&r.start);return c!=null&&c>0&&s!=null?s+c-1:null}
 function validate(rows){
  const map=new Map(),flags={};

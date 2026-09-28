@@ -29,13 +29,22 @@ public final class SacnSender {
     }
 
     public static void sendDmx(int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
-        try (DatagramSocket socket = openMulticastSocket()) {
-            sendDmx(socket, universe, channels, sequence, cid, sourceName, priority);
+        sendDmx(universe, channels, sequence, cid, sourceName, priority, "ipv4");
+    }
+
+    public static void sendDmx(int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority, String mode) throws Exception {
+        String normalized = NetworkInterfaceInspector.normalizeSacnIpMode(mode);
+        try (DatagramSocket socket = openMulticastSocket(normalized)) {
+            sendDmx(socket, universe, channels, sequence, cid, sourceName, priority, normalized);
         }
     }
 
     static MulticastSocket openMulticastSocket() throws Exception {
-        NetworkInterface route = NetworkInterfaceInspector.requireSingleMulticastIpv4Interface();
+        return openMulticastSocket("ipv4");
+    }
+
+    static MulticastSocket openMulticastSocket(String mode) throws Exception {
+        NetworkInterface route = NetworkInterfaceInspector.requireSingleSacnMulticastInterface(mode);
         MulticastSocket socket = new MulticastSocket();
         try {
             socket.setNetworkInterface(route);
@@ -51,12 +60,17 @@ public final class SacnSender {
     }
 
     public static void sendDmx(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
+        sendDmx(socket, universe, channels, sequence, cid, sourceName, priority, "ipv4");
+    }
+
+    public static void sendDmx(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority, String mode) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
         validateFullFrame(channels);
         int u = validateUniverse(universe);
         byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0, priority);
-        InetAddress address = InetAddress.getByName(multicastAddress(u));
-        socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
+        for (InetAddress address : multicastAddresses(u, mode)) {
+            socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
+        }
     }
 
     static byte[] buildDmxPacket(int universe, int[] channels, int sequence, byte[] cid, String sourceName) {
@@ -123,22 +137,34 @@ public final class SacnSender {
     }
 
     static void sendTermination(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
+        sendTermination(socket, universe, channels, sequence, cid, sourceName, priority, "ipv4");
+    }
+
+    static void sendTermination(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority, String mode) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
         validateFullFrame(channels);
         int u = validateUniverse(universe);
         byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0x40, priority);
-        InetAddress address = InetAddress.getByName(multicastAddress(u));
-        socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
+        for (InetAddress address : multicastAddresses(u, mode)) {
+            socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
+        }
     }
 
     static int sendUniverseDiscovery(DatagramSocket socket, int[] universes, byte[] cid, String sourceName) throws Exception {
+        return sendUniverseDiscovery(socket, universes, cid, sourceName, "ipv4");
+    }
+
+    static int sendUniverseDiscovery(DatagramSocket socket, int[] universes, byte[] cid, String sourceName, String mode) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
         byte[][] packets = buildUniverseDiscoveryPackets(universes, cid, sourceName);
-        InetAddress address = InetAddress.getByName(DISCOVERY_MULTICAST_ADDRESS);
-        for (byte[] packet : packets) {
-            socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
+        int sent = 0;
+        for (InetAddress address : discoveryMulticastAddresses(mode)) {
+            for (byte[] packet : packets) {
+                socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
+                sent++;
+            }
         }
-        return packets.length;
+        return sent;
     }
 
     static byte[][] buildUniverseDiscoveryPackets(int[] universes, byte[] cid, String sourceName) {
@@ -203,6 +229,33 @@ public final class SacnSender {
     static String multicastAddress(int universe) {
         int u = validateUniverse(universe);
         return "239.255." + ((u >> 8) & 0xff) + "." + (u & 0xff);
+    }
+
+    static String multicastAddressIpv6(int universe) {
+        int u = validateUniverse(universe);
+        return String.format(java.util.Locale.ROOT, "ff18::83:0:%x:%x", (u >> 8) & 0xff, u & 0xff);
+    }
+
+    static InetAddress[] multicastAddresses(int universe, String mode) throws Exception {
+        String normalized = NetworkInterfaceInspector.normalizeSacnIpMode(mode);
+        if ("ipv6".equals(normalized)) {
+            return new InetAddress[]{InetAddress.getByName(multicastAddressIpv6(universe))};
+        }
+        if ("dual".equals(normalized)) {
+            return new InetAddress[]{
+                InetAddress.getByName(multicastAddress(universe)),
+                InetAddress.getByName(multicastAddressIpv6(universe))
+            };
+        }
+        return new InetAddress[]{InetAddress.getByName(multicastAddress(universe))};
+    }
+
+    static InetAddress[] discoveryMulticastAddresses(String mode) throws Exception {
+        String normalized = NetworkInterfaceInspector.normalizeSacnIpMode(mode);
+        String ipv6 = multicastAddressIpv6(DISCOVERY_UNIVERSE);
+        if ("ipv6".equals(normalized)) return new InetAddress[]{InetAddress.getByName(ipv6)};
+        if ("dual".equals(normalized)) return new InetAddress[]{InetAddress.getByName(DISCOVERY_MULTICAST_ADDRESS), InetAddress.getByName(ipv6)};
+        return new InetAddress[]{InetAddress.getByName(DISCOVERY_MULTICAST_ADDRESS)};
     }
 
     static int validateUniverse(int universe) {

@@ -1,3 +1,5 @@
+import { qualifyEvLightDmxProfiles } from './evlight-control-verification.js';
+
 // EV LIGHT Fresnel film / theatre catalog.
 // Sources: official EV LIGHT Fresnel product pages and product index.
 const INDEX='https://www.evlightprofessional.com/products-index.html';
@@ -183,6 +185,8 @@ export const EVLIGHT_FRESNEL_FIXTURES=[
     }
   })
 ];
+
+qualifyEvLightDmxProfiles(EVLIGHT_FRESNEL_FIXTURES);
 
 const all=EVLIGHT_FRESNEL_FIXTURES.map(x=>x.id);
 

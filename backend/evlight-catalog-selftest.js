@@ -46,6 +46,16 @@ for(const f of fixtures){
   if(!/^https:\/\/(?:www\.)?evlight(?:professional|pro)\.com\//i.test(f.sourceUrl||'')) failures.push('Non-official EV Light fixture source: '+f.id);
   const direct=accessories.filter(a=>(a.compatibleWith||[]).includes(f.id));
   if(!direct.length) failures.push('No directly linked EV Light accessory: '+f.id);
+  const control=f.control&&typeof f.control==='object'&&!Array.isArray(f.control)?f.control:{};
+  const publishedTransport=[...(control.wired||[]),...(control.wireless||[])].some(x=>/(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)|crmx|lumenradio/i.test(String(x)));
+  const verifiedModes=Array.isArray(f.dmxModes)?f.dmxModes.filter(m=>m?.verified===true):[];
+  const hold=f.dmxProfileVerification;
+  if(publishedTransport&&!verifiedModes.length&&hold?.status!=='HOLD') failures.push('EV Light documented DMX transport without explicit profile HOLD: '+f.id);
+  if(hold?.status==='HOLD'){
+    if(verifiedModes.length) failures.push('EV Light fixture cannot be HOLD and verified simultaneously: '+f.id);
+    if(!String(hold.reason||'').trim()) failures.push('EV Light DMX profile HOLD lacks reason: '+f.id);
+    if(!Array.isArray(hold.sourceUrls)||!hold.sourceUrls.some(x=>String(x).startsWith('http'))) failures.push('EV Light DMX profile HOLD lacks source URL: '+f.id);
+  }
 }
 for(const a of accessories){
   if(!/^https:\/\/(?:www\.)?evlight(?:professional|pro)\.com\//i.test(a.sourceUrl||'')) failures.push('Non-official EV Light accessory source: '+a.id);

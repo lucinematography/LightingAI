@@ -1,3 +1,5 @@
+import { qualifyEvLightDmxProfiles } from './evlight-control-verification.js';
+
 // EV LIGHT GEMX large-format cinema panels.
 // Model identities are kept conservative here; detailed photometrics/specs are intentionally
 // omitted until they are locked to a model-specific manufacturer page.
@@ -76,6 +78,8 @@ export const EVLIGHT_GEMX_LARGE_FIXTURES=[
     }
   }
 ];
+
+qualifyEvLightDmxProfiles(EVLIGHT_GEMX_LARGE_FIXTURES);
 
 const all=EVLIGHT_GEMX_LARGE_FIXTURES.map(x=>x.id);
 

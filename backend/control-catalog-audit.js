@@ -36,7 +36,7 @@ function bucket(name) {
   if (!byManufacturer.has(name)) byManufacturer.set(name, {
     fixtures: 0, verifiedDmxFixtures: 0, verifiedModes: 0,
     nativeNetwork: 0, standardDmx: 0, rdmManagement: 0, proprietaryWirelessOnly: 0,
-    noControlMetadata: 0, legacyControlArrays: 0
+    dmxProfileHolds: 0, noControlMetadata: 0, legacyControlArrays: 0
   });
   return byManufacturer.get(name);
 }
@@ -85,8 +85,17 @@ for (const fixture of fixtures) {
 
   const modes = Array.isArray(fixture.dmxModes) ? fixture.dmxModes : [];
   const verified = modes.filter(m => m && m.verified === true);
+  const profileHold = fixture.dmxProfileVerification?.status === 'HOLD';
   if (verified.length) b.verifiedDmxFixtures++;
+  if (profileHold) b.dmxProfileHolds++;
   b.verifiedModes += verified.length;
+
+  if (profileHold) {
+    if (verified.length) pushFailure(fixture, 'DMX profile is HOLD but also exposes a verified mode');
+    if (!String(fixture.dmxProfileVerification?.reason || '').trim()) pushFailure(fixture, 'DMX profile HOLD lacks reason');
+    const holdSources = Array.isArray(fixture.dmxProfileVerification?.sourceUrls) ? fixture.dmxProfileVerification.sourceUrls : [];
+    if (!holdSources.some(url => String(url).startsWith('http'))) pushFailure(fixture, 'DMX profile HOLD lacks source URL');
+  }
 
   const modeNames = new Set();
   for (const mode of verified) {
@@ -155,8 +164,8 @@ for (const fixture of fixtures) {
     }
   }
 
-  if ((nativeNetwork || standardDmx) && !verified.length) {
-    pushWarning(fixture, 'standard control capability exists but no verified DMX mode is available to LightingAI');
+  if ((nativeNetwork || standardDmx) && !verified.length && !profileHold) {
+    pushWarning(fixture, 'standard control capability exists but no verified DMX mode or explicit profile HOLD is available to LightingAI');
   }
   if (rdmManagement && !standardDmx && !nativeNetwork) {
     pushWarning(fixture, 'RDM management is documented but no DMX/CRMX/native-network level-control transport is documented');
@@ -174,6 +183,7 @@ const summary = {
   verifiedDmxFixtures: fixtures.filter(f => Array.isArray(f.dmxModes) && f.dmxModes.some(m => m?.verified === true)).length,
   nativeNetworkFixtures: [...byManufacturer.values()].reduce((sum,b)=>sum+b.nativeNetwork,0),
   standardDmxFixtures: [...byManufacturer.values()].reduce((sum,b)=>sum+b.standardDmx,0),
+  dmxProfileHolds: [...byManufacturer.values()].reduce((sum,b)=>sum+b.dmxProfileHolds,0),
   warnings: warnings.length,
   failures,
   sampleWarnings: warnings.slice(0, 80),

@@ -1,3 +1,5 @@
+import { qualifyEvLightDmxProfiles } from './evlight-control-verification.js';
+
 // EV LIGHT profile / ellipsoidal spot catalog.
 // Sources are official EV LIGHT product/category pages.
 const STUDIO='https://www.evlightpro.com/led-studio-light/';
@@ -155,6 +157,8 @@ export const EVLIGHT_PROFILE_FIXTURES=[
     optics:'Ellipsoidal leko profile optics',sourceUrl:EPRO350FC
   })
 ];
+
+qualifyEvLightDmxProfiles(EVLIGHT_PROFILE_FIXTURES);
 
 const all=EVLIGHT_PROFILE_FIXTURES.map(x=>x.id);
 

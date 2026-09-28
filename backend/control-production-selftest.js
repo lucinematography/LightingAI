@@ -3,6 +3,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { ASTERA_TITANTUBE_FIXTURES, ASTERA_TITANTUBE_ACCESSORIES } from './astera-titantube-library.js';
+import { ASTERA_SOLABULB_FIXTURES } from './astera-solabulb-library.js';
 import { FIXTURE_LIBRARY } from './fixture-library.js';
 import { ARRI_SKYPANEL_PRO_FIXTURES } from './arri-skypanel-pro-library.js';
 import { ARRI_ORBITER_FIXTURES } from './arri-orbiter-library.js';
@@ -273,6 +274,17 @@ for (const [channel,value] of [[3,128],[4,0],[5,0],[6,0]]) {
 }
 expect(orbiterCct?.profileConfiguration?.ecc === 'OFF' && orbiterCct?.profileConfiguration?.operation === 'OFF', 'ARRI Orbiter safe profile must require ECC OFF and Operation OFF');
 
+for (const id of ['astera-solabulb-e26','astera-solabulb-e27','astera-solabulb-b22']) {
+  const fixture = ASTERA_SOLABULB_FIXTURES.find(f => f.id === id);
+  expect(!!fixture, 'Astera SolaBulb fixture missing: ' + id);
+  expect((fixture?.control?.wireless || []).some(x => /crmx/i.test(String(x))), 'SolaBulb documented CRMX transport missing: ' + id);
+  expect((fixture?.control?.wired || []).length === 0, 'SolaBulb must not invent wired DMX: ' + id);
+  expect((fixture?.control?.directLightingAI || []).length === 0, 'SolaBulb must not claim direct proprietary app control: ' + id);
+  expect(fixture?.dmxProfileVerification?.status === 'HOLD', 'SolaBulb DMX profile must remain HOLD until a per-channel map is manufacturer-published: ' + id);
+  expect(!(fixture?.dmxModes || []).some(mode => mode?.verified === true), 'SolaBulb must not expose an unverified DMX mode as verified: ' + id);
+  expect((fixture?.dmxProfileVerification?.sourceUrls || []).some(url => String(url).includes('astera-led.com/solabulb')), 'SolaBulb HOLD must retain an official manufacturer source: ' + id);
+}
+
 const titan = ASTERA_TITANTUBE_FIXTURES.find(f => f.id === 'astera-titantube-fp1');
 expect(!!titan, 'TitanTube FP1 missing');
 
@@ -348,6 +360,19 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+for (const fixture of ASTERA_SOLABULB_FIXTURES) {
+  const route = routingContext.window.LightingAIControlRouting.classify(fixture);
+  expect(
+    route?.route === 'gateway' &&
+    route?.nativeNetwork === false &&
+    route?.transportReady === true &&
+    route?.semanticReady === false &&
+    route?.verifiedDmxModeCount === 0 &&
+    route?.requiresInterface === true,
+    'SolaBulb CRMX transport must remain available while semantic control fails closed on HOLD: ' + (fixture?.id || '?')
+  );
+}
+
 for (const item of arrisunEvent) {
   const fixture=item.fixture;
   const route=routingContext.window.LightingAIControlRouting.classify(fixture);

@@ -44,6 +44,8 @@ expect(main.includes('parseFullDmxFrame')&&main.includes('values.length() != 512
 expect(main.includes('Stale Art-Net direct send ignored')&&main.includes('Stale sACN direct send ignored'),'Native stale direct-send rejection missing');
 expect(main.includes('Stale Art-Net live update ignored')&&main.includes('Stale sACN live update ignored'),'Native stale live-update rejection missing');
 const artNetLive=read('app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java');
+const artNetDiscovery=read('app/src/main/java/com/lightingai/app/ArtNetDiscovery.java');
+const artNetSender=read('app/src/main/java/com/lightingai/app/ArtNetSender.java');
 const sacnLive=read('app/src/main/java/com/lightingai/app/SacnLiveEngine.java');
 const sacnSequenceTracker=read('app/src/main/java/com/lightingai/app/SacnSequenceTracker.java');
 expect(artNetLive.includes('stopAll();')&&artNetLive.includes('return;')&&artNetLive.includes('NetworkInterfaceInspector.signature()'),'Art-Net live engine must fail fast and recheck network route per frame');
@@ -56,6 +58,9 @@ expect(sacnLive.includes('terminationRouteSafe')&&sacnLive.includes('Network cha
 expect(sacnSequenceTracker.includes('ConcurrentHashMap<Integer, AtomicInteger>')&&sacnSequenceTracker.includes('computeIfAbsent(u')&&sacnLive.includes('nextSequence(frame.universe)')&&main.includes('sacnSequenceTracker.next(u)')&&main.includes('new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker)'),'sACN sequence numbers must be maintained independently per universe and shared across direct/live sends');
 expect(main.includes('synchronized (sacnLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'sACN live update must recheck network signature inside live lock');
 expect(main.includes('synchronized (artNetLiveControlLock)')&&main.includes('requireNetworkDmxArmedRoute();'),'Art-Net live update must recheck network signature inside live lock');
+expect(artNetDiscovery.includes('subscriptions')&&artNetDiscovery.includes('data[186 + i]')&&artNetDiscovery.includes('data[190 + i]'),'ArtPollReply subscription universes must be parsed from SwIn/SwOut');
+expect(main.includes('item.put("subscriptions", subscriptions)')&&main.includes('subscriptionDataPresent'),'Native Art-Net discovery must expose subscriber universe data to the control layer');
+expect(artNetSender.includes('Art-Net AUTO must resolve to subscriber unicast targets')&&!artNetSender.includes('socket.setBroadcast(true)'),'Native ArtDmx sender must never use AUTO/broadcast for DMX data');
 expect(!artNetLive.includes('tickFailed')&&!artNetLive.includes('tickError'),'Art-Net live engine must not continue after a packet failure');
 expect(!sacnLive.includes('tickFailed')&&!sacnLive.includes('tickError'),'sACN live engine must not continue after a packet failure');
 expect(sacnLive.includes('terminationFailed')&&sacnLive.includes('terminationError'),'sACN termination failure aggregation missing');
@@ -178,8 +183,11 @@ expect(control.includes('if(!accepted){cancelSceneFade(false);setOutputArmed(fal
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('cancelSceneFade(false);'),'Lifecycle disarm must cancel the active scene fade timer');
 expect(control.includes('function forceLifecycleDisarm()')&&control.includes('invalidateCachedOutputState();'),'Lifecycle disarm must invalidate runtime DMX output state');
 expect(control.includes('function invalidateCachedOutputState()')&&control.includes('Object.keys(frames).forEach(key=>delete frames[key]);')&&control.includes('invalidateCachedOutputState();')&&control.includes('setOutputArmed(false,true);'),'Async transport failure must invalidate cached DMX state before disarm');
-expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.59-strict-verified-profile-identity'"),'Route changes must invalidate only route-bound runtime output state');
-expect(control.includes("selectedBroadcastRoutes")&&control.includes("!auto&&interfaces.length>1&&selectedBroadcastRoutes.length!==1"),'Manual Art-Net targets must fail closed on ambiguous multi-interface routing unless an exact broadcast route is selected');
+expect(control.includes('function invalidateRouteBoundOutputState()')&&control.includes("version:'0.60-artnet-subscriber-unicast'"),'Route changes must invalidate only route-bound runtime output state');
+expect(control.includes('function buildArtNetSubscriberMap(nodes)')&&control.includes('artNetAutoHasRequiredSubscribers')&&control.includes('artNetAutoTargetsHaveUniqueRoutes'),'AUTO Art-Net must resolve current ArtPollReply subscribers and fail closed when routing is ambiguous');
+expect(control.includes('artNetTargetIsLocalBroadcast(target,interfaces)')&&control.includes('preflightBroadcastTarget'),'Manual ArtDmx broadcast targets must be rejected');
+expect(control.includes("targets=autoTarget?artNetTargetsForPortAddress(artNetPortAddress):[rawTarget]")&&control.includes("request={id:id+'_t'+(index+1),targetIp:target"),'AUTO Art-Net must fan out ArtDmx only as per-subscriber unicast');
+expect(control.includes("artnet_auto_refresh_g")&&control.includes('Date.now()-lastArtNetAutoDiscoveryAt>=5000'),'Armed AUTO Art-Net must refresh subscriptions regularly and fail closed on changes');
 expect(control.includes('function isFullDmxFrame(channels)')&&control.includes("channels.length===512")&&control.includes("typeof value==='number'&&Number.isInteger(value)&&value>=0&&value<=255")&&control.includes("if(!isFullDmxFrame(channels)){status(t().error,false);return false}"),'JS network transport must reject malformed or partial DMX frames before native dispatch');
 expect(control.includes("typeof channel!=='number'||!Number.isInteger(channel)||channel<1")&&control.includes("typeof value!=='number'||!Number.isInteger(value)||value<0||value>255"),'Verified profile requiredChannels metadata must be strict numeric integers without JS coercion');
 expect(control.includes("typeof start!=='number'||!Number.isInteger(start)||start<1"),'Direct control frame writes must reject coerced or invalid DMX addresses');

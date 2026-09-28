@@ -331,6 +331,17 @@ expect(artnet.includes('preflightBridgeUniverse') && artnet.includes('operationU
 expect(artnet.includes('LightingAINetworkDmxLifecyclePause') && artnet.includes('LightingAINetworkDmxLifecycleResume'), 'Network DMX lifecycle fail-closed hooks missing');
 expect(artnet.includes('setArmSignature') && artnet.includes('clearArmSignature'), 'Native armed-route binding missing');
 expect(main.includes('networkDmxSetArmSignature') && main.includes('requireNetworkDmxArmedRoute'), 'Android armed-route enforcement missing');
+expect(
+  main.includes('@Override protected void onResume()') &&
+  main.includes('@Override protected void onPause()') &&
+  (main.match(/networkDmxArmSignature = "";/g)||[]).length >= 2 &&
+  (main.match(/artNetLiveEngine\.stopAll\(\);/g)||[]).length >= 2 &&
+  (main.match(/sacnLiveEngine != null\) sacnLiveEngine\.stopAll\(\);/g)||[]).length >= 2 &&
+  (main.match(/ArtNetSocketManager\.close\(\);/g)||[]).length >= 2 &&
+  main.includes('LightingAINetworkDmxLifecycleResume') &&
+  main.includes('LightingAINetworkDmxLifecyclePause'),
+  'Android onPause/onResume must fail closed: clear ARM route, stop Art-Net/sACN live engines, close socket and notify WebView lifecycle'
+);
 
 const artnetSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/ArtNetSender.java'),'utf8');
 const sacnSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/SacnSender.java'),'utf8');

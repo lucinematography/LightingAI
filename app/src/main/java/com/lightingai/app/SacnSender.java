@@ -7,6 +7,7 @@ import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.TreeSet;
 
 public final class SacnSender {
     public static final int SACN_PORT = 5568;
@@ -14,6 +15,9 @@ public final class SacnSender {
     public static final int MAX_UNIVERSE = 63999;
     public static final int DEFAULT_PRIORITY = 100;
     public static final int MAX_PRIORITY = 200;
+    static final int DISCOVERY_UNIVERSE = 64214;
+    static final String DISCOVERY_MULTICAST_ADDRESS = "239.255.250.214";
+    static final int DISCOVERY_PAGE_SIZE = 512;
     private static final byte[] ACN_PACKET_ID = new byte[]{
         0x41,0x53,0x43,0x2d,0x45,0x31,0x2e,0x31,0x37,0x00,0x00,0x00
     };
@@ -125,6 +129,75 @@ public final class SacnSender {
         byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0x40, priority);
         InetAddress address = InetAddress.getByName(multicastAddress(u));
         socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
+    }
+
+    static int sendUniverseDiscovery(DatagramSocket socket, int[] universes, byte[] cid, String sourceName) throws Exception {
+        if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
+        byte[][] packets = buildUniverseDiscoveryPackets(universes, cid, sourceName);
+        InetAddress address = InetAddress.getByName(DISCOVERY_MULTICAST_ADDRESS);
+        for (byte[] packet : packets) {
+            socket.send(new DatagramPacket(packet, packet.length, address, SACN_PORT));
+        }
+        return packets.length;
+    }
+
+    static byte[][] buildUniverseDiscoveryPackets(int[] universes, byte[] cid, String sourceName) {
+        TreeSet<Integer> sorted = new TreeSet<>();
+        if (universes != null) {
+            for (int universe : universes) sorted.add(validateUniverse(universe));
+        }
+        int[] values = new int[sorted.size()];
+        int p = 0;
+        for (Integer value : sorted) values[p++] = value.intValue();
+
+        int pageCount = Math.max(1, (values.length + DISCOVERY_PAGE_SIZE - 1) / DISCOVERY_PAGE_SIZE);
+        byte[][] packets = new byte[pageCount][];
+        int lastPage = pageCount - 1;
+        for (int page = 0; page < pageCount; page++) {
+            int start = page * DISCOVERY_PAGE_SIZE;
+            int count = Math.min(DISCOVERY_PAGE_SIZE, Math.max(0, values.length - start));
+            int[] pageUniverses = Arrays.copyOfRange(values, start, start + count);
+            packets[page] = buildUniverseDiscoveryPacket(pageUniverses, cid, sourceName, page, lastPage);
+        }
+        return packets;
+    }
+
+    private static byte[] buildUniverseDiscoveryPacket(int[] universes, byte[] cid, String sourceName, int page, int lastPage) {
+        int count = universes == null ? 0 : universes.length;
+        if (count > DISCOVERY_PAGE_SIZE) throw new IllegalArgumentException("Too many universes on discovery page");
+        if (page < 0 || lastPage < page || lastPage > 255) throw new IllegalArgumentException("Invalid discovery page");
+        int packetLength = 120 + (count * 2);
+        byte[] packet = new byte[packetLength];
+
+        packet[0] = 0x00;
+        packet[1] = 0x10;
+        packet[2] = 0x00;
+        packet[3] = 0x00;
+        System.arraycopy(ACN_PACKET_ID, 0, packet, 4, ACN_PACKET_ID.length);
+
+        writeFlagsAndLength(packet, 16, packetLength - 16);
+        writeInt(packet, 18, 0x00000008);
+
+        byte[] safeCid = cid == null ? new byte[16] : Arrays.copyOf(cid, 16);
+        System.arraycopy(safeCid, 0, packet, 22, 16);
+
+        writeFlagsAndLength(packet, 38, packetLength - 38);
+        writeInt(packet, 40, 0x00000002);
+
+        byte[] source = (sourceName == null ? "LightingAI" : sourceName).getBytes(StandardCharsets.UTF_8);
+        System.arraycopy(source, 0, packet, 44, Math.min(63, source.length));
+
+        writeFlagsAndLength(packet, 112, packetLength - 112);
+        writeInt(packet, 114, 0x00000001);
+        packet[118] = (byte) (page & 0xff);
+        packet[119] = (byte) (lastPage & 0xff);
+
+        for (int i = 0; i < count; i++) {
+            int universe = validateUniverse(universes[i]);
+            packet[120 + (i * 2)] = (byte) ((universe >> 8) & 0xff);
+            packet[121 + (i * 2)] = (byte) (universe & 0xff);
+        }
+        return packet;
     }
 
     static String multicastAddress(int universe) {

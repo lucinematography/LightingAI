@@ -37,13 +37,20 @@ public final class NetworkInterfaceInspector {
                 for (InterfaceAddress interfaceAddress : network.getInterfaceAddresses()) {
                     if (interfaceAddress == null) continue;
                     InetAddress address = interfaceAddress.getAddress();
-                    if (!(address instanceof Inet4Address) || address.isLoopbackAddress()) continue;
+                    if (!(address instanceof Inet4Address) && !(address instanceof Inet6Address)) continue;
+                    if (address.isLoopbackAddress()) continue;
 
                     JSONObject item = new JSONObject();
                     try {
                         item.put("name", network.getName() == null ? "" : network.getName());
                         item.put("displayName", network.getDisplayName() == null ? "" : network.getDisplayName());
-                        item.put("ipv4", address.getHostAddress() == null ? "" : address.getHostAddress());
+                        if (address instanceof Inet4Address) {
+                            item.put("ipv4", address.getHostAddress() == null ? "" : address.getHostAddress());
+                            item.put("ipv6", "");
+                        } else {
+                            item.put("ipv4", "");
+                            item.put("ipv6", stripIpv6Scope(address.getHostAddress()));
+                        }
                         InetAddress broadcast = interfaceAddress.getBroadcast();
                         item.put("broadcast", broadcast == null || broadcast.getHostAddress() == null ? "" : broadcast.getHostAddress());
                         item.put("prefixLength", Math.max(0, interfaceAddress.getNetworkPrefixLength()));

@@ -1101,9 +1101,9 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void sacnSetIpMode(String mode) {
             String normalized = NetworkInterfaceInspector.normalizeSacnIpMode(mode);
-            sacnIpMode = normalized;
             if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
             sacnLiveEngine.setIpMode(normalized);
+            sacnIpMode = normalized;
         }
 
         @JavascriptInterface public String sacnNetworkSignature() {

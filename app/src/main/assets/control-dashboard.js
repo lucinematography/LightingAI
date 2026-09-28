@@ -1,6 +1,9 @@
 (function(){
 'use strict';
 var CARD_ID='lightingai-control-dashboard';
+var deskPointerActive=false,deskInteractionUntil=0;
+function holdDeskInteraction(ms){deskInteractionUntil=Math.max(deskInteractionUntil,Date.now()+Math.max(250,Number(ms)||1200))}
+function periodicRender(){if(deskPointerActive||Date.now()<deskInteractionUntil)return;render()}
 function E(id){return document.getElementById(id)}
 function sr(){return (window.currentLang||'sr')!=='en'}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c})}
@@ -101,7 +104,13 @@ function render(){
    (rows.length?rows.map(fixtureCard).join(''):'<div class="card"><div class="muted small">'+empty+'</div></div>');
  var n=E('controlJumpNetwork'),jf=E('controlJumpFixtures'),jg=E('controlJumpGroups'),js=E('controlJumpScenes'),jp=E('controlJumpProtocols');
  var desk=window.LightingAIArtNetControl||{},dr=E('controlDeskDimmer'),dv=E('controlDeskDimmerValue'),da=E('controlDeskApplyMaster'),arm=E('controlDeskArm'),prev=E('controlDeskPrev'),go=E('controlDeskGo'),bo=E('controlDeskBlackout'),restore=E('controlDeskRestore');
- if(dr)dr.oninput=function(){if(dv)dv.textContent=Math.round(Number(dr.value)||0)+'%'};
+ if(dr){
+  dr.onpointerdown=function(){deskPointerActive=true;holdDeskInteraction(5000)};
+  dr.onpointerup=function(){deskPointerActive=false;holdDeskInteraction(900)};
+  dr.onpointercancel=function(){deskPointerActive=false;holdDeskInteraction(900)};
+  dr.oninput=function(){holdDeskInteraction(1200);if(dv)dv.textContent=Math.round(Number(dr.value)||0)+'%'};
+  dr.onblur=function(){deskPointerActive=false;holdDeskInteraction(350)};
+ }
  if(da)da.onclick=function(){if(typeof desk.masterDimmer==='function')desk.masterDimmer(Number(dr&&dr.value)||0)};
  if(arm)arm.onclick=function(){if(typeof desk.arm==='function'){desk.arm(!(typeof desk.isArmed==='function'&&desk.isArmed()));setTimeout(render,250)}};
  if(prev)prev.onclick=function(){if(typeof desk.previousCue==='function')desk.previousCue()};
@@ -116,9 +125,9 @@ function render(){
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl,index=Number(btn.dataset.patchIndex);if(api&&typeof api.focusPatchIndex==='function'&&Number.isInteger(index)){api.focusPatchIndex(index);return}if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.8-operator-desk'};
+window.LightingAIControlDashboard={render:render,version:'0.9-operator-desk-interaction-safe'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
-setInterval(render,900);
+setInterval(periodicRender,900);
 var old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIControlDashboardLang){
  window.__lightingAIControlDashboardLang=true;

@@ -37,6 +37,8 @@ expect(artnet.includes("ensureReady:function(){return !!E('artnetCard')||install
 expect(dashboard.includes("typeof api.ensureReady==='function'&&!api.ensureReady()"),'Operator desk must wait for control UI readiness');
 expect(artnet.includes('statusState:function(){return {text:operatorStatus.text,ok:operatorStatus.ok};}'),'Operator status API missing');
 expect(dashboard.includes('STATUS OPERATERA')&&dashboard.includes('OPERATOR STATUS'),'Main operator status visibility missing');
+expect(artnet.includes('function stopLiveForBackground(){')&&artnet.includes('invalidateCachedOutputState();')&&artnet.includes('renderCueStack();'),'WebView background must clear stale control state');
+expect(artnet.includes("document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()})")&&artnet.includes("window.addEventListener('pagehide',stopLiveForBackground)"),'WebView background hooks missing');
 expect(dashboard.includes('CURRENT CUE')&&dashboard.includes('SLEDEĆI')&&dashboard.includes('GLOBAL BLACKOUT'),'Operator cue/global blackout visibility missing');
 expect(artnet.includes("document.querySelectorAll('.artnet-master-device,.artnet-master-cct-device,.artnet-master-rgb-device')"),'ALL reset must select the existing verified master controls');
 expect(dashboard.includes('if(deskPointerActive&&now<deskInteractionUntil)return')&&dashboard.includes('if(deskPointerActive)deskPointerActive=false'),'Stalled pointer state must self-release after interaction timeout');
@@ -58,5 +60,5 @@ expect(artnet.includes('function globalBlackout(){')&&artnet.includes('if(!requi
 expect(artnet.includes('function restoreBeforeBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Blackout restore must remain ARM gated');
 expect(artnet.includes('function profileForRow(r)')&&artnet.includes('verified===true'),'Operator control engine must retain verified-profile gating');
 
-console.log(JSON.stringify({ok:failures.length===0,operatorDeskVersion:'0.15-operator-status-visible',failures},null,2));
+console.log(JSON.stringify({ok:failures.length===0,operatorDeskVersion:'0.16-background-state-failsafe',failures},null,2));
 if(failures.length)process.exit(1);

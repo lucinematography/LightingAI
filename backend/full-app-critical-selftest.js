@@ -160,6 +160,7 @@ expect(patch.includes("function autoPatch(){let u=1,a=1;state.rows.forEach(r=>{c
 
 const control=read('app/src/main/assets/artnet-control.js');
 expect(control.includes('SACN_IP_MODE_KEY')&&control.includes('setSacnIpMode:function(mode)')&&control.includes("id=\"sacnIpMode\"")&&control.includes("value=\"dual\"")&&control.includes('native.sacnMulticastInterfaceCount'),'sACN UI must expose IPv4/IPv6/Dual selection and preflight the selected multicast route');
+expect(!control.includes("else if(!interfaces.length)failure=t().preflightNoNetwork")&&control.includes("if(!interfaces.length){failure=t().preflightNoNetwork}"),'IPv6-only sACN must not be rejected by the Art-Net IPv4 interface guard');
 expect(control.includes("version:'0.66-sacn-ipv6-dual'"),'sACN IPv6/Dual control version missing');
 expect(control.includes('setKeepalive:function(request)')&&control.includes("networkdmx_keepalive_g")&&control.includes('(expectedLiveFrames>0&&(liveFrames===0||!!liveError))'),'LIVE off must downgrade to keepalive and health checks must monitor keepalive failures');
 expect(control.includes("networkdmx_disarm_stop_g")&&control.includes("transport.stopLive({id:stopId,protocol:stopProtocol})")&&control.includes("liveEnabled=false"),'Every DISARM must stop native Art-Net/sACN output even when only keepalive mode is active');

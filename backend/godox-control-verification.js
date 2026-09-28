@@ -1,3 +1,4 @@
+// Godox control verification: preserve standards transport while unverified semantic DMX profiles fail closed.
 function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
 }

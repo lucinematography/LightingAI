@@ -55,6 +55,7 @@ let activeSceneFade=null;
 let currentCueIndex=-1;
 let lastBlackoutSnapshot=null;
 let outputArmed=false;
+let operatorStatus={text:'',ok:null};
 let pendingArmPreflightId=null;
 let pendingArmDiscoveryId='';
 let activeDiscoveryRequestId='';
@@ -220,7 +221,7 @@ function controlTransport(){
  window.LightingAIControlTransport=adapter;
  return adapter;
 }
-function status(s,ok){const el=E('artnetStatus');if(!el)return;el.textContent=s;el.style.color=ok===false?'#ffb5b5':ok===true?'#b8f0d1':'#9299a3';}
+function status(s,ok){operatorStatus={text:String(s==null?'':s),ok:ok===true?true:(ok===false?false:null)};const el=E('artnetStatus');if(!el)return;el.textContent=s;el.style.color=ok===false?'#ffb5b5':ok===true?'#b8f0d1':'#9299a3';}
 function selectedBridge(){
  const select=E('networkDmxBridge'),id=select?select.value:'';
  return VERIFIED_BRIDGES.find(item=>item.id===id)||VERIFIED_BRIDGES[0];
@@ -1840,7 +1841,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.66-sacn-ipv6-dual',ensureReady:function(){return !!E('artnetCard')||install();},refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,previousCue:previousCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},masterDimmer:applyMasterDimmer,masterCct:applyMasterCct,masterRgb:applyMasterRgb,masterDimmerScope:masterDimmerScope,selectAllMasterControls:selectAllMasterControls,cueStatus:cueStatus,saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.66-sacn-ipv6-dual',ensureReady:function(){return !!E('artnetCard')||install();},refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,previousCue:previousCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},masterDimmer:applyMasterDimmer,masterCct:applyMasterCct,masterRgb:applyMasterRgb,masterDimmerScope:masterDimmerScope,selectAllMasterControls:selectAllMasterControls,cueStatus:cueStatus,statusState:function(){return {text:operatorStatus.text,ok:operatorStatus.ok};},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

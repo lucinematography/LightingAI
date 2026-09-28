@@ -188,6 +188,19 @@ public class ArtNetProtocolTest {
         assertEquals("10.0.0.42", node.ip);
     }
 
+    @Test public void truncatedArtPollReplyBelowCurrentMinimumIsRejected() throws Exception {
+        byte[] reply = new byte[206];
+        byte[] id = "Art-Net\0".getBytes(StandardCharsets.US_ASCII);
+        System.arraycopy(id, 0, reply, 0, id.length);
+        reply[8] = 0x00;
+        reply[9] = 0x21;
+        reply[10] = (byte) 192;
+        reply[11] = (byte) 168;
+        reply[12] = 1;
+        reply[13] = 50;
+        assertNull(ArtNetDiscovery.parseReply(reply, reply.length, InetAddress.getByName("192.168.1.50")));
+    }
+
     @Test public void invalidReplyIsRejected() throws Exception {
         byte[] reply = new byte[239];
         ArtNetDiscovery.Node node = ArtNetDiscovery.parseReply(reply, reply.length, InetAddress.getByName("10.0.0.1"));

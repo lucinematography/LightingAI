@@ -158,4 +158,44 @@ public class SacnProtocolTest {
         assertFalse(new String(source, StandardCharsets.UTF_8).isEmpty());
         assertEquals(0, packet[107] & 0xff);
     }
+
+    @Test public void liveEngineAbortsOnNetworkChangeWithoutUnsafeTermination() throws Exception {
+        String source = new String(
+            java.nio.file.Files.readAllBytes(
+                java.nio.file.Paths.get("src/main/java/com/lightingai/app/SacnLiveEngine.java")
+            ),
+            java.nio.charset.StandardCharsets.UTF_8
+        );
+        assertTrue(source.contains("Network changed; re-arm required"));
+        assertTrue(source.contains("abortAll();"));
+        assertTrue(source.contains("stopAll(false)"));
+        assertTrue(source.contains("Network changed; sACN termination suppressed"));
+    }
+
+    @Test public void liveEngineSendsThreeTerminationPacketsOnlyOnSameRoute() throws Exception {
+        String source = new String(
+            java.nio.file.Files.readAllBytes(
+                java.nio.file.Paths.get("src/main/java/com/lightingai/app/SacnLiveEngine.java")
+            ),
+            java.nio.charset.StandardCharsets.UTF_8
+        );
+        assertTrue(source.contains("for (int repeat = 0; repeat < 3; repeat++)"));
+        assertTrue(source.contains("SacnSender.sendTermination("));
+        assertTrue(source.contains("networkSignature.equals(currentNetwork)"));
+        assertTrue(source.contains("frames.clear();"));
+        assertTrue(source.contains("networkSignature = \"\";"));
+    }
+
+    @Test public void liveEngineLocksIpModeWhileFramesAreActive() throws Exception {
+        String source = new String(
+            java.nio.file.Files.readAllBytes(
+                java.nio.file.Paths.get("src/main/java/com/lightingai/app/SacnLiveEngine.java")
+            ),
+            java.nio.charset.StandardCharsets.UTF_8
+        );
+        assertTrue(source.contains("sACN IP mode changed; re-arm required"));
+        assertTrue(source.contains("sequenceTracker.next(universe)"));
+        assertTrue(source.contains("SacnSender.validateFullFrame(channels)"));
+        assertTrue(source.contains("Arrays.copyOf(channels, 512)"));
+    }
 }

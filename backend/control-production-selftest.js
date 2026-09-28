@@ -58,6 +58,7 @@ expect(main.includes('networkDmxSetArmSignature') && main.includes('requireNetwo
 const artnetSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/ArtNetSender.java'),'utf8');
 const sacnSender = fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/SacnSender.java'),'utf8');
 expect(artnetSender.includes('validatePortAddress') && artnetSender.includes('MAX_PORT_ADDRESS = 32767'), 'Art-Net strict Port-Address validation missing');
+expect(artnetSender.includes('isIpv4Literal') && artnetSender.includes('Art-Net target must be AUTO or an IPv4 literal'), 'Art-Net explicit target must fail closed unless it is AUTO or an IPv4 literal');
 expect(artnet.includes('artNetPortAddressForUniverse') && artnet.includes('bridgeUniverseAllowed'), 'Per-bridge Art-Net universe policy missing');
 expect(artnet.includes('preflightMultipleSacnRoutes') && artnet.includes('multicastRoutes.length>1'), 'Ambiguous sACN multicast route guard missing');
 expect(artnet.includes('runControlHealthCheck') && artnet.includes('armedNetworkSignature'), 'Network DMX health watchdog missing');

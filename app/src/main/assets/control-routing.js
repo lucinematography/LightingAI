@@ -5,9 +5,20 @@ function lower(v){return String(v||'').toLowerCase()}
 function hasAny(values,needles){
   return list(values).some(function(v){var s=lower(v);return needles.some(function(n){return s.indexOf(n)>=0})})
 }
+function controlFields(fixture){
+  var c=fixture&&fixture.control;
+  if(Array.isArray(c))return {direct:[],wired:c.slice(),wireless:[],external:[]};
+  if(!c||typeof c!=='object')return {direct:[],wired:[],wireless:[],external:[]};
+  return {
+    direct:list(c.directLightingAI),
+    wired:list(c.wired),
+    wireless:list(c.wireless),
+    external:list(c.externalInterfaceRequired)
+  };
+}
 function classify(fixture){
-  var c=fixture&&fixture.control||{};
-  var direct=list(c.directLightingAI),wired=list(c.wired),wireless=list(c.wireless),external=list(c.externalInterfaceRequired);
+  var fields=controlFields(fixture);
+  var direct=fields.direct,wired=fields.wired,wireless=fields.wireless,external=fields.external;
   var standardFields=direct.concat(wired,wireless);
   var nativeNetwork=hasAny(direct,['art-net','artnet','sacn','e1.31']);
   var standardNetwork=hasAny(standardFields,['art-net','artnet','sacn','e1.31']);

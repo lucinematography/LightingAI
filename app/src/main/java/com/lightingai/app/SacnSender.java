@@ -3,6 +3,8 @@ package com.lightingai.app;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.net.NetworkInterface;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -23,8 +25,20 @@ public final class SacnSender {
     }
 
     public static void sendDmx(int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
-        try (DatagramSocket socket = new DatagramSocket()) {
+        try (DatagramSocket socket = openMulticastSocket()) {
             sendDmx(socket, universe, channels, sequence, cid, sourceName, priority);
+        }
+    }
+
+    static MulticastSocket openMulticastSocket() throws Exception {
+        NetworkInterface route = NetworkInterfaceInspector.requireSingleMulticastIpv4Interface();
+        MulticastSocket socket = new MulticastSocket();
+        try {
+            socket.setNetworkInterface(route);
+            return socket;
+        } catch (Exception e) {
+            socket.close();
+            throw e;
         }
     }
 

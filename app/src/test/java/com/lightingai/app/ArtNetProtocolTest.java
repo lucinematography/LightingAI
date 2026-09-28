@@ -39,6 +39,15 @@ public class ArtNetProtocolTest {
         assertEquals(32767, ArtNetSender.validatePortAddress(32767));
     }
 
+    @Test public void productionSenderRequiresFullStrictFrame() {
+        assertThrows(IllegalArgumentException.class, () -> ArtNetSender.validateFullFrame(null));
+        assertThrows(IllegalArgumentException.class, () -> ArtNetSender.validateFullFrame(new int[511]));
+        int[] invalid = new int[512];
+        invalid[77] = 256;
+        assertThrows(IllegalArgumentException.class, () -> ArtNetSender.validateFullFrame(invalid));
+        ArtNetSender.validateFullFrame(new int[512]);
+    }
+
     @Test public void automaticDmxTargetMigratesLimitedBroadcastToAuto() {
         assertEquals("AUTO", ArtNetSender.normalizeTarget(null));
         assertEquals("AUTO", ArtNetSender.normalizeTarget(""));

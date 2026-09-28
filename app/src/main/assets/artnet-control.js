@@ -902,6 +902,20 @@ function previousCue(){
  if(currentCueIndex<=0){currentCueIndex=-1;renderCueStack();status(t().ready);return}
  goCue(currentCueIndex-1);
 }
+function cueStatus(){
+ const cues=readCues(),total=cues.length;
+ const current=(currentCueIndex>=0&&currentCueIndex<total)?cues[currentCueIndex]:null;
+ const nextIndex=currentCueIndex+1;
+ const next=(nextIndex>=0&&nextIndex<total)?cues[nextIndex]:null;
+ return {
+  index:current?currentCueIndex:-1,
+  total:total,
+  currentScene:current&&current.sceneName?current.sceneName:'',
+  nextIndex:next?nextIndex:-1,
+  nextScene:next&&next.sceneName?next.sceneName:'',
+  busy:!!activeSceneFade
+ };
+}
 function renderCueStack(){
  const select=E('artnetCueScene'),list=E('artnetCueList');
  if(!select||!list)return;
@@ -1826,7 +1840,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.66-sacn-ipv6-dual',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,previousCue:previousCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},masterDimmer:applyMasterDimmer,masterCct:applyMasterCct,masterRgb:applyMasterRgb,masterDimmerScope:masterDimmerScope,selectAllMasterControls:selectAllMasterControls,saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.66-sacn-ipv6-dual',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,previousCue:previousCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},masterDimmer:applyMasterDimmer,masterCct:applyMasterCct,masterRgb:applyMasterRgb,masterDimmerScope:masterDimmerScope,selectAllMasterControls:selectAllMasterControls,cueStatus:cueStatus,saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

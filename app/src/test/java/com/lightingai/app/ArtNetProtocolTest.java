@@ -234,6 +234,32 @@ public class ArtNetProtocolTest {
         assertNull(node);
     }
 
+    @Test public void liveEngineFailsClosedOnNetworkChange() throws Exception {
+        String source = new String(
+            java.nio.file.Files.readAllBytes(
+                java.nio.file.Paths.get("src/main/java/com/lightingai/app/ArtNetLiveEngine.java")
+            ),
+            java.nio.charset.StandardCharsets.UTF_8
+        );
+        assertTrue(source.contains("Network changed; re-arm required"));
+        assertTrue(source.contains("NetworkInterfaceInspector.signature()"));
+        assertTrue(source.contains("stopAll();"));
+        assertTrue(source.contains("frames.clear();"));
+        assertTrue(source.contains("networkSignature = \"\";"));
+    }
+
+    @Test public void liveEngineCopiesStrictFullFramesBeforeScheduling() throws Exception {
+        String source = new String(
+            java.nio.file.Files.readAllBytes(
+                java.nio.file.Paths.get("src/main/java/com/lightingai/app/ArtNetLiveEngine.java")
+            ),
+            java.nio.charset.StandardCharsets.UTF_8
+        );
+        assertTrue(source.contains("ArtNetSender.validateFullFrame(channels)"));
+        assertTrue(source.contains("Arrays.copyOf(channels, 512)"));
+        assertTrue(source.contains("sequenceTracker.next(frame.targetIp, frame.portAddress)"));
+    }
+
     private static void putAscii(byte[] target, int offset, int maxLength, String value) {
         byte[] raw = value.getBytes(StandardCharsets.US_ASCII);
         System.arraycopy(raw, 0, target, offset, Math.min(maxLength - 1, raw.length));

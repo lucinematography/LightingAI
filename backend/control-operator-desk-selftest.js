@@ -42,6 +42,7 @@ expect(artnet.includes("document.addEventListener('visibilitychange',()=>{if(doc
 expect(dashboard.includes('CURRENT CUE')&&dashboard.includes('SLEDEĆI')&&dashboard.includes('GLOBAL BLACKOUT'),'Operator cue/global blackout visibility missing');
 expect(artnet.includes("document.querySelectorAll('.artnet-master-device,.artnet-master-cct-device,.artnet-master-rgb-device')"),'ALL reset must select the existing verified master controls');
 expect(dashboard.includes('if(deskPointerActive&&now<deskInteractionUntil)return')&&dashboard.includes('if(deskPointerActive)deskPointerActive=false'),'Stalled pointer state must self-release after interaction timeout');
+expect(dashboard.includes("x.tagName==='DETAILS'?x:(x.closest&&x.closest('details'))")&&dashboard.includes('if(details)details.open=true'),'CONTROL quick jumps must open the nearest collapsed details panel');
 expect(!dashboard.includes('setInterval(render,900)'),'Unsafe periodic full re-render must not return');
 
 for(const apiMarker of [

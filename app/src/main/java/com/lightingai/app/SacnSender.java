@@ -34,6 +34,7 @@ public final class SacnSender {
 
     public static void sendDmx(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
+        validateFullFrame(channels);
         int u = validateUniverse(universe);
         byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0, priority);
         InetAddress address = InetAddress.getByName(multicastAddress(u));
@@ -105,6 +106,7 @@ public final class SacnSender {
 
     static void sendTermination(DatagramSocket socket, int universe, int[] channels, int sequence, byte[] cid, String sourceName, int priority) throws Exception {
         if (socket == null) throw new IllegalArgumentException("DatagramSocket is required");
+        validateFullFrame(channels);
         int u = validateUniverse(universe);
         byte[] packet = buildDmxPacket(u, channels, sequence, cid, sourceName, 0x40, priority);
         InetAddress address = InetAddress.getByName(multicastAddress(u));
@@ -121,6 +123,15 @@ public final class SacnSender {
             throw new IllegalArgumentException("sACN universe out of range: " + universe);
         }
         return universe;
+    }
+
+    static void validateFullFrame(int[] channels) {
+        if (channels == null || channels.length != 512) {
+            throw new IllegalArgumentException("DMX frame must contain exactly 512 channels");
+        }
+        for (int value : channels) {
+            if (value < 0 || value > 255) throw new IllegalArgumentException("DMX channel out of range");
+        }
     }
 
     static int normalizePriority(int priority) {

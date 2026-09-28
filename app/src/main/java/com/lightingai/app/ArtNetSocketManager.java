@@ -33,4 +33,13 @@ final class ArtNetSocketManager {
             return socket;
         }
     }
+
+    static void close() {
+        synchronized (LOCK) {
+            if (socket != null) {
+                socket.close();
+                socket = null;
+            }
+        }
+    }
 }

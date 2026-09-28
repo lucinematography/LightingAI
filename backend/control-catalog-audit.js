@@ -90,8 +90,8 @@ for (const fixture of fixtures) {
 
   const modeNames = new Set();
   for (const mode of verified) {
-    const channels = Number(mode.channels ?? mode.channelCount);
-    if (!Number.isInteger(channels) || channels < 1 || channels > 512) {
+    const channels = mode.channels ?? mode.channelCount;
+    if (typeof channels !== 'number' || !Number.isInteger(channels) || channels < 1 || channels > 512) {
       pushFailure(fixture, 'verified DMX mode has invalid channel count: ' + String(mode.name || '?'));
       continue;
     }
@@ -115,9 +115,9 @@ for (const fixture of fixtures) {
       if (keys.has(key)) pushFailure(fixture, 'duplicate control key ' + key + ' in ' + (modeName || '?'));
       keys.add(key);
 
-      const ch = Number(ctrl.channel);
-      const width = Number(ctrl.bits) === 16 || Number(ctrl.dmxMax) > 255 ? 2 : 1;
-      if (!Number.isInteger(ch) || ch < 1 || ch + width - 1 > channels) {
+      const ch = ctrl.channel;
+      const width = ctrl.bits === 16 || (typeof ctrl.dmxMax === 'number' && ctrl.dmxMax > 255) ? 2 : 1;
+      if (typeof ch !== 'number' || !Number.isInteger(ch) || ch < 1 || ch + width - 1 > channels) {
         pushFailure(fixture, 'control ' + key + ' is outside mode channel range in ' + (modeName || '?'));
       }
       if (ctrl.type === 'enum' && !Array.isArray(ctrl.choices)) {
@@ -129,12 +129,12 @@ for (const fixture of fixtures) {
     }
 
     for (const req of (Array.isArray(mode.requiredChannels) ? mode.requiredChannels : [])) {
-      const ch = Number(req?.channel);
-      const value = Number(req?.value);
-      if (!Number.isInteger(ch) || ch < 1 || ch > channels) {
+      const ch = req?.channel;
+      const value = req?.value;
+      if (typeof ch !== 'number' || !Number.isInteger(ch) || ch < 1 || ch > channels) {
         pushFailure(fixture, 'required channel is outside mode channel range in ' + (modeName || '?'));
       }
-      if (!Number.isInteger(value) || value < 0 || value > 255) {
+      if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 255) {
         pushFailure(fixture, 'required channel value invalid in ' + (modeName || '?'));
       }
     }

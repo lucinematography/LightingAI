@@ -87,17 +87,6 @@ const s30Verified = (s30Classic?.dmxModes || []).filter(mode => mode?.verified =
 expect(s30Verified.length === 1, 'SkyPanel S30-C must retain exactly one verified DMX profile');
 expect(s30Verified[0]?.name === 'Mode 1 CCT & RGBW 8 bit' && s30Verified[0]?.channels === 12, 'SkyPanel S30-C verified 12ch profile changed unexpectedly');
 
-const broadcasterRoute = routingContext.window.LightingAIControlRouting.classify(broadcaster);
-expect(
-  broadcasterRoute?.route === 'gateway' &&
-  broadcasterRoute?.nativeNetwork === false &&
-  broadcasterRoute?.transportReady === true &&
-  broadcasterRoute?.semanticReady === true &&
-  broadcasterRoute?.verifiedDmxModeCount === 1 &&
-  broadcasterRoute?.requiresInterface === true,
-  'BroadCaster must route through the standards gateway via required PowerDMX interface'
-);
-
 for (const id of ['arri-skypanel-s30-rp','arri-skypanel-s60-rp']) {
   const fixture = ARRI_SKYPANEL_DISCONTINUED_FIXTURES.find(f => f.id === id);
   expect(!!fixture, 'ARRI SkyPanel RP fixture missing: ' + id);
@@ -229,6 +218,17 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+const broadcasterRoute = routingContext.window.LightingAIControlRouting.classify(broadcaster);
+expect(
+  broadcasterRoute?.route === 'gateway' &&
+  broadcasterRoute?.nativeNetwork === false &&
+  broadcasterRoute?.transportReady === true &&
+  broadcasterRoute?.semanticReady === true &&
+  broadcasterRoute?.verifiedDmxModeCount === 1 &&
+  broadcasterRoute?.requiresInterface === true,
+  'BroadCaster must route through the standards gateway via required PowerDMX interface'
+);
+
 for (const id of ['arri-skypanel-s30-rp','arri-skypanel-s60-rp']) {
   const fixture = ARRI_SKYPANEL_DISCONTINUED_FIXTURES.find(f => f.id === id);
   const route = routingContext.window.LightingAIControlRouting.classify(fixture);

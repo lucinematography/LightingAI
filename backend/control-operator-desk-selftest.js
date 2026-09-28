@@ -18,7 +18,7 @@ for(const marker of [
   "controlDeskGo",
   "controlDeskBlackout",
   "controlDeskRestore",
-  "version:'0.9-operator-desk-interaction-safe'"
+  "version:'0.10-operator-desk-interaction-safe'"
 ]) expect(dashboard.includes(marker),'Operator desk marker missing: '+marker);
 
 expect(dashboard.includes("desk.masterDimmer(Number(dr&&dr.value)||0)"),'Operator MASTER must call existing safe masterDimmer API');
@@ -27,6 +27,7 @@ expect(dashboard.includes("desk.previousCue()")&&dashboard.includes("desk.goCue(
 expect(dashboard.includes("desk.globalBlackout()")&&dashboard.includes("desk.restoreBlackout()"),'Operator blackout/restore must call existing safety APIs');
 
 expect(dashboard.includes('deskPointerActive')&&dashboard.includes('deskInteractionUntil')&&dashboard.includes('periodicRender()'),'Operator desk interaction guard missing');
+expect(dashboard.includes('card.onpointerdown=function(){deskPointerActive=true')&&dashboard.includes('card.onpointerup=function(){deskPointerActive=false')&&dashboard.includes('card.onfocusin=function(){holdDeskInteraction(2500)'), 'Whole operator card touch/focus guard missing');
 expect(dashboard.includes("dr.onpointerdown=function(){deskPointerActive=true")&&dashboard.includes("dr.onpointerup=function(){deskPointerActive=false"),'MASTER touch pointer guard missing');
 expect(dashboard.includes('setInterval(periodicRender,900)'),'Periodic dashboard refresh must use interaction-safe render gate');
 expect(!dashboard.includes('setInterval(render,900)'),'Unsafe periodic full re-render must not return');
@@ -47,5 +48,5 @@ expect(artnet.includes('function globalBlackout(){')&&artnet.includes('if(!requi
 expect(artnet.includes('function restoreBeforeBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Blackout restore must remain ARM gated');
 expect(artnet.includes('function profileForRow(r)')&&artnet.includes('verified===true'),'Operator control engine must retain verified-profile gating');
 
-console.log(JSON.stringify({ok:failures.length===0,operatorDeskVersion:'0.9-operator-desk-interaction-safe',failures},null,2));
+console.log(JSON.stringify({ok:failures.length===0,operatorDeskVersion:'0.10-operator-desk-interaction-safe',failures},null,2));
 if(failures.length)process.exit(1);

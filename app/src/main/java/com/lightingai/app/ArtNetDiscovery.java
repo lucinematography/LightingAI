@@ -139,10 +139,10 @@ public final class ArtNetDiscovery {
             int subnet = data[19] & 0x0f;
             for (int i = 0; i < 4; i++) {
                 int portType = data[174 + i] & 0xff;
-                int goodOutput = data[182 + i] & 0xff;
-                boolean outputCapable = (portType & 0x80) != 0;
-                boolean outputSelectedForSacn = (goodOutput & 0x01) != 0;
-                if (outputCapable && !outputSelectedForSacn) {
+                if ((portType & 0x40) != 0) {
+                    subscriptions.add(portAddress(net, subnet, data[186 + i] & 0x0f));
+                }
+                if ((portType & 0x80) != 0) {
                     subscriptions.add(portAddress(net, subnet, data[190 + i] & 0x0f));
                 }
             }

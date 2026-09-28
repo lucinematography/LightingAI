@@ -18,7 +18,7 @@ for(const marker of [
   "controlDeskGo",
   "controlDeskBlackout",
   "controlDeskRestore",
-  "version:'0.13-operator-cue-status-visible'"
+  "version:'0.14-operator-startup-deterministic'"
 ]) expect(dashboard.includes(marker),'Operator desk marker missing: '+marker);
 
 expect(dashboard.includes("desk.masterDimmer(Number(dr&&dr.value)||0)"),'Operator MASTER must call existing safe masterDimmer API');
@@ -33,6 +33,8 @@ expect(dashboard.includes('setInterval(periodicRender,900)'),'Periodic dashboard
 expect(dashboard.includes('controlDeskSelectAll')&&dashboard.includes('MASTER SCOPE')&&dashboard.includes('OBIM MASTER-a'),'Operator desk must show explicit master scope and ALL reset');
 expect(artnet.includes('masterDimmerScope:masterDimmerScope')&&artnet.includes('selectAllMasterControls:selectAllMasterControls'),'Master scope/reset API missing');
 expect(artnet.includes('cueStatus:cueStatus')&&artnet.includes('function cueStatus(){'),'Operator cue status API missing');
+expect(artnet.includes("ensureReady:function(){return !!E('artnetCard')||install();}"),'Control API startup readiness gate missing');
+expect(dashboard.includes("typeof api.ensureReady==='function'&&!api.ensureReady()"),'Operator desk must wait for control UI readiness');
 expect(dashboard.includes('CURRENT CUE')&&dashboard.includes('SLEDEĆI')&&dashboard.includes('GLOBAL BLACKOUT'),'Operator cue/global blackout visibility missing');
 expect(artnet.includes("document.querySelectorAll('.artnet-master-device,.artnet-master-cct-device,.artnet-master-rgb-device')"),'ALL reset must select the existing verified master controls');
 expect(dashboard.includes('if(deskPointerActive&&now<deskInteractionUntil)return')&&dashboard.includes('if(deskPointerActive)deskPointerActive=false'),'Stalled pointer state must self-release after interaction timeout');
@@ -54,5 +56,5 @@ expect(artnet.includes('function globalBlackout(){')&&artnet.includes('if(!requi
 expect(artnet.includes('function restoreBeforeBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Blackout restore must remain ARM gated');
 expect(artnet.includes('function profileForRow(r)')&&artnet.includes('verified===true'),'Operator control engine must retain verified-profile gating');
 
-console.log(JSON.stringify({ok:failures.length===0,operatorDeskVersion:'0.13-operator-cue-status-visible',failures},null,2));
+console.log(JSON.stringify({ok:failures.length===0,operatorDeskVersion:'0.14-operator-startup-deterministic',failures},null,2));
 if(failures.length)process.exit(1);

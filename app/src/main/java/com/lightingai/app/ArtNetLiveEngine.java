@@ -100,10 +100,7 @@ public final class ArtNetLiveEngine {
                 executor.shutdownNow();
                 executor = null;
             }
-            if (socket != null) {
-                socket.close();
-                socket = null;
-            }
+            socket = null;
             networkSignature = "";
         }
     }
@@ -115,7 +112,7 @@ public final class ArtNetLiveEngine {
 
     private void ensureRunningLocked() throws Exception {
         if (socket == null || socket.isClosed()) {
-            socket = new DatagramSocket();
+            socket = ArtNetSocketManager.socket();
         }
         if (executor == null || executor.isShutdown()) {
             executor = Executors.newSingleThreadScheduledExecutor(r -> {

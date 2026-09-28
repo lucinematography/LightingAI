@@ -1055,8 +1055,8 @@ function controlToDmx(ctrl,value){
  return Math.max(0,Math.min(maxDefault,Math.round(outMin+normalized*(outMax-outMin))));
 }
 function writeControlToFrame(targetFrame,address,ctrl,value){
- const start=Math.max(1,Number(address)||1),bits=controlBitDepth(ctrl),width=bits===16?2:1;
- if(!Array.isArray(targetFrame)||start+width-1>512)return false;
+ const start=address,bits=controlBitDepth(ctrl),width=bits===16?2:1;
+ if(!isFullDmxFrame(targetFrame)||typeof start!=='number'||!Number.isInteger(start)||start<1||start+width-1>512)return false;
  const dmx=controlToDmx(ctrl,value);
  if(!Number.isInteger(dmx)||dmx<0||dmx>(bits===16?65535:255))return false;
  if(bits===16){
@@ -1067,11 +1067,17 @@ function writeControlToFrame(targetFrame,address,ctrl,value){
 }
 function applyProfileRequirements(targetFrame,fixtureStart,profile){
  const requirements=profile&&Array.isArray(profile.requiredChannels)?profile.requiredChannels:[];
+ if(!isFullDmxFrame(targetFrame)||typeof fixtureStart!=='number'||!Number.isInteger(fixtureStart)||fixtureStart<1||fixtureStart>512)return false;
  let ok=true;
  requirements.forEach(item=>{
-  const address=Math.max(1,Number(fixtureStart)||1)+Math.max(1,Number(item&&item.channel)||1)-1;
-  if(!Array.isArray(targetFrame)||address>512){ok=false;return}
-  targetFrame[address-1]=Math.max(0,Math.min(255,Number(item&&item.value)||0));
+  const channel=item&&item.channel,value=item&&item.value;
+  if(typeof channel!=='number'||!Number.isInteger(channel)||channel<1||
+     typeof value!=='number'||!Number.isInteger(value)||value<0||value>255){
+   ok=false;return;
+  }
+  const address=fixtureStart+channel-1;
+  if(address>512){ok=false;return}
+  targetFrame[address-1]=value;
  });
  return ok;
 }
@@ -1598,7 +1604,7 @@ function applyStagedFixture(fixtureId){
  return true;
 }
 
-window.LightingAIArtNetControl={version:'0.56-strict-known-frame-baselines',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
+window.LightingAIArtNetControl={version:'0.57-strict-profile-requirements',refreshPatch:function(){renderPatchDevices();renderMasterControl();renderMasterCctControl();renderMasterRgbControl();renderControlGroups();renderScenes();renderCueStack();},transport:controlTransport,setLive:setLiveEnabled,saveScene:saveScene,fadeScene:fadeToScene,cancelFade:cancelSceneFade,goCue:goCue,resetCues:resetCueStack,globalBlackout:globalBlackout,restoreBlackout:restoreBeforeBlackout,arm:setOutputArmed,isArmed:function(){return outputArmed},saveGroup:saveControlGroup,applyGroup:applyControlGroup,diagnostics:requestDiagnostics,setSacnPriority:applySacnPriority,focusFixture:focusPatchFixture,focusPatchIndex:focusPatchIndex,stageFixture:stagePatchFixture,applyStagedFixture:applyStagedFixture,getStagedFixture:function(){return aiStagedFixture;}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()});
 window.addEventListener('pagehide',stopLiveForBackground);
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);

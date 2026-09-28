@@ -1,3 +1,4 @@
+// Aladdin control verification: normalize runtime metadata without changing verified DMX semantics.
 function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
 }

@@ -336,9 +336,8 @@ function finishArmPreflight(id,payload,error){
  if(error||!native)failure=t().preflightFailed;
  else if(!interfaces.length)failure=t().preflightNoNetwork;
  else if(selectedProtocol()==='sacn'){
-  const nativeCount=Number(native.multicastInterfaceCount);
-  const uniqueFallback=new Set(interfaces.filter(item=>item&&item.multicast===true&&item.ipv4).map(item=>String(item.name||item.displayName||item.ipv4)));
-  const multicastRouteCount=Number.isInteger(nativeCount)&&nativeCount>=0?nativeCount:uniqueFallback.size;
+  const nativeCount=Number(native.sacnMulticastInterfaceCount);
+  const multicastRouteCount=Number.isInteger(nativeCount)&&nativeCount>=0?nativeCount:0;
   if(multicastRouteCount<1)failure=t().preflightNoMulticast;
   else if(multicastRouteCount>1)failure=t().preflightMultipleSacnRoutes;
  }
@@ -363,7 +362,7 @@ function finishArmPreflight(id,payload,error){
   status(failure,false);
   return true;
  }
- const signature=String(native.networkSignature||'');
+ const signature=selectedProtocol()==='sacn'?String(native.sacnNetworkSignature||''):String(native.networkSignature||'');
  if(!signature){
   outputArmed=false;
   if(toggle)toggle.checked=false;
@@ -393,7 +392,7 @@ function finishHealthCheck(id,payload,error){
  if(Number(match[1])!==armGeneration)return true;
  if(!outputArmed)return true;
  const native=payload&&typeof payload==='object'?payload:null;
- const signature=native&&typeof native.networkSignature==='string'?native.networkSignature:'';
+ const signature=selectedProtocol()==='sacn'&&native&&typeof native.sacnNetworkSignature==='string'?native.sacnNetworkSignature:(native&&typeof native.networkSignature==='string'?native.networkSignature:'');
  const protocol=selectedProtocol(),metrics=native&&(protocol==='sacn'?native.sacn:native.artNet)||null;
  const expectedLiveFrames=Object.keys(frames).length;
  const liveFrames=metrics?Number(metrics.liveFrames)||0:0;
@@ -447,6 +446,11 @@ function requireOutputArmed(){
 }
 function requestArmDiagnostics(){
  const transport=controlTransport(),toggle=E('artnetOutputArm');
+ if(selectedProtocol()==='sacn'&&!applySacnIpMode()){
+  if(toggle)toggle.disabled=false;
+  status(t().preflightFailed,false);
+  return;
+ }
  const id='network_arm_'+Date.now()+'_'+(++seq);
  pendingArmPreflightId=id;
  if(toggle){toggle.checked=false;toggle.disabled=true}
@@ -521,6 +525,20 @@ function setOutputArmed(enabled,quiet){
 function selectedProtocol(){
  const select=E('networkDmxProtocol');
  return select&&select.value==='sacn'?'sacn':'artnet';
+}
+function sacnIpMode(){
+ const select=E('sacnIpMode');
+ const saved=String(localStorage.getItem(SACN_IP_MODE_KEY)||'ipv4');
+ const value=select?select.value:saved;
+ return value==='ipv6'||value==='dual'?value:'ipv4';
+}
+function applySacnIpMode(){
+ const value=sacnIpMode(),select=E('sacnIpMode');
+ if(select)select.value=value;
+ try{localStorage.setItem(SACN_IP_MODE_KEY,value)}catch(e){}
+ const transport=controlTransport();
+ try{if(typeof transport.setSacnIpMode==='function')return transport.setSacnIpMode(value)}catch(e){}
+ return false;
 }
 function sacnPriority(){
  const input=E('sacnPriority');

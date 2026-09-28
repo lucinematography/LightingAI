@@ -142,6 +142,23 @@ public class ArtNetProtocolTest {
         assertTrue(node.subscriptions.contains(0x124));
     }
 
+    @Test public void multipleArtPollRepliesFromSameNodeMergeSubscriptions() {
+        ArtNetDiscovery.Node first = new ArtNetDiscovery.Node(
+            "192.168.1.50", "Node", "Multi-port Node",
+            java.util.Arrays.asList(0x001, 0x002), true
+        );
+        ArtNetDiscovery.Node second = new ArtNetDiscovery.Node(
+            "192.168.1.50", "Node", "Multi-port Node",
+            java.util.Arrays.asList(0x101, 0x102), true
+        );
+        ArtNetDiscovery.Node merged = ArtNetDiscovery.mergeNode(first, second);
+        assertEquals(4, merged.subscriptions.size());
+        assertTrue(merged.subscriptions.contains(0x001));
+        assertTrue(merged.subscriptions.contains(0x002));
+        assertTrue(merged.subscriptions.contains(0x101));
+        assertTrue(merged.subscriptions.contains(0x102));
+    }
+
     @Test public void automaticArtDmxMustBeResolvedToUnicastBeforeNativeSend() {
         assertThrows(IllegalArgumentException.class, () ->
             ArtNetSender.sendDmx("AUTO", 0, new int[512], 1)

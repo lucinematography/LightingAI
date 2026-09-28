@@ -146,20 +146,6 @@ const trueBlueEbMax = [
   ARRI_TRUE_BLUE_D5_FIXTURES.find(f => f.id === 'arri-true-blue-d5'),
   ARRI_TRUE_BLUE_D12_FIXTURES.find(f => f.id === 'arri-true-blue-d12')
 ];
-for (const item of arrisunEbMax) {
-  const fixture=item.fixture;
-  const route=routingContext.window.LightingAIControlRouting.classify(fixture);
-  expect(
-    route?.route==='gateway' &&
-    route?.nativeNetwork===false &&
-    route?.transportReady===true &&
-    route?.semanticReady===true &&
-    route?.verifiedDmxModeCount===1 &&
-    route?.requiresInterface===true,
-    'ARRISUN must route through a standards gateway to its required EB MAX ballast: '+(fixture?.id||'?')
-  );
-}
-
 for (const fixture of trueBlueEbMax) {
   expect(!!fixture, 'ARRI True Blue EB MAX fixture missing');
   expect((fixture?.control?.wired || []).some(x => String(x).includes('DMX512')), 'True Blue EB MAX DMX512 transport missing: ' + (fixture?.id || '?'));
@@ -325,6 +311,20 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+for (const item of arrisunEbMax) {
+  const fixture=item.fixture;
+  const route=routingContext.window.LightingAIControlRouting.classify(fixture);
+  expect(
+    route?.route==='gateway' &&
+    route?.nativeNetwork===false &&
+    route?.transportReady===true &&
+    route?.semanticReady===true &&
+    route?.verifiedDmxModeCount===1 &&
+    route?.requiresInterface===true,
+    'ARRISUN must route through a standards gateway to its required EB MAX ballast: '+(fixture?.id||'?')
+  );
+}
+
 for (const fixture of trueBlueEbMax) {
   const route = routingContext.window.LightingAIControlRouting.classify(fixture);
   expect(

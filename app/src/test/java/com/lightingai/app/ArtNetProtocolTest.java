@@ -201,6 +201,16 @@ public class ArtNetProtocolTest {
         assertNull(ArtNetDiscovery.parseReply(reply, reply.length, InetAddress.getByName("192.168.1.50")));
     }
 
+    @Test public void discoverySourceRequiresArtNetUdpPort() throws Exception {
+        String source = new String(
+            java.nio.file.Files.readAllBytes(
+                java.nio.file.Paths.get("src/main/java/com/lightingai/app/ArtNetDiscovery.java")
+            ),
+            java.nio.charset.StandardCharsets.UTF_8
+        );
+        assertTrue(source.contains("incoming.getPort() != ArtNetSender.ARTNET_PORT"));
+    }
+
     @Test public void invalidReplyIsRejected() throws Exception {
         byte[] reply = new byte[239];
         ArtNetDiscovery.Node node = ArtNetDiscovery.parseReply(reply, reply.length, InetAddress.getByName("10.0.0.1"));

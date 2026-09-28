@@ -80,6 +80,7 @@ public class MainActivity extends Activity {
     private final Object sacnLiveControlLock = new Object();
     private final Object networkDmxSendLock = new Object();
     private final AtomicInteger sacnPriority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
+    private volatile String sacnIpMode = "ipv4";
     private final AtomicLong artNetDirectSent = new AtomicLong(0);
     private final AtomicLong artNetDirectFailed = new AtomicLong(0);
     private final AtomicLong artNetDirectLastAtMs = new AtomicLong(0);
@@ -216,7 +217,9 @@ public class MainActivity extends Activity {
 
     private void requireNetworkDmxArmedRoute() {
         String expected = networkDmxArmSignature == null ? "" : networkDmxArmSignature.trim();
-        String current = NetworkInterfaceInspector.signature();
+        String current = expected.startsWith("sacn:") ?
+            "sacn:" + NetworkInterfaceInspector.sacnSignature(sacnIpMode) :
+            NetworkInterfaceInspector.signature();
         if (expected.isEmpty() || current.isEmpty() || !expected.equals(current)) {
             throw new IllegalStateException("Network changed; re-arm required");
         }
@@ -1060,6 +1063,10 @@ public class MainActivity extends Activity {
                 out.put("networkSignature", NetworkInterfaceInspector.signature());
                 out.put("multicastInterfaceCount", NetworkInterfaceInspector.multicastIpv4InterfaceCount());
                 out.put("multicastInterfaceName", NetworkInterfaceInspector.singleMulticastIpv4InterfaceName());
+                out.put("sacnIpMode", sacnIpMode);
+                out.put("sacnMulticastInterfaceCount", NetworkInterfaceInspector.sacnMulticastInterfaceCount(sacnIpMode));
+                out.put("sacnMulticastInterfaceName", NetworkInterfaceInspector.singleSacnMulticastInterfaceName(sacnIpMode));
+                out.put("sacnNetworkSignature", NetworkInterfaceInspector.sacnSignature(sacnIpMode));
 
                 JSONObject artNet = new JSONObject();
                 artNet.put("directSent", artNetDirectSent.get());
@@ -1091,6 +1098,18 @@ public class MainActivity extends Activity {
             }
         }
 
+        @JavascriptInterface public void sacnSetIpMode(String mode) {
+            String normalized = NetworkInterfaceInspector.normalizeSacnIpMode(mode);
+            sacnIpMode = normalized;
+            if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
+            sacnLiveEngine.setIpMode(normalized);
+        }
+
+        @JavascriptInterface public String sacnNetworkSignature() {
+            String signature = NetworkInterfaceInspector.sacnSignature(sacnIpMode);
+            return signature.isEmpty() ? "" : "sacn:" + signature;
+        }
+
         @JavascriptInterface public void sacnSetPriority(int priority) {
             int value = SacnSender.normalizePriority(priority);
             sacnPriority.set(value);
@@ -1113,10 +1132,11 @@ public class MainActivity extends Activity {
                         requireNetworkDmxArmedRoute();
                         for (int repeat = 0; repeat < 3; repeat++) {
                             int seq = sacnSequenceTracker.next(u);
-                            SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get());
+                            SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get(), sacnIpMode);
                         }
                         if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
                         sacnLiveEngine.setPriority(sacnPriority.get());
+                        sacnLiveEngine.setIpMode(sacnIpMode);
                         sacnLiveEngine.setKeepaliveFrame(u, channels);
                     }
                     sacnDirectSent.incrementAndGet();
@@ -1147,6 +1167,7 @@ public class MainActivity extends Activity {
                         requireNetworkDmxArmedRoute();
                         if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
                         sacnLiveEngine.setPriority(sacnPriority.get());
+                        sacnLiveEngine.setIpMode(sacnIpMode);
                         sacnLiveEngine.setLiveFrame(u, channels);
                     }
                     ok = true;

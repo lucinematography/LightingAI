@@ -43,3 +43,5 @@ Sidus Link/Sidus Mesh is a vendor-specific wireless path. Fixtures that expose D
 - Network output remains explicitly armed and fails closed.
 - BLE research builds stay separate from stable production builds.
 - Stable main is never modified by experimental vendor-protocol work.
+
+<!-- Final CONTROL regression pass after clean Control Lab #435. No production semantics changed. -->

@@ -83,6 +83,13 @@ expect(!!storm700x,'Aputure STORM 700x fixture missing');
 expect((storm700x?.dmxModes||[]).some(m=>m?.name==='Profile 1 CCT+ 8 Bit 3ch'&&m?.verified===true&&m?.channels===3),'STORM 700x verified CCT+ profile missing');
 expect((storm700x?.dmxModes||[]).some(m=>Array.isArray(m?.requiredChannels)&&m.requiredChannels.some(r=>r?.channel===3&&r?.value===137)),'STORM 700x neutral green requirement missing');
 
+const quikBeam=fixtures.find(f=>f.id==='astera-quikbeam');
+expect(!!quikBeam,'Astera QuikBeam fixture missing');
+expect((quikBeam?.dmxModes||[]).some(m=>m?.name==='Profile 4 DIM RGB 4ch'&&m?.verified===true&&m?.channels===4),'QuikBeam verified DIM RGB profile missing');
+const quikPunch=fixtures.find(f=>f.id==='astera-quikpunch');
+expect(!!quikPunch,'Astera QuikPunch fixture missing');
+expect((quikPunch?.dmxModes||[]).some(m=>m?.name==='Profile 4 DIM RGB 4ch'&&m?.verified===true&&m?.channels===4),'QuikPunch verified DIM RGB profile missing');
+
 const nyx=fixtures.find(f=>f.id==='astera-nyx-bulb');
 expect(!!nyx,'Astera NYX Bulb fixture missing');
 expect((nyx?.dmxModes||[]).some(m=>m?.name==='Profile 4 DIM RGB 4ch'&&m?.verified===true&&m?.channels===4),'NYX Bulb verified DIM RGB profile missing');

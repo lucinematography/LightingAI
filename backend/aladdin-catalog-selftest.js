@@ -183,7 +183,7 @@ function verifyMosaicControls(fixtures,appSource=readFileSync(new URL('../app/sr
   let patch=[];
   const sent=[],timers=new Map(),storage=new Map();
   let timerId=0;
-  const elements={};
+  const elements={artnetTarget:{value:'192.168.1.50'}};
   const box={innerHTML:'',querySelectorAll(selector){
     const className=selector.slice(1),result=[];
     for(const match of this.innerHTML.matchAll(/<(?:input|select)\b([^>]*)>/g)){

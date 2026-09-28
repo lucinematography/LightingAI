@@ -10,6 +10,8 @@ import { ARRI_SKYPANEL_CLASSIC_S30_FIXTURES } from './arri-skypanel-classic-s30-
 import { ARRI_SKYPANEL_DISCONTINUED_FIXTURES } from './arri-skypanel-discontinued-library.js';
 import { ARRI_CASTER_SERIES_DISCONTINUED_FIXTURES } from './arri-caster-series-discontinued-library.js';
 import { ARRI_M_SERIES_ARRIMAX_18_12_FIXTURES } from './arri-m-series-arrimax-18-12-library.js';
+import { ARRI_TRUE_BLUE_D5_FIXTURES } from './arri-true-blue-d5-library.js';
+import { ARRI_TRUE_BLUE_D12_FIXTURES } from './arri-true-blue-d12-library.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -137,6 +139,28 @@ expect((arrimaxPower?.choices || []).some(choice => choice?.value === 0 && choic
 expect((arrimaxPower?.choices || []).some(choice => choice?.value === 1 && choice?.dmxValue === 128), 'ARRIMAX EB MAX Flicker Free 75 Hz ON choice missing');
 expect(arrimaxMode?.profileConfiguration?.channel3Unused === true && arrimaxMode?.profileConfiguration?.defaultSafeState === 'OFF', 'ARRIMAX EB MAX safe profile qualification missing');
 
+const trueBlueEbMax = [
+  ARRI_TRUE_BLUE_D5_FIXTURES.find(f => f.id === 'arri-true-blue-d5'),
+  ARRI_TRUE_BLUE_D12_FIXTURES.find(f => f.id === 'arri-true-blue-d12')
+];
+for (const fixture of trueBlueEbMax) {
+  expect(!!fixture, 'ARRI True Blue EB MAX fixture missing');
+  expect((fixture?.control?.wired || []).some(x => String(x).includes('DMX512')), 'True Blue EB MAX DMX512 transport missing: ' + (fixture?.id || '?'));
+  expect((fixture?.control?.directLightingAI || []).length === 0, 'True Blue EB MAX fixture must not claim native Art-Net/sACN: ' + (fixture?.id || '?'));
+  expect((fixture?.control?.externalInterfaceRequired || []).includes('ARRI EB MAX 1.8 ballast'), 'True Blue fixture must require EB MAX 1.8 for the verified profile: ' + (fixture?.id || '?'));
+  const verified = (fixture?.dmxModes || []).filter(mode => mode?.verified === true);
+  expect(verified.length === 1, 'True Blue fixture must expose exactly one verified EB MAX 1.8 profile: ' + (fixture?.id || '?'));
+  const mode = verified[0];
+  expect(mode?.channels === 2 && mode?.name === 'EB MAX 1.8 · Flicker Free 75 Hz · 2ch', 'True Blue safe EB MAX 1.8 2ch profile missing: ' + (fixture?.id || '?'));
+  const dimmer = (mode?.controls || []).find(control => control?.key === 'dimmer');
+  expect(dimmer?.channel === 1 && dimmer?.min === 50 && dimmer?.max === 100 && dimmer?.dmxMin === 128 && dimmer?.dmxMax === 255, 'True Blue EB MAX dimmer mapping must be 50-100% / DMX 128-255: ' + (fixture?.id || '?'));
+  const power = (mode?.controls || []).find(control => control?.key === 'powerMode');
+  expect(power?.channel === 2 && power?.type === 'enum', 'True Blue EB MAX explicit power/mode control missing: ' + (fixture?.id || '?'));
+  expect((power?.choices || []).some(choice => choice?.value === 0 && choice?.dmxValue === 0), 'True Blue EB MAX safe OFF choice missing: ' + (fixture?.id || '?'));
+  expect((power?.choices || []).some(choice => choice?.value === 1 && choice?.dmxValue === 128), 'True Blue EB MAX Flicker Free 75 Hz ON choice missing: ' + (fixture?.id || '?'));
+  expect(mode?.profileConfiguration?.channel3Unused === true && mode?.profileConfiguration?.defaultSafeState === 'OFF', 'True Blue EB MAX safe profile qualification missing: ' + (fixture?.id || '?'));
+}
+
 const s60Pro = ARRI_SKYPANEL_PRO_FIXTURES.find(f => f.id === 'arri-skypanel-s60-pro');
 expect(!!s60Pro, 'ARRI SkyPanel S60 Pro missing');
 expect(hasAll(s60Pro?.control?.wired, ['DMX512','RDM','Ethernet']), 'SkyPanel S60 Pro wired control routes missing');
@@ -236,6 +260,19 @@ expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production con
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+for (const fixture of trueBlueEbMax) {
+  const route = routingContext.window.LightingAIControlRouting.classify(fixture);
+  expect(
+    route?.route === 'gateway' &&
+    route?.nativeNetwork === false &&
+    route?.transportReady === true &&
+    route?.semanticReady === true &&
+    route?.verifiedDmxModeCount === 1 &&
+    route?.requiresInterface === true,
+    'True Blue fixture must route through a standards gateway to EB MAX 1.8: ' + (fixture?.id || '?')
+  );
+}
+
 const arrimaxRoute = routingContext.window.LightingAIControlRouting.classify(arrimax);
 expect(
   arrimaxRoute?.route === 'gateway' &&

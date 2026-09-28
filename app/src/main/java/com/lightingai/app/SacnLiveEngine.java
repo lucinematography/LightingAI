@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class SacnLiveEngine {
     private static final long LIVE_PERIOD_MS = 33L;
     private static final long KEEPALIVE_PERIOD_MS = 900L;
+    private static final long DISCOVERY_PERIOD_MS = 10000L;
 
     private static final class Frame {
         final int universe;
@@ -39,6 +40,7 @@ public final class SacnLiveEngine {
 
     private ScheduledExecutorService executor;
     private ScheduledFuture<?> task;
+    private ScheduledFuture<?> discoveryTask;
     private DatagramSocket socket;
     private long periodMs = KEEPALIVE_PERIOD_MS;
 
@@ -129,6 +131,10 @@ public final class SacnLiveEngine {
                 task.cancel(false);
                 task = null;
             }
+            if (discoveryTask != null) {
+                discoveryTask.cancel(false);
+                discoveryTask = null;
+            }
             String currentNetwork = sendTerminationPackets ? NetworkInterfaceInspector.signature() : "";
             boolean terminationRouteSafe = sendTerminationPackets &&
                 !networkSignature.isEmpty() &&
@@ -186,6 +192,9 @@ public final class SacnLiveEngine {
                 return t;
             });
         }
+        if (discoveryTask == null || discoveryTask.isCancelled() || discoveryTask.isDone()) {
+            discoveryTask = executor.scheduleAtFixedRate(this::sendUniverseDiscovery, 0L, DISCOVERY_PERIOD_MS, TimeUnit.MILLISECONDS);
+        }
         long desired = liveRate ? LIVE_PERIOD_MS : KEEPALIVE_PERIOD_MS;
         if (task == null || task.isCancelled() || task.isDone() || periodMs != desired) {
             if (task != null) task.cancel(false);
@@ -197,6 +206,30 @@ public final class SacnLiveEngine {
 
     private int nextSequence(int universe) {
         return sequenceTracker.next(universe);
+    }
+
+    private void sendUniverseDiscovery() {
+        DatagramSocket activeSocket;
+        int[] activeUniverses;
+        synchronized (lock) {
+            activeSocket = socket;
+            activeUniverses = frames.keySet().stream().mapToInt(Integer::intValue).sorted().toArray();
+        }
+        if (activeSocket == null || activeSocket.isClosed() || activeUniverses.length == 0) return;
+        String currentNetwork = NetworkInterfaceInspector.signature();
+        if (networkSignature.isEmpty() || currentNetwork.isEmpty() || !networkSignature.equals(currentNetwork)) {
+            packetsFailed.incrementAndGet();
+            lastError = "Network changed; re-arm required";
+            abortAll();
+            return;
+        }
+        try {
+            SacnSender.sendUniverseDiscovery(activeSocket, activeUniverses, cid, sourceName);
+        } catch (Exception e) {
+            packetsFailed.incrementAndGet();
+            lastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            abortAll();
+        }
     }
 
     private void tick() {

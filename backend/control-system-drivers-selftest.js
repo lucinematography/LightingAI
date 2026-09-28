@@ -76,6 +76,11 @@ expect(!!storm700x,'Aputure STORM 700x fixture missing');
 expect((storm700x?.dmxModes||[]).some(m=>m?.name==='Profile 1 CCT+ 8 Bit 3ch'&&m?.verified===true&&m?.channels===3),'STORM 700x verified CCT+ profile missing');
 expect((storm700x?.dmxModes||[]).some(m=>Array.isArray(m?.requiredChannels)&&m.requiredChannels.some(r=>r?.channel===3&&r?.value===137)),'STORM 700x neutral green requirement missing');
 
+const ax7=fixtures.find(f=>f.id==='astera-ax7-spotlite');
+expect(!!ax7,'Astera AX7 SpotLite fixture missing');
+expect((ax7?.dmxModes||[]).some(m=>m?.name==='DIM RGB 4ch (Strobe Off)'&&m?.verified===true&&m?.channels===4&&String(m?.sourceUrl||'').includes('astera-led.com/products/ax7-spotlite')),'AX7 verified DIM RGB profile must use AX7-specific identity and official Astera source');
+expect(!(ax7?.dmxModes||[]).some(m=>String(m?.sourceUrl||'').includes('ax3-dmx-profiles')),'AX7 must not cite AX3 DMX profiles as its verified source');
+
 const storm80c=fixtures.find(f=>f.id==='aputure-storm-80c');
 expect(!!storm80c,'Aputure STORM 80c fixture missing');
 expect((storm80c?.dmxModes||[]).some(m=>m?.name==='Profile 27 CCT+ 8 Bit 3ch'&&m?.verified===true&&m?.channels===3),'STORM 80c verified CCT+ profile missing');

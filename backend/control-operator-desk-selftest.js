@@ -18,7 +18,7 @@ for(const marker of [
   "controlDeskGo",
   "controlDeskBlackout",
   "controlDeskRestore",
-  "version:'0.11-operator-desk-interaction-failsafe'"
+  "version:'0.12-operator-desk-scope-visible'"
 ]) expect(dashboard.includes(marker),'Operator desk marker missing: '+marker);
 
 expect(dashboard.includes("desk.masterDimmer(Number(dr&&dr.value)||0)"),'Operator MASTER must call existing safe masterDimmer API');
@@ -30,6 +30,9 @@ expect(dashboard.includes('deskPointerActive')&&dashboard.includes('deskInteract
 expect(dashboard.includes('card.onpointerdown=function(){deskPointerActive=true')&&dashboard.includes('card.onpointerup=function(){deskPointerActive=false')&&dashboard.includes('card.onfocusin=function(){holdDeskInteraction(2500)'), 'Whole operator card touch/focus guard missing');
 expect(dashboard.includes("dr.onpointerdown=function(){deskPointerActive=true")&&dashboard.includes("dr.onpointerup=function(){deskPointerActive=false"),'MASTER touch pointer guard missing');
 expect(dashboard.includes('setInterval(periodicRender,900)'),'Periodic dashboard refresh must use interaction-safe render gate');
+expect(dashboard.includes('controlDeskSelectAll')&&dashboard.includes('MASTER SCOPE')&&dashboard.includes('OBIM MASTER-a'),'Operator desk must show explicit master scope and ALL reset');
+expect(artnet.includes('masterDimmerScope:masterDimmerScope')&&artnet.includes('selectAllMasterControls:selectAllMasterControls'),'Master scope/reset API missing');
+expect(artnet.includes("document.querySelectorAll('.artnet-master-device,.artnet-master-cct-device,.artnet-master-rgb-device')"),'ALL reset must select the existing verified master controls');
 expect(dashboard.includes('if(deskPointerActive&&now<deskInteractionUntil)return')&&dashboard.includes('if(deskPointerActive)deskPointerActive=false'),'Stalled pointer state must self-release after interaction timeout');
 expect(!dashboard.includes('setInterval(render,900)'),'Unsafe periodic full re-render must not return');
 
@@ -49,5 +52,5 @@ expect(artnet.includes('function globalBlackout(){')&&artnet.includes('if(!requi
 expect(artnet.includes('function restoreBeforeBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Blackout restore must remain ARM gated');
 expect(artnet.includes('function profileForRow(r)')&&artnet.includes('verified===true'),'Operator control engine must retain verified-profile gating');
 
-console.log(JSON.stringify({ok:failures.length===0,operatorDeskVersion:'0.11-operator-desk-interaction-failsafe',failures},null,2));
+console.log(JSON.stringify({ok:failures.length===0,operatorDeskVersion:'0.12-operator-desk-scope-visible',failures},null,2));
 if(failures.length)process.exit(1);

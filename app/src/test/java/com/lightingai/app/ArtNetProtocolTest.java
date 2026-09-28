@@ -67,6 +67,14 @@ public class ArtNetProtocolTest {
         assertFalse(ArtNetSender.isIpv4Literal("192.168.001.abc"));
     }
 
+    @Test public void explicitTargetRejectsUnusableIpv4Ranges() {
+        assertTrue(ArtNetSender.isUsableIpv4Target("192.168.1.50"));
+        assertFalse(ArtNetSender.isUsableIpv4Target("0.0.0.0"));
+        assertFalse(ArtNetSender.isUsableIpv4Target("127.0.0.1"));
+        assertFalse(ArtNetSender.isUsableIpv4Target("224.0.0.1"));
+        assertFalse(ArtNetSender.isUsableIpv4Target("239.255.0.1"));
+    }
+
     @Test public void artPollPacketHasCorrectOpcodeAndProtocolVersion() {
         byte[] packet = ArtNetDiscovery.buildPollPacket();
         assertEquals(14, packet.length);

@@ -1095,7 +1095,7 @@ for (const [key, channel] of [['dimmer',1],['red',2],['green',3],['blue',4]]) {
   if (!control || control.channel !== channel || control.type !== 'percent') failures.push(`Verified TitanTube control missing: ${key}`);
 }
 
-for (const [fixtureId, label] of [['astera-ax5-triplepar','AX5 TriplePAR'],['astera-ax10-spotmax','AX10 SpotMax'],['astera-ax9-powerpar','AX9 PowerPAR'],['astera-pixelbrick-pb15','PixelBrick PB15'],['astera-heliostube-fp2-btb','HeliosTube FP2-BTB'],['astera-ax2-50-pixelbar','AX2-50 PixelBar'],['astera-ax2-100-pixelbar','AX2-100 PixelBar'],['astera-hyperiontube-fp3','HyperionTube FP3'],['astera-hydrapanel-fp6','HydraPanel FP6'],['astera-ax3-lightdrop','AX3 LightDrop'],['astera-ax7-spotlite','AX7 SpotLite']]) {
+for (const [fixtureId, label] of [['astera-ax5-triplepar','AX5 TriplePAR'],['astera-ax10-spotmax','AX10 SpotMax'],['astera-ax9-powerpar','AX9 PowerPAR'],['astera-pixelbrick-pb15','PixelBrick PB15'],['astera-heliostube-fp2-btb','HeliosTube FP2-BTB'],['astera-ax2-50-pixelbar','AX2-50 PixelBar'],['astera-ax2-100-pixelbar','AX2-100 PixelBar'],['astera-hyperiontube-fp3','HyperionTube FP3'],['astera-hydrapanel-fp6','HydraPanel FP6'],['astera-ax3-lightdrop','AX3 LightDrop']]) {
   const fixture = RUNTIME_CATALOG.fixtureById.get(fixtureId);
   const mode = fixture?.dmxModes?.find((item) => item.name === 'Profile 4 DIM RGB 4ch');
   if (!mode || mode.channels !== 4 || mode.verified !== true) failures.push(`Verified ${label} Profile 4 DIM RGB missing`);
@@ -1103,6 +1103,14 @@ for (const [fixtureId, label] of [['astera-ax5-triplepar','AX5 TriplePAR'],['ast
     const control = mode?.controls?.find((item) => item.key === key);
     if (!control || control.channel !== channel || control.type !== 'percent') failures.push(`Verified ${label} control missing: ${key}`);
   }
+}
+
+const ax7SpotLite = RUNTIME_CATALOG.fixtureById.get('astera-ax7-spotlite');
+const ax7Mode = ax7SpotLite?.dmxModes?.find((item) => item.name === 'DIM RGB 4ch (Strobe Off)');
+if (!ax7Mode || ax7Mode.channels !== 4 || ax7Mode.verified !== true) failures.push('Verified AX7 SpotLite DIM RGB 4ch mode missing');
+for (const [key, channel] of [['dimmer',1],['red',2],['green',3],['blue',4]]) {
+  const control = ax7Mode?.controls?.find((item) => item.key === key);
+  if (!control || control.channel !== channel || control.type !== 'percent') failures.push(`Verified AX7 SpotLite control missing: ${key}`);
 }
 
 for (const [fixtureId, label] of [['astera-plutofresnel-af80','PlutoFresnel AF80'],['astera-leofresnel-af250','LeoFresnel AF250']]) {

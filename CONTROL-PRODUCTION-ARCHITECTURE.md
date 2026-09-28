@@ -45,3 +45,5 @@ Sidus Link/Sidus Mesh is a vendor-specific wireless path. Fixtures that expose D
 - Stable main is never modified by experimental vendor-protocol work.
 
 <!-- Final CONTROL regression pass after clean Control Lab #435. No production semantics changed. -->
+
+<!-- Operator desk regression retrigger after preserving 0.66 control safety invariant. -->

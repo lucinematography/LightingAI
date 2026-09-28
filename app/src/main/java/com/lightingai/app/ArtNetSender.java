@@ -15,7 +15,6 @@ public final class ArtNetSender {
 
     public static void sendDmx(String targetIp, int portAddress, int[] channels, int sequence) throws Exception {
         try (DatagramSocket socket = new DatagramSocket()) {
-            socket.setBroadcast(true);
             sendDmx(socket, targetIp, portAddress, channels, sequence);
         }
     }
@@ -27,20 +26,14 @@ public final class ArtNetSender {
         byte[] packet = buildDmxPacket(portAddress, channels, sequence);
 
         if (isAutoTarget(target)) {
-            java.util.List<InetAddress> broadcasts = ArtNetDiscovery.directedBroadcastTargets();
-            if (broadcasts.isEmpty()) {
-                throw new IllegalStateException("No directed IPv4 broadcast target is available");
-            }
-            if (broadcasts.size() != 1) {
-                throw new IllegalStateException("Multiple directed IPv4 broadcast targets; select an explicit Art-Net route");
-            }
-            InetAddress address = broadcasts.get(0);
-            socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));
-            return;
+            throw new IllegalArgumentException("Art-Net AUTO must resolve to subscriber unicast targets before native send");
         }
 
         if (!isUsableIpv4Target(target)) {
-            throw new IllegalArgumentException("Art-Net target must be AUTO or a usable IPv4 literal");
+            throw new IllegalArgumentException("Art-Net target must be a usable IPv4 literal");
+        }
+        if (ArtNetDiscovery.isDirectedBroadcastTarget(target)) {
+            throw new IllegalArgumentException("ArtDmx broadcast targets are not allowed");
         }
         InetAddress address = InetAddress.getByName(target);
         socket.send(new DatagramPacket(packet, packet.length, address, ARTNET_PORT));

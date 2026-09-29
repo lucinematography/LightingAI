@@ -313,17 +313,19 @@ expect(uiAiScenePlan.includes('onclick="return window.LightingAIRemoveScenePhoto
 expect(!uiAiScenePlan.includes("document.getElementById('aiv-remove').onclick"),
  'AI visual remove-photo action must not depend on late onclick binding');
 
-expect(uiSun.includes("const SUN_TIME_ZONE='Europe/Belgrade';")&&
- uiSun.includes("DEFAULT_BELGRADE_LAT='44.835471'")&&uiSun.includes("DEFAULT_BELGRADE_LON='20.354309'"),
- 'SUNCE must keep Belgrade timezone and configured Belgrade default coordinates');
-expect(uiSun.includes('function syncBelgradeNow(emit)')&&
- uiSun.includes("b.addEventListener('click',()=>{")&&uiSun.includes('syncBelgradeNow(false);updateSun()'),
- 'SUNCE must refresh local Belgrade date/time whenever the SUNCE page is opened');
-expect(uiSun.includes('window.LightingAISunSyncCurrentTime=function(){syncBelgradeNow(true);return false}'),
- 'SUNCE must expose a shared current-time sync hook for native location updates');
+expect(!uiSun.includes('Europe/Belgrade')&&!uiSun.includes('DEFAULT_BELGRADE'),
+ 'SUNCE must not hard-code a city or timezone');
+expect(uiSun.includes('function syncDeviceNow(emit)')&&
+ uiSun.includes('function refreshCurrentLocationIfAllowed()')&&
+ uiSun.includes('syncDeviceNow(false);refreshCurrentLocationIfAllowed();updateSun()'),
+ 'SUNCE must refresh the device-local date/time and current location whenever the SUNCE page is opened');
+expect(uiSun.includes('value=""')&&uiSun.includes('id="sunLat"')&&uiSun.includes('id="sunLon"'),
+ 'SUNCE must not ship fixed city coordinates as the default location');
+expect(uiSun.includes('window.LightingAISunSyncCurrentTime=function(){syncDeviceNow(true);return false}'),
+ 'SUNCE must expose a shared device-local current-time sync hook for native location updates');
 expect(uiSunNative.includes("window.LightingAISunSyncCurrentTime==='function'")&&
  uiSunNative.includes('window.LightingAISunSyncCurrentTime()'),
- 'Native SUNCE location bridge must refresh the current local time after location updates');
+ 'Native SUNCE location bridge must refresh the current device-local time after location updates');
 
 console.log(JSON.stringify({ok:failures.length===0,failures},null,2));
 if(failures.length)process.exit(1);

@@ -377,10 +377,19 @@ const catalogAudit = fs.readFileSync(path.join(root,'backend/control-catalog-aud
 expect(catalogAudit.includes("typeof channels !== 'number'")&&catalogAudit.includes("typeof ch !== 'number'")&&catalogAudit.includes("typeof value !== 'number'"), 'Control catalog audit must reject string/coerced numeric DMX metadata');
 
 const routing = fs.readFileSync(path.join(root,'app/src/main/assets/control-routing.js'),'utf8');
-expect(routing.includes("version:'1.4-rdm-fallback-separated'"), 'Production control router version marker missing');
+expect(routing.includes("version:'1.5-native-network-gateway-separated'"), 'Production control router version marker missing');
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);
+const titanRoute = routingContext.window.LightingAIControlRouting.classify(titan);
+expect(
+  titanRoute?.route === 'gateway' &&
+  titanRoute?.nativeNetwork === false &&
+  titanRoute?.transportReady === true &&
+  titanRoute?.semanticReady === true,
+  'TitanTube bridge metadata must not be classified as native network'
+);
+
 for (const fixture of ASTERA_SOLABULB_FIXTURES) {
   const route = routingContext.window.LightingAIControlRouting.classify(fixture);
   expect(

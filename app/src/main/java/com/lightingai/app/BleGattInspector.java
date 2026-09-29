@@ -66,7 +66,16 @@ public final class BleGattInspector {
             timeoutRunnable = () -> {
                 synchronized (lock) {
                     if (thisInspectionEpoch != inspectionEpoch || callback == null) return;
-                    finishErrorLocked("ble_gatt_timeout");
+                    if (activeProfile != null) {
+                        try {
+                            activeProfile.put("diagnosticIncomplete", true);
+                            activeProfile.put("diagnosticWarning", activeRead == null ? "ble_gatt_timeout_after_service_discovery" : "ble_gatt_read_timeout");
+                            activeProfile.put("readValues", readValues);
+                        } catch (Exception ignored) {}
+                        finishSuccessLocked(activeProfile);
+                    } else {
+                        finishErrorLocked("ble_gatt_timeout");
+                    }
                 }
             };
             handler.postDelayed(timeoutRunnable, boundedTimeout);

@@ -331,6 +331,8 @@ function inspectGatt(address,button,forceAstera){
  if(!address||typeof inspect!=='function'){status(t().unavailable,false);return}
  if(scanActive||gattActive||bondActive||classicActive){status(t().alreadyScanning,false);return}
  const id='ble_gatt_'+Date.now()+'_'+(++seq);
+ const nativeTimeoutMs=astera?12000:8000;
+ const watchdogTimeoutMs=nativeTimeoutMs+5000;
  activeGattRequestId=id;
  activeGattAddress=String(address||'');
  gattActive=true;
@@ -353,9 +355,9 @@ function inspectGatt(address,button,forceAstera){
   const message=t().gattError+' (ble_gatt_no_callback_timeout)';
   if(timedOutResult)timedOutResult.textContent=message;
   status(message,false);
- },12000);
+ },watchdogTimeoutMs);
  try{
-  if(!inspect({id:id,address:address,timeoutMs:astera?12000:8000})){
+  if(!inspect({id:id,address:address,timeoutMs:nativeTimeoutMs})){
    clearGattWatchdog();
    gattActive=false;
    if(scanButton)scanButton.disabled=false;
@@ -455,7 +457,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'astera-btb-dual-transport-v6',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'astera-btb-dual-transport-v7',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

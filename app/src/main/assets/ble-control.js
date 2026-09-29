@@ -275,7 +275,7 @@ window.LightingAIAsteraBtbBondResult=function(id,payload,error){
  const message=t().bondedAstera;
  if(result)result.textContent=message;
  status(message,true);
- if(address){setTimeout(()=>inspectAsteraClassic(address),250);setTimeout(()=>inspectGatt(address,null,true),650);}
+ if(address)setTimeout(()=>inspectAsteraClassic(address),250);
 };
 
 
@@ -312,6 +312,7 @@ window.LightingAIAsteraBtbClassicInspectionResult=function(id,payload,error){
   const message=t().classicError+(error?' ('+error+')':'');
   if(result)result.textContent=message;
   status(message,false);
+  if(address)setTimeout(()=>inspectGatt(address,null,true),250);
   return;
  }
  const uuids=payload&&Array.isArray(payload.uuids)?payload.uuids:[];
@@ -320,6 +321,7 @@ window.LightingAIAsteraBtbClassicInspectionResult=function(id,payload,error){
  const message=t().classicResult+': '+uuids.length+' UUID · SPP '+(spp?'YES':'NO')+' · type '+type;
  if(result)result.textContent=message;
  status(message,true);
+ if(address)setTimeout(()=>inspectGatt(address,null,true),250);
 };
 
 function inspectGatt(address,button,forceAstera){

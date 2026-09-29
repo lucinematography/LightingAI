@@ -131,7 +131,8 @@ expect(asteraClassic.includes('fetchUuidsWithSdp')&&asteraClassic.includes('ACTI
 expect(asteraClassic.includes('00001101-0000-1000-8000-00805f9b34fb'),'Astera BTB diagnostics must check the standard Bluetooth Serial Port Profile UUID without assuming it is present');
 expect(main.includes('asteraBtbInspectClassic')&&main.includes('notifyAsteraBtbClassicInspection'),'Astera BTB Classic native bridge missing');
 expect(bleUi.includes('inspectAsteraClassic')&&bleUi.includes('LightingAIAsteraBtbClassicInspectionResult'),'Astera BTB Classic UI diagnostics missing');
-expect(bleUi.includes("diagnosticsRevision:'astera-btb-dual-transport-v6'")&&bleUi.includes('setTimeout(()=>inspectGatt(address,null,true),250)'),'Astera Classic and GATT probes must be serialized after bonding');
+expect(bleUi.includes("diagnosticsRevision:'astera-btb-dual-transport-v7'")&&bleUi.includes('setTimeout(()=>inspectGatt(address,null,true),250)'),'Astera Classic and GATT probes must be serialized after bonding');
+expect(bleUi.includes('const nativeTimeoutMs=astera?12000:8000;')&&bleUi.includes('const watchdogTimeoutMs=nativeTimeoutMs+5000;')&&bleUi.includes('},watchdogTimeoutMs);')&&bleUi.includes('timeoutMs:nativeTimeoutMs'),'Astera GATT JS watchdog must allow the native bounded timeout to report first without a same-deadline race');
 expect(bleUi.includes('POVEŽI ASTERA BTB')&&bleUi.includes('LightingAIAsteraBtbBondResult'),'Astera BTB pairing UI/result bridge missing');
 expect(bleUi.includes('LightingAIAsteraBtbBondProgress')&&bleUi.includes('inspectAsteraGatt'),'Astera BTB pairing progress and bonded GATT UI flow missing');
 const bleGatt=read('app/src/main/java/com/lightingai/app/BleGattInspector.java');

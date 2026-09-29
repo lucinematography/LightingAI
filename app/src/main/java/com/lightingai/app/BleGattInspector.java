@@ -305,11 +305,15 @@ public final class BleGattInspector {
                                     "descriptors", descriptors);
                                 characteristics.put(characteristicJson);
 
-                                if (readableFlag) {
+                                boolean passiveServiceMatch =
+                                    !passiveNotifyServiceUuid.isEmpty() &&
+                                    passiveNotifyServiceUuid.equals(serviceUuid);
+                                if (readableFlag &&
+                                    (passiveNotifyServiceUuid.isEmpty() ||
+                                        passiveServiceMatch)) {
                                     readable.add(characteristic);
                                 }
-                                if (passiveServicePresent &&
-                                    passiveNotifyServiceUuid.equals(serviceUuid) &&
+                                if (passiveServiceMatch &&
                                     (notifyFlag || indicateFlag)) {
                                     subscribable.add(characteristic);
                                 }

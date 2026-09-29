@@ -98,9 +98,31 @@ var DRIVERS=[
     status:'required-unverified',
     manufacturer:'Aladdin',
     label:'Aladdin App / Bluetooth',
-    description:'Aladdin proprietary app/Bluetooth family. Standard DMX paths take priority where documented.',
+    description:'Direct Aladdin Bluetooth control family. LightingAI must not require a separate Aladdin app for normal quick-control work.',
     match:function(f){
       return lower(f&&f.manufacturer)==='aladdin'&&includesAny(vendorControl(f),['bluetooth','app','wireless']);
+    }
+  },
+  {
+    id:'vendor-nanlite-nanlink',
+    scope:'vendor',
+    status:'required-unverified',
+    manufacturer:'Nanlite',
+    label:'NANLINK / Bluetooth',
+    description:'Direct NANLINK Bluetooth control family. Required for the Bluetooth-first LightingAI workflow when supported by the fixture.',
+    match:function(f){
+      return lower(f&&f.manufacturer)==='nanlite'&&includesAny(vendorControl(f),['nanlink','bluetooth','ble','wireless']);
+    }
+  },
+  {
+    id:'vendor-arri-lico',
+    scope:'vendor',
+    status:'required-unverified',
+    manufacturer:'ARRI',
+    label:'ARRI LiCo / Bluetooth',
+    description:'Direct ARRI LiCo Bluetooth control family for supported fixtures. Required for the Bluetooth-first LightingAI workflow where available.',
+    match:function(f){
+      return lower(f&&f.manufacturer)==='arri'&&includesAny(vendorControl(f),['lico','bluetooth','ble','wireless']);
     }
   }
 ];
@@ -110,6 +132,8 @@ function resolve(fixture){
   var standard=matches.filter(function(d){return d.scope==='standard'});
   var vendor=matches.filter(function(d){return d.scope==='vendor'});
   var productionDriver=modes.length?standard[0]||null:null;
+  var vendorDirectRequired=vendor.some(function(d){return d.status==='required-unverified'||d.status==='production'});
+  var vendorDirectReady=vendor.some(function(d){return d.status==='production'});
   return {
     productionDriver:productionDriver,
     standardDrivers:standard,
@@ -117,9 +141,11 @@ function resolve(fixture){
     verifiedDmxModeCount:modes.length,
     productionReady:!!productionDriver,
     transportKnown:standard.length>0,
-    vendorResearchOnly:vendor.length>0&&!productionDriver
+    vendorDirectRequired:vendorDirectRequired,
+    vendorDirectReady:vendorDirectReady,
+    vendorResearchOnly:false
   };
 }
 function listDrivers(){return DRIVERS.map(function(d){return {id:d.id,scope:d.scope,status:d.status,manufacturer:d.manufacturer||'',label:d.label,description:d.description}})}
-window.LightingAIControlSystemDrivers={version:'1.4-direct-vendor-required',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
+window.LightingAIControlSystemDrivers={version:'1.5-bluetooth-vendor-families',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
 })();

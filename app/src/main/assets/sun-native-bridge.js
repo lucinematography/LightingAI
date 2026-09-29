@@ -19,6 +19,7 @@ window.LightingAINativeSunLocation=function(lat,lon,accuracy){
   lat=Number(lat);lon=Number(lon);if(!Number.isFinite(lat)||!Number.isFinite(lon))return;
   if(E('sunLat'))E('sunLat').value=lat.toFixed(6);
   if(E('sunLon'))E('sunLon').value=lon.toFixed(6);
+  try{if(typeof window.LightingAISunSyncCurrentTime==='function')window.LightingAISunSyncCurrentTime()}catch(e){}
   setSunStatus(t().loaded+(Number.isFinite(Number(accuracy))?' · ±'+Math.round(Number(accuracy))+' m':''));
   E('sunLat')?.dispatchEvent(new Event('change',{bubbles:true}));
   E('sunLon')?.dispatchEvent(new Event('change',{bubbles:true}));

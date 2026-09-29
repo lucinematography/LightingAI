@@ -1067,8 +1067,8 @@ public class MainActivity extends Activity {
                     @Override public void onComplete(JSONObject result) {
                         notifyAsteraBtbBond(id, result, "");
                     }
-                    @Override public void onError(String code) {
-                        notifyAsteraBtbBond(id, new JSONObject(), code);
+                    @Override public void onError(JSONObject result, String code) {
+                        notifyAsteraBtbBond(id, result, code);
                     }
                 });
             });

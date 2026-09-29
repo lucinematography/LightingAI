@@ -57,6 +57,7 @@ public final class BleGattInspector {
     private final List<BluetoothGattCharacteristic> subscribable = new ArrayList<>();
     private final JSONArray subscriptionResults = new JSONArray();
     private final JSONArray notificationValues = new JSONArray();
+    private final JSONArray eventTimeline = new JSONArray();
     private int subscribeIndex = 0;
     private BluetoothGattDescriptor activeDescriptor;
     private BluetoothGattCharacteristic activeSubscriptionCharacteristic;
@@ -91,6 +92,8 @@ public final class BleGattInspector {
             activeAddress = target;
             inspectionStartedMs = System.currentTimeMillis();
             deadlineMs = inspectionStartedMs + boundedTimeout;
+            clearJsonArray(eventTimeline);
+            appendEvent("inspection_start", "timeoutMs", boundedTimeout);
             passiveNotifyServiceUuid = normalizeUuid(passiveServiceUuid);
             attempt = 0;
             if (!BluetoothAdapter.checkBluetoothAddress(target)) {
@@ -152,6 +155,7 @@ public final class BleGattInspector {
         clearAttemptState();
         attempt++;
         final int thisAttempt = attempt;
+        appendEvent("connect_attempt", "attempt", thisAttempt);
         final BluetoothDevice device;
         try {
             device = adapter.getRemoteDevice(activeAddress);
@@ -166,6 +170,7 @@ public final class BleGattInspector {
             ) {
                 synchronized (lock) {
                     if (gatt != activeGatt || callback == null) return;
+                    appendEvent("connection_state", "status", status, "newState", newState);
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         retryOrFailLocked(
                             "ble_gatt_connect_status_" + status + "_attempt_" + thisAttempt);
@@ -178,6 +183,7 @@ public final class BleGattInspector {
                                 boolean started;
                                 try { started = gatt.discoverServices(); }
                                 catch (Exception e) { started = false; }
+                                appendEvent("service_discovery_start", "started", started);
                                 if (!started) {
                                     retryOrFailLocked(
                                         "ble_gatt_service_discovery_start_failed_attempt_" +
@@ -195,6 +201,7 @@ public final class BleGattInspector {
             @Override public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 synchronized (lock) {
                     if (gatt != activeGatt || callback == null) return;
+                    appendEvent("services_discovered", "status", status, "serviceCount", gatt.getServices() == null ? 0 : gatt.getServices().size());
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         retryOrFailLocked(
                             "ble_gatt_service_discovery_status_" + status +
@@ -346,6 +353,7 @@ public final class BleGattInspector {
                         descriptor == null || descriptor != activeDescriptor) {
                         return;
                     }
+                    appendEvent("cccd_write_result", "status", status, "uuid", activeSubscriptionCharacteristic == null || activeSubscriptionCharacteristic.getUuid() == null ? "" : activeSubscriptionCharacteristic.getUuid().toString());
                     appendSubscriptionResult(
                         activeSubscriptionCharacteristic,
                         status,
@@ -428,6 +436,7 @@ public final class BleGattInspector {
 
     @SuppressLint("MissingPermission")
     private void retryOrFailLocked(String code) {
+        appendEvent("retry_or_fail", "code", code, "attempt", attempt);
         closeGattOnlyLocked();
         clearAttemptState();
         long remaining =
@@ -467,6 +476,7 @@ public final class BleGattInspector {
                 (properties &
                     BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0;
 
+            appendEvent("subscribe_start", "uuid", characteristic.getUuid() == null ? "" : characteristic.getUuid().toString());
             boolean localEnabled;
             try {
                 localEnabled =
@@ -475,6 +485,7 @@ public final class BleGattInspector {
             } catch (Exception e) {
                 localEnabled = false;
             }
+            appendEvent("local_notification_enable", "enabled", localEnabled, "uuid", characteristic.getUuid() == null ? "" : characteristic.getUuid().toString());
             if (!localEnabled) {
                 appendSubscriptionResult(
                     characteristic, -1,
@@ -512,6 +523,7 @@ public final class BleGattInspector {
                 activeDescriptor = cccd;
                 activeSubscriptionCharacteristic = characteristic;
                 started = gatt.writeDescriptor(cccd);
+                appendEvent("cccd_write_start", "started", started, "uuid", characteristic.getUuid() == null ? "" : characteristic.getUuid().toString());
             } catch (Exception ignored) {
                 started = false;
             }
@@ -538,6 +550,7 @@ public final class BleGattInspector {
             try {
                 if (gatt.readCharacteristic(characteristic)) {
                     activeRead = characteristic;
+                    appendEvent("read_start", "uuid", characteristic.getUuid() == null ? "" : characteristic.getUuid().toString());
                     return;
                 }
                 appendRead(
@@ -565,12 +578,14 @@ public final class BleGattInspector {
                 activeProfile.put(
                     "passiveObservationWindowMs", observeMs);
             } catch (Exception ignored) {}
+            appendEvent("passive_observation_start", "windowMs", observeMs);
             final int observeEpoch = inspectionEpoch;
             observationFinishRunnable = () -> {
                 synchronized (lock) {
                     observationFinishRunnable = null;
                     if (observeEpoch != inspectionEpoch ||
                         callback == null) return;
+                    appendEvent("passive_observation_end", "notificationCount", notificationValues.length());
                     appendRuntimeDiagnosticsLocked();
                     finishSuccessLocked(activeProfile);
                 }
@@ -593,6 +608,7 @@ public final class BleGattInspector {
             callback == null ||
             characteristic == null) return;
         if (activeRead != characteristic) return;
+        appendEvent("read_result", "status", status, "uuid", characteristic.getUuid() == null ? "" : characteristic.getUuid().toString(), "hex", hex(value));
         appendRead(
             characteristic,
             value,
@@ -637,6 +653,7 @@ public final class BleGattInspector {
             String text = printableAscii(value);
             if (!text.isEmpty()) item.put("text", text);
             notificationValues.put(item);
+            appendEvent("notification", "uuid", characteristic.getUuid() == null ? "" : characteristic.getUuid().toString(), "hex", hex(value));
             appendRuntimeDiagnosticsLocked();
         } catch (Exception ignored) {}
     }
@@ -716,6 +733,28 @@ public final class BleGattInspector {
                 "notificationValues", notificationValues);
             activeProfile.put(
                 "notificationCount", notificationValues.length());
+            activeProfile.put("eventTimeline", eventTimeline);
+        } catch (Exception ignored) {}
+    }
+
+    private void appendEvent(String name, Object... values) {
+        try {
+            JSONObject event = new JSONObject();
+            event.put("event", name == null ? "" : name);
+            event.put(
+                "elapsedMs",
+                Math.max(
+                    0L,
+                    System.currentTimeMillis() -
+                    inspectionStartedMs));
+            if (values != null) {
+                for (int i = 0; i + 1 < values.length; i += 2) {
+                    String key = String.valueOf(values[i]);
+                    Object value = values[i + 1];
+                    event.put(key, value == null ? JSONObject.NULL : value);
+                }
+            }
+            eventTimeline.put(event);
         } catch (Exception ignored) {}
     }
 
@@ -765,6 +804,7 @@ public final class BleGattInspector {
     @SuppressLint("MissingPermission")
     private void finishSuccessLocked(JSONObject result) {
         Callback cb = callback;
+        appendEvent("inspection_success", "notificationCount", notificationValues.length(), "attempt", attempt);
         callback = null;
         appendRuntimeDiagnosticsLocked();
         cancelTimersLocked();

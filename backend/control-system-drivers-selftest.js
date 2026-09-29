@@ -38,6 +38,8 @@ const legacyUnavailable=api&&api.resolve({control:['Bluetooth','DMX unavailable'
 expect(legacyUnavailable?.productionReady===false&&legacyUnavailable?.transportKnown===false,'negative legacy DMX text must not create a production route');
 const researchOnly=api&&api.resolve({manufacturer:'Astera',control:{wireless:['AsteraApp via Bluetooth']},dmxModes:[]});
 expect(researchOnly?.vendorResearchOnly===true&&researchOnly?.productionReady===false,'Astera proprietary wireless must remain research-only without a standard route');
+const vendorLabRoute=routingApi&&routingApi.classify({manufacturer:'Astera',control:{wireless:['AsteraApp via Bluetooth']},dmxModes:[]});
+expect(vendorLabRoute?.route==='vendor-wireless'&&vendorLabRoute?.semanticReady===false&&vendorLabRoute?.transportReady===false,'vendor lab route must never become production ready');
 const noSource=api&&api.resolve({control:{wired:['DMX512']},dmxModes:[{name:'Unsafe',channels:1,verified:true}]});
 expect(noSource?.productionReady===false,'verified DMX mode without source URL must fail closed');
 const rdmOnly=api&&api.resolve({control:{wired:['RDM']},dmxModes:[verifiedMode]});
@@ -49,7 +51,7 @@ vm.createContext(routingSandbox);
 vm.runInContext(routingSrc,routingSandbox);
 const routingApi=routingSandbox.window.LightingAIControlRouting;
 const rdmFallback=routingApi&&routingApi.classify({control:{wired:['RDM']},dmxModes:[verifiedMode]});
-expect(routingApi&&routingSrc.includes("version:'1.5-native-network-gateway-separated'"),'Fallback control router version marker missing');
+expect(routingApi&&routingSrc.includes("version:'1.6-production-vendor-lab-separated'"),'Fallback control router version marker missing');
 expect(rdmFallback?.dmx===false&&rdmFallback?.transportReady===false&&rdmFallback?.semanticReady===false,'Fallback router must not treat RDM-only metadata as level control');
 
 const {fixtures}=buildRuntimeCatalog();

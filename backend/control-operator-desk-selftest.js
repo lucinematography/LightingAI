@@ -18,7 +18,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.19-astera-failure-capture'"
+  "version:'0.20-astera-bond-on-auth'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -37,6 +37,8 @@ expect(gatt.includes('eventTimeline')&&gatt.includes('connection_state')&&gatt.i
 expect(gatt.includes('inspection_error')&&gatt.includes('failureCode')&&gatt.includes('onError(JSONObject result, String code)'),'Astera GATT failures must preserve structured diagnostics');
 expect(gatt.includes('deepCopyJson(')&&gatt.includes('JSONObject snapshot'),'BLE diagnostic arrays must be snapshotted before native cleanup');
 expect(gatt.includes('attemptHistory')&&gatt.includes('appendAttemptSnapshot(code)'),'Astera GATT retries must preserve per-attempt diagnostics');
+expect(gatt.includes('isAuthenticationStatus')&&gatt.includes('status == 5 || status == 15')&&gatt.includes('astera_bond_required'),'Astera must map only standard GATT auth/encryption failures to bonding');
+expect(ble.includes("error==='astera_bond_required'")&&ble.includes('ble-astera-bond')&&ble.includes('bondAstera(address,bondButton)'),'Astera bonding action must appear only after standardized auth failure');
 expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('passiveServiceMatch'),'Astera passive observer must restrict characteristic READs to the verified BTB service');
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');
 expect(!ble.includes('setTimeout(()=>inspectAsteraClassic(address),250)'),'Primary Astera connect flow must not auto-route through Classic/SDP');

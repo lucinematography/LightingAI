@@ -1,6 +1,9 @@
 package com.lightingai.app;
 
 import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -771,6 +774,15 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void notifyAsteraBtbBondProgress(String requestId, JSONObject result) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String resultJs = result == null ? "{}" : result.toString();
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIAsteraBtbBondProgress&&window.LightingAIAsteraBtbBondProgress(" + idJs + "," + resultJs + ");",
+            null));
+    }
+
     private void notifyAsteraBtbBond(String requestId, JSONObject result, String error) {
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
@@ -1037,11 +1049,53 @@ public class MainActivity extends Activity {
                 }
                 if (asteraBtbBondManager == null) asteraBtbBondManager = new AsteraBtbBondManager(MainActivity.this);
                 asteraBtbBondManager.bond(address, timeoutMs, new AsteraBtbBondManager.Callback() {
+                    @Override public void onProgress(JSONObject result) {
+                        notifyAsteraBtbBondProgress(id, result);
+                    }
                     @Override public void onComplete(JSONObject result) {
                         notifyAsteraBtbBond(id, result, "");
                     }
                     @Override public void onError(String code) {
                         notifyAsteraBtbBond(id, new JSONObject(), code);
+                    }
+                });
+            });
+        }
+
+        @JavascriptInterface public void asteraBtbInspectGatt(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> {
+                final String id = requestId == null ? "" : requestId;
+                if (!hasBlePermission()) {
+                    notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
+                    return;
+                }
+                final String target = address == null ? "" : address.trim();
+                try {
+                    BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+                    BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
+                    if (adapter == null || !adapter.isEnabled()) {
+                        notifyBleGattInspection(id, new JSONObject(), "bluetooth_disabled");
+                        return;
+                    }
+                    BluetoothDevice device = adapter.getRemoteDevice(target);
+                    if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                        notifyBleGattInspection(id, new JSONObject(), "astera_bond_required");
+                        return;
+                    }
+                } catch (SecurityException e) {
+                    notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
+                    return;
+                } catch (Exception e) {
+                    notifyBleGattInspection(id, new JSONObject(), "ble_gatt_bad_address");
+                    return;
+                }
+                if (bleGattInspector == null) bleGattInspector = new BleGattInspector(MainActivity.this);
+                bleGattInspector.inspect(target, Math.max(8000, timeoutMs), new BleGattInspector.Callback() {
+                    @Override public void onComplete(JSONObject result) {
+                        notifyBleGattInspection(id, result, "");
+                    }
+                    @Override public void onError(String code) {
+                        notifyBleGattInspection(id, new JSONObject(), code);
                     }
                 });
             });

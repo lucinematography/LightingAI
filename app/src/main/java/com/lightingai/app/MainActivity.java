@@ -95,6 +95,7 @@ public class MainActivity extends Activity {
     private SacnLiveEngine sacnLiveEngine;
     private BleDeviceScanner bleDeviceScanner;
     private BleGattInspector bleGattInspector;
+    private AsteraBtbBondManager asteraBtbBondManager;
     private String pendingBleDiscoveryRequestId = null;
     private int pendingBleDiscoveryTimeoutMs = 3000;
 
@@ -133,6 +134,7 @@ public class MainActivity extends Activity {
         sacnLiveEngine.setPriority(sacnPriority.get());
         bleDeviceScanner = new BleDeviceScanner(this);
         bleGattInspector = new BleGattInspector(this);
+        asteraBtbBondManager = new AsteraBtbBondManager(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -769,6 +771,16 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void notifyAsteraBtbBond(String requestId, JSONObject result, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String resultJs = result == null ? "{}" : result.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIAsteraBtbBondResult&&window.LightingAIAsteraBtbBondResult(" + idJs + "," + resultJs + "," + errJs + ");",
+            null));
+    }
+
     private void notifyBleGattInspection(String requestId, JSONObject result, String error) {
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
@@ -1014,6 +1026,25 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void bleDiscover(String requestId, int timeoutMs) {
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
+        }
+
+        @JavascriptInterface public void asteraBtbBond(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> {
+                final String id = requestId == null ? "" : requestId;
+                if (!hasBlePermission()) {
+                    notifyAsteraBtbBond(id, new JSONObject(), "ble_permission_denied");
+                    return;
+                }
+                if (asteraBtbBondManager == null) asteraBtbBondManager = new AsteraBtbBondManager(MainActivity.this);
+                asteraBtbBondManager.bond(address, timeoutMs, new AsteraBtbBondManager.Callback() {
+                    @Override public void onComplete(JSONObject result) {
+                        notifyAsteraBtbBond(id, result, "");
+                    }
+                    @Override public void onError(String code) {
+                        notifyAsteraBtbBond(id, new JSONObject(), code);
+                    }
+                });
+            });
         }
 
         @JavascriptInterface public void bleInspectGatt(String requestId, String address, int timeoutMs) {
@@ -1413,6 +1444,7 @@ public class MainActivity extends Activity {
         }
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
         if (bleGattInspector != null) bleGattInspector.cancel();
+        if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();
         super.onPause();
     }
 
@@ -1502,6 +1534,7 @@ public class MainActivity extends Activity {
         if (nativeSunLocation != null) nativeSunLocation.cancel();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
         if (bleGattInspector != null) bleGattInspector.cancel();
+        if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();
         if (speechRecognizer != null) {
             try { speechRecognizer.destroy(); } catch (Exception ignored) {}
             speechRecognizer = null;

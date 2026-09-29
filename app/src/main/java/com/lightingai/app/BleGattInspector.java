@@ -210,6 +210,11 @@ public final class BleGattInspector {
                     if (gatt != activeGatt || callback == null) return;
                     appendEvent("services_discovered", "status", status, "serviceCount", gatt.getServices() == null ? 0 : gatt.getServices().size());
                     if (status != BluetoothGatt.GATT_SUCCESS) {
+                        if (isAsteraInspection() && isAuthenticationStatus(status)) {
+                            appendAttemptSnapshot("astera_bond_required");
+                            finishErrorLocked("astera_bond_required");
+                            return;
+                        }
                         retryOrFailLocked(
                             "ble_gatt_service_discovery_status_" + status +
                             "_attempt_" + thisAttempt);

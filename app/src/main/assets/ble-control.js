@@ -227,6 +227,7 @@ function render(devices){
      '<div style="text-align:right"><div style="font-size:11px;font-weight:900">'+esc(signalLabel(d&&d.rssi))+'</div><div class="muted small">'+Number(d&&d.rssi)+' dBm</div></div>'+
     '</div>'+
     (address?'<button class="btn primary ble-gatt-inspect" data-address="'+esc(address)+'" data-astera="'+(astera?'1':'0')+'" type="button" style="width:100%;margin-top:10px">'+esc(astera?(lang()==='sr'?'POVEŽI ASTERA':'CONNECT ASTERA'):(lang()==='sr'?'POVEŽI':'CONNECT'))+'</button>':'')+
+    renderQuickControlShell(address,vendor,name)+
     '<details style="margin-top:8px"><summary class="muted small" style="cursor:pointer">'+(lang()==='sr'?'DIJAGNOSTIKA':'DIAGNOSTICS')+'</summary>'+
      (address?'<div class="muted small" style="margin-top:6px">'+esc(t().address)+': '+esc(address)+'</div>':'')+
      '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
@@ -378,6 +379,18 @@ function renderGattProfile(payload){
  html+='</div>';
  return html;
 }
+function renderQuickControlShell(address,vendor,name){
+ const id='ble-quick-'+String(address||'').replace(/[^a-z0-9]/gi,'');
+ return '<div id="'+esc(id)+'" class="ble-quick-control" style="margin-top:10px;padding:10px;border:1px solid #2d3f4f;border-radius:12px;background:#0d1217">'+
+  '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">'+
+   '<div><div style="font-size:10px;font-weight:900;color:#9db8ca">'+esc(vendor)+'</div><b>'+esc(name)+'</b></div>'+
+   '<span class="muted small">'+(lang()==='sr'?'ČEKA VERIFIKOVAN DRIVER':'WAITING FOR VERIFIED DRIVER')+'</span>'+
+  '</div>'+
+  '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">'+
+   ['DIM','CCT',lang()==='sr'?'BOJA':'COLOR','FX'].map(x=>'<button class="btn secondary" type="button" disabled style="padding:9px 4px;opacity:.55">'+esc(x)+'</button>').join('')+
+  '</div>'+
+ '</div>';
+}
 function inspectGatt(address,button,forceAstera){
  const tr=transport();
  const astera=forceAstera===true||!!(button&&button.dataset&&button.dataset.astera==='1');
@@ -510,7 +523,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.9-operator-fast-connect',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.10-fast-control-surface',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

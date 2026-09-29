@@ -62,7 +62,7 @@ var DRIVERS=[
   {
     id:'vendor-astera-wireless',
     scope:'vendor',
-    status:'research',
+    status:'required-unverified',
     manufacturer:'Astera',
     label:'AsteraApp / BTB / UHF',
     description:'Astera proprietary app-side wireless family. Kept isolated until session/authentication and commands are verified.',
@@ -73,7 +73,7 @@ var DRIVERS=[
   {
     id:'vendor-aputure-sidus',
     scope:'vendor',
-    status:'research',
+    status:'required-unverified',
     manufacturer:'Aputure',
     label:'Sidus Link / Sidus Mesh',
     description:'Aputure proprietary Sidus family. Standards-based DMX/CRMX/Art-Net/sACN routes take priority whenever available.',
@@ -84,7 +84,7 @@ var DRIVERS=[
   {
     id:'vendor-godox-app',
     scope:'vendor',
-    status:'research',
+    status:'required-unverified',
     manufacturer:'Godox',
     label:'Godox Light / Bluetooth',
     description:'Godox proprietary app/Bluetooth family. Production output remains disabled until protocol details are verified.',
@@ -95,7 +95,7 @@ var DRIVERS=[
   {
     id:'vendor-aladdin-app',
     scope:'vendor',
-    status:'research',
+    status:'required-unverified',
     manufacturer:'Aladdin',
     label:'Aladdin App / Bluetooth',
     description:'Aladdin proprietary app/Bluetooth family. Standard DMX paths take priority where documented.',
@@ -121,5 +121,5 @@ function resolve(fixture){
   };
 }
 function listDrivers(){return DRIVERS.map(function(d){return {id:d.id,scope:d.scope,status:d.status,manufacturer:d.manufacturer||'',label:d.label,description:d.description}})}
-window.LightingAIControlSystemDrivers={version:'1.3-native-network-gateway-separated',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
+window.LightingAIControlSystemDrivers={version:'1.4-direct-vendor-required',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
 })();

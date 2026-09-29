@@ -95,6 +95,7 @@ let activeClassicAddress='';
 let scanWatchdogTimer=null;
 let gattWatchdogTimer=null;
 let latestDiagnosticPayload=null;
+let latestScanDevicesByAddress={};
 
 function status(message,ok){
  const el=E('bleStatus');if(!el)return;
@@ -219,6 +220,8 @@ function isAsteraName(name){return /^(TITAN\s+\d+|.*ASTERA.*)$/i.test(String(nam
 function render(devices){
  const box=E('bleResults');if(!box)return;
  const list=Array.isArray(devices)?devices.slice():[];
+ latestScanDevicesByAddress={};
+ list.forEach(d=>{const a=d&&d.address?String(d.address):'';if(a)latestScanDevicesByAddress[a]=d});
  list.sort((a,b)=>(Number(b&&b.rssi)||-127)-(Number(a&&a.rssi)||-127));
  if(!list.length){box.innerHTML='<div class="muted small" style="margin-top:12px">'+esc(t().none)+'</div>';return}
  box.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><b>'+esc(t().found)+'</b><span class="muted small">'+list.length+'</span></div>'+
@@ -501,6 +504,7 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
   controlMode:'bluetooth-only',
   proprietaryCharacteristicWrites:payload&&Number.isFinite(Number(payload.proprietaryCharacteristicWrites))?Number(payload.proprietaryCharacteristicWrites):0,
   address:address||'',
+  advertisement:address&&latestScanDevicesByAddress[address]?latestScanDevicesByAddress[address]:null,
   payload:payload||{}
  };
  const labels=diagnosticLabelsFromServices(services);
@@ -574,7 +578,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.15-astera-diagnostic-export',diagnosticsRevision:'astera-btb-passive-notify-v13',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.16-astera-complete-capture',diagnosticsRevision:'astera-btb-passive-notify-v14',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

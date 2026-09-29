@@ -10,6 +10,7 @@ const ble=fs.readFileSync(path.join(root,'app/src/main/assets/ble-control.js'),'
 const gatt=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/BleGattInspector.java'),'utf8');
 const mainActivity=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/MainActivity.java'),'utf8');
 const scanner=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/BleDeviceScanner.java'),'utf8');
+const bondManager=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java'),'utf8');
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
@@ -18,7 +19,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.20-astera-bond-on-auth'"
+  "version:'0.21-astera-bond-timeline'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -39,6 +40,9 @@ expect(gatt.includes('deepCopyJson(')&&gatt.includes('JSONObject snapshot'),'BLE
 expect(gatt.includes('attemptHistory')&&gatt.includes('appendAttemptSnapshot(code)'),'Astera GATT retries must preserve per-attempt diagnostics');
 expect(gatt.includes('isAuthenticationStatus')&&gatt.includes('status == 5 || status == 15')&&gatt.includes('astera_bond_required'),'Astera must map only standard GATT auth/encryption failures to bonding');
 expect(ble.includes("error==='astera_bond_required'")&&ble.includes('ble-astera-bond')&&ble.includes('bondAstera(address,bondButton)'),'Astera bonding action must appear only after standardized auth failure');
+expect(bondManager.includes('eventTimeline')&&bondManager.includes('pairing_request')&&bondManager.includes('bond_state')&&bondManager.includes('create_bond')&&bondManager.includes('bond_error'),'Astera Android bonding must preserve a structured event timeline');
+expect(bondManager.includes('onError(JSONObject result, String code)'),'Astera bonding failures must return structured diagnostics');
+expect(ble.includes('LightingAI-Astera-BTB-bond-diagnostic')&&ble.includes('Bonding timeline captured'),'Astera bonding failure timeline must be exportable');
 expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('passiveServiceMatch'),'Astera passive observer must restrict characteristic READs to the verified BTB service');
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');
 expect(!ble.includes('setTimeout(()=>inspectAsteraClassic(address),250)'),'Primary Astera connect flow must not auto-route through Classic/SDP');

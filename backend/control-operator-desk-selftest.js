@@ -17,7 +17,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.17-astera-event-timeline'"
+  "version:'0.18-astera-family-advertisements'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -38,6 +38,7 @@ expect(!ble.includes('setTimeout(()=>inspectAsteraClassic(address),250)'),'Prima
 expect(!gatt.includes('writeCharacteristic('),'Astera diagnostic observer must not send proprietary characteristic writes');
 expect(ble.includes('LightingAI-Astera-BTB-diagnostic')&&ble.includes('SAČUVAJ DIJAGNOSTIKU')&&ble.includes('Android.saveText(filename,body)'),'Astera diagnostic export to Downloads missing');
 expect(ble.includes('latestScanDevicesByAddress')&&ble.includes('advertisement:address&&latestScanDevicesByAddress[address]'),'Astera diagnostic export must include the matching BLE advertisement snapshot');
+expect(ble.includes('helios|hyperion|hydra|nyx|pixelbrick|ax[0-9]|quik|luna|pluto|leo'),'Astera family detection must not be limited to Titan only');
 
 console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'bluetooth-only',failures},null,2));
 if(failures.length)process.exit(1);

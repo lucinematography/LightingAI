@@ -99,6 +99,7 @@ public class MainActivity extends Activity {
     private BleDeviceScanner bleDeviceScanner;
     private BleGattInspector bleGattInspector;
     private AsteraBtbBondManager asteraBtbBondManager;
+    private AsteraBtbClassicInspector asteraBtbClassicInspector;
     private String pendingBleDiscoveryRequestId = null;
     private int pendingBleDiscoveryTimeoutMs = 3000;
 
@@ -138,6 +139,7 @@ public class MainActivity extends Activity {
         bleDeviceScanner = new BleDeviceScanner(this);
         bleGattInspector = new BleGattInspector(this);
         asteraBtbBondManager = new AsteraBtbBondManager(this);
+        asteraBtbClassicInspector = new AsteraBtbClassicInspector(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -774,6 +776,16 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void notifyAsteraBtbClassicInspection(String requestId, JSONObject result, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String resultJs = result == null ? "{}" : result.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIAsteraBtbClassicInspectionResult&&window.LightingAIAsteraBtbClassicInspectionResult(" + idJs + "," + resultJs + "," + errJs + ");",
+            null));
+    }
+
     private void notifyAsteraBtbBondProgress(String requestId, JSONObject result) {
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
@@ -1057,6 +1069,27 @@ public class MainActivity extends Activity {
                     }
                     @Override public void onError(String code) {
                         notifyAsteraBtbBond(id, new JSONObject(), code);
+                    }
+                });
+            });
+        }
+
+        @JavascriptInterface public void asteraBtbInspectClassic(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> {
+                final String id = requestId == null ? "" : requestId;
+                if (!hasBlePermission()) {
+                    notifyAsteraBtbClassicInspection(id, new JSONObject(), "ble_permission_denied");
+                    return;
+                }
+                if (asteraBtbClassicInspector == null) {
+                    asteraBtbClassicInspector = new AsteraBtbClassicInspector(MainActivity.this);
+                }
+                asteraBtbClassicInspector.inspect(address, timeoutMs, new AsteraBtbClassicInspector.Callback() {
+                    @Override public void onComplete(JSONObject result) {
+                        notifyAsteraBtbClassicInspection(id, result, "");
+                    }
+                    @Override public void onError(String code) {
+                        notifyAsteraBtbClassicInspection(id, new JSONObject(), code);
                     }
                 });
             });
@@ -1499,6 +1532,7 @@ public class MainActivity extends Activity {
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
         if (bleGattInspector != null) bleGattInspector.cancel();
         if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();
+        if (asteraBtbClassicInspector != null) asteraBtbClassicInspector.cancel();
         super.onPause();
     }
 
@@ -1589,6 +1623,7 @@ public class MainActivity extends Activity {
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
         if (bleGattInspector != null) bleGattInspector.cancel();
         if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();
+        if (asteraBtbClassicInspector != null) asteraBtbClassicInspector.cancel();
         if (speechRecognizer != null) {
             try { speechRecognizer.destroy(); } catch (Exception ignored) {}
             speechRecognizer = null;

@@ -24,6 +24,14 @@ function hasStandardDmxTransport(values){
     return /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(s)||s.indexOf('crmx')>=0||s.indexOf('lumenradio')>=0;
   });
 }
+function hasNativeNetworkTransport(values){
+  return arr(values).some(function(v){
+    var s=lower(v);
+    if(!/(art-?net|sacn|e1\.31)/.test(s))return false;
+    if(/\b(via|bridge|gateway|interface|powerbox|data\s*link|datalink)\b/.test(s))return false;
+    return true;
+  });
+}
 function verifiedModes(fixture){
   return arr(fixture&&fixture.dmxModes).filter(function(m){
     return !!(m&&m.verified===true&&Number(m.channels||m.channelCount)>0&&String(m.sourceUrl||'').indexOf('http')===0)
@@ -38,7 +46,7 @@ var DRIVERS=[
     description:'LightingAI sends standards-based network DMX directly only when directLightingAI explicitly declares Art-Net or sACN.',
     match:function(f){
       var c=f&&f.control||{},direct=arr(c&&c.directLightingAI);
-      return includesAny(direct,['art-net','artnet','sacn','e1.31']);
+      return hasNativeNetworkTransport(direct);
     }
   },
   {
@@ -113,5 +121,5 @@ function resolve(fixture){
   };
 }
 function listDrivers(){return DRIVERS.map(function(d){return {id:d.id,scope:d.scope,status:d.status,manufacturer:d.manufacturer||'',label:d.label,description:d.description}})}
-window.LightingAIControlSystemDrivers={version:'1.2-rdm-management-separated',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
+window.LightingAIControlSystemDrivers={version:'1.3-native-network-gateway-separated',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
 })();

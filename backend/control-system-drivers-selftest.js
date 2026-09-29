@@ -59,6 +59,16 @@ const manufacturers=new Set(fixtures.map(f=>f.manufacturer).filter(Boolean));
 for(const maker of ['Astera','Aputure','ARRI','Godox','Aladdin']) expect(manufacturers.has(maker),'catalog missing '+maker);
 
 const astera=fixtures.filter(f=>f.manufacturer==='Astera');
+const titan=fixtures.find(f=>f.id==='astera-titantube-fp1');
+expect(!!titan,'TitanTube FP1 fixture missing');
+const titanResolved=titan&&api.resolve(titan);
+expect(
+  titanResolved?.productionDriver?.id==='standards-dmx-gateway' &&
+  Array.isArray(titanResolved?.vendorDrivers) &&
+  titanResolved.vendorDrivers.some(d=>d?.id==='vendor-astera-wireless'&&d?.status==='research') &&
+  titanResolved?.productionReady===true,
+  'Titan production route must stay standards-based while BTB remains research-only'
+);
 for(const id of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar','astera-ax3-lightdrop','astera-heliostube-fp2-btb','astera-hyperiontube-fp3','astera-hydrapanel-fp6']){
   const fixture=fixtures.find(f=>f.id===id);
   expect(!!fixture,'Astera fixture missing for source provenance: '+id);

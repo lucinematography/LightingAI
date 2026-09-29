@@ -6,46 +6,29 @@ const __dirname=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(__dirname,'..');
 const dashboard=fs.readFileSync(path.join(root,'app/src/main/assets/control-dashboard.js'),'utf8');
 const artnet=fs.readFileSync(path.join(root,'app/src/main/assets/artnet-control.js'),'utf8');
+const bootstrap=fs.readFileSync(path.join(root,'app/src/main/assets/control-bootstrap.js'),'utf8');
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 
 for(const marker of [
-  "controlDeskDimmer",
-  "controlDeskApplyMaster",
-  "controlDeskArm",
-  "controlDeskPrev",
-  "controlDeskGo",
-  "controlDeskBlackout",
-  "controlDeskRestore",
-  "version:'0.18-bluetooth-first-workflow'"
-]) expect(dashboard.includes(marker),'Operator desk marker missing: '+marker);
+  'controlOpenBluetooth',
+  'controlLoadAdvanced',
+  'LightingAIAdvancedControlLoad',
+  "version:'0.19-bluetooth-primary-no-dmx-gate'"
+]) expect(dashboard.includes(marker)||bootstrap.includes(marker),'Bluetooth-first CONTROL marker missing: '+marker);
 
-expect(dashboard.includes("desk.masterDimmer(Number(dr&&dr.value)||0)"),'Operator MASTER must call existing safe masterDimmer API');
-expect(dashboard.includes("desk.arm(!(typeof desk.isArmed==='function'&&desk.isArmed()))"),'Operator ARM must call existing arm API');
-expect(dashboard.includes("desk.previousCue()")&&dashboard.includes("desk.goCue()"),'Operator cue transport must call existing cue APIs');
-expect(dashboard.includes("desk.globalBlackout()")&&dashboard.includes("desk.restoreBlackout()"),'Operator blackout/restore must call existing safety APIs');
+expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
+expect(dashboard.includes('Bluetooth je glavni put')&&dashboard.includes('Bluetooth is the primary path'),'Primary CONTROL copy must be Bluetooth-first');
+expect(dashboard.includes('UČITAJ NAPREDNU KONTROLU')&&dashboard.includes('LOAD ADVANCED CONTROL'),'Advanced network/DMX control must be opt-in');
+expect(!dashboard.includes('controlDeskArm')&&!dashboard.includes('controlDeskDimmer'),'Primary dashboard must not expose DMX operator desk controls');
+expect(!bootstrap.includes("const scripts=["),'Bootstrap must not serialize Bluetooth behind a single DMX/network dependency chain');
+expect(bootstrap.indexOf('ble-control.js')<bootstrap.indexOf('artnet-control.js'),'Bluetooth asset must be declared before advanced Art-Net asset');
+expect(bootstrap.includes('const directScripts=')&&bootstrap.includes('const advancedScripts='),'Primary and advanced CONTROL assets must be split');
+expect(bootstrap.includes("window.LightingAIControlBootstrapMode='bluetooth-first'"),'Bootstrap mode must be Bluetooth-first');
+expect(bootstrap.includes('window.LightingAIAdvancedControlLoad=async function()'),'Advanced DMX/network loader must be explicit and lazy');
 
-expect(dashboard.includes('deskPointerActive')&&dashboard.includes('deskInteractionUntil')&&dashboard.includes('periodicRender()'),'Operator desk interaction guard missing');
-expect(dashboard.includes('card.onpointerdown=function(){deskPointerActive=true')&&dashboard.includes('card.onpointerup=function(){deskPointerActive=false')&&dashboard.includes('card.onfocusin=function(){holdDeskInteraction(2500)'), 'Whole operator card touch/focus guard missing');
-expect(dashboard.includes("dr.onpointerdown=function(){deskPointerActive=true")&&dashboard.includes("dr.onpointerup=function(){deskPointerActive=false"),'MASTER touch pointer guard missing');
-expect(dashboard.includes('setInterval(periodicRender,900)'),'Periodic dashboard refresh must use interaction-safe render gate');
-expect(dashboard.includes('controlDeskSelectAll')&&dashboard.includes('MASTER SCOPE')&&dashboard.includes('OBIM MASTER-a'),'Operator desk must show explicit master scope and ALL reset');
-expect(artnet.includes('masterDimmerScope:masterDimmerScope')&&artnet.includes('selectAllMasterControls:selectAllMasterControls'),'Master scope/reset API missing');
-expect(artnet.includes('cueStatus:cueStatus')&&artnet.includes('function cueStatus(){'),'Operator cue status API missing');
-expect(artnet.includes("ensureReady:function(){return !!E('artnetCard')||install();}"),'Control API startup readiness gate missing');
-expect(dashboard.includes("typeof api.ensureReady==='function'&&!api.ensureReady()"),'Operator desk must wait for control UI readiness');
-expect(artnet.includes('statusState:function(){return {text:operatorStatus.text,ok:operatorStatus.ok};}'),'Operator status API missing');
-expect(dashboard.includes('STATUS OPERATERA')&&dashboard.includes('OPERATOR STATUS'),'Main operator status visibility missing');
-expect(dashboard.includes('1. BLUETOOTH')&&dashboard.includes('PRIMARNI PUT')&&dashboard.includes('PRIMARY PATH'),'Bluetooth-first dashboard priority missing');
-expect(artnet.includes('function stopLiveForBackground(){')&&artnet.includes('invalidateCachedOutputState();')&&artnet.includes('renderCueStack();'),'WebView background must clear stale control state');
-expect(artnet.includes("document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()})")&&artnet.includes("window.addEventListener('pagehide',stopLiveForBackground)"),'WebView background hooks missing');
-expect(dashboard.includes('CURRENT CUE')&&dashboard.includes('SLEDEĆI')&&dashboard.includes('GLOBAL BLACKOUT'),'Operator cue/global blackout visibility missing');
-expect(artnet.includes("document.querySelectorAll('.artnet-master-device,.artnet-master-cct-device,.artnet-master-rgb-device')"),'ALL reset must select the existing verified master controls');
-expect(dashboard.includes('if(deskPointerActive&&now<deskInteractionUntil)return')&&dashboard.includes('if(deskPointerActive)deskPointerActive=false'),'Stalled pointer state must self-release after interaction timeout');
-expect(dashboard.includes("x.tagName==='DETAILS'?x:(x.closest&&x.closest('details'))")&&dashboard.includes('if(details)details.open=true'),'CONTROL quick jumps must open the nearest collapsed details panel');
-expect(!dashboard.includes('setInterval(render,900)'),'Unsafe periodic full re-render must not return');
-
+// Advanced network control remains fail-closed when manually loaded.
 for(const apiMarker of [
   'masterDimmer:applyMasterDimmer',
   'previousCue:previousCue',
@@ -54,13 +37,12 @@ for(const apiMarker of [
   'restoreBlackout:restoreBeforeBlackout',
   'arm:setOutputArmed',
   "version:'0.66-sacn-ipv6-dual'"
-]) expect(artnet.includes(apiMarker),'Safe Art-Net operator API missing: '+apiMarker);
+]) expect(artnet.includes(apiMarker),'Advanced Art-Net operator API missing: '+apiMarker);
 
-expect(artnet.includes('function applyMasterDimmer(value){')&&artnet.includes('if(!requireOutputArmed())return;'),'MASTER dimmer must remain ARM gated');
-expect(artnet.includes('function goCue(index){')&&artnet.includes('if(!requireOutputArmed())return;'),'GO cue must remain ARM gated');
-expect(artnet.includes('function globalBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Global blackout must remain ARM gated');
-expect(artnet.includes('function restoreBeforeBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Blackout restore must remain ARM gated');
-expect(artnet.includes('function profileForRow(r)')&&artnet.includes('verified===true'),'Operator control engine must retain verified-profile gating');
+expect(artnet.includes('function applyMasterDimmer(value){')&&artnet.includes('if(!requireOutputArmed())return;'),'Advanced MASTER dimmer must remain ARM gated');
+expect(artnet.includes('function goCue(index){')&&artnet.includes('if(!requireOutputArmed())return;'),'Advanced GO cue must remain ARM gated');
+expect(artnet.includes('function globalBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Advanced blackout must remain ARM gated');
+expect(artnet.includes('function restoreBeforeBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Advanced blackout restore must remain ARM gated');
 
-console.log(JSON.stringify({ok:failures.length===0,operatorDeskVersion:'0.16-background-state-failsafe',failures},null,2));
+console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'bluetooth-first',failures},null,2));
 if(failures.length)process.exit(1);

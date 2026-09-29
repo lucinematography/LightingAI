@@ -508,7 +508,10 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
   if(result){
    result.innerHTML='<div class="status warn">'+esc(message)+'</div>'+
     ((payload&&Array.isArray(payload.eventTimeline)&&payload.eventTimeline.length)?'<div class="muted small" style="margin-top:6px">'+(lang()==='sr'?'Vremenski sled sačuvan':'Failure timeline captured')+' · '+payload.eventTimeline.length+'</div>':'')+
+    (error==='astera_bond_required'?'<button class="btn primary ble-astera-bond" type="button" style="width:100%;margin-top:8px">'+esc(t().bondAstera)+'</button>':'')+
     '<button class="btn secondary ble-export-diagnostic" type="button" style="width:100%;margin-top:8px">'+(lang()==='sr'?'SAČUVAJ DIJAGNOSTIKU':'SAVE DIAGNOSTICS')+'</button>';
+   const bondButton=result.querySelector('.ble-astera-bond');
+   if(bondButton)bondButton.addEventListener('click',()=>bondAstera(address,bondButton));
    const exportButton=result.querySelector('.ble-export-diagnostic');
    if(exportButton)exportButton.addEventListener('click',exportDiagnostic);
   }
@@ -595,7 +598,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.19-astera-failure-capture',diagnosticsRevision:'astera-btb-passive-notify-v17',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.20-astera-bond-on-auth',diagnosticsRevision:'astera-btb-passive-notify-v18',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

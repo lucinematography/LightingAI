@@ -246,7 +246,8 @@ const uiRegressionAssets=[
  'app/src/main/assets/catalog.js',
  'app/src/main/assets/control-dashboard.js',
  'app/src/main/assets/ai-control-bridge.js',
- 'app/src/main/assets/ai-visual-scene-launcher.js'
+ 'app/src/main/assets/ai-visual-scene-launcher.js',
+ 'app/src/main/assets/ai-visual-scene-plan.js'
 ];
 for(const p of uiRegressionAssets){
  expect(fs.existsSync(path.join(root,p)), 'Missing UI/language regression asset: '+p);
@@ -257,6 +258,7 @@ const uiCatalog=read('app/src/main/assets/catalog.js');
 const uiControl=read('app/src/main/assets/control-dashboard.js');
 const uiAiBridge=read('app/src/main/assets/ai-control-bridge.js');
 const uiAiLauncher=read('app/src/main/assets/ai-visual-scene-launcher.js');
+const uiAiScenePlan=read('app/src/main/assets/ai-visual-scene-plan.js');
 
 expect(uiIndex.includes('window.currentLang=currentLang;'),
  'Initial language must be published through window.currentLang');
@@ -289,6 +291,15 @@ expect(uiAiBridge.includes("(window.currentLang||'sr')!=='en'")&&uiAiBridge.incl
  'AI-to-CONTROL bridge must remain bound to the shared SR/EN language state');
 expect(uiAiLauncher.includes("window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN'"),
  'AI visual launcher must remain bound to the shared SR/EN language state');
+
+expect(uiAiScenePlan.includes('id="aiv-gallery" type="file" accept="image/*" hidden')&&
+ uiAiScenePlan.includes('id="aiv-camera" type="file" accept="image/*" capture="environment" hidden'),
+ 'AI visual plan must keep Planner-style hidden gallery and camera file inputs');
+expect(uiAiScenePlan.includes("var input=document.getElementById(mode==='camera'?'aiv-camera':'aiv-gallery');")&&
+ uiAiScenePlan.includes("if(input){input.click();return false;}"),
+ 'AI visual photo buttons must open the same WebView file-picker path used by Planner');
+expect(!uiAiScenePlan.includes('Android.openImagePicker(mode)'),
+ 'AI visual photo buttons must not bypass the working WebView file-picker path');
 
 console.log(JSON.stringify({ok:failures.length===0,failures},null,2));
 if(failures.length)process.exit(1);

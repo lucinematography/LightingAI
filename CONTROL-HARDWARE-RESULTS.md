@@ -215,3 +215,18 @@ Release gate:
 - APPROVED FOR FINAL APK: YES / NO
 - Blocking failures:
 - Deferred paths and reasons:
+
+
+## Astera Titan BTB diagnostic bench - 2026-09-29
+
+- Fixture: Astera Titan Tube FP1-BTB, serial 01021365
+- LightingAI BLE discovery: PASS
+- Fixture identity match: PASS
+- AsteraNext BTB discovery: PASS
+- AsteraNext Bluetooth connection: PASS
+- LightingAI read-only GATT inspection: FAIL
+- Observed UI regression: GATT in-progress text could remain stale after lifecycle cancellation
+- Current hypothesis: LightingAI generic Android GATT/session path is not sufficient for Astera proprietary BTB session; fixture Bluetooth hardware itself is functioning
+- Next step: collect exact Android GATT failure code with Control Lab diagnostic build before any vendor BLE control implementation
+- MAIN: untouched
+- PR #408: keep draft / do not merge

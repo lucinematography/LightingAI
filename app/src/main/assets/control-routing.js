@@ -5,6 +5,14 @@ function lower(v){return String(v||'').toLowerCase()}
 function hasAny(values,needles){
   return list(values).some(function(v){var s=lower(v);return needles.some(function(n){return s.indexOf(n)>=0})})
 }
+function hasNativeNetwork(values){
+  return list(values).some(function(v){
+    var s=lower(v);
+    if(!/(art-?net|sacn|e1\.31)/.test(s))return false;
+    if(/\b(via|bridge|gateway|interface|powerbox|data\s*link|datalink)\b/.test(s))return false;
+    return true;
+  })
+}
 function controlFields(fixture){
   var c=fixture&&fixture.control;
   if(Array.isArray(c))return {direct:[],wired:c.slice(),wireless:[],external:[]};
@@ -20,7 +28,7 @@ function classify(fixture){
   var fields=controlFields(fixture);
   var direct=fields.direct,wired=fields.wired,wireless=fields.wireless,external=fields.external;
   var standardFields=direct.concat(wired,wireless);
-  var nativeNetwork=hasAny(direct,['art-net','artnet','sacn','e1.31']);
+  var nativeNetwork=hasNativeNetwork(direct);
   var standardNetwork=hasAny(standardFields,['art-net','artnet','sacn','e1.31']);
   var dmx=standardFields.some(function(v){
     var s=lower(v);
@@ -74,5 +82,5 @@ function classify(fixture){
   };
 }
 function productionReady(fixture){return classify(fixture).semanticReady===true}
-window.LightingAIControlRouting={version:'1.4-rdm-fallback-separated',classify:classify,productionReady:productionReady};
+window.LightingAIControlRouting={version:'1.5-native-network-gateway-separated',classify:classify,productionReady:productionReady};
 })();

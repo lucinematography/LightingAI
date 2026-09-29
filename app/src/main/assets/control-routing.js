@@ -54,11 +54,11 @@ function classify(fixture){
     route=nativeNetwork?'native-network':'gateway';
     label='TRANSPORT KNOWN · PROFILE UNVERIFIED';
   }else if(system&&system.vendorDrivers&&system.vendorDrivers.length){
-    route='vendor-wireless';label='VENDOR LAB · NOT PRODUCTION';
+    route='vendor-wireless';label='DIRECT VENDOR CONTROL · REQUIRED';
   }else if(nativeNetwork||standardNetwork||dmx||crmx){
     route=nativeNetwork?'native-network':'gateway';label='TRANSPORT KNOWN · PROFILE UNVERIFIED';
   }else if(proprietaryBle){
-    route='vendor-wireless';label='VENDOR LAB · NOT PRODUCTION';
+    route='vendor-wireless';label='DIRECT VENDOR CONTROL · REQUIRED';
   }
   var transportReady=system?!!system.transportKnown:(route==='native-network'||route==='gateway');
   var semanticReady=system?!!system.productionReady:(transportReady&&verifiedModes.length>0);
@@ -82,5 +82,5 @@ function classify(fixture){
   };
 }
 function productionReady(fixture){return classify(fixture).semanticReady===true}
-window.LightingAIControlRouting={version:'1.6-production-vendor-lab-separated',classify:classify,productionReady:productionReady};
+window.LightingAIControlRouting={version:'1.7-direct-vendor-required',classify:classify,productionReady:productionReady};
 })();

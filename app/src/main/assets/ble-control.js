@@ -588,33 +588,36 @@ function install(){
  return true;
 }
 function resetBleUiLifecycle(){
- const hadTransient=scanActive||gattActive||bondActive||classicActive;
+ const preserveBond=!!(bondActive&&activeBondRequestId);
+ const hadNonBondTransient=scanActive||gattActive||classicActive;
  clearScanWatchdog();
  clearGattWatchdog();
  activeScanRequestId='';
  activeGattRequestId='';
  activeGattAddress='';
- activeBondRequestId='';
- activeBondAddress='';
  activeClassicRequestId='';
  activeClassicAddress='';
  scanActive=false;
  gattActive=false;
- bondActive=false;
  classicActive=false;
  scanCooldownUntil=0;
- const button=E('bleScan');if(button)button.disabled=false;
- document.querySelectorAll('.ble-astera-bond,.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
- if(hadTransient){
-  status('');
+ if(!preserveBond){
+  activeBondRequestId='';
+  activeBondAddress='';
+  bondActive=false;
+ }
+ const button=E('bleScan');if(button)button.disabled=preserveBond;
+ document.querySelectorAll('.ble-astera-bond,.ble-gatt-inspect').forEach(btn=>btn.disabled=preserveBond);
+ if(hadNonBondTransient){
+  if(!preserveBond)status('');
   document.querySelectorAll('.ble-gatt-result').forEach(el=>{
-   if([TXT.sr.inspecting,TXT.en.inspecting,TXT.sr.bondingAstera,TXT.en.bondingAstera,TXT.sr.bondAsteraPairing,TXT.en.bondAsteraPairing].some(v=>el.textContent&&el.textContent.indexOf(v)===0))el.textContent='';
+   if([TXT.sr.inspecting,TXT.en.inspecting].some(v=>el.textContent&&el.textContent.indexOf(v)===0))el.textContent='';
   });
  }
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.22-astera-radio-pin-boundary',diagnosticsRevision:'astera-btb-passive-notify-v20',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.23-astera-bond-lifecycle',diagnosticsRevision:'astera-btb-passive-notify-v21',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

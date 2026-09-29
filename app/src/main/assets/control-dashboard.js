@@ -44,7 +44,7 @@ function render(){
  var rows=selectedFixtures();
  card.innerHTML='<div class="card" style="border-color:#31506b;background:linear-gradient(180deg,#111820,#101318);padding:16px">'+
   '<div style="font-size:21px;font-weight:900;color:#f5c542">'+(sr()?'KONTROLA RASVETE':'LIGHTING CONTROL')+'</div>'+
-  '<div class="muted small" style="margin-top:6px">'+(sr()?'Bluetooth je glavni put za brzu kontrolu na setu. Bez DMX kablova i bez obaveznog Art-Net/sACN podešavanja.':'Bluetooth is the primary path for fast on-set control. No required DMX cabling or Art-Net/sACN setup.')+'</div>'+
+  '<div class="muted small" style="margin-top:6px">'+(sr()?'Bluetooth je glavni i direktni put za brzu kontrolu rasvete na setu.':'Bluetooth is the primary direct path for fast on-set lighting control.')+'</div>'+
   '<button id="controlOpenBluetooth" class="btn primary" type="button" style="width:100%;margin-top:12px">'+(sr()?'PRONAĐI I POVEŽI RASVETU':'DISCOVER & CONNECT FIXTURES')+'</button>'+
   '</div>'+
   '<div style="margin:12px 0 8px;font-size:12px;font-weight:900;color:#c5cad2">'+(sr()?'IZABRANA RASVETA':'SELECTED FIXTURES')+' <span style="color:#7f8791">('+rows.length+')</span></div>'+

@@ -36,7 +36,8 @@ const TXT={
   inspected:'GATT servisi',
   meshProvisioning:'Bluetooth Mesh: NEPROVISIONISAN / provisioning servis',
   meshProxy:'Bluetooth Mesh: PROXY servis detektovan',
-  gattError:'GATT provera nije uspela.',
+  asteraBtbService:'ASTERA BTB privatni LE servis detektovan · transport fingerprint potvrđen; session/komande još nisu verifikovani.',
+  gattError:'GATT provera nije uspela.'
   verified:'Direktna kontrola će biti uključena samo za modele sa verifikovanim zvaničnim protokolom / SDK-om.'
  },
  en:{
@@ -72,7 +73,8 @@ const TXT={
   inspected:'GATT services',
   meshProvisioning:'Bluetooth Mesh: UNPROVISIONED / provisioning service',
   meshProxy:'Bluetooth Mesh: PROXY service detected',
-  gattError:'GATT inspection failed.',
+  asteraBtbService:'ASTERA BTB private LE service detected · transport fingerprint confirmed; session/commands are not verified yet.',
+  gattError:'GATT inspection failed.'
   verified:'Direct control will only be enabled for fixtures with a verified official protocol / SDK.'
  }
 };
@@ -103,12 +105,16 @@ function esc(v){
 }
 const BLE_MESH_PROVISIONING='00001827-0000-1000-8000-00805f9b34fb';
 const BLE_MESH_PROXY='00001828-0000-1000-8000-00805f9b34fb';
+// Observed on the physical Titan Tube FP1-BTB during LightingAI diagnostics.
+// This UUID is a transport fingerprint only. Do not infer or send proprietary commands from it.
+const ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65';
 function normalizedUuid(v){return String(v||'').toLowerCase()}
 function diagnosticLabelsFromServices(services){
  const values=(Array.isArray(services)?services:[]).map(s=>normalizedUuid(typeof s==='string'?s:(s&&s.uuid)));
  const labels=[];
  if(values.includes(BLE_MESH_PROVISIONING))labels.push(t().meshProvisioning);
  if(values.includes(BLE_MESH_PROXY))labels.push(t().meshProxy);
+ if(values.includes(ASTERA_BTB_PRIVATE_SERVICE))labels.push(t().asteraBtbService);
  return labels;
 }
 function transport(){
@@ -370,8 +376,12 @@ function renderGattProfile(payload){
  if(incomplete)html+='<div class="status warn" style="margin-top:6px">'+esc((lang()==='sr'?'PARCIJALNI REZULTAT':'PARTIAL RESULT')+(warning?' · '+warning:''))+'</div>';
  html+=services.map(s=>{
   const chars=Array.isArray(s&&s.characteristics)?s.characteristics:[];
-  return '<div style="margin-top:8px;padding-top:7px;border-top:1px solid #2d333a">'+
-   '<div><b>SERVICE</b> <code>'+esc(s&&s.uuid||'')+'</code></div>'+
+  const serviceUuid=normalizedUuid(s&&s.uuid);
+  const asteraBtb=serviceUuid===ASTERA_BTB_PRIVATE_SERVICE;
+  const roleSummary=asteraBtb?chars.reduce((acc,ch)=>{if(ch&&ch.readable)acc.read++;if(ch&&ch.writable)acc.write++;if(ch&&ch.writeNoResponse)acc.writeNr++;if(ch&&ch.notifiable)acc.notify++;if(ch&&ch.indicatable)acc.indicate++;return acc},{read:0,write:0,writeNr:0,notify:0,indicate:0}):null;
+  return '<div style="margin-top:8px;padding-top:7px;border-top:1px solid '+(asteraBtb?'#4f6f86':'#2d333a')+'">'+
+   '<div><b>SERVICE</b> <code>'+esc(s&&s.uuid||'')+'</code>'+(asteraBtb?' <b style="color:#f5c542">ASTERA BTB PRIVATE LE</b>':'')+'</div>'+
+   (roleSummary?'<div class="muted small" style="margin-top:4px">READ '+roleSummary.read+' · WRITE '+roleSummary.write+' · WRITE-NR '+roleSummary.writeNr+' · NOTIFY '+roleSummary.notify+' · INDICATE '+roleSummary.indicate+'</div>':'')+
    chars.map(ch=>'<div class="muted small" style="margin-top:4px"><code>'+esc(ch&&ch.uuid||'')+'</code> · '+esc(gattFlags(ch))+'</div>').join('')+
    '</div>';
  }).join('');
@@ -527,7 +537,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.11-vendor-advertisement-fingerprint',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.12-astera-btb-service-fingerprint',diagnosticsRevision:'astera-btb-private-service-v10',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

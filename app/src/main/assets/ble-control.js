@@ -231,6 +231,10 @@ function render(devices){
     '<details style="margin-top:8px"><summary class="muted small" style="cursor:pointer">'+(lang()==='sr'?'DIJAGNOSTIKA':'DIAGNOSTICS')+'</summary>'+
      (address?'<div class="muted small" style="margin-top:6px">'+esc(t().address)+': '+esc(address)+'</div>':'')+
      '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
+     '<div class="muted small" style="word-break:break-all">RAW: '+esc(d&&d.rawAdvertisementHex||'—')+'</div>'+
+     '<div class="muted small">FLAGS: '+esc(d&&d.advertiseFlags!=null?d.advertiseFlags:'—')+' · TX: '+esc(d&&d.txPowerLevel!=null?d.txPowerLevel:'—')+' · CONNECTABLE: '+esc(d&&d.connectable)+'</div>'+
+     '<div class="muted small" style="word-break:break-all">MFG: '+esc(JSON.stringify(d&&d.manufacturerData||{}))+'</div>'+
+     '<div class="muted small" style="word-break:break-all">SERVICE DATA: '+esc(JSON.stringify(d&&d.serviceData||{}))+'</div>'+
      (diagnosticLabelsFromServices(services).length?'<div class="status warn" style="margin-top:6px">'+esc(diagnosticLabelsFromServices(services).join(' · '))+'</div>':'')+
      '<div class="muted small ble-gatt-result" data-address="'+esc(address)+'" style="margin-top:6px"></div>'+
     '</details>'+
@@ -523,7 +527,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.10-fast-control-surface',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.11-vendor-advertisement-fingerprint',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

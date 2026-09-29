@@ -206,12 +206,10 @@ function render(devices){
     (address?'<div class="muted small">'+esc(t().address)+': '+esc(address)+'</div>':'')+
     '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
     (diagnosticLabelsFromServices(services).length?'<div class="status warn" style="margin-top:6px">'+esc(diagnosticLabelsFromServices(services).join(' · '))+'</div>':'')+
-    (address&&/^TITAN\s+\d+/i.test(name)?'<button class="btn secondary ble-astera-bond" data-address="'+esc(address)+'" type="button" style="margin-top:7px;margin-right:7px">'+esc(t().bondAstera)+'</button>':'')+
-    (address?'<button class="btn secondary ble-gatt-inspect" data-address="'+esc(address)+'" data-astera="'+(/^TITAN\s+\d+/i.test(name)?'1':'0')+'" type="button" style="margin-top:7px">'+esc(t().inspect)+'</button>':'')+
+    (address?'<button class="btn secondary ble-gatt-inspect" data-address="'+esc(address)+'" data-astera="'+(/^TITAN\s+\d+/i.test(name)?'1':'0')+'" type="button" style="margin-top:7px">'+esc(/^TITAN\s+\d+/i.test(name)?(lang()==='sr'?'PROVERI ASTERA BTB':'INSPECT ASTERA BTB'):t().inspect)+'</button>':'')+
     '<div class="muted small ble-gatt-result" data-address="'+esc(address)+'" style="margin-top:6px"></div>'+
    '</div>';
   }).join('');
- box.querySelectorAll('.ble-astera-bond').forEach(btn=>btn.addEventListener('click',()=>bondAstera(btn.dataset.address,btn)));
  box.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.addEventListener('click',()=>inspectGatt(btn.dataset.address,btn)));
 }
 
@@ -457,7 +455,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'astera-btb-dual-transport-v7',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.6-direct-astera-inspection',diagnosticsRevision:'astera-btb-direct-gatt-v8',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

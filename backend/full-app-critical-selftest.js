@@ -115,8 +115,8 @@ expect(bleUi.includes("version:'0.5-serialized-ble-diagnostics'"),'BLE Mesh/GATT
 expect(bleUi.includes('bleInspectGatt')&&bleUi.includes('LightingAIBleGattInspectionResult'),'BLE GATT inspection bridge missing');
 expect(bleUi.includes('00001827-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh provisioning service detection missing');
 expect(bleUi.includes('00001828-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh proxy service detection missing');
-expect(bleUi.includes('0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'),'Astera private GATT research service detection missing');
 expect(bleUi.includes("version:'0.5-serialized-ble-diagnostics'"),'Serialized BLE diagnostic UI version missing');
+expect(!bleUi.includes('0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'),'Unverified Astera private-service UUID must not be treated as protocol evidence');
 expect(bleUi.includes('gattActive')&&bleUi.includes('scanActive||gattActive'),'BLE scan/GATT serialization guard missing');
 const asteraBond=read('app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java');
 expect(asteraBond.includes('createBond()'),'Astera BTB pairing must use Android Bluetooth bonding before GATT');

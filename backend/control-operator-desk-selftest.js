@@ -19,7 +19,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.25-astera-gatt-status'"
+  "version:'0.26-astera-transport-state'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -49,6 +49,8 @@ expect(ble.includes('preserveBond=!!(bondActive&&activeBondRequestId)')&&ble.inc
 expect(ble.includes('blePagePaused')&&ble.includes('pendingAsteraGattAfterResume')&&ble.includes('LightingAIBleLifecycleResume=function()'),'Post-bond Astera GATT must wait for Activity resume when system pairing UI pauses the app');
 expect(gatt.includes('remote_user_terminated_connection')&&gatt.includes('android_gatt_error_0x85')&&gatt.includes('status == 19')&&gatt.includes('status == 133'),'Titan GATT 19/133 outcomes must be classified explicitly');
 expect(gatt.includes('delay = 1800L')&&gatt.includes('delay = 2200L')&&gatt.includes('retry_scheduled'),'Titan GATT 19/133 retries must use controlled backoff');
+expect(gatt.includes('connect_target')&&gatt.includes('bondState')&&gatt.includes('deviceName'),'Every Astera GATT attempt must record target bond state before connection');
+expect(gatt.includes('astera_btb_private_service_missing')&&gatt.includes('astera_service_missing'),'Astera diagnostics must flag a missing previously observed BTB private service');
 expect(!mainActivity.includes('if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();\n        if (asteraBtbClassicInspector != null) asteraBtbClassicInspector.cancel();\n        super.onPause();'),'MainActivity onPause must not cancel an active Astera bond during system pairing UI');
 expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('passiveServiceMatch'),'Astera passive observer must restrict characteristic READs to the verified BTB service');
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');

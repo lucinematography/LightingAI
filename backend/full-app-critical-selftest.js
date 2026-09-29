@@ -111,11 +111,11 @@ expect(bleScanner.includes('scanEpoch')&&bleScanner.includes('thisScanEpoch')&&b
 expect(bleScanner.includes('ble_scan_failed_'),'BLE scan failure code propagation missing');
 
 const bleUi=read('app/src/main/assets/ble-control.js');
-expect(bleUi.includes("version:'0.7-visible-gatt-profile'"),'BLE Mesh/GATT diagnostic UI missing');
+expect(bleUi.includes("version:'0.8-control-page-primary'"),'BLE Mesh/GATT diagnostic UI missing');
 expect(bleUi.includes('bleInspectGatt')&&bleUi.includes('LightingAIBleGattInspectionResult'),'BLE GATT inspection bridge missing');
 expect(bleUi.includes('00001827-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh provisioning service detection missing');
 expect(bleUi.includes('00001828-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh proxy service detection missing');
-expect(bleUi.includes("version:'0.7-visible-gatt-profile'"),'Serialized BLE diagnostic UI version missing');
+expect(bleUi.includes("version:'0.8-control-page-primary'"),'Serialized BLE diagnostic UI version missing');
 expect(!bleUi.includes('0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'),'Unverified Astera private-service UUID must not be treated as protocol evidence');
 expect(bleUi.includes('gattActive')&&bleUi.includes('scanActive||gattActive'),'BLE scan/GATT serialization guard missing');
 const asteraBond=read('app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java');
@@ -152,14 +152,13 @@ expect(main.includes('@Override protected void onPause()')&&main.includes('@Over
 expect(!main.includes("file:///android_asset/control-system-drivers.js"),'MainActivity must not directly race-load control driver assets');
 
 const bootstrap=read('app/src/main/assets/control-bootstrap.js');
-const order=['dmx-patch-planner.js','dmx-export.js','control-system-drivers.js','control-routing.js','artnet-control.js','ble-control.js','control-dashboard.js','ai-control-bridge.js'];
-let last=-1;
-for(const name of order){
- const next=bootstrap.indexOf(name);
- expect(next>last,'Control bootstrap order invalid at '+name);
- last=next;
-}
-expect(bootstrap.includes('await loadOne(item)'),'Control bootstrap must await each dependency');
+expect(bootstrap.includes('const directScripts=')&&bootstrap.includes('const advancedScripts='),'CONTROL bootstrap must split primary Bluetooth assets from advanced network/DMX assets');
+expect(bootstrap.indexOf('control-system-drivers.js')<bootstrap.indexOf('ble-control.js'),'Direct driver registry must load before Bluetooth UI');
+expect(bootstrap.indexOf('ble-control.js')<bootstrap.indexOf('control-dashboard.js'),'Bluetooth UI must load before primary dashboard');
+expect(bootstrap.indexOf('ble-control.js')<bootstrap.indexOf('artnet-control.js'),'Bluetooth must not be serialized behind Art-Net');
+expect(bootstrap.includes('window.LightingAIAdvancedControlLoad=async function()'),'Advanced network/DMX control must use explicit lazy loader');
+expect(bootstrap.includes("window.LightingAIControlBootstrapMode='bluetooth-first'"),'Primary CONTROL bootstrap must identify Bluetooth-first mode');
+expect(bootstrap.includes('await loadOne(item)'),'CONTROL bootstrap must await each selected dependency');
 
 const backup=read('app/src/main/assets/project-backup-export.js');
 for(const marker of ['LightingAIProjectBackupSnapshot','LightingAIProjectBackupImport',"if(!/^lighting_/i.test(k)","restoreAllowed(k,allowSun)"]){

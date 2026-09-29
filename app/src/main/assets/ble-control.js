@@ -94,6 +94,7 @@ let activeClassicRequestId='';
 let activeClassicAddress='';
 let scanWatchdogTimer=null;
 let gattWatchdogTimer=null;
+let latestDiagnosticPayload=null;
 
 function status(message,ok){
  const el=E('bleStatus');if(!el)return;
@@ -403,6 +404,21 @@ function renderGattProfile(payload){
  html+='</div>';
  return html;
 }
+function exportDiagnostic(){
+ if(!latestDiagnosticPayload){status(lang()==='sr'?'Nema dijagnostike za izvoz.':'No diagnostics available to export.',false);return}
+ const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+ const filename='LightingAI-Astera-BTB-diagnostic-'+stamp+'.json';
+ const body=JSON.stringify(latestDiagnosticPayload,null,2);
+ try{
+  if(window.Android&&typeof Android.saveText==='function'){
+   Android.saveText(filename,body);
+   status(lang()==='sr'?'Dijagnostika je sačuvana u Preuzimanja.':'Diagnostics saved to Downloads.',true);
+   return;
+  }
+ }catch(e){}
+ status(lang()==='sr'?'Izvoz nije dostupan na ovom uređaju.':'Export is unavailable on this device.',false);
+}
+
 function renderQuickControlShell(address,vendor,name){
  const id='ble-quick-'+String(address||'').replace(/[^a-z0-9]/gi,'');
  return '<div id="'+esc(id)+'" class="ble-quick-control" style="margin-top:10px;padding:10px;border:1px solid #2d3f4f;border-radius:12px;background:#0d1217">'+
@@ -479,9 +495,20 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
   status(message,false);return;
  }
  const services=payload&&Array.isArray(payload.services)?payload.services:[];
+ latestDiagnosticPayload={
+  kind:'LightingAI-Astera-BTB-diagnostic',
+  capturedAt:new Date().toISOString(),
+  controlMode:'bluetooth-only',
+  proprietaryCharacteristicWrites:payload&&Number.isFinite(Number(payload.proprietaryCharacteristicWrites))?Number(payload.proprietaryCharacteristicWrites):0,
+  address:address||'',
+  payload:payload||{}
+ };
  const labels=diagnosticLabelsFromServices(services);
  if(result){
-  result.innerHTML=renderGattProfile(payload)+(labels.length?'<div class="status warn" style="margin-top:6px">'+esc(labels.join(' · '))+'</div>':'');
+  result.innerHTML=renderGattProfile(payload)+(labels.length?'<div class="status warn" style="margin-top:6px">'+esc(labels.join(' · '))+'</div>':'')+
+   '<button class="btn secondary ble-export-diagnostic" type="button" style="width:100%;margin-top:8px">'+(lang()==='sr'?'SAČUVAJ DIJAGNOSTIKU':'SAVE DIAGNOSTICS')+'</button>';
+  const exportButton=result.querySelector('.ble-export-diagnostic');
+  if(exportButton)exportButton.addEventListener('click',exportDiagnostic);
  }
  status(t().inspected+': '+services.length,services.length>0);
 };
@@ -547,7 +574,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.14-astera-btb-le-primary',diagnosticsRevision:'astera-btb-passive-notify-v12',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.15-astera-diagnostic-export',diagnosticsRevision:'astera-btb-passive-notify-v13',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

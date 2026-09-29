@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -144,6 +145,15 @@ public final class BleGattInspector {
                         JSONObject out = new JSONObject();
                         out.put("address", activeAddress);
                         out.put("connectAttempts", thisAttempt);
+                        try {
+                            BluetoothDevice remote = gatt.getDevice();
+                            out.put("bondState", remote == null ? BluetoothDevice.BOND_NONE : remote.getBondState());
+                            String remoteName = remote == null ? "" : remote.getName();
+                            out.put("deviceName", remoteName == null ? "" : remoteName);
+                        } catch (Exception ignored) {
+                            out.put("bondState", BluetoothDevice.BOND_NONE);
+                            out.put("deviceName", "");
+                        }
                         JSONArray services = new JSONArray();
                         readable.clear();
                         while (readValues.length() > 0) readValues.remove(readValues.length() - 1);
@@ -158,10 +168,25 @@ public final class BleGattInspector {
                                 if (characteristic == null) continue;
                                 JSONObject characteristicJson = new JSONObject();
                                 characteristicJson.put("uuid", String.valueOf(characteristic.getUuid()));
-                                characteristicJson.put("properties", characteristic.getProperties());
+                                int properties = characteristic.getProperties();
+                                characteristicJson.put("properties", properties);
                                 characteristicJson.put("permissions", characteristic.getPermissions());
+                                characteristicJson.put("readable", (properties & BluetoothGattCharacteristic.PROPERTY_READ) != 0);
+                                characteristicJson.put("writable", (properties & BluetoothGattCharacteristic.PROPERTY_WRITE) != 0);
+                                characteristicJson.put("writeNoResponse", (properties & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0);
+                                characteristicJson.put("notifiable", (properties & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0);
+                                characteristicJson.put("indicatable", (properties & BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0);
+                                JSONArray descriptors = new JSONArray();
+                                for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
+                                    if (descriptor == null) continue;
+                                    JSONObject descriptorJson = new JSONObject();
+                                    descriptorJson.put("uuid", String.valueOf(descriptor.getUuid()));
+                                    descriptorJson.put("permissions", descriptor.getPermissions());
+                                    descriptors.put(descriptorJson);
+                                }
+                                characteristicJson.put("descriptors", descriptors);
                                 characteristics.put(characteristicJson);
-                                if ((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_READ) != 0) {
+                                if ((properties & BluetoothGattCharacteristic.PROPERTY_READ) != 0) {
                                     readable.add(characteristic);
                                 }
                             }

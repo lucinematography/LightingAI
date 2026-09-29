@@ -36,14 +36,7 @@ function jumpBle(){
  var x=E('bleControlCard');
  if(x){x.open=true;if(x.scrollIntoView)x.scrollIntoView({behavior:'smooth',block:'start'});}
 }
-async function loadAdvanced(){
- var btn=E('controlLoadAdvanced');
- if(btn)btn.disabled=true;
- try{
-  var ok=typeof window.LightingAIAdvancedControlLoad==='function'&&await window.LightingAIAdvancedControlLoad();
-  if(!ok&&btn)btn.disabled=false;
- }catch(e){if(btn)btn.disabled=false}
-}
+
 function render(){
  var host=E('controlContent');if(!host)return false;
  var card=E(CARD_ID);
@@ -53,18 +46,14 @@ function render(){
   '<div style="font-size:21px;font-weight:900;color:#f5c542">'+(sr()?'KONTROLA RASVETE':'LIGHTING CONTROL')+'</div>'+
   '<div class="muted small" style="margin-top:6px">'+(sr()?'Bluetooth je glavni put za brzu kontrolu na setu. Bez DMX kablova i bez obaveznog Art-Net/sACN podešavanja.':'Bluetooth is the primary path for fast on-set control. No required DMX cabling or Art-Net/sACN setup.')+'</div>'+
   '<button id="controlOpenBluetooth" class="btn primary" type="button" style="width:100%;margin-top:12px">'+(sr()?'PRONAĐI I POVEŽI RASVETU':'DISCOVER & CONNECT FIXTURES')+'</button>'+
-  '<details style="margin-top:10px"><summary class="muted small" style="cursor:pointer">'+(sr()?'Napredna mrežna/DMX kontrola':'Advanced network/DMX control')+'</summary>'+
-   '<div class="muted small" style="margin-top:7px">'+(sr()?'Učitava se samo kada je izričito zatražiš i ne utiče na Bluetooth kontrolu.':'Loaded only when explicitly requested and does not gate Bluetooth control.')+'</div>'+
-   '<button id="controlLoadAdvanced" class="btn secondary" type="button" style="width:100%;margin-top:8px">'+(sr()?'UČITAJ NAPREDNU KONTROLU':'LOAD ADVANCED CONTROL')+'</button>'+
-  '</details></div>'+
+  '</div>'+
   '<div style="margin:12px 0 8px;font-size:12px;font-weight:900;color:#c5cad2">'+(sr()?'IZABRANA RASVETA':'SELECTED FIXTURES')+' <span style="color:#7f8791">('+rows.length+')</span></div>'+
   (rows.length?rows.map(fixtureCard).join(''):'<div class="card"><div class="muted small">'+(sr()?'Nema izabrane rasvete. Dodaj je u Oprema pa se vrati u Kontrolu.':'No fixtures selected. Add them in Equipment, then return to Control.')+'</div></div>');
- var b=E('controlOpenBluetooth'),a=E('controlLoadAdvanced');
+ var b=E('controlOpenBluetooth');
  if(b)b.onclick=jumpBle;
- if(a)a.onclick=loadAdvanced;
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.19-bluetooth-primary-no-dmx-gate'};
+window.LightingAIControlDashboard={render:render,version:'0.20-bluetooth-only-control'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(render,1200);
 var old=window.setLanguage;

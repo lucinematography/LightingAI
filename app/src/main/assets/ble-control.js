@@ -68,6 +68,8 @@ let scanCooldownUntil=0;
 let activeScanRequestId='';
 let activeGattRequestId='';
 let activeGattAddress='';
+let scanWatchdogTimer=null;
+let gattWatchdogTimer=null;
 
 function status(message,ok){
  const el=E('bleStatus');if(!el)return;
@@ -108,6 +110,12 @@ function transport(){
   }
  };
 }
+function clearScanWatchdog(){
+ if(scanWatchdogTimer){clearTimeout(scanWatchdogTimer);scanWatchdogTimer=null}
+}
+function clearGattWatchdog(){
+ if(gattWatchdogTimer){clearTimeout(gattWatchdogTimer);gattWatchdogTimer=null}
+}
 function setScanBusy(busy){
  scanActive=!!busy;
  const button=E('bleScan');
@@ -123,9 +131,16 @@ function startScan(){
  E('bleResults').innerHTML='';
  setScanBusy(true);
  status(t().scanning);
+ clearScanWatchdog();
+ scanWatchdogTimer=setTimeout(()=>{
+  if(activeScanRequestId!==id||!scanActive)return;
+  activeScanRequestId='';
+  setScanBusy(false);
+  status(t().error+' (ble_scan_no_callback_timeout)',false);
+ },12000);
  try{
   if(!tr.discover({id:id,timeoutMs:3500})){setScanBusy(false);status(t().unavailable,false)}
- }catch(e){setScanBusy(false);status(t().error,false)}
+ }catch(e){clearScanWatchdog();setScanBusy(false);status(t().error,false)}
 }
 function errorText(code){
  if(code==='ble_permission_denied')return t().permission;
@@ -173,6 +188,20 @@ function inspectGatt(address,button){
  const result=document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(address)+'"]');
  if(result)result.textContent=t().inspecting;
  status(t().inspecting);
+ clearGattWatchdog();
+ gattWatchdogTimer=setTimeout(()=>{
+  if(activeGattRequestId!==id||!gattActive)return;
+  activeGattRequestId='';
+  gattActive=false;
+  const timedOutAddress=activeGattAddress;
+  activeGattAddress='';
+  const scanButton=E('bleScan');if(scanButton)scanButton.disabled=Date.now()<scanCooldownUntil;
+  document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
+  const timedOutResult=timedOutAddress?document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(timedOutAddress)+'"]'):null;
+  const message=t().gattError+' (ble_gatt_no_callback_timeout)';
+  if(timedOutResult)timedOutResult.textContent=message;
+  status(message,false);
+ },12000);
  try{
   if(!tr.inspectGatt({id:id,address:address,timeoutMs:8000})){
    gattActive=false;
@@ -181,6 +210,7 @@ function inspectGatt(address,button){
    status(t().unavailable,false);
   }
  }catch(e){
+  clearGattWatchdog();
   gattActive=false;
   if(scanButton)scanButton.disabled=false;
   document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
@@ -189,6 +219,7 @@ function inspectGatt(address,button){
 }
 window.LightingAIBleGattInspectionResult=function(id,payload,error){
  if(String(id||'')!==activeGattRequestId)return;
+ clearGattWatchdog();
  activeGattRequestId='';
  gattActive=false;
  const scanButton=E('bleScan');if(scanButton)scanButton.disabled=Date.now()<scanCooldownUntil;
@@ -208,6 +239,7 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
 };
 window.LightingAIBleDiscoveryResult=function(id,devices,error){
  if(String(id||'')!==activeScanRequestId)return;
+ clearScanWatchdog();
  activeScanRequestId='';
  scanCooldownUntil=Date.now()+2000;
  setScanBusy(false);
@@ -244,6 +276,9 @@ function install(){
  return true;
 }
 function resetBleUiLifecycle(){
+ const hadTransient=scanActive||gattActive;
+ clearScanWatchdog();
+ clearGattWatchdog();
  activeScanRequestId='';
  activeGattRequestId='';
  activeGattAddress='';
@@ -252,10 +287,16 @@ function resetBleUiLifecycle(){
  scanCooldownUntil=0;
  const button=E('bleScan');if(button)button.disabled=false;
  document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
+ if(hadTransient){
+  status('');
+  document.querySelectorAll('.ble-gatt-result').forEach(el=>{
+   if(el.textContent===TXT.sr.inspecting||el.textContent===TXT.en.inspecting)el.textContent='';
+  });
+ }
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'gatt-error-v1',discover:startScan,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'ble-watchdog-v2',discover:startScan,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

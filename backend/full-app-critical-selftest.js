@@ -119,13 +119,13 @@ expect(bleUi.includes("version:'0.5-serialized-ble-diagnostics'"),'Serialized BL
 expect(!bleUi.includes('0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'),'Unverified Astera private-service UUID must not be treated as protocol evidence');
 expect(bleUi.includes('gattActive')&&bleUi.includes('scanActive||gattActive'),'BLE scan/GATT serialization guard missing');
 const asteraBond=read('app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java');
-expect(asteraBond.includes('createBond()'),'Astera BTB pairing must use Android Bluetooth bonding before GATT');
+expect(asteraBond.includes('createBond()'),'Optional Android bond helper missing for Astera BTB diagnostics');
 expect(asteraBond.includes('ACTION_BOND_STATE_CHANGED'),'Astera BTB pairing must observe Android bond-state transitions');
 expect(asteraBond.includes('ACTION_PAIRING_REQUEST')&&asteraBond.includes('EXTRA_PAIRING_VARIANT'),'Astera BTB pairing diagnostics must surface Android pairing requests without guessing a PIN');
 expect(asteraBond.includes('Context.RECEIVER_EXPORTED'),'Astera BTB bond-state receiver must accept highly privileged Bluetooth framework broadcasts on Android 13+');
 expect(asteraBond.includes('astera_bond_timeout')&&asteraBond.includes('operationEpoch'),'Astera BTB pairing must fail closed with timeout and stale-callback isolation');
 expect(main.includes('asteraBtbBond')&&main.includes('notifyAsteraBtbBond'),'Astera BTB native bridge missing');
-expect(main.includes('asteraBtbInspectGatt')&&main.includes('BOND_BONDED')&&main.includes('astera_bond_required'),'Astera GATT path must require a completed Android bond before service discovery');
+expect(main.includes('asteraBtbInspectGatt')&&main.includes('adapter.getRemoteDevice(target)')&&!main.includes('astera_bond_required'),'Astera GATT inspection must not require Android system bonding');
 const asteraClassic=read('app/src/main/java/com/lightingai/app/AsteraBtbClassicInspector.java');
 expect(asteraClassic.includes('fetchUuidsWithSdp')&&asteraClassic.includes('ACTION_UUID'),'Astera BTB Classic Bluetooth SDP inspection missing');
 expect(asteraClassic.includes('00001101-0000-1000-8000-00805f9b34fb'),'Astera BTB diagnostics must check the standard Bluetooth Serial Port Profile UUID without assuming it is present');

@@ -23,12 +23,12 @@ const TXT={
   services:'SERVISI',
   address:'ADRESA',
   inspect:'PROVERI GATT',
-  bondAstera:'POVEŽI ASTERA BTB',
+  bondAstera:'UPARI BLUETOOTH',
   bondingAstera:'Uparujem Astera BTB preko Android Bluetooth sloja…',
-  bondedAstera:'Astera BTB uparivanje je uspelo.',
+  bondedAstera:'Android Bluetooth bonding je uspeo. Astera session / Radio PIN još nisu verifikovani.',
   bondAsteraError:'Astera BTB uparivanje nije uspelo.',
   bondAsteraPairing:'Android traži potvrdu Bluetooth uparivanja.',
-  bondRequired:'Astera BTB mora prvo uspešno da se upari.',
+  bondRequired:'Astera BTB traži standardni Bluetooth bonding pre daljeg LE/GATT testa.',
   classicInspecting:'Proveravam Bluetooth Classic/SDP profile…',
   classicResult:'Bluetooth Classic/SDP',
   classicError:'Bluetooth Classic/SDP provera nije uspela.',
@@ -60,12 +60,12 @@ const TXT={
   services:'SERVICES',
   address:'ADDRESS',
   inspect:'INSPECT GATT',
-  bondAstera:'PAIR ASTERA BTB',
+  bondAstera:'PAIR BLUETOOTH',
   bondingAstera:'Pairing Astera BTB through the Android Bluetooth layer…',
-  bondedAstera:'Astera BTB pairing succeeded.',
+  bondedAstera:'Android Bluetooth bonding succeeded. The Astera session / Radio PIN is still unverified.',
   bondAsteraError:'Astera BTB pairing failed.',
   bondAsteraPairing:'Android is requesting Bluetooth pairing confirmation.',
-  bondRequired:'Astera BTB must be bonded successfully first.',
+  bondRequired:'Astera BTB requires standard Bluetooth bonding before the next LE/GATT step.',
   classicInspecting:'Inspecting Bluetooth Classic/SDP profiles…',
   classicResult:'Bluetooth Classic/SDP',
   classicError:'Bluetooth Classic/SDP inspection failed.',
@@ -614,7 +614,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.21-astera-bond-timeline',diagnosticsRevision:'astera-btb-passive-notify-v19',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.22-astera-radio-pin-boundary',diagnosticsRevision:'astera-btb-passive-notify-v20',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

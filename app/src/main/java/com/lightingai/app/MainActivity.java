@@ -1123,8 +1123,8 @@ public class MainActivity extends Activity {
                     @Override public void onComplete(JSONObject result) {
                         notifyBleGattInspection(id, result, "");
                     }
-                    @Override public void onError(String code) {
-                        notifyBleGattInspection(id, new JSONObject(), code);
+                    @Override public void onError(JSONObject result, String code) {
+                        notifyBleGattInspection(id, result, code);
                     }
                 });
             });
@@ -1142,8 +1142,8 @@ public class MainActivity extends Activity {
                     @Override public void onComplete(JSONObject result) {
                         notifyBleGattInspection(id, result, "");
                     }
-                    @Override public void onError(String code) {
-                        notifyBleGattInspection(id, new JSONObject(), code);
+                    @Override public void onError(JSONObject result, String code) {
+                        notifyBleGattInspection(id, result, code);
                     }
                 });
             });

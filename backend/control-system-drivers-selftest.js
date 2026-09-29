@@ -49,7 +49,7 @@ vm.createContext(routingSandbox);
 vm.runInContext(routingSrc,routingSandbox);
 const routingApi=routingSandbox.window.LightingAIControlRouting;
 const rdmFallback=routingApi&&routingApi.classify({control:{wired:['RDM']},dmxModes:[verifiedMode]});
-expect(routingApi&&routingSrc.includes("version:'1.4-rdm-fallback-separated'"),'Fallback control router version marker missing');
+expect(routingApi&&routingSrc.includes("version:'1.5-native-network-gateway-separated'"),'Fallback control router version marker missing');
 expect(rdmFallback?.dmx===false&&rdmFallback?.transportReady===false&&rdmFallback?.semanticReady===false,'Fallback router must not treat RDM-only metadata as level control');
 
 const {fixtures}=buildRuntimeCatalog();

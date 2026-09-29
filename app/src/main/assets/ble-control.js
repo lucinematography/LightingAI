@@ -33,7 +33,6 @@ const TXT={
   inspected:'GATT servisi',
   meshProvisioning:'Bluetooth Mesh: NEPROVISIONISAN / provisioning servis',
   meshProxy:'Bluetooth Mesh: PROXY servis detektovan',
-  asteraPrivate:'Astera privatni GATT servis detektovan · komande još nisu verifikovane',
   gattError:'GATT provera nije uspela.',
   verified:'Direktna kontrola će biti uključena samo za modele sa verifikovanim zvaničnim protokolom / SDK-om.'
  },
@@ -67,7 +66,6 @@ const TXT={
   inspected:'GATT services',
   meshProvisioning:'Bluetooth Mesh: UNPROVISIONED / provisioning service',
   meshProxy:'Bluetooth Mesh: PROXY service detected',
-  asteraPrivate:'Astera private GATT service detected · commands are not verified yet',
   gattError:'GATT inspection failed.',
   verified:'Direct control will only be enabled for fixtures with a verified official protocol / SDK.'
  }
@@ -96,14 +94,12 @@ function esc(v){
 }
 const BLE_MESH_PROVISIONING='00001827-0000-1000-8000-00805f9b34fb';
 const BLE_MESH_PROXY='00001828-0000-1000-8000-00805f9b34fb';
-const ASTERA_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65';
 function normalizedUuid(v){return String(v||'').toLowerCase()}
 function diagnosticLabelsFromServices(services){
  const values=(Array.isArray(services)?services:[]).map(s=>normalizedUuid(typeof s==='string'?s:(s&&s.uuid)));
  const labels=[];
  if(values.includes(BLE_MESH_PROVISIONING))labels.push(t().meshProvisioning);
  if(values.includes(BLE_MESH_PROXY))labels.push(t().meshProxy);
- if(values.includes(ASTERA_PRIVATE_SERVICE))labels.push(t().asteraPrivate);
  return labels;
 }
 function transport(){
@@ -395,7 +391,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'astera-btb-session-v4',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'astera-btb-session-v5',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

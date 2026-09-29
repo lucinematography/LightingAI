@@ -37,7 +37,7 @@ const TXT={
   meshProvisioning:'Bluetooth Mesh: NEPROVISIONISAN / provisioning servis',
   meshProxy:'Bluetooth Mesh: PROXY servis detektovan',
   asteraBtbService:'ASTERA BTB privatni LE servis detektovan · transport fingerprint potvrđen; session/komande još nisu verifikovani.',
-  gattError:'GATT provera nije uspela.'
+  gattError:'GATT provera nije uspela.',
   verified:'Direktna kontrola će biti uključena samo za modele sa verifikovanim zvaničnim protokolom / SDK-om.'
  },
  en:{
@@ -74,7 +74,7 @@ const TXT={
   meshProvisioning:'Bluetooth Mesh: UNPROVISIONED / provisioning service',
   meshProxy:'Bluetooth Mesh: PROXY service detected',
   asteraBtbService:'ASTERA BTB private LE service detected · transport fingerprint confirmed; session/commands are not verified yet.',
-  gattError:'GATT inspection failed.'
+  gattError:'GATT inspection failed.',
   verified:'Direct control will only be enabled for fixtures with a verified official protocol / SDK.'
  }
 };

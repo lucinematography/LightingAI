@@ -19,7 +19,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.21-astera-bond-timeline'"
+  "version:'0.22-astera-radio-pin-boundary'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -43,6 +43,7 @@ expect(ble.includes("error==='astera_bond_required'")&&ble.includes('ble-astera-
 expect(bondManager.includes('eventTimeline')&&bondManager.includes('pairing_request')&&bondManager.includes('bond_state')&&bondManager.includes('create_bond')&&bondManager.includes('bond_error'),'Astera Android bonding must preserve a structured event timeline');
 expect(bondManager.includes('onError(JSONObject result, String code)'),'Astera bonding failures must return structured diagnostics');
 expect(ble.includes('LightingAI-Astera-BTB-bond-diagnostic')&&ble.includes('Bonding timeline captured'),'Astera bonding failure timeline must be exportable');
+expect(ble.includes('Android Bluetooth bonding je uspeo. Astera session / Radio PIN još nisu verifikovani.')&&ble.includes('Android Bluetooth bonding succeeded. The Astera session / Radio PIN is still unverified.'),'Astera UI must not equate Android bonding with an authenticated Astera session');
 expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('passiveServiceMatch'),'Astera passive observer must restrict characteristic READs to the verified BTB service');
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');
 expect(!ble.includes('setTimeout(()=>inspectAsteraClassic(address),250)'),'Primary Astera connect flow must not auto-route through Classic/SDP');

@@ -631,7 +631,7 @@ window.LightingAIBleLifecycleResume=function(){
  pendingAsteraGattAfterResume='';
  if(address)setTimeout(()=>inspectGatt(address,null,true),400);
 };
-window.LightingAIBleControl={version:'0.26-astera-transport-state',diagnosticsRevision:'astera-btb-passive-notify-v24',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.27-astera-device-info',diagnosticsRevision:'astera-btb-passive-notify-v25',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

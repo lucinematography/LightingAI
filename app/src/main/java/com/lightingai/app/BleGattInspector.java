@@ -172,7 +172,11 @@ public final class BleGattInspector {
             ) {
                 synchronized (lock) {
                     if (gatt != activeGatt || callback == null) return;
-                    appendEvent("connection_state", "status", status, "newState", newState);
+                    appendEvent(
+                        "connection_state",
+                        "status", status,
+                        "statusClass", classifyStatus(status),
+                        "newState", newState);
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         if (isAsteraInspection() && isAuthenticationStatus(status)) {
                             appendAttemptSnapshot("astera_bond_required");
@@ -458,7 +462,13 @@ public final class BleGattInspector {
 
     @SuppressLint("MissingPermission")
     private void retryOrFailLocked(String code) {
-        appendEvent("retry_or_fail", "code", code, "attempt", attempt);
+        int status = extractTrailingStatus(code);
+        appendEvent(
+            "retry_or_fail",
+            "code", code,
+            "status", status,
+            "statusClass", classifyStatus(status),
+            "attempt", attempt);
         appendAttemptSnapshot(code);
         closeGattOnlyLocked();
         clearAttemptState();
@@ -467,8 +477,26 @@ public final class BleGattInspector {
         if (callback != null &&
             attempt < MAX_ATTEMPTS &&
             remaining > 1500L) {
-            long delay =
-                attempt == 1 ? 500L : 1000L;
+            long delay;
+            if (status == 19) {
+                // The peer explicitly ended the link. Give the BTB time to settle
+                // before opening a fresh LE connection.
+                delay = 1800L;
+            } else if (status == 133) {
+                // Android/AOSP 0x85 GATT_ERROR: close fully and back off before retry.
+                delay = 2200L;
+            } else {
+                delay = attempt == 1 ? 500L : 1000L;
+            }
+            if (remaining <= delay + 500L) {
+                finishErrorLocked(code);
+                return;
+            }
+            appendEvent(
+                "retry_scheduled",
+                "delayMs", delay,
+                "status", status,
+                "statusClass", classifyStatus(status));
             final int retryEpoch = inspectionEpoch;
             retryRunnable = () -> {
                 synchronized (lock) {
@@ -810,6 +838,35 @@ public final class BleGattInspector {
             }
             eventTimeline.put(event);
         } catch (Exception ignored) {}
+    }
+
+    private static int extractTrailingStatus(String code) {
+        if (code == null) return -1;
+        String marker = "status_";
+        int at = code.indexOf(marker);
+        if (at < 0) return -1;
+        int start = at + marker.length();
+        int end = start;
+        while (end < code.length() &&
+            Character.isDigit(code.charAt(end))) {
+            end++;
+        }
+        if (end <= start) return -1;
+        try {
+            return Integer.parseInt(code.substring(start, end));
+        } catch (Exception ignored) {
+            return -1;
+        }
+    }
+
+    private static String classifyStatus(int status) {
+        if (status == BluetoothGatt.GATT_SUCCESS) return "success";
+        if (status == 5) return "insufficient_authentication";
+        if (status == 8) return "insufficient_authorization";
+        if (status == 15) return "insufficient_encryption";
+        if (status == 19) return "remote_user_terminated_connection";
+        if (status == 133) return "android_gatt_error_0x85";
+        return status < 0 ? "unknown" : "status_" + status;
     }
 
     private boolean isAsteraInspection() {

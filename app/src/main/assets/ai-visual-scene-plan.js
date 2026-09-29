@@ -154,17 +154,9 @@ window.LightingAIOpenSceneImage=function(mode){
  var status=document.getElementById('aiv-photo-status');
  if(status)status.textContent=mode==='camera'?(currentLanguage()==='sr'?'Otvaram kameru…':'Opening camera…'):(currentLanguage()==='sr'?'Otvaram galeriju…':'Opening gallery…');
  try{
-  if(window.Android&&typeof Android.openImagePicker==='function'){
-   Android.openImagePicker(mode);
-   return false;
-  }
- }catch(e){
-  if(status)status.textContent=currentLanguage()==='sr'?'Greška pri otvaranju Android izbora slike.':'Android image picker error.';
- }
- try{
   var input=document.getElementById(mode==='camera'?'aiv-camera':'aiv-gallery');
   if(input){input.click();return false;}
- }catch(e2){}
+ }catch(e){}
  if(status)status.textContent=currentLanguage()==='sr'?'Izbor slike nije dostupan.':'Image picker unavailable.';
  return false;
 };
@@ -225,8 +217,8 @@ function openSceneImage(mode){
  pendingImageMode=mode;
  var status=document.getElementById('aiv-photo-status');
  if(status)status.textContent=mode==='camera'?(currentLanguage()==='sr'?'Otvaram kameru…':'Opening camera…'):(currentLanguage()==='sr'?'Otvaram galeriju…':'Opening gallery…');
- try{if(window.Android&&typeof Android.openImagePicker==='function'){Android.openImagePicker(mode);return;}}catch(e){}
- document.getElementById(mode==='camera'?'aiv-camera':'aiv-gallery').click();
+ var input=document.getElementById(mode==='camera'?'aiv-camera':'aiv-gallery');
+ if(input)input.click();
 }
 var nativeImageChunks=[];
 var nativeImageExpected=0;

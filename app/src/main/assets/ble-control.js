@@ -216,7 +216,7 @@ function signalLabel(rssi){
  if(v>=-85)return lang()==='sr'?'SLAB':'WEAK';
  return lang()==='sr'?'VRLO SLAB':'VERY WEAK';
 }
-function isAsteraName(name){return /^(TITAN\s+\d+|.*ASTERA.*)$/i.test(String(name||''))}
+function isAsteraName(name){return /(?:^|\b)(titan|astera|helios|hyperion|hydra|nyx|pixelbrick|ax[0-9]|quik|luna|pluto|leo)(?:\b|\s|$)/i.test(String(name||''))}
 function render(devices){
  const box=E('bleResults');if(!box)return;
  const list=Array.isArray(devices)?devices.slice():[];
@@ -578,7 +578,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.17-astera-event-timeline',diagnosticsRevision:'astera-btb-passive-notify-v15',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.18-astera-family-advertisements',diagnosticsRevision:'astera-btb-passive-notify-v16',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

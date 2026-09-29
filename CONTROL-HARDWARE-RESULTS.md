@@ -39,10 +39,12 @@ A test with any critical FAIL blocks merge and final APK release.
 
 ## Production scope policy
 
-- Production release scope is standards-based lighting control: Art-Net, sACN/E1.31, DMX512 and CRMX using verified fixture profiles.
-- Proprietary vendor Bluetooth/app transports (AsteraApp/BTB/UHF, Sidus proprietary mesh, Godox app BLE, etc.) are LAB/diagnostic paths unless an official vendor SDK or documented third-party protocol is verified.
-- A proprietary Bluetooth LAB path may be deferred and marked N/A without blocking the production CONTROL release gate.
-- A failure in a standards-based DMX/CRMX/Art-Net/sACN path remains release-blocking.
+- LightingAI CONTROL must support both standards-based lighting control (Art-Net, sACN/E1.31, DMX512, CRMX) and direct vendor control where that was part of the product promise.
+- Direct vendor Bluetooth control for Astera, Godox and Aladdin is release-relevant and cannot be replaced by asking the operator to use separate manufacturer apps.
+- Aputure/Sidus direct control remains in scope where technically supportable; Nanlite direct control follows after the first required vendor families are physically verified.
+- Proprietary commands must never be guessed. A vendor path is marked ready only after its transport/session/command behavior is verified against documentation, SDK evidence, or repeatable physical tests.
+- A failure in standards-based DMX/CRMX/Art-Net/sACN remains release-blocking.
+- A missing required direct-vendor control path remains release-blocking for the affected vendor family.
 
 ## Test 0 - direct native Art-Net/sACN
 
@@ -222,7 +224,7 @@ Release gate:
 - APPROVED FOR FINAL APK: YES / NO
 - Blocking failures:
 - Deferred paths and reasons:
-- Proprietary vendor Bluetooth LAB diagnostics do not block production release unless explicitly promoted to a verified production driver.
+- Required direct vendor Bluetooth remains a blocking item until physically verified for the affected vendor family.
 
 
 ## Astera Titan BTB diagnostic bench - 2026-09-29

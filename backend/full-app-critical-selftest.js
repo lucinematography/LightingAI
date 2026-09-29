@@ -302,6 +302,12 @@ expect(uiAiScenePlan.includes('window.LightingAIHandleScenePhoto=receiveFile;'),
  'AI visual file inputs must feed the shared scene-photo handler');
 expect(!uiAiScenePlan.includes('Android.openImagePicker(mode)')&&!uiAiScenePlan.includes('LightingAIOpenSceneImage'),
  'AI visual photo buttons must not use a separate picker wrapper or bypass the working Planner file-input path');
+expect(uiAiScenePlan.includes('onclick="return window.LightingAIRemoveScenePhoto?window.LightingAIRemoveScenePhoto():false;"')&&
+ uiAiScenePlan.includes('window.LightingAIRemoveScenePhoto=function(){')&&
+ uiAiScenePlan.includes("if(gallery)gallery.value='';")&&uiAiScenePlan.includes("if(camera)camera.value='';"),
+ 'AI visual remove-photo action must be direct, clear the photo, and reset both file inputs');
+expect(!uiAiScenePlan.includes("document.getElementById('aiv-remove').onclick"),
+ 'AI visual remove-photo action must not depend on late onclick binding');
 
 console.log(JSON.stringify({ok:failures.length===0,failures},null,2));
 if(failures.length)process.exit(1);

@@ -37,6 +37,13 @@ Use this file only for the physical release-gate result for PR #408.
 
 A test with any critical FAIL blocks merge and final APK release.
 
+## Production scope policy
+
+- Production release scope is standards-based lighting control: Art-Net, sACN/E1.31, DMX512 and CRMX using verified fixture profiles.
+- Proprietary vendor Bluetooth/app transports (AsteraApp/BTB/UHF, Sidus proprietary mesh, Godox app BLE, etc.) are LAB/diagnostic paths unless an official vendor SDK or documented third-party protocol is verified.
+- A proprietary Bluetooth LAB path may be deferred and marked N/A without blocking the production CONTROL release gate.
+- A failure in a standards-based DMX/CRMX/Art-Net/sACN path remains release-blocking.
+
 ## Test 0 - direct native Art-Net/sACN
 
 Status: NOT RUN
@@ -215,6 +222,7 @@ Release gate:
 - APPROVED FOR FINAL APK: YES / NO
 - Blocking failures:
 - Deferred paths and reasons:
+- Proprietary vendor Bluetooth LAB diagnostics do not block production release unless explicitly promoted to a verified production driver.
 
 
 ## Astera Titan BTB diagnostic bench - 2026-09-29

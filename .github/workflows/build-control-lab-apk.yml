@@ -103,14 +103,20 @@ jobs:
           test -s app/src/main/assets/control-bootstrap.js
           test -s app/src/main/assets/control-routing.js
           test -s app/src/main/assets/control-dashboard.js
-          test -s app/src/main/assets/artnet-control.js
-          test -s app/src/main/assets/dmx-patch-planner.js
-          test -s app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java
-          test -s app/src/main/java/com/lightingai/app/SacnLiveEngine.java
-          grep -Fq "LightingAIControlRouting" app/src/main/assets/control-routing.js
+          test -s app/src/main/assets/control-system-drivers.js
+          test -s app/src/main/assets/ble-control.js
+          test -s app/src/main/java/com/lightingai/app/BleDeviceScanner.java
+          test -s app/src/main/java/com/lightingai/app/BleGattInspector.java
+          test -s app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java
+          test -s app/src/main/java/com/lightingai/app/AsteraBtbClassicInspector.java
           grep -Fq "LightingAIControlBootstrapReady" app/src/main/assets/control-bootstrap.js
-          grep -Fq "astera-fp3-datalink" app/src/main/assets/artnet-control.js
-          echo "Control lab assets verified"
+          grep -Fq "LightingAIControlBootstrapMode='bluetooth-only'" app/src/main/assets/control-bootstrap.js
+          grep -Fq "ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'" app/src/main/assets/ble-control.js
+          if grep -Fq "artnet-control.js" app/src/main/assets/control-bootstrap.js || grep -Fq "dmx-patch-planner.js" app/src/main/assets/control-bootstrap.js || grep -Fq "dmx-export.js" app/src/main/assets/control-bootstrap.js; then
+            echo "Primary CONTROL bootstrap must remain Bluetooth-only"
+            exit 1
+          fi
+          echo "Bluetooth-only Control lab assets verified"
 
       - name: Set up Java 17
         uses: actions/setup-java@v6
@@ -147,8 +153,8 @@ jobs:
             'assets/control-bootstrap.js'
             'assets/control-routing.js'
             'assets/control-dashboard.js'
-            'assets/artnet-control.js'
-            'assets/dmx-patch-planner.js'
+            'assets/control-system-drivers.js'
+            'assets/ble-control.js'
             'assets/feature-build-info.js'
             'assets/catalog.js'
             'assets/gel-filter-catalog.js'

@@ -1,6 +1,6 @@
 # LightingAI CONTROL Hardware Validation Results
 
-Use this file only for the physical release-gate result for PR #408.
+Use this file only for physical Bluetooth validation of PR #408.
 
 ## Candidate identity
 
@@ -13,230 +13,130 @@ Use this file only for the physical release-gate result for PR #408.
 - Test date:
 - Tester:
 
-## Hardware identity
+## Primary CONTROL policy
 
-- Phone model:
-- Android version:
-- Wi-Fi/router/AP:
-- VPN disabled: YES / NO
-- Mobile-data route disabled or isolated: YES / NO
-- Bridge model:
-- Bridge firmware:
-- Fixture model:
-- Fixture firmware:
-- Fixture DMX mode:
-- Fixture DMX start address:
-- Universe:
+LightingAI CONTROL is Bluetooth-first and Bluetooth-only in its normal operator workflow.
+
+Required vendor families:
+
+- Astera
+- Aputure / Sidus
+- Godox
+- Aladdin
+- Nanlite / NANLINK
+- ARRI / LiCo
+
+DMX / Art-Net / sACN / CRMX are not release prerequisites for the primary CONTROL workflow.
+
+No vendor family is marked functional until direct Bluetooth control is physically proven.
 
 ## Result legend
 
 - PASS = observed behavior exactly matches the release gate.
 - FAIL = observed behavior contradicts the release gate.
-- N/A = hardware path not available; must include a reason.
-- NOT RUN = test has not yet been executed.
+- N/A = hardware path not available; include a reason.
+- NOT RUN = not yet executed.
 
-A test with any critical FAIL blocks merge and final APK release.
+Any critical FAIL blocks merge and final APK release.
 
-## Production scope policy
+## Astera Titan Tube FP1-BTB
 
-- LightingAI CONTROL must support both standards-based lighting control (Art-Net, sACN/E1.31, DMX512, CRMX) and direct vendor control where that was part of the product promise.
-- Direct vendor Bluetooth control for Astera, Godox and Aladdin is release-relevant and cannot be replaced by asking the operator to use separate manufacturer apps.
-- Aputure/Sidus direct control remains in scope where technically supportable; Nanlite direct control follows after the first required vendor families are physically verified.
-- Proprietary commands must never be guessed. A vendor path is marked ready only after its transport/session/command behavior is verified against documentation, SDK evidence, or repeatable physical tests.
-- A failure in standards-based DMX/CRMX/Art-Net/sACN remains release-blocking.
-- A missing required direct-vendor control path remains release-blocking for the affected vendor family.
-
-## Test 0 - direct native Art-Net/sACN
+### Phase 1 - discovery and transport
 
 Status: NOT RUN
 
-Art-Net direct:
-- ARM/preflight blocks output before ARM: PASS / FAIL / N/A / NOT RUN
-- Verified dimmer behavior: PASS / FAIL / N/A / NOT RUN
-- Additional verified semantic control: PASS / FAIL / N/A / NOT RUN
-
-sACN direct:
-- Fresh ARM required after protocol change: PASS / FAIL / N/A / NOT RUN
-- Verified dimmer behavior: PASS / FAIL / N/A / NOT RUN
-- Additional verified semantic control: PASS / FAIL / N/A / NOT RUN
+- BLE discovery: PASS / FAIL / NOT RUN
+- Brand detection ASTERA: PASS / FAIL / NOT RUN
+- Fixture name detection: PASS / FAIL / NOT RUN
+- LE/GATT connection: PASS / FAIL / NOT RUN
+- Private BTB service fingerprint present: PASS / FAIL / NOT RUN
+- Expected service fingerprint:
+  `0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65`
+- Service/characteristic inventory captured: PASS / FAIL / NOT RUN
+- Passive CCCD subscription attempted: PASS / FAIL / NOT RUN
+- Notifications captured: PASS / FAIL / N/A / NOT RUN
+- Proprietary characteristic WRITE count remains zero: PASS / FAIL / NOT RUN
 
 Evidence:
-- Operator-status screenshot:
-- Fixture-response video/photo:
+- Advertisement:
+- Manufacturer data:
+- Service data:
+- GATT services:
+- Notification HEX:
 - Notes:
 
-## Test A - Art-Net -> wired DMX
+### Phase 2 - Astera session identification
 
 Status: NOT RUN
 
-- No physical output before ARM: PASS / FAIL / NOT RUN
-- ARM succeeds only on a valid route: PASS / FAIL / NOT RUN
-- 10% dimmer: PASS / FAIL / NOT RUN
-- 25% dimmer: PASS / FAIL / NOT RUN
-- 50% dimmer: PASS / FAIL / NOT RUN
-- 75% dimmer: PASS / FAIL / NOT RUN
-- 100% dimmer: PASS / FAIL / NOT RUN
-- MASTER DIMMER matches fixture control: PASS / FAIL / NOT RUN
-- No unrelated channels change: PASS / FAIL / NOT RUN
-- Operator status reports expected state: PASS / FAIL / NOT RUN
+- Authentication/session start identified: PASS / FAIL / NOT RUN
+- Framing identified: PASS / FAIL / NOT RUN
+- ACK/response behavior identified: PASS / FAIL / NOT RUN
+- Keepalive/sequencing identified: PASS / FAIL / N/A / NOT RUN
+- Evidence source is official, publicly verifiable, or repeatably measured: PASS / FAIL / NOT RUN
 
-Evidence:
-- Screenshot:
-- Video:
-- Notes:
+No DIM/CCT/BOJA/FX output is allowed before this phase passes.
 
-## Test B - sACN -> wired DMX
+### Phase 3 - real fixture control
 
 Status: NOT RUN
 
-- Sidus One/source reset performed before protocol change: PASS / FAIL / N/A / NOT RUN
-- Fresh ARM required: PASS / FAIL / NOT RUN
-- Same verified semantic mapping as Art-Net: PASS / FAIL / NOT RUN
-- No stale Art-Net route remains armed: PASS / FAIL / NOT RUN
+- DIM low level: PASS / FAIL / NOT RUN
+- DIM repeated values: PASS / FAIL / NOT RUN
+- CCT: PASS / FAIL / NOT RUN
+- BOJA: PASS / FAIL / NOT RUN
+- FX: PASS / FAIL / NOT RUN
+- Reconnect deterministic: PASS / FAIL / NOT RUN
+- Background/resume safe: PASS / FAIL / NOT RUN
+- No unrelated parameter changes: PASS / FAIL / NOT RUN
 
-Evidence:
-- Screenshot:
-- Video:
-- Notes:
+## Vendor-family release matrix
 
-## Test C - CRMX output
+### Astera
+Status: REQUIRED / UNVERIFIED
 
-Status: NOT RUN
+### Aputure / Sidus
+Status: REQUIRED / UNVERIFIED
 
-- Compatible CRMX hardware available: YES / NO
-- Art-Net -> CRMX: PASS / FAIL / N/A / NOT RUN
-- sACN -> CRMX: PASS / FAIL / N/A / NOT RUN
-- Semantic mapping matches wired DMX: PASS / FAIL / N/A / NOT RUN
-- PROFILE HOLD remains blocked: PASS / FAIL / N/A / NOT RUN
+### Godox
+Status: REQUIRED / UNVERIFIED
 
-Evidence:
-- Screenshot:
-- Video:
-- Notes:
+### Aladdin
+Status: REQUIRED / UNVERIFIED
 
-## Test D - MASTER / group scope
+### Nanlite / NANLINK
+Status: REQUIRED / UNVERIFIED
 
-Status: NOT RUN
-
-- Two verified fixtures available: YES / NO
-- Selected scope displayed correctly: PASS / FAIL / N/A / NOT RUN
-- MASTER changes only selected fixture(s): PASS / FAIL / N/A / NOT RUN
-- ALL restores full verified selection: PASS / FAIL / N/A / NOT RUN
-- Hidden/stale selection never controls unexpected fixture: PASS / FAIL / N/A / NOT RUN
-
-Evidence:
-- Screenshot:
-- Video:
-- Notes:
-
-## Test E - scene and cue
-
-Status: NOT RUN
-
-- Scene A recall: PASS / FAIL / NOT RUN
-- Scene B recall: PASS / FAIL / NOT RUN
-- GO order deterministic: PASS / FAIL / NOT RUN
-- PREV order deterministic: PASS / FAIL / NOT RUN
-- CURRENT/NEXT cue display correct: PASS / FAIL / NOT RUN
-- Active fade rejects conflicting GO: PASS / FAIL / NOT RUN
-- Patch mismatch blocks stale recall: PASS / FAIL / NOT RUN
-
-Evidence:
-- Screenshot:
-- Video:
-- Notes:
-
-## Test F - GLOBAL BLACKOUT / RESTORE
-
-Status: NOT RUN
-
-- GLOBAL BLACKOUT zeros all LightingAI-known universes: PASS / FAIL / NOT RUN
-- RESTORE returns exact known pre-blackout state: PASS / FAIL / NOT RUN
-- Patch change blocks stale RESTORE: PASS / FAIL / NOT RUN
-
-Evidence:
-- Screenshot:
-- Video:
-- Notes:
-
-## Test G - app background / resume
-
-Status: NOT RUN
-
-- LIVE output active before backgrounding: PASS / FAIL / NOT RUN
-- Backgrounding stops live output: PASS / FAIL / NOT RUN
-- ARM clears on background: PASS / FAIL / NOT RUN
-- Return does not auto-rearm: PASS / FAIL / NOT RUN
-- Return does not auto-resume stale LIVE output: PASS / FAIL / NOT RUN
-- Fresh preflight/ARM required: PASS / FAIL / NOT RUN
-
-Evidence:
-- Screenshot:
-- Video:
-- Notes:
-
-## Test H - network-change fail-safe
-
-Status: NOT RUN
-
-- Wi-Fi/network change invalidates armed route: PASS / FAIL / NOT RUN
-- LIVE output stops: PASS / FAIL / NOT RUN
-- Operator status reports re-arm requirement: PASS / FAIL / NOT RUN
-- Reconnection does not auto-rearm: PASS / FAIL / NOT RUN
-- Fresh ARM succeeds only after route is valid again: PASS / FAIL / NOT RUN
-
-Evidence:
-- Screenshot:
-- Video:
-- Notes:
-
-## Test I - invalid route checks
-
-Status: NOT RUN
-
-- VPN/ambiguous second route stays locked: PASS / FAIL / NOT RUN
-- Invalid Art-Net target stays locked: PASS / FAIL / NOT RUN
-- Art-Net AUTO without subscriber stays locked: PASS / FAIL / NOT RUN
-- sACN without usable multicast route stays locked: PASS / FAIL / NOT RUN
-- Universe outside bridge limits stays locked: PASS / FAIL / NOT RUN
-- PROFILE HOLD fixture stays blocked from semantic control: PASS / FAIL / NOT RUN
-
-Evidence:
-- Screenshot:
-- Notes:
+### ARRI / LiCo
+Status: REQUIRED / UNVERIFIED
 
 ## Final physical verdict
 
-- Direct Art-Net: PASS / FAIL / N/A / NOT RUN
-- Direct sACN: PASS / FAIL / N/A / NOT RUN
-- Wired DMX via bridge: PASS / FAIL / NOT RUN
-- CRMX via bridge: PASS / FAIL / N/A / NOT RUN
-- ARM/preflight fail-safe: PASS / FAIL / NOT RUN
-- MASTER/group scope: PASS / FAIL / N/A / NOT RUN
-- Scene/cue: PASS / FAIL / NOT RUN
-- GLOBAL BLACKOUT/RESTORE: PASS / FAIL / NOT RUN
-- Background/resume fail-safe: PASS / FAIL / NOT RUN
-- Network-change fail-safe: PASS / FAIL / NOT RUN
-- PROFILE HOLD blocking: PASS / FAIL / NOT RUN
+- Astera direct Bluetooth: PASS / FAIL / NOT RUN
+- Aputure / Sidus direct Bluetooth: PASS / FAIL / NOT RUN
+- Godox direct Bluetooth: PASS / FAIL / NOT RUN
+- Aladdin direct Bluetooth: PASS / FAIL / NOT RUN
+- Nanlite / NANLINK direct Bluetooth: PASS / FAIL / NOT RUN
+- ARRI / LiCo direct Bluetooth: PASS / FAIL / NOT RUN
 
 Release gate:
 - APPROVED FOR MERGE: YES / NO
 - APPROVED FOR FINAL APK: YES / NO
 - Blocking failures:
 - Deferred paths and reasons:
-- Required direct vendor Bluetooth remains a blocking item until physically verified for the affected vendor family.
-
 
 ## Astera Titan BTB diagnostic bench - 2026-09-29
 
-- Fixture: Astera Titan Tube FP1-BTB, serial 01021365
+- Fixture: Astera Titan Tube FP1-BTB
 - LightingAI BLE discovery: PASS
 - Fixture identity match: PASS
-- AsteraNext BTB discovery: PASS
-- AsteraNext Bluetooth connection: PASS
-- LightingAI read-only GATT inspection: FAIL
-- Observed UI regression: GATT in-progress text could remain stale after lifecycle cancellation
-- Current hypothesis: LightingAI generic Android GATT/session path is not sufficient for Astera proprietary BTB session; fixture Bluetooth hardware itself is functioning
-- Next step: collect exact Android GATT failure code with Control Lab diagnostic build before any vendor BLE control implementation
+- Astera Bluetooth hardware/path previously confirmed functional
+- LightingAI generic GATT path: insufficient for proving proprietary session/control
+- Private LE service fingerprint captured and now used only as passive diagnostic evidence
+- Primary Astera connect flow: LE/GATT
+- Automatic Classic/SPP routing: removed from primary flow
+- Passive NOTIFY/INDICATE observation: implemented
+- Proprietary characteristic WRITEs in observer: zero by design
+- DIM/CCT/BOJA/FX: still locked pending verified Astera session/command protocol
 - MAIN: untouched
 - PR #408: keep draft / do not merge

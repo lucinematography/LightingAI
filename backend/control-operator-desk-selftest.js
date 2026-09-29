@@ -39,6 +39,7 @@ expect(gatt.includes('inspection_error')&&gatt.includes('failureCode')&&gatt.inc
 expect(gatt.includes('deepCopyJson(')&&gatt.includes('JSONObject snapshot'),'BLE diagnostic arrays must be snapshotted before native cleanup');
 expect(gatt.includes('attemptHistory')&&gatt.includes('appendAttemptSnapshot(code)'),'Astera GATT retries must preserve per-attempt diagnostics');
 expect(gatt.includes('isAuthenticationStatus')&&gatt.includes('status == 5 || status == 15')&&gatt.includes('astera_bond_required'),'Astera must map only standard GATT auth/encryption failures to bonding');
+expect(gatt.includes('ble_gatt_service_discovery_status_')&&gatt.includes('appendAttemptSnapshot("astera_bond_required")'),'Astera auth failure during service discovery must route to bonding instead of blind retry');
 expect(ble.includes("error==='astera_bond_required'")&&ble.includes('ble-astera-bond')&&ble.includes('bondAstera(address,bondButton)'),'Astera bonding action must appear only after standardized auth failure');
 expect(bondManager.includes('eventTimeline')&&bondManager.includes('pairing_request')&&bondManager.includes('bond_state')&&bondManager.includes('create_bond')&&bondManager.includes('bond_error'),'Astera Android bonding must preserve a structured event timeline');
 expect(bondManager.includes('onError(JSONObject result, String code)'),'Astera bonding failures must return structured diagnostics');

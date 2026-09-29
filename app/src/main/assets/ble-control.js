@@ -309,7 +309,7 @@ window.LightingAIAsteraBtbBondResult=function(id,payload,error){
  const message=t().bondedAstera;
  if(result)result.textContent=message;
  status(message,true);
- if(address)setTimeout(()=>inspectAsteraClassic(address),250);
+ if(address)setTimeout(()=>inspectGatt(address,null,true),250);
 };
 
 
@@ -547,7 +547,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.13-astera-btb-passive-observation',diagnosticsRevision:'astera-btb-passive-notify-v11',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.14-astera-btb-le-primary',diagnosticsRevision:'astera-btb-passive-notify-v12',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

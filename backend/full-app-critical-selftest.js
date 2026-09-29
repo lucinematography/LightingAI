@@ -118,6 +118,13 @@ expect(bleUi.includes('00001828-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh pr
 expect(bleUi.includes('0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'),'Astera private GATT research service detection missing');
 expect(bleUi.includes("version:'0.5-serialized-ble-diagnostics'"),'Serialized BLE diagnostic UI version missing');
 expect(bleUi.includes('gattActive')&&bleUi.includes('scanActive||gattActive'),'BLE scan/GATT serialization guard missing');
+const asteraBond=read('app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java');
+expect(asteraBond.includes('createBond()'),'Astera BTB pairing must use Android Bluetooth bonding before GATT');
+expect(asteraBond.includes('ACTION_BOND_STATE_CHANGED'),'Astera BTB pairing must observe Android bond-state transitions');
+expect(asteraBond.includes('Context.RECEIVER_EXPORTED'),'Astera BTB bond-state receiver must accept highly privileged Bluetooth framework broadcasts on Android 13+');
+expect(asteraBond.includes('astera_bond_timeout')&&asteraBond.includes('operationEpoch'),'Astera BTB pairing must fail closed with timeout and stale-callback isolation');
+expect(main.includes('asteraBtbBond')&&main.includes('notifyAsteraBtbBond'),'Astera BTB native bridge missing');
+expect(bleUi.includes('POVEŽI ASTERA BTB')&&bleUi.includes('LightingAIAsteraBtbBondResult'),'Astera BTB pairing UI/result bridge missing');
 const bleGatt=read('app/src/main/java/com/lightingai/app/BleGattInspector.java');
 expect(bleGatt.includes('discoverServices()'),'BLE GATT service discovery missing');
 expect(!bleGatt.includes('writeCharacteristic')&&!bleGatt.includes('writeDescriptor')&&!bleGatt.includes('setCharacteristicNotification'),'Read-only BLE GATT inspector must not write or subscribe');

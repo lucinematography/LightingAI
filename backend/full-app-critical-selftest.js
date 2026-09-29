@@ -247,7 +247,9 @@ const uiRegressionAssets=[
  'app/src/main/assets/control-dashboard.js',
  'app/src/main/assets/ai-control-bridge.js',
  'app/src/main/assets/ai-visual-scene-launcher.js',
- 'app/src/main/assets/ai-visual-scene-plan.js'
+ 'app/src/main/assets/ai-visual-scene-plan.js',
+ 'app/src/main/assets/sun-ui.js',
+ 'app/src/main/assets/sun-native-bridge.js'
 ];
 for(const p of uiRegressionAssets){
  expect(fs.existsSync(path.join(root,p)), 'Missing UI/language regression asset: '+p);
@@ -259,6 +261,8 @@ const uiControl=read('app/src/main/assets/control-dashboard.js');
 const uiAiBridge=read('app/src/main/assets/ai-control-bridge.js');
 const uiAiLauncher=read('app/src/main/assets/ai-visual-scene-launcher.js');
 const uiAiScenePlan=read('app/src/main/assets/ai-visual-scene-plan.js');
+const uiSun=read('app/src/main/assets/sun-ui.js');
+const uiSunNative=read('app/src/main/assets/sun-native-bridge.js');
 
 expect(uiIndex.includes('window.currentLang=currentLang;'),
  'Initial language must be published through window.currentLang');
@@ -308,6 +312,18 @@ expect(uiAiScenePlan.includes('onclick="return window.LightingAIRemoveScenePhoto
  'AI visual remove-photo action must be direct, clear the photo, and reset both file inputs');
 expect(!uiAiScenePlan.includes("document.getElementById('aiv-remove').onclick"),
  'AI visual remove-photo action must not depend on late onclick binding');
+
+expect(uiSun.includes("const SUN_TIME_ZONE='Europe/Belgrade';")&&
+ uiSun.includes("DEFAULT_BELGRADE_LAT='44.835471'")&&uiSun.includes("DEFAULT_BELGRADE_LON='20.354309'"),
+ 'SUNCE must keep Belgrade timezone and configured Belgrade default coordinates');
+expect(uiSun.includes('function syncBelgradeNow(emit)')&&
+ uiSun.includes("b.addEventListener('click',()=>{")&&uiSun.includes('syncBelgradeNow(false);updateSun()'),
+ 'SUNCE must refresh local Belgrade date/time whenever the SUNCE page is opened');
+expect(uiSun.includes('window.LightingAISunSyncCurrentTime=function(){syncBelgradeNow(true);return false}'),
+ 'SUNCE must expose a shared current-time sync hook for native location updates');
+expect(uiSunNative.includes("window.LightingAISunSyncCurrentTime==='function'")&&
+ uiSunNative.includes('window.LightingAISunSyncCurrentTime()'),
+ 'Native SUNCE location bridge must refresh the current local time after location updates');
 
 console.log(JSON.stringify({ok:failures.length===0,failures},null,2));
 if(failures.length)process.exit(1);

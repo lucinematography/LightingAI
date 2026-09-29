@@ -58,6 +58,7 @@ public final class BleGattInspector {
     private final JSONArray subscriptionResults = new JSONArray();
     private final JSONArray notificationValues = new JSONArray();
     private final JSONArray eventTimeline = new JSONArray();
+    private final JSONArray attemptHistory = new JSONArray();
     private int subscribeIndex = 0;
     private BluetoothGattDescriptor activeDescriptor;
     private BluetoothGattCharacteristic activeSubscriptionCharacteristic;
@@ -93,6 +94,7 @@ public final class BleGattInspector {
             inspectionStartedMs = System.currentTimeMillis();
             deadlineMs = inspectionStartedMs + boundedTimeout;
             clearJsonArray(eventTimeline);
+            clearJsonArray(attemptHistory);
             appendEvent("inspection_start", "timeoutMs", boundedTimeout);
             passiveNotifyServiceUuid = normalizeUuid(passiveServiceUuid);
             attempt = 0;
@@ -441,6 +443,7 @@ public final class BleGattInspector {
     @SuppressLint("MissingPermission")
     private void retryOrFailLocked(String code) {
         appendEvent("retry_or_fail", "code", code, "attempt", attempt);
+        appendAttemptSnapshot(code);
         closeGattOnlyLocked();
         clearAttemptState();
         long remaining =
@@ -738,6 +741,33 @@ public final class BleGattInspector {
             activeProfile.put(
                 "notificationCount", notificationValues.length());
             activeProfile.put("eventTimeline", eventTimeline);
+            activeProfile.put("attemptHistory", attemptHistory);
+        } catch (Exception ignored) {}
+    }
+
+    private void appendAttemptSnapshot(String code) {
+        try {
+            JSONObject item = new JSONObject();
+            item.put("attempt", attempt);
+            item.put("code", code == null ? "" : code);
+            item.put(
+                "elapsedMs",
+                Math.max(
+                    0L,
+                    System.currentTimeMillis() -
+                    inspectionStartedMs));
+            if (activeProfile != null) {
+                item.put("profile", deepCopyJson(activeProfile));
+            } else {
+                item.put("readValues", new JSONArray(readValues.toString()));
+                item.put(
+                    "notificationSubscriptions",
+                    new JSONArray(subscriptionResults.toString()));
+                item.put(
+                    "notificationValues",
+                    new JSONArray(notificationValues.toString()));
+            }
+            attemptHistory.put(item);
         } catch (Exception ignored) {}
     }
 
@@ -870,6 +900,7 @@ public final class BleGattInspector {
                 "notificationCount",
                 notificationValues.length());
             failure.put("eventTimeline", eventTimeline);
+            failure.put("attemptHistory", attemptHistory);
         } catch (Exception ignored) {}
 
         JSONObject snapshot = deepCopyJson(failure);

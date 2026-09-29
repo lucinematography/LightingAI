@@ -65,7 +65,7 @@ var DRIVERS=[
     status:'required-unverified',
     manufacturer:'Astera',
     label:'AsteraApp / BTB / UHF',
-    description:'Astera proprietary app-side wireless family. Kept isolated until session/authentication and commands are verified.',
+    description:'Astera proprietary BTB app-side wireless family. This is the primary CONTROL path for supported Astera fixtures, but output remains locked until session/authentication and commands are physically verified.',
     match:function(f){
       return lower(f&&f.manufacturer)==='astera'&&includesAny(vendorControl(f),['asteraapp','bluetooth','btb','uhf','wi-fi','wifi']);
     }
@@ -76,7 +76,7 @@ var DRIVERS=[
     status:'required-unverified',
     manufacturer:'Aputure',
     label:'Sidus Link / Sidus Mesh',
-    description:'Aputure proprietary Sidus family. Standards-based DMX/CRMX/Art-Net/sACN routes take priority whenever available.',
+    description:'Aputure proprietary Sidus family. Direct Bluetooth/Sidus is the primary CONTROL path; legacy standards routes remain outside the primary Bluetooth workflow.',
     match:function(f){
       return lower(f&&f.manufacturer)==='aputure'&&includesAny(vendorControl(f),['sidus','mesh','bluetooth','ble']);
     }

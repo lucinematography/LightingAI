@@ -154,13 +154,13 @@ expect(main.includes('@Override protected void onPause()')&&main.includes('@Over
 expect(!main.includes("file:///android_asset/control-system-drivers.js"),'MainActivity must not directly race-load control driver assets');
 
 const bootstrap=read('app/src/main/assets/control-bootstrap.js');
-expect(bootstrap.includes('const directScripts=')&&bootstrap.includes('const advancedScripts='),'CONTROL bootstrap must split primary Bluetooth assets from advanced network/DMX assets');
+expect(bootstrap.includes('const scripts=['),'CONTROL bootstrap script list missing');
 expect(bootstrap.indexOf('control-system-drivers.js')<bootstrap.indexOf('ble-control.js'),'Direct driver registry must load before Bluetooth UI');
 expect(bootstrap.indexOf('ble-control.js')<bootstrap.indexOf('control-dashboard.js'),'Bluetooth UI must load before primary dashboard');
-expect(bootstrap.indexOf('ble-control.js')<bootstrap.indexOf('artnet-control.js'),'Bluetooth must not be serialized behind Art-Net');
-expect(bootstrap.includes('window.LightingAIAdvancedControlLoad=async function()'),'Advanced network/DMX control must use explicit lazy loader');
-expect(bootstrap.includes("window.LightingAIControlBootstrapMode='bluetooth-first'"),'Primary CONTROL bootstrap must identify Bluetooth-first mode');
-expect(bootstrap.includes('await loadOne(item)'),'CONTROL bootstrap must await each selected dependency');
+expect(!bootstrap.includes('artnet-control.js')&&!bootstrap.includes('dmx-patch-planner.js')&&!bootstrap.includes('dmx-export.js'),'CONTROL bootstrap must not load network/DMX assets');
+expect(!bootstrap.includes('LightingAIAdvancedControlLoad'),'CONTROL must not expose an advanced network/DMX loader');
+expect(bootstrap.includes("window.LightingAIControlBootstrapMode='bluetooth-only'"),'Primary CONTROL bootstrap must identify Bluetooth-only mode');
+expect(bootstrap.includes('await loadOne(item)'),'CONTROL bootstrap must await each Bluetooth dependency');
 
 const backup=read('app/src/main/assets/project-backup-export.js');
 for(const marker of ['LightingAIProjectBackupSnapshot','LightingAIProjectBackupImport',"if(!/^lighting_/i.test(k)","restoreAllowed(k,allowSun)"]){

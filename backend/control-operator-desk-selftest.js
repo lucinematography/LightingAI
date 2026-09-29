@@ -9,6 +9,7 @@ const bootstrap=fs.readFileSync(path.join(root,'app/src/main/assets/control-boot
 const ble=fs.readFileSync(path.join(root,'app/src/main/assets/ble-control.js'),'utf8');
 const gatt=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/BleGattInspector.java'),'utf8');
 const mainActivity=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/MainActivity.java'),'utf8');
+const scanner=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/BleDeviceScanner.java'),'utf8');
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
@@ -39,6 +40,8 @@ expect(!gatt.includes('writeCharacteristic('),'Astera diagnostic observer must n
 expect(ble.includes('LightingAI-Astera-BTB-diagnostic')&&ble.includes('SAČUVAJ DIJAGNOSTIKU')&&ble.includes('Android.saveText(filename,body)'),'Astera diagnostic export to Downloads missing');
 expect(ble.includes('latestScanDevicesByAddress')&&ble.includes('advertisement:address&&latestScanDevicesByAddress[address]'),'Astera diagnostic export must include the matching BLE advertisement snapshot');
 expect(ble.includes('helios|hyperion|hydra|nyx|pixelbrick|ax[0-9]|quik|luna|pluto|leo'),'Astera family detection must not be limited to Titan only');
+expect(scanner.includes('MAX_ADVERTISEMENT_SNAPSHOTS')&&scanner.includes('advertisements')&&scanner.includes('sightings')&&scanner.includes('appendAdvertisementSnapshot'),'BLE scanner must preserve multiple distinct advertisement snapshots per device');
+expect(scanner.includes('manufacturerData')&&scanner.includes('serviceData')&&scanner.includes('rawAdvertisementHex'),'BLE advertisement snapshots must preserve raw, manufacturer and service data');
 
 console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'bluetooth-only',failures},null,2));
 if(failures.length)process.exit(1);

@@ -17,7 +17,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.13-astera-btb-passive-observation'"
+  "version:'0.14-astera-btb-le-primary'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -33,6 +33,7 @@ expect(ble.includes("ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c
 expect(ble.includes('PASIVNO ASTERA BTB PRAĆENJE')&&ble.includes('PASSIVE ASTERA BTB OBSERVATION'),'Astera passive observation UI missing');
 expect(gatt.includes('inspectAstera(')&&gatt.includes('CCCD_UUID')&&gatt.includes('proprietaryCharacteristicWrites')&&gatt.includes('notificationValues'),'Astera passive GATT observer missing');
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');
+expect(!ble.includes('setTimeout(()=>inspectAsteraClassic(address),250)'),'Primary Astera connect flow must not auto-route through Classic/SDP');
 expect(!gatt.includes('writeCharacteristic('),'Astera diagnostic observer must not send proprietary characteristic writes');
 
 console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'bluetooth-only',failures},null,2));

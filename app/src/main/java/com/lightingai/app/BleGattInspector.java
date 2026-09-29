@@ -174,6 +174,11 @@ public final class BleGattInspector {
                     if (gatt != activeGatt || callback == null) return;
                     appendEvent("connection_state", "status", status, "newState", newState);
                     if (status != BluetoothGatt.GATT_SUCCESS) {
+                        if (isAsteraInspection() && isAuthenticationStatus(status)) {
+                            appendAttemptSnapshot("astera_bond_required");
+                            finishErrorLocked("astera_bond_required");
+                            return;
+                        }
                         retryOrFailLocked(
                             "ble_gatt_connect_status_" + status + "_attempt_" + thisAttempt);
                         return;
@@ -366,6 +371,12 @@ public final class BleGattInspector {
                         status == BluetoothGatt.GATT_SUCCESS
                             ? ""
                             : "descriptor_write_status_" + status);
+                    if (isAsteraInspection() && isAuthenticationStatus(status)) {
+                        activeDescriptor = null;
+                        activeSubscriptionCharacteristic = null;
+                        finishErrorLocked("astera_bond_required");
+                        return;
+                    }
                     activeDescriptor = null;
                     activeSubscriptionCharacteristic = null;
                     subscribeIndex++;
@@ -624,6 +635,10 @@ public final class BleGattInspector {
                 ? ""
                 : "read_status_" + status);
         activeRead = null;
+        if (isAsteraInspection() && isAuthenticationStatus(status)) {
+            finishErrorLocked("astera_bond_required");
+            return;
+        }
         readIndex++;
         readNextLocked(gatt);
     }
@@ -790,6 +805,16 @@ public final class BleGattInspector {
             }
             eventTimeline.put(event);
         } catch (Exception ignored) {}
+    }
+
+    private boolean isAsteraInspection() {
+        return ASTERA_BTB_PRIVATE_SERVICE.equals(passiveNotifyServiceUuid);
+    }
+
+    private static boolean isAuthenticationStatus(int status) {
+        // ATT/GATT standard errors: 0x05 insufficient authentication,
+        // 0x0F insufficient encryption.
+        return status == 5 || status == 15;
     }
 
     private static JSONObject deepCopyJson(JSONObject source) {

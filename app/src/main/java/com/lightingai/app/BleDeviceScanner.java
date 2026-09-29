@@ -21,6 +21,8 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class BleDeviceScanner {
+    private static final int MAX_ADVERTISEMENT_SNAPSHOTS = 12;
+
     public interface Callback {
         void onComplete(JSONArray devices);
         void onError(String code);
@@ -174,13 +176,70 @@ public final class BleDeviceScanner {
                     ? (item.optString("name") + "|" + services.toString())
                     : address;
                 JSONObject previous = devices.get(key);
+                long seenAtMs = System.currentTimeMillis();
+                JSONArray snapshots = previous == null
+                    ? new JSONArray()
+                    : previous.optJSONArray("advertisements");
+                if (snapshots == null) snapshots = new JSONArray();
+                appendAdvertisementSnapshot(snapshots, item, seenAtMs);
+
+                int sightings = previous == null
+                    ? 1
+                    : previous.optInt("sightings", 0) + 1;
+                long firstSeenMs = previous == null
+                    ? seenAtMs
+                    : previous.optLong("firstSeenMs", seenAtMs);
+
+                item.put("advertisements", snapshots);
+                item.put("sightings", sightings);
+                item.put("firstSeenMs", firstSeenMs);
+                item.put("lastSeenMs", seenAtMs);
+
                 if (previous == null || result.getRssi() > previous.optInt("rssi", -127)) {
                     devices.put(key, item);
+                } else {
+                    previous.put("advertisements", snapshots);
+                    previous.put("sightings", sightings);
+                    previous.put("firstSeenMs", firstSeenMs);
+                    previous.put("lastSeenMs", seenAtMs);
                 }
             } catch (Exception ignored) {
                 // Ignore one malformed advertisement and keep scanning.
             }
         }
+    }
+
+    private static void appendAdvertisementSnapshot(
+        JSONArray snapshots,
+        JSONObject item,
+        long seenAtMs
+    ) {
+        if (snapshots == null || item == null) return;
+        String raw = item.optString("rawAdvertisementHex", "");
+        if (raw.isEmpty()) return;
+
+        for (int i = 0; i < snapshots.length(); i++) {
+            JSONObject existing = snapshots.optJSONObject(i);
+            if (existing != null &&
+                raw.equals(existing.optString("rawAdvertisementHex", ""))) {
+                return;
+            }
+        }
+        if (snapshots.length() >= MAX_ADVERTISEMENT_SNAPSHOTS) return;
+
+        try {
+            JSONObject snapshot = new JSONObject();
+            snapshot.put("seenAtMs", seenAtMs);
+            snapshot.put("rawAdvertisementHex", raw);
+            snapshot.put("rssi", item.optInt("rssi", -127));
+            snapshot.put("advertiseFlags", item.optInt("advertiseFlags", -1));
+            snapshot.put("txPowerLevel", item.optInt("txPowerLevel", Integer.MIN_VALUE));
+            snapshot.put("connectable", item.optBoolean("connectable", false));
+            snapshot.put("serviceUuids", item.optJSONArray("serviceUuids"));
+            snapshot.put("manufacturerData", item.optJSONObject("manufacturerData"));
+            snapshot.put("serviceData", item.optJSONObject("serviceData"));
+            snapshots.put(snapshot);
+        } catch (Exception ignored) {}
     }
 
     private static String hex(byte[] data) {

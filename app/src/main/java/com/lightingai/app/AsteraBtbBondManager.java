@@ -121,7 +121,11 @@ public final class AsteraBtbBondManager {
             try {
                 IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    context.registerReceiver(bondReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+                    // Bluetooth bond-state broadcasts can originate from a highly privileged
+                    // framework component rather than the system UID. Android's broadcast
+                    // guidance requires RECEIVER_EXPORTED for this class of system broadcast.
+                    // The receiver remains tightly filtered by action, active address and epoch.
+                    context.registerReceiver(bondReceiver, filter, Context.RECEIVER_EXPORTED);
                 } else {
                     context.registerReceiver(bondReceiver, filter);
                 }

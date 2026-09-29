@@ -1110,11 +1110,7 @@ public class MainActivity extends Activity {
                         notifyBleGattInspection(id, new JSONObject(), "bluetooth_disabled");
                         return;
                     }
-                    BluetoothDevice device = adapter.getRemoteDevice(target);
-                    if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-                        notifyBleGattInspection(id, new JSONObject(), "astera_bond_required");
-                        return;
-                    }
+                    adapter.getRemoteDevice(target);
                 } catch (SecurityException e) {
                     notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
                     return;

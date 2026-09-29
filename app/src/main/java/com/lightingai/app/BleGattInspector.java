@@ -23,7 +23,7 @@ import java.util.UUID;
 public final class BleGattInspector {
     public interface Callback {
         void onComplete(JSONObject result);
-        void onError(String code);
+        void onError(JSONObject result, String code);
     }
 
     private static final int MAX_ATTEMPTS = 3;
@@ -824,14 +824,48 @@ public final class BleGattInspector {
     @SuppressLint("MissingPermission")
     private void finishErrorLocked(String code) {
         Callback cb = callback;
+        String resolvedCode =
+            code == null ? "ble_gatt_failed" : code;
+        appendEvent(
+            "inspection_error",
+            "code", resolvedCode,
+            "attempt", attempt);
+
+        JSONObject failure = new JSONObject();
+        try {
+            failure.put("address", activeAddress);
+            failure.put("connectAttempts", attempt);
+            failure.put("failureCode", resolvedCode);
+            failure.put(
+                "passiveObservationRequested",
+                !passiveNotifyServiceUuid.isEmpty());
+            failure.put(
+                "passiveObservationServiceUuid",
+                passiveNotifyServiceUuid);
+            failure.put("standardCccdWritesOnly", true);
+            failure.put("proprietaryCharacteristicWrites", 0);
+            failure.put("diagnosticIncomplete", true);
+            failure.put("diagnosticWarning", resolvedCode);
+            failure.put("readValues", readValues);
+            failure.put(
+                "notificationSubscriptions",
+                subscriptionResults);
+            failure.put(
+                "notificationValues",
+                notificationValues);
+            failure.put(
+                "notificationCount",
+                notificationValues.length());
+            failure.put("eventTimeline", eventTimeline);
+        } catch (Exception ignored) {}
+
         callback = null;
         cancelTimersLocked();
         closeGattOnlyLocked();
         clearState();
         activeAddress = "";
         if (cb != null) {
-            cb.onError(
-                code == null ? "ble_gatt_failed" : code);
+            cb.onError(failure, resolvedCode);
         }
     }
 

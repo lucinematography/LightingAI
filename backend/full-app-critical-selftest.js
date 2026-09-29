@@ -142,6 +142,7 @@ expect(bleGatt.includes('connectGatt')&&bleGatt.includes('closeGattOnlyLocked'),
 expect(bleGatt.includes('MAX_ATTEMPTS = 3')&&bleGatt.includes('retryOrFailLocked'),'BLE GATT retry protection missing');
 expect(bleGatt.includes('inspectionEpoch')&&bleGatt.includes('thisInspectionEpoch')&&bleGatt.includes('retryEpoch != inspectionEpoch'),'BLE GATT timeout/retry callbacks must be isolated by inspection epoch');
 expect(bleGatt.includes('PROPERTY_READ')&&bleGatt.includes('readCharacteristic'),'BLE GATT read-only snapshot missing');
+expect(bleGatt.includes('diagnosticIncomplete')&&bleGatt.includes('ble_gatt_read_timeout')&&bleGatt.includes('activeProfile != null'),'BLE GATT timeout must preserve discovered service inventory as a partial diagnostic result');
 expect(!bleGatt.includes('createBond'),'BLE GATT diagnostics must not use Android bonding');
 expect(bleUi.includes('scanCooldownUntil')&&bleUi.includes('scanActive'),'BLE scan spam guard missing');
 expect(bleUi.includes("activeScanRequestId")&&bleUi.includes("activeGattRequestId")&&bleUi.includes("String(id||'')!==activeScanRequestId")&&bleUi.includes("String(id||'')!==activeGattRequestId"),'BLE UI must ignore stale discovery/GATT callbacks by request id');

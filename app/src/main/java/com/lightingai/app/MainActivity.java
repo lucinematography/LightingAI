@@ -1527,7 +1527,9 @@ public class MainActivity extends Activity {
         }
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
         if (bleGattInspector != null) bleGattInspector.cancel();
-        if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();
+        // Keep an active Astera Android bond alive while the system pairing UI
+        // temporarily pauses this Activity. The bond manager has its own timeout
+        // and is still cancelled on onDestroy().
         if (asteraBtbClassicInspector != null) asteraBtbClassicInspector.cancel();
         super.onPause();
     }

@@ -292,14 +292,16 @@ expect(uiAiBridge.includes("(window.currentLang||'sr')!=='en'")&&uiAiBridge.incl
 expect(uiAiLauncher.includes("window.currentLang==='en'?'AI VISUAL PLAN':'AI VIZUELNI PLAN'"),
  'AI visual launcher must remain bound to the shared SR/EN language state');
 
-expect(uiAiScenePlan.includes('id="aiv-gallery" type="file" accept="image/*" hidden')&&
- uiAiScenePlan.includes('id="aiv-camera" type="file" accept="image/*" capture="environment" hidden'),
- 'AI visual plan must keep Planner-style hidden gallery and camera file inputs');
-expect(uiAiScenePlan.includes("var input=document.getElementById(mode==='camera'?'aiv-camera':'aiv-gallery');")&&
- uiAiScenePlan.includes("if(input){input.click();return false;}"),
- 'AI visual photo buttons must open the same WebView file-picker path used by Planner');
-expect(!uiAiScenePlan.includes('Android.openImagePicker(mode)'),
- 'AI visual photo buttons must not bypass the working WebView file-picker path');
+expect(uiAiScenePlan.includes('id="aiv-gallery" type="file" accept="image/*" hidden onchange="window.LightingAIHandleScenePhoto&&window.LightingAIHandleScenePhoto(event)"')&&
+ uiAiScenePlan.includes('id="aiv-camera" type="file" accept="image/*" capture="environment" hidden onchange="window.LightingAIHandleScenePhoto&&window.LightingAIHandleScenePhoto(event)"'),
+ 'AI visual plan must keep Planner-style hidden gallery and camera file inputs with direct onchange handling');
+expect(uiAiScenePlan.includes('onclick="document.getElementById(&quot;aiv-gallery&quot;).click();return false;"')&&
+ uiAiScenePlan.includes('onclick="document.getElementById(&quot;aiv-camera&quot;).click();return false;"'),
+ 'AI visual photo buttons must directly click their file inputs exactly like Planner');
+expect(uiAiScenePlan.includes('window.LightingAIHandleScenePhoto=receiveFile;'),
+ 'AI visual file inputs must feed the shared scene-photo handler');
+expect(!uiAiScenePlan.includes('Android.openImagePicker(mode)')&&!uiAiScenePlan.includes('LightingAIOpenSceneImage'),
+ 'AI visual photo buttons must not use a separate picker wrapper or bypass the working Planner file-input path');
 
 console.log(JSON.stringify({ok:failures.length===0,failures},null,2));
 if(failures.length)process.exit(1);

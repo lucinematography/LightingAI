@@ -17,7 +17,7 @@ for(const marker of [
   "vendor-aputure-sidus",
   "vendor-godox-app",
   "vendor-aladdin-app",
-  "version:'1.2-rdm-management-separated'"
+  "version:'1.3-native-network-gateway-separated'"
 ]) expect(src.includes(marker),'driver registry missing '+marker);
 
 const sandbox={window:{}};
@@ -28,6 +28,8 @@ expect(!!api,'driver registry API missing');
 const verifiedMode={name:'Test 1ch',channels:1,verified:true,sourceUrl:'https://example.invalid/dmx.pdf',controls:[{key:'dimmer',channel:1,type:'percent'}]};
 const native=api&&api.resolve({control:{directLightingAI:['Art-Net']},dmxModes:[verifiedMode]});
 expect(native?.productionDriver?.id==='standards-native-network','explicit direct Art-Net must resolve native-network');
+const bridged=api&&api.resolve({control:{directLightingAI:['Art-Net via PowerBox bridge','sACN via FP3 DataLink'],wired:['DMX512']},dmxModes:[verifiedMode]});
+expect(bridged?.productionDriver?.id==='standards-dmx-gateway','network text that explicitly requires a bridge must resolve through the standards gateway');
 const etherOnly=api&&api.resolve({control:{wired:['EtherCON']},dmxModes:[verifiedMode]});
 expect(etherOnly?.productionReady===false,'EtherCON connector alone must not become production network control');
 const unavailableOnly=api&&api.resolve({control:{unavailableDirectProtocols:['DMX not available']},dmxModes:[verifiedMode]});

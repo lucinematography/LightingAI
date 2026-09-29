@@ -67,7 +67,7 @@ expect(
   Array.isArray(titanResolved?.vendorDrivers) &&
   titanResolved.vendorDrivers.some(d=>d?.id==='vendor-astera-wireless'&&d?.status==='required-unverified') &&
   titanResolved?.productionReady===true,
-  'Titan production route must stay standards-based while BTB remains research-only'
+  'Titan standards route may coexist, but direct Astera Bluetooth remains a required unverified capability'
 );
 for(const id of ['astera-ax2-50-pixelbar','astera-ax2-100-pixelbar','astera-ax3-lightdrop','astera-heliostube-fp2-btb','astera-hyperiontube-fp3','astera-hydrapanel-fp6']){
   const fixture=fixtures.find(f=>f.id===id);

@@ -153,6 +153,16 @@ public final class BleDeviceScanner {
 
                 JSONObject item = new JSONObject();
                 item.put("name", name == null ? "" : name.trim());
+                if (record != null) {
+                    byte[] raw = record.getBytes();
+                    item.put("rawAdvertisementHex", hex(raw));
+                    item.put("advertiseFlags", record.getAdvertiseFlags());
+                    item.put("txPowerLevel", record.getTxPowerLevel());
+                } else {
+                    item.put("rawAdvertisementHex", "");
+                    item.put("advertiseFlags", -1);
+                    item.put("txPowerLevel", Integer.MIN_VALUE);
+                }
                 item.put("address", address == null ? "" : address);
                 item.put("rssi", result.getRssi());
                 item.put("connectable", android.os.Build.VERSION.SDK_INT < 26 || result.isConnectable());

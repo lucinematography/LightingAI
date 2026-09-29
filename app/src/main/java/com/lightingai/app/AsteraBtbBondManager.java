@@ -11,13 +11,14 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public final class AsteraBtbBondManager {
     public interface Callback {
         void onProgress(JSONObject result);
         void onComplete(JSONObject result);
-        void onError(String code);
+        void onError(JSONObject result, String code);
     }
 
     private final Context context;
@@ -30,6 +31,8 @@ public final class AsteraBtbBondManager {
     private String activeAddress = "";
     private int operationEpoch = 0;
     private boolean sawBonding = false;
+    private long startedMs = 0L;
+    private final JSONArray eventTimeline = new JSONArray();
 
     public AsteraBtbBondManager(Context context) {
         this.context = context.getApplicationContext();
@@ -45,6 +48,9 @@ public final class AsteraBtbBondManager {
             callback = resultCallback;
             activeAddress = target;
             sawBonding = false;
+            startedMs = System.currentTimeMillis();
+            clearJsonArray(eventTimeline);
+            appendEvent("bond_start", "timeoutMs", boundedTimeout);
 
             if (!BluetoothAdapter.checkBluetoothAddress(target)) {
                 finishErrorLocked("astera_bond_bad_address");
@@ -77,6 +83,7 @@ public final class AsteraBtbBondManager {
                 finishErrorLocked("astera_bond_state_unavailable");
                 return;
             }
+            appendEvent("initial_bond_state", "state", currentState);
             if (currentState == BluetoothDevice.BOND_BONDED) {
                 finishSuccessLocked(device, true);
                 return;
@@ -105,12 +112,15 @@ public final class AsteraBtbBondManager {
                     synchronized (lock) {
                         if (thisEpoch != operationEpoch || callback == null || !activeAddress.equalsIgnoreCase(changedAddress)) return;
                         if (BluetoothDevice.ACTION_PAIRING_REQUEST.equals(action)) {
+                            int pairingVariant = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, -1);
+                            int pairingKey = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_KEY, -1);
+                            appendEvent("pairing_request", "variant", pairingVariant, "key", pairingKey);
                             JSONObject progress = new JSONObject();
                             try {
                                 progress.put("address", activeAddress);
                                 progress.put("event", "pairing_request");
-                                progress.put("pairingVariant", intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, -1));
-                                progress.put("pairingKey", intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_KEY, -1));
+                                progress.put("pairingVariant", pairingVariant);
+                                progress.put("pairingKey", pairingKey);
                             } catch (Exception ignored) {}
                             Callback cb = callback;
                             if (cb != null) cb.onProgress(progress);
@@ -118,6 +128,7 @@ public final class AsteraBtbBondManager {
                         }
                         int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
                         int previous = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
+                        appendEvent("bond_state", "state", state, "previous", previous);
                         if (state == BluetoothDevice.BOND_BONDING) {
                             sawBonding = true;
                             return;
@@ -155,6 +166,7 @@ public final class AsteraBtbBondManager {
             timeoutRunnable = () -> {
                 synchronized (lock) {
                     if (thisEpoch != operationEpoch || callback == null) return;
+                    appendEvent("bond_timeout");
                     finishErrorLocked("astera_bond_timeout");
                 }
             };
@@ -171,6 +183,7 @@ public final class AsteraBtbBondManager {
                     return;
                 }
                 boolean started = device.createBond();
+                appendEvent("create_bond", "started", started);
                 if (!started) {
                     int after = device.getBondState();
                     if (after == BluetoothDevice.BOND_BONDED) finishSuccessLocked(device, true);
@@ -199,9 +212,11 @@ public final class AsteraBtbBondManager {
         callback = null;
         JSONObject out = new JSONObject();
         try {
+            appendEvent("bond_success", "alreadyBonded", alreadyBonded);
             out.put("address", activeAddress);
             out.put("bondState", "bonded");
             out.put("alreadyBonded", alreadyBonded);
+            out.put("eventTimeline", new JSONArray(eventTimeline.toString()));
             String name = "";
             try { name = device == null ? "" : device.getName(); } catch (Exception ignored) {}
             out.put("name", name == null ? "" : name);
@@ -212,9 +227,43 @@ public final class AsteraBtbBondManager {
 
     private void finishErrorLocked(String code) {
         Callback cb = callback;
+        String resolved =
+            code == null ? "astera_bond_failed" : code;
+        appendEvent("bond_error", "code", resolved);
+        JSONObject out = new JSONObject();
+        try {
+            out.put("address", activeAddress);
+            out.put("failureCode", resolved);
+            out.put("eventTimeline", new JSONArray(eventTimeline.toString()));
+        } catch (Exception ignored) {}
         callback = null;
         cleanupLocked();
-        if (cb != null) cb.onError(code == null ? "astera_bond_failed" : code);
+        if (cb != null) cb.onError(out, resolved);
+    }
+
+    private void appendEvent(String name, Object... values) {
+        try {
+            JSONObject event = new JSONObject();
+            event.put("event", name == null ? "" : name);
+            event.put(
+                "elapsedMs",
+                Math.max(0L, System.currentTimeMillis() - startedMs));
+            if (values != null) {
+                for (int i = 0; i + 1 < values.length; i += 2) {
+                    event.put(
+                        String.valueOf(values[i]),
+                        values[i + 1] == null ? JSONObject.NULL : values[i + 1]);
+                }
+            }
+            eventTimeline.put(event);
+        } catch (Exception ignored) {}
+    }
+
+    private static void clearJsonArray(JSONArray array) {
+        if (array == null) return;
+        while (array.length() > 0) {
+            array.remove(array.length() - 1);
+        }
     }
 
     private void cancelLocked() {
@@ -234,5 +283,6 @@ public final class AsteraBtbBondManager {
         }
         activeAddress = "";
         sawBonding = false;
+        startedMs = 0L;
     }
 }

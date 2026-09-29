@@ -134,7 +134,7 @@ expect(bleUi.includes('inspectAsteraClassic')&&bleUi.includes('LightingAIAsteraB
 expect(bleUi.includes("diagnosticsRevision:'astera-btb-visible-profile-v9'")&&bleUi.includes('inspectAsteraGatt'),'Astera BTB diagnostics revision/direct GATT path missing');
 expect(bleUi.includes('const nativeTimeoutMs=astera?12000:8000;')&&bleUi.includes('const watchdogTimeoutMs=nativeTimeoutMs+5000;')&&bleUi.includes('},watchdogTimeoutMs);')&&bleUi.includes('timeoutMs:nativeTimeoutMs'),'Astera GATT JS watchdog must allow the native bounded timeout to report first without a same-deadline race');
 expect(!bleUi.includes('class="btn secondary ble-astera-bond"')&&!bleUi.includes("querySelectorAll('.ble-astera-bond')"),'Obsolete Android bond button/handler must stay out of the Astera BLE user flow');
-expect(bleUi.includes('inspectAsteraGatt')&&bleUi.includes('PROVERI ASTERA BTB')&&bleUi.includes('INSPECT ASTERA BTB'),'Astera BTB direct read-only inspection flow missing');
+expect(bleUi.includes('inspectAsteraGatt')&&bleUi.includes('POVEŽI ASTERA')&&bleUi.includes('CONNECT ASTERA'),'Astera BTB direct connect/inspection flow missing');
 expect(bleUi.includes('renderGattProfile')&&bleUi.includes('WRITE-NR')&&bleUi.includes('NOTIFY')&&bleUi.includes('INDICATE'),'Full GATT profile must expose characteristic capabilities for diagnostics');
 const bleGatt=read('app/src/main/java/com/lightingai/app/BleGattInspector.java');
 expect(bleGatt.includes('discoverServices()'),'BLE GATT service discovery missing');

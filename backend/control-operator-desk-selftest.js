@@ -18,7 +18,7 @@ for(const marker of [
   "controlDeskGo",
   "controlDeskBlackout",
   "controlDeskRestore",
-  "version:'0.16-production-dmx-first'"
+  "version:'0.17-direct-vendor-required'"
 ]) expect(dashboard.includes(marker),'Operator desk marker missing: '+marker);
 
 expect(dashboard.includes("desk.masterDimmer(Number(dr&&dr.value)||0)"),'Operator MASTER must call existing safe masterDimmer API');

@@ -77,8 +77,6 @@ let scanCooldownUntil=0;
 let activeScanRequestId='';
 let activeGattRequestId='';
 let activeGattAddress='';
- activeBondRequestId='';
- activeBondAddress='';
 let activeBondRequestId='';
 let activeBondAddress='';
 let scanWatchdogTimer=null;
@@ -356,6 +354,8 @@ function resetBleUiLifecycle(){
  activeScanRequestId='';
  activeGattRequestId='';
  activeGattAddress='';
+ activeBondRequestId='';
+ activeBondAddress='';
  scanActive=false;
  gattActive=false;
  bondActive=false;
@@ -371,7 +371,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'astera-btb-bond-v3',discover:startScan,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'astera-btb-bond-v3',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

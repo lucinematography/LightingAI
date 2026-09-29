@@ -18,7 +18,7 @@ for(const marker of [
   "controlDeskGo",
   "controlDeskBlackout",
   "controlDeskRestore",
-  "version:'0.17-direct-vendor-required'"
+  "version:'0.18-bluetooth-first-workflow'"
 ]) expect(dashboard.includes(marker),'Operator desk marker missing: '+marker);
 
 expect(dashboard.includes("desk.masterDimmer(Number(dr&&dr.value)||0)"),'Operator MASTER must call existing safe masterDimmer API');
@@ -37,6 +37,7 @@ expect(artnet.includes("ensureReady:function(){return !!E('artnetCard')||install
 expect(dashboard.includes("typeof api.ensureReady==='function'&&!api.ensureReady()"),'Operator desk must wait for control UI readiness');
 expect(artnet.includes('statusState:function(){return {text:operatorStatus.text,ok:operatorStatus.ok};}'),'Operator status API missing');
 expect(dashboard.includes('STATUS OPERATERA')&&dashboard.includes('OPERATOR STATUS'),'Main operator status visibility missing');
+expect(dashboard.includes('1. BLUETOOTH')&&dashboard.includes('PRIMARNI PUT')&&dashboard.includes('PRIMARY PATH'),'Bluetooth-first dashboard priority missing');
 expect(artnet.includes('function stopLiveForBackground(){')&&artnet.includes('invalidateCachedOutputState();')&&artnet.includes('renderCueStack();'),'WebView background must clear stale control state');
 expect(artnet.includes("document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveForBackground()})")&&artnet.includes("window.addEventListener('pagehide',stopLiveForBackground)"),'WebView background hooks missing');
 expect(dashboard.includes('CURRENT CUE')&&dashboard.includes('SLEDEĆI')&&dashboard.includes('GLOBAL BLACKOUT'),'Operator cue/global blackout visibility missing');

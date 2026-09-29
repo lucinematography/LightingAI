@@ -15,11 +15,11 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.10-fast-control-surface'"
+  "version:'0.12-astera-btb-service-fingerprint'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
-expect(dashboard.includes('Bluetooth je glavni put')&&dashboard.includes('Bluetooth is the primary path'),'Primary CONTROL copy must be Bluetooth-only');
+expect(dashboard.includes('Bluetooth je glavni i direktni put')&&dashboard.includes('Bluetooth is the primary direct path'),'Primary CONTROL copy must be Bluetooth-only');
 expect(!dashboard.includes('controlLoadAdvanced')&&!dashboard.includes('DMX')&&!dashboard.includes('Art-Net')&&!dashboard.includes('sACN'),'Primary CONTROL dashboard must not expose network/DMX controls');
 expect(!bootstrap.includes('artnet-control.js')&&!bootstrap.includes('dmx-patch-planner.js')&&!bootstrap.includes('dmx-export.js'),'CONTROL bootstrap must not load network/DMX assets');
 expect(bootstrap.includes("window.LightingAIControlBootstrapMode='bluetooth-only'"),'CONTROL bootstrap mode must be bluetooth-only');
@@ -27,6 +27,7 @@ expect(bootstrap.indexOf('control-system-drivers.js')<bootstrap.indexOf('ble-con
 expect(bootstrap.indexOf('ble-control.js')<bootstrap.indexOf('control-dashboard.js'),'Bluetooth UI must load before dashboard');
 expect(ble.includes('renderQuickControlShell')&&ble.includes("'DIM'")&&ble.includes("'CCT'")&&ble.includes("'FX'"),'Fast Bluetooth control surface missing');
 expect(ble.includes('vendorForDevice')&&ble.includes('signalLabel')&&ble.includes('POVEŽI ASTERA'),'Fast Bluetooth fixture discovery UI missing');
+expect(ble.includes("ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'")&&ble.includes('transport fingerprint only'),'Astera BTB private LE fingerprint must remain passive diagnostic evidence only');
 
 console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'bluetooth-only',failures},null,2));
 if(failures.length)process.exit(1);

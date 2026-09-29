@@ -494,7 +494,24 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
  activeGattAddress='';
  if(error){
   const message=(error==='astera_bond_required'?t().bondRequired:t().gattError)+(error?' ('+error+')':'');
-  if(result)result.textContent=message;
+  latestDiagnosticPayload={
+   kind:'LightingAI-Astera-BTB-diagnostic',
+   capturedAt:new Date().toISOString(),
+   controlMode:'bluetooth-only',
+   failed:true,
+   error:String(error||''),
+   proprietaryCharacteristicWrites:payload&&Number.isFinite(Number(payload.proprietaryCharacteristicWrites))?Number(payload.proprietaryCharacteristicWrites):0,
+   address:address||'',
+   advertisement:address&&latestScanDevicesByAddress[address]?latestScanDevicesByAddress[address]:null,
+   payload:payload||{}
+  };
+  if(result){
+   result.innerHTML='<div class="status warn">'+esc(message)+'</div>'+
+    ((payload&&Array.isArray(payload.eventTimeline)&&payload.eventTimeline.length)?'<div class="muted small" style="margin-top:6px">'+(lang()==='sr'?'Vremenski sled sačuvan':'Failure timeline captured')+' · '+payload.eventTimeline.length+'</div>':'')+
+    '<button class="btn secondary ble-export-diagnostic" type="button" style="width:100%;margin-top:8px">'+(lang()==='sr'?'SAČUVAJ DIJAGNOSTIKU':'SAVE DIAGNOSTICS')+'</button>';
+   const exportButton=result.querySelector('.ble-export-diagnostic');
+   if(exportButton)exportButton.addEventListener('click',exportDiagnostic);
+  }
   status(message,false);return;
  }
  const services=payload&&Array.isArray(payload.services)?payload.services:[];
@@ -578,7 +595,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.18-astera-family-advertisements',diagnosticsRevision:'astera-btb-passive-notify-v16',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.19-astera-failure-capture',diagnosticsRevision:'astera-btb-passive-notify-v17',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

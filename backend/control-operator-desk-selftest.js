@@ -5,44 +5,28 @@ import { fileURLToPath } from 'node:url';
 const __dirname=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(__dirname,'..');
 const dashboard=fs.readFileSync(path.join(root,'app/src/main/assets/control-dashboard.js'),'utf8');
-const artnet=fs.readFileSync(path.join(root,'app/src/main/assets/artnet-control.js'),'utf8');
 const bootstrap=fs.readFileSync(path.join(root,'app/src/main/assets/control-bootstrap.js'),'utf8');
+const ble=fs.readFileSync(path.join(root,'app/src/main/assets/ble-control.js'),'utf8');
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 
 for(const marker of [
   'controlOpenBluetooth',
-  'controlLoadAdvanced',
-  'LightingAIAdvancedControlLoad',
-  "version:'0.19-bluetooth-primary-no-dmx-gate'"
-]) expect(dashboard.includes(marker)||bootstrap.includes(marker),'Bluetooth-first CONTROL marker missing: '+marker);
+  "version:'0.20-bluetooth-only-control'",
+  "window.LightingAIControlBootstrapMode='bluetooth-only'",
+  "version:'0.10-fast-control-surface'"
+]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
-expect(dashboard.includes('Bluetooth je glavni put')&&dashboard.includes('Bluetooth is the primary path'),'Primary CONTROL copy must be Bluetooth-first');
-expect(dashboard.includes('UČITAJ NAPREDNU KONTROLU')&&dashboard.includes('LOAD ADVANCED CONTROL'),'Advanced network/DMX control must be opt-in');
-expect(!dashboard.includes('controlDeskArm')&&!dashboard.includes('controlDeskDimmer'),'Primary dashboard must not expose DMX operator desk controls');
-expect(!bootstrap.includes("const scripts=["),'Bootstrap must not serialize Bluetooth behind a single DMX/network dependency chain');
-expect(bootstrap.indexOf('ble-control.js')<bootstrap.indexOf('artnet-control.js'),'Bluetooth asset must be declared before advanced Art-Net asset');
-expect(bootstrap.includes('const directScripts=')&&bootstrap.includes('const advancedScripts='),'Primary and advanced CONTROL assets must be split');
-expect(bootstrap.includes("window.LightingAIControlBootstrapMode='bluetooth-first'"),'Bootstrap mode must be Bluetooth-first');
-expect(bootstrap.includes('window.LightingAIAdvancedControlLoad=async function()'),'Advanced DMX/network loader must be explicit and lazy');
+expect(dashboard.includes('Bluetooth je glavni put')&&dashboard.includes('Bluetooth is the primary path'),'Primary CONTROL copy must be Bluetooth-only');
+expect(!dashboard.includes('controlLoadAdvanced')&&!dashboard.includes('DMX')&&!dashboard.includes('Art-Net')&&!dashboard.includes('sACN'),'Primary CONTROL dashboard must not expose network/DMX controls');
+expect(!bootstrap.includes('artnet-control.js')&&!bootstrap.includes('dmx-patch-planner.js')&&!bootstrap.includes('dmx-export.js'),'CONTROL bootstrap must not load network/DMX assets');
+expect(bootstrap.includes("window.LightingAIControlBootstrapMode='bluetooth-only'"),'CONTROL bootstrap mode must be bluetooth-only');
+expect(bootstrap.indexOf('control-system-drivers.js')<bootstrap.indexOf('ble-control.js'),'Vendor driver registry must load before Bluetooth UI');
+expect(bootstrap.indexOf('ble-control.js')<bootstrap.indexOf('control-dashboard.js'),'Bluetooth UI must load before dashboard');
+expect(ble.includes('renderQuickControlShell')&&ble.includes("'DIM'")&&ble.includes("'CCT'")&&ble.includes("'FX'"),'Fast Bluetooth control surface missing');
+expect(ble.includes('vendorForDevice')&&ble.includes('signalLabel')&&ble.includes('POVEŽI ASTERA'),'Fast Bluetooth fixture discovery UI missing');
 
-// Advanced network control remains fail-closed when manually loaded.
-for(const apiMarker of [
-  'masterDimmer:applyMasterDimmer',
-  'previousCue:previousCue',
-  'goCue:goCue',
-  'globalBlackout:globalBlackout',
-  'restoreBlackout:restoreBeforeBlackout',
-  'arm:setOutputArmed',
-  "version:'0.66-sacn-ipv6-dual'"
-]) expect(artnet.includes(apiMarker),'Advanced Art-Net operator API missing: '+apiMarker);
-
-expect(artnet.includes('function applyMasterDimmer(value){')&&artnet.includes('if(!requireOutputArmed())return;'),'Advanced MASTER dimmer must remain ARM gated');
-expect(artnet.includes('function goCue(index){')&&artnet.includes('if(!requireOutputArmed())return;'),'Advanced GO cue must remain ARM gated');
-expect(artnet.includes('function globalBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Advanced blackout must remain ARM gated');
-expect(artnet.includes('function restoreBeforeBlackout(){')&&artnet.includes('if(!requireOutputArmed())return;'),'Advanced blackout restore must remain ARM gated');
-
-console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'bluetooth-first',failures},null,2));
+console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'bluetooth-only',failures},null,2));
 if(failures.length)process.exit(1);

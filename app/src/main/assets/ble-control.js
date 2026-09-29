@@ -67,6 +67,7 @@ let gattActive=false;
 let scanCooldownUntil=0;
 let activeScanRequestId='';
 let activeGattRequestId='';
+let activeGattAddress='';
 
 function status(message,ok){
  const el=E('bleStatus');if(!el)return;
@@ -164,6 +165,7 @@ function inspectGatt(address,button){
  if(scanActive||gattActive){status(t().alreadyScanning,false);return}
  const id='ble_gatt_'+Date.now()+'_'+(++seq);
  activeGattRequestId=id;
+ activeGattAddress=String(address||'');
  gattActive=true;
  const scanButton=E('bleScan');if(scanButton)scanButton.disabled=true;
  document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=true);
@@ -191,11 +193,13 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
  gattActive=false;
  const scanButton=E('bleScan');if(scanButton)scanButton.disabled=Date.now()<scanCooldownUntil;
  document.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
- const address=payload&&payload.address?String(payload.address):'';
+ const address=payload&&payload.address?String(payload.address):activeGattAddress;
  const result=address?document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(address)+'"]'):null;
+ activeGattAddress='';
  if(error){
-  if(result)result.textContent=t().gattError+' ('+error+')';
-  status(t().gattError,false);return;
+  const message=t().gattError+(error?' ('+error+')':'');
+  if(result)result.textContent=message;
+  status(message,false);return;
  }
  const services=payload&&Array.isArray(payload.services)?payload.services:[];
  const labels=diagnosticLabelsFromServices(services);
@@ -242,6 +246,7 @@ function install(){
 function resetBleUiLifecycle(){
  activeScanRequestId='';
  activeGattRequestId='';
+ activeGattAddress='';
  scanActive=false;
  gattActive=false;
  scanCooldownUntil=0;
@@ -250,7 +255,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',discover:startScan,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.6-gatt-error-diagnostics',discover:startScan,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

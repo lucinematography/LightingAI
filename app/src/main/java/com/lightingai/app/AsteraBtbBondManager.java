@@ -15,6 +15,7 @@ import org.json.JSONObject;
 
 public final class AsteraBtbBondManager {
     public interface Callback {
+        void onProgress(JSONObject result);
         void onComplete(JSONObject result);
         void onError(String code);
     }
@@ -83,7 +84,10 @@ public final class AsteraBtbBondManager {
 
             bondReceiver = new BroadcastReceiver() {
                 @Override public void onReceive(Context receiverContext, Intent intent) {
-                    if (intent == null || !BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(intent.getAction())) return;
+                    if (intent == null) return;
+                    String action = intent.getAction();
+                    if (!BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action) &&
+                        !BluetoothDevice.ACTION_PAIRING_REQUEST.equals(action)) return;
                     BluetoothDevice changed;
                     try {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -100,6 +104,18 @@ public final class AsteraBtbBondManager {
                     catch (Exception e) { changedAddress = ""; }
                     synchronized (lock) {
                         if (thisEpoch != operationEpoch || callback == null || !activeAddress.equalsIgnoreCase(changedAddress)) return;
+                        if (BluetoothDevice.ACTION_PAIRING_REQUEST.equals(action)) {
+                            JSONObject progress = new JSONObject();
+                            try {
+                                progress.put("address", activeAddress);
+                                progress.put("event", "pairing_request");
+                                progress.put("pairingVariant", intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, -1));
+                                progress.put("pairingKey", intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_KEY, -1));
+                            } catch (Exception ignored) {}
+                            Callback cb = callback;
+                            if (cb != null) cb.onProgress(progress);
+                            return;
+                        }
                         int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
                         int previous = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
                         if (state == BluetoothDevice.BOND_BONDING) {
@@ -120,6 +136,7 @@ public final class AsteraBtbBondManager {
 
             try {
                 IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+                filter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     // Bluetooth bond-state broadcasts can originate from a highly privileged
                     // framework component rather than the system UID. Android's broadcast

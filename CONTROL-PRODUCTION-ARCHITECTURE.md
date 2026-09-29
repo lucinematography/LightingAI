@@ -1,53 +1,73 @@
-# LightingAI Production Control Architecture
+# LightingAI CONTROL Architecture
 
-Status: implementation baseline for production-grade fixture control.
+Status: Bluetooth-only primary CONTROL architecture for PR #408.
 
-## Core rule
+## Core operator rule
 
-LightingAI must not require per-fixture reverse engineering before useful control is available.
-Control is routed by protocol family.
+LightingAI CONTROL is built for fast on-set work:
 
-1. Standard network first: Art-Net and sACN are the primary phone-to-network transports.
-2. Standard fixture control next: DMX/RDM or CRMX downstream of a verified node/bridge.
-3. Native network fixtures may be controlled directly when their documented Art-Net/sACN profile is verified.
-4. Proprietary BLE/Mesh control is optional and isolated behind vendor-specific adapters.
-5. A proprietary BLE adapter is enabled only when its authentication, framing, commands and safety behavior are verified.
-6. One verified protocol family covers all fixtures that share the same documented transport/profile family; LightingAI does not repeat transport validation per physical fixture.
+PRONAĐI -> POVEŽI -> DIM / CCT / BOJA / FX
 
-## Production routing
+The primary CONTROL path is direct vendor Bluetooth. It must not require DMX patching, Art-Net/sACN setup, external gateway configuration, or switching to separate manufacturer apps.
 
-### Route A - Native Art-Net/sACN fixture
-Phone -> Wi-Fi/Ethernet network -> Fixture
+## Primary vendor families
 
-### Route B - Network to DMX/CRMX node
-Phone -> Art-Net/sACN -> verified node/gateway -> DMX/CRMX -> Fixture
+Required direct Bluetooth families:
 
-### Route C - Vendor BLE/Mesh adapter
-Phone -> vendor BLE/Mesh -> Fixture/bridge
-Only when vendor protocol is documented or independently verified.
+- Astera / AsteraApp / BTB
+- Aputure / Sidus
+- Godox / Godox Light
+- Aladdin
+- Nanlite / NANLINK
+- ARRI / LiCo
 
-## Astera
+Each family remains `required-unverified` until its real transport/session/command behavior is proven by official documentation, an SDK, a publicly verifiable implementation, or repeatable physical testing.
 
-Public product workflow is AsteraApp -> Bluetooth Bridge (BTB) -> paired lights, with UHF used between the bridge and fixtures. LightingAI does not treat Android OS bonding as a production Astera control protocol.
+## Safety rule
 
-Production route: documented DMX / Art-Net / sACN path through a compatible Astera or standards-based interface. Direct Astera BLE remains research-only until the proprietary session/authentication protocol is verified.
+Do not guess proprietary packets.
 
-## Aputure
+A discovered BLE device, successful Android connection, bond state, GATT service discovery, or writable characteristic is not proof of fixture control.
 
-Sidus Link/Sidus Mesh is a vendor-specific wireless path. Fixtures that expose DMX/RDM, CRMX, Art-Net or sACN are routed through those documented standards first.
+Quick controls stay locked until the vendor driver is physically verified.
 
-## Test policy
+## Astera priority
 
-- Physical fixture testing validates a protocol family, not every catalog item.
-- No output is sent until the DMX profile and channel map are verified.
-- Network output remains explicitly armed and fails closed.
-- BLE research builds stay separate from stable production builds.
-- Stable main is never modified by experimental vendor-protocol work.
+Current reference fixture: Astera Titan Tube FP1-BTB.
 
-<!-- Final CONTROL regression pass after clean Control Lab #435. No production semantics changed. -->
+Verified workflow facts:
 
-<!-- Operator desk regression retrigger after preserving 0.66 control safety invariant. -->
+- AsteraApp first connects to a Bluetooth Bridge (BTB).
+- A BTB may be built into Titan Tube BTB and other compatible Astera fixtures.
+- The BTB relays AsteraApp control to paired Astera lights over the Astera wireless system.
+- The physical Titan test has already confirmed BLE visibility and the private LE service fingerprint:
+  `0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65`.
 
-<!-- Retrigger after operator desk v0.10 whole-card interaction guard. -->
+The UUID above is diagnostic evidence only. It does not authorize inferred WRITE commands.
 
-<!-- Retrigger after Android lifecycle fail-safe CI lock. -->
+Current LightingAI Astera research path:
+
+1. BLE advertisement capture.
+2. Direct LE/GATT connection.
+3. Service/characteristic inventory.
+4. Passive standard CCCD subscription to NOTIFY/INDICATE characteristics on the observed BTB service.
+5. Record notifications, read values and timing.
+6. Identify the actual Astera session/authentication framing.
+7. Only after verification, implement the minimum real commands needed for DIM/CCT/BOJA/FX.
+
+Bluetooth Classic/SPP is not part of the automatic Astera connect path. It may remain available as a diagnostic tool only.
+
+## Legacy standards code
+
+DMX / Art-Net / sACN / CRMX code may remain elsewhere in the repository for legacy or future use, but:
+
+- it is not loaded by the primary CONTROL bootstrap;
+- it must not block Bluetooth scanning or vendor connection;
+- it is not a prerequisite for the primary CONTROL workflow;
+- it must not reappear as the normal operator path.
+
+## Release rule
+
+PR #408 remains draft and MAIN remains untouched until the required Bluetooth vendor path is genuinely functional and physically tested.
+
+No final APK is released merely because BLE discovery or GATT diagnostics work.

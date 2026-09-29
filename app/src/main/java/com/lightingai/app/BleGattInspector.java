@@ -29,6 +29,8 @@ public final class BleGattInspector {
     private static final int MAX_ATTEMPTS = 3;
     private static final UUID CCCD_UUID =
         UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    private static final String DEVICE_INFORMATION_SERVICE =
+        "0000180a-0000-1000-8000-00805f9b34fb";
     private static final String ASTERA_BTB_PRIVATE_SERVICE =
         "0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65";
 
@@ -336,9 +338,12 @@ public final class BleGattInspector {
                                 boolean passiveServiceMatch =
                                     !passiveNotifyServiceUuid.isEmpty() &&
                                     passiveNotifyServiceUuid.equals(serviceUuid);
+                                boolean standardDeviceInfoMatch =
+                                    DEVICE_INFORMATION_SERVICE.equals(serviceUuid);
                                 if (readableFlag &&
                                     (passiveNotifyServiceUuid.isEmpty() ||
-                                        passiveServiceMatch)) {
+                                        passiveServiceMatch ||
+                                        standardDeviceInfoMatch)) {
                                     readable.add(characteristic);
                                 }
                                 if (passiveServiceMatch &&
@@ -355,6 +360,9 @@ public final class BleGattInspector {
                         out.put("serviceCount", services.length());
                         out.put("passiveObservationServicePresent",
                             passiveServicePresent);
+                        out.put(
+                            "standardDeviceInformationReadEnabled",
+                            isAsteraInspection());
                         out.put("passiveNotificationCharacteristicCount",
                             subscribable.size());
                         if (isAsteraInspection() && !passiveServicePresent) {

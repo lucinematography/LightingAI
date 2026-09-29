@@ -191,23 +191,48 @@ function errorText(code){
  if(code==='ble_scan_failed_6')return t().tooFrequent;
  return t().error+(code?' ('+code+')':'');
 }
+function vendorForDevice(name){
+ const s=String(name||'').toLowerCase();
+ if(/titan|astera|helios|hyperion|hydra|nyx|pixelbrick|ax[0-9]|quik|luna|pluto|leo/.test(s))return 'ASTERA';
+ if(/aputure|infinibar|amaran|sidus|storm|nova|ls\s?\d/.test(s))return 'APUTURE';
+ if(/godox|knowled|mg\d|m\d{3}|ld\d|tl\d/.test(s))return 'GODOX';
+ if(/aladdin|fabric-lite|bi-flex|mosaic/.test(s))return 'ALADDIN';
+ if(/nanlite|nanlink|pavo|forza|evoke|fs-/.test(s))return 'NANLITE';
+ if(/arri|skypanel|orbiter|lico/.test(s))return 'ARRI';
+ return lang()==='sr'?'DRUGO':'OTHER';
+}
+function signalLabel(rssi){
+ const v=Number(rssi);
+ if(v>=-60)return lang()==='sr'?'ODLIČAN':'EXCELLENT';
+ if(v>=-72)return lang()==='sr'?'DOBAR':'GOOD';
+ if(v>=-85)return lang()==='sr'?'SLAB':'WEAK';
+ return lang()==='sr'?'VRLO SLAB':'VERY WEAK';
+}
+function isAsteraName(name){return /^(TITAN\s+\d+|.*ASTERA.*)$/i.test(String(name||''))}
 function render(devices){
  const box=E('bleResults');if(!box)return;
  const list=Array.isArray(devices)?devices.slice():[];
  list.sort((a,b)=>(Number(b&&b.rssi)||-127)-(Number(a&&a.rssi)||-127));
- if(!list.length){box.innerHTML='<div class="muted small" style="margin-top:8px">'+esc(t().none)+'</div>';return}
- box.innerHTML='<div class="caption" style="margin-top:10px">'+esc(t().found)+' · '+list.length+'</div>'+
+ if(!list.length){box.innerHTML='<div class="muted small" style="margin-top:12px">'+esc(t().none)+'</div>';return}
+ box.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><b>'+esc(t().found)+'</b><span class="muted small">'+list.length+'</span></div>'+
   list.map((d,i)=>{
    const name=(d&&d.name)||('BLE '+(i+1));
    const address=(d&&d.address)||'';
    const services=Array.isArray(d&&d.serviceUuids)?d.serviceUuids:[];
-   return '<div style="padding:10px 0;border-top:1px solid #2d333a">'+
-    '<div style="display:flex;justify-content:space-between;gap:10px"><b>'+esc(name)+'</b><span class="muted small">'+esc(t().rssi)+' '+Number(d&&d.rssi)+' dBm</span></div>'+
-    (address?'<div class="muted small">'+esc(t().address)+': '+esc(address)+'</div>':'')+
-    '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
-    (diagnosticLabelsFromServices(services).length?'<div class="status warn" style="margin-top:6px">'+esc(diagnosticLabelsFromServices(services).join(' · '))+'</div>':'')+
-    (address?'<button class="btn secondary ble-gatt-inspect" data-address="'+esc(address)+'" data-astera="'+(/^TITAN\s+\d+/i.test(name)?'1':'0')+'" type="button" style="margin-top:7px">'+esc(/^TITAN\s+\d+/i.test(name)?(lang()==='sr'?'PROVERI ASTERA BTB':'INSPECT ASTERA BTB'):t().inspect)+'</button>':'')+
-    '<div class="muted small ble-gatt-result" data-address="'+esc(address)+'" style="margin-top:6px"></div>'+
+   const vendor=vendorForDevice(name);
+   const astera=isAsteraName(name);
+   return '<div class="card" style="margin-top:9px;padding:12px;border-color:#31506b;background:#10161c">'+
+    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'+
+     '<div><div style="font-size:10px;font-weight:900;color:#9db8ca">'+esc(vendor)+'</div><div style="font-size:16px;font-weight:900;margin-top:2px">'+esc(name)+'</div></div>'+
+     '<div style="text-align:right"><div style="font-size:11px;font-weight:900">'+esc(signalLabel(d&&d.rssi))+'</div><div class="muted small">'+Number(d&&d.rssi)+' dBm</div></div>'+
+    '</div>'+
+    (address?'<button class="btn primary ble-gatt-inspect" data-address="'+esc(address)+'" data-astera="'+(astera?'1':'0')+'" type="button" style="width:100%;margin-top:10px">'+esc(astera?(lang()==='sr'?'POVEŽI ASTERA':'CONNECT ASTERA'):(lang()==='sr'?'POVEŽI':'CONNECT'))+'</button>':'')+
+    '<details style="margin-top:8px"><summary class="muted small" style="cursor:pointer">'+(lang()==='sr'?'DIJAGNOSTIKA':'DIAGNOSTICS')+'</summary>'+
+     (address?'<div class="muted small" style="margin-top:6px">'+esc(t().address)+': '+esc(address)+'</div>':'')+
+     '<div class="muted small">'+esc(t().services)+': '+esc(services.length?services.join(', '):'—')+'</div>'+
+     (diagnosticLabelsFromServices(services).length?'<div class="status warn" style="margin-top:6px">'+esc(diagnosticLabelsFromServices(services).join(' · '))+'</div>':'')+
+     '<div class="muted small ble-gatt-result" data-address="'+esc(address)+'" style="margin-top:6px"></div>'+
+    '</details>'+
    '</div>';
   }).join('');
  box.querySelectorAll('.ble-gatt-inspect').forEach(btn=>btn.addEventListener('click',()=>inspectGatt(btn.dataset.address,btn)));
@@ -446,17 +471,14 @@ function translate(){
 function install(){
  const page=E('controlContent')||E('control');if(!page||E('bleControlCard'))return false;
  const card=document.createElement('details');
- card.id='bleControlCard';card.className='card';card.style.border='1px solid #31506b';
+ card.id='bleControlCard';card.className='card';card.open=true;card.style.border='1px solid #31506b';card.style.background='linear-gradient(180deg,#111820,#0e1318)';
  card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="bleControlTitle"></span></summary>'+
   '<div style="margin-top:12px"><p id="bleControlIntro" class="muted small"></p>'+
-  '<button id="bleScan" class="btn primary" type="button"></button>'+
+  '<button id="bleScan" class="btn primary" type="button" style="width:100%;min-height:52px;font-size:15px;font-weight:900"></button>'+
   '<div id="bleStatus" class="muted small" style="margin-top:8px"></div>'+
   '<div id="bleResults"></div>'+
   '<div id="bleVerifiedHint" class="status warn" style="margin-top:10px"></div></div>';
- const network=E('artnetCard'),dmx=E('dmxCard');
- if(network&&network.parentNode)network.parentNode.insertBefore(card,network.nextSibling);
- else if(dmx&&dmx.parentNode)dmx.parentNode.insertBefore(card,dmx.nextSibling);
- else page.appendChild(card);
+ if(page.firstChild)page.insertBefore(card,page.firstChild);else page.appendChild(card);
  E('bleScan').addEventListener('click',startScan);
  translate();
  return true;
@@ -488,7 +510,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.8-control-page-primary',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.9-operator-fast-connect',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

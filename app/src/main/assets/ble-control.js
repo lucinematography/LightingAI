@@ -5,7 +5,7 @@ const lang=()=>localStorage.getItem('lighting_language_v1')==='en'?'en':'sr';
 const TXT={
  sr:{
   title:'📶 BLUETOOTH / BLE',
-  intro:'Pronađi obližnje BLE uređaje kao osnovu za buduću direktnu kontrolu rasvete. LightingAI ne šalje proizvođačke komande dok njihov protokol nije zvanično verifikovan.',
+  intro:'Pronađi obližnju rasvetu i poveži je direktno preko Bluetootha. Ovo je primarni LightingAI CONTROL put za brz rad na setu.',
   scan:'PRONAĐI BLE UREĐAJE',
   scanning:'Tražim BLE uređaje…',
   none:'Nema pronađenih BLE uređaja.',
@@ -41,7 +41,7 @@ const TXT={
  },
  en:{
   title:'📶 BLUETOOTH / BLE',
-  intro:'Discover nearby BLE devices as the foundation for future direct lighting control. LightingAI does not send manufacturer commands until the protocol is officially verified.',
+  intro:'Discover nearby fixtures and connect directly over Bluetooth. This is the primary LightingAI CONTROL path for fast on-set work.',
   scan:'DISCOVER BLE DEVICES',
   scanning:'Scanning for BLE devices…',
   none:'No BLE devices found.',
@@ -444,7 +444,7 @@ function translate(){
  E('bleVerifiedHint').textContent=x.verified;
 }
 function install(){
- const page=E('equipment');if(!page||E('bleControlCard'))return false;
+ const page=E('controlContent')||E('control');if(!page||E('bleControlCard'))return false;
  const card=document.createElement('details');
  card.id='bleControlCard';card.className='card';card.style.border='1px solid #31506b';
  card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="bleControlTitle"></span></summary>'+
@@ -488,7 +488,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.7-visible-gatt-profile',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.8-control-page-primary',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

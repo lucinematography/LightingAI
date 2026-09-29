@@ -17,7 +17,9 @@ for(const marker of [
   "vendor-aputure-sidus",
   "vendor-godox-app",
   "vendor-aladdin-app",
-  "version:'1.4-direct-vendor-required'"
+  "vendor-nanlite-nanlink",
+  "vendor-arri-lico",
+  "version:'1.5-bluetooth-vendor-families'"
 ]) expect(src.includes(marker),'driver registry missing '+marker);
 
 const sandbox={window:{}};
@@ -37,9 +39,13 @@ expect(unavailableOnly?.productionReady===false,'unavailable protocol text must 
 const legacyUnavailable=api&&api.resolve({control:['Bluetooth','DMX unavailable'],dmxModes:[verifiedMode]});
 expect(legacyUnavailable?.productionReady===false&&legacyUnavailable?.transportKnown===false,'negative legacy DMX text must not create a production route');
 const researchOnly=api&&api.resolve({manufacturer:'Astera',control:{wireless:['AsteraApp via Bluetooth']},dmxModes:[]});
-expect(researchOnly?.vendorDirectRequired===true&&researchOnly?.productionReady===false,'Astera proprietary wireless must remain research-only without a standard route');
+expect(researchOnly?.vendorDirectRequired===true&&researchOnly?.vendorDirectReady===false,'Astera direct Bluetooth must remain required but unverified until physically proven');
 const noSource=api&&api.resolve({control:{wired:['DMX512']},dmxModes:[{name:'Unsafe',channels:1,verified:true}]});
 expect(noSource?.productionReady===false,'verified DMX mode without source URL must fail closed');
+const nanliteDirect=api&&api.resolve({manufacturer:'Nanlite',control:{wireless:['NANLINK Bluetooth']},dmxModes:[]});
+expect(nanliteDirect?.vendorDrivers?.some(d=>d?.id==='vendor-nanlite-nanlink'&&d?.status==='required-unverified'),'Nanlite direct Bluetooth driver missing');
+const arriDirect=api&&api.resolve({manufacturer:'ARRI',control:{wireless:['LiCo Bluetooth']},dmxModes:[]});
+expect(arriDirect?.vendorDrivers?.some(d=>d?.id==='vendor-arri-lico'&&d?.status==='required-unverified'),'ARRI LiCo direct Bluetooth driver missing');
 const rdmOnly=api&&api.resolve({control:{wired:['RDM']},dmxModes:[verifiedMode]});
 expect(rdmOnly?.productionReady===false&&rdmOnly?.transportKnown===false,'RDM-only fixture must not qualify as a level-control route');
 

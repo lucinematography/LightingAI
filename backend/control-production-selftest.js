@@ -377,7 +377,7 @@ const catalogAudit = fs.readFileSync(path.join(root,'backend/control-catalog-aud
 expect(catalogAudit.includes("typeof channels !== 'number'")&&catalogAudit.includes("typeof ch !== 'number'")&&catalogAudit.includes("typeof value !== 'number'"), 'Control catalog audit must reject string/coerced numeric DMX metadata');
 
 const routing = fs.readFileSync(path.join(root,'app/src/main/assets/control-routing.js'),'utf8');
-expect(routing.includes("version:'1.5-native-network-gateway-separated'"), 'Production control router version marker missing');
+expect(routing.includes("version:'1.6-production-vendor-lab-separated'"), 'Production control router version marker missing');
 const routingContext = { window:{} };
 vm.createContext(routingContext);
 vm.runInContext(routing, routingContext);

@@ -161,6 +161,18 @@ public final class BleGattInspector {
         final BluetoothDevice device;
         try {
             device = adapter.getRemoteDevice(activeAddress);
+            int bondState = BluetoothDevice.BOND_NONE;
+            String deviceName = "";
+            try { bondState = device.getBondState(); } catch (Exception ignored) {}
+            try {
+                String n = device.getName();
+                deviceName = n == null ? "" : n;
+            } catch (Exception ignored) {}
+            appendEvent(
+                "connect_target",
+                "attempt", thisAttempt,
+                "bondState", bondState,
+                "deviceName", deviceName);
         } catch (Exception e) {
             finishErrorLocked("ble_gatt_bad_address");
             return;
@@ -345,6 +357,16 @@ public final class BleGattInspector {
                             passiveServicePresent);
                         out.put("passiveNotificationCharacteristicCount",
                             subscribable.size());
+                        if (isAsteraInspection() && !passiveServicePresent) {
+                            out.put("diagnosticIncomplete", true);
+                            out.put(
+                                "diagnosticWarning",
+                                "astera_btb_private_service_missing");
+                            appendEvent(
+                                "astera_service_missing",
+                                "expectedServiceUuid",
+                                ASTERA_BTB_PRIVATE_SERVICE);
+                        }
                         activeProfile = out;
 
                         readIndex = 0;

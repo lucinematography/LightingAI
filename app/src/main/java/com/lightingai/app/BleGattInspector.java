@@ -762,6 +762,15 @@ public final class BleGattInspector {
         } catch (Exception ignored) {}
     }
 
+    private static JSONObject deepCopyJson(JSONObject source) {
+        if (source == null) return new JSONObject();
+        try {
+            return new JSONObject(source.toString());
+        } catch (Exception ignored) {
+            return new JSONObject();
+        }
+    }
+
     private static void clearJsonArray(JSONArray array) {
         if (array == null) return;
         while (array.length() > 0) {
@@ -808,16 +817,20 @@ public final class BleGattInspector {
     @SuppressLint("MissingPermission")
     private void finishSuccessLocked(JSONObject result) {
         Callback cb = callback;
-        appendEvent("inspection_success", "notificationCount", notificationValues.length(), "attempt", attempt);
+        appendEvent(
+            "inspection_success",
+            "notificationCount", notificationValues.length(),
+            "attempt", attempt);
         callback = null;
         appendRuntimeDiagnosticsLocked();
+        JSONObject snapshot =
+            deepCopyJson(result == null ? new JSONObject() : result);
         cancelTimersLocked();
         closeGattOnlyLocked();
         clearState();
         activeAddress = "";
         if (cb != null) {
-            cb.onComplete(
-                result == null ? new JSONObject() : result);
+            cb.onComplete(snapshot);
         }
     }
 
@@ -859,13 +872,14 @@ public final class BleGattInspector {
             failure.put("eventTimeline", eventTimeline);
         } catch (Exception ignored) {}
 
+        JSONObject snapshot = deepCopyJson(failure);
         callback = null;
         cancelTimersLocked();
         closeGattOnlyLocked();
         clearState();
         activeAddress = "";
         if (cb != null) {
-            cb.onError(failure, resolvedCode);
+            cb.onError(snapshot, resolvedCode);
         }
     }
 

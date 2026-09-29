@@ -248,6 +248,8 @@ const uiRegressionAssets=[
  'app/src/main/assets/ai-control-bridge.js',
  'app/src/main/assets/ai-visual-scene-launcher.js',
  'app/src/main/assets/ai-visual-scene-plan.js',
+ 'app/src/main/assets/gel-filter-catalog.js',
+ 'app/src/main/assets/gel-filter-ui.js',
  'app/src/main/assets/sun-ui.js',
  'app/src/main/assets/sun-native-bridge.js'
 ];
@@ -261,6 +263,9 @@ const uiControl=read('app/src/main/assets/control-dashboard.js');
 const uiAiBridge=read('app/src/main/assets/ai-control-bridge.js');
 const uiAiLauncher=read('app/src/main/assets/ai-visual-scene-launcher.js');
 const uiAiScenePlan=read('app/src/main/assets/ai-visual-scene-plan.js');
+const uiGelCatalog=read('app/src/main/assets/gel-filter-catalog.js');
+const uiGelUi=read('app/src/main/assets/gel-filter-ui.js');
+const uiServer=read('backend/server.js');
 const uiSun=read('app/src/main/assets/sun-ui.js');
 const uiSunNative=read('app/src/main/assets/sun-native-bridge.js');
 
@@ -326,6 +331,22 @@ expect(uiSun.includes('window.LightingAISunSyncCurrentTime=function(){syncDevice
 expect(uiSunNative.includes("window.LightingAISunSyncCurrentTime==='function'")&&
  uiSunNative.includes('window.LightingAISunSyncCurrentTime()'),
  'Native SUNCE location bridge must refresh the current device-local time after location updates');
+
+expect(uiIndex.includes('id="gelFilterFolder"')&&uiIndex.includes('id="lightingai-gel-catalog-script" src="gel-filter-catalog.js"')&&uiIndex.includes('id="lightingai-gel-ui-script" src="gel-filter-ui.js"'),
+ 'FILTERI/GEL must remain a separate collapsed Equipment catalog');
+const gelCatalogScriptPos=uiIndex.indexOf('id="lightingai-gel-catalog-script" src="gel-filter-catalog.js"');
+const mainCatalogScriptPos=uiIndex.indexOf('id="lightingai-catalog-script" src="catalog.js"');
+const gelUiScriptPos=uiIndex.indexOf('id="lightingai-gel-ui-script" src="gel-filter-ui.js"');
+expect(gelCatalogScriptPos>=0&&mainCatalogScriptPos>gelCatalogScriptPos&&gelUiScriptPos>mainCatalogScriptPos,
+ 'FILTERI/GEL catalog, fixture catalog and gel UI scripts must load in deterministic order');
+expect(uiGelUi.includes('FILTERI / GEL')&&uiGelUi.includes('folderOpen=false')&&uiGelUi.includes("equipmentType:'gel'"),
+ 'FILTERI/GEL UI must start collapsed and keep selected filters typed as gel modifiers');
+expect((uiGelCatalog.match(/"equipmentType":"gel"/g)||[]).length===977&&uiGelCatalog.includes('"count":333')&&uiGelCatalog.includes('"count":144')&&uiGelCatalog.includes('"count":312')&&uiGelCatalog.includes('"count":188'),
+ 'FILTERI/GEL generated catalog must contain exactly 977 filters across the four verified source lines');
+expect(uiAiScenePlan.includes('gel_recommendations')&&uiAiScenePlan.includes('LightingAIGelCatalog')&&uiAiScenePlan.includes('gelCatalog:gelCatalog'),
+ 'AI Visual Plan must receive the FILTERI/GEL catalog and render gel recommendations');
+expect(uiServer.includes('formatGelCatalogForAI')&&uiServer.includes('GEL/FILTER RULES: filters and gels are modifiers, never fixtures')&&uiServer.includes('never invent a gel code or product'),
+ 'Backend AI contract must preserve exact FILTERI/GEL products and keep gels separate from fixtures');
 
 console.log(JSON.stringify({ok:failures.length===0,failures},null,2));
 if(failures.length)process.exit(1);

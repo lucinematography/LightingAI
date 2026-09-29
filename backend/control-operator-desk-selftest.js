@@ -18,7 +18,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.18-astera-family-advertisements'"
+  "version:'0.19-astera-failure-capture'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -34,11 +34,13 @@ expect(ble.includes("ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c
 expect(ble.includes('PASIVNO ASTERA BTB PRAĆENJE')&&ble.includes('PASSIVE ASTERA BTB OBSERVATION'),'Astera passive observation UI missing');
 expect(gatt.includes('inspectAstera(')&&gatt.includes('CCCD_UUID')&&gatt.includes('proprietaryCharacteristicWrites')&&gatt.includes('notificationValues'),'Astera passive GATT observer missing');
 expect(gatt.includes('eventTimeline')&&gatt.includes('connection_state')&&gatt.includes('services_discovered')&&gatt.includes('cccd_write_result')&&gatt.includes('notification'),'Astera passive GATT timeline missing');
+expect(gatt.includes('inspection_error')&&gatt.includes('failureCode')&&gatt.includes('onError(JSONObject result, String code)'),'Astera GATT failures must preserve structured diagnostics');
 expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('passiveServiceMatch'),'Astera passive observer must restrict characteristic READs to the verified BTB service');
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');
 expect(!ble.includes('setTimeout(()=>inspectAsteraClassic(address),250)'),'Primary Astera connect flow must not auto-route through Classic/SDP');
 expect(!gatt.includes('writeCharacteristic('),'Astera diagnostic observer must not send proprietary characteristic writes');
 expect(ble.includes('LightingAI-Astera-BTB-diagnostic')&&ble.includes('SAČUVAJ DIJAGNOSTIKU')&&ble.includes('Android.saveText(filename,body)'),'Astera diagnostic export to Downloads missing');
+expect(ble.includes("failed:true")&&ble.includes('Failure timeline captured'),'Failed Astera GATT sessions must remain exportable');
 expect(ble.includes('latestScanDevicesByAddress')&&ble.includes('advertisement:address&&latestScanDevicesByAddress[address]'),'Astera diagnostic export must include the matching BLE advertisement snapshot');
 expect(ble.includes('helios|hyperion|hydra|nyx|pixelbrick|ax[0-9]|quik|luna|pluto|leo'),'Astera family detection must not be limited to Titan only');
 expect(scanner.includes('MAX_ADVERTISEMENT_SNAPSHOTS')&&scanner.includes('advertisements')&&scanner.includes('sightings')&&scanner.includes('appendAdvertisementSnapshot'),'BLE scanner must preserve multiple distinct advertisement snapshots per device');

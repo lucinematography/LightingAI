@@ -1119,7 +1119,7 @@ public class MainActivity extends Activity {
                     return;
                 }
                 if (bleGattInspector == null) bleGattInspector = new BleGattInspector(MainActivity.this);
-                bleGattInspector.inspect(target, Math.max(8000, timeoutMs), new BleGattInspector.Callback() {
+                bleGattInspector.inspectAstera(target, Math.max(10000, timeoutMs), new BleGattInspector.Callback() {
                     @Override public void onComplete(JSONObject result) {
                         notifyBleGattInspection(id, result, "");
                     }

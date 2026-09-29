@@ -35,6 +35,7 @@ expect(ble.includes('PASIVNO ASTERA BTB PRAĆENJE')&&ble.includes('PASSIVE ASTER
 expect(gatt.includes('inspectAstera(')&&gatt.includes('CCCD_UUID')&&gatt.includes('proprietaryCharacteristicWrites')&&gatt.includes('notificationValues'),'Astera passive GATT observer missing');
 expect(gatt.includes('eventTimeline')&&gatt.includes('connection_state')&&gatt.includes('services_discovered')&&gatt.includes('cccd_write_result')&&gatt.includes('notification'),'Astera passive GATT timeline missing');
 expect(gatt.includes('inspection_error')&&gatt.includes('failureCode')&&gatt.includes('onError(JSONObject result, String code)'),'Astera GATT failures must preserve structured diagnostics');
+expect(gatt.includes('deepCopyJson(')&&gatt.includes('JSONObject snapshot'),'BLE diagnostic arrays must be snapshotted before native cleanup');
 expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('passiveServiceMatch'),'Astera passive observer must restrict characteristic READs to the verified BTB service');
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');
 expect(!ble.includes('setTimeout(()=>inspectAsteraClassic(address),250)'),'Primary Astera connect flow must not auto-route through Classic/SDP');

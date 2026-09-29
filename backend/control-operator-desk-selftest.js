@@ -7,6 +7,8 @@ const root=path.resolve(__dirname,'..');
 const dashboard=fs.readFileSync(path.join(root,'app/src/main/assets/control-dashboard.js'),'utf8');
 const bootstrap=fs.readFileSync(path.join(root,'app/src/main/assets/control-bootstrap.js'),'utf8');
 const ble=fs.readFileSync(path.join(root,'app/src/main/assets/ble-control.js'),'utf8');
+const gatt=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/BleGattInspector.java'),'utf8');
+const mainActivity=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/MainActivity.java'),'utf8');
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
@@ -29,6 +31,9 @@ expect(ble.includes('renderQuickControlShell')&&ble.includes("'DIM'")&&ble.inclu
 expect(ble.includes('vendorForDevice')&&ble.includes('signalLabel')&&ble.includes('POVEŽI ASTERA'),'Fast Bluetooth fixture discovery UI missing');
 expect(ble.includes("ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'")&&ble.includes('transport fingerprint only'),'Astera BTB private LE fingerprint must remain passive diagnostic evidence only');
 expect(ble.includes('PASIVNO ASTERA BTB PRAĆENJE')&&ble.includes('PASSIVE ASTERA BTB OBSERVATION'),'Astera passive observation UI missing');
+expect(gatt.includes('inspectAstera(')&&gatt.includes('CCCD_UUID')&&gatt.includes('proprietaryCharacteristicWrites')&&gatt.includes('notificationValues'),'Astera passive GATT observer missing');
+expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');
+expect(!gatt.includes('writeCharacteristic('),'Astera diagnostic observer must not send proprietary characteristic writes');
 
 console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'bluetooth-only',failures},null,2));
 if(failures.length)process.exit(1);

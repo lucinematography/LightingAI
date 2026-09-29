@@ -17,7 +17,7 @@ for(const marker of [
   "vendor-aputure-sidus",
   "vendor-godox-app",
   "vendor-aladdin-app",
-  "version:'1.3-native-network-gateway-separated'"
+  "version:'1.4-direct-vendor-required'"
 ]) expect(src.includes(marker),'driver registry missing '+marker);
 
 const sandbox={window:{}};
@@ -37,7 +37,7 @@ expect(unavailableOnly?.productionReady===false,'unavailable protocol text must 
 const legacyUnavailable=api&&api.resolve({control:['Bluetooth','DMX unavailable'],dmxModes:[verifiedMode]});
 expect(legacyUnavailable?.productionReady===false&&legacyUnavailable?.transportKnown===false,'negative legacy DMX text must not create a production route');
 const researchOnly=api&&api.resolve({manufacturer:'Astera',control:{wireless:['AsteraApp via Bluetooth']},dmxModes:[]});
-expect(researchOnly?.vendorResearchOnly===true&&researchOnly?.productionReady===false,'Astera proprietary wireless must remain research-only without a standard route');
+expect(researchOnly?.vendorDirectRequired===true&&researchOnly?.productionReady===false,'Astera proprietary wireless must remain research-only without a standard route');
 const noSource=api&&api.resolve({control:{wired:['DMX512']},dmxModes:[{name:'Unsafe',channels:1,verified:true}]});
 expect(noSource?.productionReady===false,'verified DMX mode without source URL must fail closed');
 const rdmOnly=api&&api.resolve({control:{wired:['RDM']},dmxModes:[verifiedMode]});
@@ -49,9 +49,9 @@ vm.createContext(routingSandbox);
 vm.runInContext(routingSrc,routingSandbox);
 const routingApi=routingSandbox.window.LightingAIControlRouting;
 const vendorLabRoute=routingApi&&routingApi.classify({manufacturer:'Astera',control:{wireless:['AsteraApp via Bluetooth']},dmxModes:[]});
-expect(vendorLabRoute?.route==='vendor-wireless'&&vendorLabRoute?.semanticReady===false&&vendorLabRoute?.transportReady===false,'vendor lab route must never become production ready');
+expect(vendorLabRoute?.route==='vendor-wireless'&&vendorLabRoute?.semanticReady===false&&vendorLabRoute?.transportReady===false,'unverified direct vendor route must remain non-ready until physically verified');
 const rdmFallback=routingApi&&routingApi.classify({control:{wired:['RDM']},dmxModes:[verifiedMode]});
-expect(routingApi&&routingSrc.includes("version:'1.6-production-vendor-lab-separated'"),'Fallback control router version marker missing');
+expect(routingApi&&routingSrc.includes("version:'1.7-direct-vendor-required'"),'Fallback control router version marker missing');
 expect(rdmFallback?.dmx===false&&rdmFallback?.transportReady===false&&rdmFallback?.semanticReady===false,'Fallback router must not treat RDM-only metadata as level control');
 
 const {fixtures}=buildRuntimeCatalog();
@@ -65,7 +65,7 @@ const titanResolved=titan&&api.resolve(titan);
 expect(
   titanResolved?.productionDriver?.id==='standards-dmx-gateway' &&
   Array.isArray(titanResolved?.vendorDrivers) &&
-  titanResolved.vendorDrivers.some(d=>d?.id==='vendor-astera-wireless'&&d?.status==='research') &&
+  titanResolved.vendorDrivers.some(d=>d?.id==='vendor-astera-wireless'&&d?.status==='required-unverified') &&
   titanResolved?.productionReady===true,
   'Titan production route must stay standards-based while BTB remains research-only'
 );

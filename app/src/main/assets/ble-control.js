@@ -306,7 +306,23 @@ window.LightingAIAsteraBtbBondResult=function(id,payload,error){
  const result=address?document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(address)+'"]'):null;
  if(error){
   const message=t().bondAsteraError+(error?' ('+error+')':'');
-  if(result)result.textContent=message;
+  latestDiagnosticPayload={
+   kind:'LightingAI-Astera-BTB-bond-diagnostic',
+   capturedAt:new Date().toISOString(),
+   controlMode:'bluetooth-only',
+   failed:true,
+   error:String(error||''),
+   address:address||'',
+   advertisement:address&&latestScanDevicesByAddress[address]?latestScanDevicesByAddress[address]:null,
+   payload:payload||{}
+  };
+  if(result){
+   result.innerHTML='<div class="status warn">'+esc(message)+'</div>'+
+    ((payload&&Array.isArray(payload.eventTimeline)&&payload.eventTimeline.length)?'<div class="muted small" style="margin-top:6px">'+(lang()==='sr'?'Bonding sled sačuvan':'Bonding timeline captured')+' · '+payload.eventTimeline.length+'</div>':'')+
+    '<button class="btn secondary ble-export-diagnostic" type="button" style="width:100%;margin-top:8px">'+(lang()==='sr'?'SAČUVAJ DIJAGNOSTIKU':'SAVE DIAGNOSTICS')+'</button>';
+   const exportButton=result.querySelector('.ble-export-diagnostic');
+   if(exportButton)exportButton.addEventListener('click',exportDiagnostic);
+  }
   status(message,false);
   return;
  }
@@ -598,7 +614,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.20-astera-bond-on-auth',diagnosticsRevision:'astera-btb-passive-notify-v18',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.21-astera-bond-timeline',diagnosticsRevision:'astera-btb-passive-notify-v19',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

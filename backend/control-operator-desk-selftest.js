@@ -19,7 +19,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.23-astera-bond-lifecycle'"
+  "version:'0.24-astera-resume-gatt'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -46,6 +46,7 @@ expect(bondManager.includes('onError(JSONObject result, String code)'),'Astera b
 expect(ble.includes('LightingAI-Astera-BTB-bond-diagnostic')&&ble.includes('Bonding timeline captured'),'Astera bonding failure timeline must be exportable');
 expect(ble.includes('Android Bluetooth bonding je uspeo. Astera session / Radio PIN još nisu verifikovani.')&&ble.includes('Android Bluetooth bonding succeeded. The Astera session / Radio PIN is still unverified.'),'Astera UI must not equate Android bonding with an authenticated Astera session');
 expect(ble.includes('preserveBond=!!(bondActive&&activeBondRequestId)')&&ble.includes('btn.disabled=preserveBond'),'System pairing UI lifecycle must preserve active Astera bonding state');
+expect(ble.includes('blePagePaused')&&ble.includes('pendingAsteraGattAfterResume')&&ble.includes('LightingAIBleLifecycleResume=function()'),'Post-bond Astera GATT must wait for Activity resume when system pairing UI pauses the app');
 expect(!mainActivity.includes('if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();\n        if (asteraBtbClassicInspector != null) asteraBtbClassicInspector.cancel();\n        super.onPause();'),'MainActivity onPause must not cancel an active Astera bond during system pairing UI');
 expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('passiveServiceMatch'),'Astera passive observer must restrict characteristic READs to the verified BTB service');
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');

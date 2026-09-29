@@ -111,11 +111,11 @@ expect(bleScanner.includes('scanEpoch')&&bleScanner.includes('thisScanEpoch')&&b
 expect(bleScanner.includes('ble_scan_failed_'),'BLE scan failure code propagation missing');
 
 const bleUi=read('app/src/main/assets/ble-control.js');
-expect(bleUi.includes("version:'0.10-fast-control-surface'"),'BLE Mesh/GATT diagnostic UI missing');
+expect(bleUi.includes("version:'0.11-vendor-advertisement-fingerprint'"),'BLE Mesh/GATT diagnostic UI missing');
 expect(bleUi.includes('bleInspectGatt')&&bleUi.includes('LightingAIBleGattInspectionResult'),'BLE GATT inspection bridge missing');
 expect(bleUi.includes('00001827-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh provisioning service detection missing');
 expect(bleUi.includes('00001828-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh proxy service detection missing');
-expect(bleUi.includes("version:'0.10-fast-control-surface'"),'Serialized BLE diagnostic UI version missing');
+expect(bleUi.includes("version:'0.11-vendor-advertisement-fingerprint'"),'Serialized BLE diagnostic UI version missing');
 expect(!bleUi.includes('0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'),'Unverified Astera private-service UUID must not be treated as protocol evidence');
 expect(bleUi.includes('gattActive')&&bleUi.includes('scanActive||gattActive'),'BLE scan/GATT serialization guard missing');
 const asteraBond=read('app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java');
@@ -142,12 +142,14 @@ expect(!bleGatt.includes('writeCharacteristic')&&!bleGatt.includes('writeDescrip
 expect(bleGatt.includes('connectGatt')&&bleGatt.includes('closeGattOnlyLocked'),'BLE GATT lifecycle close missing');
 expect(bleGatt.includes('MAX_ATTEMPTS = 3')&&bleGatt.includes('retryOrFailLocked'),'BLE GATT retry protection missing');
 expect(bleGatt.includes('inspectionEpoch')&&bleGatt.includes('thisInspectionEpoch')&&bleGatt.includes('retryEpoch != inspectionEpoch'),'BLE GATT timeout/retry callbacks must be isolated by inspection epoch');
+expect(bleScanner.includes('rawAdvertisementHex')&&bleScanner.includes('getAdvertiseFlags()')&&bleScanner.includes('getTxPowerLevel()'),'BLE scanner must capture raw advertisement fingerprint');
 expect(bleGatt.includes('PROPERTY_READ')&&bleGatt.includes('readCharacteristic'),'BLE GATT read-only snapshot missing');
 expect(bleGatt.includes('diagnosticIncomplete')&&bleGatt.includes('ble_gatt_read_timeout')&&bleGatt.includes('activeProfile != null'),'BLE GATT timeout must preserve discovered service inventory as a partial diagnostic result');
 expect(!bleGatt.includes('createBond'),'BLE GATT diagnostics must not use Android bonding');
 expect(bleUi.includes('scanCooldownUntil')&&bleUi.includes('scanActive'),'BLE scan spam guard missing');
 expect(bleUi.includes('vendorForDevice')&&bleUi.includes('signalLabel')&&bleUi.includes('POVEŽI ASTERA')&&bleUi.includes('DIJAGNOSTIKA'),'Fast BLE operator UI missing');
 expect(bleUi.includes('renderQuickControlShell')&&bleUi.includes("'DIM'")&&bleUi.includes("'CCT'")&&bleUi.includes("'FX'"),'Fast control surface shell missing');
+expect(bleUi.includes('rawAdvertisementHex')&&bleUi.includes('advertiseFlags')&&bleUi.includes('manufacturerData')&&bleUi.includes('serviceData'),'Vendor BLE advertisement fingerprint missing from diagnostics');
 expect(bleUi.includes("activeScanRequestId")&&bleUi.includes("activeGattRequestId")&&bleUi.includes("String(id||'')!==activeScanRequestId")&&bleUi.includes("String(id||'')!==activeGattRequestId"),'BLE UI must ignore stale discovery/GATT callbacks by request id');
 expect(bleUi.includes('ble_scan_failed_6')&&bleUi.includes('tooFrequent'),'BLE frequent-scan error handling missing');
 expect(main.includes('@Override protected void onPause()')&&main.includes('@Override protected void onDestroy()')&&main.includes('pendingBleDiscoveryRequestId = null;'),'Pending BLE permission scan must be invalidated on pause/destroy');

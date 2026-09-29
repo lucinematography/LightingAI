@@ -29,6 +29,9 @@ const TXT={
   bondAsteraError:'Astera BTB uparivanje nije uspelo.',
   bondAsteraPairing:'Android traži potvrdu Bluetooth uparivanja.',
   bondRequired:'Astera BTB mora prvo uspešno da se upari.',
+  classicInspecting:'Proveravam Bluetooth Classic/SDP profile…',
+  classicResult:'Bluetooth Classic/SDP',
+  classicError:'Bluetooth Classic/SDP provera nije uspela.',
   inspecting:'Proveravam BLE servise bez slanja komandi…',
   inspected:'GATT servisi',
   meshProvisioning:'Bluetooth Mesh: NEPROVISIONISAN / provisioning servis',
@@ -62,6 +65,9 @@ const TXT={
   bondAsteraError:'Astera BTB pairing failed.',
   bondAsteraPairing:'Android is requesting Bluetooth pairing confirmation.',
   bondRequired:'Astera BTB must be bonded successfully first.',
+  classicInspecting:'Inspecting Bluetooth Classic/SDP profiles…',
+  classicResult:'Bluetooth Classic/SDP',
+  classicError:'Bluetooth Classic/SDP inspection failed.',
   inspecting:'Inspecting BLE services without sending commands…',
   inspected:'GATT services',
   meshProvisioning:'Bluetooth Mesh: UNPROVISIONED / provisioning service',
@@ -75,12 +81,15 @@ let seq=0;
 let scanActive=false;
 let gattActive=false;
 let bondActive=false;
+let classicActive=false;
 let scanCooldownUntil=0;
 let activeScanRequestId='';
 let activeGattRequestId='';
 let activeGattAddress='';
 let activeBondRequestId='';
 let activeBondAddress='';
+let activeClassicRequestId='';
+let activeClassicAddress='';
 let scanWatchdogTimer=null;
 let gattWatchdogTimer=null;
 
@@ -119,6 +128,12 @@ function transport(){
    }
    return false;
   },
+  inspectAsteraClassic:function(request){
+   if(androidReady&&typeof Android.asteraBtbInspectClassic==='function'){
+    Android.asteraBtbInspectClassic(request.id,request.address,request.timeoutMs||10000);return true;
+   }
+   return false;
+  },
   inspectAsteraGatt:function(request){
    if(androidReady&&typeof Android.asteraBtbInspectGatt==='function'){
     Android.asteraBtbInspectGatt(request.id,request.address,request.timeoutMs||12000);return true;
@@ -147,7 +162,7 @@ function setScanBusy(busy){
 function startScan(){
  const tr=transport();
  if(!tr.available){status(t().unavailable,false);return}
- if(scanActive||gattActive||bondActive){status(t().alreadyScanning,false);return}
+ if(scanActive||gattActive||bondActive||classicActive){status(t().alreadyScanning,false);return}
  if(Date.now()<scanCooldownUntil){status(t().tooFrequent,false);return}
  const id='ble_'+Date.now()+'_'+(++seq);
  activeScanRequestId=id;
@@ -203,7 +218,7 @@ function render(devices){
 function bondAstera(address,button){
  const tr=transport();
  if(!address||typeof tr.bondAstera!=='function'){status(t().unavailable,false);return}
- if(scanActive||gattActive||bondActive){status(t().alreadyScanning,false);return}
+ if(scanActive||gattActive||bondActive||classicActive){status(t().alreadyScanning,false);return}
  const id='astera_bond_'+Date.now()+'_'+(++seq);
  activeBondRequestId=id;
  activeBondAddress=String(address||'');
@@ -260,7 +275,51 @@ window.LightingAIAsteraBtbBondResult=function(id,payload,error){
  const message=t().bondedAstera;
  if(result)result.textContent=message;
  status(message,true);
- if(address)setTimeout(()=>inspectGatt(address,null,true),350);
+ if(address){setTimeout(()=>inspectAsteraClassic(address),250);setTimeout(()=>inspectGatt(address,null,true),650);}
+};
+
+
+function inspectAsteraClassic(address){
+ const tr=transport();
+ if(!address||typeof tr.inspectAsteraClassic!=='function')return;
+ if(classicActive)return;
+ const id='astera_classic_'+Date.now()+'_'+(++seq);
+ activeClassicRequestId=id;
+ activeClassicAddress=String(address||'');
+ classicActive=true;
+ const result=document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(address)+'"]');
+ if(result)result.textContent=t().classicInspecting;
+ try{
+  if(!tr.inspectAsteraClassic({id:id,address:address,timeoutMs:10000})){
+   classicActive=false;
+   activeClassicRequestId='';
+   activeClassicAddress='';
+  }
+ }catch(e){
+  classicActive=false;
+  activeClassicRequestId='';
+  activeClassicAddress='';
+ }
+}
+window.LightingAIAsteraBtbClassicInspectionResult=function(id,payload,error){
+ if(String(id||'')!==activeClassicRequestId)return;
+ activeClassicRequestId='';
+ classicActive=false;
+ const address=payload&&payload.address?String(payload.address):activeClassicAddress;
+ activeClassicAddress='';
+ const result=address?document.querySelector('.ble-gatt-result[data-address="'+CSS.escape(address)+'"]'):null;
+ if(error){
+  const message=t().classicError+(error?' ('+error+')':'');
+  if(result)result.textContent=message;
+  status(message,false);
+  return;
+ }
+ const uuids=payload&&Array.isArray(payload.uuids)?payload.uuids:[];
+ const spp=!!(payload&&payload.sppPresent);
+ const type=payload&&Number.isFinite(Number(payload.deviceType))?Number(payload.deviceType):0;
+ const message=t().classicResult+': '+uuids.length+' UUID · SPP '+(spp?'YES':'NO')+' · type '+type;
+ if(result)result.textContent=message;
+ status(message,true);
 };
 
 function inspectGatt(address,button,forceAstera){
@@ -268,7 +327,7 @@ function inspectGatt(address,button,forceAstera){
  const astera=forceAstera===true||!!(button&&button.dataset&&button.dataset.astera==='1');
  const inspect=astera?tr.inspectAsteraGatt:tr.inspectGatt;
  if(!address||typeof inspect!=='function'){status(t().unavailable,false);return}
- if(scanActive||gattActive||bondActive){status(t().alreadyScanning,false);return}
+ if(scanActive||gattActive||bondActive||classicActive){status(t().alreadyScanning,false);return}
  const id='ble_gatt_'+Date.now()+'_'+(++seq);
  activeGattRequestId=id;
  activeGattAddress=String(address||'');
@@ -368,7 +427,7 @@ function install(){
  return true;
 }
 function resetBleUiLifecycle(){
- const hadTransient=scanActive||gattActive||bondActive;
+ const hadTransient=scanActive||gattActive||bondActive||classicActive;
  clearScanWatchdog();
  clearGattWatchdog();
  activeScanRequestId='';
@@ -376,9 +435,12 @@ function resetBleUiLifecycle(){
  activeGattAddress='';
  activeBondRequestId='';
  activeBondAddress='';
+ activeClassicRequestId='';
+ activeClassicAddress='';
  scanActive=false;
  gattActive=false;
  bondActive=false;
+ classicActive=false;
  scanCooldownUntil=0;
  const button=E('bleScan');if(button)button.disabled=false;
  document.querySelectorAll('.ble-astera-bond,.ble-gatt-inspect').forEach(btn=>btn.disabled=false);
@@ -391,7 +453,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'astera-btb-session-v5',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.5-serialized-ble-diagnostics',diagnosticsRevision:'astera-btb-dual-transport-v6',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

@@ -47,6 +47,13 @@ The UUID above is diagnostic evidence only. It does not authorize inferred WRITE
 
 Current LightingAI Astera research path:
 
+Astera security boundary confirmed from official manuals:
+- Android Bluetooth bonding is only the mobile-to-BTB link layer.
+- Astera fixture control is separately protected by a 4-digit Radio PIN.
+- Astera documentation states that pairing transmits the Radio PIN from the app to the light and stores it there.
+- LightingAI must not treat a successful Android bond as proof of an authenticated Astera control session.
+- LightingAI does not generate, guess or transmit a Radio PIN until the exact BTB session/authentication transport is verified.
+
 1. BLE advertisement capture.
 2. Direct LE/GATT connection.
 3. Service/characteristic inventory.

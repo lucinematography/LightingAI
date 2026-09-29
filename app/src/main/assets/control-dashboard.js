@@ -46,14 +46,14 @@ function statusBadge(routes){
  if(p&&p.semanticReady===true&&p.route==='native-network')return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#163025;color:#b8f0d1;font-size:11px;font-weight:800">'+(sr()?'ART-NET/sACN + PROFIL OK':'ART-NET/sACN + PROFILE OK')+'</span>';
  if(p&&p.semanticReady===true&&p.route==='gateway')return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#163025;color:#b8f0d1;font-size:11px;font-weight:800">'+(sr()?'STANDARDNA RUTA + PROFIL OK':'STANDARD ROUTE + PROFILE OK')+'</span>';
  if(p&&p.transportReady===true&&p.semanticReady!==true)return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#342e18;color:#f5dd91;font-size:11px;font-weight:800">'+(sr()?'RUTA POSTOJI · PROFIL NIJE VERIFIKOVAN':'ROUTE EXISTS · PROFILE NOT VERIFIED')+'</span>';
- if(p&&p.route==='vendor-wireless')return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#342e18;color:#f5dd91;font-size:11px;font-weight:800">'+(sr()?'VENDOR LAB · NIJE PRODUKCIJA':'VENDOR LAB · NOT PRODUCTION')+'</span>';
+ if(p&&p.route==='vendor-wireless')return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#342e18;color:#f5dd91;font-size:11px;font-weight:800">'+(sr()?'DIREKTNA VENDOR KONTROLA · OBAVEZNA':'DIRECT VENDOR CONTROL · REQUIRED')+'</span>';
  return '<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#382124;color:#ffb5b5;font-size:11px;font-weight:800">'+(sr()?'NEMA VERIFIKOVANE RUTE':'NO VERIFIED ROUTE')+'</span>';
 }
 function fixtureCard(row){
  var f=row.fixture,r=routeText(f),modes=dmXModes(f),baseName=(f.manufacturer||'')+' '+(f.model||f.id||''),name=baseName+(row.instanceCount>1?' #'+(row.instanceIndex+1):''),match=patchMatchForRow(row),patch=match&&match.patch,profile=profileForPatch(f,patch),controls=controlSummary(profile);
  var direct=r.direct.length?r.direct.join(' • '):(sr()?'Nije navedena direktna LightingAI ruta.':'No direct LightingAI route listed.');
  if(r.production&&r.production.route==='gateway'&&!r.direct.length)direct=sr()?'Standardna kontrola preko Art-Net/sACN + DMX/CRMX interfejsa.':'Standard control via Art-Net/sACN + DMX/CRMX interface.';
- if(r.production&&r.production.route==='vendor-wireless'&&!r.direct.length)direct=sr()?'Vlasnički Bluetooth/app protokol — laboratorijska dijagnostika, nije produkcijski CONTROL izlaz.':'Proprietary Bluetooth/app protocol — lab diagnostics only, not a production CONTROL output.';
+ if(r.production&&r.production.route==='vendor-wireless'&&!r.direct.length)direct=sr()?'Direktni Bluetooth/app protokol je obavezni deo LightingAI CONTROL-a, ali ovaj vendor put još nije verifikovan.':'Direct Bluetooth/app control is required for LightingAI CONTROL, but this vendor path is not yet verified.';
  var ext=r.external.length?'<div class="muted small" style="margin-top:7px"><b>'+(sr()?'Potreban interfejs: ':'Interface required: ')+'</b>'+esc(r.external.join(' • '))+'</div>':'';
  var mode=modes.length?'<div class="muted small" style="margin-top:7px"><b>'+(sr()?'DMX profili: ':'DMX profiles: ')+'</b>'+modes.length+'</div>':'';
  var mapped=patch?(profile?'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#10251d;color:#b8f0d1;font-size:11px"><b>'+(sr()?'DMX PATCH + VERIFIKOVAN PROFIL':'DMX PATCH + VERIFIED PROFILE')+'</b> · U'+Number(patch.universe||1)+' · '+(sr()?'adresa ':'address ')+Number(patch.start||1)+(patch.mode?' · '+esc(patch.mode):'')+(controls.length?' · '+esc(controls.join(' / ')):'')+'</div>':'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#342e18;color:#f5dd91;font-size:11px"><b>'+(sr()?'DMX PATCH POSTOJI, ALI PROFIL NIJE VERIFIKOVAN':'DMX PATCH EXISTS, BUT PROFILE IS NOT VERIFIED')+'</b></div>'):'<div style="margin-top:8px;padding:8px;border-radius:10px;background:#342e18;color:#f5dd91;font-size:11px">'+(sr()?'Nije povezan sa DMX Patch-om.':'Not mapped in DMX Patch.')+'</div>';
@@ -138,7 +138,7 @@ function render(){
  card.querySelectorAll('.control-open-fixture').forEach(function(btn){btn.onclick=function(){var api=window.LightingAIArtNetControl,index=Number(btn.dataset.patchIndex);if(api&&typeof api.focusPatchIndex==='function'&&Number.isInteger(index)){api.focusPatchIndex(index);return}if(api&&typeof api.focusFixture==='function')api.focusFixture(btn.dataset.fixture);};});
  return true;
 }
-window.LightingAIControlDashboard={render:render,version:'0.16-production-dmx-first'};
+window.LightingAIControlDashboard={render:render,version:'0.17-direct-vendor-required'};
 var tries=0,timer=setInterval(function(){tries++;if(render()||tries>200)clearInterval(timer)},120);
 setInterval(periodicRender,900);
 var old=window.setLanguage;

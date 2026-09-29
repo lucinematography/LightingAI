@@ -390,6 +390,16 @@ function renderGattProfile(payload){
    reads.map(x=>'<div class="muted small" style="margin-top:4px"><code>'+esc(x&&x.uuid||'')+'</code> · status '+esc(x&&x.status)+' · '+esc(x&&x.hex||'')+(x&&x.text?' · '+esc(x.text):'')+(x&&x.error?' · '+esc(x.error):'')+'</div>').join('')+
    '</div>';
  }
+ const subs=payload&&Array.isArray(payload.notificationSubscriptions)?payload.notificationSubscriptions:[];
+ const notes=payload&&Array.isArray(payload.notificationValues)?payload.notificationValues:[];
+ if(payload&&payload.passiveObservationRequested){
+  html+='<div style="margin-top:9px;padding-top:7px;border-top:1px solid #2d333a"><b>'+(lang()==='sr'?'PASIVNO ASTERA BTB PRAĆENJE':'PASSIVE ASTERA BTB OBSERVATION')+'</b>'+
+   '<div class="muted small" style="margin-top:4px">'+(lang()==='sr'?'Standardni CCCD subscribe bez proprietary karakterističnih WRITE komandi.':'Standard CCCD subscription only; no proprietary characteristic WRITE commands.')+'</div>'+
+   '<div class="muted small" style="margin-top:4px">'+(lang()==='sr'?'Pretplate':'Subscriptions')+': '+subs.length+' · '+(lang()==='sr'?'primljena obaveštenja':'notifications received')+': '+notes.length+'</div>'+
+   subs.map(x=>'<div class="muted small" style="margin-top:4px"><code>'+esc(x&&x.uuid||'')+'</code> · status '+esc(x&&x.status)+(x&&x.error?' · '+esc(x.error):'')+'</div>').join('')+
+   notes.map(x=>'<div class="muted small" style="margin-top:4px"><code>'+esc(x&&x.uuid||'')+'</code> · +'+esc(x&&x.elapsedMs||0)+' ms · '+esc(x&&x.hex||'')+(x&&x.text?' · '+esc(x.text):'')+'</div>').join('')+
+   '</div>';
+ }
  html+='</div>';
  return html;
 }
@@ -537,7 +547,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.12-astera-btb-service-fingerprint',diagnosticsRevision:'astera-btb-private-service-v10',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.13-astera-btb-passive-observation',diagnosticsRevision:'astera-btb-passive-notify-v11',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

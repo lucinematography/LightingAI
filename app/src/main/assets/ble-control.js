@@ -322,6 +322,37 @@ window.LightingAIAsteraBtbClassicInspectionResult=function(id,payload,error){
  if(address)setTimeout(()=>inspectGatt(address,null,true),250);
 };
 
+function gattFlags(ch){
+ const out=[];
+ if(ch&&ch.readable)out.push('READ');
+ if(ch&&ch.writable)out.push('WRITE');
+ if(ch&&ch.writeNoResponse)out.push('WRITE-NR');
+ if(ch&&ch.notifiable)out.push('NOTIFY');
+ if(ch&&ch.indicatable)out.push('INDICATE');
+ return out.length?out.join('/'):'—';
+}
+function renderGattProfile(payload){
+ const services=payload&&Array.isArray(payload.services)?payload.services:[];
+ const reads=payload&&Array.isArray(payload.readValues)?payload.readValues:[];
+ const incomplete=!!(payload&&payload.diagnosticIncomplete);
+ const warning=payload&&payload.diagnosticWarning?String(payload.diagnosticWarning):'';
+ let html='<div style="margin-top:6px"><b>'+esc(t().inspected)+': '+services.length+'</b>';
+ if(incomplete)html+='<div class="status warn" style="margin-top:6px">'+esc((lang()==='sr'?'PARCIJALNI REZULTAT':'PARTIAL RESULT')+(warning?' · '+warning:''))+'</div>';
+ html+=services.map(s=>{
+  const chars=Array.isArray(s&&s.characteristics)?s.characteristics:[];
+  return '<div style="margin-top:8px;padding-top:7px;border-top:1px solid #2d333a">'+
+   '<div><b>SERVICE</b> <code>'+esc(s&&s.uuid||'')+'</code></div>'+
+   chars.map(ch=>'<div class="muted small" style="margin-top:4px"><code>'+esc(ch&&ch.uuid||'')+'</code> · '+esc(gattFlags(ch))+'</div>').join('')+
+   '</div>';
+ }).join('');
+ if(reads.length){
+  html+='<div style="margin-top:9px;padding-top:7px;border-top:1px solid #2d333a"><b>'+(lang()==='sr'?'PROČITANE VREDNOSTI':'READ VALUES')+'</b>'+
+   reads.map(x=>'<div class="muted small" style="margin-top:4px"><code>'+esc(x&&x.uuid||'')+'</code> · status '+esc(x&&x.status)+' · '+esc(x&&x.hex||'')+(x&&x.text?' · '+esc(x.text):'')+(x&&x.error?' · '+esc(x.error):'')+'</div>').join('')+
+   '</div>';
+ }
+ html+='</div>';
+ return html;
+}
 function inspectGatt(address,button,forceAstera){
  const tr=transport();
  const astera=forceAstera===true||!!(button&&button.dataset&&button.dataset.astera==='1');
@@ -387,7 +418,9 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
  }
  const services=payload&&Array.isArray(payload.services)?payload.services:[];
  const labels=diagnosticLabelsFromServices(services);
- if(result)result.textContent=t().inspected+': '+services.map(s=>String(s.uuid||'')+' ['+((s.characteristics||[]).length)+']').join(' · ')+(labels.length?' · '+labels.join(' · '):'');
+ if(result){
+  result.innerHTML=renderGattProfile(payload)+(labels.length?'<div class="status warn" style="margin-top:6px">'+esc(labels.join(' · '))+'</div>':'');
+ }
  status(t().inspected+': '+services.length,services.length>0);
 };
 window.LightingAIBleDiscoveryResult=function(id,devices,error){
@@ -455,7 +488,7 @@ function resetBleUiLifecycle(){
 }
 window.LightingAIBleLifecyclePause=resetBleUiLifecycle;
 window.LightingAIBleLifecycleResume=resetBleUiLifecycle;
-window.LightingAIBleControl={version:'0.6-direct-astera-inspection',diagnosticsRevision:'astera-btb-direct-gatt-v8',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
+window.LightingAIBleControl={version:'0.7-visible-gatt-profile',diagnosticsRevision:'astera-btb-visible-profile-v9',discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

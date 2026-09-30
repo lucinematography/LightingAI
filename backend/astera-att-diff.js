@@ -1,0 +1,163 @@
+#!/usr/bin/env node
+'use strict';
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+function stableWriteSignature(event) {
+  return [
+    String(event && event.direction || ''),
+    String(event && event.opcodeName || ''),
+    String(event && event.serviceUuid || '').toLowerCase(),
+    String(event && event.attributeUuid || '').toLowerCase(),
+    event && event.handle != null ? String(event.handle) : '',
+    String(event && event.valueHex || '').toUpperCase()
+  ].join('|');
+}
+
+function countBySignature(events) {
+  const map = new Map();
+  for (const event of Array.isArray(events) ? events : []) {
+    const signature = stableWriteSignature(event);
+    const row = map.get(signature) || {signature, count:0, sample:event};
+    row.count++;
+    map.set(signature, row);
+  }
+  return map;
+}
+
+function subtractCounts(primary, secondary) {
+  const out = [];
+  for (const [signature, row] of primary.entries()) {
+    const other = secondary.get(signature);
+    const remaining = Math.max(0, row.count - (other ? other.count : 0));
+    if (remaining > 0) {
+      out.push({
+        signature,
+        count: remaining,
+        sample: row.sample
+      });
+    }
+  }
+  return out;
+}
+
+function commonCounts(a, b) {
+  const out = [];
+  for (const [signature, row] of a.entries()) {
+    const other = b.get(signature);
+    if (!other) continue;
+    const count = Math.min(row.count, other.count);
+    if (count > 0) out.push({signature, count, sample:row.sample});
+  }
+  return out;
+}
+
+function normalizeCapture(input) {
+  if (!input || typeof input !== 'object') {
+    throw new Error('invalid_capture_json');
+  }
+  const writes = Array.isArray(input.candidateAsteraSessionWrites)
+    ? input.candidateAsteraSessionWrites
+    : [];
+  const notifications = Array.isArray(input.attEvents)
+    ? input.attEvents.filter(e =>
+        e && (e.opcodeName === 'HANDLE_VALUE_NOTIFICATION' ||
+              e.opcodeName === 'HANDLE_VALUE_INDICATION'))
+    : [];
+  return {writes, notifications};
+}
+
+function compareCaptures(referenceInput, testInput, labels = {}) {
+  const reference = normalizeCapture(referenceInput);
+  const test = normalizeCapture(testInput);
+  const refCounts = countBySignature(reference.writes);
+  const testCounts = countBySignature(test.writes);
+
+  const onlyInReference = subtractCounts(refCounts, testCounts);
+  const onlyInTest = subtractCounts(testCounts, refCounts);
+  const common = commonCounts(refCounts, testCounts);
+
+  const refNotificationCounts = countBySignature(reference.notifications);
+  const testNotificationCounts = countBySignature(test.notifications);
+  const notificationOnlyInTest = subtractCounts(
+    testNotificationCounts,
+    refNotificationCounts
+  );
+
+  return {
+    kind: 'LightingAI-Astera-ATT-diff',
+    referenceLabel: labels.reference || 'reference',
+    testLabel: labels.test || 'test',
+    summary: {
+      referenceCandidateWrites: reference.writes.length,
+      testCandidateWrites: test.writes.length,
+      commonCandidateWrites: common.reduce((n, x) => n + x.count, 0),
+      referenceOnlyCandidateWrites: onlyInReference.reduce((n, x) => n + x.count, 0),
+      testOnlyCandidateWrites: onlyInTest.reduce((n, x) => n + x.count, 0),
+      testOnlyNotificationPatterns: notificationOnlyInTest.reduce((n, x) => n + x.count, 0)
+    },
+    commonCandidateWrites: common,
+    onlyInReference,
+    onlyInTest,
+    likelyParameterSpecificWrites: onlyInTest,
+    notificationOnlyInTest
+  };
+}
+
+function parseArgs(argv) {
+  const rest = argv.slice(2);
+  const args = {
+    reference:'',
+    test:'',
+    json:'',
+    referenceLabel:'reference',
+    testLabel:'test'
+  };
+  while (rest.length) {
+    const token = rest.shift();
+    if (token === '--json') args.json = rest.shift() || '';
+    else if (token === '--reference-label') args.referenceLabel = rest.shift() || 'reference';
+    else if (token === '--test-label') args.testLabel = rest.shift() || 'test';
+    else if (!args.reference) args.reference = token;
+    else if (!args.test) args.test = token;
+    else throw new Error('unknown_argument_' + token);
+  }
+  if (!args.reference || !args.test) {
+    throw new Error(
+      'usage: node backend/astera-att-diff.js <reference.json> <test.json> ' +
+      '[--reference-label connect-only] [--test-label dim-change] [--json out.json]'
+    );
+  }
+  return args;
+}
+
+function main() {
+  const args = parseArgs(process.argv);
+  const reference = JSON.parse(fs.readFileSync(args.reference, 'utf8'));
+  const test = JSON.parse(fs.readFileSync(args.test, 'utf8'));
+  const result = compareCaptures(reference, test, {
+    reference: args.referenceLabel,
+    test: args.testLabel
+  });
+  const body = JSON.stringify(result, null, 2) + '\n';
+  if (args.json) fs.writeFileSync(args.json, body);
+  else process.stdout.write(body);
+}
+
+const currentFile = fileURLToPath(import.meta.url);
+const invokedFile = process.argv[1] ? path.resolve(process.argv[1]) : '';
+if (invokedFile && path.resolve(currentFile) === invokedFile) {
+  try {
+    main();
+  } catch (error) {
+    process.stderr.write(String(error && error.message ? error.message : error) + '\n');
+    process.exit(1);
+  }
+}
+
+export {
+  stableWriteSignature,
+  compareCaptures
+};

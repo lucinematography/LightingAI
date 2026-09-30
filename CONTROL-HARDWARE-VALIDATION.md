@@ -115,7 +115,25 @@ The connect-only session analyzer:
 - detects repeatable periodic endpoint candidates when three or more writes occur at a stable interval within every run;
 - labels startup/auth/keepalive findings only as `candidate_only`. Variable bytes may be session/auth values, counters, random data or checksums and must not be replayed.
 
-This session baseline is used to subtract normal connect/auth/keepalive traffic from later parameter captures. It does not prove that the Astera Radio PIN session has been authenticated.
+This session baseline is used to separate normal startup/auth traffic from later parameter captures. It does not prove that the Astera Radio PIN session has been authenticated.
+
+Before parameter diffing, apply the verified startup baseline to both a fresh connect-only reference capture and the changed-parameter capture:
+
+`node backend/astera-att-session-filter.js connect-reference.json session-consensus.json --json connect-filtered.json`
+
+`node backend/astera-att-session-filter.js dim-change.json session-consensus.json --json dim-filtered.json`
+
+The filter is deliberately conservative:
+- the session consensus must have verified the same peer across its runs;
+- the capture peer must match the session peer;
+- every startup endpoint must match the verified common prefix;
+- all stable framing bytes must match; only bytes already proven variable across connect-only runs may vary;
+- filtering stops before the first repeatable periodic/keepalive endpoint, so periodic traffic remains visible to the later diff;
+- a prefix mismatch aborts the analysis instead of silently removing traffic.
+
+Use the filtered captures for the parameter comparison:
+
+`node backend/astera-att-diff.js connect-filtered.json dim-filtered.json --reference-label connect-only --test-label dim-change --json dim-diff.json`
 
 After producing the derived JSON captures, compare them with:
 

@@ -54,6 +54,37 @@ Use official documentation, SDK evidence, publicly verifiable implementation evi
 - required keepalive or sequencing;
 - safe disconnect behavior.
 
+#### Android HCI reference capture
+
+A controlled AsteraApp comparison is permitted only as a research/test step. It is not part of the final LightingAI operator workflow.
+
+1. Enable Android Bluetooth HCI snoop logging in Developer options.
+2. Disable or disconnect unrelated Bluetooth devices where practical so the capture contains the smallest possible amount of unrelated traffic.
+3. Start a fresh capture before each test case.
+4. Run these cases separately:
+   - A: connect/bond the Titan BTB and wait without changing any light parameter;
+   - B: reconnect an already bonded Titan BTB and wait without changing any light parameter;
+   - C: with the official AsteraApp, change only DIM once;
+   - D: in a fresh capture, change only CCT once;
+   - E: only after those are understood, capture one isolated color change.
+5. Export the Android `btsnoop_hci.log` or the equivalent Bluetooth snoop artifact from the bug report.
+6. Do not commit the raw snoop log to the repository. Raw HCI logs can contain traffic from other Bluetooth devices.
+7. Analyze locally with:
+   `node backend/astera-btsnoop-analyzer.js btsnoop_hci.log --address AA:BB:CC:DD:EE:FF --json astera-att.json`
+8. Preserve only the derived Astera-specific JSON needed for protocol analysis.
+
+The analyzer extracts:
+- LE connection handle and peer address;
+- primary service ranges;
+- characteristic and descriptor handle-to-UUID mappings when visible in ATT discovery;
+- ATT Write Request / Write Command;
+- notifications and indications;
+- SMP packets;
+- disconnect reasons;
+- candidate proprietary writes that target the observed Astera private BTB service while excluding the standard CCCD subscription.
+
+A packet becomes protocol evidence only after it is repeatable across captures and its meaning is isolated by changing one operator parameter at a time.
+
 No quick-control button may be enabled during this phase.
 
 ### Phase 3 - physical command proof

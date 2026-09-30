@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
-const assert = require('assert');
-const analyzer = require('./astera-btsnoop-analyzer');
+import assert from 'node:assert';
+import * as analyzer from './astera-btsnoop-analyzer.js';
 
 const EPOCH = 0x00dcddb30f2f8000n;
 

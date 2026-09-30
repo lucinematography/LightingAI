@@ -210,6 +210,8 @@ function parseCapture(buffer, options = {}) {
   const attEvents = [];
   const smpEvents = [];
   const disconnects = [];
+  const preparedWriteFragmentsByConnection = new Map();
+  const preparedWriteTransactions = [];
 
   const firstTimestamp = parsed.records.length ? parsed.records[0].timestampUs : BTSNOOP_EPOCH_DELTA_US;
 
@@ -300,6 +302,82 @@ function parseCapture(buffer, options = {}) {
     }
   }
 
+  function preparedQueue(handle) {
+    const key = connectionKey(handle);
+    if (!preparedWriteFragmentsByConnection.has(key)) {
+      preparedWriteFragmentsByConnection.set(key, new Map());
+    }
+    return preparedWriteFragmentsByConnection.get(key);
+  }
+
+  function rememberPreparedWrite(handle, payload, dir, ts, recordIndex) {
+    if (dir !== 'host_to_controller' || !payload || payload.length < 1) return;
+    const opcode = payload[0];
+    const conn = activeConnection(handle);
+    if (!conn) return;
+
+    if (opcode === 0x16 && payload.length >= 5) {
+      const attributeHandle = payload.readUInt16LE(1);
+      const offset = payload.readUInt16LE(3);
+      const value = payload.subarray(5);
+      const queue = preparedQueue(handle);
+      if (!queue.has(attributeHandle)) queue.set(attributeHandle, []);
+      queue.get(attributeHandle).push({
+        offset,
+        valueHex:hex(value),
+        recordIndex,
+        elapsedMs:elapsedMs(ts)
+      });
+      return;
+    }
+
+    if (opcode === 0x18 && payload.length >= 2) {
+      const executeFlag = payload[1];
+      const queue = preparedQueue(handle);
+      if (executeFlag === 0x01) {
+        for (const [attributeHandle, rawFragments] of queue.entries()) {
+          const fragments = rawFragments.slice().sort((a,b)=>a.offset-b.offset);
+          let expectedOffset = 0;
+          let complete = true;
+          const parts = [];
+          for (const fragment of fragments) {
+            const bytes = payloadBytesFromHex(fragment.valueHex);
+            if (!bytes || fragment.offset !== expectedOffset) {
+              complete = false;
+              break;
+            }
+            parts.push(bytes);
+            expectedOffset += bytes.length;
+          }
+          const value = complete ? Buffer.concat(parts) : Buffer.alloc(0);
+          const transaction = {
+            recordIndex,
+            elapsedMs:elapsedMs(ts),
+            direction:dir,
+            connectionId:conn.connectionId,
+            connectionHandle:handle,
+            peerAddress:conn.address,
+            opcode:0x18,
+            opcodeName:'PREPARED_WRITE_EXECUTE',
+            handle:attributeHandle,
+            valueHex:hex(value),
+            complete,
+            fragments
+          };
+          preparedWriteTransactions.push(transaction);
+          timeline.push({kind:'prepared_write', ...transaction});
+        }
+      }
+      queue.clear();
+    }
+  }
+
+  function payloadBytesFromHex(value) {
+    const text = String(value || '').trim();
+    if (!text || text.length % 2 !== 0 || !/^[0-9a-f]+$/i.test(text)) return null;
+    return Buffer.from(text,'hex');
+  }
+
   function consumeL2cap(connectionHandle, cid, payload, dir, ts, recordIndex) {
     if (cid === ATT_CID) {
       if (!keepConnection(connectionHandle)) return;
@@ -308,6 +386,7 @@ function parseCapture(buffer, options = {}) {
       rememberDiscoveryRequest(connectionHandle, payload, dir);
       applyDiscoveryResponse(connectionHandle, payload, dir, services, handleMap);
       parseDescriptorDiscovery(payload, handleMap);
+      rememberPreparedWrite(connectionHandle, payload, dir, ts, recordIndex);
 
       const opcode = payload.length ? payload[0] : -1;
       const hv = attHandleAndValue(payload);
@@ -325,6 +404,12 @@ function parseCapture(buffer, options = {}) {
         valueHex: hex(hv.value),
         packetHex: hex(payload)
       };
+      if (opcode === 0x16 && payload.length >= 5) {
+        event.prepareOffset = payload.readUInt16LE(3);
+      }
+      if (opcode === 0x18 && payload.length >= 2) {
+        event.executeWriteFlag = payload[1];
+      }
       attEvents.push(event);
       timeline.push({kind:'att', ...event});
       return;
@@ -457,6 +542,17 @@ function parseCapture(buffer, options = {}) {
     else if (record.packet[0] === 0x04) consumeEvent(record.packet, dir, record.timestampUs, index);
   });
 
+  function annotateWrite(event) {
+    if (!event || event.handle == null) return;
+    const map = handleMapsByConnection.get(event.connectionId);
+    const services = servicesByConnection.get(event.connectionId) || [];
+    event.attributeUuid = map?.get(event.handle) || '';
+    event.serviceUuid = serviceForHandle(services, event.handle);
+    if (event.attributeUuid === CCCD_UUID) event.writeClass = 'standard_cccd';
+    else if (event.serviceUuid === ASTERA_BTB_PRIVATE_SERVICE) event.writeClass = 'candidate_astera_session_write';
+    else event.writeClass = 'other_write';
+  }
+
   for (const event of attEvents) {
     if (event.handle == null) continue;
     const map = handleMapsByConnection.get(event.connectionId);
@@ -465,10 +561,12 @@ function parseCapture(buffer, options = {}) {
     event.serviceUuid = serviceForHandle(services, event.handle);
     if ((event.opcode === 0x12 || event.opcode === 0x52) &&
         event.direction === 'host_to_controller') {
-      if (event.attributeUuid === CCCD_UUID) event.writeClass = 'standard_cccd';
-      else if (event.serviceUuid === ASTERA_BTB_PRIVATE_SERVICE) event.writeClass = 'candidate_astera_session_write';
-      else event.writeClass = 'other_write';
+      annotateWrite(event);
     }
+  }
+
+  for (const event of preparedWriteTransactions) {
+    annotateWrite(event);
   }
 
   const serviceList = [];
@@ -486,9 +584,14 @@ function parseCapture(buffer, options = {}) {
     }
   }
 
-  const candidateAsteraSessionWrites = attEvents.filter(e =>
-    e.writeClass === 'candidate_astera_session_write'
-  );
+  const candidateAsteraSessionWrites = [
+    ...attEvents.filter(e =>
+      e.writeClass === 'candidate_astera_session_write'
+    ),
+    ...preparedWriteTransactions.filter(e =>
+      e.writeClass === 'candidate_astera_session_write' && e.complete
+    )
+  ].sort((a,b)=>a.recordIndex-b.recordIndex);
 
   return {
     format: {
@@ -512,6 +615,7 @@ function parseCapture(buffer, options = {}) {
     attEvents,
     smpEvents,
     disconnects,
+    preparedWriteTransactions,
     candidateAsteraSessionWrites,
     timeline
   };

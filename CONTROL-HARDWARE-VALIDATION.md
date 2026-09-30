@@ -80,6 +80,8 @@ The analyzer extracts:
 - ATT MTU request/response and effective negotiated MTU when present;
 - Bluetooth link-security metadata including Encryption Change v1/v2 and key size when exposed by HCI;
 - LE Long Term Key Request occurrence with key material redacted;
+- ATT Error Response details such as insufficient authentication, insufficient encryption and insufficient key size;
+- safe SMP pairing metadata such as IO capability, AuthReq, Secure Connections request, maximum encryption key size and key-distribution flags while redacting key-bearing SMP payloads;
 - primary service ranges;
 - characteristic and descriptor ATT-handle-to-UUID mappings when visible in ATT discovery;
 - explicit `analysisCoverage` and `unmappedHostWrites` when Android uses cached GATT handles and the capture lacks enough discovery traffic for strict UUID mapping;
@@ -89,7 +91,7 @@ The analyzer extracts:
 - disconnect reasons;
 - candidate proprietary writes that target the observed Astera private BTB service while excluding the standard CCCD subscription.
 
-Bluetooth HCI encryption is only evidence that the phone-to-BTB link is encrypted. It must not be interpreted as successful Astera Radio-PIN authentication; the official Astera pairing model separates the Bluetooth link from the Radio PIN / UHF control layer.
+Bluetooth HCI encryption and SMP pairing metadata are only evidence about the phone-to-BTB Bluetooth security layer. They must not be interpreted as successful Astera Radio-PIN authentication; the official Astera pairing model separates the Bluetooth link from the Radio PIN / UHF control layer. ATT errors 0x05/0x0F/0x0C remain standard Bluetooth security evidence, not proof of proprietary Astera command semantics.
 
 If `analysisCoverage.mappingWarning` is `gatt_mapping_incomplete_capture_may_use_cached_handles`, do not conclude that the Astera private service had no traffic. Repeat the mapping capture from a fresh connection/bond state where practical, or inspect the unmapped writes separately until their ATT attribute handles can be tied to verified UUID/service ranges.
 

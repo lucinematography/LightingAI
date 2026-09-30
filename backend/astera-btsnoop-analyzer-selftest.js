@@ -144,6 +144,38 @@ function executeWrite(flag = 0x01) {
   return Buffer.from([0x18, flag]);
 }
 
+function attErrorResponse(requestOpcode, handle, errorCode) {
+  const out = Buffer.alloc(5);
+  out[0] = 0x01;
+  out[1] = requestOpcode;
+  out.writeUInt16LE(handle, 2);
+  out[4] = errorCode;
+  return out;
+}
+
+function smpPairingRequest({
+  ioCapability=0x03,
+  oobDataFlag=0x00,
+  authReq=0x0d,
+  maxEncryptionKeySize=0x10,
+  initiatorKeyDistribution=0x01,
+  responderKeyDistribution=0x01
+} = {}) {
+  return Buffer.from([
+    0x01,
+    ioCapability,
+    oobDataFlag,
+    authReq,
+    maxEncryptionKeySize,
+    initiatorKeyDistribution,
+    responderKeyDistribution
+  ]);
+}
+
+function smpSecurityRequest(authReq=0x09) {
+  return Buffer.from([0x0b,authReq]);
+}
+
 const connectionHandle = 0x000b;
 const address = '11:22:33:44:55:66';
 const asteraService = analyzer.ASTERA_BTB_PRIVATE_SERVICE;
@@ -211,6 +243,15 @@ const noiseWrite = Buffer.concat([
 p = acl(connectionHandle, 0x0004, noiseWrite, false);
 packets.push(record(p.packet, p.flags, 55));
 
+const protectedRead = Buffer.alloc(3);
+protectedRead[0] = 0x0a;
+protectedRead.writeUInt16LE(valueHandle,1);
+p = acl(connectionHandle, 0x0004, protectedRead, false);
+packets.push(record(p.packet,p.flags,55.2));
+
+p = acl(connectionHandle, 0x0004, attErrorResponse(0x0a,valueHandle,0x05), true);
+packets.push(record(p.packet,p.flags,55.3));
+
 p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 0, '1122'), false);
 packets.push(record(p.packet, p.flags, 56));
 
@@ -251,6 +292,12 @@ const secondWrite = Buffer.concat([
 ]);
 p = acl(connectionHandle, 0x0004, secondWrite, false);
 packets.push(record(p.packet, p.flags, 110));
+
+p = acl(connectionHandle, 0x0006, smpPairingRequest(), false);
+packets.push(record(p.packet,p.flags,118));
+
+p = acl(connectionHandle, 0x0006, smpSecurityRequest(0x09), true);
+packets.push(record(p.packet,p.flags,119));
 
 // Key-bearing SMP content must be redacted from derived JSON.
 const smpEncryptionInformation = Buffer.concat([
@@ -329,13 +376,40 @@ assert.strictEqual(result.disconnects.length, 1);
 assert.strictEqual(result.disconnects[0].reason, 0x13);
 assert.strictEqual(result.disconnects[0].reasonName, 'remote_user_terminated_connection');
 
-assert.strictEqual(result.smpEvents.length, 1);
-assert.strictEqual(result.smpEvents[0].opcodeName, 'ENCRYPTION_INFORMATION');
-assert.strictEqual(result.smpEvents[0].sensitivePayloadRedacted, true);
-assert.strictEqual(Object.prototype.hasOwnProperty.call(result.smpEvents[0], 'packetHex'), false);
+assert.strictEqual(result.smpEvents.length, 3);
+const pairingRequest = result.smpEvents.find(e => e.opcodeName === 'PAIRING_REQUEST');
+assert.ok(pairingRequest, 'SMP Pairing Request metadata missing');
+assert.strictEqual(pairingRequest.ioCapability, 0x03);
+assert.strictEqual(pairingRequest.authReq, 0x0d);
+assert.strictEqual(pairingRequest.bondingFlags, 0x01);
+assert.strictEqual(pairingRequest.mitmRequested, true);
+assert.strictEqual(pairingRequest.secureConnectionsRequested, true);
+assert.strictEqual(pairingRequest.maxEncryptionKeySize, 16);
+assert.strictEqual(pairingRequest.initiatorKeyDistribution, 0x01);
+assert.strictEqual(pairingRequest.responderKeyDistribution, 0x01);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(pairingRequest, 'packetHex'), false);
+
+const securityRequest = result.smpEvents.find(e => e.opcodeName === 'SECURITY_REQUEST');
+assert.ok(securityRequest, 'SMP Security Request metadata missing');
+assert.strictEqual(securityRequest.authReq, 0x09);
+assert.strictEqual(securityRequest.secureConnectionsRequested, true);
+
+const encryptionInformation = result.smpEvents.find(e => e.opcodeName === 'ENCRYPTION_INFORMATION');
+assert.ok(encryptionInformation, 'SMP Encryption Information event missing');
+assert.strictEqual(encryptionInformation.sensitivePayloadRedacted, true);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(encryptionInformation, 'packetHex'), false);
 assert.strictEqual(result.privacy.smpKeyMaterialRedacted, true);
+assert.strictEqual(result.privacy.smpPairingMetadataOnly, true);
 assert.strictEqual(result.privacy.securityKeyMaterialRedacted, true);
 assert.strictEqual(result.privacy.addressFilterRequiredByCli, true);
+
+assert.strictEqual(result.attErrors.length, 1);
+assert.strictEqual(result.attErrors[0].requestOpcodeName, 'READ_REQUEST');
+assert.strictEqual(result.attErrors[0].errorHandle, valueHandle);
+assert.strictEqual(result.attErrors[0].errorCode, 0x05);
+assert.strictEqual(result.attErrors[0].errorName, 'insufficient_authentication');
+assert.strictEqual(result.attErrors[0].attributeUuid, vendorCharacteristic);
+assert.strictEqual(result.attErrors[0].serviceUuid, asteraService);
 
 assert.strictEqual(result.mtuEvents.length, 2);
 assert.strictEqual(result.mtuEvents[0].opcodeName, 'EXCHANGE_MTU_REQUEST');
@@ -412,6 +486,8 @@ process.stdout.write(JSON.stringify({
   preparedWriteTransactions: result.preparedWriteTransactions.length,
   mtuEffective: result.mtuExchanges[0].effectiveMtu,
   securityEvents: result.securityEvents.length,
+  attErrors: result.attErrors.length,
+  smpPairingMetadataEvents: result.smpEvents.length,
   attributeUuidMappings: result.analysisCoverage.attributeUuidMappings,
   cachedUnmappedWrites: cachedResult.unmappedHostWrites.length,
   connections: result.connections.length,

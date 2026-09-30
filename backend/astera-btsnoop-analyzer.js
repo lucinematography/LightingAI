@@ -41,6 +41,46 @@ const ATT_NAMES = {
   0x52: 'WRITE_COMMAND'
 };
 
+const ATT_ERROR_NAMES = {
+  0x01:'invalid_handle',
+  0x02:'read_not_permitted',
+  0x03:'write_not_permitted',
+  0x04:'invalid_pdu',
+  0x05:'insufficient_authentication',
+  0x06:'request_not_supported',
+  0x07:'invalid_offset',
+  0x08:'insufficient_authorization',
+  0x09:'prepare_queue_full',
+  0x0a:'attribute_not_found',
+  0x0b:'attribute_not_long',
+  0x0c:'insufficient_encryption_key_size',
+  0x0d:'invalid_attribute_value_length',
+  0x0e:'unlikely_error',
+  0x0f:'insufficient_encryption',
+  0x10:'unsupported_group_type',
+  0x11:'insufficient_resources',
+  0x12:'database_out_of_sync',
+  0x13:'value_not_allowed'
+};
+
+const SMP_FAILURE_NAMES = {
+  0x01:'passkey_entry_failed',
+  0x02:'oob_not_available',
+  0x03:'authentication_requirements',
+  0x04:'confirm_value_failed',
+  0x05:'pairing_not_supported',
+  0x06:'encryption_key_size',
+  0x07:'command_not_supported',
+  0x08:'unspecified_reason',
+  0x09:'repeated_attempts',
+  0x0a:'invalid_parameters',
+  0x0b:'dhkey_check_failed',
+  0x0c:'numeric_comparison_failed',
+  0x0d:'br_edr_pairing_in_progress',
+  0x0e:'cross_transport_key_derivation_not_allowed',
+  0x0f:'key_rejected'
+};
+
 const HCI_REASON_NAMES = {
   0x08: 'connection_timeout',
   0x13: 'remote_user_terminated_connection',
@@ -99,6 +139,47 @@ function uuidFromAtt(bytes) {
   if (bytes.length === 2) return uuid16(bytes.readUInt16LE(0));
   if (bytes.length === 16) return uuid128Le(bytes);
   return hex(bytes);
+}
+
+function safeSmpMetadata(payload) {
+  if (!payload || payload.length < 1) return {};
+  const opcode = payload[0];
+  if ((opcode === 0x01 || opcode === 0x02) && payload.length >= 7) {
+    const authReq = payload[3];
+    return {
+      ioCapability:payload[1],
+      oobDataFlag:payload[2],
+      authReq,
+      bondingFlags:authReq & 0x03,
+      mitmRequested:(authReq & 0x04) !== 0,
+      secureConnectionsRequested:(authReq & 0x08) !== 0,
+      keypressRequested:(authReq & 0x10) !== 0,
+      ct2Requested:(authReq & 0x20) !== 0,
+      maxEncryptionKeySize:payload[4],
+      initiatorKeyDistribution:payload[5],
+      responderKeyDistribution:payload[6]
+    };
+  }
+  if (opcode === 0x05 && payload.length >= 2) {
+    const failureReason = payload[1];
+    return {
+      failureReason,
+      failureReasonName:SMP_FAILURE_NAMES[failureReason] ||
+        ('smp_failure_0x' + failureReason.toString(16).padStart(2,'0'))
+    };
+  }
+  if (opcode === 0x0b && payload.length >= 2) {
+    const authReq = payload[1];
+    return {
+      authReq,
+      bondingFlags:authReq & 0x03,
+      mitmRequested:(authReq & 0x04) !== 0,
+      secureConnectionsRequested:(authReq & 0x08) !== 0,
+      keypressRequested:(authReq & 0x10) !== 0,
+      ct2Requested:(authReq & 0x20) !== 0
+    };
+  }
+  return {};
 }
 
 function parseBtsnoop(buffer) {
@@ -209,6 +290,7 @@ function parseCapture(buffer, options = {}) {
   const timeline = [];
   const attEvents = [];
   const smpEvents = [];
+  const attErrors = [];
   const disconnects = [];
   const preparedWriteFragmentsByConnection = new Map();
   const preparedWriteTransactions = [];
@@ -407,6 +489,16 @@ function parseCapture(buffer, options = {}) {
         valueHex: hex(hv.value),
         packetHex: hex(payload)
       };
+      if (opcode === 0x01 && payload.length >= 5) {
+        event.requestOpcode = payload[1];
+        event.requestOpcodeName = ATT_NAMES[event.requestOpcode] ||
+          ('ATT_0x' + event.requestOpcode.toString(16).padStart(2,'0'));
+        event.errorHandle = payload.readUInt16LE(2);
+        event.errorCode = payload[4];
+        event.errorName = ATT_ERROR_NAMES[event.errorCode] ||
+          ('att_error_0x' + event.errorCode.toString(16).padStart(2,'0'));
+        attErrors.push(event);
+      }
       if (opcode === 0x16 && payload.length >= 5) {
         event.prepareOffset = payload.readUInt16LE(3);
       }
@@ -463,7 +555,8 @@ function parseCapture(buffer, options = {}) {
         opcode,
         opcodeName: SMP_NAMES[opcode] || ('SMP_0x' + opcode.toString(16).padStart(2, '0')),
         packetLength: payload.length,
-        sensitivePayloadRedacted: true
+        sensitivePayloadRedacted: true,
+        ...safeSmpMetadata(payload)
       };
       smpEvents.push(event);
       timeline.push({kind:'smp', ...event});
@@ -671,6 +764,13 @@ function parseCapture(buffer, options = {}) {
     annotateWrite(event);
   }
 
+  for (const event of attErrors) {
+    const map = handleMapsByConnection.get(event.connectionId);
+    const services = servicesByConnection.get(event.connectionId) || [];
+    event.attributeUuid = map?.get(event.errorHandle) || '';
+    event.serviceUuid = serviceForHandle(services,event.errorHandle);
+  }
+
   const serviceList = [];
   for (const [connectionId, services] of servicesByConnection.entries()) {
     const conn = connectionById.get(connectionId);
@@ -758,7 +858,8 @@ function parseCapture(buffer, options = {}) {
       addressFilterRequiredByCli: true,
       smpKeyMaterialRedacted: true,
       vendorPayloadsMayContainSensitiveSessionData: true,
-      securityKeyMaterialRedacted: true
+      securityKeyMaterialRedacted: true,
+      smpPairingMetadataOnly: true
     },
     connections: connections.filter(c =>
       !addressFilter || normalizeAddress(c.address) === addressFilter
@@ -768,6 +869,7 @@ function parseCapture(buffer, options = {}) {
     analysisCoverage,
     unmappedHostWrites,
     attEvents,
+    attErrors,
     smpEvents,
     disconnects,
     preparedWriteTransactions,

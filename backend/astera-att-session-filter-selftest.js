@@ -3,6 +3,7 @@
 
 import assert from 'node:assert';
 import { analyzeSessionCaptures } from './astera-att-session-consensus.js';
+import { compareCaptures } from './astera-att-diff.js';
 import {
   startupPrefix,
   filterSessionBaseline,
@@ -85,6 +86,37 @@ assert.strictEqual(
   3
 );
 
+const freshReference={
+  filter:{address},
+  analysisCoverage:{mappingWarning:''},
+  candidateAsteraSessionWrites:[
+    write(authUuid,'AA55CC88',100,1),
+    write(setupUuid,'DEAD',200,2),
+    write(keepaliveUuid,'55AA',1000,3),
+    write(keepaliveUuid,'55AA',2000,4),
+    write(keepaliveUuid,'55AA',3000,5)
+  ],
+  attEvents:[]
+};
+const filteredReference=filterSessionBaseline(freshReference,session);
+const dimDiff=compareCaptures(
+  filteredReference,
+  filtered,
+  {reference:'connect-filtered',test:'dim-filtered'}
+);
+assert.strictEqual(dimDiff.captureIdentity.verifiedMatch,true);
+assert.strictEqual(dimDiff.summary.commonCandidateWrites,3);
+assert.strictEqual(dimDiff.summary.testOnlyCandidateWrites,1);
+assert.strictEqual(dimDiff.candidateParameterSpecificWrites.length,1);
+assert.strictEqual(
+  dimDiff.candidateParameterSpecificWrites[0].sample.attributeUuid,
+  dimUuid
+);
+assert.strictEqual(
+  dimDiff.candidateParameterSpecificWrites[0].sample.valueHex,
+  'BEEF'
+);
+
 const wrongPeer={
   ...parameterCapture,
   filter:{address:'AA:BB:CC:DD:EE:FF'}
@@ -158,5 +190,6 @@ process.stdout.write(JSON.stringify({
   startupPrefixWritesRemoved:filtered.sessionBaselineFilter.startupPrefixWritesRemoved,
   remainingCandidateWriteCount:filtered.sessionBaselineFilter.remainingCandidateWriteCount,
   firstRemainingCandidate:filtered.candidateAsteraSessionWrites[0].valueHex,
-  periodicEndpointCandidatesPreserved:filtered.sessionBaselineFilter.periodicEndpointCandidatesPreserved
+  periodicEndpointCandidatesPreserved:filtered.sessionBaselineFilter.periodicEndpointCandidatesPreserved,
+  endToEndDimCandidates:dimDiff.candidateParameterSpecificWrites.length
 },null,2)+'\n');

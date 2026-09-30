@@ -5,6 +5,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+function normalizePeerAddress(value) {
+  return String(value || '').trim().replace(/-/g, ':').toUpperCase();
+}
+
+function diffPeerAddress(diff) {
+  if (!diff || typeof diff !== 'object') return '';
+  const identity = diff.captureIdentity;
+  return identity && identity.peerAddress
+    ? normalizePeerAddress(identity.peerAddress)
+    : '';
+}
+
 function endpointIdentity(row) {
   if (row && row.endpoint) return String(row.endpoint);
   const e = row && row.sample ? row.sample : {};
@@ -99,6 +111,32 @@ function buildConsensus(diffInputs, options = {}) {
     throw new Error('at_least_' + minimumRuns + '_diff_captures_required');
   }
 
+  const peerAddresses = diffInputs.map(diffPeerAddress);
+  const knownPeerAddresses = new Set(peerAddresses.filter(Boolean));
+  const missingPeerAddresses = peerAddresses.filter(x => !x).length;
+
+  if (knownPeerAddresses.size > 1) {
+    throw new Error('peer_address_mismatch_across_diff_captures');
+  }
+  if (knownPeerAddresses.size === 1 && missingPeerAddresses > 0) {
+    throw new Error('peer_address_missing_in_some_diff_captures');
+  }
+
+  const peerAddress = knownPeerAddresses.size === 1
+    ? [...knownPeerAddresses][0]
+    : '';
+  const captureIdentity = {
+    peerAddress,
+    verifiedAcrossRuns:!!(
+      peerAddress &&
+      missingPeerAddresses === 0 &&
+      peerAddresses.length === diffInputs.length
+    ),
+    warning:knownPeerAddresses.size === 0
+      ? 'peer_address_unavailable_in_all_diff_inputs'
+      : ''
+  };
+
   const buckets = new Map();
 
   diffInputs.forEach((diff, runIndex) => {
@@ -162,6 +200,7 @@ function buildConsensus(diffInputs, options = {}) {
     kind:'LightingAI-Astera-ATT-consensus',
     minimumRuns,
     analyzedRuns:diffInputs.length,
+    captureIdentity,
     summary:{
       repeatableCandidateEndpoints:repeatableCandidates.length,
       partialCandidateEndpoints:partialCandidates.length
@@ -214,6 +253,8 @@ if (invokedFile && path.resolve(currentFile) === invokedFile) {
 }
 
 export {
+  normalizePeerAddress,
+  diffPeerAddress,
   endpointIdentity,
   candidateRows,
   byteConsensus,

@@ -101,6 +101,8 @@ After producing the derived JSON captures, compare them with:
 
 `node backend/astera-att-diff.js connect-only.json dim-change.json --reference-label connect-only --test-label dim-change --json dim-diff.json`
 
+The diff analyzer refuses captures that carry `analysisCoverage.mappingWarning`. This is deliberate: an Android GATT-cache capture with unmapped writes must not be interpreted as a negative result. Repeat the capture with sufficient discovery traffic or establish the ATT handle-to-UUID mapping before differential analysis.
+
 Repeat separately for CCT and color. The diff tool treats test-only writes and changed payloads as candidates, not as proven commands. Characteristic UUID is the preferred logical endpoint identity; the ATT attribute handle is used only as a fallback when UUID mapping is unavailable. The HCI connection handle is tracked separately as connection metadata and is never treated as the command endpoint identity.
 
 For each isolated operator action, produce at least three separate diff JSON files and run:

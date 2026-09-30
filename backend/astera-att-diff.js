@@ -102,9 +102,18 @@ function changedEndpointPayloads(referenceEvents, testEvents) {
   return out;
 }
 
-function normalizeCapture(input) {
+function normalizeCapture(input, label = 'capture') {
   if (!input || typeof input !== 'object') {
     throw new Error('invalid_capture_json');
+  }
+  const mappingWarning = input.analysisCoverage &&
+    typeof input.analysisCoverage.mappingWarning === 'string'
+      ? input.analysisCoverage.mappingWarning
+      : '';
+  if (mappingWarning) {
+    throw new Error(
+      label + '_gatt_mapping_incomplete_' + mappingWarning
+    );
   }
   const writes = Array.isArray(input.candidateAsteraSessionWrites)
     ? input.candidateAsteraSessionWrites
@@ -118,8 +127,8 @@ function normalizeCapture(input) {
 }
 
 function compareCaptures(referenceInput, testInput, labels = {}) {
-  const reference = normalizeCapture(referenceInput);
-  const test = normalizeCapture(testInput);
+  const reference = normalizeCapture(referenceInput, 'reference');
+  const test = normalizeCapture(testInput, 'test');
   const refCounts = countBySignature(reference.writes);
   const testCounts = countBySignature(test.writes);
 

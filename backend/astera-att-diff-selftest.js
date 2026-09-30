@@ -80,6 +80,24 @@ const duplicateReference = {
   ],
   attEvents:[]
 };
+const incompleteMapping = {
+  analysisCoverage:{
+    mappingWarning:'gatt_mapping_incomplete_capture_may_use_cached_handles',
+    unmappedHostWriteCount:1
+  },
+  unmappedHostWrites:[write('DEAD')],
+  candidateAsteraSessionWrites:[],
+  attEvents:[]
+};
+assert.throws(
+  () => compareCaptures(incompleteMapping, test),
+  /reference_gatt_mapping_incomplete_gatt_mapping_incomplete_capture_may_use_cached_handles/
+);
+assert.throws(
+  () => compareCaptures(reference, incompleteMapping),
+  /test_gatt_mapping_incomplete_gatt_mapping_incomplete_capture_may_use_cached_handles/
+);
+
 const duplicateDiff = compareCaptures(duplicateReference, duplicateTest);
 assert.strictEqual(duplicateDiff.summary.testOnlyCandidateWrites, 1);
 assert.strictEqual(duplicateDiff.onlyInTest[0].count, 1);

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('fs');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const BTSNOOP_MAGIC = Buffer.from('btsnoop\0', 'binary');
 const BTSNOOP_VERSION = 1;
@@ -413,7 +415,9 @@ function main() {
   else process.stdout.write(body);
 }
 
-if (require.main === module) {
+const currentFile = fileURLToPath(import.meta.url);
+const invokedFile = process.argv[1] ? path.resolve(process.argv[1]) : '';
+if (invokedFile && path.resolve(currentFile) === invokedFile) {
   try {
     main();
   } catch (error) {
@@ -422,7 +426,7 @@ if (require.main === module) {
   }
 }
 
-module.exports = {
+export {
   parseBtsnoop,
   parseCapture,
   uuidFromAtt,

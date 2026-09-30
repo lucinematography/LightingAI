@@ -91,7 +91,20 @@ After producing the derived JSON captures, compare them with:
 
 `node backend/astera-att-diff.js connect-only.json dim-change.json --reference-label connect-only --test-label dim-change --json dim-diff.json`
 
-Repeat separately for CCT and color. The diff tool treats test-only writes and changed payloads as candidates, not as proven commands. HCI connection handles are not treated as stable identity when a characteristic UUID is available. A candidate becomes protocol evidence only after the same endpoint/byte-level relationship repeats across at least three controlled captures of the same isolated operator action. It becomes a verified control command only after a later physical replay reproduces only the intended fixture change.
+Repeat separately for CCT and color. The diff tool treats test-only writes and changed payloads as candidates, not as proven commands. HCI connection handles are not treated as stable identity when a characteristic UUID is available.
+
+For each isolated operator action, produce at least three separate diff JSON files and run:
+
+`node backend/astera-att-consensus.js dim-run1-diff.json dim-run2-diff.json dim-run3-diff.json --json dim-consensus.json`
+
+The consensus analyzer:
+- requires at least three independent diff captures;
+- groups by logical endpoint rather than transient HCI connection handle when a characteristic UUID exists;
+- reports only endpoints present across every analyzed run as repeatable candidates;
+- shows byte positions that are stable across payloads and positions that vary;
+- never labels a repeatable candidate as a verified DIM/CCT/COLOR/FX command.
+
+A candidate becomes protocol evidence only after the same endpoint/byte-level relationship repeats across at least three controlled captures of the same isolated operator action. It becomes a verified control command only after a later physical replay reproduces only the intended fixture change.
 
 Do not combine DIM, CCT and color changes in the same reference capture because that destroys causal isolation.
 

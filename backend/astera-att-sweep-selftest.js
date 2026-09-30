@@ -173,6 +173,59 @@ assert.strictEqual(
   false
 );
 
+const checksumEndpoint='host_to_controller|WRITE_COMMAND|0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65|uuid:bbbbbbbb-cccc-dddd-eeee-ffffffffffff';
+function checksumConsensus(parameterByte){
+  const header=0xA5;
+  const checksum=header ^ parameterByte;
+  return {
+    kind:'LightingAI-Astera-ATT-consensus',
+    captureIdentity:{
+      peerAddress:'11:22:33:44:55:66',
+      verifiedAcrossRuns:true,
+      warning:''
+    },
+    repeatableCandidates:[{
+      endpoint:checksumEndpoint,
+      byteConsensus:{
+        payloadLength:3,
+        stableBytes:[
+          {index:0,hex:header.toString(16).padStart(2,'0').toUpperCase()},
+          {index:1,hex:parameterByte.toString(16).padStart(2,'0').toUpperCase()},
+          {index:2,hex:checksum.toString(16).padStart(2,'0').toUpperCase()}
+        ],
+        variableByteIndexes:[],
+        exactPayloadRepeat:true
+      }
+    }]
+  };
+}
+
+const checksumSweep=analyzeSweep({
+  parameter:'DIM-checksum-candidate',
+  cases:[
+    {label:'16',value:16,consensus:checksumConsensus(0x10)},
+    {label:'32',value:32,consensus:checksumConsensus(0x20)},
+    {label:'48',value:48,consensus:checksumConsensus(0x30)},
+    {label:'64',value:64,consensus:checksumConsensus(0x40)}
+  ]
+});
+const checksumRow=checksumSweep.endpoints.find(x=>x.endpoint===checksumEndpoint);
+assert.ok(checksumRow,'checksum endpoint missing');
+const xorCandidate=checksumRow.checksumCandidateBytes.find(x =>
+  x.byteIndex===2 &&
+  x.algorithm==='xor8_excluding_self'
+);
+assert.ok(xorCandidate,'XOR8 checksum candidate missing');
+assert.strictEqual(xorCandidate.interpretation.confidence,'candidate_only');
+assert.strictEqual(
+  checksumRow.checksumCandidateBytes.some(x =>
+    x.byteIndex===2 &&
+    x.algorithm==='sum8_excluding_self'
+  ),
+  false
+);
+assert.strictEqual(checksumSweep.summary.endpointsWithChecksumCandidates,1);
+
 const stableMap=stableByteMap({
   byteConsensus:{
     stableBytes:[
@@ -297,6 +350,10 @@ process.stdout.write(JSON.stringify({
     byteIndexes:le16.byteIndexes,
     slope:le16.slope,
     rSquared:le16.rSquared
+  },
+  checksumCandidate:{
+    byteIndex:xorCandidate.byteIndex,
+    algorithm:xorCandidate.algorithm
   },
   peerAddress:result.captureIdentity.peerAddress
 },null,2)+'\n');

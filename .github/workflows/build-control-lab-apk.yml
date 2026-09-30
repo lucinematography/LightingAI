@@ -96,6 +96,10 @@ jobs:
         working-directory: backend
         run: node astera-att-diff-selftest.js
 
+      - name: Validate Astera ATT consensus analyzer
+        working-directory: backend
+        run: node astera-att-consensus-selftest.js
+
       - name: Audit full fixture control catalog
         working-directory: backend
         run: node control-catalog-audit.js

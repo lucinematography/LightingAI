@@ -5,6 +5,34 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+function normalizePeerAddress(value) {
+  return String(value || '').trim().replace(/-/g, ':').toUpperCase();
+}
+
+function capturePeerAddress(input) {
+  if (!input || typeof input !== 'object') return '';
+  const explicit = input.filter && input.filter.address
+    ? normalizePeerAddress(input.filter.address)
+    : '';
+  if (explicit) return explicit;
+
+  const addresses = new Set();
+  const collect = rows => {
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const address = normalizePeerAddress(row && row.peerAddress);
+      if (address) addresses.add(address);
+    }
+  };
+  collect(input.connections);
+  collect(input.candidateAsteraSessionWrites);
+  collect(input.attEvents);
+
+  if (addresses.size > 1) {
+    throw new Error('capture_contains_multiple_peer_addresses');
+  }
+  return addresses.size === 1 ? [...addresses][0] : '';
+}
+
 function stableAttributeIdentity(event) {
   const uuid = String(event && event.attributeUuid || '').toLowerCase();
   if (uuid) return 'uuid:' + uuid;
@@ -123,12 +151,31 @@ function normalizeCapture(input, label = 'capture') {
         e && (e.opcodeName === 'HANDLE_VALUE_NOTIFICATION' ||
               e.opcodeName === 'HANDLE_VALUE_INDICATION'))
     : [];
-  return {writes, notifications};
+  return {
+    writes,
+    notifications,
+    peerAddress:capturePeerAddress(input)
+  };
 }
 
 function compareCaptures(referenceInput, testInput, labels = {}) {
   const reference = normalizeCapture(referenceInput, 'reference');
   const test = normalizeCapture(testInput, 'test');
+
+  if (reference.peerAddress && test.peerAddress &&
+      reference.peerAddress !== test.peerAddress) {
+    throw new Error(
+      'capture_peer_address_mismatch_' +
+      reference.peerAddress + '_vs_' + test.peerAddress
+    );
+  }
+
+  const peerAddress = reference.peerAddress || test.peerAddress || '';
+  const identityWarning =
+    reference.peerAddress && test.peerAddress
+      ? ''
+      : 'peer_address_unavailable_in_one_or_both_captures';
+
   const refCounts = countBySignature(reference.writes);
   const testCounts = countBySignature(test.writes);
 
@@ -155,6 +202,17 @@ function compareCaptures(referenceInput, testInput, labels = {}) {
     kind: 'LightingAI-Astera-ATT-diff',
     referenceLabel: labels.reference || 'reference',
     testLabel: labels.test || 'test',
+    captureIdentity:{
+      peerAddress,
+      referencePeerAddress:reference.peerAddress,
+      testPeerAddress:test.peerAddress,
+      verifiedMatch:!!(
+        reference.peerAddress &&
+        test.peerAddress &&
+        reference.peerAddress === test.peerAddress
+      ),
+      warning:identityWarning
+    },
     summary: {
       referenceCandidateWrites: reference.writes.length,
       testCandidateWrites: test.writes.length,
@@ -231,6 +289,8 @@ if (invokedFile && path.resolve(currentFile) === invokedFile) {
 }
 
 export {
+  normalizePeerAddress,
+  capturePeerAddress,
   stableAttributeIdentity,
   stableEndpointSignature,
   stableWriteSignature,

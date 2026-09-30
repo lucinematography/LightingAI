@@ -108,6 +108,10 @@ jobs:
         working-directory: backend
         run: node astera-att-session-filter-selftest.js
 
+      - name: Validate Astera physical capture-set orchestrator
+        working-directory: backend
+        run: node astera-physical-capture-set-selftest.js
+
       - name: Validate Astera ATT setpoint sweep analyzer
         working-directory: backend
         run: node astera-att-sweep-selftest.js

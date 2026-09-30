@@ -376,6 +376,35 @@ const filteredOut = analyzer.parseCapture(capture, {address:'AA:BB:CC:DD:EE:FF'}
 assert.strictEqual(filteredOut.attEvents.length, 0);
 assert.strictEqual(filteredOut.disconnects.length, 0);
 
+assert.strictEqual(result.analysisCoverage.asteraPrivateServiceMapped, true);
+assert.ok(result.analysisCoverage.attributeUuidMappings >= 2);
+assert.strictEqual(result.analysisCoverage.mappingWarning, '');
+assert.ok(result.attributes.some(x => x.handle === valueHandle && x.uuid === vendorCharacteristic));
+
+// Simulate an Android cached-GATT capture where writes are visible but service/
+// characteristic discovery PDUs are absent. The analyzer must flag missing mapping
+// instead of interpreting zero strict candidates as proof of zero vendor traffic.
+const cachedPackets = [];
+cachedPackets.push(record(hciLeConnection(connectionHandle, address), 1, 0));
+const cachedWrite = Buffer.concat([
+  Buffer.from([0x52, valueHandle & 0xff, valueHandle >> 8]),
+  Buffer.from('CAFEBABE', 'hex')
+]);
+p = acl(connectionHandle, 0x0004, cachedWrite, false);
+cachedPackets.push(record(p.packet, p.flags, 5));
+const cachedCapture = Buffer.concat([header, ...cachedPackets]);
+const cachedResult = analyzer.parseCapture(cachedCapture, {address});
+assert.strictEqual(cachedResult.services.length, 0);
+assert.strictEqual(cachedResult.attributes.length, 0);
+assert.strictEqual(cachedResult.candidateAsteraSessionWrites.length, 0);
+assert.strictEqual(cachedResult.unmappedHostWrites.length, 1);
+assert.strictEqual(cachedResult.unmappedHostWrites[0].valueHex, 'CAFEBABE');
+assert.strictEqual(
+  cachedResult.analysisCoverage.mappingWarning,
+  'gatt_mapping_incomplete_capture_may_use_cached_handles'
+);
+assert.strictEqual(cachedResult.analysisCoverage.unmappedHostWriteCount, 1);
+
 process.stdout.write(JSON.stringify({
   ok: true,
   attEvents: result.attEvents.length,
@@ -383,6 +412,8 @@ process.stdout.write(JSON.stringify({
   preparedWriteTransactions: result.preparedWriteTransactions.length,
   mtuEffective: result.mtuExchanges[0].effectiveMtu,
   securityEvents: result.securityEvents.length,
+  attributeUuidMappings: result.analysisCoverage.attributeUuidMappings,
+  cachedUnmappedWrites: cachedResult.unmappedHostWrites.length,
   connections: result.connections.length,
   smpEventsRedacted: result.smpEvents.length,
   disconnectReason: result.disconnects[0].reasonName

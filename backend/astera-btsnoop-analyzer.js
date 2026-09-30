@@ -695,6 +695,55 @@ function parseCapture(buffer, options = {}) {
     )
   ].sort((a,b)=>a.recordIndex-b.recordIndex);
 
+  const attributeList = [];
+  for (const [connectionId, map] of handleMapsByConnection.entries()) {
+    const conn = connectionById.get(connectionId);
+    if (!conn) continue;
+    if (addressFilter && normalizeAddress(conn.address) !== addressFilter) continue;
+    const services = servicesByConnection.get(connectionId) || [];
+    for (const [handle, uuid] of map.entries()) {
+      attributeList.push({
+        connectionId,
+        connectionHandle:conn.handle,
+        peerAddress:conn.address,
+        handle,
+        uuid,
+        serviceUuid:serviceForHandle(services,handle)
+      });
+    }
+  }
+  attributeList.sort((x,y)=>
+    x.connectionId.localeCompare(y.connectionId) ||
+    x.handle-y.handle
+  );
+
+  const directHostWrites = attEvents.filter(e =>
+    e.direction === 'host_to_controller' &&
+    (e.opcode === 0x12 || e.opcode === 0x52)
+  );
+  const hostWriteEvents = [
+    ...directHostWrites,
+    ...preparedWriteTransactions
+  ].sort((x,y)=>x.recordIndex-y.recordIndex);
+  const unmappedHostWrites = hostWriteEvents.filter(e =>
+    e.writeClass === 'other_write' && !e.serviceUuid
+  );
+  const asteraPrivateServiceMapped = serviceList.some(s =>
+    String(s.uuid || '').toLowerCase() === ASTERA_BTB_PRIVATE_SERVICE
+  );
+  const analysisCoverage = {
+    serviceDiscoveryObserved:serviceList.length > 0,
+    characteristicMappingObserved:attributeList.length > 0,
+    asteraPrivateServiceMapped,
+    attributeUuidMappings:attributeList.length,
+    hostWriteCount:hostWriteEvents.length,
+    strictAsteraCandidateCount:candidateAsteraSessionWrites.length,
+    unmappedHostWriteCount:unmappedHostWrites.length,
+    mappingWarning:unmappedHostWrites.length > 0 && !asteraPrivateServiceMapped
+      ? 'gatt_mapping_incomplete_capture_may_use_cached_handles'
+      : ''
+  };
+
   return {
     format: {
       magic: 'btsnoop',
@@ -715,6 +764,9 @@ function parseCapture(buffer, options = {}) {
       !addressFilter || normalizeAddress(c.address) === addressFilter
     ),
     services: serviceList,
+    attributes: attributeList,
+    analysisCoverage,
+    unmappedHostWrites,
     attEvents,
     smpEvents,
     disconnects,

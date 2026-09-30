@@ -81,7 +81,8 @@ The analyzer extracts:
 - Bluetooth link-security metadata including Encryption Change v1/v2 and key size when exposed by HCI;
 - LE Long Term Key Request occurrence with key material redacted;
 - primary service ranges;
-- characteristic and descriptor handle-to-UUID mappings when visible in ATT discovery;
+- characteristic and descriptor ATT-handle-to-UUID mappings when visible in ATT discovery;
+- explicit `analysisCoverage` and `unmappedHostWrites` when Android uses cached GATT handles and the capture lacks enough discovery traffic for strict UUID mapping;
 - ATT Write Request / Write Command;
 - notifications and indications;
 - SMP packets;
@@ -90,13 +91,15 @@ The analyzer extracts:
 
 Bluetooth HCI encryption is only evidence that the phone-to-BTB link is encrypted. It must not be interpreted as successful Astera Radio-PIN authentication; the official Astera pairing model separates the Bluetooth link from the Radio PIN / UHF control layer.
 
+If `analysisCoverage.mappingWarning` is `gatt_mapping_incomplete_capture_may_use_cached_handles`, do not conclude that the Astera private service had no traffic. Repeat the mapping capture from a fresh connection/bond state where practical, or inspect the unmapped writes separately until their ATT attribute handles can be tied to verified UUID/service ranges.
+
 A packet becomes protocol evidence only after it is repeatable across captures and its meaning is isolated by changing one operator parameter at a time.
 
 After producing the derived JSON captures, compare them with:
 
 `node backend/astera-att-diff.js connect-only.json dim-change.json --reference-label connect-only --test-label dim-change --json dim-diff.json`
 
-Repeat separately for CCT and color. The diff tool treats test-only writes and changed payloads as candidates, not as proven commands. HCI connection handles are not treated as stable identity when a characteristic UUID is available.
+Repeat separately for CCT and color. The diff tool treats test-only writes and changed payloads as candidates, not as proven commands. Characteristic UUID is the preferred logical endpoint identity; the ATT attribute handle is used only as a fallback when UUID mapping is unavailable. The HCI connection handle is tracked separately as connection metadata and is never treated as the command endpoint identity.
 
 For each isolated operator action, produce at least three separate diff JSON files and run:
 
@@ -104,7 +107,7 @@ For each isolated operator action, produce at least three separate diff JSON fil
 
 The consensus analyzer:
 - requires at least three independent diff captures;
-- groups by logical endpoint rather than transient HCI connection handle when a characteristic UUID exists;
+- groups by characteristic UUID when available, falling back to the ATT attribute handle; HCI connection handles remain connection metadata only;
 - reports only endpoints present across every analyzed run as repeatable candidates;
 - shows byte positions that are stable across payloads and positions that vary;
 - never labels a repeatable candidate as a verified DIM/CCT/COLOR/FX command.

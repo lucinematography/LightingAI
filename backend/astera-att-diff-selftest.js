@@ -26,7 +26,10 @@ function notify(valueHex, handle = 0x25) {
   };
 }
 
+const address='11:22:33:44:55:66';
+
 const reference = {
+  filter:{address},
   candidateAsteraSessionWrites:[
     write('AA01'),
     write('BB02')
@@ -37,6 +40,7 @@ const reference = {
 };
 
 const test = {
+  filter:{address},
   candidateAsteraSessionWrites:[
     write('AA01'),
     write('BB02'),
@@ -54,6 +58,9 @@ const result = compareCaptures(reference, test, {
 });
 
 assert.strictEqual(result.kind, 'LightingAI-Astera-ATT-diff');
+assert.strictEqual(result.captureIdentity.peerAddress,address);
+assert.strictEqual(result.captureIdentity.verifiedMatch,true);
+assert.strictEqual(result.captureIdentity.warning,'');
 assert.strictEqual(result.summary.referenceCandidateWrites, 2);
 assert.strictEqual(result.summary.testCandidateWrites, 3);
 assert.strictEqual(result.summary.commonCandidateWrites, 2);
@@ -98,6 +105,14 @@ assert.throws(
   /test_gatt_mapping_incomplete_gatt_mapping_incomplete_capture_may_use_cached_handles/
 );
 
+assert.throws(
+  () => compareCaptures(
+    {...reference,filter:{address:'11:22:33:44:55:66'}},
+    {...test,filter:{address:'AA:BB:CC:DD:EE:FF'}}
+  ),
+  /capture_peer_address_mismatch/
+);
+
 const duplicateDiff = compareCaptures(duplicateReference, duplicateTest);
 assert.strictEqual(duplicateDiff.summary.testOnlyCandidateWrites, 1);
 assert.strictEqual(duplicateDiff.onlyInTest[0].count, 1);
@@ -139,5 +154,6 @@ process.stdout.write(JSON.stringify({
   ok:true,
   candidateParameterSpecificWrites:result.candidateParameterSpecificWrites.length,
   changedWritePayloadEndpoints:payloadChangedDiff.changedWritePayloadEndpoints.length,
-  notificationOnlyInTest:result.notificationOnlyInTest.length
+  notificationOnlyInTest:result.notificationOnlyInTest.length,
+  peerAddress:result.captureIdentity.peerAddress
 }, null, 2) + '\n');

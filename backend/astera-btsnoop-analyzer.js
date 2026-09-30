@@ -353,6 +353,7 @@ function parseCapture(buffer, options = {}) {
   const mtuEvents = [];
   const mtuStateByConnection = new Map();
   const securityEvents = [];
+  const pendingWriteRequestByConnection = new Map();
 
   const firstTimestamp = parsed.records.length ? parsed.records[0].timestampUs : BTSNOOP_EPOCH_DELTA_US;
 
@@ -616,6 +617,29 @@ function parseCapture(buffer, options = {}) {
         event.errorName = ATT_ERROR_NAMES[event.errorCode] ||
           ('att_error_0x' + event.errorCode.toString(16).padStart(2,'0'));
         attErrors.push(event);
+      }
+      if (opcode === 0x12 && dir === 'host_to_controller' && conn) {
+        pendingWriteRequestByConnection.set(conn.connectionId,event);
+      }
+      if (opcode === 0x13 && dir === 'controller_to_host' && conn) {
+        const pending = pendingWriteRequestByConnection.get(conn.connectionId);
+        if (pending) {
+          pending.deviceConfirmed = true;
+          pending.writeResponseRecordIndex = recordIndex;
+          pending.writeResponseElapsedMs = event.elapsedMs;
+          pendingWriteRequestByConnection.delete(conn.connectionId);
+        }
+      }
+      if (opcode === 0x01 && dir === 'controller_to_host' && payload.length >= 5 && conn) {
+        const requestOpcode = payload[1];
+        if (requestOpcode === 0x12) {
+          const pending = pendingWriteRequestByConnection.get(conn.connectionId);
+          if (pending) {
+            pending.deviceConfirmed = false;
+            pending.rejected = true;
+            pendingWriteRequestByConnection.delete(conn.connectionId);
+          }
+        }
       }
       if (opcode === 0x16 && payload.length >= 5) {
         event.prepareOffset = payload.readUInt16LE(3);
@@ -930,7 +954,8 @@ function parseCapture(buffer, options = {}) {
 
   const candidateAsteraSessionWrites = [
     ...attEvents.filter(e =>
-      e.writeClass === 'candidate_astera_session_write'
+      e.writeClass === 'candidate_astera_session_write' &&
+      (e.opcode === 0x52 || (e.opcode === 0x12 && e.deviceConfirmed === true))
     ),
     ...preparedWriteTransactions.filter(e =>
       e.writeClass === 'candidate_astera_session_write' &&

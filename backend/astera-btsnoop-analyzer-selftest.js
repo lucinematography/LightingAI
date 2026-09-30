@@ -134,6 +134,19 @@ function findInformationCccd(handle) {
   return Buffer.concat([Buffer.from([0x05, 0x01]), entry]);
 }
 
+function writeRequest(handle, valueHex) {
+  const value = Buffer.from(valueHex, 'hex');
+  const out = Buffer.alloc(3 + value.length);
+  out[0] = 0x12;
+  out.writeUInt16LE(handle, 1);
+  value.copy(out, 3);
+  return out;
+}
+
+function writeResponse() {
+  return Buffer.from([0x13]);
+}
+
 function prepareWrite(handle, offset, valueHex) {
   const value = Buffer.from(valueHex, 'hex');
   const out = Buffer.alloc(5 + value.length);
@@ -580,6 +593,31 @@ const missingExecuteAck = parsePreparedOnly([
 ]);
 assert.strictEqual(missingExecuteAck.candidateAsteraSessionWrites.length, 0);
 assert.strictEqual(missingExecuteAck.preparedWriteTransactions.length, 0);
+
+// ATT Write Request must be confirmed by the device before it can become
+// protocol evidence. Write Command remains unacknowledged by ATT design.
+const acceptedWriteRequest = parsePreparedOnly([
+  {payload:writeRequest(valueHandle,'CAFE'),incoming:false},
+  {payload:writeResponse(),incoming:true}
+]);
+assert.strictEqual(acceptedWriteRequest.candidateAsteraSessionWrites.length, 1);
+assert.strictEqual(acceptedWriteRequest.candidateAsteraSessionWrites[0].opcode, 0x12);
+assert.strictEqual(acceptedWriteRequest.candidateAsteraSessionWrites[0].deviceConfirmed, true);
+
+const rejectedWriteRequest = parsePreparedOnly([
+  {payload:writeRequest(valueHandle,'CAFE'),incoming:false},
+  {payload:attErrorResponse(0x12,valueHandle,0x03),incoming:true}
+]);
+assert.strictEqual(rejectedWriteRequest.candidateAsteraSessionWrites.length, 0);
+const rejectedDirect = rejectedWriteRequest.attEvents.find(e=>e.opcode===0x12);
+assert.ok(rejectedDirect);
+assert.strictEqual(rejectedDirect.deviceConfirmed, false);
+assert.strictEqual(rejectedDirect.rejected, true);
+
+const missingWriteResponse = parsePreparedOnly([
+  {payload:writeRequest(valueHandle,'CAFE'),incoming:false}
+]);
+assert.strictEqual(missingWriteResponse.candidateAsteraSessionWrites.length, 0);
 
 assert.throws(
   () => analyzer.normalizeGattProfile({

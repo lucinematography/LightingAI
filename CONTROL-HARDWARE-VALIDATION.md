@@ -85,6 +85,14 @@ The analyzer extracts:
 
 A packet becomes protocol evidence only after it is repeatable across captures and its meaning is isolated by changing one operator parameter at a time.
 
+After producing the derived JSON captures, compare them with:
+
+`node backend/astera-att-diff.js connect-only.json dim-change.json --reference-label connect-only --test-label dim-change --json dim-diff.json`
+
+Repeat separately for CCT and color. The diff tool treats writes that are present only in the changed-parameter capture as candidates, not as proven commands. A candidate becomes a verified command only after the same byte-level difference repeats across controlled captures and a later physical replay reproduces only the intended fixture change.
+
+Do not combine DIM, CCT and color changes in the same reference capture because that destroys causal isolation.
+
 No quick-control button may be enabled during this phase.
 
 ### Phase 3 - physical command proof

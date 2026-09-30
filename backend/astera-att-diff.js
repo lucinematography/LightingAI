@@ -5,13 +5,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-function stableWriteSignature(event) {
+function stableAttributeIdentity(event) {
+  const uuid = String(event && event.attributeUuid || '').toLowerCase();
+  if (uuid) return 'uuid:' + uuid;
+  return 'handle:' + (event && event.handle != null ? String(event.handle) : '');
+}
+
+function stableEndpointSignature(event) {
   return [
     String(event && event.direction || ''),
     String(event && event.opcodeName || ''),
     String(event && event.serviceUuid || '').toLowerCase(),
-    String(event && event.attributeUuid || '').toLowerCase(),
-    event && event.handle != null ? String(event.handle) : '',
+    stableAttributeIdentity(event)
+  ].join('|');
+}
+
+function stableWriteSignature(event) {
+  return [
+    stableEndpointSignature(event),
     String(event && event.valueHex || '').toUpperCase()
   ].join('|');
 }
@@ -54,6 +65,43 @@ function commonCounts(a, b) {
   return out;
 }
 
+function payloadSetByEndpoint(events) {
+  const map = new Map();
+  for (const event of Array.isArray(events) ? events : []) {
+    const endpoint = stableEndpointSignature(event);
+    const payload = String(event && event.valueHex || '').toUpperCase();
+    if (!map.has(endpoint)) {
+      map.set(endpoint, {
+        endpoint,
+        sample:event,
+        payloads:new Set()
+      });
+    }
+    map.get(endpoint).payloads.add(payload);
+  }
+  return map;
+}
+
+function changedEndpointPayloads(referenceEvents, testEvents) {
+  const reference = payloadSetByEndpoint(referenceEvents);
+  const test = payloadSetByEndpoint(testEvents);
+  const out = [];
+  for (const [endpoint, testRow] of test.entries()) {
+    const refRow = reference.get(endpoint);
+    if (!refRow) continue;
+    const referencePayloads = [...refRow.payloads].sort();
+    const testPayloads = [...testRow.payloads].sort();
+    if (JSON.stringify(referencePayloads) === JSON.stringify(testPayloads)) continue;
+    out.push({
+      endpoint,
+      sample:testRow.sample,
+      referencePayloads,
+      testPayloads
+    });
+  }
+  return out;
+}
+
 function normalizeCapture(input) {
   if (!input || typeof input !== 'object') {
     throw new Error('invalid_capture_json');
@@ -85,6 +133,14 @@ function compareCaptures(referenceInput, testInput, labels = {}) {
     testNotificationCounts,
     refNotificationCounts
   );
+  const changedWritePayloadEndpoints = changedEndpointPayloads(
+    reference.writes,
+    test.writes
+  );
+  const changedNotificationPayloadEndpoints = changedEndpointPayloads(
+    reference.notifications,
+    test.notifications
+  );
 
   return {
     kind: 'LightingAI-Astera-ATT-diff',
@@ -96,13 +152,21 @@ function compareCaptures(referenceInput, testInput, labels = {}) {
       commonCandidateWrites: common.reduce((n, x) => n + x.count, 0),
       referenceOnlyCandidateWrites: onlyInReference.reduce((n, x) => n + x.count, 0),
       testOnlyCandidateWrites: onlyInTest.reduce((n, x) => n + x.count, 0),
-      testOnlyNotificationPatterns: notificationOnlyInTest.reduce((n, x) => n + x.count, 0)
+      testOnlyNotificationPatterns: notificationOnlyInTest.reduce((n, x) => n + x.count, 0),
+      changedWritePayloadEndpoints: changedWritePayloadEndpoints.length,
+      changedNotificationPayloadEndpoints: changedNotificationPayloadEndpoints.length
     },
     commonCandidateWrites: common,
     onlyInReference,
     onlyInTest,
-    likelyParameterSpecificWrites: onlyInTest,
-    notificationOnlyInTest
+    candidateParameterSpecificWrites: onlyInTest,
+    changedWritePayloadEndpoints,
+    notificationOnlyInTest,
+    changedNotificationPayloadEndpoints,
+    interpretation: {
+      confidence:'candidate_only',
+      note:'A test-only or changed payload is not a verified DIM/CCT/COLOR/FX command until it repeats across controlled captures with one operator parameter changed at a time.'
+    }
   };
 }
 
@@ -158,6 +222,8 @@ if (invokedFile && path.resolve(currentFile) === invokedFile) {
 }
 
 export {
+  stableAttributeIdentity,
+  stableEndpointSignature,
   stableWriteSignature,
   compareCaptures
 };

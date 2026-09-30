@@ -19,6 +19,131 @@ function stableByteMap(candidate) {
   return out;
 }
 
+function analyzeNumericEncoding(rows, decodedValues, metadata = {}) {
+  if (!Array.isArray(rows) || rows.length < 4 ||
+      !Array.isArray(decodedValues) || decodedValues.length !== rows.length) {
+    return null;
+  }
+
+  const points = rows.map((row,index) => ({
+    label:row.label,
+    value:Number(row.value),
+    decoded:Number(decodedValues[index])
+  }));
+
+  if (points.some(p => !Number.isFinite(p.value) || !Number.isFinite(p.decoded))) {
+    return null;
+  }
+
+  const distinctSetpoints = new Set(points.map(p => p.value));
+  const distinctDecoded = new Set(points.map(p => p.decoded));
+  if (distinctSetpoints.size < 4 || distinctDecoded.size < 4) return null;
+
+  const ordered = points.slice().sort((a,b) => a.value - b.value);
+  let increasing = true;
+  let decreasing = true;
+  for (let i = 1; i < ordered.length; i++) {
+    if (!(ordered[i].decoded > ordered[i - 1].decoded)) increasing = false;
+    if (!(ordered[i].decoded < ordered[i - 1].decoded)) decreasing = false;
+  }
+  if (!increasing && !decreasing) return null;
+
+  const meanX = ordered.reduce((n,p) => n + p.value,0) / ordered.length;
+  const meanY = ordered.reduce((n,p) => n + p.decoded,0) / ordered.length;
+  let covariance = 0;
+  let varianceX = 0;
+  for (const p of ordered) {
+    covariance += (p.value - meanX) * (p.decoded - meanY);
+    varianceX += (p.value - meanX) ** 2;
+  }
+  if (varianceX === 0) return null;
+
+  const slope = covariance / varianceX;
+  const intercept = meanY - slope * meanX;
+  let ssResidual = 0;
+  let ssTotal = 0;
+  let maxAbsResidual = 0;
+  for (const p of ordered) {
+    const predicted = slope * p.value + intercept;
+    const residual = p.decoded - predicted;
+    ssResidual += residual ** 2;
+    ssTotal += (p.decoded - meanY) ** 2;
+    maxAbsResidual = Math.max(maxAbsResidual, Math.abs(residual));
+  }
+  const rSquared = ssTotal === 0 ? 1 : 1 - (ssResidual / ssTotal);
+  const linear = rSquared >= 0.999;
+
+  return {
+    ...metadata,
+    relation:linear ? 'affine_linear' : 'strict_monotonic',
+    direction:increasing ? 'increasing' : 'decreasing',
+    slope:Number(slope.toFixed(8)),
+    intercept:Number(intercept.toFixed(8)),
+    rSquared:Number(rSquared.toFixed(8)),
+    maxAbsResidual:Number(maxAbsResidual.toFixed(8)),
+    series:ordered,
+    interpretation:{
+      confidence:'candidate_only',
+      note:linear
+        ? 'The decoded field is monotonic and fits an affine relation across at least four isolated setpoints. This is still not a verified command field until physical replay proves causality.'
+        : 'The decoded field is strictly monotonic across at least four isolated setpoints but is not sufficiently linear. It may be a transformed parameter, checksum or other correlated field.'
+    }
+  };
+}
+
+function encodingCandidates(rows, maps, payloadLength) {
+  if (!Array.isArray(rows) || rows.length < 4 ||
+      !Array.isArray(maps) || maps.length !== rows.length ||
+      !Number.isInteger(payloadLength) || payloadLength <= 0) {
+    return [];
+  }
+
+  const out = [];
+
+  for (let index = 0; index < payloadLength; index++) {
+    const bytes = maps.map(m => m.get(index));
+    if (bytes.some(v => !v)) continue;
+    const decoded = bytes.map(v => parseInt(v,16));
+    const candidate = analyzeNumericEncoding(rows,decoded,{
+      widthBits:8,
+      byteIndexes:[index],
+      byteOrder:'single_byte'
+    });
+    if (candidate) out.push(candidate);
+  }
+
+  for (let index = 0; index + 1 < payloadLength; index++) {
+    const low = maps.map(m => m.get(index));
+    const high = maps.map(m => m.get(index + 1));
+    if (low.some(v => !v) || high.some(v => !v)) continue;
+
+    const le = low.map((v,i) => parseInt(v,16) | (parseInt(high[i],16) << 8));
+    const be = low.map((v,i) => (parseInt(v,16) << 8) | parseInt(high[i],16));
+
+    const leCandidate = analyzeNumericEncoding(rows,le,{
+      widthBits:16,
+      byteIndexes:[index,index + 1],
+      byteOrder:'little_endian'
+    });
+    if (leCandidate) out.push(leCandidate);
+
+    const beCandidate = analyzeNumericEncoding(rows,be,{
+      widthBits:16,
+      byteIndexes:[index,index + 1],
+      byteOrder:'big_endian'
+    });
+    if (beCandidate) out.push(beCandidate);
+  }
+
+  return out.sort((a,b) =>
+    (a.relation === 'affine_linear' ? 0 : 1) -
+      (b.relation === 'affine_linear' ? 0 : 1) ||
+    b.rSquared - a.rSquared ||
+    a.widthBits - b.widthBits ||
+    a.byteIndexes[0] - b.byteIndexes[0]
+  );
+}
+
 function candidateByEndpoint(consensus) {
   if (!consensus || typeof consensus !== 'object') {
     throw new Error('invalid_consensus_json');
@@ -91,6 +216,8 @@ function analyzeEndpoint(endpoint, cases) {
     }
   }
 
+  const candidateEncodings = encodingCandidates(rows,maps,length);
+
   return {
     endpoint,
     comparable:true,
@@ -98,6 +225,7 @@ function analyzeEndpoint(endpoint, cases) {
     parameterCandidateByteIndexes,
     constantFramingByteIndexes,
     unstableByteIndexes,
+    candidateEncodings,
     interpretation:{
       confidence:'candidate_only',
       note:'A byte that is stable within each repeated setpoint but changes between setpoints is only a parameter candidate. Encoding and command semantics require separate physical replay proof.'
@@ -150,12 +278,16 @@ function analyzeSweep(input) {
       comparableEndpoints:endpoints.filter(e=>e.comparable).length,
       endpointsWithParameterCandidateBytes:endpoints.filter(e =>
         e.comparable && e.parameterCandidateByteIndexes.length > 0
+      ).length,
+      endpointsWithEncodingCandidates:endpoints.filter(e =>
+        e.comparable && Array.isArray(e.candidateEncodings) &&
+        e.candidateEncodings.length > 0
       ).length
     },
     endpoints,
     interpretation:{
       confidence:'candidate_only',
-      note:'This analysis never proves a DIM/CCT/COLOR/FX command. It only identifies byte positions correlated with isolated setpoint changes after within-setpoint repeatability has already been established.'
+      note:'This analysis never proves a DIM/CCT/COLOR/FX command. It only identifies byte positions and possible 8-bit/16-bit numeric encodings correlated with isolated setpoint changes after within-setpoint repeatability has already been established.'
     }
   };
 }
@@ -215,6 +347,8 @@ if (invokedFile && path.resolve(currentFile) === invokedFile) {
 
 export {
   stableByteMap,
+  analyzeNumericEncoding,
+  encodingCandidates,
   candidateByEndpoint,
   analyzeEndpoint,
   analyzeSweep,

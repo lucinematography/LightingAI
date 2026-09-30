@@ -197,3 +197,42 @@ Physical status:
 - No DIM/CCT/BOJA/FX command has been declared verified.
 - Quick controls remain locked.
 - PR #408 must remain DRAFT and must not be merged into MAIN.
+
+
+## Astera prepared-write confirmation safety checkpoint - 2026-09-30
+
+Verified functional tooling checkpoint:
+- Branch: `feature/production-control-routing`
+- HEAD: `915ee39f4262cea410d0e75604c29da22953b1d4`
+- Control Lab: #719 SUCCESS
+- PR #408: OPEN / DRAFT
+- MAIN: untouched
+
+Control Lab #719 passed:
+- full-app critical regression;
+- production CONTROL routing;
+- operator-desk safety;
+- Astera btsnoop analyzer;
+- Astera ATT differential / consensus / session / sweep analyzers;
+- full fixture control catalog audit;
+- control system driver-family validation;
+- Android lint and changed-files lint gate;
+- Android unit tests;
+- debug APK build;
+- packaged CONTROL APK verification;
+- artifact upload.
+
+Prepared Write evidence is now fail-closed:
+- every Prepare Write fragment must receive the matching device Prepare Write Response;
+- a rejected or unmatched Prepare Write invalidates the cycle;
+- Execute Write Request is not evidence by itself;
+- the final Execute Write must receive a device Execute Write Response;
+- rejected or missing Execute confirmation never becomes an Astera candidate;
+- only a complete, contiguous, device-confirmed prepared-write transaction may enter candidate protocol evidence.
+
+Runtime safety remains unchanged:
+- LightingAI Astera diagnostics do not call `writeCharacteristic()`;
+- the only intentional GATT write in the passive inspector is the standard CCCD descriptor used to enable NOTIFY/INDICATE observation;
+- DIM / CCT / BOJA / FX quick controls remain disabled;
+- no Astera proprietary packet has been declared verified or replayed;
+- the next required evidence is a fresh physical Titan HCI/BTSnoop capture.

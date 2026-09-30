@@ -62,6 +62,10 @@ expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('pa
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');
 expect(!ble.includes('setTimeout(()=>inspectAsteraClassic(address),250)'),'Primary Astera connect flow must not auto-route through Classic/SDP');
 expect(!gatt.includes('writeCharacteristic('),'Astera diagnostic observer must not send proprietary characteristic writes');
+expect(!mainActivity.includes('writeCharacteristic('),'Android bridge must not expose a proprietary GATT characteristic write path before physical proof');
+expect((gatt.match(/writeDescriptor\s*\(/g)||[]).length===1,'Astera passive observer must have exactly one descriptor write path');
+expect(gatt.includes('gatt.writeDescriptor(cccd)'),'The only Astera descriptor write must be the standard CCCD subscription');
+expect(ble.includes("type=\"button\" disabled")&&ble.includes("WAITING FOR VERIFIED DRIVER"),'Quick Bluetooth controls must remain disabled until a vendor driver is physically verified');
 expect(ble.includes('LightingAI-Astera-BTB-diagnostic')&&ble.includes('SAČUVAJ DIJAGNOSTIKU')&&ble.includes('Android.saveText(filename,body)'),'Astera diagnostic export to Downloads missing');
 expect(ble.includes("failed:true")&&ble.includes('Failure timeline captured'),'Failed Astera GATT sessions must remain exportable');
 expect(ble.includes('latestScanDevicesByAddress')&&ble.includes('advertisement:address&&latestScanDevicesByAddress[address]'),'Astera diagnostic export must include the matching BLE advertisement snapshot');

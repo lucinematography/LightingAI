@@ -88,6 +88,10 @@ jobs:
         working-directory: backend
         run: node control-operator-desk-selftest.js
 
+      - name: Validate Astera btsnoop analyzer
+        working-directory: backend
+        run: node astera-btsnoop-analyzer-selftest.js
+
       - name: Audit full fixture control catalog
         working-directory: backend
         run: node control-catalog-audit.js

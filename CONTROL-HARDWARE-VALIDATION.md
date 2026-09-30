@@ -93,7 +93,13 @@ The analyzer extracts:
 
 Bluetooth HCI encryption and SMP pairing metadata are only evidence about the phone-to-BTB Bluetooth security layer. They must not be interpreted as successful Astera Radio-PIN authentication; the official Astera pairing model separates the Bluetooth link from the Radio PIN / UHF control layer. ATT errors 0x05/0x0F/0x0C remain standard Bluetooth security evidence, not proof of proprietary Astera command semantics.
 
-If `analysisCoverage.mappingWarning` is `gatt_mapping_incomplete_capture_may_use_cached_handles`, do not conclude that the Astera private service had no traffic. Repeat the mapping capture from a fresh connection/bond state where practical, or inspect the unmapped writes separately until their ATT attribute handles can be tied to verified UUID/service ranges.
+If `analysisCoverage.mappingWarning` is `gatt_mapping_incomplete_capture_may_use_cached_handles`, do not conclude that the Astera private service had no traffic. Repeat the mapping capture from a fresh connection/bond state where practical.
+
+If Android continues to use cached handles, an earlier fully mapped derived capture from the same physical Titan Tube and the same verified firmware may be supplied explicitly:
+
+`node backend/astera-btsnoop-analyzer.js cached-run.log --address AA:BB:CC:DD:EE:FF --profile mapped-reference.json --json cached-run-derived.json`
+
+The analyzer accepts a profile only when that reference has no mapping warning, contains the verified Astera private service and contains an ATT handle-to-UUID map. The profile is applied only when the new connection has no captured service or characteristic mapping at all. A profile must never be reused across a different fixture or firmware without re-verification; derived output records `profileAssumption: same_fixture_and_firmware_must_be_verified`.
 
 A packet becomes protocol evidence only after it is repeatable across captures and its meaning is isolated by changing one operator parameter at a time.
 

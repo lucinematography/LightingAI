@@ -276,9 +276,65 @@ function attHandleAndValue(att) {
   return {handle: null, value: Buffer.alloc(0)};
 }
 
+function normalizeGattProfile(profile) {
+  if (!profile || typeof profile !== 'object') {
+    throw new Error('invalid_gatt_profile');
+  }
+  const warning = profile.analysisCoverage &&
+    typeof profile.analysisCoverage.mappingWarning === 'string'
+      ? profile.analysisCoverage.mappingWarning
+      : '';
+  if (warning) {
+    throw new Error('gatt_profile_incomplete_' + warning);
+  }
+
+  const serviceRanges = new Map();
+  for (const row of Array.isArray(profile.services) ? profile.services : []) {
+    if (!row || !Number.isInteger(row.startHandle) ||
+        !Number.isInteger(row.endHandle) || !row.uuid) continue;
+    const uuid = String(row.uuid).toLowerCase();
+    const key = row.startHandle + ':' + row.endHandle;
+    const existing = serviceRanges.get(key);
+    if (existing && existing.uuid !== uuid) {
+      throw new Error('gatt_profile_service_range_conflict_' + key);
+    }
+    serviceRanges.set(key,{
+      startHandle:row.startHandle,
+      endHandle:row.endHandle,
+      uuid
+    });
+  }
+
+  const attributes = new Map();
+  for (const row of Array.isArray(profile.attributes) ? profile.attributes : []) {
+    if (!row || !Number.isInteger(row.handle) || !row.uuid) continue;
+    const uuid = String(row.uuid).toLowerCase();
+    const existing = attributes.get(row.handle);
+    if (existing && existing !== uuid) {
+      throw new Error('gatt_profile_attribute_handle_conflict_' + row.handle);
+    }
+    attributes.set(row.handle,uuid);
+  }
+
+  const services = [...serviceRanges.values()];
+  if (!services.some(s => s.uuid === ASTERA_BTB_PRIVATE_SERVICE)) {
+    throw new Error('gatt_profile_missing_astera_private_service');
+  }
+  if (!attributes.size) {
+    throw new Error('gatt_profile_missing_attribute_uuid_map');
+  }
+
+  return {
+    services,
+    attributes:[...attributes.entries()].map(([handle,uuid])=>({handle,uuid}))
+  };
+}
+
 function parseCapture(buffer, options = {}) {
   const parsed = parseBtsnoop(buffer);
   const addressFilter = normalizeAddress(options.address);
+  const explicitProfile = options.profile ? normalizeGattProfile(options.profile) : null;
+  const profileAppliedConnectionIds = new Set();
   const connections = [];
   const activeConnections = new Map();
   const connectionById = new Map();
@@ -737,6 +793,29 @@ function parseCapture(buffer, options = {}) {
     else if (record.packet[0] === 0x04) consumeEvent(record.packet, dir, record.timestampUs, index);
   });
 
+  if (explicitProfile) {
+    for (const conn of connections) {
+      if (addressFilter && normalizeAddress(conn.address) !== addressFilter) continue;
+      const services = servicesByConnection.get(conn.connectionId) || [];
+      const map = handleMapsByConnection.get(conn.connectionId) || new Map();
+      if (services.length === 0 && map.size === 0) {
+        servicesByConnection.set(
+          conn.connectionId,
+          explicitProfile.services.map(s => ({
+            ...s,
+            mappingSource:'explicit_profile'
+          }))
+        );
+        const seededMap = new Map();
+        for (const row of explicitProfile.attributes) {
+          seededMap.set(row.handle,row.uuid);
+        }
+        handleMapsByConnection.set(conn.connectionId,seededMap);
+        profileAppliedConnectionIds.add(conn.connectionId);
+      }
+    }
+  }
+
   function annotateWrite(event) {
     if (!event || event.handle == null) return;
     const map = handleMapsByConnection.get(event.connectionId);
@@ -781,6 +860,7 @@ function parseCapture(buffer, options = {}) {
         connectionId,
         connectionHandle: conn.handle,
         peerAddress: conn.address,
+        mappingSource:service.mappingSource || 'capture',
         ...service
       });
     }
@@ -808,7 +888,10 @@ function parseCapture(buffer, options = {}) {
         peerAddress:conn.address,
         handle,
         uuid,
-        serviceUuid:serviceForHandle(services,handle)
+        serviceUuid:serviceForHandle(services,handle),
+        mappingSource:profileAppliedConnectionIds.has(connectionId)
+          ? 'explicit_profile'
+          : 'capture'
       });
     }
   }
@@ -831,9 +914,24 @@ function parseCapture(buffer, options = {}) {
   const asteraPrivateServiceMapped = serviceList.some(s =>
     String(s.uuid || '').toLowerCase() === ASTERA_BTB_PRIVATE_SERVICE
   );
+  const capturedServiceCount = serviceList.filter(s =>
+    s.mappingSource === 'capture'
+  ).length;
+  const capturedAttributeCount = attributeList.filter(x =>
+    x.mappingSource === 'capture'
+  ).length;
   const analysisCoverage = {
-    serviceDiscoveryObserved:serviceList.length > 0,
-    characteristicMappingObserved:attributeList.length > 0,
+    serviceDiscoveryObserved:capturedServiceCount > 0,
+    characteristicMappingObserved:capturedAttributeCount > 0,
+    explicitProfileProvided:!!explicitProfile,
+    explicitProfileUsed:profileAppliedConnectionIds.size > 0,
+    explicitProfileConnectionCount:profileAppliedConnectionIds.size,
+    mappingSource:profileAppliedConnectionIds.size > 0
+      ? 'explicit_profile'
+      : (capturedServiceCount > 0 || capturedAttributeCount > 0 ? 'capture' : 'none'),
+    profileAssumption:profileAppliedConnectionIds.size > 0
+      ? 'same_fixture_and_firmware_must_be_verified'
+      : '',
     asteraPrivateServiceMapped,
     attributeUuidMappings:attributeList.length,
     hostWriteCount:hostWriteEvents.length,
@@ -852,7 +950,8 @@ function parseCapture(buffer, options = {}) {
       recordCount: parsed.records.length
     },
     filter: {
-      address: addressFilter || null
+      address: addressFilter || null,
+      profileProvided:!!explicitProfile
     },
     privacy: {
       addressFilterRequiredByCli: true,
@@ -882,18 +981,19 @@ function parseCapture(buffer, options = {}) {
 }
 
 function parseArgs(argv) {
-  const args = {input:'', address:'', json:'', allowAll:false};
+  const args = {input:'', address:'', json:'', profile:'', allowAll:false};
   const rest = argv.slice(2);
   while (rest.length) {
     const token = rest.shift();
     if (token === '--address') args.address = rest.shift() || '';
     else if (token === '--json') args.json = rest.shift() || '';
+    else if (token === '--profile') args.profile = rest.shift() || '';
     else if (token === '--allow-all') args.allowAll = true;
     else if (!args.input) args.input = token;
     else throw new Error('unknown_argument_' + token);
   }
   if (!args.input) {
-    throw new Error('usage: node backend/astera-btsnoop-analyzer.js <btsnoop_hci.log> --address AA:BB:CC:DD:EE:FF [--json out.json]');
+    throw new Error('usage: node backend/astera-btsnoop-analyzer.js <btsnoop_hci.log> --address AA:BB:CC:DD:EE:FF [--profile mapped-reference.json] [--json out.json]');
   }
   if (!args.address && !args.allowAll) {
     throw new Error('address_filter_required_use_--address_or_explicit_--allow-all');
@@ -904,7 +1004,10 @@ function parseArgs(argv) {
 function main() {
   const args = parseArgs(process.argv);
   const input = fs.readFileSync(args.input);
-  const result = parseCapture(input, {address:args.address});
+  const profile = args.profile
+    ? JSON.parse(fs.readFileSync(args.profile,'utf8'))
+    : null;
+  const result = parseCapture(input, {address:args.address,profile});
   const body = JSON.stringify(result, null, 2) + '\n';
   if (args.json) fs.writeFileSync(args.json, body);
   else process.stdout.write(body);
@@ -925,6 +1028,7 @@ export {
   parseBtsnoop,
   parseCapture,
   parseArgs,
+  normalizeGattProfile,
   uuidFromAtt,
   ASTERA_BTB_PRIVATE_SERVICE,
   CCCD_UUID,

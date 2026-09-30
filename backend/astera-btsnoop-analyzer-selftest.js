@@ -479,6 +479,50 @@ assert.strictEqual(
 );
 assert.strictEqual(cachedResult.analysisCoverage.unmappedHostWriteCount, 1);
 
+const firstConnectionId = result.connections[0].connectionId;
+const explicitProfile = {
+  analysisCoverage:{mappingWarning:''},
+  services:result.services.filter(x => x.connectionId === firstConnectionId),
+  attributes:result.attributes.filter(x => x.connectionId === firstConnectionId)
+};
+const cachedProfiled = analyzer.parseCapture(cachedCapture, {
+  address,
+  profile:explicitProfile
+});
+assert.strictEqual(cachedProfiled.analysisCoverage.explicitProfileProvided, true);
+assert.strictEqual(cachedProfiled.analysisCoverage.explicitProfileUsed, true);
+assert.strictEqual(cachedProfiled.analysisCoverage.mappingSource, 'explicit_profile');
+assert.strictEqual(
+  cachedProfiled.analysisCoverage.profileAssumption,
+  'same_fixture_and_firmware_must_be_verified'
+);
+assert.strictEqual(cachedProfiled.analysisCoverage.mappingWarning, '');
+assert.strictEqual(cachedProfiled.candidateAsteraSessionWrites.length, 1);
+assert.strictEqual(cachedProfiled.candidateAsteraSessionWrites[0].valueHex, 'CAFEBABE');
+assert.strictEqual(cachedProfiled.candidateAsteraSessionWrites[0].serviceUuid, asteraService);
+assert.strictEqual(cachedProfiled.candidateAsteraSessionWrites[0].attributeUuid, vendorCharacteristic);
+assert.ok(cachedProfiled.services.every(x => x.mappingSource === 'explicit_profile'));
+assert.ok(cachedProfiled.attributes.every(x => x.mappingSource === 'explicit_profile'));
+
+assert.throws(
+  () => analyzer.normalizeGattProfile({
+    analysisCoverage:{
+      mappingWarning:'gatt_mapping_incomplete_capture_may_use_cached_handles'
+    },
+    services:explicitProfile.services,
+    attributes:explicitProfile.attributes
+  }),
+  /gatt_profile_incomplete/
+);
+
+assert.strictEqual(
+  analyzer.parseArgs([
+    'node','astera-btsnoop-analyzer.js','capture.log',
+    '--address',address,'--profile','reference.json'
+  ]).profile,
+  'reference.json'
+);
+
 process.stdout.write(JSON.stringify({
   ok: true,
   attEvents: result.attEvents.length,
@@ -490,6 +534,7 @@ process.stdout.write(JSON.stringify({
   smpPairingMetadataEvents: result.smpEvents.length,
   attributeUuidMappings: result.analysisCoverage.attributeUuidMappings,
   cachedUnmappedWrites: cachedResult.unmappedHostWrites.length,
+  profiledCachedCandidates: cachedProfiled.candidateAsteraSessionWrites.length,
   connections: result.connections.length,
   smpEventsRedacted: result.smpEvents.length,
   disconnectReason: result.disconnects[0].reasonName

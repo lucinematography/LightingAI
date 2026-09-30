@@ -23,9 +23,14 @@ function candidate(valueHex, handle = 0x25, attributeUuid = '12345678-1234-5678-
   };
 }
 
-function diff(rows) {
+function diff(rows, peerAddress='11:22:33:44:55:66') {
   return {
     kind:'LightingAI-Astera-ATT-diff',
+    captureIdentity:{
+      peerAddress,
+      verifiedMatch:true,
+      warning:''
+    },
     candidateParameterSpecificWrites:rows,
     interpretation:{confidence:'candidate_only'}
   };
@@ -45,6 +50,9 @@ const run3 = diff([
 const result = buildConsensus([run1, run2, run3]);
 
 assert.strictEqual(result.kind, 'LightingAI-Astera-ATT-consensus');
+assert.strictEqual(result.captureIdentity.peerAddress,'11:22:33:44:55:66');
+assert.strictEqual(result.captureIdentity.verifiedAcrossRuns,true);
+assert.strictEqual(result.captureIdentity.warning,'');
 assert.strictEqual(result.minimumRuns, 3);
 assert.strictEqual(result.analyzedRuns, 3);
 assert.strictEqual(result.summary.repeatableCandidateEndpoints, 1);
@@ -84,6 +92,14 @@ assert.throws(
   /at_least_3_diff_captures_required/
 );
 assert.throws(
+  () => buildConsensus([
+    run1,
+    run2,
+    diff([candidate('AA30CC03')],'AA:BB:CC:DD:EE:FF')
+  ]),
+  /peer_address_mismatch_across_diff_captures/
+);
+assert.throws(
   () => parseArgs(['node','astera-att-consensus.js','a.json','b.json']),
   /usage:/
 );
@@ -97,5 +113,6 @@ process.stdout.write(JSON.stringify({
   repeatableCandidateEndpoints:result.repeatableCandidates.length,
   partialCandidateEndpoints:result.partialCandidates.length,
   stableBytes:repeatable.byteConsensus.stableBytes,
-  variableByteIndexes:repeatable.byteConsensus.variableByteIndexes
+  variableByteIndexes:repeatable.byteConsensus.variableByteIndexes,
+  peerAddress:result.captureIdentity.peerAddress
 }, null, 2) + '\n');

@@ -64,14 +64,11 @@ Astera security boundary confirmed from official manuals:
 
 Bluetooth Classic/SPP is not part of the automatic Astera connect path. It may remain available as a diagnostic tool only.
 
-## Legacy standards code
+## Removed network transports
 
-DMX / Art-Net / sACN / CRMX code may remain elsewhere in the repository for legacy or future use, but:
+DMX / Art-Net / sACN / CRMX are not CONTROL transports in this branch. Their executable JavaScript, Android bridge methods, sender classes and protocol tests have been removed.
 
-- it is not loaded by the primary CONTROL bootstrap;
-- it must not block Bluetooth scanning or vendor connection;
-- it is not a prerequisite for the primary CONTROL workflow;
-- it must not reappear as the normal operator path.
+Fixture catalog entries may still describe manufacturer-supported DMX or CRMX capability as reference metadata. That metadata cannot create a CONTROL route, unlock a quick control or cause LightingAI to transmit a command.
 
 ## Release rule
 

@@ -85,18 +85,6 @@ if(!document.getElementById('lightingai-lighting-ratio-script')){
   q.src='file:///android_asset/lighting-ratio.js';
   document.body.appendChild(q);
 }
-if(!document.getElementById('lightingai-dmx-patch-script')){
-  const d=document.createElement('script');
-  d.id='lightingai-dmx-patch-script';
-  d.src='file:///android_asset/dmx-patch-planner.js';
-  document.body.appendChild(d);
-}
-if(!document.getElementById('lightingai-dmx-export-script')){
-  const x=document.createElement('script');
-  x.id='lightingai-dmx-export-script';
-  x.src='file:///android_asset/dmx-export.js';
-  document.body.appendChild(x);
-}
 if(!document.getElementById('lightingai-dof-planner-script')){
   const o=document.createElement('script');
   o.id='lightingai-dof-planner-script';

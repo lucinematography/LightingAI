@@ -2,150 +2,28 @@
 'use strict';
 function arr(v){return Array.isArray(v)?v.filter(Boolean):[]}
 function lower(v){return String(v||'').toLowerCase()}
-function standardControl(fixture){
-  var c=fixture&&fixture.control;
-  if(Array.isArray(c))return c.slice();
-  if(!c||typeof c!=='object')return [];
-  return [].concat(arr(c.directLightingAI),arr(c.wired),arr(c.wireless));
-}
 function vendorControl(fixture){
-  var c=fixture&&fixture.control;
-  if(Array.isArray(c))return c.slice();
-  if(!c||typeof c!=='object')return [];
-  return [].concat(arr(c.directLightingAI),arr(c.wired),arr(c.wireless),arr(c.externalInterfaceRequired),arr(c.unavailableDirectProtocols));
+ var c=fixture&&fixture.control;
+ if(Array.isArray(c))return c.slice();
+ if(!c||typeof c!=='object')return [];
+ return [].concat(arr(c.directLightingAI),arr(c.wired),arr(c.wireless),arr(c.externalInterfaceRequired),arr(c.unavailableDirectProtocols));
 }
-function includesAny(values,needles){
-  return arr(values).some(function(v){var s=lower(v);return needles.some(function(n){return s.indexOf(n)>=0})})
-}
-function hasStandardDmxTransport(values){
-  return arr(values).some(function(v){
-    var s=lower(v);
-    if(/\b(unavailable|unsupported|not supported|not available|no dmx|without dmx)\b/.test(s))return false;
-    return /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(s)||s.indexOf('crmx')>=0||s.indexOf('lumenradio')>=0;
-  });
-}
-function hasNativeNetworkTransport(values){
-  return arr(values).some(function(v){
-    var s=lower(v);
-    if(!/(art-?net|sacn|e1\.31)/.test(s))return false;
-    if(/\b(via|bridge|gateway|interface|powerbox|data\s*link|datalink)\b/.test(s))return false;
-    return true;
-  });
-}
-function verifiedModes(fixture){
-  return arr(fixture&&fixture.dmxModes).filter(function(m){
-    return !!(m&&m.verified===true&&Number(m.channels||m.channelCount)>0&&String(m.sourceUrl||'').indexOf('http')===0)
-  })
-}
+function includesAny(values,needles){return arr(values).some(function(v){var s=lower(v);return needles.some(function(n){return s.indexOf(n)>=0})})}
+
+// CONTROL exposes only direct vendor Bluetooth families. Network/DMX metadata is not executable.
 var DRIVERS=[
-  {
-    id:'standards-native-network',
-    scope:'standard',
-    status:'production',
-    label:'Native Art-Net / sACN',
-    description:'LightingAI sends standards-based network DMX directly only when directLightingAI explicitly declares Art-Net or sACN.',
-    match:function(f){
-      var c=f&&f.control||{},direct=arr(c&&c.directLightingAI);
-      return hasNativeNetworkTransport(direct);
-    }
-  },
-  {
-    id:'standards-dmx-gateway',
-    scope:'standard',
-    status:'production',
-    label:'Art-Net/sACN → DMX/CRMX',
-    description:'LightingAI outputs Art-Net/sACN to a standards-based gateway; the downstream fixture is controlled by its verified DMX profile. RDM alone is management/configuration and does not qualify as a level-control transport.',
-    match:function(f){
-      return hasStandardDmxTransport(standardControl(f));
-    }
-  },
-  {
-    id:'vendor-astera-wireless',
-    scope:'vendor',
-    status:'required-unverified',
-    manufacturer:'Astera',
-    label:'AsteraApp / BTB / UHF',
-    description:'Astera proprietary BTB app-side wireless family. This is the primary CONTROL path for supported Astera fixtures, but output remains locked until session/authentication and commands are physically verified.',
-    match:function(f){
-      return lower(f&&f.manufacturer)==='astera'&&includesAny(vendorControl(f),['asteraapp','bluetooth','btb','uhf','wi-fi','wifi']);
-    }
-  },
-  {
-    id:'vendor-aputure-sidus',
-    scope:'vendor',
-    status:'required-unverified',
-    manufacturer:'Aputure',
-    label:'Sidus Link / Sidus Mesh',
-    description:'Aputure proprietary Sidus family. Direct Bluetooth/Sidus is the primary CONTROL path; legacy standards routes remain outside the primary Bluetooth workflow.',
-    match:function(f){
-      return lower(f&&f.manufacturer)==='aputure'&&includesAny(vendorControl(f),['sidus','mesh','bluetooth','ble']);
-    }
-  },
-  {
-    id:'vendor-godox-app',
-    scope:'vendor',
-    status:'required-unverified',
-    manufacturer:'Godox',
-    label:'Godox Light / Bluetooth',
-    description:'Godox proprietary app/Bluetooth family. Production output remains disabled until protocol details are verified.',
-    match:function(f){
-      return lower(f&&f.manufacturer)==='godox'&&includesAny(vendorControl(f),['bluetooth','app','2.4g','2.4 ghz','2.4ghz']);
-    }
-  },
-  {
-    id:'vendor-aladdin-app',
-    scope:'vendor',
-    status:'required-unverified',
-    manufacturer:'Aladdin',
-    label:'Aladdin App / Bluetooth',
-    description:'Direct Aladdin Bluetooth control family. LightingAI must not require a separate Aladdin app for normal quick-control work.',
-    match:function(f){
-      return lower(f&&f.manufacturer)==='aladdin'&&includesAny(vendorControl(f),['bluetooth','app','wireless']);
-    }
-  },
-  {
-    id:'vendor-nanlite-nanlink',
-    scope:'vendor',
-    status:'required-unverified',
-    manufacturer:'Nanlite',
-    label:'NANLINK / Bluetooth',
-    description:'Direct NANLINK Bluetooth control family. Required for the Bluetooth-first LightingAI workflow when supported by the fixture.',
-    match:function(f){
-      return lower(f&&f.manufacturer)==='nanlite'&&includesAny(vendorControl(f),['nanlink','bluetooth','ble','wireless']);
-    }
-  },
-  {
-    id:'vendor-arri-lico',
-    scope:'vendor',
-    status:'required-unverified',
-    manufacturer:'ARRI',
-    label:'ARRI LiCo / Bluetooth',
-    description:'Direct ARRI LiCo Bluetooth control family for supported fixtures. Required for the Bluetooth-first LightingAI workflow where available.',
-    match:function(f){
-      return lower(f&&f.manufacturer)==='arri'&&includesAny(vendorControl(f),['lico','bluetooth','ble','wireless']);
-    }
-  }
+ {id:'vendor-astera-wireless',manufacturer:'Astera',label:'Astera Bluetooth',description:'Direct Astera Bluetooth candidate. Output remains locked until the real session and commands are physically verified.',match:function(f){return lower(f&&f.manufacturer)==='astera'&&includesAny(vendorControl(f),['asteraapp','bluetooth','btb','uhf','wi-fi','wifi'])}},
+ {id:'vendor-aputure-sidus',manufacturer:'Aputure',label:'Aputure Sidus Bluetooth',description:'Direct Aputure Bluetooth/Sidus candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='aputure'&&includesAny(vendorControl(f),['sidus','mesh','bluetooth','ble'])}},
+ {id:'vendor-godox-app',manufacturer:'Godox',label:'Godox Bluetooth',description:'Direct Godox Bluetooth candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='godox'&&includesAny(vendorControl(f),['bluetooth','app','2.4g','2.4 ghz','2.4ghz'])}},
+ {id:'vendor-aladdin-app',manufacturer:'Aladdin',label:'Aladdin Bluetooth',description:'Direct Aladdin Bluetooth candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='aladdin'&&includesAny(vendorControl(f),['bluetooth','app','wireless'])}},
+ {id:'vendor-nanlite-nanlink',manufacturer:'Nanlite',label:'NANLINK Bluetooth',description:'Direct NANLINK Bluetooth candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='nanlite'&&includesAny(vendorControl(f),['nanlink','bluetooth','ble','wireless'])}},
+ {id:'vendor-arri-lico',manufacturer:'ARRI',label:'ARRI LiCo Bluetooth',description:'Direct ARRI LiCo Bluetooth candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='arri'&&includesAny(vendorControl(f),['lico','bluetooth','ble','wireless'])}}
 ];
 function matchingDrivers(fixture){return DRIVERS.filter(function(d){try{return d.match(fixture)}catch(e){return false}})}
 function resolve(fixture){
-  var matches=matchingDrivers(fixture),modes=verifiedModes(fixture);
-  var standard=matches.filter(function(d){return d.scope==='standard'});
-  var vendor=matches.filter(function(d){return d.scope==='vendor'});
-  var productionDriver=modes.length?standard[0]||null:null;
-  var vendorDirectRequired=vendor.some(function(d){return d.status==='required-unverified'||d.status==='production'});
-  var vendorDirectReady=vendor.some(function(d){return d.status==='production'});
-  return {
-    productionDriver:productionDriver,
-    standardDrivers:standard,
-    vendorDrivers:vendor,
-    verifiedDmxModeCount:modes.length,
-    productionReady:!!productionDriver,
-    transportKnown:standard.length>0,
-    vendorDirectRequired:vendorDirectRequired,
-    vendorDirectReady:vendorDirectReady,
-    vendorResearchOnly:false
-  };
+ var vendor=matchingDrivers(fixture);
+ return {productionDriver:null,standardDrivers:[],vendorDrivers:vendor,verifiedDmxModeCount:0,productionReady:false,transportKnown:false,vendorDirectRequired:vendor.length>0,vendorDirectReady:false,vendorResearchOnly:vendor.length>0};
 }
-function listDrivers(){return DRIVERS.map(function(d){return {id:d.id,scope:d.scope,status:d.status,manufacturer:d.manufacturer||'',label:d.label,description:d.description}})}
-window.LightingAIControlSystemDrivers={version:'1.5-bluetooth-vendor-families',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
+function listDrivers(){return DRIVERS.map(function(d){return {id:d.id,scope:'vendor',status:'required-unverified',manufacturer:d.manufacturer,label:d.label,description:d.description}})}
+window.LightingAIControlSystemDrivers={version:'2.0-bluetooth-only',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
 })();

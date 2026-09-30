@@ -10,7 +10,6 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
@@ -51,11 +50,7 @@ import org.json.JSONArray;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.ArrayList;
-import java.util.UUID;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -73,29 +68,6 @@ public class MainActivity extends Activity {
     private String pendingVoiceTarget = null;
     private String pendingVoiceLanguage = "sr";
     private SpeechRecognizer speechRecognizer;
-    private final ArtNetSequenceTracker artNetSequenceTracker = new ArtNetSequenceTracker();
-    private final SacnSequenceTracker sacnSequenceTracker = new SacnSequenceTracker();
-    private final AtomicInteger artNetLiveEpoch = new AtomicInteger(0);
-    private final AtomicInteger artNetDiscoveryEpoch = new AtomicInteger(0);
-    private final AtomicInteger sacnLiveEpoch = new AtomicInteger(0);
-    private final AtomicInteger networkDmxSendEpoch = new AtomicInteger(0);
-    private final Object artNetLiveControlLock = new Object();
-    private final Object sacnLiveControlLock = new Object();
-    private final Object networkDmxSendLock = new Object();
-    private final AtomicInteger sacnPriority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
-    private volatile String sacnIpMode = "ipv4";
-    private final AtomicLong artNetDirectSent = new AtomicLong(0);
-    private final AtomicLong artNetDirectFailed = new AtomicLong(0);
-    private final AtomicLong artNetDirectLastAtMs = new AtomicLong(0);
-    private final AtomicLong sacnDirectSent = new AtomicLong(0);
-    private final AtomicLong sacnDirectFailed = new AtomicLong(0);
-    private final AtomicLong sacnDirectLastAtMs = new AtomicLong(0);
-    private volatile String artNetDirectLastError = "";
-    private volatile String sacnDirectLastError = "";
-    private volatile String networkDmxArmSignature = "";
-    private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine(artNetSequenceTracker);
-    private byte[] sacnCid;
-    private SacnLiveEngine sacnLiveEngine;
     private BleDeviceScanner bleDeviceScanner;
     private BleGattInspector bleGattInspector;
     private AsteraBtbBondManager asteraBtbBondManager;
@@ -133,9 +105,6 @@ public class MainActivity extends Activity {
         setContentView(rootView);
         nativeSunLocation = new NativeSunLocation(this);
         nativeSunCompass = new NativeSunCompass(this);
-        sacnCid = loadOrCreateSacnCid();
-        sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
-        sacnLiveEngine.setPriority(sacnPriority.get());
         bleDeviceScanner = new BleDeviceScanner(this);
         bleGattInspector = new BleGattInspector(this);
         asteraBtbBondManager = new AsteraBtbBondManager(this);
@@ -220,32 +189,6 @@ public class MainActivity extends Activity {
             3350
         );
         webView.requestApplyInsets();
-    }
-
-    private void requireNetworkDmxArmedRoute() {
-        String expected = networkDmxArmSignature == null ? "" : networkDmxArmSignature.trim();
-        String current = expected.startsWith("sacn:") ?
-            "sacn:" + NetworkInterfaceInspector.sacnSignature(sacnIpMode) :
-            NetworkInterfaceInspector.signature();
-        if (expected.isEmpty() || current.isEmpty() || !expected.equals(current)) {
-            throw new IllegalStateException("Network changed; re-arm required");
-        }
-    }
-
-    private static int[] parseFullDmxFrame(String channelsJson) throws Exception {
-        JSONArray values = new JSONArray(channelsJson == null ? "[]" : channelsJson);
-        if (values.length() != 512) throw new IllegalArgumentException("DMX frame must contain exactly 512 channels");
-        int[] channels = new int[512];
-        for (int i = 0; i < 512; i++) {
-            Object raw = values.get(i);
-            if (!(raw instanceof Number)) throw new IllegalArgumentException("DMX channel must be numeric");
-            double value = ((Number) raw).doubleValue();
-            if (!Double.isFinite(value) || value != Math.rint(value) || value < 0 || value > 255) {
-                throw new IllegalArgumentException("DMX channel out of range");
-            }
-            channels[i] = (int) value;
-        }
-        return channels;
     }
 
     private View createStartupSplash() {
@@ -693,25 +636,6 @@ public class MainActivity extends Activity {
             null));
     }
 
-    private byte[] loadOrCreateSacnCid() {
-        SharedPreferences prefs = getSharedPreferences("lightingai_control", MODE_PRIVATE);
-        String raw = prefs.getString("sacn_cid", null);
-        UUID uuid;
-        try {
-            uuid = raw == null ? null : UUID.fromString(raw);
-        } catch (Exception ignored) {
-            uuid = null;
-        }
-        if (uuid == null) {
-            uuid = UUID.randomUUID();
-            prefs.edit().putString("sacn_cid", uuid.toString()).apply();
-        }
-        return ByteBuffer.allocate(16)
-            .putLong(uuid.getMostSignificantBits())
-            .putLong(uuid.getLeastSignificantBits())
-            .array();
-    }
-
     private boolean hasBlePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
@@ -822,25 +746,6 @@ public class MainActivity extends Activity {
         final String errJs = JSONObject.quote(error == null ? "" : error);
         webView.post(() -> webView.evaluateJavascript(
             "window.LightingAIBleDiscoveryResult&&window.LightingAIBleDiscoveryResult(" + idJs + "," + devicesJs + "," + errJs + ");",
-            null));
-    }
-
-    private void notifyArtNetResult(String requestId, boolean ok, String message) {
-        if (webView == null) return;
-        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
-        final String msgJs = JSONObject.quote(message == null ? "" : message);
-        webView.post(() -> webView.evaluateJavascript(
-            "window.LightingAIArtNetResult&&window.LightingAIArtNetResult(" + idJs + "," + (ok ? "true" : "false") + "," + msgJs + ");",
-            null));
-    }
-
-    private void notifyArtNetDiscovery(String requestId, JSONArray nodes, String error) {
-        if (webView == null) return;
-        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
-        final String nodesJs = nodes == null ? "[]" : nodes.toString();
-        final String errJs = JSONObject.quote(error == null ? "" : error);
-        webView.post(() -> webView.evaluateJavascript(
-            "window.LightingAIArtNetDiscoveryResult&&window.LightingAIArtNetDiscoveryResult(" + idJs + "," + nodesJs + "," + errJs + ");",
             null));
     }
 
@@ -1149,293 +1054,6 @@ public class MainActivity extends Activity {
             });
         }
 
-        @JavascriptInterface public String networkDmxNetworkSignature() {
-            return NetworkInterfaceInspector.signature();
-        }
-
-        @JavascriptInterface public void networkDmxSetArmSignature(String signature) {
-            synchronized (networkDmxSendLock) {
-                networkDmxSendEpoch.incrementAndGet();
-                networkDmxArmSignature = signature == null ? "" : signature.trim();
-            }
-        }
-
-        @JavascriptInterface public void networkDmxClearArmSignature() {
-            synchronized (networkDmxSendLock) {
-                networkDmxSendEpoch.incrementAndGet();
-                networkDmxArmSignature = "";
-            }
-        }
-
-        @JavascriptInterface public String networkDmxDiagnostics() {
-            try {
-                JSONObject out = new JSONObject();
-                out.put("platform", "android");
-                out.put("timestampMs", System.currentTimeMillis());
-
-                out.put("interfaces", NetworkInterfaceInspector.snapshot());
-                out.put("networkSignature", NetworkInterfaceInspector.signature());
-                out.put("multicastInterfaceCount", NetworkInterfaceInspector.multicastIpv4InterfaceCount());
-                out.put("multicastInterfaceName", NetworkInterfaceInspector.singleMulticastIpv4InterfaceName());
-                out.put("sacnIpMode", sacnIpMode);
-                out.put("sacnMulticastInterfaceCount", NetworkInterfaceInspector.sacnMulticastInterfaceCount(sacnIpMode));
-                out.put("sacnMulticastInterfaceName", NetworkInterfaceInspector.singleSacnMulticastInterfaceName(sacnIpMode));
-                String sacnSignature = NetworkInterfaceInspector.sacnSignature(sacnIpMode);
-                out.put("sacnNetworkSignature", sacnSignature.isEmpty() ? "" : "sacn:" + sacnSignature);
-
-                JSONObject artNet = new JSONObject();
-                artNet.put("directSent", artNetDirectSent.get());
-                artNet.put("directFailed", artNetDirectFailed.get());
-                artNet.put("directLastAtMs", artNetDirectLastAtMs.get());
-                artNet.put("directLastError", artNetDirectLastError == null ? "" : artNetDirectLastError);
-                artNet.put("liveFrames", artNetLiveEngine.activeFrameCount());
-                artNet.put("livePacketsSent", artNetLiveEngine.packetsSent());
-                artNet.put("livePacketsFailed", artNetLiveEngine.packetsFailed());
-                artNet.put("liveLastSendAtMs", artNetLiveEngine.lastSendAtMs());
-                artNet.put("liveLastError", artNetLiveEngine.lastError());
-                out.put("artNet", artNet);
-
-                JSONObject sacn = new JSONObject();
-                sacn.put("directSent", sacnDirectSent.get());
-                sacn.put("directFailed", sacnDirectFailed.get());
-                sacn.put("directLastAtMs", sacnDirectLastAtMs.get());
-                sacn.put("directLastError", sacnDirectLastError == null ? "" : sacnDirectLastError);
-                sacn.put("liveFrames", sacnLiveEngine == null ? 0 : sacnLiveEngine.activeFrameCount());
-                sacn.put("livePacketsSent", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsSent());
-                sacn.put("livePacketsFailed", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsFailed());
-                sacn.put("liveLastSendAtMs", sacnLiveEngine == null ? 0 : sacnLiveEngine.lastSendAtMs());
-                sacn.put("liveLastError", sacnLiveEngine == null ? "" : sacnLiveEngine.lastError());
-                sacn.put("priority", sacnPriority.get());
-                out.put("sacn", sacn);
-                return out.toString();
-            } catch (Exception e) {
-                return "{}";
-            }
-        }
-
-        @JavascriptInterface public void sacnSetIpMode(String mode) {
-            String normalized = NetworkInterfaceInspector.normalizeSacnIpMode(mode);
-            if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
-            sacnLiveEngine.setIpMode(normalized);
-            sacnIpMode = normalized;
-        }
-
-        @JavascriptInterface public String sacnNetworkSignature() {
-            String signature = NetworkInterfaceInspector.sacnSignature(sacnIpMode);
-            return signature.isEmpty() ? "" : "sacn:" + signature;
-        }
-
-        @JavascriptInterface public void sacnSetPriority(int priority) {
-            int value = SacnSender.normalizePriority(priority);
-            sacnPriority.set(value);
-            if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
-            sacnLiveEngine.setPriority(value);
-        }
-
-        @JavascriptInterface public void sacnSendDmx(String requestId, int universe, String channelsJson) {
-            final String id = requestId == null ? "" : requestId;
-            final int u = universe;
-            final String raw = channelsJson == null ? "[]" : channelsJson;
-            final int epoch = networkDmxSendEpoch.get();
-            new Thread(() -> {
-                boolean ok = false;
-                String message = "";
-                try {
-                    int[] channels = parseFullDmxFrame(raw);
-                    synchronized (networkDmxSendLock) {
-                        if (epoch != networkDmxSendEpoch.get()) throw new IllegalStateException("Stale sACN direct send ignored");
-                        requireNetworkDmxArmedRoute();
-                        for (int repeat = 0; repeat < 3; repeat++) {
-                            int seq = sacnSequenceTracker.next(u);
-                            SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get(), sacnIpMode);
-                        }
-                        if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
-                        sacnLiveEngine.setPriority(sacnPriority.get());
-                        sacnLiveEngine.setIpMode(sacnIpMode);
-                        sacnLiveEngine.setKeepaliveFrame(u, channels);
-                    }
-                    sacnDirectSent.incrementAndGet();
-                    sacnDirectLastAtMs.set(System.currentTimeMillis());
-                    sacnDirectLastError = "";
-                    ok = true;
-                } catch (Exception e) {
-                    sacnDirectFailed.incrementAndGet();
-                    sacnDirectLastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                    message = e.getMessage() == null ? "sACN send failed" : e.getMessage();
-                }
-                notifyArtNetResult(id, ok, message);
-            }, "LightingAI-sACN").start();
-        }
-
-        @JavascriptInterface public void sacnSetLiveDmx(String requestId, int universe, String channelsJson) {
-            final String id = requestId == null ? "" : requestId;
-            final int u = universe;
-            final String raw = channelsJson == null ? "[]" : channelsJson;
-            final int epoch = sacnLiveEpoch.get();
-            new Thread(() -> {
-                boolean ok = false;
-                String message = "";
-                try {
-                    int[] channels = parseFullDmxFrame(raw);
-                    synchronized (sacnLiveControlLock) {
-                        if (epoch != sacnLiveEpoch.get()) throw new IllegalStateException("Stale sACN live update ignored");
-                        requireNetworkDmxArmedRoute();
-                        if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI", sacnSequenceTracker);
-                        sacnLiveEngine.setPriority(sacnPriority.get());
-                        sacnLiveEngine.setIpMode(sacnIpMode);
-                        sacnLiveEngine.setLiveFrame(u, channels);
-                    }
-                    ok = true;
-                } catch (Exception e) {
-                    message = e.getMessage() == null ? "sACN live refresh failed" : e.getMessage();
-                }
-                notifyArtNetResult(id, ok, message);
-            }, "LightingAI-sACN-Live-Update").start();
-        }
-
-        @JavascriptInterface public void sacnSetKeepalive(String requestId) {
-            final String id = requestId == null ? "" : requestId;
-            boolean ok = true;
-            String message = "";
-            synchronized (sacnLiveControlLock) {
-                try {
-                    if (sacnLiveEngine != null) sacnLiveEngine.setKeepaliveRate();
-                } catch (Exception e) {
-                    ok = false;
-                    message = e.getMessage() == null ? "sACN keepalive failed" : e.getMessage();
-                }
-            }
-            notifyArtNetResult(id, ok, message);
-        }
-
-        @JavascriptInterface public void sacnStopLive(String requestId) {
-            final String id = requestId == null ? "" : requestId;
-            boolean ok = true;
-            String message = "";
-            synchronized (sacnLiveControlLock) {
-                sacnLiveEpoch.incrementAndGet();
-                if (sacnLiveEngine != null) {
-                    ok = sacnLiveEngine.stopAll();
-                    if (!ok) message = sacnLiveEngine.lastError();
-                }
-            }
-            notifyArtNetResult(id, ok, message);
-        }
-
-        @JavascriptInterface public int sacnLiveFrameCount() {
-            return sacnLiveEngine == null ? 0 : sacnLiveEngine.activeFrameCount();
-        }
-
-        @JavascriptInterface public void artNetDiscover(String requestId, int timeoutMs) {
-            final String id = requestId == null ? "" : requestId;
-            final int epoch = artNetDiscoveryEpoch.incrementAndGet();
-            new Thread(() -> {
-                JSONArray result = new JSONArray();
-                String error = "";
-                try {
-                    for (ArtNetDiscovery.Node node : ArtNetDiscovery.discover(timeoutMs)) {
-                        JSONObject item = new JSONObject();
-                        item.put("ip", node.ip);
-                        item.put("shortName", node.shortName);
-                        item.put("longName", node.longName);
-                        JSONArray subscriptions = new JSONArray();
-                        for (Integer portAddress : node.subscriptions) {
-                            if (portAddress != null) subscriptions.put(portAddress.intValue());
-                        }
-                        item.put("subscriptions", subscriptions);
-                        item.put("subscriptionDataPresent", node.subscriptionDataPresent);
-                        result.put(item);
-                    }
-                } catch (Exception e) {
-                    error = e.getMessage() == null ? "Art-Net discovery failed" : e.getMessage();
-                }
-                if (epoch != artNetDiscoveryEpoch.get()) return;
-                notifyArtNetDiscovery(id, result, error);
-            }, "LightingAI-ArtNet-Discovery").start();
-        }
-
-        @JavascriptInterface public void artNetSendDmx(String requestId, String targetIp, int universe, String channelsJson) {
-            final String id = requestId == null ? "" : requestId;
-            final String ip = targetIp == null ? "" : targetIp;
-            final int u = universe;
-            final String raw = channelsJson == null ? "[]" : channelsJson;
-            final int epoch = networkDmxSendEpoch.get();
-            new Thread(() -> {
-                boolean ok = false;
-                String message = "";
-                try {
-                    int[] channels = parseFullDmxFrame(raw);
-                    synchronized (networkDmxSendLock) {
-                        if (epoch != networkDmxSendEpoch.get()) throw new IllegalStateException("Stale Art-Net direct send ignored");
-                        requireNetworkDmxArmedRoute();
-                        int seq = artNetSequenceTracker.next(ip, u);
-                        ArtNetSender.sendDmx(ip, u, channels, seq);
-                        artNetLiveEngine.setKeepaliveFrame(ip, u, channels);
-                    }
-                    artNetDirectSent.incrementAndGet();
-                    artNetDirectLastAtMs.set(System.currentTimeMillis());
-                    artNetDirectLastError = "";
-                    ok = true;
-                } catch (Exception e) {
-                    artNetDirectFailed.incrementAndGet();
-                    artNetDirectLastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                    message = e.getMessage() == null ? "Art-Net send failed" : e.getMessage();
-                }
-                notifyArtNetResult(id, ok, message);
-            }, "LightingAI-ArtNet").start();
-        }
-
-        @JavascriptInterface public void artNetSetLiveDmx(String requestId, String targetIp, int universe, String channelsJson) {
-            final String id = requestId == null ? "" : requestId;
-            final String ip = targetIp == null ? "" : targetIp;
-            final int u = universe;
-            final String raw = channelsJson == null ? "[]" : channelsJson;
-            final int epoch = artNetLiveEpoch.get();
-            new Thread(() -> {
-                boolean ok = false;
-                String message = "";
-                try {
-                    int[] channels = parseFullDmxFrame(raw);
-                    synchronized (artNetLiveControlLock) {
-                        if (epoch != artNetLiveEpoch.get()) throw new IllegalStateException("Stale Art-Net live update ignored");
-                        requireNetworkDmxArmedRoute();
-                        artNetLiveEngine.setLiveFrame(ip, u, channels);
-                    }
-                    ok = true;
-                } catch (Exception e) {
-                    message = e.getMessage() == null ? "Art-Net live refresh failed" : e.getMessage();
-                }
-                notifyArtNetResult(id, ok, message);
-            }, "LightingAI-ArtNet-Live-Update").start();
-        }
-
-        @JavascriptInterface public void artNetSetKeepalive(String requestId) {
-            final String id = requestId == null ? "" : requestId;
-            boolean ok = true;
-            String message = "";
-            synchronized (artNetLiveControlLock) {
-                try {
-                    artNetLiveEngine.setKeepaliveRate();
-                } catch (Exception e) {
-                    ok = false;
-                    message = e.getMessage() == null ? "Art-Net keepalive failed" : e.getMessage();
-                }
-            }
-            notifyArtNetResult(id, ok, message);
-        }
-
-        @JavascriptInterface public void artNetStopLive(String requestId) {
-            final String id = requestId == null ? "" : requestId;
-            synchronized (artNetLiveControlLock) {
-                artNetLiveEpoch.incrementAndGet();
-                artNetLiveEngine.stopAll();
-            }
-            notifyArtNetResult(id, true, "");
-        }
-
-        @JavascriptInterface public int artNetLiveFrameCount() {
-            return artNetLiveEngine.activeFrameCount();
-        }
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -1481,48 +1099,19 @@ public class MainActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
-        // Fail closed after any lifecycle transition. Native live engines must never
-        // resume output until the WebView performs a fresh ARM preflight.
-        synchronized (networkDmxSendLock) {
-            networkDmxSendEpoch.incrementAndGet();
-            networkDmxArmSignature = "";
-        }
-        synchronized (artNetLiveControlLock) {
-            artNetLiveEpoch.incrementAndGet();
-            artNetLiveEngine.stopAll();
-        }
-        synchronized (sacnLiveControlLock) {
-            sacnLiveEpoch.incrementAndGet();
-            if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
-        }
-        ArtNetSocketManager.close();
         if (webView != null) {
             webView.post(() -> webView.evaluateJavascript(
-                "window.LightingAINetworkDmxLifecycleResume&&window.LightingAINetworkDmxLifecycleResume();window.LightingAIBleLifecycleResume&&window.LightingAIBleLifecycleResume();",
+                "window.LightingAIBleLifecycleResume&&window.LightingAIBleLifecycleResume();",
                 null));
         }
     }
 
     @Override protected void onPause() {
-        artNetDiscoveryEpoch.incrementAndGet();
         stopNativeSunCompass();
         pendingBleDiscoveryRequestId = null;
-        synchronized (networkDmxSendLock) {
-            networkDmxSendEpoch.incrementAndGet();
-            networkDmxArmSignature = "";
-        }
-        synchronized (artNetLiveControlLock) {
-            artNetLiveEpoch.incrementAndGet();
-            artNetLiveEngine.stopAll();
-        }
-        synchronized (sacnLiveControlLock) {
-            sacnLiveEpoch.incrementAndGet();
-            if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
-        }
-        ArtNetSocketManager.close();
         if (webView != null) {
             webView.post(() -> webView.evaluateJavascript(
-                "window.LightingAINetworkDmxLifecyclePause&&window.LightingAINetworkDmxLifecyclePause();window.LightingAIBleLifecyclePause&&window.LightingAIBleLifecyclePause();",
+                "window.LightingAIBleLifecyclePause&&window.LightingAIBleLifecyclePause();",
                 null));
         }
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
@@ -1600,21 +1189,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
-        artNetDiscoveryEpoch.incrementAndGet();
         pendingBleDiscoveryRequestId = null;
-        synchronized (networkDmxSendLock) {
-            networkDmxSendEpoch.incrementAndGet();
-            networkDmxArmSignature = "";
-        }
-        synchronized (artNetLiveControlLock) {
-            artNetLiveEpoch.incrementAndGet();
-            artNetLiveEngine.stopAll();
-        }
-        synchronized (sacnLiveControlLock) {
-            sacnLiveEpoch.incrementAndGet();
-            if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
-        }
-        ArtNetSocketManager.close();
         if (pendingFileChooser != null) finishFileChooser(null);
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();

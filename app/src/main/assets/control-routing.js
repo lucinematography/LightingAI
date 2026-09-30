@@ -1,86 +1,18 @@
 (function(){
 'use strict';
 function list(v){return Array.isArray(v)?v.filter(Boolean):[]}
-function lower(v){return String(v||'').toLowerCase()}
-function hasAny(values,needles){
-  return list(values).some(function(v){var s=lower(v);return needles.some(function(n){return s.indexOf(n)>=0})})
-}
-function hasNativeNetwork(values){
-  return list(values).some(function(v){
-    var s=lower(v);
-    if(!/(art-?net|sacn|e1\.31)/.test(s))return false;
-    if(/\b(via|bridge|gateway|interface|powerbox|data\s*link|datalink)\b/.test(s))return false;
-    return true;
-  })
-}
 function controlFields(fixture){
-  var c=fixture&&fixture.control;
-  if(Array.isArray(c))return {direct:[],wired:c.slice(),wireless:[],external:[]};
-  if(!c||typeof c!=='object')return {direct:[],wired:[],wireless:[],external:[]};
-  return {
-    direct:list(c.directLightingAI),
-    wired:list(c.wired),
-    wireless:list(c.wireless),
-    external:list(c.externalInterfaceRequired)
-  };
+ var c=fixture&&fixture.control;
+ if(Array.isArray(c))return {direct:[],wired:c.slice(),wireless:[],external:[]};
+ if(!c||typeof c!=='object')return {direct:[],wired:[],wireless:[],external:[]};
+ return {direct:list(c.directLightingAI),wired:list(c.wired),wireless:list(c.wireless),external:list(c.externalInterfaceRequired)};
 }
 function classify(fixture){
-  var fields=controlFields(fixture);
-  var direct=fields.direct,wired=fields.wired,wireless=fields.wireless,external=fields.external;
-  var standardFields=direct.concat(wired,wireless);
-  var nativeNetwork=hasNativeNetwork(direct);
-  var standardNetwork=hasAny(standardFields,['art-net','artnet','sacn','e1.31']);
-  var dmx=standardFields.some(function(v){
-    var s=lower(v);
-    if(/\b(unavailable|unsupported|not supported|not available|no dmx|without dmx)\b/.test(s))return false;
-    return /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(s);
-  });
-  var crmx=hasAny(standardFields,['crmx','lumenradio']);
-  var proprietaryBle=hasAny(standardFields.concat(external),['sidus','bluetooth','ble','mesh','asteraapp','uhf']);
-  var verifiedModes=list(fixture&&fixture.dmxModes).filter(function(m){
-    return !!(m&&m.verified===true&&Number(m.channels||m.channelCount)>0&&String(m.sourceUrl||'').indexOf('http')===0);
-  });
-  var system=null;
-  try{
-    if(window.LightingAIControlSystemDrivers&&typeof window.LightingAIControlSystemDrivers.resolve==='function'){
-      system=window.LightingAIControlSystemDrivers.resolve(fixture);
-    }
-  }catch(e){}
-  var route='unverified',label='NO VERIFIED ROUTE',requiresInterface=external.length>0;
-  if(system&&system.productionDriver){
-    if(system.productionDriver.id==='standards-native-network'){route='native-network';label='DIRECT ART-NET / sACN';}
-    else {route='gateway';label='STANDARD CONTROL ROUTE';}
-  }else if(system&&system.transportKnown){
-    route=nativeNetwork?'native-network':'gateway';
-    label='TRANSPORT KNOWN · PROFILE UNVERIFIED';
-  }else if(system&&system.vendorDrivers&&system.vendorDrivers.length){
-    route='vendor-wireless';label='DIRECT VENDOR CONTROL · REQUIRED';
-  }else if(nativeNetwork||standardNetwork||dmx||crmx){
-    route=nativeNetwork?'native-network':'gateway';label='TRANSPORT KNOWN · PROFILE UNVERIFIED';
-  }else if(proprietaryBle){
-    route='vendor-wireless';label='DIRECT VENDOR CONTROL · REQUIRED';
-  }
-  var transportReady=system?!!system.transportKnown:(route==='native-network'||route==='gateway');
-  var semanticReady=system?!!system.productionReady:(transportReady&&verifiedModes.length>0);
-  return {
-    route:route,
-    label:label,
-    nativeNetwork:nativeNetwork,
-    standardNetwork:standardNetwork,
-    dmx:dmx,
-    crmx:crmx,
-    proprietaryBle:proprietaryBle,
-    transportReady:transportReady,
-    semanticReady:semanticReady,
-    verifiedDmxModeCount:verifiedModes.length,
-    system:system,
-    requiresInterface:requiresInterface,
-    externalInterfaces:external,
-    direct:direct,
-    wired:wired,
-    wireless:wireless
-  };
+ var fields=controlFields(fixture),system=null;
+ try{if(window.LightingAIControlSystemDrivers&&typeof window.LightingAIControlSystemDrivers.resolve==='function')system=window.LightingAIControlSystemDrivers.resolve(fixture)}catch(e){}
+ var vendor=system&&Array.isArray(system.vendorDrivers)?system.vendorDrivers:[];
+ return {route:vendor.length?'vendor-bluetooth':'unverified',label:vendor.length?'DIRECT BLUETOOTH · VERIFICATION REQUIRED':'NO VERIFIED BLUETOOTH ROUTE',bluetooth:vendor.length>0,transportReady:false,semanticReady:false,verifiedDmxModeCount:0,system:system,requiresInterface:false,externalInterfaces:[],direct:fields.direct,wired:fields.wired,wireless:fields.wireless};
 }
-function productionReady(fixture){return classify(fixture).semanticReady===true}
-window.LightingAIControlRouting={version:'1.7-direct-vendor-required',classify:classify,productionReady:productionReady};
+function productionReady(){return false}
+window.LightingAIControlRouting={version:'2.0-bluetooth-only',classify:classify,productionReady:productionReady};
 })();

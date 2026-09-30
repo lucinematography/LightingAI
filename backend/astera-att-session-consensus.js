@@ -5,6 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65';
+
 function normalizePeerAddress(value) {
   return String(value || '').trim().replace(/-/g, ':').toUpperCase();
 }
@@ -146,9 +148,23 @@ function normalizeCapture(input, index) {
     Number(a && a.recordIndex || 0) - Number(b && b.recordIndex || 0)
   );
 
+  const notifications = Array.isArray(input.attEvents)
+    ? input.attEvents.filter(event =>
+        event &&
+        (event.opcodeName === 'HANDLE_VALUE_NOTIFICATION' ||
+         event.opcodeName === 'HANDLE_VALUE_INDICATION') &&
+        String(event.serviceUuid || '').toLowerCase() === ASTERA_BTB_PRIVATE_SERVICE
+      ).slice()
+    : [];
+  notifications.sort((a,b) =>
+    Number(a && a.elapsedMs || 0) - Number(b && b.elapsedMs || 0) ||
+    Number(a && a.recordIndex || 0) - Number(b && b.recordIndex || 0)
+  );
+
   return {
     peerAddress,
-    writes
+    writes,
+    notifications
   };
 }
 
@@ -172,6 +188,66 @@ function commonEndpointPrefix(captures) {
         median:times.length ? median(times) : null
       },
       samples:rows
+    });
+  }
+  return out;
+}
+
+function firstResponseAfter(write, notifications, windowMs) {
+  const writeTime = Number(write && write.elapsedMs);
+  if (!Number.isFinite(writeTime)) return null;
+  for (const event of Array.isArray(notifications) ? notifications : []) {
+    const eventTime = Number(event && event.elapsedMs);
+    if (!Number.isFinite(eventTime) || eventTime < writeTime) continue;
+    const latencyMs = eventTime - writeTime;
+    if (latencyMs > windowMs) break;
+    return {
+      event,
+      latencyMs
+    };
+  }
+  return null;
+}
+
+function repeatableResponsePairs(captures, prefix, windowMs=750) {
+  const out = [];
+  for (const position of prefix) {
+    const responses = captures.map(capture =>
+      firstResponseAfter(
+        capture.writes[position.position],
+        capture.notifications,
+        windowMs
+      )
+    );
+    if (responses.some(row => !row)) continue;
+
+    const endpoints = responses.map(row => endpointIdentity(row.event));
+    if (new Set(endpoints).size !== 1) continue;
+
+    const latencies = responses.map(row => row.latencyMs);
+    const payloads = responses.map(row =>
+      String(row.event && row.event.valueHex || '').toUpperCase()
+    );
+
+    out.push({
+      writePosition:position.position,
+      writeEndpoint:position.endpoint,
+      responseEndpoint:endpoints[0],
+      responseLatencyMs:{
+        min:Math.min(...latencies),
+        max:Math.max(...latencies),
+        median:median(latencies)
+      },
+      responsePayloadConsensus:byteConsensus(payloads),
+      samples:responses.map((row,index)=>({
+        runIndex:index,
+        latencyMs:row.latencyMs,
+        event:row.event
+      })),
+      interpretation:{
+        confidence:'candidate_only',
+        note:'A repeatable notification/indication following the same startup write is only an ACK/response candidate. Temporal proximity does not prove protocol semantics.'
+      }
     });
   }
   return out;
@@ -247,6 +323,7 @@ function analyzeSessionCaptures(inputs, options={}) {
   const peerAddress = [...addresses][0];
 
   const prefix = commonEndpointPrefix(captures);
+  const responsePairs = repeatableResponsePairs(captures,prefix,750);
   const periodic = periodicEndpoints(captures);
   const writeCounts = captures.map(c=>c.writes.length);
 
@@ -263,9 +340,11 @@ function analyzeSessionCaptures(inputs, options={}) {
       minVendorWriteCount:Math.min(...writeCounts),
       maxVendorWriteCount:Math.max(...writeCounts),
       commonEndpointPrefixLength:prefix.length,
+      repeatableWriteResponseCandidates:responsePairs.length,
       repeatablePeriodicEndpointCandidates:periodic.length
     },
     commonEndpointPrefix:prefix,
+    repeatableWriteResponsePairs:responsePairs,
     periodicEndpointCandidates:periodic,
     interpretation:{
       confidence:'candidate_only',
@@ -318,6 +397,8 @@ export {
   byteConsensus,
   intervalStats,
   commonEndpointPrefix,
+  firstResponseAfter,
+  repeatableResponsePairs,
   periodicEndpoints,
   analyzeSessionCaptures,
   parseArgs

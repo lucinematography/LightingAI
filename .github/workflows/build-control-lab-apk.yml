@@ -104,6 +104,10 @@ jobs:
         working-directory: backend
         run: node astera-att-session-consensus-selftest.js
 
+      - name: Validate Astera verified session baseline filter
+        working-directory: backend
+        run: node astera-att-session-filter-selftest.js
+
       - name: Validate Astera ATT setpoint sweep analyzer
         working-directory: backend
         run: node astera-att-sweep-selftest.js

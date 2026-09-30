@@ -5,6 +5,7 @@ import assert from 'node:assert';
 import {
   byteConsensus,
   intervalStats,
+  firstResponseAfter,
   analyzeSessionCaptures,
   parseArgs
 } from './astera-att-session-consensus.js';
@@ -107,6 +108,23 @@ assert.strictEqual(periodic.medianIntervalMs,1000);
 assert.strictEqual(periodic.intervalSpreadRatio,1);
 assert.strictEqual(periodic.payloadConsensus.exactPayloadRepeat,true);
 assert.strictEqual(periodic.interpretation.confidence,'candidate_only');
+
+const boundedOut=firstResponseAfter(
+  {elapsedMs:100},
+  [notify('77777777-6666-5555-4444-333333333333','90FF',250,99)],
+  750,
+  200
+);
+assert.strictEqual(boundedOut,null);
+
+const boundedIn=firstResponseAfter(
+  {elapsedMs:100},
+  [notify('77777777-6666-5555-4444-333333333333','90EE',150,98)],
+  750,
+  200
+);
+assert.ok(boundedIn);
+assert.strictEqual(boundedIn.latencyMs,50);
 
 const stats=intervalStats([
   {elapsedMs:1000},

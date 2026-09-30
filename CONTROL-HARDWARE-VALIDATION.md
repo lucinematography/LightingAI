@@ -113,7 +113,8 @@ The connect-only session analyzer:
 - reports the common endpoint prefix shared across all runs;
 - shows stable and variable payload byte positions at each repeated startup position;
 - detects repeatable periodic endpoint candidates when three or more writes occur at a stable interval within every run;
-- labels startup/auth/keepalive findings only as `candidate_only`. Variable bytes may be session/auth values, counters, random data or checksums and must not be replayed.
+- correlates a repeated startup WRITE with the first private-service NOTIFY/INDICATE only when it arrives within 750 ms **and before the next WRITE**; this is an ACK/response candidate, not proof;
+- labels startup/auth/response/keepalive findings only as `candidate_only`. Variable bytes may be session/auth values, counters, random data or checksums and must not be replayed.
 
 This session baseline is used to separate normal startup/auth traffic from later parameter captures. It does not prove that the Astera Radio PIN session has been authenticated.
 
@@ -135,9 +136,7 @@ Use the filtered captures for the parameter comparison:
 
 `node backend/astera-att-diff.js connect-filtered.json dim-filtered.json --reference-label connect-only --test-label dim-change --json dim-diff.json`
 
-After producing the derived JSON captures, compare them with:
-
-`node backend/astera-att-diff.js connect-only.json dim-change.json --reference-label connect-only --test-label dim-change --json dim-diff.json`
+Once a verified session baseline exists, **do not bypass the session filter for parameter evidence**. Raw connect-only versus raw parameter diffing remains exploratory only because changing session/auth values can look like false parameter writes.
 
 The diff analyzer refuses captures that carry `analysisCoverage.mappingWarning`. This is deliberate: an Android GATT-cache capture with unmapped writes must not be interpreted as a negative result. Repeat the capture with sufficient discovery traffic or establish the ATT handle-to-UUID mapping before differential analysis.
 
@@ -194,6 +193,13 @@ With four or more distinct numeric setpoints the analyzer additionally emits con
 - adjacent 16-bit big-endian fields;
 - strict monotonic direction;
 - affine linear fits labelled `affine_linear` only when R-squared is at least 0.999.
+
+With four or more setpoints where every payload byte is stable inside each setpoint, the sweep also reports simple `checksumCandidateBytes` when a changing byte exactly matches one of these relations across all cases:
+- XOR8 of all other bytes;
+- SUM8 modulo 256 of all other bytes;
+- two's-complement SUM8 of all other bytes.
+
+Checksum matches are framing candidates only. They are not permission to construct or transmit a new packet.
 
 An encoding candidate is still not a DIM/CCT/COLOR/FX command. A checksum, transformed value or another correlated field can also vary monotonically or linearly. Physical replay remains mandatory before any runtime vendor driver may use the candidate.
 

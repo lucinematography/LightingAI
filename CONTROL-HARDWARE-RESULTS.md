@@ -236,3 +236,29 @@ Runtime safety remains unchanged:
 - DIM / CCT / BOJA / FX quick controls remain disabled;
 - no Astera proprietary packet has been declared verified or replayed;
 - the next required evidence is a fresh physical Titan HCI/BTSnoop capture.
+
+
+## Ready-for-physical-capture checkpoint - 2026-09-30
+
+Verified software gate:
+- Branch: `feature/production-control-routing`
+- HEAD: `4710fc5ca3a473376c2ea910a4fc951f0ee51111`
+- Control Lab: #721 SUCCESS
+- PR #408: OPEN / DRAFT
+- MAIN: untouched
+
+Safety state at this checkpoint:
+- CONTROL remains Bluetooth-only.
+- Astera runtime diagnostics send zero proprietary characteristic WRITE commands.
+- The only intentional GATT descriptor write in the passive observer is the standard CCCD subscription used for NOTIFY/INDICATE observation.
+- ATT WRITE_REQUEST evidence is accepted only after the device returns WRITE_RESPONSE.
+- Prepared Write evidence requires matching device confirmation for every fragment and final Execute Write confirmation.
+- Rejected or unconfirmed writes are excluded from Astera protocol evidence.
+- DIM / CCT / BOJA / FX quick controls remain disabled.
+- No Astera proprietary packet has been declared verified or replayed.
+
+Next evidence source must be physical:
+1. three fresh connect-only Titan/AsteraApp HCI captures;
+2. one isolated DIM change per fresh capture, repeated at least three times;
+3. one isolated CCT change per fresh capture, repeated at least three times;
+4. no LightingAI proprietary command transmission during capture collection.

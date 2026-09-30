@@ -260,3 +260,82 @@ For every physical run:
 PR #408 stays DRAFT and MAIN stays untouched until the required direct Bluetooth control path is genuinely working.
 
 No final APK is approved while the only proven behavior is discovery, bonding or diagnostics.
+
+
+## Physical capture runbook - first Titan evidence set
+
+Use this exact order for the first real Astera Titan Tube FP1-BTB evidence set.
+
+### Preconditions
+
+- Keep PR #408 DRAFT.
+- Keep MAIN untouched.
+- Use the same physical Titan Tube for the whole evidence set.
+- Record the Titan firmware version before the first capture.
+- Enable Android Bluetooth HCI snoop logging.
+- Disconnect unrelated Bluetooth devices where practical.
+- Do not press any LightingAI DIM/CCT/BOJA/FX control; those controls must remain disabled.
+- Do not reuse a raw HCI capture from a different fixture or firmware.
+
+### Capture A - connect-only baseline
+
+Create three independent fresh captures:
+
+- `titan-connect-01.log`
+- `titan-connect-02.log`
+- `titan-connect-03.log`
+
+For each capture:
+1. start a fresh Android HCI snoop capture;
+2. open the official AsteraApp;
+3. connect to the same Titan;
+4. wait without changing DIM, CCT, color or FX;
+5. disconnect/stop the capture;
+6. export the raw snoop file without committing it.
+
+Analyze each raw capture with the exact Titan Bluetooth address and produce derived JSON:
+- `titan-connect-01.json`
+- `titan-connect-02.json`
+- `titan-connect-03.json`
+
+Then run connect-only session consensus before interpreting any parameter change.
+
+### Capture B - isolated DIM
+
+After the connect-only baseline is accepted, create at least three fresh DIM captures:
+
+- `titan-dim-01.log`
+- `titan-dim-02.log`
+- `titan-dim-03.log`
+
+In each capture:
+1. start from a fresh capture and connection;
+2. wait for the normal AsteraApp startup/session traffic to settle;
+3. change only DIM once;
+4. do not touch CCT, color or FX;
+5. stop immediately after the isolated change plus enough time to observe the device response;
+6. export the raw log without committing it.
+
+Do not infer command bytes from a single run. Filter the verified connect-only session baseline first, then diff, then require consensus across at least three DIM runs.
+
+### Capture C - isolated CCT
+
+Repeat the same procedure with only one CCT change per fresh capture:
+
+- `titan-cct-01.log`
+- `titan-cct-02.log`
+- `titan-cct-03.log`
+
+Do not change DIM, color or FX in those captures.
+
+### Stop conditions
+
+Stop analysis and do not continue toward replay if any of these occur:
+- the peer Bluetooth address differs between evidence files;
+- GATT mapping is incomplete and the explicit same-fixture/same-firmware profile condition cannot be proven;
+- a WRITE_REQUEST lacks WRITE_RESPONSE;
+- any Prepared Write fragment or Execute Write lacks matching device confirmation;
+- the supposed parameter candidate also appears in connect-only traffic without a defensible session/keepalive explanation;
+- repeated runs do not converge on the same logical endpoint and byte-level relationship.
+
+A packet remains candidate-only until later controlled physical replay changes only the intended Titan parameter.

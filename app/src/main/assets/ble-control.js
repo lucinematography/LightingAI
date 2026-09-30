@@ -410,6 +410,12 @@ function renderGattProfile(payload){
    chars.map(ch=>'<div class="muted small" style="margin-top:4px"><code>'+esc(ch&&ch.uuid||'')+'</code> · '+esc(gattFlags(ch))+'</div>').join('')+
    '</div>';
  }).join('');
+ const deviceInfo=payload&&payload.deviceInformation&&typeof payload.deviceInformation==='object'?payload.deviceInformation:null;
+ if(deviceInfo&&Object.keys(deviceInfo).length){
+  html+='<div style="margin-top:9px;padding-top:7px;border-top:1px solid #2d333a"><b>'+(lang()==='sr'?'STANDARDNI DEVICE INFORMATION':'STANDARD DEVICE INFORMATION')+'</b>'+
+   ['manufacturerName','modelNumber','serialNumber','firmwareRevision','hardwareRevision','softwareRevision'].filter(k=>deviceInfo[k]).map(k=>'<div class="muted small" style="margin-top:4px">'+esc(k)+' · '+esc(deviceInfo[k])+'</div>').join('')+
+   '</div>';
+ }
  if(reads.length){
   html+='<div style="margin-top:9px;padding-top:7px;border-top:1px solid #2d333a"><b>'+(lang()==='sr'?'PROČITANE VREDNOSTI':'READ VALUES')+'</b>'+
    reads.map(x=>'<div class="muted small" style="margin-top:4px"><code>'+esc(x&&x.uuid||'')+'</code> · status '+esc(x&&x.status)+' · '+esc(x&&x.hex||'')+(x&&x.text?' · '+esc(x.text):'')+(x&&x.error?' · '+esc(x.error):'')+'</div>').join('')+
@@ -631,7 +637,7 @@ window.LightingAIBleLifecycleResume=function(){
  pendingAsteraGattAfterResume='';
  if(address)setTimeout(()=>inspectGatt(address,null,true),400);
 };
-window.LightingAIBleControl={version:'0.27-astera-device-info',diagnosticsRevision:'astera-btb-passive-notify-v25',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.28-astera-device-info-decoded',diagnosticsRevision:'astera-btb-passive-notify-v26',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

@@ -13,6 +13,9 @@ const ATT_CID = 0x0004;
 const SMP_CID = 0x0006;
 const ASTERA_BTB_PRIVATE_SERVICE = '0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65';
 const CCCD_UUID = '00002902-0000-1000-8000-00805f9b34fb';
+const PRIMARY_SERVICE_UUID = '00002800-0000-1000-8000-00805f9b34fb';
+const SECONDARY_SERVICE_UUID = '00002801-0000-1000-8000-00805f9b34fb';
+const CHARACTERISTIC_DECLARATION_UUID = '00002803-0000-1000-8000-00805f9b34fb';
 
 const ATT_NAMES = {
   0x01: 'ERROR_RESPONSE',
@@ -200,6 +203,7 @@ function parseCapture(buffer, options = {}) {
   const connectionById = new Map();
   const servicesByConnection = new Map();
   const handleMapsByConnection = new Map();
+  const pendingDiscoveryByConnection = new Map();
   let connectionSequence = 0;
   const fragments = new Map();
   const timeline = [];
@@ -245,13 +249,64 @@ function parseCapture(buffer, options = {}) {
     return !!(conn && normalizeAddress(conn.address) === addressFilter);
   }
 
+  function discoveryState(handle) {
+    const key = connectionKey(handle);
+    if (!pendingDiscoveryByConnection.has(key)) {
+      pendingDiscoveryByConnection.set(key, {
+        readByTypeUuid:'',
+        readByGroupTypeUuid:''
+      });
+    }
+    return pendingDiscoveryByConnection.get(key);
+  }
+
+  function rememberDiscoveryRequest(handle, payload, dir) {
+    if (dir !== 'host_to_controller' || !payload || payload.length < 1) return;
+    const opcode = payload[0];
+    const state = discoveryState(handle);
+    if (opcode === 0x08 && payload.length >= 7) {
+      state.readByTypeUuid = uuidFromAtt(payload.subarray(5));
+    } else if (opcode === 0x10 && payload.length >= 7) {
+      state.readByGroupTypeUuid = uuidFromAtt(payload.subarray(5));
+    }
+  }
+
+  function applyDiscoveryResponse(handle, payload, dir, services, handleMap) {
+    if (dir !== 'controller_to_host' || !payload || payload.length < 1) return;
+    const opcode = payload[0];
+    const state = discoveryState(handle);
+
+    if (opcode === 0x09) {
+      if (state.readByTypeUuid === CHARACTERISTIC_DECLARATION_UUID) {
+        parseCharacteristicDiscovery(payload, handleMap);
+      }
+      state.readByTypeUuid = '';
+      return;
+    }
+
+    if (opcode === 0x11) {
+      if (state.readByGroupTypeUuid === PRIMARY_SERVICE_UUID ||
+          state.readByGroupTypeUuid === SECONDARY_SERVICE_UUID) {
+        parseServiceDiscovery(payload, services);
+      }
+      state.readByGroupTypeUuid = '';
+      return;
+    }
+
+    if (opcode === 0x01 && payload.length >= 2) {
+      const requestOpcode = payload[1];
+      if (requestOpcode === 0x08) state.readByTypeUuid = '';
+      if (requestOpcode === 0x10) state.readByGroupTypeUuid = '';
+    }
+  }
+
   function consumeL2cap(connectionHandle, cid, payload, dir, ts, recordIndex) {
     if (cid === ATT_CID) {
       if (!keepConnection(connectionHandle)) return;
       const services = connectionServices(connectionHandle);
       const handleMap = connectionHandleMap(connectionHandle);
-      parseServiceDiscovery(payload, services);
-      parseCharacteristicDiscovery(payload, handleMap);
+      rememberDiscoveryRequest(connectionHandle, payload, dir);
+      applyDiscoveryResponse(connectionHandle, payload, dir, services, handleMap);
       parseDescriptorDiscovery(payload, handleMap);
 
       const opcode = payload.length ? payload[0] : -1;
@@ -361,6 +416,10 @@ function parseCapture(buffer, options = {}) {
         connectionById.set(connectionId, conn);
         servicesByConnection.set(connectionId, []);
         handleMapsByConnection.set(connectionId, new Map());
+        pendingDiscoveryByConnection.set(connectionId, {
+          readByTypeUuid:'',
+          readByGroupTypeUuid:''
+        });
         fragments.delete('host_to_controller:' + handle);
         fragments.delete('controller_to_host:' + handle);
         timeline.push({kind:'le_connection', recordIndex, direction:dir, ...conn});
@@ -504,5 +563,8 @@ export {
   parseArgs,
   uuidFromAtt,
   ASTERA_BTB_PRIVATE_SERVICE,
-  CCCD_UUID
+  CCCD_UUID,
+  PRIMARY_SERVICE_UUID,
+  SECONDARY_SERVICE_UUID,
+  CHARACTERISTIC_DECLARATION_UUID
 };

@@ -111,6 +111,27 @@ function buildConsensus(diffInputs, options = {}) {
     throw new Error('at_least_' + minimumRuns + '_diff_captures_required');
   }
 
+  const identities = diffInputs.map(diff =>
+    diff && typeof diff.captureIdentity === 'object'
+      ? diff.captureIdentity
+      : null
+  );
+  const identityMetadataCount = identities.filter(Boolean).length;
+  if (identityMetadataCount > 0 &&
+      identityMetadataCount !== diffInputs.length) {
+    throw new Error('capture_identity_missing_in_some_diff_captures');
+  }
+  if (identityMetadataCount === diffInputs.length) {
+    for (const identity of identities) {
+      if (identity.verifiedMatch !== true) {
+        throw new Error('unverified_fixture_identity_in_diff_capture');
+      }
+      if (identity.warning) {
+        throw new Error('capture_identity_warning_in_diff_capture');
+      }
+    }
+  }
+
   const peerAddresses = diffInputs.map(diffPeerAddress);
   const knownPeerAddresses = new Set(peerAddresses.filter(Boolean));
   const missingPeerAddresses = peerAddresses.filter(x => !x).length;

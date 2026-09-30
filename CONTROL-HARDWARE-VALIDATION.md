@@ -72,6 +72,8 @@ A controlled AsteraApp comparison is permitted only as a research/test step. It 
 7. Analyze locally with:
    `node backend/astera-btsnoop-analyzer.js btsnoop_hci.log --address AA:BB:CC:DD:EE:FF --json astera-att.json`
 8. Preserve only the derived Astera-specific JSON needed for protocol analysis.
+9. Treat derived JSON as sensitive until reviewed: proprietary ATT payloads may include session/authentication values even though SMP key material is redacted by the analyzer. Do not commit raw or unreviewed derived captures.
+10. Repeat each changed-parameter case at least three times from fresh captures before assigning meaning to any byte pattern.
 
 The analyzer extracts:
 - LE connection handle and peer address;
@@ -89,7 +91,7 @@ After producing the derived JSON captures, compare them with:
 
 `node backend/astera-att-diff.js connect-only.json dim-change.json --reference-label connect-only --test-label dim-change --json dim-diff.json`
 
-Repeat separately for CCT and color. The diff tool treats writes that are present only in the changed-parameter capture as candidates, not as proven commands. A candidate becomes a verified command only after the same byte-level difference repeats across controlled captures and a later physical replay reproduces only the intended fixture change.
+Repeat separately for CCT and color. The diff tool treats test-only writes and changed payloads as candidates, not as proven commands. HCI connection handles are not treated as stable identity when a characteristic UUID is available. A candidate becomes protocol evidence only after the same endpoint/byte-level relationship repeats across at least three controlled captures of the same isolated operator action. It becomes a verified control command only after a later physical replay reproduces only the intended fixture change.
 
 Do not combine DIM, CCT and color changes in the same reference capture because that destroys causal isolation.
 

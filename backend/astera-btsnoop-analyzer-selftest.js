@@ -32,6 +32,24 @@ function hciLeConnection(handle, address) {
   return Buffer.concat([Buffer.from([0x04, 0x3e, params.length]), params]);
 }
 
+function hciEncryptionChangeV2(handle, enabled = 1, keySize = 16, status = 0) {
+  const params = Buffer.alloc(5);
+  params[0] = status;
+  params.writeUInt16LE(handle, 1);
+  params[3] = enabled;
+  params[4] = keySize;
+  return Buffer.concat([Buffer.from([0x04, 0x59, params.length]), params]);
+}
+
+function hciLongTermKeyRequest(handle) {
+  const params = Buffer.alloc(13);
+  params[0] = 0x05;
+  params.writeUInt16LE(handle, 1);
+  Buffer.alloc(8, 0xaa).copy(params, 3);
+  params.writeUInt16LE(0x1234, 11);
+  return Buffer.concat([Buffer.from([0x04, 0x3e, params.length]), params]);
+}
+
 function hciDisconnect(handle, reason) {
   const params = Buffer.alloc(4);
   params[0] = 0;
@@ -51,6 +69,13 @@ function acl(handle, cid, payload, incoming) {
   packet.writeUInt16LE(body.length, 3);
   body.copy(packet, 5);
   return {packet, flags: incoming ? 1 : 0};
+}
+
+function exchangeMtu(opcode, mtu) {
+  const out = Buffer.alloc(3);
+  out[0] = opcode;
+  out.writeUInt16LE(mtu, 1);
+  return out;
 }
 
 function readByGroupTypeRequest(start, end, type16 = 0x2800) {
@@ -128,8 +153,16 @@ const cccdHandle = 0x0026;
 
 const packets = [];
 packets.push(record(hciLeConnection(connectionHandle, address), 1, 0));
+packets.push(record(hciLongTermKeyRequest(connectionHandle), 1, 1));
+packets.push(record(hciEncryptionChangeV2(connectionHandle, 1, 16, 0), 1, 2));
 
-let p = acl(connectionHandle, 0x0004, readByGroupTypeRequest(0x0001, 0xffff), false);
+let p = acl(connectionHandle, 0x0004, exchangeMtu(0x02, 247), false);
+packets.push(record(p.packet, p.flags, 3));
+
+p = acl(connectionHandle, 0x0004, exchangeMtu(0x03, 185), true);
+packets.push(record(p.packet, p.flags, 4));
+
+p = acl(connectionHandle, 0x0004, readByGroupTypeRequest(0x0001, 0xffff), false);
 packets.push(record(p.packet, p.flags, 5));
 
 p = acl(connectionHandle, 0x0004, readByGroupTypeResponse(0x0020, 0x002f, asteraService), true);
@@ -301,7 +334,30 @@ assert.strictEqual(result.smpEvents[0].opcodeName, 'ENCRYPTION_INFORMATION');
 assert.strictEqual(result.smpEvents[0].sensitivePayloadRedacted, true);
 assert.strictEqual(Object.prototype.hasOwnProperty.call(result.smpEvents[0], 'packetHex'), false);
 assert.strictEqual(result.privacy.smpKeyMaterialRedacted, true);
+assert.strictEqual(result.privacy.securityKeyMaterialRedacted, true);
 assert.strictEqual(result.privacy.addressFilterRequiredByCli, true);
+
+assert.strictEqual(result.mtuEvents.length, 2);
+assert.strictEqual(result.mtuEvents[0].opcodeName, 'EXCHANGE_MTU_REQUEST');
+assert.strictEqual(result.mtuEvents[0].mtu, 247);
+assert.strictEqual(result.mtuEvents[1].opcodeName, 'EXCHANGE_MTU_RESPONSE');
+assert.strictEqual(result.mtuEvents[1].mtu, 185);
+assert.strictEqual(result.mtuExchanges.length, 1);
+assert.strictEqual(result.mtuExchanges[0].requestMtu, 247);
+assert.strictEqual(result.mtuExchanges[0].responseMtu, 185);
+assert.strictEqual(result.mtuExchanges[0].effectiveMtu, 185);
+
+const ltkRequest = result.securityEvents.find(e => e.eventName === 'le_long_term_key_request');
+assert.ok(ltkRequest, 'LE long term key request metadata missing');
+assert.strictEqual(ltkRequest.sensitivePayloadRedacted, true);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(ltkRequest, 'random'), false);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(ltkRequest, 'ediv'), false);
+
+const encryption = result.securityEvents.find(e => e.eventName === 'encryption_change_v2');
+assert.ok(encryption, 'Encryption Change v2 metadata missing');
+assert.strictEqual(encryption.status, 0);
+assert.strictEqual(encryption.encrypted, true);
+assert.strictEqual(encryption.encryptionKeySize, 16);
 
 assert.throws(
   () => analyzer.parseArgs(['node', 'astera-btsnoop-analyzer.js', 'capture.log']),
@@ -325,6 +381,8 @@ process.stdout.write(JSON.stringify({
   attEvents: result.attEvents.length,
   candidateAsteraSessionWrites: result.candidateAsteraSessionWrites.length,
   preparedWriteTransactions: result.preparedWriteTransactions.length,
+  mtuEffective: result.mtuExchanges[0].effectiveMtu,
+  securityEvents: result.securityEvents.length,
   connections: result.connections.length,
   smpEventsRedacted: result.smpEvents.length,
   disconnectReason: result.disconnects[0].reasonName

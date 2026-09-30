@@ -77,6 +77,9 @@ A controlled AsteraApp comparison is permitted only as a research/test step. It 
 
 The analyzer extracts:
 - LE connection handle and peer address;
+- ATT MTU request/response and effective negotiated MTU when present;
+- Bluetooth link-security metadata including Encryption Change v1/v2 and key size when exposed by HCI;
+- LE Long Term Key Request occurrence with key material redacted;
 - primary service ranges;
 - characteristic and descriptor handle-to-UUID mappings when visible in ATT discovery;
 - ATT Write Request / Write Command;
@@ -84,6 +87,8 @@ The analyzer extracts:
 - SMP packets;
 - disconnect reasons;
 - candidate proprietary writes that target the observed Astera private BTB service while excluding the standard CCCD subscription.
+
+Bluetooth HCI encryption is only evidence that the phone-to-BTB link is encrypted. It must not be interpreted as successful Astera Radio-PIN authentication; the official Astera pairing model separates the Bluetooth link from the Radio PIN / UHF control layer.
 
 A packet becomes protocol evidence only after it is repeatable across captures and its meaning is isolated by changing one operator parameter at a time.
 

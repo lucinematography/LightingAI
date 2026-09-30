@@ -212,6 +212,9 @@ function parseCapture(buffer, options = {}) {
   const disconnects = [];
   const preparedWriteFragmentsByConnection = new Map();
   const preparedWriteTransactions = [];
+  const mtuEvents = [];
+  const mtuStateByConnection = new Map();
+  const securityEvents = [];
 
   const firstTimestamp = parsed.records.length ? parsed.records[0].timestampUs : BTSNOOP_EPOCH_DELTA_US;
 
@@ -410,6 +413,38 @@ function parseCapture(buffer, options = {}) {
       if (opcode === 0x18 && payload.length >= 2) {
         event.executeWriteFlag = payload[1];
       }
+      if ((opcode === 0x02 || opcode === 0x03) && payload.length >= 3) {
+        const mtu = payload.readUInt16LE(1);
+        event.mtu = mtu;
+        const key = event.connectionId || ('untracked:' + connectionHandle);
+        if (!mtuStateByConnection.has(key)) {
+          mtuStateByConnection.set(key, {
+            connectionId:event.connectionId || '',
+            connectionHandle,
+            peerAddress:event.peerAddress || '',
+            requestMtu:null,
+            responseMtu:null,
+            effectiveMtu:null
+          });
+        }
+        const state = mtuStateByConnection.get(key);
+        if (opcode === 0x02) state.requestMtu = mtu;
+        if (opcode === 0x03) state.responseMtu = mtu;
+        if (state.requestMtu != null && state.responseMtu != null) {
+          state.effectiveMtu = Math.min(state.requestMtu, state.responseMtu);
+        }
+        mtuEvents.push({
+          recordIndex,
+          elapsedMs:event.elapsedMs,
+          direction:dir,
+          connectionId:event.connectionId,
+          connectionHandle,
+          peerAddress:event.peerAddress,
+          opcode,
+          opcodeName:event.opcodeName,
+          mtu
+        });
+      }
       attEvents.push(event);
       timeline.push({kind:'att', ...event});
       return;
@@ -478,9 +513,56 @@ function parseCapture(buffer, options = {}) {
     const eventCode = packet[1];
     const params = packet.subarray(3);
 
-    if (eventCode === 0x3e && params.length >= 12) {
+    if ((eventCode === 0x08 && params.length >= 4) ||
+        (eventCode === 0x59 && params.length >= 5)) {
+      const status = params[0];
+      const handle = params.readUInt16LE(1);
+      if (!keepConnection(handle)) return;
+      const conn = activeConnection(handle);
+      const encryptionEnabled = params[3];
+      const event = {
+        recordIndex,
+        elapsedMs:elapsedMs(ts),
+        direction:dir,
+        connectionId:conn?.connectionId || '',
+        connectionHandle:handle,
+        peerAddress:conn?.address || '',
+        eventCode,
+        eventName:eventCode === 0x59 ? 'encryption_change_v2' : 'encryption_change_v1',
+        status,
+        encryptionEnabled,
+        encrypted:encryptionEnabled !== 0
+      };
+      if (eventCode === 0x59) event.encryptionKeySize = params[4];
+      securityEvents.push(event);
+      timeline.push({kind:'security', ...event});
+      return;
+    }
+
+    if (eventCode === 0x30 && params.length >= 3) {
+      const status = params[0];
+      const handle = params.readUInt16LE(1);
+      if (!keepConnection(handle)) return;
+      const conn = activeConnection(handle);
+      const event = {
+        recordIndex,
+        elapsedMs:elapsedMs(ts),
+        direction:dir,
+        connectionId:conn?.connectionId || '',
+        connectionHandle:handle,
+        peerAddress:conn?.address || '',
+        eventCode,
+        eventName:'encryption_key_refresh_complete',
+        status
+      };
+      securityEvents.push(event);
+      timeline.push({kind:'security', ...event});
+      return;
+    }
+
+    if (eventCode === 0x3e && params.length >= 1) {
       const subevent = params[0];
-      if (subevent === 0x01 || subevent === 0x0a) {
+      if ((subevent === 0x01 || subevent === 0x0a) && params.length >= 12) {
         const status = params[1];
         const handle = params.readUInt16LE(2);
         const role = params[4];
@@ -508,6 +590,26 @@ function parseCapture(buffer, options = {}) {
         fragments.delete('host_to_controller:' + handle);
         fragments.delete('controller_to_host:' + handle);
         timeline.push({kind:'le_connection', recordIndex, direction:dir, ...conn});
+        return;
+      }
+      if (subevent === 0x05 && params.length >= 3) {
+        const handle = params.readUInt16LE(1);
+        if (!keepConnection(handle)) return;
+        const conn = activeConnection(handle);
+        const event = {
+          recordIndex,
+          elapsedMs:elapsedMs(ts),
+          direction:dir,
+          connectionId:conn?.connectionId || '',
+          connectionHandle:handle,
+          peerAddress:conn?.address || '',
+          eventCode,
+          subevent,
+          eventName:'le_long_term_key_request',
+          sensitivePayloadRedacted:true
+        };
+        securityEvents.push(event);
+        timeline.push({kind:'security', ...event});
       }
       return;
     }
@@ -606,7 +708,8 @@ function parseCapture(buffer, options = {}) {
     privacy: {
       addressFilterRequiredByCli: true,
       smpKeyMaterialRedacted: true,
-      vendorPayloadsMayContainSensitiveSessionData: true
+      vendorPayloadsMayContainSensitiveSessionData: true,
+      securityKeyMaterialRedacted: true
     },
     connections: connections.filter(c =>
       !addressFilter || normalizeAddress(c.address) === addressFilter
@@ -617,6 +720,9 @@ function parseCapture(buffer, options = {}) {
     disconnects,
     preparedWriteTransactions,
     candidateAsteraSessionWrites,
+    mtuEvents,
+    mtuExchanges:Array.from(mtuStateByConnection.values()),
+    securityEvents,
     timeline
   };
 }

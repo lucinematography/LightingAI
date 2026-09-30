@@ -7,12 +7,16 @@ import * as analyzer from './astera-btsnoop-analyzer.js';
 const EPOCH = 0x00dcddb30f2f8000n;
 
 function record(packet, flags, ms) {
+  const offsetUs = Math.round(Number(ms) * 1000);
+  if (!Number.isSafeInteger(offsetUs)) {
+    throw new Error('invalid_test_timestamp_ms');
+  }
   const header = Buffer.alloc(24);
   header.writeUInt32BE(packet.length, 0);
   header.writeUInt32BE(packet.length, 4);
   header.writeUInt32BE(flags >>> 0, 8);
   header.writeUInt32BE(0, 12);
-  header.writeBigUInt64BE(EPOCH + BigInt(ms) * 1000n, 16);
+  header.writeBigUInt64BE(EPOCH + BigInt(offsetUs), 16);
   return Buffer.concat([header, packet]);
 }
 

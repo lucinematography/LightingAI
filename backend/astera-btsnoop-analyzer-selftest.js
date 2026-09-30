@@ -121,6 +121,31 @@ packets.push(record(p.packet, p.flags, 60));
 
 packets.push(record(hciDisconnect(connectionHandle, 0x13), 1, 70));
 
+// Reuse the same HCI handle for a second logical connection.
+// Service/characteristic maps must stay isolated per connection instance.
+packets.push(record(hciLeConnection(connectionHandle, address), 1, 80));
+
+p = acl(connectionHandle, 0x0004, readByGroupTypeResponse(0x0020, 0x002f, '11111111-2222-3333-4444-555555555555'), true);
+packets.push(record(p.packet, p.flags, 90));
+
+p = acl(connectionHandle, 0x0004, readByTypeCharacteristicResponse(0x0024, valueHandle, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'), true);
+packets.push(record(p.packet, p.flags, 100));
+
+const secondWrite = Buffer.concat([
+  Buffer.from([0x52, valueHandle & 0xff, valueHandle >> 8]),
+  Buffer.from('DEADBEEF', 'hex')
+]);
+p = acl(connectionHandle, 0x0004, secondWrite, false);
+packets.push(record(p.packet, p.flags, 110));
+
+// Key-bearing SMP content must be redacted from derived JSON.
+const smpEncryptionInformation = Buffer.concat([
+  Buffer.from([0x06]),
+  Buffer.alloc(16, 0xaa)
+]);
+p = acl(connectionHandle, 0x0006, smpEncryptionInformation, false);
+packets.push(record(p.packet, p.flags, 120));
+
 const header = Buffer.alloc(16);
 Buffer.from('btsnoop\0', 'binary').copy(header, 0);
 header.writeUInt32BE(1, 8);
@@ -131,8 +156,10 @@ const result = analyzer.parseCapture(capture, {address});
 
 assert.strictEqual(result.format.version, 1);
 assert.strictEqual(result.format.datalinkType, 1002);
-assert.strictEqual(result.connections.length, 1);
+assert.strictEqual(result.connections.length, 2);
 assert.strictEqual(result.connections[0].address, address);
+assert.strictEqual(result.connections[1].address, address);
+assert.notStrictEqual(result.connections[0].connectionId, result.connections[1].connectionId);
 assert.ok(result.services.some(s => s.uuid === asteraService));
 
 const cccd = result.attEvents.find(e => e.handle === cccdHandle && e.opcode === 0x12);
@@ -147,6 +174,14 @@ assert.strictEqual(candidate.attributeUuid, vendorCharacteristic);
 assert.strictEqual(candidate.serviceUuid, asteraService);
 assert.strictEqual(candidate.valueHex, 'A1B2C3D4');
 assert.strictEqual(candidate.writeClass, 'candidate_astera_session_write');
+assert.strictEqual(result.candidateAsteraSessionWrites.length, 1);
+
+const secondConnectionWrite = result.attEvents.find(e => e.valueHex === 'DEADBEEF');
+assert.ok(secondConnectionWrite, 'second connection write missing');
+assert.strictEqual(secondConnectionWrite.serviceUuid, '11111111-2222-3333-4444-555555555555');
+assert.strictEqual(secondConnectionWrite.attributeUuid, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
+assert.strictEqual(secondConnectionWrite.writeClass, 'other_write');
+assert.notStrictEqual(secondConnectionWrite.connectionId, candidate.connectionId);
 
 const notification = result.attEvents.find(e => e.opcode === 0x1b);
 assert.ok(notification, 'notification missing');
@@ -157,6 +192,26 @@ assert.strictEqual(result.disconnects.length, 1);
 assert.strictEqual(result.disconnects[0].reason, 0x13);
 assert.strictEqual(result.disconnects[0].reasonName, 'remote_user_terminated_connection');
 
+assert.strictEqual(result.smpEvents.length, 1);
+assert.strictEqual(result.smpEvents[0].opcodeName, 'ENCRYPTION_INFORMATION');
+assert.strictEqual(result.smpEvents[0].sensitivePayloadRedacted, true);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(result.smpEvents[0], 'packetHex'), false);
+assert.strictEqual(result.privacy.smpKeyMaterialRedacted, true);
+assert.strictEqual(result.privacy.addressFilterRequiredByCli, true);
+
+assert.throws(
+  () => analyzer.parseArgs(['node', 'astera-btsnoop-analyzer.js', 'capture.log']),
+  /address_filter_required/
+);
+assert.strictEqual(
+  analyzer.parseArgs(['node', 'astera-btsnoop-analyzer.js', 'capture.log', '--address', address]).address,
+  address
+);
+assert.strictEqual(
+  analyzer.parseArgs(['node', 'astera-btsnoop-analyzer.js', 'capture.log', '--allow-all']).allowAll,
+  true
+);
+
 const filteredOut = analyzer.parseCapture(capture, {address:'AA:BB:CC:DD:EE:FF'});
 assert.strictEqual(filteredOut.attEvents.length, 0);
 assert.strictEqual(filteredOut.disconnects.length, 0);
@@ -165,5 +220,7 @@ process.stdout.write(JSON.stringify({
   ok: true,
   attEvents: result.attEvents.length,
   candidateAsteraSessionWrites: result.candidateAsteraSessionWrites.length,
+  connections: result.connections.length,
+  smpEventsRedacted: result.smpEvents.length,
   disconnectReason: result.disconnects[0].reasonName
 }, null, 2) + '\n');

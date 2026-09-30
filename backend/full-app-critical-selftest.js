@@ -111,12 +111,12 @@ expect(bleScanner.includes('scanEpoch')&&bleScanner.includes('thisScanEpoch')&&b
 expect(bleScanner.includes('ble_scan_failed_'),'BLE scan failure code propagation missing');
 
 const bleUi=read('app/src/main/assets/ble-control.js');
-expect(bleUi.includes("version:'0.11-vendor-advertisement-fingerprint'"),'BLE Mesh/GATT diagnostic UI missing');
+expect(bleUi.includes("version:'0.27-astera-device-info'"),'Bluetooth-only Astera GATT diagnostic UI missing');
 expect(bleUi.includes('bleInspectGatt')&&bleUi.includes('LightingAIBleGattInspectionResult'),'BLE GATT inspection bridge missing');
 expect(bleUi.includes('00001827-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh provisioning service detection missing');
 expect(bleUi.includes('00001828-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh proxy service detection missing');
-expect(bleUi.includes("version:'0.11-vendor-advertisement-fingerprint'"),'Serialized BLE diagnostic UI version missing');
-expect(!bleUi.includes('0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'),'Unverified Astera private-service UUID must not be treated as protocol evidence');
+expect(bleUi.includes("version:'0.27-astera-device-info'"),'Serialized Bluetooth-only diagnostic UI version missing');
+expect(bleUi.includes("ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'")&&bleUi.includes('transport fingerprint only'),'Astera private-service UUID must remain passive transport fingerprint evidence only');
 expect(bleUi.includes('gattActive')&&bleUi.includes('scanActive||gattActive'),'BLE scan/GATT serialization guard missing');
 const asteraBond=read('app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java');
 expect(asteraBond.includes('createBond()'),'Optional Android bond helper missing for Astera BTB diagnostics');
@@ -131,14 +131,14 @@ expect(asteraClassic.includes('fetchUuidsWithSdp')&&asteraClassic.includes('ACTI
 expect(asteraClassic.includes('00001101-0000-1000-8000-00805f9b34fb'),'Astera BTB diagnostics must check the standard Bluetooth Serial Port Profile UUID without assuming it is present');
 expect(main.includes('asteraBtbInspectClassic')&&main.includes('notifyAsteraBtbClassicInspection'),'Astera BTB Classic native bridge missing');
 expect(bleUi.includes('inspectAsteraClassic')&&bleUi.includes('LightingAIAsteraBtbClassicInspectionResult'),'Astera BTB Classic UI diagnostics missing');
-expect(bleUi.includes("diagnosticsRevision:'astera-btb-visible-profile-v9'")&&bleUi.includes('inspectAsteraGatt'),'Astera BTB diagnostics revision/direct GATT path missing');
+expect(bleUi.includes("diagnosticsRevision:'astera-btb-passive-notify-v25'")&&bleUi.includes('inspectAsteraGatt'),'Astera BTB passive LE diagnostics revision/direct GATT path missing');
 expect(bleUi.includes('const nativeTimeoutMs=astera?12000:8000;')&&bleUi.includes('const watchdogTimeoutMs=nativeTimeoutMs+5000;')&&bleUi.includes('},watchdogTimeoutMs);')&&bleUi.includes('timeoutMs:nativeTimeoutMs'),'Astera GATT JS watchdog must allow the native bounded timeout to report first without a same-deadline race');
-expect(!bleUi.includes('class="btn secondary ble-astera-bond"')&&!bleUi.includes("querySelectorAll('.ble-astera-bond')"),'Obsolete Android bond button/handler must stay out of the Astera BLE user flow');
+expect(bleUi.includes("error==='astera_bond_required'")&&bleUi.includes('ble-astera-bond')&&bleUi.includes('bondAstera(address,bondButton)'),'Astera Android bonding action must appear only after a standard GATT authentication/encryption failure');
 expect(bleUi.includes('inspectAsteraGatt')&&bleUi.includes('POVEŽI ASTERA')&&bleUi.includes('CONNECT ASTERA'),'Astera BTB direct connect/inspection flow missing');
 expect(bleUi.includes('renderGattProfile')&&bleUi.includes('WRITE-NR')&&bleUi.includes('NOTIFY')&&bleUi.includes('INDICATE'),'Full GATT profile must expose characteristic capabilities for diagnostics');
 const bleGatt=read('app/src/main/java/com/lightingai/app/BleGattInspector.java');
 expect(bleGatt.includes('discoverServices()'),'BLE GATT service discovery missing');
-expect(!bleGatt.includes('writeCharacteristic')&&!bleGatt.includes('writeDescriptor')&&!bleGatt.includes('setCharacteristicNotification'),'Read-only BLE GATT inspector must not write or subscribe');
+expect(!bleGatt.includes('writeCharacteristic(')&&bleGatt.includes('CCCD_UUID')&&bleGatt.includes('setCharacteristicNotification')&&bleGatt.includes('writeDescriptor')&&bleGatt.includes('standardCccdWritesOnly')&&bleGatt.includes('proprietaryCharacteristicWrites'),'Astera GATT observer may only use standard CCCD subscription and must not send proprietary characteristic writes');
 expect(bleGatt.includes('connectGatt')&&bleGatt.includes('closeGattOnlyLocked'),'BLE GATT lifecycle close missing');
 expect(bleGatt.includes('MAX_ATTEMPTS = 3')&&bleGatt.includes('retryOrFailLocked'),'BLE GATT retry protection missing');
 expect(bleGatt.includes('inspectionEpoch')&&bleGatt.includes('thisInspectionEpoch')&&bleGatt.includes('retryEpoch != inspectionEpoch'),'BLE GATT timeout/retry callbacks must be isolated by inspection epoch');

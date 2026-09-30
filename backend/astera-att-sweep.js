@@ -156,6 +156,86 @@ function encodingCandidates(rows, maps, payloadLength) {
   );
 }
 
+function checksumCandidates(rows, maps, payloadLength) {
+  if (!Array.isArray(rows) || rows.length < 4 ||
+      !Array.isArray(maps) || maps.length !== rows.length ||
+      !Number.isInteger(payloadLength) || payloadLength <= 1) {
+    return [];
+  }
+
+  const payloads = maps.map(map => {
+    const bytes = [];
+    for (let index = 0; index < payloadLength; index++) {
+      const value = map.get(index);
+      if (!value) return null;
+      bytes.push(parseInt(value,16));
+    }
+    return bytes;
+  });
+  if (payloads.some(row => !row)) return [];
+
+  const algorithms = [
+    {
+      name:'xor8_excluding_self',
+      compute(bytes,targetIndex) {
+        let value = 0;
+        for (let i = 0; i < bytes.length; i++) {
+          if (i !== targetIndex) value ^= bytes[i];
+        }
+        return value & 0xff;
+      }
+    },
+    {
+      name:'sum8_excluding_self',
+      compute(bytes,targetIndex) {
+        let value = 0;
+        for (let i = 0; i < bytes.length; i++) {
+          if (i !== targetIndex) value = (value + bytes[i]) & 0xff;
+        }
+        return value;
+      }
+    },
+    {
+      name:'twos_complement_sum8_excluding_self',
+      compute(bytes,targetIndex) {
+        let value = 0;
+        for (let i = 0; i < bytes.length; i++) {
+          if (i !== targetIndex) value = (value + bytes[i]) & 0xff;
+        }
+        return (-value) & 0xff;
+      }
+    }
+  ];
+
+  const out = [];
+  for (let targetIndex = 0; targetIndex < payloadLength; targetIndex++) {
+    const targetValues = payloads.map(bytes => bytes[targetIndex]);
+    if (new Set(targetValues).size < 2) continue;
+
+    for (const algorithm of algorithms) {
+      const matches = payloads.every(bytes =>
+        bytes[targetIndex] === algorithm.compute(bytes,targetIndex)
+      );
+      if (!matches) continue;
+      out.push({
+        byteIndex:targetIndex,
+        algorithm:algorithm.name,
+        cases:rows.map((row,index) => ({
+          label:row.label,
+          value:row.value,
+          checksumHex:targetValues[index].toString(16).padStart(2,'0').toUpperCase()
+        })),
+        interpretation:{
+          confidence:'candidate_only',
+          note:'The byte exactly matches this simple checksum relation across at least four isolated setpoints. It is still only a framing candidate until verified on additional captures and physical replay.'
+        }
+      });
+    }
+  }
+
+  return out;
+}
+
 function candidateByEndpoint(consensus) {
   if (!consensus || typeof consensus !== 'object') {
     throw new Error('invalid_consensus_json');
@@ -229,6 +309,7 @@ function analyzeEndpoint(endpoint, cases) {
   }
 
   const candidateEncodings = encodingCandidates(rows,maps,length);
+  const checksumCandidateBytes = checksumCandidates(rows,maps,length);
 
   return {
     endpoint,
@@ -238,6 +319,7 @@ function analyzeEndpoint(endpoint, cases) {
     constantFramingByteIndexes,
     unstableByteIndexes,
     candidateEncodings,
+    checksumCandidateBytes,
     interpretation:{
       confidence:'candidate_only',
       note:'A byte that is stable within each repeated setpoint but changes between setpoints is only a parameter candidate. Encoding and command semantics require separate physical replay proof.'
@@ -342,12 +424,16 @@ function analyzeSweep(input) {
       endpointsWithEncodingCandidates:endpoints.filter(e =>
         e.comparable && Array.isArray(e.candidateEncodings) &&
         e.candidateEncodings.length > 0
+      ).length,
+      endpointsWithChecksumCandidates:endpoints.filter(e =>
+        e.comparable && Array.isArray(e.checksumCandidateBytes) &&
+        e.checksumCandidateBytes.length > 0
       ).length
     },
     endpoints,
     interpretation:{
       confidence:'candidate_only',
-      note:'This analysis never proves a DIM/CCT/COLOR/FX command. It only identifies byte positions and possible 8-bit/16-bit numeric encodings correlated with isolated setpoint changes after within-setpoint repeatability has already been established.'
+      note:'This analysis never proves a DIM/CCT/COLOR/FX command. It only identifies byte positions, possible 8-bit/16-bit numeric encodings and simple checksum/framing candidates correlated with isolated setpoint changes after within-setpoint repeatability has already been established.'
     }
   };
 }
@@ -411,6 +497,7 @@ export {
   stableByteMap,
   analyzeNumericEncoding,
   encodingCandidates,
+  checksumCandidates,
   candidateByEndpoint,
   analyzeEndpoint,
   analyzeSweep,

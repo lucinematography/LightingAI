@@ -99,6 +99,23 @@ assert.throws(
   ]),
   /peer_address_mismatch_across_diff_captures/
 );
+
+const unverifiedRun=diff([candidate('AA30CC03')]);
+unverifiedRun.captureIdentity.verifiedMatch=false;
+assert.throws(
+  () => buildConsensus([run1,run2,unverifiedRun]),
+  /unverified_fixture_identity_in_diff_capture/
+);
+
+const missingIdentityRun={
+  kind:'LightingAI-Astera-ATT-diff',
+  candidateParameterSpecificWrites:[candidate('AA30CC03')],
+  interpretation:{confidence:'candidate_only'}
+};
+assert.throws(
+  () => buildConsensus([run1,run2,missingIdentityRun]),
+  /capture_identity_missing_in_some_diff_captures/
+);
 assert.throws(
   () => parseArgs(['node','astera-att-consensus.js','a.json','b.json']),
   /usage:/

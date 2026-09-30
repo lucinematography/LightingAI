@@ -54,6 +54,15 @@ const input={
         {index:1,hex:'90'},
         {index:2,hex:'CC'}
       ])
+    },
+    {
+      label:'DIM 100',
+      value:100,
+      consensus:consensus([
+        {index:0,hex:'AA'},
+        {index:1,hex:'A0'},
+        {index:2,hex:'CC'}
+      ])
     }
   ]
 };
@@ -62,10 +71,11 @@ const result=analyzeSweep(input);
 
 assert.strictEqual(result.kind,'LightingAI-Astera-ATT-sweep');
 assert.strictEqual(result.parameter,'DIM');
-assert.strictEqual(result.caseCount,3);
+assert.strictEqual(result.caseCount,4);
 assert.strictEqual(result.summary.sharedRepeatableEndpoints,1);
 assert.strictEqual(result.summary.comparableEndpoints,1);
 assert.strictEqual(result.summary.endpointsWithParameterCandidateBytes,1);
+assert.strictEqual(result.summary.endpointsWithEncodingCandidates,1);
 assert.strictEqual(result.interpretation.confidence,'candidate_only');
 
 const row=result.endpoints[0];
@@ -81,7 +91,73 @@ assert.strictEqual(row.parameterCandidateByteIndexes.length,1);
 assert.strictEqual(row.parameterCandidateByteIndexes[0].index,1);
 assert.deepStrictEqual(
   row.parameterCandidateByteIndexes[0].series.map(x=>x.hex),
-  ['10','50','90']
+  ['10','50','90','A0']
+);
+
+const dim8=row.candidateEncodings.find(x =>
+  x.widthBits===8 &&
+  x.byteIndexes.length===1 &&
+  x.byteIndexes[0]===1 &&
+  x.relation==='affine_linear'
+);
+assert.ok(dim8,'8-bit DIM encoding candidate missing');
+assert.strictEqual(dim8.direction,'increasing');
+assert.strictEqual(dim8.slope,1.6);
+assert.strictEqual(dim8.intercept,0);
+assert.strictEqual(dim8.rSquared,1);
+assert.strictEqual(dim8.interpretation.confidence,'candidate_only');
+
+const leEndpoint='host_to_controller|WRITE_COMMAND|0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65|uuid:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+function leConsensus(low,high){
+  return {
+    kind:'LightingAI-Astera-ATT-consensus',
+    repeatableCandidates:[{
+      endpoint:leEndpoint,
+      byteConsensus:{
+        payloadLength:4,
+        stableBytes:[
+          {index:0,hex:'AA'},
+          {index:1,hex:low},
+          {index:2,hex:high},
+          {index:3,hex:'CC'}
+        ],
+        variableByteIndexes:[],
+        exactPayloadRepeat:true
+      }
+    }]
+  };
+}
+
+const leSweep=analyzeSweep({
+  parameter:'CCT-candidate',
+  cases:[
+    {label:'250',value:250,consensus:leConsensus('FA','00')},
+    {label:'260',value:260,consensus:leConsensus('04','01')},
+    {label:'510',value:510,consensus:leConsensus('FE','01')},
+    {label:'520',value:520,consensus:leConsensus('08','02')}
+  ]
+});
+const leRow=leSweep.endpoints.find(x=>x.endpoint===leEndpoint);
+assert.ok(leRow,'16-bit LE endpoint missing');
+const le16=leRow.candidateEncodings.find(x =>
+  x.widthBits===16 &&
+  x.byteOrder==='little_endian' &&
+  x.byteIndexes[0]===1 &&
+  x.byteIndexes[1]===2
+);
+assert.ok(le16,'16-bit LE encoding candidate missing');
+assert.strictEqual(le16.relation,'affine_linear');
+assert.strictEqual(le16.direction,'increasing');
+assert.strictEqual(le16.slope,1);
+assert.strictEqual(le16.intercept,0);
+assert.strictEqual(le16.rSquared,1);
+assert.strictEqual(
+  leRow.candidateEncodings.some(x =>
+    x.widthBits===8 &&
+    x.byteIndexes.length===1 &&
+    x.byteIndexes[0]===1
+  ),
+  false
 );
 
 const stableMap=stableByteMap({
@@ -141,5 +217,14 @@ process.stdout.write(JSON.stringify({
   ok:true,
   parameterCandidateByteIndexes:row.parameterCandidateByteIndexes.map(x=>x.index),
   constantFramingByteIndexes:row.constantFramingByteIndexes.map(x=>x.index),
-  unstableByteIndexes:row.unstableByteIndexes
+  unstableByteIndexes:row.unstableByteIndexes,
+  dim8Candidate:{
+    slope:dim8.slope,
+    rSquared:dim8.rSquared
+  },
+  le16Candidate:{
+    byteIndexes:le16.byteIndexes,
+    slope:le16.slope,
+    rSquared:le16.rSquared
+  }
 },null,2)+'\n');

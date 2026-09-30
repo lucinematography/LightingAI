@@ -348,7 +348,7 @@ function parseCapture(buffer, options = {}) {
   const smpEvents = [];
   const attErrors = [];
   const disconnects = [];
-  const preparedWriteFragmentsByConnection = new Map();
+  const preparedWriteStateByConnection = new Map();
   const preparedWriteTransactions = [];
   const mtuEvents = [];
   const mtuStateByConnection = new Map();
@@ -443,73 +443,135 @@ function parseCapture(buffer, options = {}) {
     }
   }
 
-  function preparedQueue(handle) {
+  function preparedWriteState(handle) {
     const key = connectionKey(handle);
-    if (!preparedWriteFragmentsByConnection.has(key)) {
-      preparedWriteFragmentsByConnection.set(key, new Map());
+    if (!preparedWriteStateByConnection.has(key)) {
+      preparedWriteStateByConnection.set(key, {
+        fragmentsByHandle:new Map(),
+        pendingExecute:null
+      });
     }
-    return preparedWriteFragmentsByConnection.get(key);
+    return preparedWriteStateByConnection.get(key);
+  }
+
+  function clearPreparedWriteState(handle) {
+    const state = preparedWriteState(handle);
+    state.fragmentsByHandle.clear();
+    state.pendingExecute = null;
   }
 
   function rememberPreparedWrite(handle, payload, dir, ts, recordIndex) {
-    if (dir !== 'host_to_controller' || !payload || payload.length < 1) return;
+    if (!payload || payload.length < 1) return;
     const opcode = payload[0];
     const conn = activeConnection(handle);
     if (!conn) return;
+    const state = preparedWriteState(handle);
 
-    if (opcode === 0x16 && payload.length >= 5) {
+    if (opcode === 0x16 && dir === 'host_to_controller' && payload.length >= 5) {
       const attributeHandle = payload.readUInt16LE(1);
       const offset = payload.readUInt16LE(3);
-      const value = payload.subarray(5);
-      const queue = preparedQueue(handle);
-      if (!queue.has(attributeHandle)) queue.set(attributeHandle, []);
-      queue.get(attributeHandle).push({
+      const valueHex = hex(payload.subarray(5));
+      if (!state.fragmentsByHandle.has(attributeHandle)) {
+        state.fragmentsByHandle.set(attributeHandle, []);
+      }
+      state.fragmentsByHandle.get(attributeHandle).push({
         offset,
-        valueHex:hex(value),
+        valueHex,
         recordIndex,
-        elapsedMs:elapsedMs(ts)
+        elapsedMs:elapsedMs(ts),
+        deviceConfirmed:false
       });
       return;
     }
 
-    if (opcode === 0x18 && payload.length >= 2) {
-      const executeFlag = payload[1];
-      const queue = preparedQueue(handle);
-      if (executeFlag === 0x01) {
-        for (const [attributeHandle, rawFragments] of queue.entries()) {
-          const fragments = rawFragments.slice().sort((a,b)=>a.offset-b.offset);
-          let expectedOffset = 0;
-          let complete = true;
-          const parts = [];
-          for (const fragment of fragments) {
-            const bytes = payloadBytesFromHex(fragment.valueHex);
-            if (!bytes || fragment.offset !== expectedOffset) {
-              complete = false;
-              break;
-            }
-            parts.push(bytes);
-            expectedOffset += bytes.length;
-          }
-          const value = complete ? Buffer.concat(parts) : Buffer.alloc(0);
-          const transaction = {
-            recordIndex,
-            elapsedMs:elapsedMs(ts),
-            direction:dir,
-            connectionId:conn.connectionId,
-            connectionHandle:handle,
-            peerAddress:conn.address,
-            opcode:0x18,
-            opcodeName:'PREPARED_WRITE_EXECUTE',
-            handle:attributeHandle,
-            valueHex:hex(value),
-            complete,
-            fragments
-          };
-          preparedWriteTransactions.push(transaction);
-          timeline.push({kind:'prepared_write', ...transaction});
-        }
+    if (opcode === 0x17 && dir === 'controller_to_host' && payload.length >= 5) {
+      const attributeHandle = payload.readUInt16LE(1);
+      const offset = payload.readUInt16LE(3);
+      const valueHex = hex(payload.subarray(5));
+      const fragments = state.fragmentsByHandle.get(attributeHandle) || [];
+      const fragment = fragments.find(row =>
+        !row.deviceConfirmed &&
+        row.offset === offset &&
+        row.valueHex === valueHex
+      );
+      if (!fragment) {
+        clearPreparedWriteState(handle);
+        return;
       }
-      queue.clear();
+      fragment.deviceConfirmed = true;
+      fragment.responseRecordIndex = recordIndex;
+      fragment.responseElapsedMs = elapsedMs(ts);
+      return;
+    }
+
+    if (opcode === 0x01 && dir === 'controller_to_host' && payload.length >= 5) {
+      const requestOpcode = payload[1];
+      if (requestOpcode === 0x16 || requestOpcode === 0x18) {
+        clearPreparedWriteState(handle);
+      }
+      return;
+    }
+
+    if (opcode === 0x18 && dir === 'host_to_controller' && payload.length >= 2) {
+      const executeFlag = payload[1];
+      if (executeFlag !== 0x01) {
+        clearPreparedWriteState(handle);
+        return;
+      }
+      state.pendingExecute = {
+        recordIndex,
+        elapsedMs:elapsedMs(ts)
+      };
+      return;
+    }
+
+    if (opcode === 0x19 && dir === 'controller_to_host') {
+      if (!state.pendingExecute) {
+        clearPreparedWriteState(handle);
+        return;
+      }
+
+      const executeRequest = state.pendingExecute;
+      for (const [attributeHandle, rawFragments] of state.fragmentsByHandle.entries()) {
+        const fragments = rawFragments.slice().sort((a,b)=>a.offset-b.offset);
+        let expectedOffset = 0;
+        let complete = fragments.length > 0;
+        let deviceConfirmed = fragments.length > 0;
+        const parts = [];
+        for (const fragment of fragments) {
+          const bytes = payloadBytesFromHex(fragment.valueHex);
+          if (!fragment.deviceConfirmed) deviceConfirmed = false;
+          if (!bytes || fragment.offset !== expectedOffset) {
+            complete = false;
+            break;
+          }
+          parts.push(bytes);
+          expectedOffset += bytes.length;
+        }
+        complete = complete && deviceConfirmed;
+        const value = complete ? Buffer.concat(parts) : Buffer.alloc(0);
+        const transaction = {
+          recordIndex:executeRequest.recordIndex,
+          elapsedMs:executeRequest.elapsedMs,
+          direction:'host_to_controller',
+          connectionId:conn.connectionId,
+          connectionHandle:handle,
+          peerAddress:conn.address,
+          opcode:0x18,
+          opcodeName:'PREPARED_WRITE_EXECUTE',
+          handle:attributeHandle,
+          valueHex:hex(value),
+          complete,
+          deviceConfirmed,
+          executeConfirmed:true,
+          executeResponseRecordIndex:recordIndex,
+          executeResponseElapsedMs:elapsedMs(ts),
+          fragments
+        };
+        preparedWriteTransactions.push(transaction);
+        timeline.push({kind:'prepared_write', ...transaction});
+      }
+      clearPreparedWriteState(handle);
     }
   }
 
@@ -871,7 +933,10 @@ function parseCapture(buffer, options = {}) {
       e.writeClass === 'candidate_astera_session_write'
     ),
     ...preparedWriteTransactions.filter(e =>
-      e.writeClass === 'candidate_astera_session_write' && e.complete
+      e.writeClass === 'candidate_astera_session_write' &&
+      e.complete &&
+      e.deviceConfirmed === true &&
+      e.executeConfirmed === true
     )
   ].sort((a,b)=>a.recordIndex-b.recordIndex);
 

@@ -144,8 +144,18 @@ function prepareWrite(handle, offset, valueHex) {
   return out;
 }
 
+function prepareWriteResponse(handle, offset, valueHex) {
+  const out = prepareWrite(handle, offset, valueHex);
+  out[0] = 0x17;
+  return out;
+}
+
 function executeWrite(flag = 0x01) {
   return Buffer.from([0x18, flag]);
+}
+
+function executeWriteResponse() {
+  return Buffer.from([0x19]);
 }
 
 function attErrorResponse(requestOpcode, handle, errorCode) {
@@ -259,18 +269,27 @@ packets.push(record(p.packet,p.flags,57));
 p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 0, '1122'), false);
 packets.push(record(p.packet, p.flags, 58));
 
-p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 2, '3344'), false);
+p = acl(connectionHandle, 0x0004, prepareWriteResponse(valueHandle, 0, '1122'), true);
 packets.push(record(p.packet, p.flags, 59));
 
-p = acl(connectionHandle, 0x0004, executeWrite(0x01), false);
+p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 2, '3344'), false);
 packets.push(record(p.packet, p.flags, 60));
+
+p = acl(connectionHandle, 0x0004, prepareWriteResponse(valueHandle, 2, '3344'), true);
+packets.push(record(p.packet, p.flags, 61));
+
+p = acl(connectionHandle, 0x0004, executeWrite(0x01), false);
+packets.push(record(p.packet, p.flags, 62));
+
+p = acl(connectionHandle, 0x0004, executeWriteResponse(), true);
+packets.push(record(p.packet, p.flags, 63));
 
 const notify = Buffer.concat([
   Buffer.from([0x1b, valueHandle & 0xff, valueHandle >> 8]),
   Buffer.from('010203', 'hex')
 ]);
 p = acl(connectionHandle, 0x0004, notify, true);
-packets.push(record(p.packet, p.flags, 61));
+packets.push(record(p.packet, p.flags, 64));
 
 packets.push(record(hciDisconnect(connectionHandle, 0x13), 1, 70));
 
@@ -345,6 +364,9 @@ const prepared = result.preparedWriteTransactions.find(e => e.opcodeName === 'PR
 assert.ok(prepared, 'prepared write transaction missing');
 assert.strictEqual(prepared.handle, valueHandle);
 assert.strictEqual(prepared.complete, true);
+assert.strictEqual(prepared.deviceConfirmed, true);
+assert.strictEqual(prepared.executeConfirmed, true);
+assert.ok(Number.isInteger(prepared.executeResponseRecordIndex));
 assert.strictEqual(prepared.valueHex, '11223344');
 assert.strictEqual(prepared.fragments.length, 2);
 assert.deepStrictEqual(prepared.fragments.map(x=>x.offset), [0,2]);
@@ -507,6 +529,57 @@ assert.strictEqual(cachedProfiled.candidateAsteraSessionWrites[0].serviceUuid, a
 assert.strictEqual(cachedProfiled.candidateAsteraSessionWrites[0].attributeUuid, vendorCharacteristic);
 assert.ok(cachedProfiled.services.every(x => x.mappingSource === 'explicit_profile'));
 assert.ok(cachedProfiled.attributes.every(x => x.mappingSource === 'explicit_profile'));
+
+// Prepared Write must fail closed unless every fragment and the final Execute
+// are confirmed by the device.
+function parsePreparedOnly(attPayloads) {
+  const rows = [record(hciLeConnection(connectionHandle, address), 1, 0)];
+  let tick = 1;
+  for (const row of attPayloads) {
+    const wrapped = acl(connectionHandle, 0x0004, row.payload, row.incoming);
+    rows.push(record(wrapped.packet, wrapped.flags, tick++));
+  }
+  return analyzer.parseCapture(Buffer.concat([header, ...rows]), {
+    address,
+    profile:explicitProfile
+  });
+}
+
+const missingPrepareAck = parsePreparedOnly([
+  {payload:prepareWrite(valueHandle,0,'AA55'),incoming:false},
+  {payload:executeWrite(0x01),incoming:false},
+  {payload:executeWriteResponse(),incoming:true}
+]);
+assert.strictEqual(missingPrepareAck.candidateAsteraSessionWrites.length, 0);
+assert.strictEqual(missingPrepareAck.preparedWriteTransactions.length, 1);
+assert.strictEqual(missingPrepareAck.preparedWriteTransactions[0].deviceConfirmed, false);
+assert.strictEqual(missingPrepareAck.preparedWriteTransactions[0].executeConfirmed, true);
+
+const rejectedPrepare = parsePreparedOnly([
+  {payload:prepareWrite(valueHandle,0,'AA55'),incoming:false},
+  {payload:attErrorResponse(0x16,valueHandle,0x09),incoming:true},
+  {payload:executeWrite(0x01),incoming:false},
+  {payload:executeWriteResponse(),incoming:true}
+]);
+assert.strictEqual(rejectedPrepare.candidateAsteraSessionWrites.length, 0);
+assert.strictEqual(rejectedPrepare.preparedWriteTransactions.length, 0);
+
+const rejectedExecute = parsePreparedOnly([
+  {payload:prepareWrite(valueHandle,0,'AA55'),incoming:false},
+  {payload:prepareWriteResponse(valueHandle,0,'AA55'),incoming:true},
+  {payload:executeWrite(0x01),incoming:false},
+  {payload:attErrorResponse(0x18,valueHandle,0x0e),incoming:true}
+]);
+assert.strictEqual(rejectedExecute.candidateAsteraSessionWrites.length, 0);
+assert.strictEqual(rejectedExecute.preparedWriteTransactions.length, 0);
+
+const missingExecuteAck = parsePreparedOnly([
+  {payload:prepareWrite(valueHandle,0,'AA55'),incoming:false},
+  {payload:prepareWriteResponse(valueHandle,0,'AA55'),incoming:true},
+  {payload:executeWrite(0x01),incoming:false}
+]);
+assert.strictEqual(missingExecuteAck.candidateAsteraSessionWrites.length, 0);
+assert.strictEqual(missingExecuteAck.preparedWriteTransactions.length, 0);
 
 assert.throws(
   () => analyzer.normalizeGattProfile({

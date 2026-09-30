@@ -28,7 +28,7 @@ const TXT={
   bondedAstera:'Android Bluetooth bonding je uspeo. Astera session / Radio PIN još nisu verifikovani.',
   bondAsteraError:'Astera BTB uparivanje nije uspelo.',
   bondAsteraPairing:'Android traži potvrdu Bluetooth uparivanja.',
-  bondRequired:'Astera BTB traži standardni Bluetooth bonding pre daljeg LE/GATT testa.',
+  bondRequired:'Astera BTB traži standardni Bluetooth bonding. Na lampi drži POWER oko 3 s dok ne blinka plavo, zatim izaberi UPARI BLUETOOTH.',
   classicInspecting:'Proveravam Bluetooth Classic/SDP profile…',
   classicResult:'Bluetooth Classic/SDP',
   classicError:'Bluetooth Classic/SDP provera nije uspela.',
@@ -65,7 +65,7 @@ const TXT={
   bondedAstera:'Android Bluetooth bonding succeeded. The Astera session / Radio PIN is still unverified.',
   bondAsteraError:'Astera BTB pairing failed.',
   bondAsteraPairing:'Android is requesting Bluetooth pairing confirmation.',
-  bondRequired:'Astera BTB requires standard Bluetooth bonding before the next LE/GATT step.',
+  bondRequired:'Astera BTB requires standard Bluetooth bonding. Hold POWER on the light for about 3 s until it flashes blue, then choose PAIR BLUETOOTH.',
   classicInspecting:'Inspecting Bluetooth Classic/SDP profiles…',
   classicResult:'Bluetooth Classic/SDP',
   classicError:'Bluetooth Classic/SDP inspection failed.',
@@ -637,7 +637,7 @@ window.LightingAIBleLifecycleResume=function(){
  pendingAsteraGattAfterResume='';
  if(address)setTimeout(()=>inspectGatt(address,null,true),400);
 };
-window.LightingAIBleControl={version:'0.28-astera-device-info-decoded',diagnosticsRevision:'astera-btb-passive-notify-v26',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.29-astera-blue-mode-preflight',diagnosticsRevision:'astera-btb-passive-notify-v27',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

@@ -501,6 +501,7 @@ if (invokedFile && path.resolve(currentFile) === invokedFile) {
 export {
   parseBtsnoop,
   parseCapture,
+  parseArgs,
   uuidFromAtt,
   ASTERA_BTB_PRIVATE_SERVICE,
   CCCD_UUID

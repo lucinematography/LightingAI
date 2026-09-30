@@ -10,9 +10,14 @@ import {
 
 const endpoint='host_to_controller|WRITE_COMMAND|0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65|uuid:12345678-1234-5678-9abc-def012345678';
 
-function consensus(stableBytes, variableByteIndexes=[3]) {
+function consensus(stableBytes, variableByteIndexes=[3], peerAddress='11:22:33:44:55:66') {
   return {
     kind:'LightingAI-Astera-ATT-consensus',
+    captureIdentity:{
+      peerAddress,
+      verifiedAcrossRuns:true,
+      warning:''
+    },
     repeatableCandidates:[{
       endpoint,
       byteConsensus:{
@@ -70,6 +75,9 @@ const input={
 const result=analyzeSweep(input);
 
 assert.strictEqual(result.kind,'LightingAI-Astera-ATT-sweep');
+assert.strictEqual(result.captureIdentity.peerAddress,'11:22:33:44:55:66');
+assert.strictEqual(result.captureIdentity.verifiedAcrossSetpoints,true);
+assert.strictEqual(result.captureIdentity.warning,'');
 assert.strictEqual(result.parameter,'DIM');
 assert.strictEqual(result.caseCount,4);
 assert.strictEqual(result.summary.sharedRepeatableEndpoints,1);
@@ -108,9 +116,14 @@ assert.strictEqual(dim8.rSquared,1);
 assert.strictEqual(dim8.interpretation.confidence,'candidate_only');
 
 const leEndpoint='host_to_controller|WRITE_COMMAND|0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65|uuid:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
-function leConsensus(low,high){
+function leConsensus(low,high, peerAddress='11:22:33:44:55:66'){
   return {
     kind:'LightingAI-Astera-ATT-consensus',
+    captureIdentity:{
+      peerAddress,
+      verifiedAcrossRuns:true,
+      warning:''
+    },
     repeatableCandidates:[{
       endpoint:leEndpoint,
       byteConsensus:{
@@ -188,6 +201,11 @@ const mixedLength={
       label:'DIM 90',
       value:90,
       consensus:{
+        captureIdentity:{
+          peerAddress:'11:22:33:44:55:66',
+          verifiedAcrossRuns:true,
+          warning:''
+        },
         repeatableCandidates:[{
           endpoint,
           byteConsensus:{
@@ -200,6 +218,25 @@ const mixedLength={
     }
   ]
 };
+assert.throws(
+  ()=>analyzeSweep({
+    parameter:'DIM',
+    cases:[
+      input.cases[0],
+      input.cases[1],
+      {
+        ...input.cases[2],
+        consensus:consensus([
+          {index:0,hex:'AA'},
+          {index:1,hex:'90'},
+          {index:2,hex:'CC'}
+        ],[3],'AA:BB:CC:DD:EE:FF')
+      }
+    ]
+  }),
+  /peer_address_mismatch_across_sweep_setpoints/
+);
+
 const mixed=analyzeSweep(mixedLength);
 assert.strictEqual(mixed.endpoints[0].comparable,false);
 assert.strictEqual(mixed.endpoints[0].reason,'payload_length_not_stable_across_setpoints');
@@ -226,5 +263,6 @@ process.stdout.write(JSON.stringify({
     byteIndexes:le16.byteIndexes,
     slope:le16.slope,
     rSquared:le16.rSquared
-  }
+  },
+  peerAddress:result.captureIdentity.peerAddress
 },null,2)+'\n');

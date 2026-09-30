@@ -103,6 +103,20 @@ The analyzer accepts a profile only when that reference has no mapping warning, 
 
 A packet becomes protocol evidence only after it is repeatable across captures and its meaning is isolated by changing one operator parameter at a time.
 
+Before analyzing DIM/CCT/color changes, compare at least three independent **connect-only** derived captures:
+
+`node backend/astera-att-session-consensus.js connect1.json connect2.json connect3.json --json session-consensus.json`
+
+The connect-only session analyzer:
+- requires at least three fully mapped captures from the same peer address;
+- compares the ordered Astera private-service WRITE sequence;
+- reports the common endpoint prefix shared across all runs;
+- shows stable and variable payload byte positions at each repeated startup position;
+- detects repeatable periodic endpoint candidates when three or more writes occur at a stable interval within every run;
+- labels startup/auth/keepalive findings only as `candidate_only`. Variable bytes may be session/auth values, counters, random data or checksums and must not be replayed.
+
+This session baseline is used to subtract normal connect/auth/keepalive traffic from later parameter captures. It does not prove that the Astera Radio PIN session has been authenticated.
+
 After producing the derived JSON captures, compare them with:
 
 `node backend/astera-att-diff.js connect-only.json dim-change.json --reference-label connect-only --test-label dim-change --json dim-diff.json`

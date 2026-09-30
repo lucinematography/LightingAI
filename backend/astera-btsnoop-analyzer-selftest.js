@@ -564,9 +564,27 @@ const missingPrepareAck = parsePreparedOnly([
   {payload:executeWriteResponse(),incoming:true}
 ]);
 assert.strictEqual(missingPrepareAck.candidateAsteraSessionWrites.length, 0);
-assert.strictEqual(missingPrepareAck.preparedWriteTransactions.length, 1);
-assert.strictEqual(missingPrepareAck.preparedWriteTransactions[0].deviceConfirmed, false);
-assert.strictEqual(missingPrepareAck.preparedWriteTransactions[0].executeConfirmed, true);
+assert.strictEqual(missingPrepareAck.preparedWriteTransactions.length, 0);
+
+const overlappingPrepareRequests = parsePreparedOnly([
+  {payload:prepareWrite(valueHandle,0,'AA55'),incoming:false},
+  {payload:prepareWrite(valueHandle,2,'BB66'),incoming:false},
+  {payload:prepareWriteResponse(valueHandle,2,'BB66'),incoming:true},
+  {payload:executeWrite(0x01),incoming:false},
+  {payload:executeWriteResponse(),incoming:true}
+]);
+assert.strictEqual(overlappingPrepareRequests.candidateAsteraSessionWrites.length,0);
+assert.strictEqual(overlappingPrepareRequests.preparedWriteTransactions.length,0);
+
+const overlappingExecuteRequests = parsePreparedOnly([
+  {payload:prepareWrite(valueHandle,0,'AA55'),incoming:false},
+  {payload:prepareWriteResponse(valueHandle,0,'AA55'),incoming:true},
+  {payload:executeWrite(0x01),incoming:false},
+  {payload:executeWrite(0x01),incoming:false},
+  {payload:executeWriteResponse(),incoming:true}
+]);
+assert.strictEqual(overlappingExecuteRequests.candidateAsteraSessionWrites.length,0);
+assert.strictEqual(overlappingExecuteRequests.preparedWriteTransactions.length,0);
 
 const rejectedPrepare = parsePreparedOnly([
   {payload:prepareWrite(valueHandle,0,'AA55'),incoming:false},
@@ -649,6 +667,31 @@ assert.strictEqual(reconnectWriteState.candidateAsteraSessionWrites.length,0);
 const staleRequest = reconnectWriteState.attEvents.find(e=>e.opcode===0x12);
 assert.ok(staleRequest);
 assert.strictEqual(staleRequest.deviceConfirmed,undefined);
+
+// Prepared fragments must also die with the logical connection.
+const preparedReconnectRows = [
+  record(hciLeConnection(connectionHandle,address),1,0)
+];
+let preparedReconnectPacket = acl(
+  connectionHandle,0x0004,prepareWrite(valueHandle,0,'AA55'),false
+);
+preparedReconnectRows.push(record(preparedReconnectPacket.packet,preparedReconnectPacket.flags,1));
+preparedReconnectPacket = acl(
+  connectionHandle,0x0004,prepareWriteResponse(valueHandle,0,'AA55'),true
+);
+preparedReconnectRows.push(record(preparedReconnectPacket.packet,preparedReconnectPacket.flags,2));
+preparedReconnectRows.push(record(hciDisconnect(connectionHandle,0x13),1,3));
+preparedReconnectRows.push(record(hciLeConnection(connectionHandle,address),1,4));
+preparedReconnectPacket = acl(connectionHandle,0x0004,executeWrite(0x01),false);
+preparedReconnectRows.push(record(preparedReconnectPacket.packet,preparedReconnectPacket.flags,5));
+preparedReconnectPacket = acl(connectionHandle,0x0004,executeWriteResponse(),true);
+preparedReconnectRows.push(record(preparedReconnectPacket.packet,preparedReconnectPacket.flags,6));
+const preparedReconnectState = analyzer.parseCapture(
+  Buffer.concat([header,...preparedReconnectRows]),
+  {address,profile:explicitProfile}
+);
+assert.strictEqual(preparedReconnectState.candidateAsteraSessionWrites.length,0);
+assert.strictEqual(preparedReconnectState.preparedWriteTransactions.length,0);
 
 assert.throws(
   () => analyzer.normalizeGattProfile({

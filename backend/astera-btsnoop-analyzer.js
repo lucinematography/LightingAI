@@ -449,6 +449,7 @@ function parseCapture(buffer, options = {}) {
     if (!preparedWriteStateByConnection.has(key)) {
       preparedWriteStateByConnection.set(key, {
         fragmentsByHandle:new Map(),
+        pendingPrepare:null,
         pendingExecute:null
       });
     }
@@ -458,6 +459,7 @@ function parseCapture(buffer, options = {}) {
   function clearPreparedWriteState(handle) {
     const state = preparedWriteState(handle);
     state.fragmentsByHandle.clear();
+    state.pendingPrepare = null;
     state.pendingExecute = null;
   }
 
@@ -469,19 +471,30 @@ function parseCapture(buffer, options = {}) {
     const state = preparedWriteState(handle);
 
     if (opcode === 0x16 && dir === 'host_to_controller' && payload.length >= 5) {
+      if (state.pendingPrepare || state.pendingExecute) {
+        clearPreparedWriteState(handle);
+        return;
+      }
       const attributeHandle = payload.readUInt16LE(1);
       const offset = payload.readUInt16LE(3);
       const valueHex = hex(payload.subarray(5));
       if (!state.fragmentsByHandle.has(attributeHandle)) {
         state.fragmentsByHandle.set(attributeHandle, []);
       }
-      state.fragmentsByHandle.get(attributeHandle).push({
+      const fragment = {
         offset,
         valueHex,
         recordIndex,
         elapsedMs:elapsedMs(ts),
         deviceConfirmed:false
-      });
+      };
+      state.fragmentsByHandle.get(attributeHandle).push(fragment);
+      state.pendingPrepare = {
+        attributeHandle,
+        offset,
+        valueHex,
+        fragment
+      };
       return;
     }
 
@@ -489,19 +502,19 @@ function parseCapture(buffer, options = {}) {
       const attributeHandle = payload.readUInt16LE(1);
       const offset = payload.readUInt16LE(3);
       const valueHex = hex(payload.subarray(5));
-      const fragments = state.fragmentsByHandle.get(attributeHandle) || [];
-      const fragment = fragments.find(row =>
-        !row.deviceConfirmed &&
-        row.offset === offset &&
-        row.valueHex === valueHex
-      );
-      if (!fragment) {
+      const pending = state.pendingPrepare;
+      if (!pending ||
+          pending.attributeHandle !== attributeHandle ||
+          pending.offset !== offset ||
+          pending.valueHex !== valueHex) {
         clearPreparedWriteState(handle);
         return;
       }
+      const fragment = pending.fragment;
       fragment.deviceConfirmed = true;
       fragment.responseRecordIndex = recordIndex;
       fragment.responseElapsedMs = elapsedMs(ts);
+      state.pendingPrepare = null;
       return;
     }
 
@@ -515,7 +528,9 @@ function parseCapture(buffer, options = {}) {
 
     if (opcode === 0x18 && dir === 'host_to_controller' && payload.length >= 2) {
       const executeFlag = payload[1];
-      if (executeFlag !== 0x01) {
+      if (executeFlag !== 0x01 ||
+          state.pendingPrepare ||
+          state.pendingExecute) {
         clearPreparedWriteState(handle);
         return;
       }

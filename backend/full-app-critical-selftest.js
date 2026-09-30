@@ -111,11 +111,11 @@ expect(bleScanner.includes('scanEpoch')&&bleScanner.includes('thisScanEpoch')&&b
 expect(bleScanner.includes('ble_scan_failed_'),'BLE scan failure code propagation missing');
 
 const bleUi=read('app/src/main/assets/ble-control.js');
-expect(bleUi.includes("version:'0.28-astera-device-info-decoded'"),'Bluetooth-only Astera GATT diagnostic UI missing');
+expect(bleUi.includes("version:'0.29-astera-blue-mode-preflight'"),'Bluetooth-only Astera GATT diagnostic UI missing');
 expect(bleUi.includes('bleInspectGatt')&&bleUi.includes('LightingAIBleGattInspectionResult'),'BLE GATT inspection bridge missing');
 expect(bleUi.includes('00001827-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh provisioning service detection missing');
 expect(bleUi.includes('00001828-0000-1000-8000-00805f9b34fb'),'Bluetooth Mesh proxy service detection missing');
-expect(bleUi.includes("version:'0.28-astera-device-info-decoded'"),'Serialized Bluetooth-only diagnostic UI version missing');
+expect(bleUi.includes("version:'0.29-astera-blue-mode-preflight'"),'Serialized Bluetooth-only diagnostic UI version missing');
 expect(bleUi.includes("ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'")&&bleUi.includes('transport fingerprint only'),'Astera private-service UUID must remain passive transport fingerprint evidence only');
 expect(bleUi.includes('gattActive')&&bleUi.includes('scanActive||gattActive'),'BLE scan/GATT serialization guard missing');
 const asteraBond=read('app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java');
@@ -131,7 +131,7 @@ expect(asteraClassic.includes('fetchUuidsWithSdp')&&asteraClassic.includes('ACTI
 expect(asteraClassic.includes('00001101-0000-1000-8000-00805f9b34fb'),'Astera BTB diagnostics must check the standard Bluetooth Serial Port Profile UUID without assuming it is present');
 expect(main.includes('asteraBtbInspectClassic')&&main.includes('notifyAsteraBtbClassicInspection'),'Astera BTB Classic native bridge missing');
 expect(bleUi.includes('inspectAsteraClassic')&&bleUi.includes('LightingAIAsteraBtbClassicInspectionResult'),'Astera BTB Classic UI diagnostics missing');
-expect(bleUi.includes("diagnosticsRevision:'astera-btb-passive-notify-v26'")&&bleUi.includes('inspectAsteraGatt'),'Astera BTB passive LE diagnostics revision/direct GATT path missing');
+expect(bleUi.includes("diagnosticsRevision:'astera-btb-passive-notify-v27'")&&bleUi.includes('inspectAsteraGatt'),'Astera BTB passive LE diagnostics revision/direct GATT path missing');
 expect(bleUi.includes('const nativeTimeoutMs=astera?12000:8000;')&&bleUi.includes('const watchdogTimeoutMs=nativeTimeoutMs+5000;')&&bleUi.includes('},watchdogTimeoutMs);')&&bleUi.includes('timeoutMs:nativeTimeoutMs'),'Astera GATT JS watchdog must allow the native bounded timeout to report first without a same-deadline race');
 expect(bleUi.includes("error==='astera_bond_required'")&&bleUi.includes('ble-astera-bond')&&bleUi.includes('bondAstera(address,bondButton)'),'Astera Android bonding action must appear only after a standard GATT authentication/encryption failure');
 expect(bleUi.includes('inspectAsteraGatt')&&bleUi.includes('POVEŽI ASTERA')&&bleUi.includes('CONNECT ASTERA'),'Astera BTB direct connect/inspection flow missing');

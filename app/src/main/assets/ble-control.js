@@ -392,6 +392,45 @@ function gattFlags(ch){
  if(ch&&ch.indicatable)out.push('INDICATE');
  return out.length?out.join('/'):'—';
 }
+function parseFirmwareVersion(value){
+ const m=String(value||'').match(/(\d+)\.(\d+)\.(\d+)/);
+ return m?[Number(m[1]),Number(m[2]),Number(m[3])]:null;
+}
+function compareFirmware(a,b){
+ for(let i=0;i<3;i++){const d=(a&&a[i]||0)-(b&&b[i]||0);if(d)return d<0?-1:1}
+ return 0;
+}
+function asteraFirmwareObservations(deviceInfo){
+ const raw=deviceInfo&&deviceInfo.firmwareRevision?String(deviceInfo.firmwareRevision):'';
+ const v=parseFirmwareVersion(raw);
+ if(!v)return [];
+ const out=[];
+ if(compareFirmware(v,[5,14,61])<0){
+  out.push({
+   code:'pre_5_14_61_bonding_memory',
+   sourceRelease:'5.14.61',
+   sr:'Astera 5.14.61 je ispravio pamćenje više Bluetooth bonding veza na BTB lampama.',
+   en:'Astera 5.14.61 fixed remembering multiple Bluetooth bonds on BTB lights.'
+  });
+ }
+ if(compareFirmware(v,[5,12,67])===0){
+  out.push({
+   code:'5_12_67_app_connection_bug',
+   sourceRelease:'5.12.85',
+   sr:'Astera 5.12.85 navodi ispravku app connection buga iz 5.12.67.',
+   en:'Astera 5.12.85 lists a fix for the app connection bug in 5.12.67.'
+  });
+ }
+ if(compareFirmware(v,[5,15,14])===0){
+  out.push({
+   code:'5_15_14_btb_led_lag',
+   sourceRelease:'5.16.24',
+   sr:'Astera 5.16.24 je ispravio usporenu LED kontrolu na TitanBTB/HeliosBTB/HyperionBTB sa 5.15.14.',
+   en:'Astera 5.16.24 fixed laggy LED control on TitanBTB/HeliosBTB/HyperionBTB with 5.15.14.'
+  });
+ }
+ return out;
+}
 function renderGattProfile(payload){
  const services=payload&&Array.isArray(payload.services)?payload.services:[];
  const reads=payload&&Array.isArray(payload.readValues)?payload.readValues:[];
@@ -412,8 +451,10 @@ function renderGattProfile(payload){
  }).join('');
  const deviceInfo=payload&&payload.deviceInformation&&typeof payload.deviceInformation==='object'?payload.deviceInformation:null;
  if(deviceInfo&&Object.keys(deviceInfo).length){
+  const firmwareNotes=asteraFirmwareObservations(deviceInfo);
   html+='<div style="margin-top:9px;padding-top:7px;border-top:1px solid #2d333a"><b>'+(lang()==='sr'?'STANDARDNI DEVICE INFORMATION':'STANDARD DEVICE INFORMATION')+'</b>'+
    ['manufacturerName','modelNumber','serialNumber','firmwareRevision','hardwareRevision','softwareRevision'].filter(k=>deviceInfo[k]).map(k=>'<div class="muted small" style="margin-top:4px">'+esc(k)+' · '+esc(deviceInfo[k])+'</div>').join('')+
+   (firmwareNotes.length?'<div class="status warn" style="margin-top:7px">'+firmwareNotes.map(n=>esc((lang()==='sr'?n.sr:n.en)+' ['+n.sourceRelease+']')).join('<br>')+'</div>':'')+
    '</div>';
  }
  if(reads.length){
@@ -545,6 +586,7 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
   status(message,false);return;
  }
  const services=payload&&Array.isArray(payload.services)?payload.services:[];
+ const firmwareObservations=asteraFirmwareObservations(payload&&payload.deviceInformation);
  latestDiagnosticPayload={
   kind:'LightingAI-Astera-BTB-diagnostic',
   capturedAt:new Date().toISOString(),
@@ -552,6 +594,7 @@ window.LightingAIBleGattInspectionResult=function(id,payload,error){
   proprietaryCharacteristicWrites:payload&&Number.isFinite(Number(payload.proprietaryCharacteristicWrites))?Number(payload.proprietaryCharacteristicWrites):0,
   address:address||'',
   advertisement:address&&latestScanDevicesByAddress[address]?latestScanDevicesByAddress[address]:null,
+  firmwareObservations:firmwareObservations,
   payload:payload||{}
  };
  const labels=diagnosticLabelsFromServices(services);
@@ -637,7 +680,7 @@ window.LightingAIBleLifecycleResume=function(){
  pendingAsteraGattAfterResume='';
  if(address)setTimeout(()=>inspectGatt(address,null,true),400);
 };
-window.LightingAIBleControl={version:'0.29-astera-blue-mode-preflight',diagnosticsRevision:'astera-btb-passive-notify-v27',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.30-astera-firmware-observations',diagnosticsRevision:'astera-btb-passive-notify-v28',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

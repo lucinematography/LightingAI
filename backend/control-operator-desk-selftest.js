@@ -19,7 +19,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.27-astera-device-info'"
+  "version:'0.28-astera-device-info-decoded'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -51,6 +51,8 @@ expect(gatt.includes('remote_user_terminated_connection')&&gatt.includes('androi
 expect(gatt.includes('delay = 1800L')&&gatt.includes('delay = 2200L')&&gatt.includes('retry_scheduled'),'Titan GATT 19/133 retries must use controlled backoff');
 expect(gatt.includes('connect_target')&&gatt.includes('bondState')&&gatt.includes('deviceName'),'Every Astera GATT attempt must record target bond state before connection');
 expect(gatt.includes('DEVICE_INFORMATION_SERVICE')&&gatt.includes('standardDeviceInformationReadEnabled'),'Astera diagnostics must read only the standard Device Information service in addition to the verified BTB service');
+expect(gatt.includes('DIS_FIRMWARE_REVISION')&&gatt.includes('DIS_HARDWARE_REVISION')&&gatt.includes('DIS_MANUFACTURER_NAME')&&gatt.includes('deviceInformation'),'Astera diagnostics must decode standard Device Information fields');
+expect(ble.includes('STANDARD DEVICE INFORMATION')&&ble.includes('firmwareRevision')&&ble.includes('hardwareRevision'),'Astera diagnostic UI must show decoded standard device information');
 expect(gatt.includes('astera_btb_private_service_missing')&&gatt.includes('astera_service_missing'),'Astera diagnostics must flag a missing previously observed BTB private service');
 expect(!mainActivity.includes('if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();\n        if (asteraBtbClassicInspector != null) asteraBtbClassicInspector.cancel();\n        super.onPause();'),'MainActivity onPause must not cancel an active Astera bond during system pairing UI');
 expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('passiveServiceMatch'),'Astera passive observer must restrict characteristic READs to the verified BTB service');

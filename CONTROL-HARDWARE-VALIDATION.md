@@ -104,7 +104,33 @@ The consensus analyzer:
 - shows byte positions that are stable across payloads and positions that vary;
 - never labels a repeatable candidate as a verified DIM/CCT/COLOR/FX command.
 
-A candidate becomes protocol evidence only after the same endpoint/byte-level relationship repeats across at least three controlled captures of the same isolated operator action. It becomes a verified control command only after a later physical replay reproduces only the intended fixture change.
+A candidate becomes protocol evidence only after the same endpoint/byte-level relationship repeats across at least three controlled captures of the same isolated operator action.
+
+After repeatability is established, use at least three different setpoints for the same parameter, for example DIM 10 / 50 / 90. Create one consensus JSON per setpoint, then a sweep manifest:
+
+```json
+{
+  "parameter": "DIM",
+  "cases": [
+    {"label":"DIM 10","value":10,"file":"dim10-consensus.json"},
+    {"label":"DIM 50","value":50,"file":"dim50-consensus.json"},
+    {"label":"DIM 90","value":90,"file":"dim90-consensus.json"}
+  ]
+}
+```
+
+Run:
+
+`node backend/astera-att-sweep.js dim-sweep.json --json dim-sweep-result.json`
+
+The sweep analyzer only identifies byte positions that are:
+- stable across repeated captures within each setpoint;
+- present on the same logical endpoint across all setpoints;
+- different between the isolated setpoints.
+
+Bytes that still vary within a setpoint are classified as unstable and must not be treated as direct control values. Constant bytes are treated as framing candidates. Changing bytes are parameter candidates only.
+
+A candidate becomes a verified control command only after a later physical replay reproduces only the intended fixture change.
 
 Do not combine DIM, CCT and color changes in the same reference capture because that destroys causal isolation.
 

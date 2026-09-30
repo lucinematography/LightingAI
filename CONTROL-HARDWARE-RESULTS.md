@@ -140,3 +140,60 @@ Release gate:
 - DIM/CCT/BOJA/FX: still locked pending verified Astera session/command protocol
 - MAIN: untouched
 - PR #408: keep draft / do not merge
+
+
+## Astera offline protocol-evidence tooling checkpoint - 2026-09-30
+
+Verified functional tooling checkpoint:
+- Branch: `feature/production-control-routing`
+- HEAD: `7c14e0e0eb94e477a0d753102bf89d504cd1b566`
+- Control Lab: #715 SUCCESS
+- PR #408: OPEN / DRAFT
+- MAIN: untouched
+
+Control Lab #715 passed:
+- WebView JavaScript syntax;
+- full-app critical regression;
+- production CONTROL routing;
+- operator-desk safety;
+- Astera btsnoop analyzer;
+- Astera ATT differential analyzer;
+- Astera ATT consensus analyzer;
+- Astera connect-only session consensus;
+- Astera verified session baseline filter;
+- Astera ATT setpoint sweep analyzer;
+- Android lint;
+- Android changed-files lint gate;
+- Android unit tests;
+- debug APK build;
+- packaged CONTROL APK verification;
+- artifact upload.
+
+Offline Astera evidence pipeline now available:
+1. Android HCI/BTSnoop capture -> `backend/astera-btsnoop-analyzer.js`.
+2. Three or more connect-only captures -> `backend/astera-att-session-consensus.js`.
+3. Verified startup/auth prefix removal -> `backend/astera-att-session-filter.js`.
+4. Filtered connect-only versus filtered parameter capture -> `backend/astera-att-diff.js`.
+5. Three or more repeated diffs for the same isolated action -> `backend/astera-att-consensus.js`.
+6. Multi-setpoint byte/encoding/framing analysis -> `backend/astera-att-sweep.js`.
+
+Safety/evidence rules:
+- raw BTSnoop logs are not committed;
+- SMP key-bearing payloads are redacted in derived output;
+- incomplete GATT mapping blocks parameter diff evidence;
+- cached GATT profile seeding is explicit and assumes independently verified same fixture and firmware;
+- fixture identity is fail-closed through diff -> consensus -> sweep;
+- session startup filtering requires the same peer, the same endpoint sequence and all stable framing bytes to match;
+- filtering stops before the first repeatable periodic/keepalive endpoint;
+- startup WRITE -> NOTIFY/INDICATE correlation is only an ACK/response candidate and is bounded to 750 ms and before the next WRITE;
+- numeric encoding candidates require at least four distinct setpoints and remain candidate-only;
+- simple XOR8 / SUM8 / two's-complement SUM8 matches are checksum/framing candidates only;
+- no captured or inferred packet is automatically replayed;
+- LightingAI runtime Astera diagnostics still send zero proprietary characteristic WRITE commands.
+
+Physical status:
+- No new Titan HCI/BTSnoop capture has yet been analyzed with this pipeline.
+- No Astera proprietary session/auth command has been declared verified.
+- No DIM/CCT/BOJA/FX command has been declared verified.
+- Quick controls remain locked.
+- PR #408 must remain DRAFT and must not be merged into MAIN.

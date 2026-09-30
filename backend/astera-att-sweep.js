@@ -5,6 +5,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+function normalizePeerAddress(value) {
+  return String(value || '').trim().replace(/-/g, ':').toUpperCase();
+}
+
+function consensusPeerAddress(consensus) {
+  if (!consensus || typeof consensus !== 'object') return '';
+  const identity = consensus.captureIdentity;
+  return identity && identity.peerAddress
+    ? normalizePeerAddress(identity.peerAddress)
+    : '';
+}
+
 function stableByteMap(candidate) {
   const out = new Map();
   const rows = candidate && candidate.byteConsensus &&
@@ -245,9 +257,34 @@ function analyzeSweep(input) {
     return {
       label:String(row.label || ('case-' + (index + 1))),
       value:row.value,
+      peerAddress:consensusPeerAddress(row.consensus),
       candidates:candidateByEndpoint(row.consensus)
     };
   });
+
+  const peerAddresses = cases.map(row => row.peerAddress);
+  const knownPeerAddresses = new Set(peerAddresses.filter(Boolean));
+  const missingPeerAddresses = peerAddresses.filter(x => !x).length;
+  if (knownPeerAddresses.size > 1) {
+    throw new Error('peer_address_mismatch_across_sweep_setpoints');
+  }
+  if (knownPeerAddresses.size === 1 && missingPeerAddresses > 0) {
+    throw new Error('peer_address_missing_in_some_sweep_setpoints');
+  }
+  const peerAddress = knownPeerAddresses.size === 1
+    ? [...knownPeerAddresses][0]
+    : '';
+  const captureIdentity = {
+    peerAddress,
+    verifiedAcrossSetpoints:!!(
+      peerAddress &&
+      missingPeerAddresses === 0 &&
+      peerAddresses.length === cases.length
+    ),
+    warning:knownPeerAddresses.size === 0
+      ? 'peer_address_unavailable_in_all_sweep_setpoints'
+      : ''
+  };
 
   const endpointCounts = new Map();
   for (const row of cases) {
@@ -269,6 +306,7 @@ function analyzeSweep(input) {
     kind:'LightingAI-Astera-ATT-sweep',
     parameter:String(input.parameter || 'unknown'),
     caseCount:cases.length,
+    captureIdentity,
     cases:rawCases.map((row,index) => ({
       label:String(row.label || ('case-' + (index + 1))),
       value:row.value
@@ -346,6 +384,8 @@ if (invokedFile && path.resolve(currentFile) === invokedFile) {
 }
 
 export {
+  normalizePeerAddress,
+  consensusPeerAddress,
   stableByteMap,
   analyzeNumericEncoding,
   encodingCandidates,

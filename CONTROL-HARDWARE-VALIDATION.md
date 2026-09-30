@@ -109,6 +109,13 @@ After producing the derived JSON captures, compare them with:
 
 The diff analyzer refuses captures that carry `analysisCoverage.mappingWarning`. This is deliberate: an Android GATT-cache capture with unmapped writes must not be interpreted as a negative result. Repeat the capture with sufficient discovery traffic or establish the ATT handle-to-UUID mapping before differential analysis.
 
+Fixture identity is fail-closed through the analysis chain:
+- reference and changed-parameter captures must resolve to the same Bluetooth peer address;
+- diff output records `captureIdentity.verifiedMatch`;
+- consensus accepts physical diff inputs only when every diff verified its reference/test identity and all runs resolve to the same peer;
+- setpoint sweep accepts physical consensus inputs only when every setpoint verified the same peer across its repeated runs and all setpoints resolve to the same peer;
+- peer-address continuity is an analysis guard, not proof that firmware is unchanged. Explicit cached GATT profiles still require independent same-fixture and same-firmware verification.
+
 Repeat separately for CCT and color. The diff tool treats test-only writes and changed payloads as candidates, not as proven commands. Characteristic UUID is the preferred logical endpoint identity; the ATT attribute handle is used only as a fallback when UUID mapping is unavailable. The HCI connection handle is tracked separately as connection metadata and is never treated as the command endpoint identity.
 
 For each isolated operator action, produce at least three separate diff JSON files and run:
@@ -124,14 +131,15 @@ The consensus analyzer:
 
 A candidate becomes protocol evidence only after the same endpoint/byte-level relationship repeats across at least three controlled captures of the same isolated operator action.
 
-After repeatability is established, use at least three different setpoints for the same parameter, for example DIM 10 / 50 / 90. Create one consensus JSON per setpoint, then a sweep manifest:
+After repeatability is established, use at least three different setpoints for basic byte-position comparison. Use **at least four distinct numeric setpoints** when you want numeric encoding candidates. Create one consensus JSON per setpoint, then a sweep manifest:
 
 ```json
 {
   "parameter": "DIM",
   "cases": [
     {"label":"DIM 10","value":10,"file":"dim10-consensus.json"},
-    {"label":"DIM 50","value":50,"file":"dim50-consensus.json"},
+    {"label":"DIM 30","value":30,"file":"dim30-consensus.json"},
+    {"label":"DIM 60","value":60,"file":"dim60-consensus.json"},
     {"label":"DIM 90","value":90,"file":"dim90-consensus.json"}
   ]
 }
@@ -141,12 +149,21 @@ Run:
 
 `node backend/astera-att-sweep.js dim-sweep.json --json dim-sweep-result.json`
 
-The sweep analyzer only identifies byte positions that are:
+The sweep analyzer identifies byte positions that are:
 - stable across repeated captures within each setpoint;
 - present on the same logical endpoint across all setpoints;
 - different between the isolated setpoints.
 
-Bytes that still vary within a setpoint are classified as unstable and must not be treated as direct control values. Constant bytes are treated as framing candidates. Changing bytes are parameter candidates only.
+Bytes that still vary within a setpoint are classified as unstable and must not be treated as direct control values. Constant bytes are framing candidates. Changing bytes are parameter candidates only.
+
+With four or more distinct numeric setpoints the analyzer additionally emits conservative `candidateEncodings` for:
+- one-byte unsigned fields;
+- adjacent 16-bit little-endian fields;
+- adjacent 16-bit big-endian fields;
+- strict monotonic direction;
+- affine linear fits labelled `affine_linear` only when R-squared is at least 0.999.
+
+An encoding candidate is still not a DIM/CCT/COLOR/FX command. A checksum, transformed value or another correlated field can also vary monotonically or linearly. Physical replay remains mandatory before any runtime vendor driver may use the candidate.
 
 A candidate becomes a verified control command only after a later physical replay reproduces only the intended fixture change.
 

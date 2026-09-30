@@ -53,6 +53,32 @@ function acl(handle, cid, payload, incoming) {
   return {packet, flags: incoming ? 1 : 0};
 }
 
+function readByGroupTypeRequest(start, end, type16 = 0x2800) {
+  const out = Buffer.alloc(7);
+  out[0] = 0x10;
+  out.writeUInt16LE(start, 1);
+  out.writeUInt16LE(end, 3);
+  out.writeUInt16LE(type16, 5);
+  return out;
+}
+
+function readByTypeRequest(start, end, type16 = 0x2803) {
+  const out = Buffer.alloc(7);
+  out[0] = 0x08;
+  out.writeUInt16LE(start, 1);
+  out.writeUInt16LE(end, 3);
+  out.writeUInt16LE(type16, 5);
+  return out;
+}
+
+function readByTypeValueResponse(handle, valueBytes) {
+  const value = Buffer.from(valueBytes);
+  const entry = Buffer.alloc(2 + value.length);
+  entry.writeUInt16LE(handle, 0);
+  value.copy(entry, 2);
+  return Buffer.concat([Buffer.from([0x09, entry.length]), entry]);
+}
+
 function readByGroupTypeResponse(start, end, uuid128) {
   const uuidBytes = Buffer.from(uuid128.replace(/-/g, ''), 'hex').reverse();
   const entry = Buffer.alloc(4 + 16);
@@ -89,11 +115,30 @@ const cccdHandle = 0x0026;
 const packets = [];
 packets.push(record(hciLeConnection(connectionHandle, address), 1, 0));
 
-let p = acl(connectionHandle, 0x0004, readByGroupTypeResponse(0x0020, 0x002f, asteraService), true);
+let p = acl(connectionHandle, 0x0004, readByGroupTypeRequest(0x0001, 0xffff), false);
+packets.push(record(p.packet, p.flags, 5));
+
+p = acl(connectionHandle, 0x0004, readByGroupTypeResponse(0x0020, 0x002f, asteraService), true);
 packets.push(record(p.packet, p.flags, 10));
+
+p = acl(connectionHandle, 0x0004, readByTypeRequest(0x0020, 0x002f), false);
+packets.push(record(p.packet, p.flags, 15));
 
 p = acl(connectionHandle, 0x0004, readByTypeCharacteristicResponse(0x0024, valueHandle, vendorCharacteristic), true);
 packets.push(record(p.packet, p.flags, 20));
+
+// A non-characteristic Read By Type response with entry length >= 7 must not
+// be misinterpreted as a characteristic declaration.
+p = acl(connectionHandle, 0x0004, readByTypeRequest(0x0001, 0xffff, 0x2a00), false);
+packets.push(record(p.packet, p.flags, 22));
+
+p = acl(
+  connectionHandle,
+  0x0004,
+  readByTypeValueResponse(0x0030, Buffer.from([0x00,0x44,0x00,0x29,0x2a])),
+  true
+);
+packets.push(record(p.packet, p.flags, 24));
 
 p = acl(connectionHandle, 0x0004, findInformationCccd(cccdHandle), true);
 packets.push(record(p.packet, p.flags, 30));
@@ -112,6 +157,13 @@ const vendorWrite = Buffer.concat([
 p = acl(connectionHandle, 0x0004, vendorWrite, false);
 packets.push(record(p.packet, p.flags, 50));
 
+const noiseWrite = Buffer.concat([
+  Buffer.from([0x52, 0x44, 0x00]),
+  Buffer.from('BEEF', 'hex')
+]);
+p = acl(connectionHandle, 0x0004, noiseWrite, false);
+packets.push(record(p.packet, p.flags, 55));
+
 const notify = Buffer.concat([
   Buffer.from([0x1b, valueHandle & 0xff, valueHandle >> 8]),
   Buffer.from('010203', 'hex')
@@ -125,8 +177,14 @@ packets.push(record(hciDisconnect(connectionHandle, 0x13), 1, 70));
 // Service/characteristic maps must stay isolated per connection instance.
 packets.push(record(hciLeConnection(connectionHandle, address), 1, 80));
 
+p = acl(connectionHandle, 0x0004, readByGroupTypeRequest(0x0001, 0xffff), false);
+packets.push(record(p.packet, p.flags, 85));
+
 p = acl(connectionHandle, 0x0004, readByGroupTypeResponse(0x0020, 0x002f, '11111111-2222-3333-4444-555555555555'), true);
 packets.push(record(p.packet, p.flags, 90));
+
+p = acl(connectionHandle, 0x0004, readByTypeRequest(0x0020, 0x002f), false);
+packets.push(record(p.packet, p.flags, 95));
 
 p = acl(connectionHandle, 0x0004, readByTypeCharacteristicResponse(0x0024, valueHandle, 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'), true);
 packets.push(record(p.packet, p.flags, 100));
@@ -175,6 +233,12 @@ assert.strictEqual(candidate.serviceUuid, asteraService);
 assert.strictEqual(candidate.valueHex, 'A1B2C3D4');
 assert.strictEqual(candidate.writeClass, 'candidate_astera_session_write');
 assert.strictEqual(result.candidateAsteraSessionWrites.length, 1);
+
+const noise = result.attEvents.find(e => e.valueHex === 'BEEF');
+assert.ok(noise, 'non-characteristic Read By Type noise write missing');
+assert.strictEqual(noise.handle, 0x0044);
+assert.strictEqual(noise.attributeUuid, '');
+assert.strictEqual(noise.writeClass, 'other_write');
 
 const secondConnectionWrite = result.attEvents.find(e => e.valueHex === 'DEADBEEF');
 assert.ok(secondConnectionWrite, 'second connection write missing');

@@ -19,7 +19,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.28-astera-device-info-decoded'"
+  "version:'0.29-astera-blue-mode-preflight'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -41,6 +41,7 @@ expect(gatt.includes('attemptHistory')&&gatt.includes('appendAttemptSnapshot(cod
 expect(gatt.includes('isAuthenticationStatus')&&gatt.includes('status == 5 || status == 15')&&gatt.includes('astera_bond_required'),'Astera must map only standard GATT auth/encryption failures to bonding');
 expect(gatt.includes('ble_gatt_service_discovery_status_')&&gatt.includes('appendAttemptSnapshot("astera_bond_required")'),'Astera auth failure during service discovery must route to bonding instead of blind retry');
 expect(ble.includes("error==='astera_bond_required'")&&ble.includes('ble-astera-bond')&&ble.includes('bondAstera(address,bondButton)'),'Astera bonding action must appear only after standardized auth failure');
+expect(ble.includes('drži POWER oko 3 s dok ne blinka plavo')&&ble.includes('Hold POWER on the light for about 3 s until it flashes blue'),'Astera bonding UI must include the official BlueMode preflight instruction');
 expect(bondManager.includes('eventTimeline')&&bondManager.includes('pairing_request')&&bondManager.includes('bond_state')&&bondManager.includes('create_bond')&&bondManager.includes('bond_error'),'Astera Android bonding must preserve a structured event timeline');
 expect(bondManager.includes('onError(JSONObject result, String code)'),'Astera bonding failures must return structured diagnostics');
 expect(ble.includes('LightingAI-Astera-BTB-bond-diagnostic')&&ble.includes('Bonding timeline captured'),'Astera bonding failure timeline must be exportable');

@@ -25,10 +25,25 @@ function write(attributeUuid,valueHex,elapsedMs,recordIndex){
   };
 }
 
+function notify(attributeUuid,valueHex,elapsedMs,recordIndex){
+  return {
+    direction:'controller_to_host',
+    opcodeName:'HANDLE_VALUE_NOTIFICATION',
+    serviceUuid:service,
+    attributeUuid,
+    handle:0x35,
+    valueHex,
+    elapsedMs,
+    recordIndex
+  };
+}
+
 function capture(sessionPayload, peerAddress=address){
   const authUuid='12345678-1234-5678-9abc-def012345678';
   const setupUuid='aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
   const keepaliveUuid='99999999-8888-7777-6666-555555555555';
+  const responseUuid='77777777-6666-5555-4444-333333333333';
+  const responsePayload='90'+sessionPayload.slice(-2);
   return {
     filter:{address:peerAddress},
     analysisCoverage:{mappingWarning:''},
@@ -38,6 +53,9 @@ function capture(sessionPayload, peerAddress=address){
       write(keepaliveUuid,'55AA',1000,3),
       write(keepaliveUuid,'55AA',2000,4),
       write(keepaliveUuid,'55AA',3000,5)
+    ],
+    attEvents:[
+      notify(responseUuid,responsePayload,140,10)
     ]
   };
 }
@@ -53,6 +71,7 @@ assert.strictEqual(result.analyzedRuns,3);
 assert.strictEqual(result.captureIdentity.peerAddress,address);
 assert.strictEqual(result.captureIdentity.verifiedAcrossRuns,true);
 assert.strictEqual(result.summary.commonEndpointPrefixLength,5);
+assert.strictEqual(result.summary.repeatableWriteResponseCandidates,1);
 assert.strictEqual(result.summary.repeatablePeriodicEndpointCandidates,1);
 assert.strictEqual(result.interpretation.confidence,'candidate_only');
 
@@ -69,6 +88,18 @@ assert.strictEqual(first.payloadConsensus.exactPayloadRepeat,false);
 const second=result.commonEndpointPrefix[1];
 assert.strictEqual(second.payloadConsensus.exactPayloadRepeat,true);
 assert.deepStrictEqual(second.payloadConsensus.variableByteIndexes,[]);
+
+const response=result.repeatableWriteResponsePairs[0];
+assert.strictEqual(response.writePosition,0);
+assert.strictEqual(response.responseLatencyMs.min,40);
+assert.strictEqual(response.responseLatencyMs.max,40);
+assert.strictEqual(response.responseLatencyMs.median,40);
+assert.strictEqual(response.responsePayloadConsensus.payloadLength,2);
+assert.deepStrictEqual(response.responsePayloadConsensus.stableBytes,[
+  {index:0,hex:'90'}
+]);
+assert.deepStrictEqual(response.responsePayloadConsensus.variableByteIndexes,[1]);
+assert.strictEqual(response.interpretation.confidence,'candidate_only');
 
 const periodic=result.periodicEndpointCandidates[0];
 assert.strictEqual(periodic.presentRuns,3);
@@ -126,6 +157,7 @@ assert.strictEqual(
 process.stdout.write(JSON.stringify({
   ok:true,
   commonEndpointPrefixLength:result.summary.commonEndpointPrefixLength,
+  repeatableWriteResponseCandidates:result.summary.repeatableWriteResponseCandidates,
   repeatablePeriodicEndpointCandidates:result.summary.repeatablePeriodicEndpointCandidates,
   variableStartupByteIndexes:first.payloadConsensus.variableByteIndexes,
   peerAddress:result.captureIdentity.peerAddress

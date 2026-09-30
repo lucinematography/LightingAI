@@ -619,6 +619,37 @@ const missingWriteResponse = parsePreparedOnly([
 ]);
 assert.strictEqual(missingWriteResponse.candidateAsteraSessionWrites.length, 0);
 
+const overlappingWriteRequests = parsePreparedOnly([
+  {payload:writeRequest(valueHandle,'CAFE'),incoming:false},
+  {payload:writeRequest(valueHandle,'BABE'),incoming:false},
+  {payload:writeResponse(),incoming:true}
+]);
+assert.strictEqual(overlappingWriteRequests.candidateAsteraSessionWrites.length, 0);
+const overlappingDirect = overlappingWriteRequests.attEvents.filter(e=>e.opcode===0x12);
+assert.strictEqual(overlappingDirect.length, 2);
+assert.ok(overlappingDirect.every(e=>e.protocolSequenceInvalid===true));
+assert.ok(overlappingDirect.every(e=>e.deviceConfirmed!==true));
+
+// A stale pending request from a disconnected logical connection must not be
+// confirmable after the same HCI handle is reused.
+const reconnectRows = [
+  record(hciLeConnection(connectionHandle,address),1,0)
+];
+let reconnectPacket = acl(connectionHandle,0x0004,writeRequest(valueHandle,'CAFE'),false);
+reconnectRows.push(record(reconnectPacket.packet,reconnectPacket.flags,1));
+reconnectRows.push(record(hciDisconnect(connectionHandle,0x13),1,2));
+reconnectRows.push(record(hciLeConnection(connectionHandle,address),1,3));
+reconnectPacket = acl(connectionHandle,0x0004,writeResponse(),true);
+reconnectRows.push(record(reconnectPacket.packet,reconnectPacket.flags,4));
+const reconnectWriteState = analyzer.parseCapture(
+  Buffer.concat([header,...reconnectRows]),
+  {address,profile:explicitProfile}
+);
+assert.strictEqual(reconnectWriteState.candidateAsteraSessionWrites.length,0);
+const staleRequest = reconnectWriteState.attEvents.find(e=>e.opcode===0x12);
+assert.ok(staleRequest);
+assert.strictEqual(staleRequest.deviceConfirmed,undefined);
+
 assert.throws(
   () => analyzer.normalizeGattProfile({
     analysisCoverage:{

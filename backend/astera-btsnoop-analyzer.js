@@ -619,7 +619,16 @@ function parseCapture(buffer, options = {}) {
         attErrors.push(event);
       }
       if (opcode === 0x12 && dir === 'host_to_controller' && conn) {
-        pendingWriteRequestByConnection.set(conn.connectionId,event);
+        const pending = pendingWriteRequestByConnection.get(conn.connectionId);
+        if (pending) {
+          pending.deviceConfirmed = false;
+          pending.protocolSequenceInvalid = true;
+          event.deviceConfirmed = false;
+          event.protocolSequenceInvalid = true;
+          pendingWriteRequestByConnection.delete(conn.connectionId);
+        } else {
+          pendingWriteRequestByConnection.set(conn.connectionId,event);
+        }
       }
       if (opcode === 0x13 && dir === 'controller_to_host' && conn) {
         const pending = pendingWriteRequestByConnection.get(conn.connectionId);
@@ -868,6 +877,11 @@ function parseCapture(buffer, options = {}) {
       };
       disconnects.push(event);
       timeline.push({kind:'disconnect', ...event});
+      if (conn) {
+        pendingWriteRequestByConnection.delete(conn.connectionId);
+        preparedWriteStateByConnection.delete(conn.connectionId);
+        pendingDiscoveryByConnection.delete(conn.connectionId);
+      }
       activeConnections.delete(handle);
     }
   }
@@ -955,7 +969,10 @@ function parseCapture(buffer, options = {}) {
   const candidateAsteraSessionWrites = [
     ...attEvents.filter(e =>
       e.writeClass === 'candidate_astera_session_write' &&
-      (e.opcode === 0x52 || (e.opcode === 0x12 && e.deviceConfirmed === true))
+      (e.opcode === 0x52 ||
+       (e.opcode === 0x12 &&
+        e.deviceConfirmed === true &&
+        e.protocolSequenceInvalid !== true))
     ),
     ...preparedWriteTransactions.filter(e =>
       e.writeClass === 'candidate_astera_session_write' &&

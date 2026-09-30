@@ -1,0 +1,18 @@
+{
+  "kind": "LightingAI-Astera-physical-capture-set-manifest",
+  "connectOnly": [
+    "titan-connect-01.json",
+    "titan-connect-02.json",
+    "titan-connect-03.json"
+  ],
+  "dim": [
+    "titan-dim-01.json",
+    "titan-dim-02.json",
+    "titan-dim-03.json"
+  ],
+  "cct": [
+    "titan-cct-01.json",
+    "titan-cct-02.json",
+    "titan-cct-03.json"
+  ]
+}

@@ -2,6 +2,9 @@
 'use strict';
 
 import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { analyzeCaptureSet } from './astera-physical-capture-set.js';
 
 const address='AA:BB:CC:DD:EE:FF';
@@ -62,6 +65,29 @@ assert.throws(
   ()=>analyzeCaptureSet({connectOnly:connectOnly.slice(0,2),dim,cct}),
   /requires_at_least_3_captures/
 );
+
+const currentFile=fileURLToPath(import.meta.url);
+const templatePath=path.join(
+  path.dirname(currentFile),
+  'astera-physical-capture-set.example.json'
+);
+const template=JSON.parse(fs.readFileSync(templatePath,'utf8'));
+assert.strictEqual(template.kind,'LightingAI-Astera-physical-capture-set-manifest');
+assert.deepStrictEqual(template.connectOnly,[
+  'titan-connect-01.json',
+  'titan-connect-02.json',
+  'titan-connect-03.json'
+]);
+assert.deepStrictEqual(template.dim,[
+  'titan-dim-01.json',
+  'titan-dim-02.json',
+  'titan-dim-03.json'
+]);
+assert.deepStrictEqual(template.cct,[
+  'titan-cct-01.json',
+  'titan-cct-02.json',
+  'titan-cct-03.json'
+]);
 
 process.stdout.write(JSON.stringify({
   ok:true,

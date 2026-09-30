@@ -339,3 +339,40 @@ Stop analysis and do not continue toward replay if any of these occur:
 - repeated runs do not converge on the same logical endpoint and byte-level relationship.
 
 A packet remains candidate-only until later controlled physical replay changes only the intended Titan parameter.
+
+
+## Evidence intake package
+
+Use the repository template:
+
+`backend/astera-physical-capture-set.example.json`
+
+Create a working copy next to the derived capture JSON files and keep these exact filenames for the first Titan evidence set:
+
+- `titan-connect-01.json`
+- `titan-connect-02.json`
+- `titan-connect-03.json`
+- `titan-dim-01.json`
+- `titan-dim-02.json`
+- `titan-dim-03.json`
+- `titan-cct-01.json`
+- `titan-cct-02.json`
+- `titan-cct-03.json`
+
+The raw `.log` / BTSnoop files remain local evidence and must not be committed.
+
+After the nine derived JSON files are present, run the complete offline evidence gate with:
+
+`node backend/astera-physical-capture-set.js <working-manifest.json> --json titan-capture-set-result.json`
+
+A successful run means only that the evidence set is internally consistent enough for protocol analysis. It does **not** verify DIM/CCT command semantics and does not permit runtime replay.
+
+Before accepting the result, record:
+- Titan model and firmware;
+- Android phone model and Android version;
+- Titan Bluetooth address used by every capture;
+- branch HEAD and Control Lab run;
+- whether all nine captures were made with the same physical fixture and firmware;
+- whether any unrelated Bluetooth activity was present.
+
+If any one of these identity facts is uncertain, keep the result candidate-only and repeat the physical captures.

@@ -193,12 +193,16 @@ function commonEndpointPrefix(captures) {
   return out;
 }
 
-function firstResponseAfter(write, notifications, windowMs) {
+function firstResponseAfter(write, notifications, windowMs, beforeMs=Infinity) {
   const writeTime = Number(write && write.elapsedMs);
   if (!Number.isFinite(writeTime)) return null;
+  const cutoff = Number.isFinite(Number(beforeMs))
+    ? Number(beforeMs)
+    : Infinity;
   for (const event of Array.isArray(notifications) ? notifications : []) {
     const eventTime = Number(event && event.elapsedMs);
     if (!Number.isFinite(eventTime) || eventTime < writeTime) continue;
+    if (eventTime >= cutoff) break;
     const latencyMs = eventTime - writeTime;
     if (latencyMs > windowMs) break;
     return {
@@ -212,13 +216,19 @@ function firstResponseAfter(write, notifications, windowMs) {
 function repeatableResponsePairs(captures, prefix, windowMs=750) {
   const out = [];
   for (const position of prefix) {
-    const responses = captures.map(capture =>
-      firstResponseAfter(
-        capture.writes[position.position],
+    const responses = captures.map(capture => {
+      const write = capture.writes[position.position];
+      const nextWrite = capture.writes[position.position + 1];
+      const beforeMs = nextWrite && Number.isFinite(Number(nextWrite.elapsedMs))
+        ? Number(nextWrite.elapsedMs)
+        : Infinity;
+      return firstResponseAfter(
+        write,
         capture.notifications,
-        windowMs
-      )
-    );
+        windowMs,
+        beforeMs
+      );
+    });
     if (responses.some(row => !row)) continue;
 
     const endpoints = responses.map(row => endpointIdentity(row.event));

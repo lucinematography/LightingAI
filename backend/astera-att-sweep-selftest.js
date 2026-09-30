@@ -237,6 +237,40 @@ assert.throws(
   /peer_address_mismatch_across_sweep_setpoints/
 );
 
+const unverifiedConsensus=consensus([
+  {index:0,hex:'AA'},
+  {index:1,hex:'90'},
+  {index:2,hex:'CC'}
+]);
+unverifiedConsensus.captureIdentity.verifiedAcrossRuns=false;
+assert.throws(
+  ()=>analyzeSweep({
+    parameter:'DIM',
+    cases:[
+      input.cases[0],
+      input.cases[1],
+      {...input.cases[2],consensus:unverifiedConsensus}
+    ]
+  }),
+  /unverified_fixture_identity_in_sweep_setpoint/
+);
+
+const consensusWithoutIdentity={
+  kind:'LightingAI-Astera-ATT-consensus',
+  repeatableCandidates:input.cases[2].consensus.repeatableCandidates
+};
+assert.throws(
+  ()=>analyzeSweep({
+    parameter:'DIM',
+    cases:[
+      input.cases[0],
+      input.cases[1],
+      {...input.cases[2],consensus:consensusWithoutIdentity}
+    ]
+  }),
+  /capture_identity_missing_in_some_sweep_setpoints/
+);
+
 const mixed=analyzeSweep(mixedLength);
 assert.strictEqual(mixed.endpoints[0].comparable,false);
 assert.strictEqual(mixed.endpoints[0].reason,'payload_length_not_stable_across_setpoints');

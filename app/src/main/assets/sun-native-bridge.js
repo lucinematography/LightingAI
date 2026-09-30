@@ -19,6 +19,7 @@ window.LightingAINativeSunLocation=function(lat,lon,accuracy){
   lat=Number(lat);lon=Number(lon);if(!Number.isFinite(lat)||!Number.isFinite(lon))return;
   if(E('sunLat'))E('sunLat').value=lat.toFixed(6);
   if(E('sunLon'))E('sunLon').value=lon.toFixed(6);
+  try{if(typeof window.LightingAISunSyncCurrentTime==='function')window.LightingAISunSyncCurrentTime()}catch(e){}
   setSunStatus(t().loaded+(Number.isFinite(Number(accuracy))?' · ±'+Math.round(Number(accuracy))+' m':''));
   E('sunLat')?.dispatchEvent(new Event('change',{bubbles:true}));
   E('sunLon')?.dispatchEvent(new Event('change',{bubbles:true}));
@@ -83,18 +84,6 @@ if(!document.getElementById('lightingai-lighting-ratio-script')){
   q.id='lightingai-lighting-ratio-script';
   q.src='file:///android_asset/lighting-ratio.js';
   document.body.appendChild(q);
-}
-if(!document.getElementById('lightingai-dmx-patch-script')){
-  const d=document.createElement('script');
-  d.id='lightingai-dmx-patch-script';
-  d.src='file:///android_asset/dmx-patch-planner.js';
-  document.body.appendChild(d);
-}
-if(!document.getElementById('lightingai-dmx-export-script')){
-  const x=document.createElement('script');
-  x.id='lightingai-dmx-export-script';
-  x.src='file:///android_asset/dmx-export.js';
-  document.body.appendChild(x);
 }
 if(!document.getElementById('lightingai-dof-planner-script')){
   const o=document.createElement('script');

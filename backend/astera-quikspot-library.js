@@ -1,6 +1,7 @@
 // Astera QuikSpot battery-powered Fresnel fixture.
 // Specifications verified from Astera documentation and current product datasheet references.
 const SRC = 'https://astera-led.com/products/quikspot/';
+const DMX_PROFILE_SRC = 'https://images.prolighting.de/manuals/AST-QUKSP_QuikSpot_DMX_Profiles_V4.pdf';
 const ACCESSORY_SRC = SRC;
 
 export const ASTERA_QUIKSPOT_FIXTURES = [
@@ -32,6 +33,18 @@ export const ASTERA_QUIKSPOT_FIXTURES = [
         'https://update.astera-led.com/firmwares/current/release_notes.html'
       ]
     },
+    dmxModes: [{
+      name: 'Profile 4 DIM RGB 4ch',
+      channels: 4,
+      verified: true,
+      sourceUrl: DMX_PROFILE_SRC,
+      controls: [
+        { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+        { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+      ]
+    }],
     sourceUrl: SRC
   }
 ];

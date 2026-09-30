@@ -8,7 +8,9 @@ const plannerKeys = [
   'lighting_dof_planner_v1', 'lighting_flicker_planner_v1', 'lighting_continuity_v1',
   'lighting_shot_list_v1', 'lighting_cue_planner_v1', 'lighting_beam_coverage_v1',
   'lighting_camera_setups_v1', 'lighting_ratio_v1', 'lighting_power_calculator_v1',
-  'lighting_cct_gel_v1', 'lighting_shot_setup_notes_v1', 'lighting_equipment_v1'
+  'lighting_cct_gel_v1', 'lighting_shot_setup_notes_v1', 'lighting_equipment_v1',
+  'lighting_artnet_scenes_v1::ctx_deadbeef', 'lighting_control_cues_v1::ctx_deadbeef',
+  'lighting_control_groups_v1::ctx_deadbeef'
 ];
 const sunKeys = ['lightingai_sun_locations_v1', 'lightingai_sun_shot_presets_v1', 'lighting_set_sketch_sun_v1'];
 const blockedKeys = ['lighting_language_v1', 'lighting_backend_v1', 'lighting_api_v1',
@@ -97,6 +99,7 @@ const importFile = {
   schema:'lightingai-project-backup-v1', generatedAt:'2026-09-17T00:00:00Z', includesSunLocationData:false,
   storage:{
     lighting_set_sketch_v1:{activeId:'restored'},
+    'lighting_artnet_scenes_v1::ctx_deadbeef':[{version:2,name:'Control A',frames:{'1':[0,255]}}],
     lighting_projects_v1:[{id:'restored', project:'Vraćena scena', scenePhoto:'blocked', language:'en', plan:{description:'OK', authToken:'blocked'}}],
     lighting_language_v1:'en', lighting_backend_v1:{url:'blocked'},
     lighting_set_sketch_sun_v1:{lat:44.8,lon:20.5}
@@ -106,7 +109,7 @@ const importFile = {
 const beforeStage = JSON.stringify([...stored]);
 // Values returned from vm.runInContext belong to another JS realm; normalize them before strict structural assertions.
 const staged = JSON.parse(JSON.stringify(context.LightingAIProjectBackupImport.stageText(JSON.stringify(importFile))));
-assert.deepEqual(staged.storageKeys, ['lighting_projects_v1','lighting_set_sketch_v1']);
+assert.deepEqual(staged.storageKeys, ['lighting_artnet_scenes_v1::ctx_deadbeef','lighting_projects_v1','lighting_set_sketch_v1']);
 assert.equal(Object.hasOwn(staged.storage,'lighting_language_v1'), false);
 assert.equal(Object.hasOwn(staged.storage,'lighting_backend_v1'), false);
 assert.equal(Object.hasOwn(staged.storage,'lighting_set_sketch_sun_v1'), false);
@@ -119,6 +122,7 @@ const applied = context.LightingAIProjectBackupImport.apply();
 assert.equal(applied.ok, true);
 assert.deepEqual(JSON.parse(stored.get('lighting_set_sketch_v1')), {activeId:'restored'});
 assert.equal(JSON.parse(stored.get('lighting_projects_v1'))[0].project, 'Vraćena scena');
+assert.equal(JSON.parse(stored.get('lighting_artnet_scenes_v1::ctx_deadbeef'))[0].name, 'Control A');
 assert.equal(stored.get('lighting_language_v1'), JSON.stringify('excluded'), 'Language must not be overwritten');
 assert.equal(stored.get('lighting_backend_v1'), JSON.stringify('excluded'), 'Backend settings must not be overwritten');
 assert.equal(JSON.parse(stored.get('lighting_equipment_v1'))[0].qty, 3);

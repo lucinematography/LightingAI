@@ -1,17 +1,19 @@
 // Discontinued ARRI L-Series DT & TT LED Fresnels with model-compatible light-control accessories.
 // Canonical fixture source: official ARRI discontinued L-Series DT & TT pages.
 const SRC='https://www.arri.com/en/lighting/led-spotlights/discontinued/l-series-dt-tt';
+const DMX_PROTOCOL='https://www.arri.com/resource/blob/65926/3b71e4fe69caea09f657fa8d599a55ab/l-series-dmx-protocol-specification-v3-4-data.pdf';
+const verifiedTuneableMode=(kind)=>({name:'Mode 1 '+kind+' 8-bit 3ch',channels:3,verified:true,sourceUrl:DMX_PROTOCOL,requiredChannels:[{channel:3,value:133,label:'Green/Magenta Neutral'}],controls:[{key:'dimmer',label:'Dimmer',channel:1,type:'percent',min:0,max:100,dmxMin:0,dmxMax:255},{key:'cct',label:'CCT',channel:2,type:'cct-linear',min:kind==='DT'?5000:2600,max:kind==='DT'?6500:3600,step:10,dmxMin:0,dmxMax:255}]});
 
 const wired=['5-Pin DMX In/Thru','RDM','On-board Controller'];
 const control={wired,wireless:[],builtInWirelessDMX:false};
 
 export const ARRI_L_SERIES_DT_TT_DISCONTINUED_FIXTURES=[
- {id:'arri-l5-dt',manufacturer:'ARRI',model:'L5-DT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Daylight LED Fresnel',lens:'137 mm / 5 in Fresnel',cct:'5000-6500 K',control,sourceUrl:SRC+'/l5-dt'},
- {id:'arri-l5-tt',manufacturer:'ARRI',model:'L5-TT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Tungsten LED Fresnel',lens:'137 mm / 5 in Fresnel',control,sourceUrl:SRC+'/l5-tt'},
- {id:'arri-l7-dt',manufacturer:'ARRI',model:'L7-DT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Daylight LED Fresnel',lens:'175 mm / 7 in Fresnel',cct:'5000-6500 K',control,sourceUrl:SRC+'/l7-dt'},
- {id:'arri-l7-tt',manufacturer:'ARRI',model:'L7-TT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Tungsten LED Fresnel',lens:'175 mm / 7 in Fresnel',control,sourceUrl:SRC+'/l7-tt'},
- {id:'arri-l10-dt',manufacturer:'ARRI',model:'L10-DT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Daylight LED Fresnel',lens:'250 mm / 10 in Fresnel',cct:'5000-6500 K',control,sourceUrl:SRC+'/l10-dt'},
- {id:'arri-l10-tt',manufacturer:'ARRI',model:'L10-TT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Tungsten LED Fresnel',lens:'250 mm / 10 in Fresnel',control,sourceUrl:SRC+'/l10-tt'}
+ {id:'arri-l5-dt',manufacturer:'ARRI',model:'L5-DT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Daylight LED Fresnel',lens:'137 mm / 5 in Fresnel',cct:'5000-6500 K',control,dmxModes:[verifiedTuneableMode('DT')],sourceUrl:SRC+'/l5-dt'},
+ {id:'arri-l5-tt',manufacturer:'ARRI',model:'L5-TT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Tungsten LED Fresnel',lens:'137 mm / 5 in Fresnel',control,dmxModes:[verifiedTuneableMode('TT')],sourceUrl:SRC+'/l5-tt'},
+ {id:'arri-l7-dt',manufacturer:'ARRI',model:'L7-DT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Daylight LED Fresnel',lens:'175 mm / 7 in Fresnel',cct:'5000-6500 K',control,dmxModes:[verifiedTuneableMode('DT')],sourceUrl:SRC+'/l7-dt'},
+ {id:'arri-l7-tt',manufacturer:'ARRI',model:'L7-TT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Tungsten LED Fresnel',lens:'175 mm / 7 in Fresnel',control,dmxModes:[verifiedTuneableMode('TT')],sourceUrl:SRC+'/l7-tt'},
+ {id:'arri-l10-dt',manufacturer:'ARRI',model:'L10-DT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Daylight LED Fresnel',lens:'250 mm / 10 in Fresnel',cct:'5000-6500 K',control,dmxModes:[verifiedTuneableMode('DT')],sourceUrl:SRC+'/l10-dt'},
+ {id:'arri-l10-tt',manufacturer:'ARRI',model:'L10-TT',family:'L-Series DT & TT',category:'Light',status:'Discontinued',sourceType:'Tuneable Tungsten LED Fresnel',lens:'250 mm / 10 in Fresnel',control,dmxModes:[verifiedTuneableMode('TT')],sourceUrl:SRC+'/l10-tt'}
 ];
 
 const L5=['arri-l5-dt','arri-l5-tt'];

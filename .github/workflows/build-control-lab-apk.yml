@@ -1,0 +1,215 @@
+name: Build Control Lab APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "feature/production-control-routing" ]
+
+jobs:
+  latest-head:
+    runs-on: ubuntu-latest
+    outputs:
+      is_latest: ${{ steps.guard.outputs.is_latest }}
+    steps:
+      - name: Check current branch HEAD
+        id: guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          LATEST="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" "refs/heads/${GITHUB_REF_NAME}" | awk '{print $1}')"
+          if [ -n "$LATEST" ] && [ "$GITHUB_SHA" = "$LATEST" ]; then
+            echo "is_latest=true" >> "$GITHUB_OUTPUT"
+            echo "Testing latest branch HEAD: $GITHUB_SHA"
+          else
+            echo "is_latest=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping stale push $GITHUB_SHA; current HEAD is $LATEST"
+          fi
+
+  control-lab-build:
+    needs: latest-head
+    if: needs.latest-head.outputs.is_latest == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: lightingai-control-lab-${{ github.ref_name }}-${{ github.sha }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Audit backend dependencies
+        working-directory: backend
+        run: npm run audit:dependencies
+
+      - name: Build official FILTERI GEL catalog
+        working-directory: backend
+        run: npm run build:gels
+
+      - name: Embed control-lab build identity
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          BUILT_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          printf 'window.LightingAIFeatureBuild={run:"%s",sha:"%s",branch:"%s",builtAt:"%s",lab:"control"};\n' "$GITHUB_RUN_NUMBER" "$SHORT_SHA" "$GITHUB_REF_NAME" "$BUILT_AT" > app/src/main/assets/feature-build-info.js
+
+      - name: Validate complete equipment catalog
+        working-directory: backend
+        run: npm run check
+
+      - name: Validate WebView JavaScript syntax
+        run: find app/src/main/assets -maxdepth 1 -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Validate Project 5 safety invariants
+        working-directory: backend
+        run: npm run test:project5-safety
+
+      - name: Validate backup model
+        run: node backend/project-backup-selftest.js
+
+      - name: Validate full-app critical regression surface
+        run: node backend/full-app-critical-selftest.js
+
+      - name: Validate production control routing
+        working-directory: backend
+        run: node control-production-selftest.js
+
+      - name: Validate operator desk safety
+        working-directory: backend
+        run: node control-operator-desk-selftest.js
+
+      - name: Validate Astera btsnoop analyzer
+        working-directory: backend
+        run: node astera-btsnoop-analyzer-selftest.js
+
+      - name: Validate Astera ATT differential analyzer
+        working-directory: backend
+        run: node astera-att-diff-selftest.js
+
+      - name: Validate Astera ATT consensus analyzer
+        working-directory: backend
+        run: node astera-att-consensus-selftest.js
+
+      - name: Validate Astera connect-only session consensus
+        working-directory: backend
+        run: node astera-att-session-consensus-selftest.js
+
+      - name: Validate Astera verified session baseline filter
+        working-directory: backend
+        run: node astera-att-session-filter-selftest.js
+
+      - name: Validate Astera physical capture-set orchestrator
+        working-directory: backend
+        run: node astera-physical-capture-set-selftest.js
+
+      - name: Validate Astera ATT setpoint sweep analyzer
+        working-directory: backend
+        run: node astera-att-sweep-selftest.js
+
+      - name: Audit full fixture control catalog
+        working-directory: backend
+        run: node control-catalog-audit.js
+
+      - name: Validate control system driver families
+        working-directory: backend
+        run: node control-system-drivers-selftest.js
+
+      - name: Verify control lab assets exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s app/src/main/assets/control-bootstrap.js
+          test -s app/src/main/assets/control-routing.js
+          test -s app/src/main/assets/control-dashboard.js
+          test -s app/src/main/assets/control-system-drivers.js
+          test -s app/src/main/assets/ble-control.js
+          test -s app/src/main/java/com/lightingai/app/BleDeviceScanner.java
+          test -s app/src/main/java/com/lightingai/app/BleGattInspector.java
+          test -s app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java
+          test -s app/src/main/java/com/lightingai/app/AsteraBtbClassicInspector.java
+          grep -Fq "LightingAIControlBootstrapReady" app/src/main/assets/control-bootstrap.js
+          grep -Fq "LightingAIControlBootstrapMode='bluetooth-only'" app/src/main/assets/control-bootstrap.js
+          grep -Fq "ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'" app/src/main/assets/ble-control.js
+          if grep -Fq "artnet-control.js" app/src/main/assets/control-bootstrap.js || grep -Fq "dmx-patch-planner.js" app/src/main/assets/control-bootstrap.js || grep -Fq "dmx-export.js" app/src/main/assets/control-bootstrap.js; then
+            echo "Primary CONTROL bootstrap must remain Bluetooth-only"
+            exit 1
+          fi
+          echo "Bluetooth-only Control lab assets verified"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.9'
+
+      - name: Collect Android lint report
+        continue-on-error: true
+        run: gradle lintDebug
+
+      - name: Enforce Android lint on changed app files
+        working-directory: backend
+        run: node android-lint-changed-files-gate.js
+
+      - name: Android unit tests
+        run: gradle testDebugUnitTest
+
+      - name: Build debug APK
+        run: gradle assembleDebug
+
+      - name: Verify packaged control APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/debug/app-debug.apk'
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          REQUIRED=(
+            'assets/control-bootstrap.js'
+            'assets/control-routing.js'
+            'assets/control-dashboard.js'
+            'assets/control-system-drivers.js'
+            'assets/ble-control.js'
+            'assets/feature-build-info.js'
+            'assets/catalog.js'
+            'assets/gel-filter-catalog.js'
+            'assets/gel-filter-ui.js'
+          )
+          test -s "$APK"
+          for asset in "${REQUIRED[@]}"; do
+            unzip -Z1 "$APK" | grep -Fxq "$asset" || { echo "Missing packaged asset: $asset"; exit 1; }
+            cmp -s <(unzip -p "$APK" "$asset") "app/src/main/$asset" || { echo "Packaged asset differs from source: $asset"; exit 1; }
+          done
+          INFO="$(unzip -p "$APK" assets/feature-build-info.js)"
+          grep -Fq "run:\"$GITHUB_RUN_NUMBER\"" <<<"$INFO" || { echo 'Packaged build number mismatch'; exit 1; }
+          grep -Fq "sha:\"$SHORT_SHA\"" <<<"$INFO" || { echo 'Packaged SHA mismatch'; exit 1; }
+          grep -Fq 'lab:"control"' <<<"$INFO" || { echo 'Control lab marker missing'; exit 1; }
+          unzip -p "$APK" assets/gel-filter-catalog.js > /tmp/lightingai-gels.js
+          node -e "const fs=require('fs'),vm=require('vm');const c={window:{}};vm.runInNewContext(fs.readFileSync('/tmp/lightingai-gels.js','utf8'),c);const g=c.window.LightingAIGelCatalog;if(!g||!Array.isArray(g.filters)||g.filters.length!==977)process.exit(1);const x=Object.fromEntries((g.sources||[]).map(s=>[s.key,s.count]));if(x['lee-lighting-filters']!==333||x['rosco-supergel']!==144||x['rosco-ecolour-plus']!==312||x['rosco-cinegel']!==188)process.exit(1);console.log('Packaged FILTERI/GEL catalog verified: 977');"
+          echo "Control Lab APK verified"
+
+      - name: Prepare direct APK artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/LightingAI-control-lab-${GITHUB_RUN_NUMBER}.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          path: app/build/outputs/apk/debug/LightingAI-control-lab-${{ github.run_number }}.apk
+          archive: false
+          retention-days: 14

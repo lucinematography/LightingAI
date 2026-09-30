@@ -1,13 +1,15 @@
 package com.lightingai.app;
 
 import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
@@ -15,6 +17,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -47,11 +50,7 @@ import org.json.JSONArray;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.ArrayList;
-import java.util.UUID;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -69,21 +68,10 @@ public class MainActivity extends Activity {
     private String pendingVoiceTarget = null;
     private String pendingVoiceLanguage = "sr";
     private SpeechRecognizer speechRecognizer;
-    private final AtomicInteger artNetSequence = new AtomicInteger(1);
-    private final AtomicInteger sacnSequence = new AtomicInteger(0);
-    private final AtomicInteger sacnPriority = new AtomicInteger(SacnSender.DEFAULT_PRIORITY);
-    private final AtomicLong artNetDirectSent = new AtomicLong(0);
-    private final AtomicLong artNetDirectFailed = new AtomicLong(0);
-    private final AtomicLong artNetDirectLastAtMs = new AtomicLong(0);
-    private final AtomicLong sacnDirectSent = new AtomicLong(0);
-    private final AtomicLong sacnDirectFailed = new AtomicLong(0);
-    private final AtomicLong sacnDirectLastAtMs = new AtomicLong(0);
-    private volatile String artNetDirectLastError = "";
-    private volatile String sacnDirectLastError = "";
-    private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine();
-    private byte[] sacnCid;
-    private SacnLiveEngine sacnLiveEngine;
     private BleDeviceScanner bleDeviceScanner;
+    private BleGattInspector bleGattInspector;
+    private AsteraBtbBondManager asteraBtbBondManager;
+    private AsteraBtbClassicInspector asteraBtbClassicInspector;
     private String pendingBleDiscoveryRequestId = null;
     private int pendingBleDiscoveryTimeoutMs = 3000;
 
@@ -117,10 +105,10 @@ public class MainActivity extends Activity {
         setContentView(rootView);
         nativeSunLocation = new NativeSunLocation(this);
         nativeSunCompass = new NativeSunCompass(this);
-        sacnCid = loadOrCreateSacnCid();
-        sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
-        sacnLiveEngine.setPriority(sacnPriority.get());
         bleDeviceScanner = new BleDeviceScanner(this);
+        bleGattInspector = new BleGattInspector(this);
+        asteraBtbBondManager = new AsteraBtbBondManager(this);
+        asteraBtbClassicInspector = new AsteraBtbClassicInspector(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -580,8 +568,7 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-set-sketch-camera-fov-script')){var f=document.createElement('script');f.id='lightingai-set-sketch-camera-fov-script';f.src='file:///android_asset/set-sketch-camera-fov.js';document.body.appendChild(f);}" +
             "if(!document.getElementById('lightingai-device-capabilities-script')){var d=document.createElement('script');d.id='lightingai-device-capabilities-script';d.src='file:///android_asset/device-capabilities.js';document.body.appendChild(d);}" +
             "if(!document.getElementById('lightingai-sun-native-bridge-script')){var n=document.createElement('script');n.id='lightingai-sun-native-bridge-script';n.src='file:///android_asset/sun-native-bridge.js';document.body.appendChild(n);}" +
-            "if(!document.getElementById('lightingai-artnet-control-script')){var a=document.createElement('script');a.id='lightingai-artnet-control-script';a.src='file:///android_asset/artnet-control.js';document.body.appendChild(a);}" +
-            "if(!document.getElementById('lightingai-ble-control-script')){var b=document.createElement('script');b.id='lightingai-ble-control-script';b.src='file:///android_asset/ble-control.js';document.body.appendChild(b);}if(!document.getElementById('lightingai-control-dashboard-script')){var h=document.createElement('script');h.id='lightingai-control-dashboard-script';h.src='file:///android_asset/control-dashboard.js';document.body.appendChild(h);}if(!document.getElementById('lightingai-ai-control-bridge-script')){var j=document.createElement('script');j.id='lightingai-ai-control-bridge-script';j.src='file:///android_asset/ai-control-bridge.js';document.body.appendChild(j);}if(!document.getElementById('lightingai-dmx-patch-script')){var x1=document.createElement('script');x1.id='lightingai-dmx-patch-script';x1.src='file:///android_asset/dmx-patch-planner.js';document.body.appendChild(x1);}if(!document.getElementById('lightingai-dmx-export-script')){var x2=document.createElement('script');x2.id='lightingai-dmx-export-script';x2.src='file:///android_asset/dmx-export.js';document.body.appendChild(x2);}if(!document.getElementById('lightingai-dof-script')){var x3=document.createElement('script');x3.id='lightingai-dof-script';x3.src='file:///android_asset/dof-planner.js';document.body.appendChild(x3);}if(!document.getElementById('lightingai-flicker-script')){var x4=document.createElement('script');x4.id='lightingai-flicker-script';x4.src='file:///android_asset/flicker-shutter-planner.js';document.body.appendChild(x4);}if(!document.getElementById('lightingai-continuity-script')){var x5=document.createElement('script');x5.id='lightingai-continuity-script';x5.src='file:///android_asset/continuity-match-shot.js';document.body.appendChild(x5);}if(!document.getElementById('lightingai-shot-list-script')){var x6=document.createElement('script');x6.id='lightingai-shot-list-script';x6.src='file:///android_asset/shot-list-planner.js';document.body.appendChild(x6);}if(!document.getElementById('lightingai-shot-list-export-script')){var x7=document.createElement('script');x7.id='lightingai-shot-list-export-script';x7.src='file:///android_asset/shot-list-export.js';document.body.appendChild(x7);}if(!document.getElementById('lightingai-cue-script')){var x8=document.createElement('script');x8.id='lightingai-cue-script';x8.src='file:///android_asset/lighting-cue-planner.js';document.body.appendChild(x8);}if(!document.getElementById('lightingai-cue-export-script')){var x9=document.createElement('script');x9.id='lightingai-cue-export-script';x9.src='file:///android_asset/lighting-cue-export.js';document.body.appendChild(x9);}if(!document.getElementById('lightingai-beam-report-script')){var x10=document.createElement('script');x10.id='lightingai-beam-report-script';x10.src='file:///android_asset/beam-coverage-report.js';document.body.appendChild(x10);}if(!document.getElementById('lightingai-camera-snapshots-script')){var x11=document.createElement('script');x11.id='lightingai-camera-snapshots-script';x11.src='file:///android_asset/camera-setup-snapshots.js';document.body.appendChild(x11);}if(!document.getElementById('lightingai-camera-report-script')){var x12=document.createElement('script');x12.id='lightingai-camera-report-script';x12.src='file:///android_asset/camera-setup-report.js';document.body.appendChild(x12);}if(!document.getElementById('lightingai-ratio-script')){var x13=document.createElement('script');x13.id='lightingai-ratio-script';x13.src='file:///android_asset/lighting-ratio.js';document.body.appendChild(x13);}if(!document.getElementById('lightingai-shot-setup-report-script')){var x14=document.createElement('script');x14.id='lightingai-shot-setup-report-script';x14.src='file:///android_asset/shot-setup-report.js';document.body.appendChild(x14);}if(!document.getElementById('lightingai-backup-script')){var x15=document.createElement('script');x15.id='lightingai-backup-script';x15.src='file:///android_asset/project-backup-export.js';document.body.appendChild(x15);}" +
+            "if(!document.getElementById('lightingai-control-bootstrap-script')){var cb=document.createElement('script');cb.id='lightingai-control-bootstrap-script';cb.src='file:///android_asset/control-bootstrap.js';document.body.appendChild(cb);}if(!document.getElementById('lightingai-dof-script')){var x3=document.createElement('script');x3.id='lightingai-dof-script';x3.src='file:///android_asset/dof-planner.js';document.body.appendChild(x3);}if(!document.getElementById('lightingai-flicker-script')){var x4=document.createElement('script');x4.id='lightingai-flicker-script';x4.src='file:///android_asset/flicker-shutter-planner.js';document.body.appendChild(x4);}if(!document.getElementById('lightingai-continuity-script')){var x5=document.createElement('script');x5.id='lightingai-continuity-script';x5.src='file:///android_asset/continuity-match-shot.js';document.body.appendChild(x5);}if(!document.getElementById('lightingai-shot-list-script')){var x6=document.createElement('script');x6.id='lightingai-shot-list-script';x6.src='file:///android_asset/shot-list-planner.js';document.body.appendChild(x6);}if(!document.getElementById('lightingai-shot-list-export-script')){var x7=document.createElement('script');x7.id='lightingai-shot-list-export-script';x7.src='file:///android_asset/shot-list-export.js';document.body.appendChild(x7);}if(!document.getElementById('lightingai-cue-script')){var x8=document.createElement('script');x8.id='lightingai-cue-script';x8.src='file:///android_asset/lighting-cue-planner.js';document.body.appendChild(x8);}if(!document.getElementById('lightingai-cue-export-script')){var x9=document.createElement('script');x9.id='lightingai-cue-export-script';x9.src='file:///android_asset/lighting-cue-export.js';document.body.appendChild(x9);}if(!document.getElementById('lightingai-beam-report-script')){var x10=document.createElement('script');x10.id='lightingai-beam-report-script';x10.src='file:///android_asset/beam-coverage-report.js';document.body.appendChild(x10);}if(!document.getElementById('lightingai-camera-snapshots-script')){var x11=document.createElement('script');x11.id='lightingai-camera-snapshots-script';x11.src='file:///android_asset/camera-setup-snapshots.js';document.body.appendChild(x11);}if(!document.getElementById('lightingai-camera-report-script')){var x12=document.createElement('script');x12.id='lightingai-camera-report-script';x12.src='file:///android_asset/camera-setup-report.js';document.body.appendChild(x12);}if(!document.getElementById('lightingai-ratio-script')){var x13=document.createElement('script');x13.id='lightingai-ratio-script';x13.src='file:///android_asset/lighting-ratio.js';document.body.appendChild(x13);}if(!document.getElementById('lightingai-shot-setup-report-script')){var x14=document.createElement('script');x14.id='lightingai-shot-setup-report-script';x14.src='file:///android_asset/shot-setup-report.js';document.body.appendChild(x14);}if(!document.getElementById('lightingai-backup-script')){var x15=document.createElement('script');x15.id='lightingai-backup-script';x15.src='file:///android_asset/project-backup-export.js';document.body.appendChild(x15);}" +
             "})();", null);
     }
 
@@ -649,38 +636,33 @@ public class MainActivity extends Activity {
             null));
     }
 
-    private byte[] loadOrCreateSacnCid() {
-        SharedPreferences prefs = getSharedPreferences("lightingai_control", MODE_PRIVATE);
-        String raw = prefs.getString("sacn_cid", null);
-        UUID uuid;
-        try {
-            uuid = raw == null ? null : UUID.fromString(raw);
-        } catch (Exception ignored) {
-            uuid = null;
-        }
-        if (uuid == null) {
-            uuid = UUID.randomUUID();
-            prefs.edit().putString("sacn_cid", uuid.toString()).apply();
-        }
-        return ByteBuffer.allocate(16)
-            .putLong(uuid.getMostSignificantBits())
-            .putLong(uuid.getLeastSignificantBits())
-            .array();
-    }
-
     private boolean hasBlePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-                checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+                checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         }
         return hasLocationPermission();
+    }
+
+    private boolean isBleLocationServiceReady() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) return true;
+        try {
+            LocationManager manager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            if (manager == null) return false;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) return manager.isLocationEnabled();
+            return manager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private void requestBlePermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || hasBlePermission()) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             requestPermissions(
-                new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
+                new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                 BLE_PERMISSION
             );
         } else {
@@ -702,6 +684,10 @@ public class MainActivity extends Activity {
         }
 
         pendingBleDiscoveryRequestId = null;
+        if (!isBleLocationServiceReady()) {
+            notifyBleDiscovery(id, new JSONArray(), "ble_location_disabled");
+            return;
+        }
         if (bleDeviceScanner == null) bleDeviceScanner = new BleDeviceScanner(this);
         bleDeviceScanner.discover(boundedTimeout, new BleDeviceScanner.Callback() {
             @Override public void onComplete(JSONArray devices) {
@@ -714,6 +700,45 @@ public class MainActivity extends Activity {
         });
     }
 
+    private void notifyAsteraBtbClassicInspection(String requestId, JSONObject result, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String resultJs = result == null ? "{}" : result.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIAsteraBtbClassicInspectionResult&&window.LightingAIAsteraBtbClassicInspectionResult(" + idJs + "," + resultJs + "," + errJs + ");",
+            null));
+    }
+
+    private void notifyAsteraBtbBondProgress(String requestId, JSONObject result) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String resultJs = result == null ? "{}" : result.toString();
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIAsteraBtbBondProgress&&window.LightingAIAsteraBtbBondProgress(" + idJs + "," + resultJs + ");",
+            null));
+    }
+
+    private void notifyAsteraBtbBond(String requestId, JSONObject result, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String resultJs = result == null ? "{}" : result.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIAsteraBtbBondResult&&window.LightingAIAsteraBtbBondResult(" + idJs + "," + resultJs + "," + errJs + ");",
+            null));
+    }
+
+    private void notifyBleGattInspection(String requestId, JSONObject result, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String resultJs = result == null ? "{}" : result.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIBleGattInspectionResult&&window.LightingAIBleGattInspectionResult(" + idJs + "," + resultJs + "," + errJs + ");",
+            null));
+    }
+
     private void notifyBleDiscovery(String requestId, JSONArray devices, String error) {
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
@@ -721,25 +746,6 @@ public class MainActivity extends Activity {
         final String errJs = JSONObject.quote(error == null ? "" : error);
         webView.post(() -> webView.evaluateJavascript(
             "window.LightingAIBleDiscoveryResult&&window.LightingAIBleDiscoveryResult(" + idJs + "," + devicesJs + "," + errJs + ");",
-            null));
-    }
-
-    private void notifyArtNetResult(String requestId, boolean ok, String message) {
-        if (webView == null) return;
-        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
-        final String msgJs = JSONObject.quote(message == null ? "" : message);
-        webView.post(() -> webView.evaluateJavascript(
-            "window.LightingAIArtNetResult&&window.LightingAIArtNetResult(" + idJs + "," + (ok ? "true" : "false") + "," + msgJs + ");",
-            null));
-    }
-
-    private void notifyArtNetDiscovery(String requestId, JSONArray nodes, String error) {
-        if (webView == null) return;
-        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
-        final String nodesJs = nodes == null ? "[]" : nodes.toString();
-        final String errJs = JSONObject.quote(error == null ? "" : error);
-        webView.post(() -> webView.evaluateJavascript(
-            "window.LightingAIArtNetDiscoveryResult&&window.LightingAIArtNetDiscoveryResult(" + idJs + "," + nodesJs + "," + errJs + ");",
             null));
     }
 
@@ -951,190 +957,103 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
         }
 
-        @JavascriptInterface public String networkDmxDiagnostics() {
-            try {
-                JSONObject out = new JSONObject();
-                out.put("platform", "android");
-                out.put("timestampMs", System.currentTimeMillis());
-
-                out.put("interfaces", NetworkInterfaceInspector.snapshot());
-
-                JSONObject artNet = new JSONObject();
-                artNet.put("directSent", artNetDirectSent.get());
-                artNet.put("directFailed", artNetDirectFailed.get());
-                artNet.put("directLastAtMs", artNetDirectLastAtMs.get());
-                artNet.put("directLastError", artNetDirectLastError == null ? "" : artNetDirectLastError);
-                artNet.put("liveFrames", artNetLiveEngine.activeFrameCount());
-                artNet.put("livePacketsSent", artNetLiveEngine.packetsSent());
-                artNet.put("livePacketsFailed", artNetLiveEngine.packetsFailed());
-                artNet.put("liveLastSendAtMs", artNetLiveEngine.lastSendAtMs());
-                artNet.put("liveLastError", artNetLiveEngine.lastError());
-                out.put("artNet", artNet);
-
-                JSONObject sacn = new JSONObject();
-                sacn.put("directSent", sacnDirectSent.get());
-                sacn.put("directFailed", sacnDirectFailed.get());
-                sacn.put("directLastAtMs", sacnDirectLastAtMs.get());
-                sacn.put("directLastError", sacnDirectLastError == null ? "" : sacnDirectLastError);
-                sacn.put("liveFrames", sacnLiveEngine == null ? 0 : sacnLiveEngine.activeFrameCount());
-                sacn.put("livePacketsSent", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsSent());
-                sacn.put("livePacketsFailed", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsFailed());
-                sacn.put("liveLastSendAtMs", sacnLiveEngine == null ? 0 : sacnLiveEngine.lastSendAtMs());
-                sacn.put("liveLastError", sacnLiveEngine == null ? "" : sacnLiveEngine.lastError());
-                sacn.put("priority", sacnPriority.get());
-                out.put("sacn", sacn);
-                return out.toString();
-            } catch (Exception e) {
-                return "{}";
-            }
-        }
-
-        @JavascriptInterface public void sacnSetPriority(int priority) {
-            int value = SacnSender.normalizePriority(priority);
-            sacnPriority.set(value);
-            if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
-            sacnLiveEngine.setPriority(value);
-        }
-
-        @JavascriptInterface public void sacnSendDmx(String requestId, int universe, String channelsJson) {
-            final String id = requestId == null ? "" : requestId;
-            final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
-            final String raw = channelsJson == null ? "[]" : channelsJson;
-            new Thread(() -> {
-                boolean ok = false;
-                String message = "";
-                try {
-                    JSONArray a = new JSONArray(raw);
-                    int count = Math.min(512, a.length());
-                    int[] channels = new int[count];
-                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
-                    int seq = sacnSequence.getAndUpdate(v -> v >= 255 ? 0 : v + 1);
-                    SacnSender.sendDmx(u, channels, seq, sacnCid, "LightingAI", sacnPriority.get());
-                    sacnDirectSent.incrementAndGet();
-                    sacnDirectLastAtMs.set(System.currentTimeMillis());
-                    sacnDirectLastError = "";
-                    ok = true;
-                } catch (Exception e) {
-                    sacnDirectFailed.incrementAndGet();
-                    sacnDirectLastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                    message = e.getMessage() == null ? "sACN send failed" : e.getMessage();
+        @JavascriptInterface public void asteraBtbBond(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> {
+                final String id = requestId == null ? "" : requestId;
+                if (!hasBlePermission()) {
+                    notifyAsteraBtbBond(id, new JSONObject(), "ble_permission_denied");
+                    return;
                 }
-                notifyArtNetResult(id, ok, message);
-            }, "LightingAI-sACN").start();
-        }
-
-        @JavascriptInterface public void sacnSetLiveDmx(String requestId, int universe, String channelsJson) {
-            final String id = requestId == null ? "" : requestId;
-            final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
-            final String raw = channelsJson == null ? "[]" : channelsJson;
-            new Thread(() -> {
-                boolean ok = false;
-                String message = "";
-                try {
-                    JSONArray a = new JSONArray(raw);
-                    int count = Math.min(512, a.length());
-                    int[] channels = new int[count];
-                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
-                    if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
-                    sacnLiveEngine.setPriority(sacnPriority.get());
-                    sacnLiveEngine.setFrame(u, channels);
-                    ok = true;
-                } catch (Exception e) {
-                    message = e.getMessage() == null ? "sACN live refresh failed" : e.getMessage();
-                }
-                notifyArtNetResult(id, ok, message);
-            }, "LightingAI-sACN-Live-Update").start();
-        }
-
-        @JavascriptInterface public void sacnStopLive(String requestId) {
-            final String id = requestId == null ? "" : requestId;
-            if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
-            notifyArtNetResult(id, true, "");
-        }
-
-        @JavascriptInterface public int sacnLiveFrameCount() {
-            return sacnLiveEngine == null ? 0 : sacnLiveEngine.activeFrameCount();
-        }
-
-        @JavascriptInterface public void artNetDiscover(String requestId, int timeoutMs) {
-            final String id = requestId == null ? "" : requestId;
-            new Thread(() -> {
-                JSONArray result = new JSONArray();
-                String error = "";
-                try {
-                    for (ArtNetDiscovery.Node node : ArtNetDiscovery.discover(timeoutMs)) {
-                        JSONObject item = new JSONObject();
-                        item.put("ip", node.ip);
-                        item.put("shortName", node.shortName);
-                        item.put("longName", node.longName);
-                        result.put(item);
+                if (asteraBtbBondManager == null) asteraBtbBondManager = new AsteraBtbBondManager(MainActivity.this);
+                asteraBtbBondManager.bond(address, timeoutMs, new AsteraBtbBondManager.Callback() {
+                    @Override public void onProgress(JSONObject result) {
+                        notifyAsteraBtbBondProgress(id, result);
                     }
-                } catch (Exception e) {
-                    error = e.getMessage() == null ? "Art-Net discovery failed" : e.getMessage();
-                }
-                notifyArtNetDiscovery(id, result, error);
-            }, "LightingAI-ArtNet-Discovery").start();
+                    @Override public void onComplete(JSONObject result) {
+                        notifyAsteraBtbBond(id, result, "");
+                    }
+                    @Override public void onError(JSONObject result, String code) {
+                        notifyAsteraBtbBond(id, result, code);
+                    }
+                });
+            });
         }
 
-        @JavascriptInterface public void artNetSendDmx(String requestId, String targetIp, int universe, String channelsJson) {
-            final String id = requestId == null ? "" : requestId;
-            final String ip = targetIp == null ? "" : targetIp;
-            final int u = Math.max(1, universe);
-            final String raw = channelsJson == null ? "[]" : channelsJson;
-            new Thread(() -> {
-                boolean ok = false;
-                String message = "";
+        @JavascriptInterface public void asteraBtbInspectClassic(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> {
+                final String id = requestId == null ? "" : requestId;
+                if (!hasBlePermission()) {
+                    notifyAsteraBtbClassicInspection(id, new JSONObject(), "ble_permission_denied");
+                    return;
+                }
+                if (asteraBtbClassicInspector == null) {
+                    asteraBtbClassicInspector = new AsteraBtbClassicInspector(MainActivity.this);
+                }
+                asteraBtbClassicInspector.inspect(address, timeoutMs, new AsteraBtbClassicInspector.Callback() {
+                    @Override public void onComplete(JSONObject result) {
+                        notifyAsteraBtbClassicInspection(id, result, "");
+                    }
+                    @Override public void onError(String code) {
+                        notifyAsteraBtbClassicInspection(id, new JSONObject(), code);
+                    }
+                });
+            });
+        }
+
+        @JavascriptInterface public void asteraBtbInspectGatt(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> {
+                final String id = requestId == null ? "" : requestId;
+                if (!hasBlePermission()) {
+                    notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
+                    return;
+                }
+                final String target = address == null ? "" : address.trim();
                 try {
-                    JSONArray a = new JSONArray(raw);
-                    int count = Math.min(512, a.length());
-                    int[] channels = new int[count];
-                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
-                    int seq = artNetSequence.getAndUpdate(v -> v >= 255 ? 1 : v + 1);
-                    ArtNetSender.sendDmx(ip, u, channels, seq);
-                    artNetDirectSent.incrementAndGet();
-                    artNetDirectLastAtMs.set(System.currentTimeMillis());
-                    artNetDirectLastError = "";
-                    ok = true;
+                    BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
+                    BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
+                    if (adapter == null || !adapter.isEnabled()) {
+                        notifyBleGattInspection(id, new JSONObject(), "bluetooth_disabled");
+                        return;
+                    }
+                    adapter.getRemoteDevice(target);
+                } catch (SecurityException e) {
+                    notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
+                    return;
                 } catch (Exception e) {
-                    artNetDirectFailed.incrementAndGet();
-                    artNetDirectLastError = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                    message = e.getMessage() == null ? "Art-Net send failed" : e.getMessage();
+                    notifyBleGattInspection(id, new JSONObject(), "ble_gatt_bad_address");
+                    return;
                 }
-                notifyArtNetResult(id, ok, message);
-            }, "LightingAI-ArtNet").start();
+                if (bleGattInspector == null) bleGattInspector = new BleGattInspector(MainActivity.this);
+                bleGattInspector.inspectAstera(target, Math.max(10000, timeoutMs), new BleGattInspector.Callback() {
+                    @Override public void onComplete(JSONObject result) {
+                        notifyBleGattInspection(id, result, "");
+                    }
+                    @Override public void onError(JSONObject result, String code) {
+                        notifyBleGattInspection(id, result, code);
+                    }
+                });
+            });
         }
 
-        @JavascriptInterface public void artNetSetLiveDmx(String requestId, String targetIp, int universe, String channelsJson) {
-            final String id = requestId == null ? "" : requestId;
-            final String ip = targetIp == null ? "" : targetIp;
-            final int u = Math.max(1, universe);
-            final String raw = channelsJson == null ? "[]" : channelsJson;
-            new Thread(() -> {
-                boolean ok = false;
-                String message = "";
-                try {
-                    JSONArray a = new JSONArray(raw);
-                    int count = Math.min(512, a.length());
-                    int[] channels = new int[count];
-                    for (int i = 0; i < count; i++) channels[i] = Math.max(0, Math.min(255, a.optInt(i, 0)));
-                    artNetLiveEngine.setFrame(ip, u, channels);
-                    ok = true;
-                } catch (Exception e) {
-                    message = e.getMessage() == null ? "Art-Net live refresh failed" : e.getMessage();
+        @JavascriptInterface public void bleInspectGatt(String requestId, String address, int timeoutMs) {
+            runOnUiThread(() -> {
+                final String id = requestId == null ? "" : requestId;
+                if (!hasBlePermission()) {
+                    notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
+                    return;
                 }
-                notifyArtNetResult(id, ok, message);
-            }, "LightingAI-ArtNet-Live-Update").start();
+                if (bleGattInspector == null) bleGattInspector = new BleGattInspector(MainActivity.this);
+                bleGattInspector.inspect(address, timeoutMs, new BleGattInspector.Callback() {
+                    @Override public void onComplete(JSONObject result) {
+                        notifyBleGattInspection(id, result, "");
+                    }
+                    @Override public void onError(JSONObject result, String code) {
+                        notifyBleGattInspection(id, result, code);
+                    }
+                });
+            });
         }
 
-        @JavascriptInterface public void artNetStopLive(String requestId) {
-            final String id = requestId == null ? "" : requestId;
-            artNetLiveEngine.stopAll();
-            notifyArtNetResult(id, true, "");
-        }
-
-        @JavascriptInterface public int artNetLiveFrameCount() {
-            return artNetLiveEngine.activeFrameCount();
-        }
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -1178,11 +1097,29 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override protected void onResume() {
+        super.onResume();
+        if (webView != null) {
+            webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAIBleLifecycleResume&&window.LightingAIBleLifecycleResume();",
+                null));
+        }
+    }
+
     @Override protected void onPause() {
         stopNativeSunCompass();
-        artNetLiveEngine.stopAll();
-        if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
+        pendingBleDiscoveryRequestId = null;
+        if (webView != null) {
+            webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAIBleLifecyclePause&&window.LightingAIBleLifecyclePause();",
+                null));
+        }
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
+        if (bleGattInspector != null) bleGattInspector.cancel();
+        // Keep an active Astera Android bond alive while the system pairing UI
+        // temporarily pauses this Activity. The bond manager has its own timeout
+        // and is still cancelled on onDestroy().
+        if (asteraBtbClassicInspector != null) asteraBtbClassicInspector.cancel();
         super.onPause();
     }
 
@@ -1252,11 +1189,14 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
-        artNetLiveEngine.stopAll();
+        pendingBleDiscoveryRequestId = null;
         if (pendingFileChooser != null) finishFileChooser(null);
         if (nativeSunCompass != null) nativeSunCompass.stop();
         if (nativeSunLocation != null) nativeSunLocation.cancel();
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
+        if (bleGattInspector != null) bleGattInspector.cancel();
+        if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();
+        if (asteraBtbClassicInspector != null) asteraBtbClassicInspector.cancel();
         if (speechRecognizer != null) {
             try { speechRecognizer.destroy(); } catch (Exception ignored) {}
             speechRecognizer = null;

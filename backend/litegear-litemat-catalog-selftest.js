@@ -545,6 +545,29 @@ else{
   if(control.dmx?.publicChannelTable!==null) failures.push('LiteMat S2 4 must not invent a public DMX channel table');
 }
 
+const spectrumG2Ids=[
+  'litegear-litemat-spectrum-g2-1',
+  'litegear-litemat-spectrum-g2-2',
+  'litegear-litemat-spectrum-g2-2l',
+  'litegear-litemat-spectrum-g2-3',
+  'litegear-litemat-spectrum-g2-4',
+  'litegear-litemat-spectrum-g2-8'
+];
+const spectrumG2Holds=[];
+for(const id of spectrumG2Ids){
+  const fixture=fixtures.find(item=>item.id===id);
+  const verifiedModes=(fixture?.dmxModes||[]).filter(mode=>mode?.verified===true);
+  const hold=fixture?.dmxProfileVerification;
+  if(verifiedModes.length) failures.push('LiteMat Spectrum Gen 2 must not claim encoded verified DMX modes before exact personality import: '+id);
+  if(hold?.status!=='HOLD') failures.push('LiteMat Spectrum Gen 2 explicit DMX profile HOLD missing: '+id);
+  else{
+    spectrumG2Holds.push(fixture);
+    if(!String(hold.reason||'').trim()) failures.push('LiteMat Spectrum Gen 2 HOLD reason missing: '+id);
+    if(!Array.isArray(hold.sourceUrls)||!hold.sourceUrls.some(url=>String(url||'').includes('rdm-dmx-profile-tables-spectrum-os-3-1.pdf'))) failures.push('LiteMat Spectrum Gen 2 HOLD official Spectrum OS 3.1 profile source missing: '+id);
+  }
+}
+if(spectrumG2Holds.length!==6) failures.push('LiteMat Spectrum Gen 2 DMX profile HOLD count must remain 6, got '+spectrumG2Holds.length);
+
 const unique=[...new Set(failures)];
-console.log(JSON.stringify({ok:unique.length===0,manufacturer:'LiteGear',family:'LiteMat',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
+console.log(JSON.stringify({ok:unique.length===0,manufacturer:'LiteGear',family:'LiteMat',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,spectrumG2Holds:spectrumG2Holds.length,failures:unique},null,2));
 if(unique.length) process.exit(1);

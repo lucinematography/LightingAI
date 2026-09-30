@@ -1,7 +1,7 @@
 // Astera HydraPanel FP6 wireless LED softlight.
 // Official product documentation: Astera FP6 HydraPanel user manual.
 const SRC = 'https://astera-led.com/hydra';
-const MANUAL = 'https://cdn.stormlighting.co.uk/content/2024/02/Astera_HydraPanel_Manual.pdf';
+const MANUAL = 'https://astera-led.com/products/hydrapanel/downloads/';
 
 export const ASTERA_HYDRAPANEL_FIXTURES = [
   {
@@ -42,7 +42,7 @@ export const ASTERA_HYDRAPANEL_FIXTURES = [
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,
       verified: true,
-      sourceUrl: 'https://goknight.com/content/documentation/FP6_HydraPanel_DMX_Profiles_V1.pdf',
+      sourceUrl: 'https://astera-led.com/products/hydrapanel/downloads/',
       controls: [
         { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
         { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },

@@ -1,3 +1,5 @@
+import { qualifyEvLightDmxProfiles } from './evlight-control-verification.js';
+
 // EV LIGHT Fresnel film / theatre catalog.
 // Sources: official EV LIGHT Fresnel product pages and product index.
 const INDEX='https://www.evlightprofessional.com/products-index.html';
@@ -6,7 +8,7 @@ const SP150FC='https://www.evlightpro.com/fresnel-led/';
 const SP_SERIES='https://www.evlightpro.com/fresnel-led/63172212.html';
 const SP350='https://www.evlightpro.com/fresnel-led/62965541.html';
 const SP350BI='https://www.evlightpro.com/fresnel-led/63234789.html';
-const SP350FC='https://www.evlightprofessional.com/quality-fresnel-led-63172212.html';
+const SP350FC='https://www.evlightpro.com/fresnel-led/62970669.html';
 const SP500BI='https://www.evlightprofessional.com/products-index/7/';
 const SP600='https://www.evlightprofessional.com/products-index/2/';
 
@@ -107,10 +109,24 @@ export const EVLIGHT_FRESNEL_FIXTURES=[
     ledEngine:'RGBAL 5-in-1',
     cri:90,
     tlci:98,
-    pwm:'2-25 kHz',
+    pwm:'1-20 kHz',
     zoom:'Manual / motorized zoom',
-    dmxChannels:[7,11],
-    dmxConnection:'3-pin XLR in/out',
+    dmxChannels:[5,6,7,8,9,10],
+    dmxChannelVariants:{
+      manualZoom:[5,7,9],
+      motorizedZoom:[6,8,10]
+    },
+    dmxChannelPublicationConflict:{
+      familyPageChannels:[7,11],
+      sourceUrl:SP_SERIES,
+      note:'EV Light SP family table conflicts with the model-specific SP350FC page; no verified per-channel function map is publicly available.'
+    },
+    dmxProfileVerification:{
+      status:'HOLD',
+      reason:'Manufacturer pages disagree on DMX channel-count variants and do not publish a per-channel function map.',
+      sourceUrls:[SP350FC,SP_SERIES]
+    },
+    dmxConnection:'3-pin or 5-pin XLR in/out + RJ45',
     control:{
       wired:['DMX512','RDM'],
       wireless:[],
@@ -169,6 +185,8 @@ export const EVLIGHT_FRESNEL_FIXTURES=[
     }
   })
 ];
+
+qualifyEvLightDmxProfiles(EVLIGHT_FRESNEL_FIXTURES);
 
 const all=EVLIGHT_FRESNEL_FIXTURES.map(x=>x.id);
 

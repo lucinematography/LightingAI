@@ -20,6 +20,19 @@ const expected=[
   'godox-tl30','godox-tl60','godox-tl120','godox-tl180'
 ];
 const failures=[];
+function hasGodoxDmxTransport(control = {}) {
+  const values = [
+    ...(control.wired || []),
+    ...(control.wireless || []),
+    ...(control.directLightingAI || [])
+  ].map(value => String(value).toLowerCase());
+  return values.some(value =>
+    /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(value) ||
+    value.includes('crmx') ||
+    value.includes('art-net') ||
+    value.includes('sacn')
+  );
+}
 const duplicateFixtureIds=fixtures.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
 const duplicateAccessoryIds=accessories.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
 if(duplicateFixtureIds.length) failures.push('Duplicate Godox fixture IDs: '+[...new Set(duplicateFixtureIds)].join(', '));
@@ -324,6 +337,26 @@ for(const fixture of godoxFixtures){
   }
 }
 if(godoxFixtures.some(x=>x.id==='godox-lc500bi')) failures.push('Obsolete Godox LC500Bi id must not return');
+const standardDmxFixtures=godoxFixtures.filter(fixture=>hasGodoxDmxTransport(fixture.control||{}));
+const verifiedDmxFixtures=standardDmxFixtures.filter(fixture=>(fixture.dmxModes||[]).some(mode=>mode?.verified===true));
+const dmxProfileHolds=standardDmxFixtures.filter(fixture=>fixture.dmxProfileVerification?.status==='HOLD');
+for(const fixture of standardDmxFixtures){
+  const verifiedModes=(fixture.dmxModes||[]).filter(mode=>mode?.verified===true);
+  const hold=fixture.dmxProfileVerification?.status==='HOLD';
+  if(!verifiedModes.length && !hold) failures.push('Godox standard control transport requires verified DMX mode or explicit HOLD: '+fixture.id);
+  if(verifiedModes.length && fixture.dmxProfileVerification) failures.push('Godox verified DMX mode must not coexist with profile verification HOLD: '+fixture.id);
+  if(hold){
+    if(!String(fixture.dmxProfileVerification?.reason||'').trim()) failures.push('Godox DMX profile HOLD reason missing: '+fixture.id);
+    const sources=fixture.dmxProfileVerification?.sourceUrls;
+    if(!Array.isArray(sources) || !sources.some(url=>/^https?:\/\//i.test(String(url||'')))) failures.push('Godox DMX profile HOLD source URL missing: '+fixture.id);
+  }
+}
+{
+  const fixture=godoxFixtures.find(x=>x.id==='godox-m600r');
+  const verified=(fixture?.dmxModes||[]).filter(mode=>mode?.verified===true);
+  if(verified.length!==2) failures.push('Godox M600R must retain its two verified DMX modes');
+  if(fixture?.dmxProfileVerification) failures.push('Godox M600R verified DMX modes must not be replaced by HOLD');
+}
 const unique=[...new Set(failures)];
-console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
+console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,standardDmxFixtures:standardDmxFixtures.length,verifiedDmxFixtures:verifiedDmxFixtures.length,dmxProfileHolds:dmxProfileHolds.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

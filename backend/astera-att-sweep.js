@@ -262,6 +262,28 @@ function analyzeSweep(input) {
     };
   });
 
+  const identities = rawCases.map(row =>
+    row && row.consensus &&
+    typeof row.consensus.captureIdentity === 'object'
+      ? row.consensus.captureIdentity
+      : null
+  );
+  const identityMetadataCount = identities.filter(Boolean).length;
+  if (identityMetadataCount > 0 &&
+      identityMetadataCount !== rawCases.length) {
+    throw new Error('capture_identity_missing_in_some_sweep_setpoints');
+  }
+  if (identityMetadataCount === rawCases.length) {
+    for (const identity of identities) {
+      if (identity.verifiedAcrossRuns !== true) {
+        throw new Error('unverified_fixture_identity_in_sweep_setpoint');
+      }
+      if (identity.warning) {
+        throw new Error('capture_identity_warning_in_sweep_setpoint');
+      }
+    }
+  }
+
   const peerAddresses = cases.map(row => row.peerAddress);
   const knownPeerAddresses = new Set(peerAddresses.filter(Boolean));
   const missingPeerAddresses = peerAddresses.filter(x => !x).length;

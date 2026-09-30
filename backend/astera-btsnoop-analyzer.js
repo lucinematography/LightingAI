@@ -46,6 +46,23 @@ const HCI_REASON_NAMES = {
   0x16: 'connection_terminated_by_local_host'
 };
 
+const SMP_NAMES = {
+  0x01: 'PAIRING_REQUEST',
+  0x02: 'PAIRING_RESPONSE',
+  0x03: 'PAIRING_CONFIRM',
+  0x04: 'PAIRING_RANDOM',
+  0x05: 'PAIRING_FAILED',
+  0x06: 'ENCRYPTION_INFORMATION',
+  0x07: 'MASTER_IDENTIFICATION',
+  0x08: 'IDENTITY_INFORMATION',
+  0x09: 'IDENTITY_ADDRESS_INFORMATION',
+  0x0a: 'SIGNING_INFORMATION',
+  0x0b: 'SECURITY_REQUEST',
+  0x0c: 'PAIRING_PUBLIC_KEY',
+  0x0d: 'PAIRING_DHKEY_CHECK',
+  0x0e: 'PAIRING_KEYPRESS_NOTIFICATION'
+};
+
 function hex(buffer) {
   return buffer && buffer.length ? buffer.toString('hex').toUpperCase() : '';
 }
@@ -178,9 +195,12 @@ function attHandleAndValue(att) {
 function parseCapture(buffer, options = {}) {
   const parsed = parseBtsnoop(buffer);
   const addressFilter = normalizeAddress(options.address);
-  const connections = new Map();
+  const connections = [];
+  const activeConnections = new Map();
+  const connectionById = new Map();
   const servicesByConnection = new Map();
   const handleMapsByConnection = new Map();
+  let connectionSequence = 0;
   const fragments = new Map();
   const timeline = [];
   const attEvents = [];
@@ -198,19 +218,30 @@ function parseCapture(buffer, options = {}) {
     return (flags & 1) ? 'controller_to_host' : 'host_to_controller';
   }
 
+  function activeConnection(handle) {
+    return activeConnections.get(handle) || null;
+  }
+
+  function connectionKey(handle) {
+    const conn = activeConnection(handle);
+    return conn ? conn.connectionId : 'untracked:' + handle;
+  }
+
   function connectionServices(handle) {
-    if (!servicesByConnection.has(handle)) servicesByConnection.set(handle, []);
-    return servicesByConnection.get(handle);
+    const key = connectionKey(handle);
+    if (!servicesByConnection.has(key)) servicesByConnection.set(key, []);
+    return servicesByConnection.get(key);
   }
 
   function connectionHandleMap(handle) {
-    if (!handleMapsByConnection.has(handle)) handleMapsByConnection.set(handle, new Map());
-    return handleMapsByConnection.get(handle);
+    const key = connectionKey(handle);
+    if (!handleMapsByConnection.has(key)) handleMapsByConnection.set(key, new Map());
+    return handleMapsByConnection.get(key);
   }
 
   function keepConnection(handle) {
     if (!addressFilter) return true;
-    const conn = connections.get(handle);
+    const conn = activeConnection(handle);
     return !!(conn && normalizeAddress(conn.address) === addressFilter);
   }
 
@@ -225,12 +256,14 @@ function parseCapture(buffer, options = {}) {
 
       const opcode = payload.length ? payload[0] : -1;
       const hv = attHandleAndValue(payload);
+      const conn = activeConnection(connectionHandle);
       const event = {
         recordIndex,
         elapsedMs: elapsedMs(ts),
         direction: dir,
+        connectionId: conn?.connectionId || '',
         connectionHandle,
-        peerAddress: connections.get(connectionHandle)?.address || '',
+        peerAddress: conn?.address || '',
         opcode,
         opcodeName: ATT_NAMES[opcode] || ('ATT_0x' + opcode.toString(16).padStart(2, '0')),
         handle: hv.handle,
@@ -243,14 +276,19 @@ function parseCapture(buffer, options = {}) {
     }
     if (cid === SMP_CID) {
       if (!keepConnection(connectionHandle)) return;
+      const conn = activeConnection(connectionHandle);
+      const opcode = payload.length ? payload[0] : -1;
       const event = {
         recordIndex,
         elapsedMs: elapsedMs(ts),
         direction: dir,
+        connectionId: conn?.connectionId || '',
         connectionHandle,
-        peerAddress: connections.get(connectionHandle)?.address || '',
-        opcode: payload.length ? payload[0] : -1,
-        packetHex: hex(payload)
+        peerAddress: conn?.address || '',
+        opcode,
+        opcodeName: SMP_NAMES[opcode] || ('SMP_0x' + opcode.toString(16).padStart(2, '0')),
+        packetLength: payload.length,
+        sensitivePayloadRedacted: true
       };
       smpEvents.push(event);
       timeline.push({kind:'smp', ...event});
@@ -308,8 +346,23 @@ function parseCapture(buffer, options = {}) {
         const role = params[4];
         const addressType = params[5];
         const address = formatAddressLe(params.subarray(6, 12));
-        const conn = {handle, address, addressType, role, status, elapsedMs: elapsedMs(ts)};
-        connections.set(handle, conn);
+        const connectionId = 'conn_' + (++connectionSequence);
+        const conn = {
+          connectionId,
+          handle,
+          address,
+          addressType,
+          role,
+          status,
+          elapsedMs: elapsedMs(ts)
+        };
+        connections.push(conn);
+        activeConnections.set(handle, conn);
+        connectionById.set(connectionId, conn);
+        servicesByConnection.set(connectionId, []);
+        handleMapsByConnection.set(connectionId, new Map());
+        fragments.delete('host_to_controller:' + handle);
+        fragments.delete('controller_to_host:' + handle);
         timeline.push({kind:'le_connection', recordIndex, direction:dir, ...conn});
       }
       return;
@@ -320,18 +373,21 @@ function parseCapture(buffer, options = {}) {
       const handle = params.readUInt16LE(1);
       const reason = params[3];
       if (!keepConnection(handle)) return;
+      const conn = activeConnection(handle);
       const event = {
         recordIndex,
         elapsedMs: elapsedMs(ts),
         direction: dir,
+        connectionId: conn?.connectionId || '',
         connectionHandle: handle,
-        peerAddress: connections.get(handle)?.address || '',
+        peerAddress: conn?.address || '',
         status,
         reason,
         reasonName: HCI_REASON_NAMES[reason] || ('hci_reason_0x' + reason.toString(16).padStart(2, '0'))
       };
       disconnects.push(event);
       timeline.push({kind:'disconnect', ...event});
+      activeConnections.delete(handle);
     }
   }
 
@@ -344,8 +400,8 @@ function parseCapture(buffer, options = {}) {
 
   for (const event of attEvents) {
     if (event.handle == null) continue;
-    const map = handleMapsByConnection.get(event.connectionHandle);
-    const services = servicesByConnection.get(event.connectionHandle) || [];
+    const map = handleMapsByConnection.get(event.connectionId);
+    const services = servicesByConnection.get(event.connectionId) || [];
     event.attributeUuid = map?.get(event.handle) || '';
     event.serviceUuid = serviceForHandle(services, event.handle);
     if ((event.opcode === 0x12 || event.opcode === 0x52) &&
@@ -357,10 +413,17 @@ function parseCapture(buffer, options = {}) {
   }
 
   const serviceList = [];
-  for (const [connectionHandle, services] of servicesByConnection.entries()) {
-    if (!keepConnection(connectionHandle)) continue;
+  for (const [connectionId, services] of servicesByConnection.entries()) {
+    const conn = connectionById.get(connectionId);
+    if (!conn) continue;
+    if (addressFilter && normalizeAddress(conn.address) !== addressFilter) continue;
     for (const service of services) {
-      serviceList.push({connectionHandle, ...service});
+      serviceList.push({
+        connectionId,
+        connectionHandle: conn.handle,
+        peerAddress: conn.address,
+        ...service
+      });
     }
   }
 
@@ -378,7 +441,12 @@ function parseCapture(buffer, options = {}) {
     filter: {
       address: addressFilter || null
     },
-    connections: Array.from(connections.values()).filter(c =>
+    privacy: {
+      addressFilterRequiredByCli: true,
+      smpKeyMaterialRedacted: true,
+      vendorPayloadsMayContainSensitiveSessionData: true
+    },
+    connections: connections.filter(c =>
       !addressFilter || normalizeAddress(c.address) === addressFilter
     ),
     services: serviceList,
@@ -391,17 +459,21 @@ function parseCapture(buffer, options = {}) {
 }
 
 function parseArgs(argv) {
-  const args = {input:'', address:'', json:''};
+  const args = {input:'', address:'', json:'', allowAll:false};
   const rest = argv.slice(2);
   while (rest.length) {
     const token = rest.shift();
     if (token === '--address') args.address = rest.shift() || '';
     else if (token === '--json') args.json = rest.shift() || '';
+    else if (token === '--allow-all') args.allowAll = true;
     else if (!args.input) args.input = token;
     else throw new Error('unknown_argument_' + token);
   }
   if (!args.input) {
-    throw new Error('usage: node backend/astera-btsnoop-analyzer.js <btsnoop_hci.log> [--address AA:BB:CC:DD:EE:FF] [--json out.json]');
+    throw new Error('usage: node backend/astera-btsnoop-analyzer.js <btsnoop_hci.log> --address AA:BB:CC:DD:EE:FF [--json out.json]');
+  }
+  if (!args.address && !args.allowAll) {
+    throw new Error('address_filter_required_use_--address_or_explicit_--allow-all');
   }
   return args;
 }

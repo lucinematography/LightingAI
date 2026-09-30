@@ -19,7 +19,9 @@ function capturePeerAddress(input) {
   const addresses = new Set();
   const collect = rows => {
     for (const row of Array.isArray(rows) ? rows : []) {
-      const address = normalizePeerAddress(row && row.peerAddress);
+      const address = normalizePeerAddress(
+        row && (row.peerAddress || row.address)
+      );
       if (address) addresses.add(address);
     }
   };

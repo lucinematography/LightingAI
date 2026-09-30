@@ -247,16 +247,16 @@ const protectedRead = Buffer.alloc(3);
 protectedRead[0] = 0x0a;
 protectedRead.writeUInt16LE(valueHandle,1);
 p = acl(connectionHandle, 0x0004, protectedRead, false);
-packets.push(record(p.packet,p.flags,55.2));
+packets.push(record(p.packet,p.flags,56));
 
 p = acl(connectionHandle, 0x0004, attErrorResponse(0x0a,valueHandle,0x05), true);
-packets.push(record(p.packet,p.flags,55.3));
+packets.push(record(p.packet,p.flags,57));
 
 p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 0, '1122'), false);
-packets.push(record(p.packet, p.flags, 56));
+packets.push(record(p.packet, p.flags, 61));
 
 p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 2, '3344'), false);
-packets.push(record(p.packet, p.flags, 57));
+packets.push(record(p.packet, p.flags, 59));
 
 p = acl(connectionHandle, 0x0004, executeWrite(0x01), false);
 packets.push(record(p.packet, p.flags, 58));

@@ -1143,6 +1143,7 @@ public final class BleGattInspector {
         subscribable.clear();
         clearJsonArray(subscriptionResults);
         clearJsonArray(notificationValues);
+        clearJsonObject(deviceInformation);
         subscribeIndex = 0;
         activeDescriptor = null;
         activeSubscriptionCharacteristic = null;

@@ -92,6 +92,10 @@ jobs:
         working-directory: backend
         run: node astera-btsnoop-analyzer-selftest.js
 
+      - name: Validate Astera ATT differential analyzer
+        working-directory: backend
+        run: node astera-att-diff-selftest.js
+
       - name: Audit full fixture control catalog
         working-directory: backend
         run: node control-catalog-audit.js

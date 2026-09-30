@@ -31,6 +31,18 @@ public final class BleGattInspector {
         UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     private static final String DEVICE_INFORMATION_SERVICE =
         "0000180a-0000-1000-8000-00805f9b34fb";
+    private static final String DIS_MODEL_NUMBER =
+        "00002a24-0000-1000-8000-00805f9b34fb";
+    private static final String DIS_SERIAL_NUMBER =
+        "00002a25-0000-1000-8000-00805f9b34fb";
+    private static final String DIS_FIRMWARE_REVISION =
+        "00002a26-0000-1000-8000-00805f9b34fb";
+    private static final String DIS_HARDWARE_REVISION =
+        "00002a27-0000-1000-8000-00805f9b34fb";
+    private static final String DIS_SOFTWARE_REVISION =
+        "00002a28-0000-1000-8000-00805f9b34fb";
+    private static final String DIS_MANUFACTURER_NAME =
+        "00002a29-0000-1000-8000-00805f9b34fb";
     private static final String ASTERA_BTB_PRIVATE_SERVICE =
         "0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65";
 
@@ -61,6 +73,7 @@ public final class BleGattInspector {
     private final JSONArray notificationValues = new JSONArray();
     private final JSONArray eventTimeline = new JSONArray();
     private final JSONArray attemptHistory = new JSONArray();
+    private final JSONObject deviceInformation = new JSONObject();
     private int subscribeIndex = 0;
     private BluetoothGattDescriptor activeDescriptor;
     private BluetoothGattCharacteristic activeSubscriptionCharacteristic;
@@ -269,6 +282,7 @@ public final class BleGattInspector {
                         clearJsonArray(readValues);
                         clearJsonArray(subscriptionResults);
                         clearJsonArray(notificationValues);
+                        clearJsonObject(deviceInformation);
                         boolean passiveServicePresent = false;
 
                         for (BluetoothGattService service : gatt.getServices()) {
@@ -697,6 +711,9 @@ public final class BleGattInspector {
             status == BluetoothGatt.GATT_SUCCESS
                 ? ""
                 : "read_status_" + status);
+        if (status == BluetoothGatt.GATT_SUCCESS) {
+            captureDeviceInformation(characteristic, value);
+        }
         activeRead = null;
         if (isAsteraInspection() && isAuthenticationStatus(status)) {
             finishErrorLocked("astera_bond_required");
@@ -820,6 +837,9 @@ public final class BleGattInspector {
                 "notificationCount", notificationValues.length());
             activeProfile.put("eventTimeline", eventTimeline);
             activeProfile.put("attemptHistory", attemptHistory);
+            activeProfile.put(
+                "deviceInformation",
+                new JSONObject(deviceInformation.toString()));
         } catch (Exception ignored) {}
     }
 
@@ -846,6 +866,41 @@ public final class BleGattInspector {
                     new JSONArray(notificationValues.toString()));
             }
             attemptHistory.put(item);
+        } catch (Exception ignored) {}
+    }
+
+    private void captureDeviceInformation(
+        BluetoothGattCharacteristic characteristic,
+        byte[] value
+    ) {
+        if (characteristic == null ||
+            characteristic.getUuid() == null ||
+            value == null) return;
+        BluetoothGattService service = characteristic.getService();
+        if (service == null || service.getUuid() == null) return;
+        String serviceUuid =
+            normalizeUuid(service.getUuid().toString());
+        if (!DEVICE_INFORMATION_SERVICE.equals(serviceUuid)) return;
+
+        String uuid =
+            normalizeUuid(characteristic.getUuid().toString());
+        String key = "";
+        if (DIS_MODEL_NUMBER.equals(uuid)) key = "modelNumber";
+        else if (DIS_SERIAL_NUMBER.equals(uuid)) key = "serialNumber";
+        else if (DIS_FIRMWARE_REVISION.equals(uuid)) key = "firmwareRevision";
+        else if (DIS_HARDWARE_REVISION.equals(uuid)) key = "hardwareRevision";
+        else if (DIS_SOFTWARE_REVISION.equals(uuid)) key = "softwareRevision";
+        else if (DIS_MANUFACTURER_NAME.equals(uuid)) key = "manufacturerName";
+        if (key.isEmpty()) return;
+
+        try {
+            String text =
+                new String(value, StandardCharsets.UTF_8).trim();
+            deviceInformation.put(key, text);
+            appendEvent(
+                "device_information",
+                "field", key,
+                "value", text);
         } catch (Exception ignored) {}
     }
 
@@ -915,6 +970,16 @@ public final class BleGattInspector {
             return new JSONObject(source.toString());
         } catch (Exception ignored) {
             return new JSONObject();
+        }
+    }
+
+    private static void clearJsonObject(JSONObject object) {
+        if (object == null) return;
+        JSONArray names = object.names();
+        if (names == null) return;
+        for (int i = 0; i < names.length(); i++) {
+            String name = names.optString(i, "");
+            if (!name.isEmpty()) object.remove(name);
         }
     }
 

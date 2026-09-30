@@ -253,20 +253,20 @@ p = acl(connectionHandle, 0x0004, attErrorResponse(0x0a,valueHandle,0x05), true)
 packets.push(record(p.packet,p.flags,57));
 
 p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 0, '1122'), false);
-packets.push(record(p.packet, p.flags, 61));
+packets.push(record(p.packet, p.flags, 58));
 
 p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 2, '3344'), false);
 packets.push(record(p.packet, p.flags, 59));
 
 p = acl(connectionHandle, 0x0004, executeWrite(0x01), false);
-packets.push(record(p.packet, p.flags, 58));
+packets.push(record(p.packet, p.flags, 60));
 
 const notify = Buffer.concat([
   Buffer.from([0x1b, valueHandle & 0xff, valueHandle >> 8]),
   Buffer.from('010203', 'hex')
 ]);
 p = acl(connectionHandle, 0x0004, notify, true);
-packets.push(record(p.packet, p.flags, 60));
+packets.push(record(p.packet, p.flags, 61));
 
 packets.push(record(hciDisconnect(connectionHandle, 0x13), 1, 70));
 

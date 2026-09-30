@@ -105,6 +105,20 @@ function findInformationCccd(handle) {
   return Buffer.concat([Buffer.from([0x05, 0x01]), entry]);
 }
 
+function prepareWrite(handle, offset, valueHex) {
+  const value = Buffer.from(valueHex, 'hex');
+  const out = Buffer.alloc(5 + value.length);
+  out[0] = 0x16;
+  out.writeUInt16LE(handle, 1);
+  out.writeUInt16LE(offset, 3);
+  value.copy(out, 5);
+  return out;
+}
+
+function executeWrite(flag = 0x01) {
+  return Buffer.from([0x18, flag]);
+}
+
 const connectionHandle = 0x000b;
 const address = '11:22:33:44:55:66';
 const asteraService = analyzer.ASTERA_BTB_PRIVATE_SERVICE;
@@ -163,6 +177,15 @@ const noiseWrite = Buffer.concat([
 ]);
 p = acl(connectionHandle, 0x0004, noiseWrite, false);
 packets.push(record(p.packet, p.flags, 55));
+
+p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 0, '1122'), false);
+packets.push(record(p.packet, p.flags, 56));
+
+p = acl(connectionHandle, 0x0004, prepareWrite(valueHandle, 2, '3344'), false);
+packets.push(record(p.packet, p.flags, 57));
+
+p = acl(connectionHandle, 0x0004, executeWrite(0x01), false);
+packets.push(record(p.packet, p.flags, 58));
 
 const notify = Buffer.concat([
   Buffer.from([0x1b, valueHandle & 0xff, valueHandle >> 8]),
@@ -232,7 +255,24 @@ assert.strictEqual(candidate.attributeUuid, vendorCharacteristic);
 assert.strictEqual(candidate.serviceUuid, asteraService);
 assert.strictEqual(candidate.valueHex, 'A1B2C3D4');
 assert.strictEqual(candidate.writeClass, 'candidate_astera_session_write');
-assert.strictEqual(result.candidateAsteraSessionWrites.length, 1);
+assert.strictEqual(result.candidateAsteraSessionWrites.length, 2);
+
+const prepared = result.preparedWriteTransactions.find(e => e.opcodeName === 'PREPARED_WRITE_EXECUTE');
+assert.ok(prepared, 'prepared write transaction missing');
+assert.strictEqual(prepared.handle, valueHandle);
+assert.strictEqual(prepared.complete, true);
+assert.strictEqual(prepared.valueHex, '11223344');
+assert.strictEqual(prepared.fragments.length, 2);
+assert.deepStrictEqual(prepared.fragments.map(x=>x.offset), [0,2]);
+assert.strictEqual(prepared.attributeUuid, vendorCharacteristic);
+assert.strictEqual(prepared.serviceUuid, asteraService);
+assert.strictEqual(prepared.writeClass, 'candidate_astera_session_write');
+assert.ok(result.candidateAsteraSessionWrites.includes(prepared));
+
+const prepareFragments = result.attEvents.filter(e => e.opcode === 0x16);
+assert.strictEqual(prepareFragments.length, 2);
+assert.deepStrictEqual(prepareFragments.map(e=>e.prepareOffset), [0,2]);
+assert.ok(prepareFragments.every(e => !e.writeClass));
 
 const noise = result.attEvents.find(e => e.valueHex === 'BEEF');
 assert.ok(noise, 'non-characteristic Read By Type noise write missing');
@@ -284,6 +324,7 @@ process.stdout.write(JSON.stringify({
   ok: true,
   attEvents: result.attEvents.length,
   candidateAsteraSessionWrites: result.candidateAsteraSessionWrites.length,
+  preparedWriteTransactions: result.preparedWriteTransactions.length,
   connections: result.connections.length,
   smpEventsRedacted: result.smpEvents.length,
   disconnectReason: result.disconnects[0].reasonName

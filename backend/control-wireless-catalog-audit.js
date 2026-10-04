@@ -43,6 +43,10 @@ function bucket(name) {
     both: 0,
     otherRadioOnly: 0,
     noWirelessMetadata: 0,
+    directBluetooth: 0,
+    assistedBluetooth: 0,
+    directWifi: 0,
+    assistedWifi: 0,
     bluetoothSamples: [],
     wifiSamples: [],
     bothSamples: [],
@@ -59,6 +63,10 @@ let wifiFixtures = 0;
 let bothFixtures = 0;
 let otherRadioOnlyFixtures = 0;
 let noWirelessMetadataFixtures = 0;
+let directBluetoothFixtures = 0;
+let assistedBluetoothFixtures = 0;
+let directWifiFixtures = 0;
+let assistedWifiFixtures = 0;
 
 for (const fixture of fixtures) {
   const maker = fixture.manufacturer || 'Unknown';
@@ -72,12 +80,19 @@ for (const fixture of fixtures) {
   const wifi = wifiEvidence.length > 0;
   const other = otherEvidence.length > 0;
   const id = fixture.id || '?';
+  const external = list(fixture?.control?.externalInterfaceRequired);
+  const bluetoothExternal = external.some(value => /bluetooth|\bble\b|bt dongle|bluetooth.*dongle|sidus link bridge/i.test(String(value)));
+  const wifiExternal = external.some(value => /wi-?fi|wifi|w-2|wireless adapter/i.test(String(value)));
 
   if (bt) {
     b.bluetooth++; bluetoothFixtures++; sample(b.bluetoothSamples, id);
+    if (bluetoothExternal) { b.assistedBluetooth++; assistedBluetoothFixtures++; }
+    else { b.directBluetooth++; directBluetoothFixtures++; }
   }
   if (wifi) {
     b.wifi++; wifiFixtures++; sample(b.wifiSamples, id);
+    if (wifiExternal) { b.assistedWifi++; assistedWifiFixtures++; }
+    else { b.directWifi++; directWifiFixtures++; }
   }
   if (bt && wifi) {
     b.both++; bothFixtures++; sample(b.bothSamples, id);
@@ -119,6 +134,10 @@ const summary = {
   bothFixtures,
   otherRadioOnlyFixtures,
   noWirelessMetadataFixtures,
+  directBluetoothFixtures,
+  assistedBluetoothFixtures,
+  directWifiFixtures,
+  assistedWifiFixtures,
   failures,
   byManufacturer: manufacturers
 };

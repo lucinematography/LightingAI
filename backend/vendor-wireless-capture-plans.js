@@ -113,6 +113,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  COLBOR: {
+    id:'colbor-studio-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'COLBOR Studio',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact COLBOR model at a time with COLBOR Studio.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer commands to other COLBOR app-controlled models without exact-model Bluetooth evidence.'
+    ],
+    officialSources:[
+      'https://www.colborlight.com/products/co-cl60',
+      'https://www.colborlight.com/products/co-cl100x',
+      'https://www.colborlight.com/blogs/articles/get-studio-lights-for-youtube',
+      'https://www.colborlight.com/blogs/articles/buyer-guide-to-light-for-streaming',
+      'https://www.colborlight.com/pages/colbor-apps-download'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   PROLYCHT: {
     id:'prolycht-chromalink-bluetooth-capture-v1',
     transport:'bluetooth',

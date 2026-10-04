@@ -6,6 +6,7 @@ const SRC500='https://nanliteus.com/products/forza-500b-ii-led-spotlight';
 const SRC500G='https://nanliteus.com/products/forza-500b-ii-led-spotlight-with-gold-mount';
 const FL20G='https://nanliteus.com/products/fl-20g-fresnel-lens-for-bowens-mount';
 const CASE='https://nanliteus.com/products/padded-carrying-case-for-forza-300-ii-and-500-ii';
+const CLAMP='https://nanliteus.com/products/quick-release-super-clamp-for-forza-720-500-300-and-pavoslim';
 const RC='https://nanliteus.com/products/nanlink-ws-rc-c2-2-4ghz-remote-control';
 const TB='https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box';
 
@@ -64,7 +65,9 @@ export const NANLITE_FORZA_II_ACCESSORIES=[
   {
     id:'nanlite-ascpqrfz',manufacturer:'Nanlite',model:'ASCPQRFZ Quick-Release Super Clamp',
     category:'Bracket',compatibleWith:[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-alien-150c','nanlite-alien-300c'],compatibilityStatus:'Designed For',
-    includedWithFixture:true,sourceUrl:SRC300
+    includedWithFixtures:['nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-300-ii','nanlite-forza-500-ii','nanlite-forza-720b','nanlite-forza-720','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-240c','nanlite-alien-150c','nanlite-alien-300c'],
+    inclusionEvidenceNote:'Included-with list is conservative and contains only fixtures explicitly verified in first-party product or launch documentation; compatibility is broader.',
+    sourceUrl:CLAMP
   },
   {
     id:'nanlite-forza-300b-ii-control-unit',manufacturer:'Nanlite',model:'Forza 300B II Control Unit with V-Mount Plates',

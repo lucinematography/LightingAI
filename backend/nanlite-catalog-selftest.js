@@ -14,12 +14,13 @@ import { NANLITE_PAVOSLIM_EXTENDED_FIXTURES, NANLITE_PAVOSLIM_EXTENDED_ACCESSORI
 import { NANLITE_PAVOTUBE_T8_7X_FIXTURES, NANLITE_PAVOTUBE_T8_7X_ACCESSORIES } from './nanlite-pavotube-t8-7x-library.js';
 import { NANLITE_PAVOBULB_CURRENT_FIXTURES, NANLITE_PAVOBULB_CURRENT_ACCESSORIES } from './nanlite-pavobulb-current-library.js';
 import { NANLITE_FS_CURRENT_FIXTURES, NANLITE_FS_CURRENT_ACCESSORIES } from './nanlite-fs-current-library.js';
+import { NANLITE_LUMIPAD_CURRENT_FIXTURES, NANLITE_LUMIPAD_CURRENT_ACCESSORIES } from './nanlite-lumipad-current-library.js';
 
 const failures=[];
-const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOSLIM_EXTENDED_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_T8_7X_FIXTURES,...NANLITE_PAVOBULB_CURRENT_FIXTURES,...NANLITE_FS_CURRENT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
+const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOSLIM_EXTENDED_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_T8_7X_FIXTURES,...NANLITE_PAVOBULB_CURRENT_FIXTURES,...NANLITE_FS_CURRENT_FIXTURES,...NANLITE_LUMIPAD_CURRENT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
 const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES];
 const fixtures=[...currentFixtures,...legacyFixtures];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_LUMIPAD_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 const accessoryModels=new Map();
@@ -330,5 +331,26 @@ for(const id of ['nanlite-cc-s-fs','nanlite-bd-bm-rf45']){
   for(const target of ['nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'])
     if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
 }
+for(const id of ['nanlite-lumipad-11','nanlite-lumipad-25']){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing current Nanlite LumiPad fixture: '+id);
+  else {
+    if(f.discontinued!==false) failures.push('LumiPad fixture must be current: '+id);
+    if(f.control?.builtInCRMX) failures.push('LumiPad fixture must not claim CRMX: '+id);
+    if((f.control?.wired||[]).length) failures.push('LumiPad fixture must not claim wired DMX/RDM: '+id);
+  }
+}
+const lp11=fixtures.find(x=>x.id==='nanlite-lumipad-11');
+if(!(lp11?.control?.wireless||[]).includes('2.4G')) failures.push('LumiPad 11 2.4G control missing');
+for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
+  const a=accessoryById.get(id);
+  if(!a?.compatibleWith?.includes('nanlite-lumipad-11')) failures.push(id+' missing LumiPad 11');
+  if(a?.compatibleWith?.includes('nanlite-lumipad-25')) failures.push(id+' must not be activated for LumiPad 25 while official-source conflict remains');
+}
+const lp25=fixtures.find(x=>x.id==='nanlite-lumipad-25');
+if(!lp25?.control?.officialSourceConflict) failures.push('LumiPad 25 official-source control conflict must be preserved');
+if((lp25?.control?.wireless||[]).length) failures.push('LumiPad 25 wireless relation must stay inactive until official conflict is resolved');
+if(!accessoryById.get('nanlite-pa-7-5v2a')?.compatibleWith?.includes('nanlite-lumipad-11')) failures.push('LumiPad 11 PA-7.5V2A link missing');
+if(!accessoryById.get('nanlite-lumipad-25-ac-adapter')?.compatibleWith?.includes('nanlite-lumipad-25')) failures.push('LumiPad 25 AC adapter link missing');
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

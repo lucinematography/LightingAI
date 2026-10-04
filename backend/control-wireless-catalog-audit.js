@@ -47,6 +47,8 @@ function bucket(name) {
     assistedBluetooth: 0,
     directWifi: 0,
     assistedWifi: 0,
+    verifiedBluetoothEvidence: 0,
+    verifiedWifiEvidence: 0,
     bluetoothSamples: [],
     wifiSamples: [],
     bothSamples: [],
@@ -67,6 +69,8 @@ let directBluetoothFixtures = 0;
 let assistedBluetoothFixtures = 0;
 let directWifiFixtures = 0;
 let assistedWifiFixtures = 0;
+let verifiedBluetoothEvidenceFixtures = 0;
+let verifiedWifiEvidenceFixtures = 0;
 
 for (const fixture of fixtures) {
   const maker = fixture.manufacturer || 'Unknown';
@@ -83,16 +87,23 @@ for (const fixture of fixtures) {
   const external = list(fixture?.control?.externalInterfaceRequired);
   const bluetoothExternal = external.some(value => /bluetooth|\bble\b|bt dongle|bluetooth.*dongle|sidus link bridge/i.test(String(value)));
   const wifiExternal = external.some(value => /wi-?fi|wifi|w-2|wireless adapter/i.test(String(value)));
+  const wirelessVerification = fixture?.control && typeof fixture.control === 'object' && !Array.isArray(fixture.control)
+    ? fixture.control.wirelessVerification || {}
+    : {};
+  const verifiedBtEvidence = wirelessVerification?.bluetooth?.verified === true;
+  const verifiedWifiEvidence = wirelessVerification?.wifi?.verified === true;
 
   if (bt) {
     b.bluetooth++; bluetoothFixtures++; sample(b.bluetoothSamples, id);
     if (bluetoothExternal) { b.assistedBluetooth++; assistedBluetoothFixtures++; }
     else { b.directBluetooth++; directBluetoothFixtures++; }
+    if (verifiedBtEvidence) { b.verifiedBluetoothEvidence++; verifiedBluetoothEvidenceFixtures++; }
   }
   if (wifi) {
     b.wifi++; wifiFixtures++; sample(b.wifiSamples, id);
     if (wifiExternal) { b.assistedWifi++; assistedWifiFixtures++; }
     else { b.directWifi++; directWifiFixtures++; }
+    if (verifiedWifiEvidence) { b.verifiedWifiEvidence++; verifiedWifiEvidenceFixtures++; }
   }
   if (bt && wifi) {
     b.both++; bothFixtures++; sample(b.bothSamples, id);
@@ -147,6 +158,8 @@ const summary = {
   assistedBluetoothFixtures,
   directWifiFixtures,
   assistedWifiFixtures,
+  verifiedBluetoothEvidenceFixtures,
+  verifiedWifiEvidenceFixtures,
   failures,
   byManufacturer: manufacturers
 };

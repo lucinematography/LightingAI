@@ -9,6 +9,10 @@ expect(report.fixtureCount===539,'fixture total changed from verified catalog');
 expect(report.wirelessManufacturers===7,'wireless manufacturer count must remain 7');
 expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
 expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
+expect(report.totals.dimControlVerified<=report.totals.dimCapable,'verified control totals must be bounded by physical DIM capability');
+expect(report.totals.cctControlVerified<=report.totals.cctCapable,'verified CCT control total exceeds physical capability');
+expect(report.totals.colorControlVerified<=report.totals.colorCapable,'verified COLOR control total exceeds physical capability');
+expect(report.totals.fxControlVerified<=report.totals.fxCapable,'verified FX control total exceeds physical capability');
 
 for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light']){
   const row=by[maker];
@@ -21,6 +25,10 @@ for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Li
   expect(row.cctCapable<=row.wirelessFixtures,maker+' CCT capability count exceeds wireless fixtures');
   expect(row.colorCapable<=row.wirelessFixtures,maker+' COLOR capability count exceeds wireless fixtures');
   expect(row.fxCapable<=row.wirelessFixtures,maker+' FX capability count exceeds wireless fixtures');
+  expect(row.dimControlVerified<=row.dimCapable,maker+' verified DIM control exceeds fixture DIM capability');
+  expect(row.cctControlVerified<=row.cctCapable,maker+' verified CCT control exceeds fixture CCT capability');
+  expect(row.colorControlVerified<=row.colorCapable,maker+' verified COLOR control exceeds fixture COLOR capability');
+  expect(row.fxControlVerified<=row.fxCapable,maker+' verified FX control exceeds fixture FX capability');
 }
 
 expect(report.vendors[0]?.manufacturer==='Godox','Godox should remain first by current wireless fixture coverage');

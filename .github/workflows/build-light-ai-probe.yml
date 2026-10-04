@@ -124,6 +124,11 @@ jobs:
         working-directory: backend
         run: node vendor-wireless-protocol-status-selftest.js
 
+      - name: Validate vendor wireless capture plans
+        working-directory: backend
+        run: node vendor-wireless-capture-plans-selftest.js
+
+
 
       - name: Set up Java 17
         uses: actions/setup-java@v6

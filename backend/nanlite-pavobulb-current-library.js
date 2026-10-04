@@ -38,7 +38,7 @@ export const NANLITE_PAVOBULB_CURRENT_ACCESSORIES=[
   {
     id:'nanlite-cb-dmx-usbc-1-3',manufacturer:'Nanlite',model:'CB-DMX-USBC-1/3 USB-C to DMX Cable (legacy PavoBulb adapter)',
     category:'Control',compatibleWith:['nanlite-pavobulb-10c'],
-    compatibilityStatus:'Documented Legacy',
+    compatibilityStatus:'Compatible',lifecycleStatus:'legacy/documented',
     conditions:['Archived Nanlite PavoBulb accessory catalog lists SKU CBDMXUSBC1/3','Provides wired DMX control through PavoBulb USB-C port','RDM is not asserted without explicit first-party evidence'],
     sourceUrl:SRC.legacyDmx
   },

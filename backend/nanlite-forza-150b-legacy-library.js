@@ -52,25 +52,6 @@ export const NANLITE_FORZA_150B_LEGACY_FIXTURES=[
   }
 ];
 
-export const NANLITE_FORZA_150B_LEGACY_ACCESSORIES=[
-  {
-    id:'nanlite-forza-150-accessory-note',manufacturer:'Nanlite',
-    model:'Forza 150 shares documented FM-mount accessory ecosystem',
-    category:'Other',compatibleWith:['nanlite-forza-150'],
-    compatibilityStatus:'Reference',
-    conditions:[
-      'Uses canonical AS-BA-FMM, FL-11, PJ-FMM-19, PJ-FMM-36, SB-FMM-O-40 and SB-FMM-O-60 records'
-    ],
-    sourceUrl:SRC.f150
-  },
-  {
-    id:'nanlite-forza-150b-accessory-note',manufacturer:'Nanlite',
-    model:'Forza 150B shares documented FM-mount accessory ecosystem',
-    category:'Other',compatibleWith:['nanlite-forza-150b'],
-    compatibilityStatus:'Reference',
-    conditions:[
-      'Uses canonical AS-BA-FMM, FL-11, PJ-FMM-19, PJ-FMM-36, SB-FMM-O-40, SB-FMM-O-60, BT-BG-XLR4-II and CB-DMX-3.5C-1/2 records'
-    ],
-    sourceUrl:SRC.product
-  }
-];
+// Shared Forza 150 / 150B accessories are represented by their canonical records
+// in nanlite-fm-current-library.js; do not create reference-only pseudo-accessories here.
+export const NANLITE_FORZA_150B_LEGACY_ACCESSORIES=[];

@@ -52,6 +52,15 @@ for(const a of accessories){
   else accessoryModels.set(key,a.id);
 }
 
+for(const id of ['nanlite-forza-150-accessory-note','nanlite-forza-150b-accessory-note'])
+  if(accessoryById.has(id)) failures.push('Reference-only pseudo-accessory must stay removed: '+id);
+const legacyBulbDmx=accessoryById.get('nanlite-cb-dmx-usbc-1-3');
+if(!legacyBulbDmx) failures.push('Missing documented legacy PavoBulb USB-C DMX cable');
+else {
+  if(legacyBulbDmx.compatibilityStatus!=='Compatible') failures.push('Legacy PavoBulb DMX cable must use a valid compatibility status');
+  if(legacyBulbDmx.lifecycleStatus!=='legacy/documented') failures.push('Legacy PavoBulb DMX lifecycle marker missing');
+  if(!legacyBulbDmx.compatibleWith?.includes('nanlite-pavobulb-10c')) failures.push('Legacy PavoBulb DMX cable link missing');
+}
 const expected=[
   'nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
   'nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'

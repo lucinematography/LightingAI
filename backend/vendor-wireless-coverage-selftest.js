@@ -1,5 +1,5 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
-import { VENDOR_WIRELESS_PROTOCOL_STATUS, vendorWideCommandProductionReady } from './vendor-wireless-protocol-status.js';
+import { VENDOR_WIRELESS_PROTOCOL_STATUS } from './vendor-wireless-protocol-status.js';
 import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.js';
 
 const failures=[];
@@ -50,24 +50,18 @@ for(const [maker,row] of Object.entries(coverage)){
   const plan=VENDOR_WIRELESS_CAPTURE_PLANS[maker];
   const ids=planIds(plan);
 
-  const requiredTransports=[
-    ...(row.bluetooth>0?['bluetooth']:[]),
-    ...(row.wifi>0?['wifi']:[])
-  ];
-  const production=vendorWideCommandProductionReady(maker,requiredTransports,row.fixtureIds,row.routes);
-
   if(row.bluetooth>0){
     const primaryId=status.capturePlanId;
-    expect(production || (!!primaryId && ids.has(primaryId)),
-      maker+' Bluetooth coverage has no verified production driver or linked capture plan');
+    expect(!!primaryId && ids.has(primaryId),
+      maker+' Bluetooth coverage must retain a linked capture plan even after production promotion');
   }
 
   if(row.wifi>0){
     const secondary=Array.isArray(status.secondaryCapturePlanIds)?status.secondaryCapturePlanIds:[];
     const linkedWifi=secondary.some(id=>ids.has(id) && (plan?.secondaryPlans||[]).some(x=>x?.id===id&&x?.transport==='wifi'));
     const primaryWifi=plan?.transport==='wifi' && status.capturePlanId===plan?.id;
-    expect(production || primaryWifi || linkedWifi,
-      maker+' Wi-Fi coverage has no verified production driver or linked Wi-Fi capture plan');
+    expect(primaryWifi || linkedWifi,
+      maker+' Wi-Fi coverage must retain a linked Wi-Fi capture plan even after production promotion');
   }
 }
 

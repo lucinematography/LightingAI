@@ -126,6 +126,44 @@ else {
   if(!vm98.sourceConflictNote) failures.push('BT-V-14.4V98 FC-60C/FC-60B source conflict note missing');
 }
 if(fixtureIds.has('nanlite-fc-60c')) failures.push('Do not create FC-60C fixture from Nanlite battery-page typo');
+const pjTargets=['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-forza-150b','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'];
+for(const id of ['nanlite-pj-fmm-19','nanlite-pj-fmm-36','nanlite-pj-fmm-18-36']){
+  const a=accessoryById.get(id);
+  if(!a) failures.push('Missing current PJ-FMM projection attachment: '+id);
+  else {
+    for(const target of pjTargets) if(!a.compatibleWith?.includes(target)) failures.push(id+' missing documented target '+target);
+    for(const forbidden of ['nanlite-forza-60-ii','nanlite-forza-60','nanlite-forza-60b','nanlite-forza-150'])
+      if(a.compatibleWith?.includes(forbidden)) failures.push(id+' must not infer undocumented target '+forbidden);
+  }
+}
+const pjZoom=accessoryById.get('nanlite-pj-fmm-18-36');
+if(pjZoom?.beamAngleDeg?.min!==18||pjZoom?.beamAngleDeg?.max!==36||pjZoom?.rotationDeg!==360)
+  failures.push('PJ-FMM-18-36 zoom/rotation identity mismatch');
+for(const [id,angle] of [['nanlite-pj-fmm-lens-10',10],['nanlite-pj-fmm-lens-19',19],['nanlite-pj-fmm-lens-36',36],['nanlite-pj-fmm-lens-50',50]]){
+  const a=accessoryById.get(id);
+  if(!a) failures.push('Missing PJ-FMM interchangeable lens: '+id);
+  else {
+    if(a.beamAngleDeg!==angle) failures.push(id+' beam angle mismatch');
+    for(const host of ['nanlite-pj-fmm-19','nanlite-pj-fmm-36']) if(!a.compatibleWith?.includes(host)) failures.push(id+' missing PJ-FMM host '+host);
+    if(a.compatibleWith?.includes('nanlite-pj-fmm-18-36')) failures.push(id+' must not be linked to self-contained zoom attachment');
+  }
+}
+const pjIris=accessoryById.get('nanlite-pjfmm-ai');
+if(!pjIris||pjIris.bladeCount!==18) failures.push('PJFMMAI 18-blade iris missing');
+else for(const host of ['nanlite-pj-fmm-19','nanlite-pj-fmm-36','nanlite-pj-fmm-18-36','nanlite-pj-bm-25-45'])
+  if(!pjIris.compatibleWith?.includes(host)) failures.push('PJFMMAI missing documented host '+host);
+for(const id of ['nanlite-asgbfmmset1','nanlite-asgbfmmset2']){
+  const a=accessoryById.get(id);
+  if(!a||a.goboCount!==10) failures.push(id+' 10-disc gobo set missing');
+  else for(const host of ['nanlite-pj-fmm-19','nanlite-pj-fmm-36','nanlite-pj-fmm-18-36'])
+    if(!a.compatibleWith?.includes(host)) failures.push(id+' missing documented host '+host);
+}
+const ps240Swivel=accessoryById.get('nanlite-asuhps-2x2');
+if(!ps240Swivel) failures.push('Missing ASUHPS-2x2 PavoSlim 240 swivel holder');
+else {
+  for(const target of ['nanlite-pavoslim-240b','nanlite-pavoslim-240c']) if(!ps240Swivel.compatibleWith?.includes(target)) failures.push('ASUHPS-2x2 missing '+target);
+  if(ps240Swivel.compatibleWith?.includes('nanlite-pavoslim-240cl')) failures.push('ASUHPS-2x2 must not be linked to PavoSlim 240CL');
+}
 for(const id of ['nanlite-forza-300b-ii','nanlite-forza-500b-ii']) if(!fixtureIds.has(id)) failures.push('Missing Nanlite Forza II fixture: '+id);
 for(const id of ['nanlite-fc-720b','nanlite-fc-720c']) if(!fixtureIds.has(id)) failures.push('Missing Nanlite FC-720 fixture: '+id);
 for(const id of ['nanlite-fl-20g','nanlite-ccsfz300ii','nanlite-rf-bm-55-forza-ii']){

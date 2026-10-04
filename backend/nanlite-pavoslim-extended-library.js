@@ -12,6 +12,7 @@ const SRC={
   cb240:'https://nanliteus.com/products/head-cable-for-pavoslim-240cl-led-panel-light',
   coupler240cl:'https://nanliteus.com/products/pavoslim-240cl-multi-panel-coupler-and-softbox-kit',
   coupler360:'https://nanliteus.com/products/dual-panel-coupler-for-pavoslim-360c',
+  swivel240cb:'https://nanliteus.com/products/swivel-holder-for-pavoslim-240b-c',
   baby240cb:'https://nanliteus.com/products/5-8-baby-pin-holder-for-pavoslim-240c-b',
   baby240cl:'https://nanliteus.com/products/5-8-baby-pin-holder-for-pavoslim-240cl'
 };
@@ -64,6 +65,11 @@ export const NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES=[
   {
     id:'nanlite-cbps5m',manufacturer:'Nanlite',model:'CBPS5M Head Cable 5 m for PavoSlim 240',
     category:'Cable',compatibleWith:P240,compatibilityStatus:'Designed For',sourceUrl:SRC.cb240
+  },
+  {
+    id:'nanlite-asuhps-2x2',manufacturer:'Nanlite',model:'ASUHPS-2x2 PavoSlim 240 Swivel Holder',
+    category:'Mount',compatibleWith:['nanlite-pavoslim-240b','nanlite-pavoslim-240c'],
+    compatibilityStatus:'Designed For',sourceUrl:SRC.swivel240cb
   },
   {
     id:'nanlite-asbphps-2x2',manufacturer:'Nanlite',model:'ASBPHPS-2x2 PavoSlim 240 Baby-Pin Holder',

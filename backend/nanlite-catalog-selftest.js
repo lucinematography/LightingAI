@@ -642,6 +642,10 @@ for(const id of ['nanlite-cc-s-fs','nanlite-bd-bm-rf45','nanlite-ws-rc-c2','nanl
   const a=accessoryById.get(id);
   for(const target of ['nanlite-fs-200b','nanlite-fs-300']) if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
 }
+const bdRf45=accessoryById.get('nanlite-bd-bm-rf45');
+for(const target of ['nanlite-fs-150b','nanlite-fs-200b','nanlite-fs-300','nanlite-fs-300b','nanlite-fs-300c','nanlite-forza-720','nanlite-forza-720b','nanlite-fc-500b','nanlite-fc-500c'])
+  if(!bdRf45?.compatibleWith?.includes(target)) failures.push('BD-BM-RF45 missing documented target '+target);
+if(!bdRf45?.compatibilityEvidenceNote) failures.push('BD-BM-RF45 compatibility evidence note missing');
 for(const id of ['nanlite-compac-100','nanlite-compac-200']){
   const f=fixtures.find(x=>x.id===id);
   if(!f) failures.push('Missing legacy Nanlite Compac daylight fixture: '+id);

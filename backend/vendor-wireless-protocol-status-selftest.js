@@ -1,4 +1,4 @@
-import { VENDOR_WIRELESS_PROTOCOL_STATUS, vendorWideCommandProductionReady } from './vendor-wireless-protocol-status.js';
+import { VENDOR_WIRELESS_PROTOCOL_STATUS, vendorWideCommandProductionReady, commandProductionReadyForStatus } from './vendor-wireless-protocol-status.js';
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
@@ -16,6 +16,19 @@ for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Li
 
 const syntheticStatus=VENDOR_WIRELESS_PROTOCOL_STATUS.__synthetic_missing_scope;
 expect(vendorWideCommandProductionReady('__synthetic_missing_scope')===false,'Missing vendor status must remain fail-closed');
+expect(commandProductionReadyForStatus({commandSpec:'production_verified'})===false,
+  'production_verified without scope must remain fail-closed');
+expect(commandProductionReadyForStatus({
+  commandSpec:'production_verified',
+  productionScope:{kind:'model-family',allCurrentWirelessFixtures:false,transports:['bluetooth']}
+})===false,
+  'model/family scoped production proof must not unlock an entire vendor');
+expect(commandProductionReadyForStatus({
+  commandSpec:'production_verified',
+  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth']}
+})===true,
+  'explicit vendor-wide production scope should be accepted');
+
 
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.nextStep==='capture-plan-required-before-driver','Astera physical evidence path changed');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.capturePlanId==='astera-physical-capture-set-v1','Astera capture plan link missing');

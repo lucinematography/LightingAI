@@ -12,10 +12,10 @@ for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Li
 }
 
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.nextStep==='official-app-btsnoop-capture-and-replay-verification','Astera physical evidence path changed');
-expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Kino Flo'].bluetooth==='not_verified_for-current-catalog','Kino Flo Bluetooth must remain unverified');
-expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Kino Flo'].wifi==='not_verified_for-current-catalog','Kino Flo Wi-Fi must remain unverified');
-expect(VENDOR_WIRELESS_PROTOCOL_STATUS['De Sisti'].bluetooth==='not_verified_for-current-catalog','De Sisti Bluetooth must remain unverified');
-expect(VENDOR_WIRELESS_PROTOCOL_STATUS.LiteGear.bluetooth==='not_verified-for-current-catalog','LiteGear Bluetooth must remain unverified');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Kino Flo'].bluetooth==='not_verified_for_current_catalog','Kino Flo Bluetooth must remain unverified');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Kino Flo'].wifi==='not_verified_for_current_catalog','Kino Flo Wi-Fi must remain unverified');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS['De Sisti'].bluetooth==='not_verified_for_current_catalog','De Sisti Bluetooth must remain unverified');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.LiteGear.bluetooth==='not_verified_for_current_catalog','LiteGear Bluetooth must remain unverified');
 
 console.log(JSON.stringify({
   ok:failures.length===0,

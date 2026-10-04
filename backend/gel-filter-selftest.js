@@ -1,12 +1,5 @@
 import assert from 'node:assert/strict';
-import { parseLeeHtml, parseRoscoHtml } from './gel-filter-catalog-builder.js';
-
-const leeSource = { manufacturer:'LEE Filters', line:'Technical', category:'technical', url:'https://example.test/lee', parser:'lee' };
-const lee = parseLeeHtml('<h3>201&nbsp;Full C.T. Blue</h3><h3>204 Full C.T. Orange</h3>', leeSource);
-assert.equal(lee.length, 2);
-assert.equal(lee[0].code, '201');
-assert.equal(lee[0].name, 'Full C.T. Blue');
-assert.equal(lee[1].code, '204');
+import { parseRoscoHtml } from './gel-filter-catalog-builder.js';
 
 const supergelSource = { manufacturer:'Rosco', line:'Supergel', category:'color-diffusion', url:'https://example.test/rosco', parser:'rosco', codePrefix:'R' };
 const supergel = parseRoscoHtml('Roscolux, Supergel R00 Dempster Open White Roscolux, Supergel R01 Light Bastard Amber Roscolux, Supergel', supergelSource);

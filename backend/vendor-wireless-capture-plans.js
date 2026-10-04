@@ -113,6 +113,39 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  PROLYCHT: {
+    id:'prolycht-chromalink-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'ChromaLink',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Orion model at a time with the documented ChromaLink control path.',
+      'Reset to a known state before each capture.',
+      'Keep Bluetooth and Wi-Fi capture sets separate and do not infer undocumented cross-transport command equivalence.'
+    ],
+    officialSources:[
+      'https://www.prolycht.com/orion300fs/index.aspx',
+      'https://prolycht.com/orion675fs/index.aspx',
+      'https://prolycht.com/uploadfiles/2021/11/20211125172104110.pdf',
+      'https://prolycht.com/uploadfiles/2022/10/20221014151213506.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one Orion fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one color change per capture from the same initial state.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
+    },
+    secondaryPlans:[{
+      id:'prolycht-chromalink-wifi-capture-v1',
+      transport:'wifi',
+      target:'Orion 300 FS and Orion 675 FS',
+      commandSpecStatus:'public-wifi-command-spec-not-located-in-official-docs',
+      rule:'Capture Wi-Fi/ChromaLink independently from Bluetooth. Do not infer proprietary IP/session semantics from transport availability.'
+    }],
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   ZHIYUN: {
     id:'zhiyun-zy-vega-bluetooth-capture-v1',
     transport:'bluetooth',

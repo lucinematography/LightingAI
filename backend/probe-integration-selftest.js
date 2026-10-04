@@ -35,6 +35,7 @@ const allowed=new Set([
   'backend/gvm-wireless-library.js',
   'backend/litepanels-wireless-library.js',
   'backend/dmg-mix-wireless-library.js',
+  'backend/zhiyun-bluetooth-library.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js',
   'backend/probe-integration-selftest.js',

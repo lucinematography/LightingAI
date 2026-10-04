@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===684,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===27,'wireless manufacturer coverage must remain 27');
+expect(report.fixtureCount===686,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===28,'wireless manufacturer coverage must remain 28');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -56,6 +56,7 @@ expect(by.Harlowe?.bluetoothFixtures===11&&by.Harlowe?.wifiFixtures===0&&by.Harl
 expect(by.SWIT?.bluetoothFixtures===7&&by.SWIT?.wifiFixtures===0&&by.SWIT?.bothFixtures===0,'SWIT wireless counts changed unexpectedly');
 expect(by.Dracast?.bluetoothFixtures===2&&by.Dracast?.wifiFixtures===0&&by.Dracast?.bothFixtures===0,'Dracast wireless counts changed unexpectedly');
 expect(by['Hive Lighting']?.bluetoothFixtures===7&&by['Hive Lighting']?.wifiFixtures===0&&by['Hive Lighting']?.bothFixtures===0,'Hive Lighting wireless counts changed unexpectedly');
+expect(by.Kinotehnik?.bluetoothFixtures===2&&by.Kinotehnik?.wifiFixtures===0&&by.Kinotehnik?.bothFixtures===0,'Kinotehnik wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

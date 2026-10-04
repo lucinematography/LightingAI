@@ -132,6 +132,11 @@ jobs:
         working-directory: backend
         run: node vendor-wireless-coverage-selftest.js
 
+      - name: Validate vendor wireless readiness report
+        working-directory: backend
+        run: node vendor-wireless-readiness-report-selftest.js
+
+
 
 
 

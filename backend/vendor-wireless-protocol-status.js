@@ -36,6 +36,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  VELVET: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'velvet-evo-wireless-capture-v1',
+    evidence: [
+      'https://www.velvetlight.tv/velvet-evo/',
+      'https://www.velvetlight.tv/serie/evo/',
+      'https://www.velvetlight.tv/support/'
+    ],
+    note: 'VELVET EVO wireless transport is model-scoped: all six cataloged models have Wi-Fi evidence; four also have Bluetooth evidence. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   Kinotehnik: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

@@ -216,6 +216,10 @@ const hive=byManufacturer.get('Hive Lighting');
 if(!hive || hive.bluetooth!==7 || hive.wifi!==0 || hive.both!==0) {
   failures.push('Hive Lighting wireless coverage expected 7 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const kinotehnik=byManufacturer.get('Kinotehnik');
+if(!kinotehnik || kinotehnik.bluetooth!==2 || kinotehnik.wifi!==0 || kinotehnik.both!==0) {
+  failures.push('Kinotehnik wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

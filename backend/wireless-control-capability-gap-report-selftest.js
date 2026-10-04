@@ -25,12 +25,12 @@ expect(verifiedWirelessTransport({
 }).bluetooth===true,
   'Verified Bluetooth transport evidence must enter wireless gap scope');
 
-expect(report.fixtureCount===642,'fixture total changed from verified catalog');
-expect(report.wirelessFixtures===305,'verified wireless fixture total changed unexpectedly');
+expect(report.fixtureCount===644,'fixture total changed from verified catalog');
+expect(report.wirelessFixtures===307,'verified wireless fixture total changed unexpectedly');
 expect(report.fixturesWithAnyGap>0,'capability-gap audit unexpectedly empty');
 
 const by=report.byManufacturer;
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT']){
   expect(!!by[maker],maker+' capability-gap row missing');
 }
 

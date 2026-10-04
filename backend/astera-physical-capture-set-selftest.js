@@ -71,6 +71,18 @@ assert.throws(
   /requires_at_least_3_captures/
 );
 
+assert.throws(
+  ()=>analyzeCaptureSet({connectOnly:[...connectOnly,capture()],dim,cct}),
+  /paired_capture_count_mismatch/
+);
+
+assert.ok(result.dim.diffs.every((diff,index)=>
+  diff.referenceLabel==='connect-only-' + String(index + 1).padStart(2,'0')
+));
+assert.ok(result.cct.diffs.every((diff,index)=>
+  diff.referenceLabel==='connect-only-' + String(index + 1).padStart(2,'0')
+));
+
 const noCoverage=capture();
 delete noCoverage.analysisCoverage;
 assert.throws(

@@ -57,12 +57,15 @@ function validatePhysicalCapture(capture, group, index) {
   return capture;
 }
 
-function analyzeAction(reference, captures, session, label) {
-  const filteredReference = filterSessionBaseline(reference, session);
+function analyzeAction(references, captures, session, label) {
+  if (!Array.isArray(references) || references.length !== captures.length) {
+    throw new Error(label + '_reference_capture_count_mismatch');
+  }
   const diffs = captures.map((capture,index) => {
+    const filteredReference = filterSessionBaseline(references[index], session);
     const filtered = filterSessionBaseline(capture, session);
     return compareCaptures(filteredReference, filtered, {
-      reference:'connect-only',
+      reference:'connect-only-' + String(index + 1).padStart(2,'0'),
       test:label + '-' + String(index + 1).padStart(2,'0')
     });
   });
@@ -81,10 +84,12 @@ function analyzeCaptureSet(input) {
     .map((capture,index)=>validatePhysicalCapture(capture,'cct',index));
 
   const session=analyzeSessionCaptures(connectOnly,{minimumRuns:3});
-  const reference=connectOnly[0];
+  if (connectOnly.length !== dim.length || connectOnly.length !== cct.length) {
+    throw new Error('paired_capture_count_mismatch');
+  }
 
-  const dimResult=analyzeAction(reference,dim,session,'dim');
-  const cctResult=analyzeAction(reference,cct,session,'cct');
+  const dimResult=analyzeAction(connectOnly,dim,session,'dim');
+  const cctResult=analyzeAction(connectOnly,cct,session,'cct');
 
   return {
     kind:'LightingAI-Astera-physical-capture-set-analysis',

@@ -361,6 +361,13 @@ Create a working copy next to the derived capture JSON files and keep these exac
 
 The raw `.log` / BTSnoop files remain local evidence and must not be committed.
 
+Each changed-parameter run is paired 1:1 with the corresponding connect-only run:
+- connect-01 ↔ DIM-01 and CCT-01;
+- connect-02 ↔ DIM-02 and CCT-02;
+- connect-03 ↔ DIM-03 and CCT-03.
+
+The capture counts must match exactly. The orchestrator no longer reuses one connect-only capture as the reference for every parameter run, because that can turn unrelated per-session traffic into a repeatable false candidate.
+
 After the nine derived JSON files are present, run the complete offline evidence gate with:
 
 `node backend/astera-physical-capture-set.js <working-manifest.json> --json titan-capture-set-result.json`

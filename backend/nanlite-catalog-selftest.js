@@ -25,12 +25,13 @@ import { NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES, NANLITE_COMPAC_DAYLIGHT_LEGACY
 import { NANLITE_MIXPANEL_LEGACY_FIXTURES, NANLITE_MIXPANEL_LEGACY_ACCESSORIES } from './nanlite-mixpanel-legacy-library.js';
 import { NANLITE_MIXPAD_FIXTURES, NANLITE_MIXPAD_ACCESSORIES } from './nanlite-mixpad-library.js';
 import { NANLITE_LITOLITE_LEGACY_FIXTURES, NANLITE_LITOLITE_LEGACY_ACCESSORIES } from './nanlite-litolite-legacy-library.js';
+import { NANLITE_HALO_LEGACY_FIXTURES, NANLITE_HALO_LEGACY_ACCESSORIES } from './nanlite-halo-legacy-library.js';
 
 const failures=[];
 const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FORZA_DAYLIGHT_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOSLIM_EXTENDED_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_T8_7X_FIXTURES,...NANLITE_PAVOBULB_CURRENT_FIXTURES,...NANLITE_FS_CURRENT_FIXTURES,...NANLITE_LUMIPAD_CURRENT_FIXTURES,...NANLITE_MIRO_CURRENT_FIXTURES,...NANLITE_CREATOR_HANDHELD_FIXTURES,...NANLITE_CREATOR_COMPACT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
-const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES,...NANLITE_FORZA_150B_LEGACY_FIXTURES,...NANLITE_FS_LEGACY_FIXTURES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES,...NANLITE_MIXPANEL_LEGACY_FIXTURES,...NANLITE_MIXPAD_FIXTURES,...NANLITE_LITOLITE_LEGACY_FIXTURES];
+const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES,...NANLITE_FORZA_150B_LEGACY_FIXTURES,...NANLITE_FS_LEGACY_FIXTURES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES,...NANLITE_MIXPANEL_LEGACY_FIXTURES,...NANLITE_MIXPAD_FIXTURES,...NANLITE_LITOLITE_LEGACY_FIXTURES,...NANLITE_HALO_LEGACY_FIXTURES];
 const fixtures=[...currentFixtures,...legacyFixtures];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FORZA_DAYLIGHT_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_ACCESSORIES,...NANLITE_MIXPANEL_LEGACY_ACCESSORIES,...NANLITE_MIXPAD_ACCESSORIES,...NANLITE_LITOLITE_LEGACY_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_FS_LEGACY_ACCESSORIES,...NANLITE_LUMIPAD_CURRENT_ACCESSORIES,...NANLITE_MIRO_CURRENT_ACCESSORIES,...NANLITE_CREATOR_HANDHELD_ACCESSORIES,...NANLITE_CREATOR_COMPACT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FORZA_150B_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FORZA_DAYLIGHT_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_ACCESSORIES,...NANLITE_MIXPANEL_LEGACY_ACCESSORIES,...NANLITE_MIXPAD_ACCESSORIES,...NANLITE_LITOLITE_LEGACY_ACCESSORIES,...NANLITE_HALO_LEGACY_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_FS_LEGACY_ACCESSORIES,...NANLITE_LUMIPAD_CURRENT_ACCESSORIES,...NANLITE_MIRO_CURRENT_ACCESSORIES,...NANLITE_CREATOR_HANDHELD_ACCESSORIES,...NANLITE_CREATOR_COMPACT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FORZA_150B_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 const accessoryModels=new Map();
@@ -519,5 +520,28 @@ else {
 for(const id of ['nanlite-as-mt-hg-1-4','nanlite-as-bh-1-4','nanlite-as-csa-1-4']){
   if(!accessoryById.get(id)?.compatibleWith?.includes('nanlite-litolite-5c')) failures.push(id+' missing LitoLite 5C');
 }
+for(const id of ['nanlite-halo-10b','nanlite-halo-14','nanlite-halo-14u','nanlite-halo-16','nanlite-halo-16c','nanlite-halo-18']){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing legacy Nanlite Halo fixture: '+id);
+  else if(f.discontinued!==true) failures.push('Halo fixture must be legacy: '+id);
+}
+for(const id of ['nanlite-halo-10b','nanlite-halo-18']){
+  const f=fixtures.find(x=>x.id===id);
+  if((f?.control?.wired||[]).length||(f?.control?.wireless||[]).length) failures.push(id+' must stay local-only');
+}
+for(const id of ['nanlite-halo-16','nanlite-halo-16c']){
+  const f=fixtures.find(x=>x.id===id);
+  for(const p of ['2.4G','Wi-Fi via Nanlite W-2 adapter']) if(!(f?.control?.wireless||[]).includes(p)) failures.push(id+' missing '+p);
+  if(!accessoryById.get('nanlite-w-2-wifi-adapter')?.compatibleWith?.includes(id)) failures.push('W-2 missing '+id);
+}
+for(const id of ['nanlite-halo-14','nanlite-halo-14u']){
+  if(!fixtures.find(x=>x.id===id)?.control?.controlEvidenceIncomplete) failures.push(id+' incomplete control evidence flag missing');
+}
+const haloBracket=accessoryById.get('nanlite-as-bracket-c');
+for(const target of ['nanlite-halo-10b','nanlite-halo-14','nanlite-halo-14u','nanlite-halo-16','nanlite-halo-16c','nanlite-halo-18'])
+  if(!haloBracket?.compatibleWith?.includes(target)) failures.push('Halo camera bracket missing '+target);
+const haloMirror=accessoryById.get('nanlite-as-mirror-8');
+for(const target of ['nanlite-halo-16','nanlite-halo-16c','nanlite-halo-18'])
+  if(!haloMirror?.compatibleWith?.includes(target)) failures.push('Halo mirror missing '+target);
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

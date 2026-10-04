@@ -156,6 +156,7 @@ import { qualifyLiteGearSpectrumG2Profiles } from './litegear-control-verificati
 import { normalizeKinoFloControl } from './kinoflo-control-verification.js';
 import { normalizeAputureWirelessControl } from './aputure-wireless-verification.js';
 import { normalizeArriWirelessControl } from './arri-wireless-verification.js';
+import { normalizeNanliteWirelessVerification } from './nanlite-wireless-verification.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function unique(values = []) { return [...new Set(values)]; }
@@ -242,6 +243,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(NANLITE_LITOLITE_EARLY_LEGACY_FIXTURES));
   fixtures.push(...clone(NANLITE_SA_LEGACY_FIXTURES));
   fixtures.push(...clone(NANLITE_TK_LEGACY_FIXTURES));
+  normalizeNanliteWirelessVerification(fixtures);
   fixtures.push(...clone(ALADDIN_MOSAIC_FIXTURES));
   fixtures.push(...clone(ALADDIN_FABRIC_LITE_FIXTURES));
   fixtures.push(...clone(ALADDIN_BI_FLEX_FIXTURES));

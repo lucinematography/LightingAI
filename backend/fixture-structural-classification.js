@@ -11,7 +11,7 @@ export function deriveFixtureStructuralClass(fixture){
 
   if(/fresnel/.test(text)) return 'Fresnel';
   if(/\b(tube|pixeltube|pavotube)\b/.test(text)) return 'Tube';
-  if(/\bbulb\b/.test(text)) return 'Bulb';
+  if(/bulb/.test(text)) return 'Bulb';
   if(/ring light|\bhalo\b/.test(text)) return 'Ring Light';
   if(/pixel\s*bar|infinibar|light\s*bar/.test(text)) return 'Pixel Bar';
   if(/pixelbrick|\bbrick\b/.test(text)) return 'Brick / Compact Pixel';

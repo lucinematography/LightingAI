@@ -4,8 +4,19 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessCapabilityGapReport();
 
+const rawOnlyFixture={
+  id:'synthetic-raw-bluetooth-only',
+  manufacturer:'Synthetic',
+  category:'Light',
+  colorMode:'Daylight',
+  cctK:{min:5600,max:5600},
+  control:{wireless:['Bluetooth']}
+};
+expect(!rawOnlyFixture.control?.wirelessVerification?.bluetooth?.verified,
+  'Synthetic raw Bluetooth label must remain unverified');
+
 expect(report.fixtureCount===539,'fixture total changed from verified catalog');
-expect(report.wirelessFixtures===185,'wireless fixture total changed unexpectedly');
+expect(report.wirelessFixtures===185,'verified wireless fixture total changed unexpectedly');
 expect(report.fixturesWithAnyGap>0,'capability-gap audit unexpectedly empty');
 
 const by=report.byManufacturer;

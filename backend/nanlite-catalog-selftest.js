@@ -128,6 +128,8 @@ for(const id of ['nanlite-pavotube-ii-6xr','nanlite-pavotube-ii-15xr','nanlite-p
 }
 const xr6=fixtures.find(x=>x.id==='nanlite-pavotube-ii-6xr');
 if(xr6?.control?.dmxConnection!=='USB-C via CB-DMX-USBC-1/3II adapter') failures.push('6XR DMX path must be USB-C adapter');
+if(!xr6?.control?.nfcPairing) failures.push('PavoTube II 6XR NFC pairing missing');
+if((xr6?.control?.wireless||[]).includes('2.4G')) failures.push('PavoTube II 6XR must not claim 2.4G');
 for(const id of ['nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr']){
   const f=fixtures.find(x=>x.id===id);
   if(f?.control?.dmxConnection!=='Locking metal DMX/RDM port') failures.push(id+' must use locking DMX/RDM port');

@@ -1,5 +1,6 @@
 import {
   deriveFixtureControlCapabilities,
+  deriveVerifiedControlCapabilities,
   buildFixtureControlCapabilityReport
 } from './fixture-control-capabilities.js';
 
@@ -73,6 +74,28 @@ expect(appVerified.dim.supported===true,'Official app capability verification sh
 expect(appVerified.fx.supported===true,'Official app capability verification should prove FX feature availability');
 expect(appVerified.dim.evidence.includes('verified-official-app-capability'),'DIM app capability evidence marker missing');
 expect(appVerified.fx.evidence.includes('verified-official-app-capability'),'FX app capability evidence marker missing');
+
+
+const physicalOnly=deriveVerifiedControlCapabilities({
+  colorMode:'RGBWW',
+  cctK:{min:2000,max:10000},
+  control:{}
+});
+expect(physicalOnly.cct.supported===false,'Catalog CCT range must not prove verified CCT control');
+expect(physicalOnly.color.supported===false,'Catalog RGB engine must not prove verified COLOR control');
+
+const verifiedAppOnly=deriveVerifiedControlCapabilities({
+  colorMode:'RGBWW',
+  cctK:{min:2000,max:10000},
+  control:{
+    capabilityVerification:{
+      cct:{verified:true,scope:'official-app-capability-only'},
+      color:{verified:true,scope:'official-app-capability-only'}
+    }
+  }
+});
+expect(verifiedAppOnly.cct.supported===true,'Verified app CCT evidence must prove verified CCT control');
+expect(verifiedAppOnly.color.supported===true,'Verified app COLOR evidence must prove verified COLOR control');
 
 const report=buildFixtureControlCapabilityReport();
 expect(report.totals.fixtures===539,'fixture total changed from verified catalog');

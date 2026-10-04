@@ -113,6 +113,37 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  SmallRig: {
+    id:'smallrig-smallgogo-direct-ble-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'SmallGoGo',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one SmallRig fixture whose catalog entry includes exact-model BLE/Bluetooth first-party evidence.',
+      'Use the official SmallGoGo app and reset BLE on the fixture as documented before a clean capture set.',
+      'Do not extend BLE support to RC 120B or other SmallGoGo-capable models without exact-model Bluetooth/BLE evidence.',
+      'Keep optional DMX adapters and wired controllers out of the Bluetooth capture set.'
+    ],
+    officialSources:[
+      'https://static.smallrig.com/mall/img/public/ikoxo2sh29-1740738075427_.pdf',
+      'https://static.smallrig.com/mall/img/public/5wglduq1wx7-1748506964081_.pdf',
+      'https://static.smallrig.com/mall/img/public/1732525071182_.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Reset BLE as documented, connect exactly one fixture in SmallGoGo, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same initial intensity perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'On a variable-CCT model perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'Only on the exact RGB/full-color model; perform one color change per capture after DIM/CCT evidence is stable.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one documented lighting effect per capture only after simpler controls are understood.'}
+    },
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   Kelvin: {
     id:'kelvin-narrator-direct-bluetooth-capture-v1',
     transport:'bluetooth',

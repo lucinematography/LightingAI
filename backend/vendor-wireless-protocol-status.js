@@ -36,6 +36,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  SmallRig: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'smallrig-smallgogo-direct-ble-capture-v1',
+    evidence: [
+      'https://static.smallrig.com/mall/img/public/ikoxo2sh29-1740738075427_.pdf',
+      'https://static.smallrig.com/mall/img/public/5wglduq1wx7-1748506964081_.pdf',
+      'https://static.smallrig.com/mall/img/public/1732525071182_.pdf'
+    ],
+    note: 'BLE is verified only for RC 100B, RC 220C, RC 350B and RC 450B. RC 120B and other SmallGoGo models remain outside this scope until exact-model Bluetooth/BLE evidence is captured.'
+  },
   Kelvin: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

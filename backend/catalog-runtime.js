@@ -104,6 +104,7 @@ import { NANLITE_LUMIPAD_CURRENT_FIXTURES, NANLITE_LUMIPAD_CURRENT_ACCESSORIES }
 import { NANLITE_MIRO_CURRENT_FIXTURES, NANLITE_MIRO_CURRENT_ACCESSORIES } from './nanlite-miro-current-library.js';
 import { NANLITE_CREATOR_HANDHELD_FIXTURES, NANLITE_CREATOR_HANDHELD_ACCESSORIES } from './nanlite-creator-handheld-library.js';
 import { NANLITE_CREATOR_COMPACT_FIXTURES, NANLITE_CREATOR_COMPACT_ACCESSORIES } from './nanlite-creator-compact-library.js';
+import { NANLITE_FORZA_60_LEGACY_FIXTURES, NANLITE_FORZA_60_LEGACY_ACCESSORIES } from './nanlite-forza-60-legacy-library.js';
 import { NANLITE_FORZA_150B_LEGACY_FIXTURES, NANLITE_FORZA_150B_LEGACY_ACCESSORIES } from './nanlite-forza-150b-legacy-library.js';
 import { NANLITE_FORZA_DAYLIGHT_FIXTURES, NANLITE_FORZA_DAYLIGHT_ACCESSORIES } from './nanlite-forza-daylight-library.js';
 import { NANLITE_FS_LEGACY_FIXTURES, NANLITE_FS_LEGACY_ACCESSORIES } from './nanlite-fs-legacy-library.js';
@@ -216,6 +217,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(NANLITE_MIRO_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_CREATOR_HANDHELD_FIXTURES));
   fixtures.push(...clone(NANLITE_CREATOR_COMPACT_FIXTURES));
+  fixtures.push(...clone(NANLITE_FORZA_60_LEGACY_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_150B_LEGACY_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_DAYLIGHT_FIXTURES));
   fixtures.push(...clone(NANLITE_FS_LEGACY_FIXTURES));
@@ -313,6 +315,7 @@ export function buildRuntimeCatalog() {
   accessoryDefinitions.push(...clone(NANLITE_MIRO_CURRENT_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_CREATOR_HANDHELD_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_CREATOR_COMPACT_ACCESSORIES));
+  accessoryDefinitions.push(...clone(NANLITE_FORZA_60_LEGACY_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_FORZA_150B_LEGACY_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_FORZA_DAYLIGHT_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_FS_LEGACY_ACCESSORIES));

@@ -65,17 +65,18 @@ export const NANLITE_FM_CURRENT_FIXTURES = [
   fixture('nanlite-fs-60b','FS-60B','FS',2700,6500,70,'Bi-Color',96,97,SRC.fs60b,{control:control({dmx:false})})
 ];
 
-const FMM_ALL = [
-  'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-forza-150b',
+const FMM_CURRENT = [
+  'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
   'nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'
 ];
-const NANLINK_SHARED=[...FMM_ALL,'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b','nanlite-fc-720b','nanlite-fc-720c','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-1200b','nanlite-fc-1200c','nanlite-alien-150c','nanlite-alien-300c','nanlite-pavobulb-10c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c','nanlite-lumipad-11','nanlite-forza-150b','nanlite-compac-200b'];
+const FMM_SHARED = [...FMM_CURRENT,'nanlite-forza-150b'];
+const NANLINK_SHARED=[...FMM_SHARED,'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b','nanlite-fc-720b','nanlite-fc-720c','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-1200b','nanlite-fc-1200c','nanlite-alien-150c','nanlite-alien-300c','nanlite-pavobulb-10c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c','nanlite-lumipad-11','nanlite-compac-200b'];
 const SMALL_BATTERY = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'];
 const VMOUNT_60 = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fc-60b'];
 const VMOUNT_XLR = ['nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'];
 const MINI_REFLECTOR = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b','nanlite-fs-60b'];
-const LARGE_REFLECTOR = ['nanlite-fc-120b','nanlite-fc-120c'];
-const DMX_FMM = FMM_ALL.filter(id => id!=='nanlite-fs-60b');
+const LARGE_REFLECTOR = ['nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'];
+const DMX_FMM = FMM_CURRENT.filter(id => id!=='nanlite-fs-60b');
 
 const included = (id,model,category,target,sourceUrl) => ({
   id,manufacturer:'Nanlite',model,category,compatibleWith:[target],
@@ -85,32 +86,32 @@ const included = (id,model,category,target,sourceUrl) => ({
 export const NANLITE_FM_CURRENT_ACCESSORIES = [
   {
     id:'nanlite-as-ba-fmm',manufacturer:'Nanlite',model:'AS-BA-FMM Bowens Adapter for FM-Mount Lights',
-    category:'Mount Adapter',mount:'FM Mount to Bowens',compatibleWith:FMM_ALL,
+    category:'Mount Adapter',mount:'FM Mount to Bowens',compatibleWith:FMM_SHARED,
     compatibilityStatus:'Designed For',sourceUrl:SRC.bowens
   },
   {
     id:'nanlite-fl-11',manufacturer:'Nanlite',model:'FL-11 Fresnel Lens and Barndoors',
-    category:'Fresnel',mount:'FM Mount',beamAngleDeg:{min:10,max:45},compatibleWith:FMM_ALL,
+    category:'Fresnel',mount:'FM Mount',beamAngleDeg:{min:10,max:45},compatibleWith:FMM_SHARED,
     compatibilityStatus:'Designed For',sourceUrl:SRC.fl11
   },
   {
     id:'nanlite-pj-fmm-19',manufacturer:'Nanlite',model:'PJ-FMM Projection Attachment with 19° Lens',
-    category:'Spotlight',mount:'FM Mount',compatibleWith:FMM_ALL,
+    category:'Spotlight',mount:'FM Mount',compatibleWith:FMM_SHARED,
     compatibilityStatus:'Designed For',sourceUrl:SRC.pj19
   },
   {
     id:'nanlite-pj-fmm-36',manufacturer:'Nanlite',model:'PJ-FMM Projection Attachment with 36° Lens',
-    category:'Spotlight',mount:'FM Mount',compatibleWith:FMM_ALL,
+    category:'Spotlight',mount:'FM Mount',compatibleWith:FMM_SHARED,
     compatibilityStatus:'Designed For',sourceUrl:SRC.pj36
   },
   {
     id:'nanlite-sb-fmm-o-40',manufacturer:'Nanlite',model:'SB-FMM-O-40 40cm Octagonal Softbox with Grid',
-    category:'Softbox',mount:'FM Mount',compatibleWith:FMM_ALL,
+    category:'Softbox',mount:'FM Mount',compatibleWith:FMM_SHARED,
     compatibilityStatus:'Designed For',sourceUrl:SRC.sb40
   },
   {
     id:'nanlite-sb-fmm-o-60',manufacturer:'Nanlite',model:'SB-FMM-O-60 60cm Octagonal Softbox with Grid',
-    category:'Softbox',mount:'FM Mount',compatibleWith:FMM_ALL,
+    category:'Softbox',mount:'FM Mount',compatibleWith:FMM_SHARED,
     compatibilityStatus:'Designed For',sourceUrl:SRC.sb60
   },
   {

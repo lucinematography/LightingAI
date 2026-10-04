@@ -51,9 +51,9 @@ export const NANLITE_FORZA_II_FIXTURES=[
 
 const BOTH=['nanlite-forza-300b-ii','nanlite-forza-500b-ii'];
 const DAYLIGHT_II=['nanlite-forza-300-ii','nanlite-forza-500-ii'];
-const FL20G_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-fs-150b','nanlite-fs-200b','nanlite-fs-300','nanlite-fs-300b','nanlite-fs-300c'];
+const FL20G_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-200','nanlite-forza-300','nanlite-forza-300b','nanlite-forza-500','nanlite-forza-720b','nanlite-forza-720','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-fs-150b','nanlite-fs-200b','nanlite-fs-300','nanlite-fs-300b','nanlite-fs-300c'];
 const LONG_HEAD_CABLE_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720'];
-const CAP_BW_B_TARGETS=['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b'];
+const CAP_BW_B_TARGETS=['nanlite-forza-200','nanlite-forza-300b','nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b'];
 
 export const NANLITE_FORZA_II_ACCESSORIES=[
   {
@@ -79,7 +79,7 @@ export const NANLITE_FORZA_II_ACCESSORIES=[
   {
     id:'nanlite-fl-20g',manufacturer:'Nanlite',model:'FL-20G Fresnel Lens with Removable Metal Barndoors',
     category:'Fresnel',mount:'Bowens',beamAngleDeg:{min:10,max:45},compatibleWith:FL20G_TARGETS,compatibilityStatus:'Designed For',
-    compatibilityEvidenceNote:'Nanlite FL-20G product page explicitly supports the Forza 300/500 II family, FC-300B/500B and the FS-Series; current FC-720B/C product documentation also demonstrates FL-20G use. Existing catalog fixtures are mapped conservatively to those documented families.',
+    compatibilityEvidenceNote:'Nanlite FL-20G product page explicitly supports the Forza 300/500 II family, first-generation Forza 200/300/300B/500, FC-300B/500B and the FS-Series; current FC-720B/C product documentation also demonstrates FL-20G use. Existing catalog fixtures are mapped conservatively to those documented families.',
     sourceUrl:FL20G
   },
   {

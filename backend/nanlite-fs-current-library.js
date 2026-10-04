@@ -42,7 +42,7 @@ export const NANLITE_FS_CURRENT_FIXTURES=[
 
 const ALL=['nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'];
 const ALL_WITH_LEGACY=[...ALL,'nanlite-fs-200b','nanlite-fs-300'];
-const BD_BM_RF45_TARGETS=[...ALL_WITH_LEGACY,'nanlite-forza-720','nanlite-forza-720b','nanlite-fc-500b','nanlite-fc-500c'];
+const BD_BM_RF45_TARGETS=[...ALL_WITH_LEGACY,'nanlite-forza-200','nanlite-forza-300','nanlite-forza-300b','nanlite-forza-500','nanlite-forza-720','nanlite-forza-720b','nanlite-fc-500b','nanlite-fc-500c'];
 
 function included(id,model,category,target,sourceUrl){
   return {
@@ -60,7 +60,7 @@ export const NANLITE_FS_CURRENT_ACCESSORIES=[
     id:'nanlite-bd-bm-rf45',manufacturer:'Nanlite',model:'BD-BM-RF45 Barndoors and Grid',
     category:'Barndoors',compatibleWith:BD_BM_RF45_TARGETS,compatibilityStatus:'Designed For',
     conditions:['Requires the RF-BM Bowens-mount reflector'],
-    compatibilityEvidenceNote:'Nanlite product documentation explicitly lists Forza 720/720B, FC-500B/500C and the FS-Series lights that use the required RF-BM reflector.',
+    compatibilityEvidenceNote:'Nanlite product documentation explicitly lists first-generation Forza 200/300/300B/500, Forza 720/720B, FC-500B/500C and the FS-Series lights that use the required RF-BM reflector.',
     sourceUrl:SRC.barndoors
   },
 

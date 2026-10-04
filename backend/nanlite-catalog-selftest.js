@@ -19,6 +19,7 @@ import { NANLITE_MIRO_CURRENT_FIXTURES, NANLITE_MIRO_CURRENT_ACCESSORIES } from 
 import { NANLITE_CREATOR_HANDHELD_FIXTURES, NANLITE_CREATOR_HANDHELD_ACCESSORIES } from './nanlite-creator-handheld-library.js';
 import { NANLITE_CREATOR_COMPACT_FIXTURES, NANLITE_CREATOR_COMPACT_ACCESSORIES } from './nanlite-creator-compact-library.js';
 import { NANLITE_FORZA_60_LEGACY_FIXTURES, NANLITE_FORZA_60_LEGACY_ACCESSORIES } from './nanlite-forza-60-legacy-library.js';
+import { NANLITE_FORZA_BOWENS_LEGACY_FIXTURES, NANLITE_FORZA_BOWENS_LEGACY_ACCESSORIES } from './nanlite-forza-bowens-legacy-library.js';
 import { NANLITE_FORZA_150B_LEGACY_FIXTURES, NANLITE_FORZA_150B_LEGACY_ACCESSORIES } from './nanlite-forza-150b-legacy-library.js';
 import { NANLITE_FORZA_DAYLIGHT_FIXTURES, NANLITE_FORZA_DAYLIGHT_ACCESSORIES } from './nanlite-forza-daylight-library.js';
 import { NANLITE_FS_LEGACY_FIXTURES, NANLITE_FS_LEGACY_ACCESSORIES } from './nanlite-fs-legacy-library.js';
@@ -33,9 +34,9 @@ import { NANLITE_TK_LEGACY_FIXTURES, NANLITE_TK_LEGACY_ACCESSORIES } from './nan
 
 const failures=[];
 const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FORZA_DAYLIGHT_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOSLIM_EXTENDED_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_T8_7X_FIXTURES,...NANLITE_PAVOBULB_CURRENT_FIXTURES,...NANLITE_FS_CURRENT_FIXTURES,...NANLITE_LUMIPAD_CURRENT_FIXTURES,...NANLITE_MIRO_CURRENT_FIXTURES,...NANLITE_CREATOR_HANDHELD_FIXTURES,...NANLITE_CREATOR_COMPACT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
-const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES,...NANLITE_FORZA_60_LEGACY_FIXTURES,...NANLITE_FORZA_150B_LEGACY_FIXTURES,...NANLITE_FS_LEGACY_FIXTURES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES,...NANLITE_MIXPANEL_LEGACY_FIXTURES,...NANLITE_MIXPAD_FIXTURES,...NANLITE_LITOLITE_LEGACY_FIXTURES,...NANLITE_HALO_LEGACY_FIXTURES,...NANLITE_LITOLITE_EARLY_LEGACY_FIXTURES,...NANLITE_SA_LEGACY_FIXTURES,...NANLITE_TK_LEGACY_FIXTURES];
+const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES,...NANLITE_FORZA_60_LEGACY_FIXTURES,...NANLITE_FORZA_BOWENS_LEGACY_FIXTURES,...NANLITE_FORZA_150B_LEGACY_FIXTURES,...NANLITE_FS_LEGACY_FIXTURES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES,...NANLITE_MIXPANEL_LEGACY_FIXTURES,...NANLITE_MIXPAD_FIXTURES,...NANLITE_LITOLITE_LEGACY_FIXTURES,...NANLITE_HALO_LEGACY_FIXTURES,...NANLITE_LITOLITE_EARLY_LEGACY_FIXTURES,...NANLITE_SA_LEGACY_FIXTURES,...NANLITE_TK_LEGACY_FIXTURES];
 const fixtures=[...currentFixtures,...legacyFixtures];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FORZA_DAYLIGHT_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_ACCESSORIES,...NANLITE_MIXPANEL_LEGACY_ACCESSORIES,...NANLITE_MIXPAD_ACCESSORIES,...NANLITE_LITOLITE_LEGACY_ACCESSORIES,...NANLITE_HALO_LEGACY_ACCESSORIES,...NANLITE_LITOLITE_EARLY_LEGACY_ACCESSORIES,...NANLITE_SA_LEGACY_ACCESSORIES,...NANLITE_TK_LEGACY_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_FS_LEGACY_ACCESSORIES,...NANLITE_LUMIPAD_CURRENT_ACCESSORIES,...NANLITE_MIRO_CURRENT_ACCESSORIES,...NANLITE_CREATOR_HANDHELD_ACCESSORIES,...NANLITE_CREATOR_COMPACT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FORZA_60_LEGACY_ACCESSORIES,...NANLITE_FORZA_150B_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FORZA_DAYLIGHT_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_ACCESSORIES,...NANLITE_MIXPANEL_LEGACY_ACCESSORIES,...NANLITE_MIXPAD_ACCESSORIES,...NANLITE_LITOLITE_LEGACY_ACCESSORIES,...NANLITE_HALO_LEGACY_ACCESSORIES,...NANLITE_LITOLITE_EARLY_LEGACY_ACCESSORIES,...NANLITE_SA_LEGACY_ACCESSORIES,...NANLITE_TK_LEGACY_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_FS_LEGACY_ACCESSORIES,...NANLITE_LUMIPAD_CURRENT_ACCESSORIES,...NANLITE_MIRO_CURRENT_ACCESSORIES,...NANLITE_CREATOR_HANDHELD_ACCESSORIES,...NANLITE_CREATOR_COMPACT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FORZA_60_LEGACY_ACCESSORIES,...NANLITE_FORZA_BOWENS_LEGACY_ACCESSORIES,...NANLITE_FORZA_150B_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 const accessoryModels=new Map();
@@ -600,6 +601,42 @@ for(const [fixtureId,accessoryId] of [
 ]){
   if(!accessoryById.get(accessoryId)?.compatibleWith?.includes(fixtureId)) failures.push(accessoryId+' missing '+fixtureId);
 }
+const legacyBowensForzaIds=['nanlite-forza-200','nanlite-forza-300','nanlite-forza-300b','nanlite-forza-500'];
+for(const id of legacyBowensForzaIds){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing first-generation Bowens Forza fixture: '+id);
+  else {
+    if(f.discontinued!==true) failures.push(id+' must be legacy/discontinued');
+    if(f.mount!=='Bowens') failures.push(id+' must remain Bowens mount');
+  }
+}
+const legacyF200=fixtures.find(x=>x.id==='nanlite-forza-200');
+if(legacyF200?.cctK?.fixed!==5600||legacyF200?.powerDrawW!==200||legacyF200?.cri!==98||legacyF200?.tlci!==97)
+  failures.push('Forza 200 documented 5600K / 200W / CRI98 / TLCI97 identity mismatch');
+const legacyF300=fixtures.find(x=>x.id==='nanlite-forza-300');
+if(legacyF300?.cctK?.fixed!==5600) failures.push('Original Forza 300 daylight 5600K identity missing');
+if(legacyF300?.control?.builtInBluetooth!==false) failures.push('Original Forza 300 must not claim built-in Bluetooth');
+const legacyF300b=fixtures.find(x=>x.id==='nanlite-forza-300b');
+if(legacyF300b?.colorMode!=='Bi-Color') failures.push('Original Forza 300B bi-color identity missing');
+const legacyF500=fixtures.find(x=>x.id==='nanlite-forza-500');
+if(legacyF500?.cctK?.fixed!==5600) failures.push('Original Forza 500 daylight 5600K identity missing');
+if(!legacyF500?.control?.wireless?.includes('2.4G via NANLINK WS-TB-1')) failures.push('Original Forza 500 documented WS-TB-1 path missing');
+for(const id of ['nanlite-cb-fz-2-5','nanlite-cb-fz-5m-legacy']){
+  const a=accessoryById.get(id);
+  if(!a) failures.push('Missing first-generation Forza head cable: '+id);
+  else for(const target of legacyBowensForzaIds) if(!a.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
+}
+if(accessoryById.get('nanlite-cb-fz-2-5')?.lengthM!==2.5) failures.push('CB-FZ-2.5 cable length must remain 2.5 m');
+if(accessoryById.get('nanlite-cb-fz-5m-legacy')?.lengthM!==5) failures.push('Legacy Forza extension cable length must remain 5 m');
+if(!accessoryById.get('nanlite-pa-48v84a-fz300')?.compatibleWith?.includes('nanlite-forza-300')) failures.push('PA-48V84A-FZ300 missing Forza 300');
+for(const target of legacyBowensForzaIds){
+  if(!accessoryById.get('nanlite-fl-20g')?.compatibleWith?.includes(target)) failures.push('FL-20G missing first-generation '+target);
+  if(!accessoryById.get('nanlite-bd-bm-rf45')?.compatibleWith?.includes(target)) failures.push('BD-BM-RF45 missing first-generation '+target);
+}
+for(const target of ['nanlite-forza-200','nanlite-forza-300b'])
+  if(!accessoryById.get('nanlite-as-cap-bw-b')?.compatibleWith?.includes(target)) failures.push('AS-CAP-BW-B missing first-generation '+target);
+if(!accessoryById.get('nanlite-ws-tb-1')?.compatibleWith?.includes('nanlite-forza-500')) failures.push('WS-TB-1 missing first-generation Forza 500');
+if(accessoryById.get('nanlite-ws-rc-c2')?.compatibleWith?.includes('nanlite-forza-500')) failures.push('WS-RC-C2 must not be inferred for first-generation Forza 500 without direct evidence');
 const legacyForza60=fixtures.find(x=>x.id==='nanlite-forza-60');
 if(!legacyForza60) failures.push('Missing legacy Nanlite Forza 60');
 else {

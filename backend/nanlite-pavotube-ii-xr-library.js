@@ -55,8 +55,8 @@ export const NANLITE_PAVOTUBE_II_XR_FIXTURES=[
   })
 ];
 
-const ALL=['nanlite-pavotube-ii-6xr','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c'];
-const LOCKING=['nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr'];
+const ALL=['nanlite-pavotube-ii-6xr','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x'];
+const LOCKING=['nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x'];
 const T1530=['nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr'];
 
 function included(id,model,category,target,sourceUrl,extra={}){

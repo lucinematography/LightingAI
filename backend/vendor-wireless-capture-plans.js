@@ -92,6 +92,115 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       derivedEvidenceOnly:true,
       resultStatus:'candidate_only_until_physical_replay'
     }
+  },
+  ARRI: {
+    id:'arri-lico-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'ARRI LiCo',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Prefer SkyPanel X or SkyPanel S60 Pro for the first direct-Bluetooth capture set.',
+      'For SkyPanel X/S60 Pro use native Bluetooth without CRMX, Art-Net, sACN or wired DMX traffic.',
+      'If Orbiter is tested, record it as an adapter-assisted variant and use the supported Bluetooth 5.0 USB dongle required by ARRI.',
+      'Use the official ARRI LiCo app and keep other Bluetooth lighting controllers disconnected.'
+    ],
+    officialSources:[
+      'https://www.arri.com/en/learn-help/lighting/tools-apps/lico',
+      'https://www.arri.com/en/lighting/led-panel-lights/skypanel-pro/faq',
+      'https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/control-options'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Enable fixture Bluetooth, connect only the test fixture in LiCo, wait 15 seconds, make no lighting change, then disconnect.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one dimmer change in LiCo per capture.'},
+      cct:{runs:3,rule:'From the same known CCT/intensity perform exactly one CCT change in LiCo per capture.'},
+      color:{runs:3,optional:true,rule:'Only after DIM/CCT evidence is stable; perform exactly one HSI/RGBACL/xy color parameter change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; activate exactly one known lighting effect per capture.'}
+    },
+    secondaryPlans:[
+      {
+        id:'arri-skypanel-web-wifi-capture-v1',
+        transport:'wifi',
+        target:'SkyPanel S60 Pro Web Portal',
+        commandSpecStatus:'public-http-command-api-not-located-in-official-docs',
+        rule:'Use an isolated local network, access only the fixture Web Portal, capture browser HTTP traffic for three no-change sessions and three isolated DIM/CCT actions each. Do not infer endpoints from page labels alone.'
+      }
+    ],
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
+  Aladdin: {
+    id:'aladdin-app-ble-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Official Aladdin Lights mobile app',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one catalog fixture whose Aladdin metadata explicitly lists Bluetooth/BLE app control.',
+      'Prefer a MOSAIC 2x4, 4x4 or 3x6 for the first capture set because the official manual explicitly lists BLE and app control.',
+      'Do not use LumenRadio or optional DMX attachments during the direct-BLE capture set.',
+      'Keep other Bluetooth lighting fixtures disconnected where practical.'
+    ],
+    officialSources:[
+      'https://aladdin-lights.com/mosaic-2x4/',
+      'https://aladdin-lights.com/wp-content/uploads/2023/09/MOSAIC-4x4-Manual-SINGLE-PAGE.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Open the official Aladdin app, connect only the test fixture, wait 15 seconds and make no lighting change.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one dimmer change per capture.'},
+      cct:{runs:3,rule:'From the same known CCT/intensity perform exactly one CCT change per capture.'},
+      color:{runs:3,optional:true,rule:'Only after DIM/CCT evidence is stable; perform exactly one RGB/HSI color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; activate exactly one effect per capture.'}
+    },
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
+  'EV Light': {
+    id:'evlight-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Official EV Light mobile control app',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use only an EV Light catalog model whose first-party product page explicitly lists Bluetooth app control.',
+      'Do not interpret Wireless DMX as Bluetooth.',
+      'Keep DMX/CRMX/wireless-DMX transmitters inactive during the direct-Bluetooth capture set.',
+      'Record exact fixture model and firmware/app versions with every capture set.'
+    ],
+    officialSources:[
+      'https://www.evlightprofessional.com/quality-led-soft-light-panel-63424122.html',
+      'https://www.evlightpro.com/led-soft-light-panel/68692360.html'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect only the test fixture using the vendor app, wait 15 seconds and make no lighting change.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one dimmer change per capture.'},
+      cct:{runs:3,rule:'On a CCT-capable fixture perform exactly one CCT change from the same initial state per capture.'},
+      color:{runs:3,optional:true,rule:'Only after DIM/CCT evidence is stable; perform exactly one documented color parameter change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only if the fixture/app exposes FX; activate exactly one known effect per capture.'}
+    },
+    secondaryPlans:[
+      {
+        id:'evlight-model-scoped-wifi-capture-v1',
+        transport:'wifi',
+        target:'EV Light models whose official product metadata explicitly lists WiFi-DMX/app control',
+        commandSpecStatus:'public-wifi-command-api-not-located-in-official-docs',
+        rule:'Use an isolated local network and the vendor-documented app/control path. Capture three no-change sessions and three isolated DIM/CCT actions. WiFi-DMX labeling alone must not be converted into an undocumented proprietary IP API.'
+      }
+    ],
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
   }
 });
 

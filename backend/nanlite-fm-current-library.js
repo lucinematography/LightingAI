@@ -3,6 +3,7 @@
 // Compatibility is intentionally explicit; do not infer unlisted model relationships.
 
 const SRC = {
+  forza60ii:'https://nanliteus.com/blogs/learn/the-nanlite-forza-60-ii-and-60b-ii-new-upgrades-make-a-big-difference',
   forza60bii:'https://nanliteus.com/products/forza-60b-ii-bi-color-led-spotlight',
   forza60c:'https://nanliteus.com/products/forza-60c-rgblac-led-spotlight-kit-includes-battery-grip-and-bowens-mount-adapter',
   forza60cr:'https://nanliteus.com/products/forza-60cr-rgblac-led-spotlight-with-crmx',
@@ -23,7 +24,8 @@ const SRC = {
   tb:'https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box',
   rf45:'https://nanliteus.com/products/rf-fmm-45-45-degree-reflector-for-fm-mount',
   rf45s:'https://nanliteus.com/products/forza-45-degree-mini-reflector-with-fm-mount',
-  dome:'https://nanliteus.com/products/diffusion-dome-for-fc-120b-and-forza-150b'
+  dome:'https://nanliteus.com/products/diffusion-dome-for-fc-120b-and-forza-150b',
+  case60:'https://nanliteus.com/products/padded-carrying-case-for-forza-60s-or-fs-60b'
 };
 
 function control({dmx=true,crmx=false}={}){
@@ -56,6 +58,7 @@ function fixture(id,model,family,cctMin,cctMax,powerDrawW,colorMode,cri,tlci,sou
 }
 
 export const NANLITE_FM_CURRENT_FIXTURES = [
+  fixture('nanlite-forza-60-ii','Forza 60 II','Forza',5600,5600,71,'Daylight',95,95,SRC.forza60ii,{control:control()}),
   fixture('nanlite-forza-60b-ii','Forza 60B II','Forza',2700,6500,72,'Bi-Color',96,98,SRC.forza60bii,{control:control()}),
   fixture('nanlite-forza-60c','Forza 60C','Forza',1800,20000,88,'RGBLAC',96,95,SRC.forza60c,{control:control()}),
   fixture('nanlite-forza-60cr','Forza 60CR','Forza',1800,20000,88,'RGBLAC',96,95,SRC.forza60cr,{control:control({crmx:true})}),
@@ -66,16 +69,16 @@ export const NANLITE_FM_CURRENT_FIXTURES = [
 ];
 
 const FMM_CURRENT = [
-  'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
+  'nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
   'nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'
 ];
 const FMM_SHARED = [...FMM_CURRENT,'nanlite-forza-150b'];
 const NANLINK_RC_SHARED=[...FMM_SHARED,'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b','nanlite-fc-720b','nanlite-fc-720c','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-1200b','nanlite-fc-1200c','nanlite-alien-150c','nanlite-alien-300c','nanlite-pavobulb-10c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c','nanlite-lumipad-11','nanlite-forza-300-ii','nanlite-forza-500-ii','nanlite-forza-720','nanlite-fs-200b','nanlite-fs-300','nanlite-compac-200b'];
 const NANLINK_TB_SHARED=[...NANLINK_RC_SHARED,'nanlite-mixpanel-60','nanlite-mixpanel-150'];
-const SMALL_BATTERY = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'];
-const VMOUNT_60 = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fc-60b'];
+const SMALL_BATTERY = ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'];
+const VMOUNT_60 = ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fc-60b'];
 const VMOUNT_XLR = ['nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'];
-const MINI_REFLECTOR = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b','nanlite-fs-60b'];
+const MINI_REFLECTOR = ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b','nanlite-fs-60b'];
 const LARGE_REFLECTOR = ['nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'];
 const DMX_FMM = FMM_CURRENT.filter(id => id!=='nanlite-fs-60b');
 
@@ -157,8 +160,14 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
     conditions:['Fixture provides a locking DMX/RDM port; an external wired DMX controller/interface is required'],
     sourceUrl:NANLITE_FM_CURRENT_FIXTURES.find(f=>f.id===target).sourceUrl
   })),
+  included('nanlite-ps-forza-60-ii','Power Adapter — Forza 60 II','Power','nanlite-forza-60-ii',SRC.forza60ii),
   included('nanlite-ps-forza-60b-ii','Power Adapter — Forza 60B II','Power','nanlite-forza-60b-ii',SRC.forza60bii),
-  included('nanlite-case-forza-60b-ii','Padded Carrying Case — Forza 60B II','Case','nanlite-forza-60b-ii',SRC.forza60bii),
+  {
+    id:'nanlite-ccsfz60ii',manufacturer:'Nanlite',model:'CCSFZ60II Padded Carrying Case',
+    category:'Case',compatibleWith:['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fs-60b','nanlite-fc-60b'],
+    compatibilityStatus:'Designed For',includedWithFixtures:['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fs-60b','nanlite-fc-60b'],
+    sourceUrl:SRC.case60
+  },
   included('nanlite-ps-forza-60c','Power Adapter — Forza 60C','Power','nanlite-forza-60c',SRC.forza60c),
   included('nanlite-case-forza-60c','Padded Carrying Case — Forza 60C','Case','nanlite-forza-60c',SRC.forza60c),
   included('nanlite-ps-forza-60cr','15V/6A Power Adapter with V-Mount Plate — Forza 60CR','Power','nanlite-forza-60cr',SRC.forza60cr),

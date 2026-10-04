@@ -21,6 +21,7 @@ const allowed=new Set([
   'app/src/main/AndroidManifest.xml',
   'app/src/main/assets/catalog.js',
   'app/src/main/assets/index.html',
+  'backend/control-system-drivers-selftest.js',
   'backend/build-equipment-catalog-snapshot.js',
   'backend/catalog-runtime.js',
   'backend/package.json',
@@ -86,12 +87,29 @@ const mustRemainIdentical=[
   'backend/control-production-selftest.js',
   'backend/control-operator-desk-selftest.js',
   'backend/control-catalog-audit.js',
-  'backend/control-system-drivers-selftest.js'
 ];
 for(const path of mustRemainIdentical){
   if(!existsAt(CONTROL_BASE,path)||!existsAt('HEAD',path)) fail('required CONTROL file missing: '+path);
   if(git(['show',`${CONTROL_BASE}:${path}`])!==git(['show',`HEAD:${path}`])) fail('verified CONTROL file changed in Probe: '+path);
 }
+
+const controlDrivers=git(['show','HEAD:app/src/main/assets/control-system-drivers.js']);
+for(const marker of ["version:'3.0-vendor-wireless'","transport:'bluetooth'","transport:'wifi'","2.4 GHz"])
+  if(!controlDrivers.includes(marker)) fail('vendor-wireless driver marker missing: '+marker);
+
+const controlRouting=git(['show','HEAD:app/src/main/assets/control-routing.js']);
+for(const marker of ["version:'3.0-vendor-wireless'","vendor-wireless","NO VERIFIED BLUETOOTH / WI-FI ROUTE"])
+  if(!controlRouting.includes(marker)) fail('vendor-wireless routing marker missing: '+marker);
+
+const controlDashboard=git(['show','HEAD:app/src/main/assets/control-dashboard.js']);
+for(const marker of ["version:'0.30-vendor-wireless-control'","BLUETOOTH / BLE","WI-FI","Wi-Fi se ne skenira generički"])
+  if(!controlDashboard.includes(marker)) fail('vendor-wireless dashboard marker missing: '+marker);
+
+const controlBootstrap=git(['show','HEAD:app/src/main/assets/control-bootstrap.js']);
+if(!controlBootstrap.includes("window.LightingAIControlBootstrapMode='vendor-wireless'"))
+  fail('Probe CONTROL bootstrap is not vendor-wireless');
+for(const forbidden of ['artnet-control.js','dmx-patch-planner.js','dmx-export.js'])
+  if(controlBootstrap.includes(forbidden)) fail('removed network/DMX asset returned to bootstrap: '+forbidden);
 
 for(const removed of [
   'app/src/main/assets/artnet-control.js',
@@ -143,6 +161,7 @@ console.log(JSON.stringify({
   controlBase:CONTROL_BASE,
   changedFiles:changed.length,
   protectedControlFiles:mustRemainIdentical.length,
+  controlMode:'vendor-wireless-bluetooth-wifi',
   networkRuntime:'absent-as-verified',
   applicationId:'com.lightingai.probe',
   appLabel:'Light AI Proba'

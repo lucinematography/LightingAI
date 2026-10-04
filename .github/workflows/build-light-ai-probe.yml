@@ -146,6 +146,10 @@ jobs:
         working-directory: backend
         run: node vendor-wireless-readiness-report-selftest.js
 
+      - name: Validate Aputure wireless capability evidence
+        working-directory: backend
+        run: node aputure-wireless-verification-selftest.js
+
       - name: Validate fixture control capabilities
         working-directory: backend
         run: node fixture-control-capabilities-selftest.js

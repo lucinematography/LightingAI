@@ -23,8 +23,9 @@ function stateFor(f){
   var bluetooth=vendors.some(function(d){return d&&d.transport==='bluetooth'});
   var wifi=vendors.some(function(d){return d&&d.transport==='wifi'});
   var ready=vendors.some(function(d){return d&&d.status==='production'&&d.production===true});
-  return {bluetooth:bluetooth,wifi:wifi,ready:ready};
- }catch(e){return {bluetooth:false,wifi:false,ready:false}}
+  var assisted=vendors.filter(function(d){return d&&d.requiresExternalInterface});
+  return {bluetooth:bluetooth,wifi:wifi,ready:ready,assisted:assisted};
+ }catch(e){return {bluetooth:false,wifi:false,ready:false,assisted:[]}}
 }
 function transportBadge(label,on,color){
  return '<span style="padding:4px 7px;border-radius:999px;border:1px solid '+(on?color:'#353a42')+';background:'+(on?'#151a20':'#111318')+';color:'+(on?color:'#707780')+';font-size:10px;font-weight:900">'+esc(label)+'</span>';
@@ -32,10 +33,12 @@ function transportBadge(label,on,color){
 function fixtureCard(row){
  var f=row.fixture,s=stateFor(f),name=(f.manufacturer||'')+' '+(f.model||f.id||'')+(row.count>1?' #'+(row.index+1):'');
  var status=s.ready?(sr()?'VERIFIKOVAN DRIVER':'VERIFIED DRIVER'):((s.bluetooth||s.wifi)?(sr()?'ČEKA VERIFIKOVAN DRIVER':'WAITING FOR VERIFIED DRIVER'):(sr()?'NEMA BT/WI-FI PROFILA':'NO BT/WI-FI PROFILE'));
+ var assistedText=s.assisted.length?(sr()?'POTREBAN DODATNI INTERFEJS: ':'EXTERNAL INTERFACE REQUIRED: ')+s.assisted.map(function(d){return (d.externalInterfaceRequired||[]).join(', ')}).filter(Boolean).join(' · '):'';
  return '<div class="card" style="margin-bottom:9px;border-color:#303842">'+
   '<div style="font-weight:900">'+esc(name)+'</div><div class="muted small">'+esc(f.family||f.type||'')+'</div>'+
   '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px">'+transportBadge('BLUETOOTH / BLE',s.bluetooth,'#75bfff')+transportBadge('WI-FI',s.wifi,'#9ee7b0')+'</div>'+
   '<div class="muted small" style="margin-top:8px">'+esc(status)+'</div>'+
+  (assistedText?'<div class="status warn" style="margin-top:8px;margin-bottom:0">'+esc(assistedText)+'</div>':'')+
   '</div>';
 }
 function jumpBle(){

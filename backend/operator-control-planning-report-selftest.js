@@ -21,6 +21,9 @@ for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Li
   if(row.bluetoothFixtures>0) expect(!!row.bluetoothPlanId,maker+' Bluetooth plan missing from planning report');
   if(row.wifiFixtures>0) expect(!!row.wifiPlanId,maker+' Wi-Fi plan missing from planning report');
   expect(row.commandReady===false,maker+' commandReady must remain false');
+  expect(Array.isArray(row.requiredProductionFixtureIds)&&row.requiredProductionFixtureIds.length>=row.wirelessFixtures,maker+' required production fixture IDs must cover every planning fixture');
+  expect(new Set(row.requiredProductionFixtureIds).size===row.requiredProductionFixtureIds.length,maker+' required production fixture IDs must be unique');
+  expect(Array.isArray(row.requiredProductionTransports)&&row.requiredProductionTransports.length>0,maker+' required production transports missing');
   expect(row.dimCapable<=row.wirelessFixtures,maker+' DIM capability count exceeds wireless fixtures');
   expect(row.cctCapable<=row.wirelessFixtures,maker+' CCT capability count exceeds wireless fixtures');
   expect(row.colorCapable<=row.wirelessFixtures,maker+' COLOR capability count exceeds wireless fixtures');
@@ -36,6 +39,15 @@ expect(by.Godox?.wirelessFixtures===68,'Godox wireless fixture count changed une
 expect(by.Nanlite?.wirelessFixtures===66,'Nanlite unique wireless fixture count changed unexpectedly');
 expect(by.Aputure?.wirelessFixtures===19,'Aputure wireless fixture count changed unexpectedly');
 expect(by.Astera?.wirelessFixtures===17,'Astera unique wireless fixture count changed unexpectedly');
+
+for(const maker of ['Nanlite','Astera','ARRI','EV Light']){
+  const transports=new Set(by[maker]?.requiredProductionTransports||[]);
+  expect(transports.has('bluetooth')&&transports.has('wifi'),maker+' dual-transport production scope must require Bluetooth and Wi-Fi');
+}
+for(const maker of ['Godox','Aputure','Aladdin']){
+  const transports=by[maker]?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='bluetooth',maker+' current production scope should require Bluetooth only');
+}
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

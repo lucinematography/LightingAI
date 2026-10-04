@@ -30,7 +30,12 @@ function capture(extraWrite,addressOverride=address){
   if(extraWrite) writes.push(extraWrite);
   return {
     filter:{address:addressOverride},
-    analysisCoverage:{mappingWarning:''},
+    analysisCoverage:{
+      mappingWarning:'',
+      asteraPrivateServiceMapped:true,
+      attributeUuidMappings:2,
+      mappingSource:'capture'
+    },
     connections:[{peerAddress:addressOverride}],
     candidateAsteraSessionWrites:writes,
     attEvents:[]
@@ -64,6 +69,34 @@ assert.throws(
 assert.throws(
   ()=>analyzeCaptureSet({connectOnly:connectOnly.slice(0,2),dim,cct}),
   /requires_at_least_3_captures/
+);
+
+const noCoverage=capture();
+delete noCoverage.analysisCoverage;
+assert.throws(
+  ()=>analyzeCaptureSet({connectOnly:[noCoverage,...connectOnly.slice(1)],dim,cct}),
+  /analysis_coverage_missing/
+);
+
+const incompleteMapping=capture();
+incompleteMapping.analysisCoverage.mappingWarning='gatt_mapping_incomplete_capture_may_use_cached_handles';
+assert.throws(
+  ()=>analyzeCaptureSet({connectOnly:[incompleteMapping,...connectOnly.slice(1)],dim,cct}),
+  /gatt_mapping_incomplete/
+);
+
+const privateServiceMissing=capture();
+privateServiceMissing.analysisCoverage.asteraPrivateServiceMapped=false;
+assert.throws(
+  ()=>analyzeCaptureSet({connectOnly:[privateServiceMissing,...connectOnly.slice(1)],dim,cct}),
+  /astera_private_service_not_mapped/
+);
+
+const mappingSourceMissing=capture();
+mappingSourceMissing.analysisCoverage.mappingSource='none';
+assert.throws(
+  ()=>analyzeCaptureSet({connectOnly:[mappingSourceMissing,...connectOnly.slice(1)],dim,cct}),
+  /mapping_source_unverified/
 );
 
 const currentFile=fileURLToPath(import.meta.url);

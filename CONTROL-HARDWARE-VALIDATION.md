@@ -367,6 +367,15 @@ After the nine derived JSON files are present, run the complete offline evidence
 
 A successful run means only that the evidence set is internally consistent enough for protocol analysis. It does **not** verify DIM/CCT command semantics and does not permit runtime replay.
 
+The physical capture-set gate is fail-closed. Every derived capture must include analyzer-produced `analysisCoverage` metadata with:
+- an empty `mappingWarning`;
+- the Astera private service positively mapped;
+- at least one UUID attribute mapping;
+- a mapping source of `capture` or `explicit_profile`;
+- connection identity, ATT events and candidate-write arrays present.
+
+A shortened or manually assembled JSON file without those coverage fields is rejected instead of being treated as physical protocol evidence.
+
 Before accepting the result, record:
 - Titan model and firmware;
 - Android phone model and Android version;

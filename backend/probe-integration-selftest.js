@@ -16,6 +16,7 @@ catch{fail('Probe no longer descends from verified CONTROL base');}
 
 const allowed=new Set([
   '.github/workflows/build-light-ai-probe.yml',
+  '.github/light-ai-probe-test-keystore.b64',
   'app/build.gradle',
   'app/src/main/AndroidManifest.xml',
   'app/src/main/assets/catalog.js',

@@ -79,6 +79,8 @@ const allowed=new Set([
   'backend/astera-wireless-verification.js',
   'backend/vendor-wireless-protocol-status.js',
   'backend/vendor-wireless-protocol-status-selftest.js',
+  'backend/vendor-wireless-capture-plans.js',
+  'backend/vendor-wireless-capture-plans-selftest.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

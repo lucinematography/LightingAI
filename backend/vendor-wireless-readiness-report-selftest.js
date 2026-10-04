@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===675,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===25,'wireless manufacturer coverage must remain 25');
+expect(report.fixtureCount===677,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===26,'wireless manufacturer coverage must remain 26');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -54,6 +54,7 @@ expect(by.SIRUI?.bluetoothFixtures===10&&by.SIRUI?.wifiFixtures===0&&by.SIRUI?.b
 expect(by.Fiilex?.bluetoothFixtures===0&&by.Fiilex?.wifiFixtures===1&&by.Fiilex?.bothFixtures===0,'Fiilex wireless counts changed unexpectedly');
 expect(by.Harlowe?.bluetoothFixtures===11&&by.Harlowe?.wifiFixtures===0&&by.Harlowe?.bothFixtures===0,'Harlowe wireless counts changed unexpectedly');
 expect(by.SWIT?.bluetoothFixtures===7&&by.SWIT?.wifiFixtures===0&&by.SWIT?.bothFixtures===0,'SWIT wireless counts changed unexpectedly');
+expect(by.Dracast?.bluetoothFixtures===2&&by.Dracast?.wifiFixtures===0&&by.Dracast?.bothFixtures===0,'Dracast wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

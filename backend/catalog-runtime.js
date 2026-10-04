@@ -84,6 +84,7 @@ import { DESISTI_TUNGSTEN_SOFT_BROAD_FIXTURES, DESISTI_TUNGSTEN_SOFT_BROAD_ACCES
 import { DESISTI_HMI_FIXTURES, DESISTI_HMI_ACCESSORIES } from './desisti-hmi-library.js';
 import { DESISTI_CONVENTIONAL_EXTRA_FIXTURES, DESISTI_CONVENTIONAL_EXTRA_ACCESSORIES } from './desisti-conventional-extra-library.js';
 import { GODOX_CONTINUOUS_FIXTURES, GODOX_CONTINUOUS_ACCESSORIES } from './godox-continuous-library.js';
+import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { ALADDIN_MOSAIC_FIXTURES, ALADDIN_MOSAIC_ACCESSORIES } from './aladdin-mosaic-library.js';
 import { ALADDIN_FABRIC_LITE_FIXTURES, ALADDIN_FABRIC_LITE_ACCESSORIES } from './aladdin-fabric-lite-library.js';
 import { ALADDIN_BI_FLEX_FIXTURES, ALADDIN_BI_FLEX_ACCESSORIES } from './aladdin-bi-flex-library.js';
@@ -165,6 +166,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(DESISTI_HMI_FIXTURES));
   fixtures.push(...clone(DESISTI_CONVENTIONAL_EXTRA_FIXTURES));
   fixtures.push(...clone(GODOX_CONTINUOUS_FIXTURES));
+  fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(ALADDIN_MOSAIC_FIXTURES));
   fixtures.push(...clone(ALADDIN_FABRIC_LITE_FIXTURES));
   fixtures.push(...clone(ALADDIN_BI_FLEX_FIXTURES));
@@ -231,6 +233,7 @@ export function buildRuntimeCatalog() {
   accessoryDefinitions.push(...clone(DESISTI_HMI_ACCESSORIES));
   accessoryDefinitions.push(...clone(DESISTI_CONVENTIONAL_EXTRA_ACCESSORIES));
   accessoryDefinitions.push(...clone(GODOX_CONTINUOUS_ACCESSORIES));
+  accessoryDefinitions.push(...clone(NANLITE_FM_CURRENT_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_MOSAIC_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_FABRIC_LITE_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_BI_FLEX_ACCESSORIES));

@@ -25,6 +25,9 @@ const SRC = {
   pjGobo2:'https://nanliteus.com/products/gobo-set-2-for-forza-fm-mount-projector',
   sb40:'https://nanliteus.com/products/40cm-octagonal-softbox-for-fm-mount',
   sb60:'https://nanliteus.com/products/60cm-octagonal-softbox-for-fm-mount',
+  rapid60:'https://nanliteus.com/products/rapid-60-softbox-with-grid-and-fm-mount',
+  lantern60:'https://nanliteus.com/products/forza-lantern-softbox-with-fm-mount-and-bowens-mount',
+  legacyModifiers:'https://nanliteus.com/blogs/learn/light-modifiers-and-other-accessories-for-the-nanlite-forza-60-and-60b',
   npfGrip:'https://nanliteus.com/products/np-f-battery-grip-for-forza-60-ii-60b-ii-and-60c',
   vmountGrip:'https://nanliteus.com/products/v-mount-battery-grip-for-forza-60-ii-60b-ii-60c-and-fc-60b',
   xlrVmountGrip:'https://nanliteus.com/products/v-mount-battery-grip-for-forza-150b-and-fc-120b',
@@ -110,6 +113,7 @@ const VMOUNT_60 = ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-6
 const VMOUNT_XLR = ['nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'];
 const MINI_REFLECTOR = ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b','nanlite-fs-60b'];
 const LARGE_REFLECTOR = ['nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'];
+const LANTERN_EXPLICIT = ['nanlite-forza-60','nanlite-forza-60b','nanlite-forza-60c','nanlite-forza-150','nanlite-forza-150b','nanlite-fs-60b'];
 const DMX_FMM = FMM_CURRENT.filter(id => id!=='nanlite-fs-60b');
 
 const included = (id,model,category,target,sourceUrl) => ({
@@ -187,6 +191,22 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
     id:'nanlite-sb-fmm-o-60',manufacturer:'Nanlite',model:'SB-FMM-O-60 60cm Octagonal Softbox with Grid',
     category:'Softbox',mount:'FM Mount',compatibleWith:FMM_SHARED,
     compatibilityStatus:'Designed For',sourceUrl:SRC.sb60
+  },
+  {
+    id:'nanlite-sb-fm-rp60',manufacturer:'Nanlite',model:'SBFMRP60 Rapid 60 Softbox with Grid and FM Mount',
+    category:'Softbox',mount:'FM Mount',diameterCm:60,compatibleWith:FMM_SHARED,
+    compatibilityStatus:'Designed For',
+    includedComponents:['Standard diffuser','Medium diffuser','Eggcrate grid','AS-SR-BM Bowens Mount speed ring','Padded carrying case'],
+    compatibilityEvidenceNote:'Official Nanlite product page states FM Mount compatibility with compact Nanlite Forza, FS and FC series fixtures.',
+    sourceUrl:SRC.rapid60
+  },
+  {
+    id:'nanlite-lt-fmm-60',manufacturer:'Nanlite',model:'LTFMM60 Lantern Softbox with FM Mount and Bowens Mount',
+    category:'Lantern Softbox',mount:'FM Mount + Bowens',beamAngleDeg:270,diameterIn:18,
+    compatibleWith:LANTERN_EXPLICIT,compatibilityStatus:'Designed For',
+    includedComponents:['FM Mount speed ring','Bowens Mount speed ring','Light-control skirt set'],
+    compatibilityEvidenceNote:'Current product page explicitly names Forza 60, 60B and 150; Nanlite legacy modifier guide also confirms Forza 60C and states the covered modifiers are fully compatible with Forza 150B and FS-60B.',
+    evidenceSources:[SRC.lantern60,SRC.legacyModifiers],sourceUrl:SRC.lantern60
   },
   {
     id:'nanlite-pa-15v6a-fz60',manufacturer:'Nanlite',model:'PA-15V6A-FZ60 Power Adapter 15V/6A',

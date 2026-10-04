@@ -126,6 +126,24 @@ else {
   if(!vm98.sourceConflictNote) failures.push('BT-V-14.4V98 FC-60C/FC-60B source conflict note missing');
 }
 if(fixtureIds.has('nanlite-fc-60c')) failures.push('Do not create FC-60C fixture from Nanlite battery-page typo');
+const rapid60=accessoryById.get('nanlite-sb-fm-rp60');
+if(!rapid60) failures.push('Missing SBFMRP60 Rapid 60 FM softbox');
+else {
+  if(rapid60.mount!=='FM Mount'||rapid60.diameterCm!==60) failures.push('SBFMRP60 physical identity mismatch');
+  for(const target of ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'])
+    if(!rapid60.compatibleWith?.includes(target)) failures.push('SBFMRP60 missing current FM target '+target);
+  if(!rapid60.includedComponents?.includes('AS-SR-BM Bowens Mount speed ring')) failures.push('SBFMRP60 included Bowens speed ring missing');
+}
+const lantern60=accessoryById.get('nanlite-lt-fmm-60');
+if(!lantern60) failures.push('Missing LTFMM60 Lantern softbox');
+else {
+  if(lantern60.beamAngleDeg!==270||lantern60.diameterIn!==18) failures.push('LTFMM60 18-inch / 270-degree identity mismatch');
+  for(const target of ['nanlite-forza-60','nanlite-forza-60b','nanlite-forza-60c','nanlite-forza-150','nanlite-forza-150b','nanlite-fs-60b'])
+    if(!lantern60.compatibleWith?.includes(target)) failures.push('LTFMM60 missing documented target '+target);
+  for(const unverified of ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c'])
+    if(lantern60.compatibleWith?.includes(unverified)) failures.push('LTFMM60 must not infer target without direct first-party evidence '+unverified);
+  if(!lantern60.includedComponents?.includes('Bowens Mount speed ring')) failures.push('LTFMM60 included Bowens speed ring missing');
+}
 const pjClassicTargets=['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b','nanlite-forza-60','nanlite-forza-60b','nanlite-forza-150','nanlite-forza-150b'];
 for(const id of ['nanlite-pj-fmm-19','nanlite-pj-fmm-36']){
   const a=accessoryById.get(id);

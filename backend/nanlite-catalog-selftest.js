@@ -121,6 +121,12 @@ for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-ascpqrfz']){
   const a=accessoryById.get(id); if(!a) failures.push('Missing consolidated Nanlite accessory: '+id);
   else for(const target of ['nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
 }
+const qrClamp=accessoryById.get('nanlite-ascpqrfz');
+if(qrClamp?.includedWithFixture===true) failures.push('ASCPQRFZ must not use generic includedWithFixture flag');
+for(const target of ['nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-300-ii','nanlite-forza-500-ii','nanlite-forza-720b','nanlite-forza-720','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-240c','nanlite-alien-150c','nanlite-alien-300c'])
+  if(!qrClamp?.includedWithFixtures?.includes(target)) failures.push('ASCPQRFZ verified inclusion missing '+target);
+if(!qrClamp?.sourceUrl?.includes('quick-release-super-clamp')) failures.push('ASCPQRFZ must use its canonical product page as source');
+if(!qrClamp?.inclusionEvidenceNote) failures.push('ASCPQRFZ conservative inclusion evidence note missing');
 for(const id of ['nanlite-pavotube-ii-6xr','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr']){
   const f=fixtures.find(x=>x.id===id);
   if(!f) failures.push('Missing Nanlite PavoTube II XR fixture: '+id);

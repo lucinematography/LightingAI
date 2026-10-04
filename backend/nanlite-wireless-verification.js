@@ -38,7 +38,16 @@ export function normalizeNanliteWirelessVerification(fixtures=[]){
     fixture.control={
       ...control,
       sourceUrls:unique([...(Array.isArray(control.sourceUrls)?control.sourceUrls:[]),fixture.sourceUrl,bt?NANLINK_APP_SOURCE:null,bt?NANLINK_BLUETOOTH_SOURCE:null]),
-      wirelessVerification:verification
+      wirelessVerification:verification,
+      capabilityVerification:{
+        ...(control.capabilityVerification||{}),
+        dim:{
+          verified:true,
+          scope:'official-app-capability-only',
+          sourceUrls:[NANLINK_BLUETOOTH_SOURCE],
+          note:'NANLINK documents console-mode intensity control for connected fixtures. This proves the operator capability, not proprietary LightingAI command encoding.'
+        }
+      }
     };
   }
   return fixtures;

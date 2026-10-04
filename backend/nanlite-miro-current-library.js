@@ -4,7 +4,10 @@
 const SRC={
   m30:'https://nanliteus.com/products/miro-30c-led-full-color-round-panel-light-mint-blue',
   m60:'https://nanliteus.com/products/miro-60c-led-full-color-round-panel-light-midnight-blue',
-  guide:'https://nanliteus.com/blogs/learn/the-new-nanlite-miro-60c-30c-round-led-panel-lights'
+  guide:'https://nanliteus.com/blogs/learn/the-new-nanlite-miro-60c-30c-round-led-panel-lights',
+  npf750:'https://nanliteus.com/products/np-f750-lithium-ion-battery-mint-blue',
+  npf970:'https://nanliteus.com/products/np-f970-lithium-ion-battery-mint-blue',
+  npfCharger:'https://nanliteus.com/products/bt-cg-npf-2-dual-slot-np-f-battery-charger-mint-blue'
 };
 
 function control(){
@@ -51,16 +54,24 @@ function included(id,model,category,target,sourceUrl){
 
 export const NANLITE_MIRO_CURRENT_ACCESSORIES=[
   {
-    id:'nanlite-bt-npf750-miro',manufacturer:'Nanlite',model:'BT-NPF750 NP-F Battery',
-    category:'Battery',compatibleWith:[...BOTH,'nanlite-wand'],compatibilityStatus:'Compatible',sourceUrl:SRC.guide
+    id:'nanlite-bt-npf750',manufacturer:'Nanlite',model:'BT-NPF750 NP-F750 Lithium-ion Battery',
+    category:'Battery',compatibleWith:[...BOTH,'nanlite-wand'],compatibilityStatus:'Compatible',
+    fixtureUseCases:[...BOTH,'nanlite-wand'],
+    inputs:['USB-C charging','NP-F charger contacts'],outputs:['USB-A power-bank output'],
+    sourceUrl:SRC.npf750
   },
   {
-    id:'nanlite-bt-npf970-miro',manufacturer:'Nanlite',model:'BT-NPF970 NP-F Battery',
-    category:'Battery',compatibleWith:[...BOTH,'nanlite-wand'],compatibilityStatus:'Compatible',sourceUrl:SRC.guide
+    id:'nanlite-bt-npf970',manufacturer:'Nanlite',model:'BT-NPF970 NP-F970 Lithium-ion Battery',
+    category:'Battery',compatibleWith:[...BOTH,'nanlite-wand'],compatibilityStatus:'Compatible',
+    fixtureUseCases:[...BOTH,'nanlite-wand'],
+    inputs:['USB-C charging','NP-F charger contacts'],outputs:['USB-A power-bank output'],
+    sourceUrl:SRC.npf970
   },
   {
     id:'nanlite-bt-cg-npf-2',manufacturer:'Nanlite',model:'BT-CG-NPF-2 Dual-Slot NP-F Battery Charger',
-    category:'Power',compatibleWith:BOTH,compatibilityStatus:'Compatible',sourceUrl:SRC.guide
+    category:'Power',compatibleWith:['nanlite-bt-npf750','nanlite-bt-npf970'],compatibilityStatus:'Compatible',
+    batteryTypes:['NP-F750','NP-F970','NP-F550'],slots:2,input:'USB-C',
+    sourceUrl:SRC.npfCharger
   },
   {
     id:'nanlite-as-pbh-npf',manufacturer:'Nanlite',model:'AS-PBH-NPF Power Bank Holder for NP-F Mount',

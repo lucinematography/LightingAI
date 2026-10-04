@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===656,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===22,'wireless manufacturer coverage must remain 22');
+expect(report.fixtureCount===657,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===23,'wireless manufacturer coverage must remain 23');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -51,6 +51,7 @@ expect(by.ZHIYUN?.bluetoothFixtures===16&&by.ZHIYUN?.wifiFixtures===0&&by.ZHIYUN
 expect(by.PROLYCHT?.bluetoothFixtures===2&&by.PROLYCHT?.wifiFixtures===2&&by.PROLYCHT?.bothFixtures===2,'PROLYCHT wireless counts changed unexpectedly');
 expect(by.COLBOR?.bluetoothFixtures===2&&by.COLBOR?.wifiFixtures===0&&by.COLBOR?.bothFixtures===0,'COLBOR wireless counts changed unexpectedly');
 expect(by.SIRUI?.bluetoothFixtures===10&&by.SIRUI?.wifiFixtures===0&&by.SIRUI?.bothFixtures===0,'SIRUI wireless counts changed unexpectedly');
+expect(by.Fiilex?.bluetoothFixtures===0&&by.Fiilex?.wifiFixtures===1&&by.Fiilex?.bothFixtures===0,'Fiilex wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

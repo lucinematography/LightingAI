@@ -19,37 +19,26 @@ function control(){
     unavailableDirectProtocols:['NANLINK Bluetooth/2.4G protocol is not publicly documented for third-party direct control']
   };
 }
-function fixture(id,model,powerDrawW,sourceUrl,extra={}){
+function fixture(id,model,sourceUrl,extra={}){
   return {
     id,manufacturer:'Nanlite',model,family:'Forza Daylight',category:'Light',discontinued:false,
     sourceType:'Daylight LED Spotlight',mount:'Bowens',cctK:{fixed:5600},colorMode:'Daylight',
-    powerDrawW,control:control(),sourceUrl,...extra
+    control:control(),sourceUrl,...extra
   };
 }
 
 export const NANLITE_FORZA_DAYLIGHT_FIXTURES=[
-  fixture('nanlite-forza-300-ii','Forza 300 II',350,SRC.f300,{
+  fixture('nanlite-forza-300-ii','Forza 300 II',SRC.f300,{
     cri:96,tlci:97,batteryPowered:true,
     batteryOptions:['1x or 2x V-Mount via Control Unit','AC mains']
   }),
-  fixture('nanlite-forza-500-ii','Forza 500 II',520,SRC.f500,{
+  fixture('nanlite-forza-500-ii','Forza 500 II',SRC.f500,{
     batteryPowered:true,batteryOptions:['1x or 2x V-Mount via Control Unit','AC mains'],
     sourceNote:'Nanlite Forza 500B II page explicitly identifies the daylight-only Forza 500 II as the companion model'
   }),
-  fixture('nanlite-forza-720','Forza 720',800,SRC.f720,{
+  fixture('nanlite-forza-720','Forza 720',SRC.f720,{
     batteryPowered:true,batteryOptions:['2x V-Mount via Control Unit','AC mains']
   })
 ];
 
-export const NANLITE_FORZA_DAYLIGHT_ACCESSORIES=[
-  {
-    id:'nanlite-ccsfz300ii-daylight',manufacturer:'Nanlite',model:'CCSFZ300II Padded Carrying Case',
-    category:'Case',compatibleWith:['nanlite-forza-300-ii','nanlite-forza-500-ii'],
-    compatibilityStatus:'Designed For',sourceUrl:SRC.case300500
-  },
-  {
-    id:'nanlite-cc-st-fz720-daylight',manufacturer:'Nanlite',model:'CC-ST-FZ720 Rolling Padded Case',
-    category:'Case',compatibleWith:['nanlite-forza-720'],
-    compatibilityStatus:'Designed For',sourceUrl:SRC.case720
-  }
-];
+export const NANLITE_FORZA_DAYLIGHT_ACCESSORIES=[];

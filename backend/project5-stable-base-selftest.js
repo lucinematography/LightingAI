@@ -131,6 +131,7 @@ const exactAllowed = new Set([
   'backend/godox-continuous-library.js',
   'backend/godox-catalog-selftest.js',
   'backend/nanlite-fm-current-library.js',
+  'backend/nanlite-forza-ii-library.js',
   'backend/nanlite-catalog-selftest.js',
   'backend/aladdin-mosaic-library.js',
   'backend/aladdin-fabric-lite-library.js',

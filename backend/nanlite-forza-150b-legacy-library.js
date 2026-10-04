@@ -1,7 +1,8 @@
-// Nanlite Forza 150B legacy/open-box-only model.
-// Official Nanlite US sources only. This model is not treated as part of the current mainline catalog.
+// Nanlite Forza 150 / 150B legacy family.
+// Official Nanlite US sources only. These models are not treated as part of the current mainline catalog.
 
 const SRC={
+  f150:'https://nanliteus.com/blogs/learn/the-nanlite-forza-150-the-ultimate-compact-powerhouse',
   product:'https://nanliteus.com/products/open-box-forza-150b-bi-color-led-spotlight',
   bowens:'https://nanliteus.com/products/forza-bowens-adapter-for-fm-mount-lights',
   fl11:'https://nanliteus.com/products/fl-11-fresnel-lens-and-barndoors-for-forza-fm-mount-lights',
@@ -13,6 +14,24 @@ const SRC={
 };
 
 export const NANLITE_FORZA_150B_LEGACY_FIXTURES=[
+  {
+    id:'nanlite-forza-150',manufacturer:'Nanlite',model:'Forza 150',
+    family:'Forza',category:'Light',discontinued:true,lifecycleStatus:'legacy',
+    sourceType:'Daylight LED Spotlight',mount:'FM Mount',
+    cctK:{fixed:5600},colorMode:'Daylight',cri:96,tlci:98,
+    batteryPowered:true,
+    powerOptions:['V-Mount battery','AC power adapter'],
+    control:{
+      wired:['DMX512'],
+      wireless:['Bluetooth / NANLINK app','2.4G'],
+      builtInBluetooth:true,builtInCRMX:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['Wired DMX controller/interface for DMX512 control'],
+      unavailableDirectProtocols:['NANLINK Bluetooth/2.4G protocol is not publicly documented for third-party direct control'],
+      controlEvidenceNote:'Official Nanlite launch documentation confirms a DMX connector but does not explicitly state RDM; catalog therefore claims DMX512 only.'
+    },
+    sourceUrl:SRC.f150
+  },
   {
     id:'nanlite-forza-150b',manufacturer:'Nanlite',model:'Forza 150B',
     family:'Forza',category:'Light',discontinued:true,lifecycleStatus:'legacy/open-box-only',
@@ -34,6 +53,16 @@ export const NANLITE_FORZA_150B_LEGACY_FIXTURES=[
 ];
 
 export const NANLITE_FORZA_150B_LEGACY_ACCESSORIES=[
+  {
+    id:'nanlite-forza-150-accessory-note',manufacturer:'Nanlite',
+    model:'Forza 150 shares documented FM-mount accessory ecosystem',
+    category:'Other',compatibleWith:['nanlite-forza-150'],
+    compatibilityStatus:'Reference',
+    conditions:[
+      'Uses canonical AS-BA-FMM, FL-11, PJ-FMM-19, PJ-FMM-36, SB-FMM-O-40 and SB-FMM-O-60 records'
+    ],
+    sourceUrl:SRC.f150
+  },
   {
     id:'nanlite-forza-150b-accessory-note',manufacturer:'Nanlite',
     model:'Forza 150B shares documented FM-mount accessory ecosystem',

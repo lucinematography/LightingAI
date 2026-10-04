@@ -180,6 +180,10 @@ const dmg=byManufacturer.get('DMG Lumiere');
 if(!dmg || dmg.bluetooth!==3 || dmg.wifi!==3 || dmg.both!==3) {
   failures.push('DMG Lumiere wireless coverage expected 3 Bluetooth / 3 Wi-Fi / 3 both');
 }
+const zhiyun=byManufacturer.get('ZHIYUN');
+if(!zhiyun || zhiyun.bluetooth!==16 || zhiyun.wifi!==0 || zhiyun.both!==0) {
+  failures.push('ZHIYUN wireless coverage expected 16 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

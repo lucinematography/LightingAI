@@ -15,9 +15,10 @@ for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Li
 
 expect(by.Godox?.wirelessFixtures===68,'Godox wireless count changed');
 expect(by.Nanlite?.wirelessFixtures===66,'Nanlite wireless count changed');
-expect(by.Godox?.missingDim===67,'Godox DIM gap baseline changed');
-expect(by.Nanlite?.missingDim===66,'Nanlite DIM gap baseline changed');
-expect(by.Aputure?.missingDim===3,'Aputure DIM gap baseline changed');
+expect(by.Godox?.missingDim===0,'Godox DIM official-app capability coverage changed');
+expect(by.Nanlite?.missingDim===0,'Nanlite DIM official-app capability coverage changed');
+expect(by.Aputure?.missingDim===0,'Aputure DIM official-app capability coverage changed');
+expect(by.Aputure?.missingFx===0,'Aputure FX official-app capability coverage changed');
 expect(by.Astera?.missingCct===17,'Astera CCT gap baseline changed');
 expect(by.Aladdin?.missingFx===2,'Aladdin FX gap baseline changed');
 

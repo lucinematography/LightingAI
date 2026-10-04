@@ -58,6 +58,22 @@ const unverifiedAppEvidence=deriveFixtureControlCapabilities({
 expect(unverifiedAppEvidence.dim.supported===false,'Unverified app metadata must not prove DIM');
 expect(unverifiedAppEvidence.fx.supported===false,'Unverified app metadata must not prove FX');
 
+
+const appVerified=deriveFixtureControlCapabilities({
+  colorMode:'Bi-Color',
+  cctK:{min:2700,max:6500},
+  control:{
+    capabilityVerification:{
+      dim:{verified:true,scope:'official-app-capability-only'},
+      fx:{verified:true,scope:'official-app-capability-only'}
+    }
+  }
+});
+expect(appVerified.dim.supported===true,'Official app capability verification should prove DIM feature availability');
+expect(appVerified.fx.supported===true,'Official app capability verification should prove FX feature availability');
+expect(appVerified.dim.evidence.includes('verified-official-app-capability'),'DIM app capability evidence marker missing');
+expect(appVerified.fx.evidence.includes('verified-official-app-capability'),'FX app capability evidence marker missing');
+
 const report=buildFixtureControlCapabilityReport();
 expect(report.totals.fixtures===539,'fixture total changed from verified catalog');
 expect(report.totals.cct>0,'CCT capability audit unexpectedly empty');

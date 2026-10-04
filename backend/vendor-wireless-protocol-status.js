@@ -56,7 +56,7 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
   Aladdin: {
     bluetooth: 'transport_verified_model_scoped',
-    wifi: 'not_verified_for-current-catalog',
+    wifi: 'not_verified_for_current_catalog',
     commandSpec: 'not_captured_from_public_vendor_docs',
     nextStep: 'vendor-protocol-research-or-physical-capture',
     evidence: [
@@ -77,24 +77,24 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
   'Kino Flo': {
-    bluetooth: 'not_verified_for-current-catalog',
-    wifi: 'not_verified_for-current-catalog',
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'not_verified_for_current_catalog',
     commandSpec: 'not_applicable_until-direct-transport-evidence',
     nextStep: 'keep-crmx-lumenradio-separated',
     evidence: ['https://kinoflo.com/true-match/'],
     note: 'Current public evidence is DMX/RDM/LumenRadio wireless DMX, not direct Bluetooth/Wi-Fi.'
   },
   'De Sisti': {
-    bluetooth: 'not_verified_for-current-catalog',
-    wifi: 'not_verified-for-current-catalog',
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'not_verified_for_current_catalog',
     commandSpec: 'not_applicable_until-direct-transport-evidence',
     nextStep: 'keep-wireless-dmx-separated',
     evidence: [],
     note: 'Current catalog wireless entries are not treated as Bluetooth/Wi-Fi.'
   },
   LiteGear: {
-    bluetooth: 'not_verified_for-current-catalog',
-    wifi: 'not_verified_for-current-catalog',
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'not_verified_for_current_catalog',
     commandSpec: 'not_applicable_until-direct-transport-evidence',
     nextStep: 'keep-litedimmer-control-path-separated',
     evidence: ['https://kinoflo.com/about-litedimmer/'],

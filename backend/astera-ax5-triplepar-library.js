@@ -22,11 +22,12 @@ export const ASTERA_AX5_TRIPLEPAR_FIXTURES = [
     weightKg: 3.4,
     control: {
       wired: ['5-pin XLR DMX'],
-      wireless: ['AsteraApp', 'CRMX/W-DMX', 'ART3 DMX (legacy)'],
+      wireless: ['AsteraApp', 'CRMX/W-DMX', 'ART3 DMX (legacy)', 'Bluetooth on AX5-BTB variant', 'WiFi on AX5-BTB variant'],
       builtInCRMX: true,
+      builtInBTBVariant: 'AX5-BTB',
       directLightingAI: [],
       externalInterfaceRequired: ['Wired DMX interface for 5-pin XLR DMX control', 'CRMX/W-DMX transmitter for wireless DMX control', 'ART3 transmitter for legacy ART3 DMX control'],
-      unavailableDirectProtocols: ['AsteraApp protocol is not publicly documented for third-party direct control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
       sourceUrls: ['https://astera-led.com/wp-content/uploads/AX5_TriplePAR_Technical_Reference_Manual_V1.pdf']
     },
     dmxModes: [{

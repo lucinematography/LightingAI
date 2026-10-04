@@ -1,0 +1,148 @@
+import { execFileSync } from 'node:child_process';
+
+const CONTROL_BASE='94f275f579399b26f8bd1c882b2a32a59bc4684a';
+
+function git(args){return execFileSync('git',args,{encoding:'utf8'}).trim();}
+function fail(message){throw new Error('Light AI Proba integration guard failed: '+message);}
+function existsAt(ref,path){
+  try{execFileSync('git',['cat-file','-e',`${ref}:${path}`],{stdio:'ignore'});return true;}
+  catch{return false;}
+}
+
+try{git(['cat-file','-e',`${CONTROL_BASE}^{commit}`]);}
+catch{fail('verified CONTROL base is unavailable; checkout must include full history');}
+try{git(['merge-base','--is-ancestor',CONTROL_BASE,'HEAD']);}
+catch{fail('Probe no longer descends from verified CONTROL base');}
+
+const allowed=new Set([
+  '.github/workflows/build-light-ai-probe.yml',
+  'app/build.gradle',
+  'app/src/main/AndroidManifest.xml',
+  'app/src/main/assets/catalog.js',
+  'app/src/main/assets/index.html',
+  'backend/build-equipment-catalog-snapshot.js',
+  'backend/catalog-runtime.js',
+  'backend/package.json',
+  'backend/project5-stable-base-selftest.js',
+  'backend/probe-integration-selftest.js',
+  'backend/nanlite-alien-current-library.js',
+  'backend/nanlite-catalog-selftest.js',
+  'backend/nanlite-compac-current-library.js',
+  'backend/nanlite-compac-daylight-legacy-library.js',
+  'backend/nanlite-creator-compact-library.js',
+  'backend/nanlite-creator-handheld-library.js',
+  'backend/nanlite-fc-720-library.js',
+  'backend/nanlite-fc-high-output-library.js',
+  'backend/nanlite-fm-current-library.js',
+  'backend/nanlite-forza-150b-legacy-library.js',
+  'backend/nanlite-forza-60-legacy-library.js',
+  'backend/nanlite-forza-720b-library.js',
+  'backend/nanlite-forza-bowens-legacy-library.js',
+  'backend/nanlite-forza-daylight-library.js',
+  'backend/nanlite-forza-ii-library.js',
+  'backend/nanlite-fs-current-library.js',
+  'backend/nanlite-fs-legacy-library.js',
+  'backend/nanlite-halo-legacy-library.js',
+  'backend/nanlite-litolite-early-legacy-library.js',
+  'backend/nanlite-litolite-legacy-library.js',
+  'backend/nanlite-lumipad-current-library.js',
+  'backend/nanlite-miro-current-library.js',
+  'backend/nanlite-mixpad-library.js',
+  'backend/nanlite-mixpanel-legacy-library.js',
+  'backend/nanlite-pavobulb-current-library.js',
+  'backend/nanlite-pavoslim-60-120-library.js',
+  'backend/nanlite-pavoslim-extended-library.js',
+  'backend/nanlite-pavotube-10-current-library.js',
+  'backend/nanlite-pavotube-ii-c-library.js',
+  'backend/nanlite-pavotube-ii-xr-library.js',
+  'backend/nanlite-pavotube-t8-7x-library.js',
+  'backend/nanlite-pavotube-x-legacy-library.js',
+  'backend/nanlite-sa-legacy-library.js',
+  'backend/nanlite-tk-legacy-library.js'
+]);
+
+const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);
+const unexpected=changed.filter(p=>!allowed.has(p));
+if(unexpected.length) fail('unexpected files changed after verified CONTROL base: '+unexpected.join(', '));
+
+const mustRemainIdentical=[
+  'app/src/main/assets/control-bootstrap.js',
+  'app/src/main/assets/control-routing.js',
+  'app/src/main/assets/control-dashboard.js',
+  'app/src/main/assets/control-system-drivers.js',
+  'app/src/main/assets/ble-control.js',
+  'app/src/main/java/com/lightingai/app/BleDeviceScanner.java',
+  'app/src/main/java/com/lightingai/app/BleGattInspector.java',
+  'app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java',
+  'app/src/main/java/com/lightingai/app/AsteraBtbClassicInspector.java',
+  'backend/astera-btsnoop-analyzer.js',
+  'backend/astera-att-diff.js',
+  'backend/astera-att-consensus.js',
+  'backend/astera-att-session-consensus.js',
+  'backend/astera-att-session-filter.js',
+  'backend/astera-att-sweep.js',
+  'backend/astera-physical-capture-set.js',
+  'backend/control-production-selftest.js',
+  'backend/control-operator-desk-selftest.js',
+  'backend/control-catalog-audit.js',
+  'backend/control-system-drivers-selftest.js'
+];
+for(const path of mustRemainIdentical){
+  if(!existsAt(CONTROL_BASE,path)||!existsAt('HEAD',path)) fail('required CONTROL file missing: '+path);
+  if(git(['show',`${CONTROL_BASE}:${path}`])!==git(['show',`HEAD:${path}`])) fail('verified CONTROL file changed in Probe: '+path);
+}
+
+for(const removed of [
+  'app/src/main/assets/artnet-control.js',
+  'app/src/main/assets/dmx-patch-planner.js',
+  'app/src/main/assets/dmx-export.js',
+  'app/src/main/java/com/lightingai/app/ArtNetSender.java',
+  'app/src/main/java/com/lightingai/app/ArtNetLiveEngine.java',
+  'app/src/main/java/com/lightingai/app/ArtNetDiscovery.java',
+  'app/src/main/java/com/lightingai/app/SacnSender.java',
+  'app/src/main/java/com/lightingai/app/SacnLiveEngine.java'
+]){
+  if(existsAt('HEAD',removed)) fail('removed network/DMX runtime was resurrected: '+removed);
+}
+
+const gradle=git(['show','HEAD:app/build.gradle']);
+for(const marker of [
+  "applicationId 'com.lightingai.probe'",
+  "probeAppLabel = String.valueOf(project.findProperty('probeAppLabel') ?: 'Light AI Proba')",
+  "resValue 'string', 'app_name', probeAppLabel"
+]) if(!gradle.includes(marker)) fail('Probe Gradle identity marker missing: '+marker);
+
+const manifest=git(['show','HEAD:app/src/main/AndroidManifest.xml']);
+const controlManifest=git(['show',`${CONTROL_BASE}:app/src/main/AndroidManifest.xml`]);
+if(!manifest.includes('android:label="@string/app_name"')) fail('Probe manifest app label missing');
+if(manifest.replace('android:label="@string/app_name"','android:label="LIGHTING AI"')!==controlManifest)
+  fail('Probe manifest changed outside app label');
+
+const index=git(['show','HEAD:app/src/main/assets/index.html']);
+if(!index.includes('equipment-catalog-snapshot.js')) fail('embedded equipment catalog script is not loaded');
+
+const catalog=git(['show','HEAD:app/src/main/assets/catalog.js']);
+for(const marker of ["maker(x)==='nanlite'","window.LightingAIEmbeddedCatalog","setCatalogManufacturer(\\'nanlite\\')"])
+  if(!catalog.includes(marker)) fail('Nanlite/embedded catalog marker missing: '+marker);
+
+const runtime=git(['show','HEAD:backend/catalog-runtime.js']);
+for(const marker of [
+  "NANLITE_FM_CURRENT_FIXTURES",
+  "NANLITE_PAVOTUBE_II_XR_FIXTURES",
+  "normalizeDeSistiControl(fixtures)",
+  "normalizeGodoxControl(fixtures)",
+  "normalizeAladdinControl(fixtures)",
+  "qualifyLiteGearSpectrumG2Profiles(fixtures)",
+  "normalizeKinoFloControl(fixtures)"
+]) if(!runtime.includes(marker)) fail('merged runtime marker missing: '+marker);
+
+console.log(JSON.stringify({
+  ok:true,
+  suite:'Light AI Proba integration guard',
+  controlBase:CONTROL_BASE,
+  changedFiles:changed.length,
+  protectedControlFiles:mustRemainIdentical.length,
+  networkRuntime:'absent-as-verified',
+  applicationId:'com.lightingai.probe',
+  appLabel:'Light AI Proba'
+},null,2));

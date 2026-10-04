@@ -5,7 +5,8 @@ const SRC={
   fixture:'https://nanliteus.com/products/forza-720b-bi-color-led-spotlight-with-rolling-case',
   case:'https://nanliteus.com/products/rolling-padded-case-for-forza-720-720b',
   pj36:'https://nanliteus.com/products/pj-bm-projection-attachment-with-36-lens-for-bowens-mount',
-  pj19:'https://nanliteus.com/products/pj-bm-projection-attachment-with-19-lens-for-bowens-mount'
+  pj19:'https://nanliteus.com/products/pj-bm-projection-attachment-with-19-lens-for-bowens-mount',
+  sharedHeadCableEvidence:'https://nanliteus.com/products/head-cable-24-7ft-for-forza-720-720b-500-ii-500b-ii-300-ii-300b-ii'
 };
 
 function control(){
@@ -45,7 +46,14 @@ function included(id,model,category,sourceUrl,extra={}){
 
 export const NANLITE_FORZA_720B_ACCESSORIES=[
   included('nanlite-forza-720b-control-unit','Forza 720B Control Unit with V-Mount Plates','Power',SRC.fixture),
-  included('nanlite-forza-720b-head-cable','Forza 720B Head Cable 5 m','Cable',SRC.fixture),
+  {
+    id:'nanlite-forza-720b-head-cable',manufacturer:'Nanlite',model:'Forza 720 / 720B Head Cable 5 m',
+    category:'Cable',compatibleWith:['nanlite-forza-720','nanlite-forza-720b'],
+    compatibilityStatus:'Designed For',
+    includedWithFixtures:['nanlite-forza-720','nanlite-forza-720b'],
+    evidenceNote:'Nanlite long-head-cable product documentation explicitly states the included 5 m head cable is supplied with both Forza 720 and Forza 720B.',
+    sourceUrl:SRC.sharedHeadCableEvidence
+  },
   included('nanlite-forza-720b-power-cable','Forza 720B Power Cable 6 m','Cable',SRC.fixture),
   included('nanlite-forza-720b-cob-cap','AS-CAP-BW-B COB Protective Cap','Other',SRC.fixture),
   {

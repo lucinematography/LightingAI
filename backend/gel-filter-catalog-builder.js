@@ -1,14 +1,5 @@
 export const GEL_FILTER_SOURCES = [
   {
-    key: 'lee-lighting-filters',
-    manufacturer: 'LEE Filters',
-    line: 'Lighting Filters',
-    category: 'lighting-filter',
-    url: 'https://leefilters.com/lighting/lee-lighting-filters-colour-comparison-tool/',
-    parser: 'lee',
-    minCount: 300
-  },
-  {
     key: 'rosco-supergel',
     manufacturer: 'Rosco',
     line: 'Supergel',

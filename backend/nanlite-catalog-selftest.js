@@ -99,6 +99,23 @@ else {
   if(dtap.compatibleWith?.includes('nanlite-pavotube-ii-6xr')) failures.push('CB-DT/DC must not be linked to USB-C-only PavoTube II 6XR');
   if(dtap.connectorA!=='D-Tap'||dtap.connectorB!=='5.5mm DC barrel') failures.push('CB-DT/DC connector identity mismatch');
 }
+const powerbankGrip=accessoryById.get('nanlite-bt-bg-pb');
+if(!powerbankGrip) failures.push('Missing BT-BG-PB powerbank battery grip');
+else {
+  for(const target of ['nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c'])
+    if(!powerbankGrip.compatibleWith?.includes(target)) failures.push('BT-BG-PB missing '+target);
+  for(const forbidden of ['nanlite-forza-60c','nanlite-forza-60b-ii','nanlite-fs-60b'])
+    if(powerbankGrip.compatibleWith?.includes(forbidden)) failures.push('BT-BG-PB must not infer '+forbidden);
+  if(powerbankGrip.powerSource!=='USB-C PD power bank') failures.push('BT-BG-PB power source identity mismatch');
+}
+const npfPowerbankHolder=accessoryById.get('nanlite-as-pbh-npf');
+if(!npfPowerbankHolder) failures.push('Missing AS-PBH-NPF power bank holder');
+else {
+  for(const target of ['nanlite-miro-30c','nanlite-miro-60c','nanlite-wand'])
+    if(!npfPowerbankHolder.compatibleWith?.includes(target)) failures.push('AS-PBH-NPF missing '+target);
+  for(const forbidden of ['nanlite-pico','nanlite-lumo'])
+    if(npfPowerbankHolder.compatibleWith?.includes(forbidden)) failures.push('AS-PBH-NPF must not infer '+forbidden);
+}
 const npf=accessoryById.get('nanlite-bt-bg-fz60');
 for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b']) if(!npf?.compatibleWith?.includes(id)) failures.push('NP-F grip missing '+id);
 for(const target of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'])

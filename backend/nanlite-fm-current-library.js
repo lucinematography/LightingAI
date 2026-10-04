@@ -31,6 +31,8 @@ const SRC = {
   npfGrip:'https://nanliteus.com/products/np-f-battery-grip-for-forza-60-ii-60b-ii-and-60c',
   vmountGrip:'https://nanliteus.com/products/v-mount-battery-grip-for-forza-60-ii-60b-ii-60c-and-fc-60b',
   xlrVmountGrip:'https://nanliteus.com/products/v-mount-battery-grip-for-forza-150b-and-fc-120b',
+  powerbankGrip:'https://nanliteus.com/products/powerbank-battery-grip-for-fc-60b-and-fc-120b',
+  fc120cPowerbank:'https://nanliteus.com/blogs/learn/the-new-nanlite-fc-120c-spotlight-color-on-the-go',
   rc:'https://nanliteus.com/products/nanlink-ws-rc-c2-2-4ghz-remote-control',
   tb:'https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box',
   rf45:'https://nanliteus.com/products/rf-fmm-45-45-degree-reflector-for-fm-mount',
@@ -245,6 +247,15 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
   {
     id:'nanlite-bt-bg-xlr4-ii',manufacturer:'Nanlite',model:'BT-BG-XLR4-II V-Mount Battery Grip with 4-Pin XLR',
     category:'Power',compatibleWith:VMOUNT_XLR,compatibilityStatus:'Designed For',sourceUrl:SRC.xlrVmountGrip
+  },
+  {
+    id:'nanlite-bt-bg-pb',manufacturer:'Nanlite',model:'BT-BG-PB Powerbank Battery Grip',
+    category:'Power',compatibleWith:['nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c'],
+    compatibilityStatus:'Designed For',mount:'5/8 in receiver',
+    powerSource:'USB-C PD power bank',
+    conditions:['Power bank sold separately','Fixture must support USB-C PD input'],
+    compatibilityEvidenceNote:'Current BT-BG-PB product page explicitly supports FC-60B and FC-120B. Nanlite FC-120C launch documentation separately confirms BT-BG-PB use with FC-120C.',
+    evidenceSources:[SRC.powerbankGrip,SRC.fc120cPowerbank],sourceUrl:SRC.powerbankGrip
   },
   {
     id:'nanlite-bt-v-14-4v98',manufacturer:'Nanlite',model:'BT-V-14.4V98 Mini V-Mount Battery 14.4V 98Wh Li-ion',

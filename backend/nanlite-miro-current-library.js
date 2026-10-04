@@ -7,7 +7,8 @@ const SRC={
   guide:'https://nanliteus.com/blogs/learn/the-new-nanlite-miro-60c-30c-round-led-panel-lights',
   npf750:'https://nanliteus.com/products/np-f750-lithium-ion-battery-mint-blue',
   npf970:'https://nanliteus.com/products/np-f970-lithium-ion-battery-mint-blue',
-  npfCharger:'https://nanliteus.com/products/bt-cg-npf-2-dual-slot-np-f-battery-charger-mint-blue'
+  npfCharger:'https://nanliteus.com/products/bt-cg-npf-2-dual-slot-np-f-battery-charger-mint-blue',
+  powerBankHolder:'https://nanliteus.com/products/power-bank-holder-for-np-f-mount'
 };
 
 function control(){
@@ -75,8 +76,10 @@ export const NANLITE_MIRO_CURRENT_ACCESSORIES=[
   },
   {
     id:'nanlite-as-pbh-npf',manufacturer:'Nanlite',model:'AS-PBH-NPF Power Bank Holder for NP-F Mount',
-    category:'Mount',compatibleWith:BOTH,compatibilityStatus:'Designed For',
-    conditions:['Secures a USB-C PD power bank to the fixture body'],sourceUrl:SRC.guide
+    category:'Mount',compatibleWith:[...BOTH,'nanlite-wand'],compatibilityStatus:'Designed For',
+    conditions:['Secures a USB-C PD power bank to the fixture NP-F mount'],
+    compatibilityEvidenceNote:'Current Nanlite product page explicitly names wand, miro 30C and miro 60C.',
+    sourceUrl:SRC.powerBankHolder
   },
 
   included('nanlite-miro-30c-diffuser','miro 30c Magnetic Diffuser','Diffusion','nanlite-miro-30c',SRC.m30),

@@ -1,13 +1,8 @@
 function clean(v){return String(v??'').trim()}
 
-export function deriveFixtureStructuralClass(fixture){
-  const explicit=clean(fixture?.formFactor);
-  const text=[
-    explicit,
-    clean(fixture?.family),
-    clean(fixture?.sourceType),
-    clean(fixture?.model)
-  ].filter(Boolean).join(' ').toLowerCase();
+function classifyText(value,manufacturer){
+  const text=clean(value).toLowerCase();
+  if(!text) return null;
 
   if(/fresnel/.test(text)) return 'Fresnel';
   if(/\b(tube|pixeltube|pavotube)\b/.test(text)) return 'Tube';
@@ -20,8 +15,37 @@ export function deriveFixtureStructuralClass(fixture){
   if(/pocket|handheld/.test(text)) return 'Pocket / Handheld';
   if(/\bpar\b|lightdrop|triplepar|powerpar/.test(text)) return 'PAR / Point Light';
   if(/spotlight|monolight|\bcob\b|focusable|quikspot|quikbeam|quikpunch/.test(text)) return 'Spotlight / Monolight';
-  if(/\b(ls|storm|electro storm)\b/.test(text) && fixture?.manufacturer==='Aputure') return 'Spotlight / Monolight';
-  if(/\b(knowled m|knowled mg|knowled ms|litemons la|sl cob|ml portable cob)\b/.test(text) && fixture?.manufacturer==='Godox') return 'Spotlight / Monolight';
+  if(/\b(ls|storm|electro storm)\b/.test(text) && manufacturer==='Aputure') return 'Spotlight / Monolight';
+  if(/\b(knowled m|knowled mg|knowled ms|litemons la|sl cob|ml portable cob)\b/.test(text) && manufacturer==='Godox') return 'Spotlight / Monolight';
 
   return null;
+}
+
+export function deriveFixtureStructuralClassification(fixture){
+  const manufacturer=clean(fixture?.manufacturer);
+  const sources=[
+    ['formFactor',fixture?.formFactor],
+    ['sourceType',fixture?.sourceType],
+    ['family',fixture?.family],
+    ['model',fixture?.model]
+  ];
+  for(const [basis,value] of sources){
+    const className=classifyText(value,manufacturer);
+    if(className) return {
+      className,
+      basis,
+      evidence:clean(value),
+      auditOnly:true
+    };
+  }
+  return {
+    className:null,
+    basis:null,
+    evidence:null,
+    auditOnly:true
+  };
+}
+
+export function deriveFixtureStructuralClass(fixture){
+  return deriveFixtureStructuralClassification(fixture).className;
 }

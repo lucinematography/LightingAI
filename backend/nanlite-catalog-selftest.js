@@ -18,12 +18,13 @@ import { NANLITE_LUMIPAD_CURRENT_FIXTURES, NANLITE_LUMIPAD_CURRENT_ACCESSORIES }
 import { NANLITE_MIRO_CURRENT_FIXTURES, NANLITE_MIRO_CURRENT_ACCESSORIES } from './nanlite-miro-current-library.js';
 import { NANLITE_CREATOR_HANDHELD_FIXTURES, NANLITE_CREATOR_HANDHELD_ACCESSORIES } from './nanlite-creator-handheld-library.js';
 import { NANLITE_CREATOR_COMPACT_FIXTURES, NANLITE_CREATOR_COMPACT_ACCESSORIES } from './nanlite-creator-compact-library.js';
+import { NANLITE_FORZA_150B_LEGACY_FIXTURES, NANLITE_FORZA_150B_LEGACY_ACCESSORIES } from './nanlite-forza-150b-legacy-library.js';
 
 const failures=[];
 const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOSLIM_EXTENDED_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_T8_7X_FIXTURES,...NANLITE_PAVOBULB_CURRENT_FIXTURES,...NANLITE_FS_CURRENT_FIXTURES,...NANLITE_LUMIPAD_CURRENT_FIXTURES,...NANLITE_MIRO_CURRENT_FIXTURES,...NANLITE_CREATOR_HANDHELD_FIXTURES,...NANLITE_CREATOR_COMPACT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
-const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES];
+const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES,...NANLITE_FORZA_150B_LEGACY_FIXTURES];
 const fixtures=[...currentFixtures,...legacyFixtures];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_LUMIPAD_CURRENT_ACCESSORIES,...NANLITE_MIRO_CURRENT_ACCESSORIES,...NANLITE_CREATOR_HANDHELD_ACCESSORIES,...NANLITE_CREATOR_COMPACT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_LUMIPAD_CURRENT_ACCESSORIES,...NANLITE_MIRO_CURRENT_ACCESSORIES,...NANLITE_CREATOR_HANDHELD_ACCESSORIES,...NANLITE_CREATOR_COMPACT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FORZA_150B_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 const accessoryModels=new Map();
@@ -407,6 +408,18 @@ for(const [fixtureId,accessoryId] of [
   ['nanlite-lumo','nanlite-lumo-magnetic-ring']
 ]){
   if(!accessoryById.get(accessoryId)?.compatibleWith?.includes(fixtureId)) failures.push(accessoryId+' missing '+fixtureId);
+}
+const forza150=fixtures.find(x=>x.id==='nanlite-forza-150b');
+if(!forza150) failures.push('Missing legacy Nanlite Forza 150B');
+else {
+  if(forza150.discontinued!==true) failures.push('Forza 150B must be legacy/discontinued');
+  if(forza150.control?.builtInCRMX) failures.push('Forza 150B must not claim CRMX');
+  for(const p of ['DMX512','RDM']) if(!(forza150.control?.wired||[]).includes(p)) failures.push('Forza 150B missing '+p);
+  for(const p of ['Bluetooth / NANLINK app','2.4G']) if(!(forza150.control?.wireless||[]).includes(p)) failures.push('Forza 150B missing '+p);
+}
+for(const id of ['nanlite-as-ba-fmm','nanlite-fl-11','nanlite-pj-fmm-19','nanlite-pj-fmm-36','nanlite-sb-fmm-o-40','nanlite-sb-fmm-o-60','nanlite-bt-bg-xlr4-ii','nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-rf-fmm-45','nanlite-cb-dmx-3-5c-1-2']){
+  const a=accessoryById.get(id);
+  if(!a?.compatibleWith?.includes('nanlite-forza-150b')) failures.push(id+' missing Forza 150B');
 }
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

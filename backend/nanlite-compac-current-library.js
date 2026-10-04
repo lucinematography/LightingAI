@@ -75,23 +75,23 @@ export const NANLITE_COMPAC_CURRENT_ACCESSORIES=[
   accessory(
     'nanlite-compac-100-softbox',
     'Compac 100 / 100B Rapid-Fold Collapsible Softbox',
-    'Softbox',['nanlite-compac-100b'],SRC.guide
+    'Softbox',['nanlite-compac-100b','nanlite-compac-100'],SRC.guide
   ),
   accessory(
     'nanlite-compac-100-lantern',
     'Compac 100 / 100B Rapid-Fold Collapsible Lantern Softbox',
-    'Lantern',['nanlite-compac-100b'],SRC.lantern100,
+    'Lantern',['nanlite-compac-100b','nanlite-compac-100'],SRC.lantern100,
     {beamAngleDeg:270}
   ),
   accessory(
     'nanlite-compac-200-softbox',
     'Compac 200 / 200B Rapid-Fold Collapsible Softbox',
-    'Softbox',['nanlite-compac-200b'],SRC.guide
+    'Softbox',['nanlite-compac-200b','nanlite-compac-200'],SRC.guide
   ),
   accessory(
     'nanlite-compac-200-lantern',
     'Compac 200 / 200B Rapid-Fold Collapsible Lantern Softbox',
-    'Lantern',['nanlite-compac-200b'],SRC.guide
+    'Lantern',['nanlite-compac-200b','nanlite-compac-200'],SRC.guide
   ),
   included('nanlite-compac-68b-power-cable','Compac 68B Power Cable','Cable','nanlite-compac-68b',SRC.c68),
   included('nanlite-compac-100b-power-cable','Compac 100B Power Cable','Cable','nanlite-compac-100b',SRC.c100),

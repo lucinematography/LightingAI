@@ -42,7 +42,8 @@
     "test:fixture-control-capabilities": "node fixture-control-capabilities-selftest.js",
     "test:operator-control-planning": "node operator-control-planning-report-selftest.js",
     "test:wireless-capability-gaps": "node wireless-control-capability-gap-report-selftest.js",
-    "test:aputure-wireless-verification": "node aputure-wireless-verification-selftest.js"
+    "test:aputure-wireless-verification": "node aputure-wireless-verification-selftest.js",
+    "test:arri-wireless-verification": "node arri-wireless-verification-selftest.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

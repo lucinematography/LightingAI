@@ -33,7 +33,7 @@ function loadOne(item){
 async function start(){
  for(const item of scripts)await loadOne(item);
  window.LightingAIControlBootstrapReady=true;
- window.LightingAIControlBootstrapMode='bluetooth-only';
+ window.LightingAIControlBootstrapMode='vendor-wireless';
  window.dispatchEvent(new CustomEvent('lightingai-control-ready'));
 }
 start().catch(error=>{

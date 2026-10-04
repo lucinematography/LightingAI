@@ -208,6 +208,10 @@ const swit=byManufacturer.get('SWIT');
 if(!swit || swit.bluetooth!==7 || swit.wifi!==0 || swit.both!==0) {
   failures.push('SWIT wireless coverage expected 7 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const dracast=byManufacturer.get('Dracast');
+if(!dracast || dracast.bluetooth!==2 || dracast.wifi!==0 || dracast.both!==0) {
+  failures.push('Dracast wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

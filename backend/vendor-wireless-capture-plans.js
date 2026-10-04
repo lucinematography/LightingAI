@@ -113,6 +113,35 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  SWIT: {
+    id:'swit-console-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'SWIT Console',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact SWIT model at a time with SWIT Console.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer commands across VANGO, MONET, CL, and Mini families without matching physical evidence.'
+    ],
+    officialSources:[
+      'https://swit.cc/index.php?c=article&id=2501',
+      'https://swit.cc/index.php?c=article&id=2502',
+      'https://swit.cc/index.php?c=article&id=2613',
+      'https://www.swit.cc/index.php?c=article&id=3114',
+      'https://www.swit.cc/index.php?c=article&id=3115',
+      'https://swit.cc/index.php?c=article&id=2670',
+      'https://www.swit.cc/index.php?c=article&id=4440'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one SWIT fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state where supported.'},
+      color:{runs:3,optional:true,rule:'Only on RGB-capable models; perform exactly one color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Harlowe: {
     id:'harlowe-app-bluetooth-capture-v1',
     transport:'bluetooth',

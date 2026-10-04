@@ -113,6 +113,27 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  VILTROX: {
+    id:'viltrox-weeylite-pro-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Weeylite Pro',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact VILTROX Ninja 30 or Ninja 30B fixture at a time with Weeylite Pro.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer compatibility to unrelated Weeylite/Viltrox models without exact-model evidence.'
+    ],
+    officialSources:[
+      'https://viltrox.com/products/viltrox-ninja-30-30b'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one VILTROX fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state on Ninja 30B; keep Ninja 30 fixed-daylight captures separate.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   VELVET: {
     id:'velvet-evo-wireless-capture-v1',
     transport:'bluetooth',

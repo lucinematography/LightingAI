@@ -31,6 +31,23 @@ function capabilityVerification(fixture,key){
   const row=c.capabilityVerification?.[key];
   return row&&row.verified===true?row:null;
 }
+function deriveVerifiedControlCapabilities(fixture){
+  const keys=keySet(fixture);
+  const evidenceFor=(key,names,extraMatch)=> {
+    const evidence=[];
+    if(hasAny(keys,names) || (typeof extraMatch==='function' && extraMatch(keys))) evidence.push('verified-dmx-control');
+    if(capabilityVerification(fixture,key)) evidence.push('verified-official-app-capability');
+    return {supported:evidence.length>0,evidence:[...new Set(evidence)]};
+  };
+  return {
+    dim:evidenceFor('dim',['dimmer','intensity','masterdimmer','master_dimmer']),
+    cct:evidenceFor('cct',['cct','kelvin','temperature','color_temperature']),
+    color:evidenceFor('color',['red','green','blue','white','amber','lime','cyan','hue','saturation','x','y','xy','crossfade']),
+    fx:evidenceFor('fx',[],keys=>[...keys].some(key=>key==='effect'||key==='effects'||key.startsWith('fx'))),
+    verifiedDmxModes:verifiedModes(fixture).length
+  };
+}
+
 function deriveFixtureControlCapabilities(fixture){
   const keys=keySet(fixture);
   const dimEvidence=[];
@@ -103,4 +120,4 @@ if(import.meta.url===`file://${process.argv[1]}`){
   },null,2));
 }
 
-export { verifiedModes, verifiedControls, validCctRange, declaredColorEngine, capabilityVerification, deriveFixtureControlCapabilities, buildFixtureControlCapabilityReport };
+export { verifiedModes, verifiedControls, validCctRange, declaredColorEngine, capabilityVerification, deriveVerifiedControlCapabilities, deriveFixtureControlCapabilities, buildFixtureControlCapabilityReport };

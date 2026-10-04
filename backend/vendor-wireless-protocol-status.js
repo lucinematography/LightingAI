@@ -133,6 +133,11 @@ export function commandProductionReadyForStatus(row,requiredTransports=[],requir
     scope.fixtureIds.length>0
   )) return false;
   const evidence=row?.productionEvidence;
+  const linkedCapturePlanIds=[
+    row?.capturePlanId,
+    ...((Array.isArray(row?.secondaryCapturePlanIds)?row.secondaryCapturePlanIds:[]))
+  ].filter(Boolean).map(String);
+  if(linkedCapturePlanIds.length===0) return false;
   if(!(
     evidence &&
     evidence.physicalReplayVerified===true &&
@@ -142,8 +147,12 @@ export function commandProductionReadyForStatus(row,requiredTransports=[],requir
     Array.isArray(evidence.verifiedTransports) &&
     evidence.verifiedTransports.length>0 &&
     Array.isArray(evidence.verifiedFixtureIds) &&
-    evidence.verifiedFixtureIds.length>0
+    evidence.verifiedFixtureIds.length>0 &&
+    Array.isArray(evidence.capturePlanIds) &&
+    evidence.capturePlanIds.length>0
   )) return false;
+  const evidencePlanIds=new Set(evidence.capturePlanIds.map(String));
+  if(!linkedCapturePlanIds.every(id=>evidencePlanIds.has(id))) return false;
   const declared=new Set(scope.transports.map(x=>String(x).toLowerCase()));
   if(!requiredTransports.every(t=>declared.has(String(t).toLowerCase()))) return false;
   const evidenceTransports=new Set(evidence.verifiedTransports.map(x=>String(x).toLowerCase()));

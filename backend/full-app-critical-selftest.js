@@ -30,5 +30,26 @@ for(const forbidden of [
 
 expect(!read('app/src/main/java/com/lightingai/app/BleGattInspector.java').includes('writeCharacteristic('),'BLE diagnostics may not send proprietary writes');
 for(const removed of ['app/src/main/assets/artnet-control.js','app/src/main/assets/dmx-patch-planner.js','app/src/main/assets/dmx-export.js'])expect(!exists(removed),'removed network asset still present: '+removed);
+const failClosedRuntime=[
+  ['control-system-drivers.js',read('app/src/main/assets/control-system-drivers.js')],
+  ['control-routing.js',read('app/src/main/assets/control-routing.js')],
+  ['control-dashboard.js',dashboard],
+  ['ble-control.js',ble],
+  ['ai-control-bridge.js',aiBridge]
+];
+for(const [name,text] of failClosedRuntime){
+  for(const forbidden of [
+    /production\s*:\s*true/,
+    /status\s*:\s*['"]production['"]/,
+    /semanticReady\s*:\s*true/,
+    /transportReady\s*:\s*true/
+  ]) expect(!forbidden.test(text),'CONTROL runtime must remain fail-closed until physical driver verification: '+name+' matched '+String(forbidden));
+}
+for(const nativePath of [
+  'app/src/main/java/com/lightingai/app/MainActivity.java',
+  'app/src/main/java/com/lightingai/app/BleGattInspector.java'
+]){
+  expect(!read(nativePath).includes('writeCharacteristic('),'Native CONTROL bridge may not expose proprietary characteristic writes before physical verification: '+nativePath);
+}
 console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'vendor-wireless-bluetooth-wifi',failures},null,2));
 if(failures.length)process.exit(1);

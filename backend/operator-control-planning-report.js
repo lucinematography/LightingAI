@@ -31,15 +31,23 @@ export function buildOperatorControlPlanningReport(){
   const by=new Map();
   const requiredFixtureIdsByMaker=new Map();
   const requiredTransportsByMaker=new Map();
+  const requiredRoutesByMaker=new Map();
   for(const fixture of fixtures){
     const flags=catalogWirelessFlags(fixture);
     if(!flags.bluetooth&&!flags.wifi) continue;
     const maker=fixture?.manufacturer||'Unknown';
     if(!requiredFixtureIdsByMaker.has(maker)) requiredFixtureIdsByMaker.set(maker,[]);
     if(!requiredTransportsByMaker.has(maker)) requiredTransportsByMaker.set(maker,new Set());
+    if(!requiredRoutesByMaker.has(maker)) requiredRoutesByMaker.set(maker,[]);
     if(fixture?.id) requiredFixtureIdsByMaker.get(maker).push(String(fixture.id));
-    if(flags.bluetooth) requiredTransportsByMaker.get(maker).add('bluetooth');
-    if(flags.wifi) requiredTransportsByMaker.get(maker).add('wifi');
+    if(flags.bluetooth) {
+      requiredTransportsByMaker.get(maker).add('bluetooth');
+      if(fixture?.id) requiredRoutesByMaker.get(maker).push({fixtureId:String(fixture.id),transport:'bluetooth'});
+    }
+    if(flags.wifi) {
+      requiredTransportsByMaker.get(maker).add('wifi');
+      if(fixture?.id) requiredRoutesByMaker.get(maker).push({fixtureId:String(fixture.id),transport:'wifi'});
+    }
   }
 
   for(const fixture of fixtures){
@@ -84,10 +92,12 @@ export function buildOperatorControlPlanningReport(){
       commandReady:vendorWideCommandProductionReady(
         row.manufacturer,
         [...(requiredTransportsByMaker.get(row.manufacturer)||new Set())],
-        requiredFixtureIdsByMaker.get(row.manufacturer)||[]
+        requiredFixtureIdsByMaker.get(row.manufacturer)||[],
+        requiredRoutesByMaker.get(row.manufacturer)||[]
       ),
       requiredProductionTransports:[...(requiredTransportsByMaker.get(row.manufacturer)||new Set())],
       requiredProductionFixtureIds:requiredFixtureIdsByMaker.get(row.manufacturer)||[],
+      requiredProductionRoutes:requiredRoutesByMaker.get(row.manufacturer)||[],
       bluetoothPlanId:row.bluetoothFixtures?planFor(plan,'bluetooth'):null,
       wifiPlanId:row.wifiFixtures?planFor(plan,'wifi'):null,
       nextStep:status?.nextStep||'status-missing'

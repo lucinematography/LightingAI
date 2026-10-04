@@ -157,6 +157,7 @@ import { normalizeKinoFloControl } from './kinoflo-control-verification.js';
 import { normalizeAputureWirelessControl } from './aputure-wireless-verification.js';
 import { normalizeArriWirelessControl } from './arri-wireless-verification.js';
 import { normalizeNanliteWirelessVerification } from './nanlite-wireless-verification.js';
+import { normalizeEvLightWirelessVerification } from './evlight-wireless-verification.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function unique(values = []) { return [...new Set(values)]; }
@@ -262,6 +263,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(EVLIGHT_GEMX_HARD_FIXTURES));
   fixtures.push(...clone(EVLIGHT_PROFILE_FIXTURES));
   fixtures.push(...clone(EVLIGHT_GEMX_LARGE_FIXTURES));
+  normalizeEvLightWirelessVerification(fixtures);
   fixtures.push(...clone(KINOFLO_CURRENT_FIXTURES));
   fixtures.push(...clone(KINOFLO_FREESTYLE_AIR_FIXTURES));
   fixtures.push(...clone(KINOFLO_CELEB_LED_FIXTURES));

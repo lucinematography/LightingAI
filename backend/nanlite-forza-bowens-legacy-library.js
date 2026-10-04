@@ -25,7 +25,7 @@ export const NANLITE_FORZA_BOWENS_LEGACY_FIXTURES=[
     batteryPowered:true,
     batteryOptions:['14.4V-14.8V / 12A V-Mount battery','26V / 12A V-Mount battery'],
     control:{
-      wired:[],wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
+      wired:[],wireless:['2.4G via NANLINK WS-TB-1','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
       directLightingAI:[],
       externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
       unavailableDirectProtocols:[proprietary],
@@ -41,7 +41,7 @@ export const NANLITE_FORZA_BOWENS_LEGACY_FIXTURES=[
     cctK:{fixed:5600},colorMode:'Daylight',batteryPowered:true,
     batteryOptions:['Two 14.8V V-Mount batteries via legacy Control Unit','AC via removable power adapter'],
     control:{
-      wired:[],wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
+      wired:[],wireless:['2.4G via NANLINK WS-TB-1','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
       directLightingAI:[],
       externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
       unavailableDirectProtocols:[proprietary],
@@ -57,7 +57,7 @@ export const NANLITE_FORZA_BOWENS_LEGACY_FIXTURES=[
     colorMode:'Bi-Color',batteryPowered:true,
     batteryOptions:['Two 14.8V V-Mount batteries via legacy Control Unit','AC via removable power supply'],
     control:{
-      wired:[],wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
+      wired:[],wireless:['2.4G via NANLINK WS-TB-1','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
       directLightingAI:[],
       externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
       unavailableDirectProtocols:[proprietary],
@@ -72,7 +72,7 @@ export const NANLITE_FORZA_BOWENS_LEGACY_FIXTURES=[
     sourceType:'Daylight LED Spotlight',mount:'Bowens',
     cctK:{fixed:5600},colorMode:'Daylight',batteryPowered:true,
     control:{
-      wired:[],wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
+      wired:[],wireless:['2.4G via NANLINK WS-TB-1','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
       directLightingAI:[],
       externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
       unavailableDirectProtocols:[proprietary],

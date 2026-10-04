@@ -50,7 +50,7 @@ function included(id,model,category,target,sourceUrl,extra={}){
 export const NANLITE_PAVOTUBE_II_C_ACCESSORIES=[
   {
     id:'nanlite-cb-dmx-3-5c-1-2',manufacturer:'Nanlite',model:'CB-DMX-3.5C-1/2 DMX Adapter Cable with Locking 3.5mm Connector',
-    category:'Control',compatibleWith:BOTH,compatibilityStatus:'Designed For',
+    category:'Control',compatibleWith:[...BOTH,'nanlite-pavoslim-360c'],compatibilityStatus:'Designed For',
     conditions:['Required for wired DMX/RDM on PavoTube II 15C and 30C'],sourceUrl:'https://nanliteus.com/products/cb-dmx-3-5c-1-2-dmx-adapter-cable-with-locking-3-5mm-connector'
   },
   {

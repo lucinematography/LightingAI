@@ -2,6 +2,9 @@
 const ALADDIN_MOSAIC_SOURCE='https://aladdin-lights.com/mosaic-2x4/';
 const ALADDIN_ALL_IN_ONE_SOURCE='https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-ONE-Manual-corrected-version-05.02.2024.pdf';
 const ALADDIN_ALL_IN_TWO_SOURCE='https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-TWO-Manual-corrected-version-05.02.2024.pdf';
+const ALADDIN_BLUETOOTH_SOURCE='https://aladdin-lights.com/mosaic-2x4/';
+const ALADDIN_MOSAIC_MANUAL='https://aladdin-lights.com/wp-content/uploads/2023/09/MOSAIC-4x4-Manual-SINGLE-PAGE.pdf';
+
 function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
 }

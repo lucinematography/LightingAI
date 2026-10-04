@@ -228,6 +228,10 @@ const viltrox=byManufacturer.get('VILTROX');
 if(!viltrox || viltrox.bluetooth!==2 || viltrox.wifi!==0 || viltrox.both!==0) {
   failures.push('VILTROX wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const phottix=byManufacturer.get('Phottix');
+if(!phottix || phottix.bluetooth!==4 || phottix.wifi!==0 || phottix.both!==0) {
+  failures.push('Phottix wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

@@ -36,6 +36,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  Rotolight: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'rotolight-app-direct-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['rotolight-app-direct-wifi-capture-v1'],
+    evidence: [
+      'https://rotolight.com/pages/neo-3-support',
+      'https://rotolight.com/pages/ap3-support',
+      'https://rotolight.com/pages/titan-support'
+    ],
+    note: 'Rotolight app Bluetooth is model-scoped; NEO 3/AEOS 2/Anova PRO 3 also have model-scoped Wi-Fi, while Titan X1/X2 remain Bluetooth-only in this catalog evidence set.'
+  },
   Creamsource: {
     bluetooth: 'transport_verified_model_family_scoped',
     wifi: 'not_direct_fixture_route_in_current_catalog',

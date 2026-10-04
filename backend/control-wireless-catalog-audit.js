@@ -140,6 +140,10 @@ const evlight=byManufacturer.get('EV Light');
 if(!evlight || evlight.bluetooth!==2 || evlight.wifi!==5 || evlight.both!==2) {
   failures.push('EV Light wireless coverage expected 2 Bluetooth / 5 Wi-Fi / 2 both');
 }
+const rotolight=byManufacturer.get('Rotolight');
+if(!rotolight || rotolight.bluetooth!==7 || rotolight.wifi!==5 || rotolight.both!==5) {
+  failures.push('Rotolight wireless coverage expected 7 Bluetooth / 5 Wi-Fi / 5 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

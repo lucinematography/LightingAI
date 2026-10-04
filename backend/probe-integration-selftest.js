@@ -25,6 +25,7 @@ const allowed=new Set([
   'backend/build-equipment-catalog-snapshot.js',
   'backend/catalog-runtime.js',
   'backend/creamsource-vortex-library.js',
+  'backend/rotolight-app-wireless-library.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js',
   'backend/probe-integration-selftest.js',

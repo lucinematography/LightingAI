@@ -113,6 +113,46 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  Rotolight: {
+    id:'rotolight-app-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Rotolight app',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one Rotolight fixture whose catalog entry explicitly verifies Bluetooth app control.',
+      'Use the official Rotolight app and isolate one fixture where practical.',
+      'Do not treat LumenRadio CRMX, wDMX, flash receivers, or Wi-Fi traffic as Bluetooth command evidence.',
+      'Record Bluetooth and Wi-Fi paths in separate capture sets.'
+    ],
+    officialSources:[
+      'https://rotolight.com/pages/neo-3-support',
+      'https://rotolight.com/pages/titan-support',
+      'https://rotolight.com/pages/ap3-support'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one fixture through the Rotolight app over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known output perform exactly one power/intensity change per capture.'},
+      cct:{runs:3,rule:'On a CCT-capable fixture perform exactly one CCT change from the same initial state per capture.'},
+      color:{runs:3,rule:'On an RGBWW fixture perform exactly one color change per capture after DIM/CCT evidence is stable.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; activate one CineSFX preset per capture.'}
+    },
+    secondaryPlans:[
+      {
+        id:'rotolight-app-direct-wifi-capture-v1',
+        transport:'wifi',
+        target:'Rotolight models whose catalog metadata explicitly verifies Wi-Fi app control',
+        commandSpecStatus:'public-wifi-command-spec-not-located-in-official-docs',
+        rule:'Use the official Rotolight app with exactly one Wi-Fi-capable fixture. Capture three no-change sessions and isolated DIM/COLOR actions. Do not infer a proprietary IP API from the presence of Wi-Fi or reuse Bluetooth packet semantics.'
+      }
+    ],
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   Aputure: {
     id:'sidus-direct-bluetooth-capture-v1',
     transport:'bluetooth',

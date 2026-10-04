@@ -21,6 +21,11 @@ const astera=api?.resolve({manufacturer:'Astera',control:{wireless:['AsteraApp v
 expect(astera?.vendorDrivers?.some(x=>x.id==='vendor-astera-wireless'&&x.transport==='bluetooth'),'Astera Bluetooth candidate missing');
 expect(astera?.productionReady===false&&astera?.vendorDirectReady===false,'Astera output must remain locked without physical verification');
 
+
+const aputureSidus=api?.resolve({manufacturer:'Aputure',control:{wireless:['Sidus Link','Sidus Bluetooth Mesh']}});
+expect(aputureSidus?.candidateTransports?.bluetooth===true,'Aputure Sidus Bluetooth Mesh candidate not classified');
+expect(aputureSidus?.productionReady===false,'Aputure Sidus candidate must remain fail-closed until protocol verification');
+
 const nanliteBoth=api?.resolve({manufacturer:'Nanlite',control:{wireless:['NANLINK Bluetooth','NANLINK Wi-Fi']}});
 expect(nanliteBoth?.candidateTransports?.bluetooth===true&&nanliteBoth?.candidateTransports?.wifi===true,'Nanlite Bluetooth + Wi-Fi candidates not classified');
 

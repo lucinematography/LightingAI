@@ -80,8 +80,11 @@ export const NANLITE_FC_HIGH_OUTPUT_ACCESSORIES=[
   },
   {
     id:'nanlite-pj-bm-19',manufacturer:'Nanlite',model:'PJ-BM Projection Attachment with 19° Lens',
-    category:'Spotlight',mount:'Bowens',beamAngleDeg:19,compatibleWith:[...PJ_TARGETS,'nanlite-forza-720b'],
-    compatibilityStatus:'Designed For',sourceUrl:SRC.pj19
+    category:'Spotlight',mount:'Bowens',beamAngleDeg:19,
+    compatibleWith:["nanlite-forza-300-ii","nanlite-forza-300b-ii","nanlite-forza-500-ii","nanlite-forza-500b-ii","nanlite-forza-720","nanlite-forza-720b","nanlite-fs-150b","nanlite-fs-200b","nanlite-fs-300","nanlite-fs-300b","nanlite-fs-300c","nanlite-fc-500b","nanlite-fc-500c"],
+    compatibilityStatus:'Designed For',
+    compatibilityEvidenceNote:'Nanlite product copy explicitly names the Forza 300 II/300B II, 500 II/500B II, 720/720B and FS families; the specifications table additionally names FS-300C and FC-500B/500C and describes the list as including compatible Bowens fixtures below 800W.',
+    sourceUrl:SRC.pj19
   },
   {
     id:'nanlite-cc-st-fc1200',manufacturer:'Nanlite',model:'CC-ST-FC1200 Rolling Padded Case',

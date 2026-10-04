@@ -125,6 +125,15 @@ const aladdin=byManufacturer.get('Aladdin');
 if(!aladdin || aladdin.bluetooth!==5) {
   failures.push('Aladdin Bluetooth verification expected 5 fixtures');
 }
+const evlight=byManufacturer.get('EV Light');
+if(!evlight || evlight.bluetooth!==2 || evlight.wifi!==5 || evlight.both!==2) {
+  failures.push('EV Light wireless coverage expected 2 Bluetooth / 5 Wi-Fi / 2 both');
+}
+for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
+  const row=byManufacturer.get(maker);
+  if(!row) failures.push(maker+' wireless audit row missing');
+  else if(row.bluetooth!==0 || row.wifi!==0) failures.push(maker+' must not infer Bluetooth/Wi-Fi from DMX/CRMX/LumenRadio metadata');
+}
 const summary = {
   ok: failures.length === 0,
   fixtures: fixtures.length,

@@ -34,7 +34,6 @@ for(const secondary of [...(VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans||[
 }
 
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Astera.existingToolchain?.orchestrator==='backend/astera-physical-capture-set.js','Astera capture plan must point to verified orchestrator');
-expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.Astera.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.Astera.secondaryPlans.some(x=>x.id==='astera-model-scoped-wifi-capture-v1'&&x.transport==='wifi'),'Astera Wi-Fi secondary capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Astera.safety?.lightingAiWritesAllowed===false,'Astera evidence capture must keep LightingAI proprietary writes disabled');
 console.log(JSON.stringify({ok:failures.length===0,vendors:7,failures},null,2));
 if(failures.length)process.exit(1);

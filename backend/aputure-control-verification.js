@@ -2,6 +2,20 @@ function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
 }
 
+const SIDUS_BLUETOOTH_SOURCE = 'https://aputure.com/en-US/pages/sidus-link';
+
+function normalizeSidusWireless(values = []) {
+  const out = [];
+  let hasSidus = false;
+  for (const value of values || []) {
+    const label = String(value);
+    if (/sidus link/i.test(label)) hasSidus = true;
+    out.push(label);
+  }
+  if (hasSidus) out.push('Sidus Bluetooth Mesh');
+  return unique(out);
+}
+
 const VERIFIED_OVERRIDES = {
   'aputure-ls-600d': {
     wired: ['DMX512'],
@@ -87,7 +101,25 @@ const DMX_PROFILE_HOLDS = {
 
 export function normalizeLegacyAputureControl(fixtures = []) {
   for (const fixture of fixtures) {
-    if (fixture?.manufacturer !== 'Aputure' || !Array.isArray(fixture.control)) continue;
+    if (fixture?.manufacturer !== 'Aputure') continue;
+
+    if (fixture.control && typeof fixture.control === 'object' && !Array.isArray(fixture.control)) {
+      const wirelessBefore = Array.isArray(fixture.control.wireless) ? fixture.control.wireless : [];
+      const wirelessAfter = normalizeSidusWireless(wirelessBefore);
+      if (wirelessAfter.some(value => /bluetooth/i.test(String(value)))) {
+        fixture.control = {
+          ...fixture.control,
+          wireless: wirelessAfter,
+          sourceUrls: unique([
+            ...(Array.isArray(fixture.control.sourceUrls) ? fixture.control.sourceUrls : []),
+            SIDUS_BLUETOOTH_SOURCE
+          ])
+        };
+      }
+      continue;
+    }
+
+    if (!Array.isArray(fixture.control)) continue;
 
     const labels = fixture.control.map(value => String(value));
     const local = [];
@@ -112,12 +144,13 @@ export function normalizeLegacyAputureControl(fixtures = []) {
     fixture.control = {
       local: unique(local),
       wired: unique([...wired, ...(override.wired || [])]),
-      wireless: unique(wireless),
+      wireless: normalizeSidusWireless(wireless),
       directLightingAI: unique([...directLightingAI, ...(override.directLightingAI || [])]),
       externalInterfaceRequired: [],
       sourceUrls: unique([
         fixture.sourceUrl,
-        ...(override.sourceUrls || [])
+        ...(override.sourceUrls || []),
+        ...(labels.some(label => /sidus link/i.test(label)) ? [SIDUS_BLUETOOTH_SOURCE] : [])
       ]),
       legacyLabels: labels
     };

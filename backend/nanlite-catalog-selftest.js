@@ -77,7 +77,7 @@ for(const id of ['nanlite-as-ba-fmm','nanlite-fl-11','nanlite-pj-fmm-19','nanlit
 }
 const npf=accessoryById.get('nanlite-bt-bg-fz60');
 for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b']) if(!npf?.compatibleWith?.includes(id)) failures.push('NP-F grip missing '+id);
-for(const target of ['nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'])
+for(const target of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'])
   if(!npf?.includedWithFixtures?.includes(target)) failures.push('BT-BG-FZ60 included relation missing '+target);
 for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr']){
   const f=fixtures.find(x=>x.id===id);

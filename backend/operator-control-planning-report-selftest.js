@@ -40,7 +40,7 @@ for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Li
 
 expect(report.vendors[0]?.manufacturer==='Godox','Godox should remain first by current wireless fixture coverage');
 expect(by.Godox?.wirelessFixtures===68,'Godox wireless fixture count changed unexpectedly');
-expect(by.Nanlite?.wirelessFixtures===66,'Nanlite unique wireless fixture count changed unexpectedly');
+expect(by.Nanlite?.wirelessFixtures===77,'Nanlite unique wireless fixture count changed unexpectedly');
 expect(by.Aputure?.wirelessFixtures===19,'Aputure wireless fixture count changed unexpectedly');
 expect(by.Astera?.wirelessFixtures===23,'Astera unique wireless fixture count changed unexpectedly');
 

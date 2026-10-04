@@ -29,12 +29,12 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     commandSpec: 'not_captured_from_public_vendor_docs',
     nextStep: 'capture-plan-required-before-driver',
     capturePlanId: 'nanlink-direct-bluetooth-capture-v1',
-    secondaryCapturePlanIds: ['nanlink-model-scoped-wifi-capture-v1'],
+    secondaryCapturePlanIds: ['nanlink-ws-tb1-assisted-bluetooth-capture-v1','nanlink-model-scoped-wifi-capture-v1'],
     evidence: [
       'https://nanliteus.com/pages/free-nanlink-app',
       'https://www.nanlink.com/en/h-col-242.html'
     ],
-    note: 'NANLINK Bluetooth and adapter-assisted legacy wireless paths remain distinct.'
+    note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
   ARRI: {
     bluetooth: 'transport_verified',

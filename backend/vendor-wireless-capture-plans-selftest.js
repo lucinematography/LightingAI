@@ -23,7 +23,8 @@ expect(VENDOR_WIRELESS_CAPTURE_PLANS.Nanlite.prerequisites.some(x=>/WS-TB-1/.tes
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Aputure.prerequisites.some(x=>/Sidus Link Bridge/.test(x)),'Aputure direct-Bluetooth plan must exclude bridge path');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Godox.prerequisites.some(x=>/Bluetooth reset/i.test(x)),'Godox clean-session Bluetooth reset requirement missing');
 
-expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.Nanlite.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.Nanlite.secondaryPlans.some(x=>x.id==='nanlink-model-scoped-wifi-capture-v1'&&x.transport==='wifi'),'Nanlite Wi-Fi secondary capture plan missing');
+expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.Nanlite.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.Nanlite.secondaryPlans.some(x=>x.id==='nanlink-ws-tb1-assisted-bluetooth-capture-v1'&&x.transport==='bluetooth'),'Nanlite WS-TB-1 assisted-Bluetooth capture plan missing');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Nanlite.secondaryPlans.some(x=>x.id==='nanlink-model-scoped-wifi-capture-v1'&&x.transport==='wifi'),'Nanlite Wi-Fi secondary capture plan missing');
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.Astera.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.Astera.secondaryPlans.some(x=>x.id==='astera-model-scoped-wifi-capture-v1'&&x.transport==='wifi'),'Astera Wi-Fi secondary capture plan missing');
 
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans.some(x=>x.id==='arri-skypanel-web-wifi-capture-v1'&&x.transport==='wifi'),'ARRI Wi-Fi secondary capture plan missing');

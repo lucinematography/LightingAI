@@ -55,6 +55,18 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     },
     secondaryPlans:[
       {
+        id:'nanlink-ws-tb1-assisted-bluetooth-capture-v1',
+        transport:'bluetooth',
+        target:'Nanlite fixtures whose catalog metadata requires WS-TB-1 Bluetooth-to-2.4G bridging',
+        commandSpecStatus:'public-bridge-command-spec-not-located-in-official-docs',
+        rule:'Use the official NANLINK app with one WS-TB-1 and one explicitly compatible 2.4G fixture. Capture three connect-only sessions and three isolated DIM/CCT actions. Treat Bluetooth as the phone-to-box transport and 2.4G as the box-to-fixture link; never infer that the fixture itself is a Bluetooth endpoint or reuse direct-fixture BLE command semantics.',
+        officialSources:[
+          'https://www.nanlink.com/en/h-col-231.html',
+          'https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box',
+          'https://www.nanlink.com/en/h-col-293.html'
+        ]
+      },
+      {
         id:'nanlink-model-scoped-wifi-capture-v1',
         transport:'wifi',
         target:'Nanlite models whose catalog metadata explicitly verifies Wi-Fi control',

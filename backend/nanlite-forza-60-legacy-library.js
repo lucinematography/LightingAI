@@ -22,12 +22,12 @@ export const NANLITE_FORZA_60_LEGACY_FIXTURES=[
     powerOptions:['AC power adapter','NP-F batteries via battery handgrip','V-Mount battery via battery handgrip'],
     control:{
       wired:[],
-      wireless:['2.4G via NANLINK WS-TB-1'],
+      wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],
       builtInBluetooth:false,builtInCRMX:false,
       directLightingAI:[],
-      externalInterfaceRequired:['NANLINK WS-TB-1 for NANLINK app control'],
+      externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
       unavailableDirectProtocols:[proprietaryProtocolNote],
-      controlEvidenceNote:'Nanlite explicitly states that the original Forza 60 did not have built-in Bluetooth. Nanlite separately documents app control of Forza 60 through WS-TB-1.'
+      controlEvidenceNote:'Nanlite explicitly states that the original Forza 60 did not have built-in Bluetooth. NANLINK documents app control through WS-TB-1, whose Bluetooth module bridges the phone to the fixture\'s 2.4G radio.'
     },
     sourceUrl:SRC.generation,
     evidenceSources:[SRC.generation,SRC.nanlink,SRC.modifiers,SRC.powerAdapter]

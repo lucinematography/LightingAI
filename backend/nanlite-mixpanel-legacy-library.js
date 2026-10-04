@@ -40,10 +40,10 @@ export const NANLITE_MIXPANEL_LEGACY_FIXTURES=[
     powerOptions:['AC power adapter','26V V-Mount battery'],
     control:{
       wired:[],
-      wireless:['2.4G / NANLINK via WS-TB-1'],
+      wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],
       builtInBluetooth:false,builtInCRMX:false,
       directLightingAI:[],
-      externalInterfaceRequired:['NANLINK WS-TB-1 Transmitter Box'],
+      externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
       controlEvidenceIncomplete:true,
       evidenceNote:'DMX is intentionally not encoded until a directly accessible first-party MixPanel 150 product/manual source is available.',
       unavailableDirectProtocols:['Nanlite 2.4G protocol is not publicly documented for third-party direct control']

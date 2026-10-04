@@ -9,7 +9,9 @@ const SRC={
   head25:'https://nanliteus.com/nanlite-forza-300-and-forza-500-head-connection-cable-8-2ft/',
   head5:'https://nanliteus.com/nanlite-forza-300-500-head-extension-cable-16-4ft/',
   pa300:'https://nanliteus.com/nanlite-power-adapter-for-forza-300/',
-  wsTb:'https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box'
+  wsTb:'https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box',
+  nanlinkFaq:'https://www.nanlink.com/en/h-col-293.html',
+  nanlinkLaunch:'https://nanliteus.com/blogs/learn/the-impressively-powerful-nanlink-mobile-app-is-here'
 };
 
 const proprietary='NANLINK 2.4G control protocol is not publicly documented for third-party direct control';
@@ -22,7 +24,15 @@ export const NANLITE_FORZA_BOWENS_LEGACY_FIXTURES=[
     cctK:{fixed:5600},colorMode:'Daylight',powerDrawW:200,cri:98,tlci:97,
     batteryPowered:true,
     batteryOptions:['14.4V-14.8V / 12A V-Mount battery','26V / 12A V-Mount battery'],
-    sourceUrl:SRC.f200
+    control:{
+      wired:[],wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
+      unavailableDirectProtocols:[proprietary],
+      controlEvidenceNote:'NANLINK FAQ explicitly lists Forza 200 for WS-TB-1 2.4G grouping; the WS-TB-1 Bluetooth module provides the phone-side bridge.'
+    },
+    sourceUrl:SRC.f200,
+    evidenceSources:[SRC.f200,SRC.nanlinkFaq,SRC.wsTb]
   },
   {
     id:'nanlite-forza-300',manufacturer:'Nanlite',model:'Forza 300',
@@ -31,12 +41,14 @@ export const NANLITE_FORZA_BOWENS_LEGACY_FIXTURES=[
     cctK:{fixed:5600},colorMode:'Daylight',batteryPowered:true,
     batteryOptions:['Two 14.8V V-Mount batteries via legacy Control Unit','AC via removable power adapter'],
     control:{
-      wired:[],wireless:[],builtInBluetooth:false,builtInCRMX:false,
-      directLightingAI:[],externalInterfaceRequired:[],
+      wired:[],wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
       unavailableDirectProtocols:[proprietary],
-      controlEvidenceNote:'Nanlite explicitly states that the first-generation Forza 300 did not have built-in Bluetooth. No DMX/RDM claim is inferred here.'
+      controlEvidenceNote:'Nanlite explicitly states that the first-generation Forza 300 did not have built-in Bluetooth. NANLINK separately documents WS-TB-1 app control for Forza 300 through its 2.4G radio.'
     },
-    sourceUrl:SRC.f300family
+    sourceUrl:SRC.f300family,
+    evidenceSources:[SRC.f300family,SRC.nanlinkLaunch,SRC.wsTb]
   },
   {
     id:'nanlite-forza-300b',manufacturer:'Nanlite',model:'Forza 300B',
@@ -44,8 +56,15 @@ export const NANLITE_FORZA_BOWENS_LEGACY_FIXTURES=[
     sourceType:'Bi-Color LED Spotlight',mount:'Bowens',
     colorMode:'Bi-Color',batteryPowered:true,
     batteryOptions:['Two 14.8V V-Mount batteries via legacy Control Unit','AC via removable power supply'],
+    control:{
+      wired:[],wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
+      unavailableDirectProtocols:[proprietary],
+      controlEvidenceNote:'NANLINK FAQ explicitly lists Forza 300B for WS-TB-1 2.4G grouping; Bluetooth is bridge-side and not built into the fixture.'
+    },
     sourceUrl:SRC.legacyCollection,
-    evidenceSources:[SRC.f300family,SRC.legacyCollection]
+    evidenceSources:[SRC.f300family,SRC.legacyCollection,SRC.nanlinkFaq,SRC.wsTb]
   },
   {
     id:'nanlite-forza-500',manufacturer:'Nanlite',model:'Forza 500',
@@ -53,11 +72,11 @@ export const NANLITE_FORZA_BOWENS_LEGACY_FIXTURES=[
     sourceType:'Daylight LED Spotlight',mount:'Bowens',
     cctK:{fixed:5600},colorMode:'Daylight',batteryPowered:true,
     control:{
-      wired:[],wireless:['2.4G via NANLINK WS-TB-1'],builtInCRMX:false,
+      wired:[],wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
       directLightingAI:[],
-      externalInterfaceRequired:['NANLINK WS-TB-1 for NANLINK app control'],
+      externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
       unavailableDirectProtocols:[proprietary],
-      controlEvidenceNote:'Nanlite WS-TB-1 documentation explicitly names the first-generation Forza 500 as a compatible 2.4G fixture. No DMX/RDM claim is inferred here.'
+      controlEvidenceNote:'Nanlite WS-TB-1 documentation explicitly names the first-generation Forza 500 as a compatible 2.4G fixture; the box provides Bluetooth on the app side. No DMX/RDM claim is inferred here.'
     },
     sourceUrl:SRC.f500,
     evidenceSources:[SRC.f500,SRC.wsTb]

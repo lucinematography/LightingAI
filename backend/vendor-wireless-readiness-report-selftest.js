@@ -30,7 +30,7 @@ for(const maker of ['Kino Flo','De Sisti','LiteGear']){
 }
 expect(report.vendors[0]?.manufacturer==='Godox','Godox should remain highest wireless-coverage vendor by current catalog count');
 expect(by.Godox?.bluetoothFixtures===68,'Godox Bluetooth count changed unexpectedly');
-expect(by.Nanlite?.bluetoothFixtures===59,'Nanlite Bluetooth count changed unexpectedly');
+expect(by.Nanlite?.bluetoothFixtures===70,'Nanlite Bluetooth count changed unexpectedly');
 expect(by.Nanlite?.wifiFixtures===8,'Nanlite Wi-Fi count changed unexpectedly');
 expect(by.Astera?.bluetoothFixtures===23&&by.Astera?.wifiFixtures===19,'Astera wireless counts changed unexpectedly');
 expect(by.Aputure?.bluetoothFixtures===19,'Aputure Bluetooth count changed unexpectedly');

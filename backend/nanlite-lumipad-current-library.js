@@ -20,9 +20,13 @@ export const NANLITE_LUMIPAD_CURRENT_FIXTURES=[
     colorMode:'Bi-Color',powerDrawW:11.5,cri:95,tlci:93,
     batteryPowered:true,powerOptions:['NP-F battery','7.2-15V DC','AC adapter'],
     control:{
-      wired:[],wireless:['2.4G'],builtInBluetooth:false,builtInCRMX:false,
-      directLightingAI:[],externalInterfaceRequired:[],
-      unavailableDirectProtocols:['2.4G control protocol is not publicly documented for third-party direct control']
+      wired:[],wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],builtInBluetooth:false,builtInCRMX:false,
+      directLightingAI:[],
+      externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
+      unavailableDirectProtocols:[
+        '2.4G control protocol is not publicly documented for third-party direct control',
+        'Bluetooth is provided by the WS-TB-1 bridge and is not built into LumiPad 11'
+      ]
     },
     sourceUrl:SRC.lp11
   },

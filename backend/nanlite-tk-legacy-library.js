@@ -10,12 +10,12 @@ const SRC={
 function tkControl(){
   return {
     wired:[],
-    wireless:['2.4G via NANLINK WS-TB-1'],
+    wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],
     builtInBluetooth:false,builtInCRMX:false,
     directLightingAI:[],
-    externalInterfaceRequired:['NANLINK WS-TB-1 Transmitter Box'],
+    externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],
     controlEvidenceIncomplete:true,
-    evidenceNote:'Nanlite FAQ explicitly lists TK-140B/280B/200/450 among fixtures that require WS-TB-1 for grouping over 2.4G. No DMX or Bluetooth claim is made here without a recoverable first-party product/manual source.',
+    evidenceNote:'Nanlite FAQ explicitly lists TK-140B/280B/200/450 among fixtures that require WS-TB-1 for grouping over 2.4G. NANLINK documents Bluetooth in the WS-TB-1 bridge; no built-in fixture Bluetooth or DMX claim is made.',
     unavailableDirectProtocols:['No DMX/CRMX path is asserted','Nanlite 2.4G protocol is not publicly documented for third-party direct control']
   };
 }

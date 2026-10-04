@@ -10,8 +10,9 @@ on:
 jobs:
   validate-and-build:
     # Experimental production-control work is validated by build-control-lab-apk.yml.
-    # Keep the stable Project 5 release gate unchanged instead of weakening it for this lab branch.
-    if: ${{ github.head_ref != 'feature/production-control-routing' && github.ref_name != 'feature/production-control-routing' }}
+    # The dedicated Probe branch is validated by build-light-ai-probe.yml.
+    # Keep the stable Project 5 release gate unchanged instead of weakening it for either isolated workstream.
+    if: ${{ github.head_ref != 'feature/production-control-routing' && github.ref_name != 'feature/production-control-routing' && github.head_ref != 'feature/light-ai-probe' && github.ref_name != 'feature/light-ai-probe' }}
     runs-on: ubuntu-latest
     concurrency:
       group: lightingai-android-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}

@@ -92,6 +92,7 @@ const exactAllowed = new Set([
   'backend/prolycht-orion-wireless-library.js',
   'backend/colbor-bluetooth-library.js',
   'backend/sirui-bluetooth-library.js',
+  'backend/fiilex-matrix-wifi-library.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',

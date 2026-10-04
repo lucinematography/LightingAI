@@ -212,6 +212,10 @@ const dracast=byManufacturer.get('Dracast');
 if(!dracast || dracast.bluetooth!==2 || dracast.wifi!==0 || dracast.both!==0) {
   failures.push('Dracast wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const hive=byManufacturer.get('Hive Lighting');
+if(!hive || hive.bluetooth!==7 || hive.wifi!==0 || hive.both!==0) {
+  failures.push('Hive Lighting wireless coverage expected 7 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

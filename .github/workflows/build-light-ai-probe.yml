@@ -140,6 +140,11 @@ jobs:
         working-directory: backend
         run: node fixture-control-capabilities-selftest.js
 
+      - name: Validate operator control planning report
+        working-directory: backend
+        run: node operator-control-planning-report-selftest.js
+
+
 
 
 

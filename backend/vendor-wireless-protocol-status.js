@@ -36,6 +36,27 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  ZHIYUN: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'zhiyun-zy-vega-bluetooth-capture-v1',
+    evidence: [
+      'https://www.zhiyun-tech.com/en/product/param/757',
+      'https://www.zhiyun-tech.com/en/product/param/816',
+      'https://www.zhiyun-tech.com/en/product/param/934',
+      'https://www.zhiyun-tech.com/en/product/param/924',
+      'https://www.zhiyun-tech.com/en/product/param/901',
+      'https://store.zhiyun-tech.com/products/molus-x100',
+      'https://www.zhiyun-tech.com/en/product/param/1077',
+      'https://www.zhiyun-tech.com/en/product/param/1099',
+      'https://www.zhiyun-tech.com/en/product/param/1132',
+      'https://www.zhiyun-tech.com/en/product/param/1055'
+    ],
+    note: 'Bluetooth/ZY Vega control is verified only for the explicitly cataloged ZHIYUN models. LightingAI proprietary command semantics remain locked.'
+  },
+
   'DMG Lumiere': {
     bluetooth: 'transport_verified_mixed_integrated_and_assisted',
     wifi: 'transport_verified_mixed_integrated_and_assisted',

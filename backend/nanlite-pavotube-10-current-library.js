@@ -5,8 +5,7 @@ const SRC={
   c6:'https://nanliteus.com/products/pavotube-ii-6c-rgbww-led-tube-light',
   cp6:'https://nanliteus.com/products/pavotube-ii-6cp-10-inch-nebula-c4-led-tube-light',
   compare:'https://nanliteus.com/blogs/learn/whats-the-difference-between-the-pavotube-ii-6c-6cp-6xr',
-  collection:'https://nanliteus.com/collections/pavotube',
-  miniTripod:'https://nanliteus.com/products/mini-tripod-hand-grip-with-1-4-20-mount-1'
+  collection:'https://nanliteus.com/collections/pavotube'
 };
 
 function control6C(){
@@ -69,13 +68,6 @@ function included(id,model,category,target,sourceUrl){
 }
 
 export const NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES=[
-  {
-    id:'nanlite-as-mt-hg-1-4',manufacturer:'Nanlite',model:'AS-MT/HG-1/4 Mini Tripod / Hand Grip',
-    category:'Mount',mount:'1/4-20 male',compatibleWith:['nanlite-pavotube-ii-6c'],
-    compatibilityStatus:'Compatible',loadCapacityKg:1,maxHeightCm:11.5,weightKg:0.13,
-    compatibilityEvidenceNote:'Official Nanlite product page explicitly names PavoTube II 6C.',
-    sourceUrl:SRC.miniTripod
-  },
   included('nanlite-pavotube-ii-6c-usbc-cable','PavoTube II 6C USB-C to USB-A Cable','Cable','nanlite-pavotube-ii-6c',SRC.c6),
   included('nanlite-pavotube-ii-6c-iron-plates','PavoTube II 6C Iron Mounting Plates (set of 3)','Mount','nanlite-pavotube-ii-6c',SRC.c6),
   included('nanlite-pavotube-ii-6c-wrist-strap','PavoTube II 6C Wrist Strap','Mount','nanlite-pavotube-ii-6c',SRC.c6),

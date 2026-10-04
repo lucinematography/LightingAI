@@ -71,6 +71,7 @@ const allowed=new Set([
   'backend/control-wireless-catalog-audit.js',
   'backend/aputure-wireless-verification.js',
   'backend/aputure-control-verification.js',
+  'backend/godox-control-verification.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

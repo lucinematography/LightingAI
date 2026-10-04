@@ -112,6 +112,10 @@ jobs:
         working-directory: backend
         run: node control-catalog-audit.js
 
+      - name: Audit Bluetooth and Wi-Fi catalog coverage
+        working-directory: backend
+        run: node control-wireless-catalog-audit.js
+
       - name: Validate control system driver families
         working-directory: backend
         run: node control-system-drivers-selftest.js

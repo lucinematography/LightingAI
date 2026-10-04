@@ -140,11 +140,14 @@ if(accessoryById.get('nanlite-forza-300-ii-power-cable')?.lengthM!==6) failures.
 const capBwB=accessoryById.get('nanlite-as-cap-bw-b');
 if(!capBwB) failures.push('Missing canonical AS-CAP-BW-B COB cap');
 else {
-  for(const target of ['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b'])
+  for(const target of ['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b'])
     if(!capBwB.compatibleWith?.includes(target)) failures.push('AS-CAP-BW-B missing compatible target '+target);
+  if(capBwB.compatibleWith?.includes('nanlite-forza-500-ii')) failures.push('AS-CAP-BW-B must not infer Forza 500 II compatibility without direct first-party evidence');
   for(const target of ['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b'])
     if(!capBwB.includedWithFixtures?.includes(target)) failures.push('AS-CAP-BW-B verified inclusion missing '+target);
   if(!capBwB.sourceUrl?.includes('replacement-cob-cap')) failures.push('AS-CAP-BW-B canonical source missing');
+  if(!capBwB.officialSourceConflict) failures.push('AS-CAP-BW-B FAQ/current-product source conflict must remain documented');
+  if((capBwB.conflictSources||[]).length<5) failures.push('AS-CAP-BW-B conflict sources missing');
 }
 for(const duplicateId of ['nanlite-forza-300-ii-cob-cap','nanlite-forza-720b-cob-cap'])
   if(accessoryById.has(duplicateId)) failures.push('Duplicate model-scoped AS-CAP-BW-B record must stay removed: '+duplicateId);

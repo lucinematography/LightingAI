@@ -37,6 +37,7 @@ const allowed=new Set([
   'backend/dmg-mix-wireless-library.js',
   'backend/zhiyun-bluetooth-library.js',
   'backend/prolycht-orion-wireless-library.js',
+  'backend/colbor-bluetooth-library.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js',
   'backend/probe-integration-selftest.js',

@@ -1,6 +1,6 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { wirelessTransportFlags, wirelessRouteKind } from './wireless-route-classification.js';
-import { deriveFixtureStructuralClass } from './fixture-structural-classification.js';
+import { deriveFixtureStructuralClassification } from './fixture-structural-classification.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
 function wirelessFlags(f){return wirelessTransportFlags(f)}
@@ -79,6 +79,8 @@ export function buildWirelessFixtureClassCoverageReport(){
   const byManufacturerStructuralClass=new Map();
   const byManufacturerClassSignature=new Map();
   const byManufacturer=new Map();
+  const structuralBasisCounts={formFactor:0,sourceType:0,family:0,model:0};
+  const structuralModelOnlyFixtureIds=[];
   const wirelessFixtureIds=[];
   const unclassifiedFixtureIds=[];
   const structurallyUnclassifiedFixtureIds=[];
@@ -101,7 +103,12 @@ export function buildWirelessFixtureClassCoverageReport(){
     const family=clean(fixture.family);
     const sourceType=clean(fixture.sourceType);
     const formFactor=clean(fixture.formFactor);
-    const structuralClass=deriveFixtureStructuralClass(fixture);
+    const structural=deriveFixtureStructuralClassification(fixture);
+    const structuralClass=structural.className;
+    if(structural.basis&&Object.prototype.hasOwnProperty.call(structuralBasisCounts,structural.basis)){
+      structuralBasisCounts[structural.basis]++;
+      if(structural.basis==='model') structuralModelOnlyFixtureIds.push(id);
+    }
     if(!family&&!sourceType&&!formFactor) unclassifiedFixtureIds.push(id);
     if(!structuralClass) structurallyUnclassifiedFixtureIds.push(id);
 
@@ -125,6 +132,8 @@ export function buildWirelessFixtureClassCoverageReport(){
     bothFixtures,
     unclassifiedFixtureIds:[...new Set(unclassifiedFixtureIds)].sort(),
     structurallyUnclassifiedFixtureIds:[...new Set(structurallyUnclassifiedFixtureIds)].sort(),
+    structuralBasisCounts,
+    structuralModelOnlyFixtureIds:[...new Set(structuralModelOnlyFixtureIds)].sort(),
     byCategory:serialize(byCategory),
     byFamily:serialize(byFamily),
     bySourceType:serialize(bySourceType),

@@ -105,6 +105,25 @@ expect(btRoute?.route==='vendor-wireless'&&btRoute?.bluetooth===true&&btRoute?.w
 
 const wifiRoute=routeSandbox.window.LightingAIControlRouting.classify({manufacturer:'ARRI',control:{wireless:['ARRI Wi-Fi control']}});
 expect(wifiRoute?.route==='vendor-wireless'&&wifiRoute?.wifi===true&&wifiRoute?.transportReady===false,'Wi-Fi candidate must remain fail-closed');
+const assistedRoute=routeSandbox.window.LightingAIControlRouting.classify({
+  manufacturer:'ARRI',
+  control:{
+    wireless:['ARRI LiCo Bluetooth 5.0 via supported USB dongle'],
+    externalInterfaceRequired:['Supported Bluetooth 5.0 USB dongle']
+  }
+});
+expect(assistedRoute?.requiresInterface===true,'Adapter-assisted route must preserve interface requirement');
+expect(Array.isArray(assistedRoute?.externalInterfaces)&&assistedRoute.externalInterfaces.includes('Supported Bluetooth 5.0 USB dongle'),'Adapter-assisted route must expose the required interface');
+
+const assistedWifiRoute=routeSandbox.window.LightingAIControlRouting.classify({
+  manufacturer:'Nanlite',
+  control:{
+    wireless:['Wi-Fi via Nanlite W-2 adapter'],
+    externalInterfaceRequired:['Nanlite W-2 Wi-Fi adapter']
+  }
+});
+expect(assistedWifiRoute?.requiresInterface===true,'Adapter-assisted Wi-Fi route must preserve interface requirement');
+expect(assistedWifiRoute?.externalInterfaces?.includes('Nanlite W-2 Wi-Fi adapter'),'Adapter-assisted Wi-Fi route must expose its required adapter');
 
 expect(!routingSrc.includes('native-network')&&!routingSrc.includes('gateway'),'Art-Net/sACN/DMX routes remain in fast CONTROL router');
 

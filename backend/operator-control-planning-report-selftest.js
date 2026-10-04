@@ -24,6 +24,10 @@ for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Li
   expect(Array.isArray(row.requiredProductionFixtureIds)&&row.requiredProductionFixtureIds.length>=row.wirelessFixtures,maker+' required production fixture IDs must cover every planning fixture');
   expect(new Set(row.requiredProductionFixtureIds).size===row.requiredProductionFixtureIds.length,maker+' required production fixture IDs must be unique');
   expect(Array.isArray(row.requiredProductionTransports)&&row.requiredProductionTransports.length>0,maker+' required production transports missing');
+  expect(Array.isArray(row.requiredProductionRoutes)&&row.requiredProductionRoutes.length>=row.bluetoothFixtures+row.wifiFixtures,maker+' required production routes must cover verified planning routes');
+  const routeKeys=row.requiredProductionRoutes.map(r=>String(r?.fixtureId||'')+'::'+String(r?.transport||'').toLowerCase());
+  expect(new Set(routeKeys).size===routeKeys.length,maker+' required production routes must be unique');
+  expect(row.requiredProductionRoutes.every(r=>row.requiredProductionFixtureIds.includes(String(r?.fixtureId||''))),maker+' production route references fixture outside required scope');
   expect(row.dimCapable<=row.wirelessFixtures,maker+' DIM capability count exceeds wireless fixtures');
   expect(row.cctCapable<=row.wirelessFixtures,maker+' CCT capability count exceeds wireless fixtures');
   expect(row.colorCapable<=row.wirelessFixtures,maker+' COLOR capability count exceeds wireless fixtures');

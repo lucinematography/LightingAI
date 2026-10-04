@@ -305,6 +305,15 @@ for(const target of ['nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanl
   if(!accessoryById.get('nanlite-pj-bm-25-45')?.compatibleWith?.includes(target)) failures.push('Canonical PJ-BM-25-45 missing '+target);
 }
 for(const duplicateId of ['nanlite-fl-20g-fc','nanlite-pj-bm-25-45-fc']) if(accessoryById.has(duplicateId)) failures.push('Duplicate Nanlite accessory ID must be removed: '+duplicateId);
+const forza300day=fixtures.find(x=>x.id==='nanlite-forza-300-ii');
+if(!forza300day) failures.push('Missing Nanlite Forza 300 II daylight');
+else {
+  if(forza300day.cctK?.fixed!==5600) failures.push('Forza 300 II must remain fixed 5600K daylight');
+  if(forza300day.powerDrawW!==350) failures.push('Forza 300 II max power must remain 350W');
+  if(forza300day.cri!==96) failures.push('Forza 300 II CRI must remain 96');
+  if(forza300day.tlci!==97) failures.push('Forza 300 II TLCI must remain 97');
+  if(forza300day.beamAngleDeg!==120) failures.push('Forza 300 II native beam angle must remain 120 degrees');
+}
 const forza720day=fixtures.find(x=>x.id==='nanlite-forza-720');
 if(!forza720day) failures.push('Missing current Nanlite Forza 720 daylight');
 else {

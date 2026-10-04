@@ -22,12 +22,13 @@ import { NANLITE_FORZA_150B_LEGACY_FIXTURES, NANLITE_FORZA_150B_LEGACY_ACCESSORI
 import { NANLITE_FORZA_DAYLIGHT_FIXTURES, NANLITE_FORZA_DAYLIGHT_ACCESSORIES } from './nanlite-forza-daylight-library.js';
 import { NANLITE_FS_LEGACY_FIXTURES, NANLITE_FS_LEGACY_ACCESSORIES } from './nanlite-fs-legacy-library.js';
 import { NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES, NANLITE_COMPAC_DAYLIGHT_LEGACY_ACCESSORIES } from './nanlite-compac-daylight-legacy-library.js';
+import { NANLITE_MIXPANEL_LEGACY_FIXTURES, NANLITE_MIXPANEL_LEGACY_ACCESSORIES } from './nanlite-mixpanel-legacy-library.js';
 
 const failures=[];
 const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FORZA_DAYLIGHT_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOSLIM_EXTENDED_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_T8_7X_FIXTURES,...NANLITE_PAVOBULB_CURRENT_FIXTURES,...NANLITE_FS_CURRENT_FIXTURES,...NANLITE_LUMIPAD_CURRENT_FIXTURES,...NANLITE_MIRO_CURRENT_FIXTURES,...NANLITE_CREATOR_HANDHELD_FIXTURES,...NANLITE_CREATOR_COMPACT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
-const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES,...NANLITE_FORZA_150B_LEGACY_FIXTURES,...NANLITE_FS_LEGACY_FIXTURES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES];
+const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES,...NANLITE_FORZA_150B_LEGACY_FIXTURES,...NANLITE_FS_LEGACY_FIXTURES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES,...NANLITE_MIXPANEL_LEGACY_FIXTURES];
 const fixtures=[...currentFixtures,...legacyFixtures];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FORZA_DAYLIGHT_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_FS_LEGACY_ACCESSORIES,...NANLITE_LUMIPAD_CURRENT_ACCESSORIES,...NANLITE_MIRO_CURRENT_ACCESSORIES,...NANLITE_CREATOR_HANDHELD_ACCESSORIES,...NANLITE_CREATOR_COMPACT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FORZA_150B_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FORZA_DAYLIGHT_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_COMPAC_DAYLIGHT_LEGACY_ACCESSORIES,...NANLITE_MIXPANEL_LEGACY_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_FS_CURRENT_ACCESSORIES,...NANLITE_FS_LEGACY_ACCESSORIES,...NANLITE_LUMIPAD_CURRENT_ACCESSORIES,...NANLITE_MIRO_CURRENT_ACCESSORIES,...NANLITE_CREATOR_HANDHELD_ACCESSORIES,...NANLITE_CREATOR_COMPACT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FORZA_150B_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 const accessoryModels=new Map();
@@ -469,5 +470,26 @@ for(const id of ['nanlite-compac-200-softbox','nanlite-compac-200-lantern']){
 const w2=accessoryById.get('nanlite-w-2-wifi-adapter');
 for(const id of ['nanlite-compac-200','nanlite-compac-200b']) if(!w2?.compatibleWith?.includes(id)) failures.push('W-2 missing '+id);
 if(w2?.compatibleWith?.includes('nanlite-compac-100')) failures.push('W-2 must not be inferred for Compac 100');
+for(const id of ['nanlite-mixpanel-60','nanlite-mixpanel-150']){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing legacy Nanlite MixPanel fixture: '+id);
+  else if(f.discontinued!==true) failures.push('MixPanel must be legacy/open-box-only: '+id);
+}
+const mp60=fixtures.find(x=>x.id==='nanlite-mixpanel-60');
+if(!(mp60?.control?.wired||[]).includes('DMX512')) failures.push('MixPanel 60 DMX512 missing');
+for(const p of ['2.4G','Wi-Fi via Nanlite W-2 adapter / NANLINK app']) if(!(mp60?.control?.wireless||[]).includes(p)) failures.push('MixPanel 60 missing '+p);
+const mp150=fixtures.find(x=>x.id==='nanlite-mixpanel-150');
+if((mp150?.control?.wired||[]).length) failures.push('MixPanel 150 must not claim DMX until first-party evidence is resolved');
+if(!mp150?.control?.controlEvidenceIncomplete) failures.push('MixPanel 150 incomplete control evidence flag missing');
+for(const id of ['nanlite-sb-mp60','nanlite-rc-1-mixpanel60']){
+  if(!accessoryById.get(id)?.compatibleWith?.includes('nanlite-mixpanel-60')) failures.push(id+' missing MixPanel 60');
+}
+for(const id of ['nanlite-sb-mp150','nanlite-sbmp150o','nanlite-bt-v-26v270']){
+  if(!accessoryById.get(id)?.compatibleWith?.includes('nanlite-mixpanel-150')) failures.push(id+' missing MixPanel 150');
+}
+for(const id of ['nanlite-ws-tb-1']){
+  const a=accessoryById.get(id);
+  for(const target of ['nanlite-mixpanel-60','nanlite-mixpanel-150']) if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
+}
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

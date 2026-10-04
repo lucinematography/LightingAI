@@ -40,6 +40,7 @@ const allowed=new Set([
   'backend/colbor-bluetooth-library.js',
   'backend/sirui-bluetooth-library.js',
   'backend/fiilex-matrix-wifi-library.js',
+  'backend/harlowe-bluetooth-library.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js',
   'backend/probe-integration-selftest.js',

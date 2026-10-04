@@ -5,10 +5,11 @@ import { NANLITE_PAVOSLIM_60_120_FIXTURES, NANLITE_PAVOSLIM_60_120_ACCESSORIES }
 import { NANLITE_PAVOTUBE_II_XR_FIXTURES, NANLITE_PAVOTUBE_II_XR_ACCESSORIES } from './nanlite-pavotube-ii-xr-library.js';
 import { NANLITE_PAVOTUBE_II_C_FIXTURES, NANLITE_PAVOTUBE_II_C_ACCESSORIES } from './nanlite-pavotube-ii-c-library.js';
 import { NANLITE_COMPAC_CURRENT_FIXTURES, NANLITE_COMPAC_CURRENT_ACCESSORIES } from './nanlite-compac-current-library.js';
+import { NANLITE_PAVOTUBE_10_CURRENT_FIXTURES, NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES } from './nanlite-pavotube-10-current-library.js';
 
 const failures=[];
-const fixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES];
+const fixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 
@@ -133,6 +134,31 @@ for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
   const a=accessoryById.get(id);
   if(!a?.compatibleWith?.includes('nanlite-compac-200b')) failures.push(id+' missing Compac 200B');
   if(a?.compatibleWith?.includes('nanlite-compac-68b')||a?.compatibleWith?.includes('nanlite-compac-100b')) failures.push(id+' must not be inferred for Compac 68B/100B');
+}
+for(const id of ['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp']){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing current Nanlite 10-inch PavoTube: '+id);
+  else if(f.discontinued!==false) failures.push('Current 10-inch PavoTube not marked current: '+id);
+}
+const sixC=fixtures.find(x=>x.id==='nanlite-pavotube-ii-6c');
+if(!(sixC?.control?.wireless||[]).includes('2.4G')) failures.push('PavoTube II 6C must include 2.4G control');
+if((sixC?.control?.wired||[]).length) failures.push('PavoTube II 6C must not claim wired DMX/RDM');
+if(sixC?.control?.builtInCRMX) failures.push('PavoTube II 6C must not claim CRMX');
+const sixCP=fixtures.find(x=>x.id==='nanlite-pavotube-ii-6cp');
+if((sixCP?.control?.wired||[]).length) failures.push('PavoTube II 6CP must not claim wired DMX/RDM');
+if((sixCP?.control?.wireless||[]).includes('2.4G')) failures.push('PavoTube II 6CP must not infer 2.4G');
+if(!sixCP?.control?.nfcPairing) failures.push('PavoTube II 6CP NFC pairing missing');
+if(sixCP?.control?.builtInCRMX) failures.push('PavoTube II 6CP must not claim CRMX');
+for(const id of ['nanlite-ec-ptii6c','nanlite-as-wb-ptii6c','nanlite-pavotube-t12-clip-1-4','nanlite-pavotube-t12-clip-magnet']){
+  const a=accessoryById.get(id); if(!a) failures.push('Missing shared 10-inch PavoTube accessory: '+id);
+  else for(const target of ['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-6xr']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
+}
+const usb6=accessoryById.get('nanlite-cb-dmx-usbc-1-3ii');
+for(const id of ['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp']) if(usb6?.compatibleWith?.includes(id)) failures.push('USB-C DMX adapter must not be inferred for '+id);
+for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
+  const a=accessoryById.get(id);
+  if(!a?.compatibleWith?.includes('nanlite-pavotube-ii-6c')) failures.push(id+' missing PavoTube II 6C');
+  if(a?.compatibleWith?.includes('nanlite-pavotube-ii-6cp')) failures.push(id+' must not be inferred for PavoTube II 6CP');
 }
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

@@ -68,6 +68,7 @@ const allowed=new Set([
   'backend/control-production-selftest.js',
   'backend/control-operator-desk-selftest.js',
   'backend/full-app-critical-selftest.js',
+  'backend/control-wireless-catalog-audit.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

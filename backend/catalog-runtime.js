@@ -86,6 +86,7 @@ import { DESISTI_CONVENTIONAL_EXTRA_FIXTURES, DESISTI_CONVENTIONAL_EXTRA_ACCESSO
 import { GODOX_CONTINUOUS_FIXTURES, GODOX_CONTINUOUS_ACCESSORIES } from './godox-continuous-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
+import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
 import { ALADDIN_MOSAIC_FIXTURES, ALADDIN_MOSAIC_ACCESSORIES } from './aladdin-mosaic-library.js';
 import { ALADDIN_FABRIC_LITE_FIXTURES, ALADDIN_FABRIC_LITE_ACCESSORIES } from './aladdin-fabric-lite-library.js';
 import { ALADDIN_BI_FLEX_FIXTURES, ALADDIN_BI_FLEX_ACCESSORIES } from './aladdin-bi-flex-library.js';
@@ -169,6 +170,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(GODOX_CONTINUOUS_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
+  fixtures.push(...clone(NANLITE_FC_720_FIXTURES));
   fixtures.push(...clone(ALADDIN_MOSAIC_FIXTURES));
   fixtures.push(...clone(ALADDIN_FABRIC_LITE_FIXTURES));
   fixtures.push(...clone(ALADDIN_BI_FLEX_FIXTURES));
@@ -237,6 +239,7 @@ export function buildRuntimeCatalog() {
   accessoryDefinitions.push(...clone(GODOX_CONTINUOUS_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_FM_CURRENT_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_FORZA_II_ACCESSORIES));
+  accessoryDefinitions.push(...clone(NANLITE_FC_720_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_MOSAIC_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_FABRIC_LITE_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_BI_FLEX_ACCESSORIES));

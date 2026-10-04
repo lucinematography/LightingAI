@@ -25,6 +25,12 @@ function declaredColorEngine(fixture){
 function hasAny(keys,names){
   return names.some(name=>keys.has(name));
 }
+function capabilityVerification(fixture,key){
+  const c=fixture?.control;
+  if(!c||Array.isArray(c)||typeof c!=='object') return null;
+  const row=c.capabilityVerification?.[key];
+  return row&&row.verified===true?row:null;
+}
 function deriveFixtureControlCapabilities(fixture){
   const keys=keySet(fixture);
   const dimEvidence=[];
@@ -33,6 +39,7 @@ function deriveFixtureControlCapabilities(fixture){
   const fxEvidence=[];
 
   if(hasAny(keys,['dimmer','intensity','masterdimmer','master_dimmer'])) dimEvidence.push('verified-dmx-control');
+  if(capabilityVerification(fixture,'dim')) dimEvidence.push('verified-official-app-capability');
   if(validCctRange(fixture)) cctEvidence.push('catalog-cct-range');
   if(hasAny(keys,['cct','kelvin','temperature','color_temperature'])) cctEvidence.push('verified-dmx-control');
 
@@ -42,6 +49,7 @@ function deriveFixtureControlCapabilities(fixture){
   }
 
   if([...keys].some(key=>key==='effect'||key==='effects'||key.startsWith('fx'))) fxEvidence.push('verified-dmx-control');
+  if(capabilityVerification(fixture,'fx')) fxEvidence.push('verified-official-app-capability');
 
   return {
     dim:{supported:dimEvidence.length>0,evidence:[...new Set(dimEvidence)]},
@@ -93,4 +101,4 @@ if(import.meta.url===`file://${process.argv[1]}`){
   },null,2));
 }
 
-export { verifiedModes, verifiedControls, validCctRange, declaredColorEngine, deriveFixtureControlCapabilities, buildFixtureControlCapabilityReport };
+export { verifiedModes, verifiedControls, validCctRange, declaredColorEngine, capabilityVerification, deriveFixtureControlCapabilities, buildFixtureControlCapabilityReport };

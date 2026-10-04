@@ -288,6 +288,9 @@ for(const target of ['nanlite-pavoslim-60cl','nanlite-pavoslim-240b','nanlite-pa
   if(mag?.compatibleWith?.includes(target)) failures.push('Do not infer PavoSlim magnetic adapter compatibility for '+target);
 const sw=accessoryById.get('nanlite-asuhps');
 if(!sw?.compatibleWith?.includes('nanlite-pavoslim-60cl')) failures.push('PavoSlim 60CL shared swivel holder missing');
+const baby60cl=accessoryById.get('nanlite-asbhpps');
+if(!baby60cl?.compatibleWith?.includes('nanlite-pavoslim-60cl')) failures.push('PavoSlim 60CL shared baby-pin holder missing');
+if(!baby60cl?.includedWithFixtures?.includes('nanlite-pavoslim-60cl')) failures.push('PavoSlim 60CL included baby-pin holder relation missing');
 const dmx35=accessoryById.get('nanlite-cb-dmx-3-5c-1-2');
 if(!dmx35?.compatibleWith?.includes('nanlite-pavoslim-360c')) failures.push('PavoSlim 360C 3.5mm DMX adapter missing');
 for(const target of ['nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl'])

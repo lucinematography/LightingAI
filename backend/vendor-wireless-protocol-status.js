@@ -36,6 +36,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  'Quasar Science': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'quasar-starctrl-direct-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['quasar-rainbow-model-scoped-wifi-capture-v1'],
+    evidence: [
+      'https://www.quasarscience.com/pages/starctrl',
+      'https://www.quasarscience.com/products/rainbow-2',
+      'https://www.quasarscience.com/collections/new/products/double-rainbow'
+    ],
+    note: 'Rainbow 2 and Double Rainbow Bluetooth/starCTRL plus built-in Wi-Fi are model-scoped transport evidence only; LightingAI command semantics remain locked.'
+  },
   Luxli: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

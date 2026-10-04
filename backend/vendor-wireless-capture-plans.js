@@ -113,6 +113,46 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  'Quasar Science': {
+    id:'quasar-starctrl-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Quasar Science starCTRL',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one Rainbow 2 or Double Rainbow fixture with firmware that supports starCTRL.',
+      'Enable starCTRL/App mode on the fixture and use the official starCTRL iOS app.',
+      'Keep CRMX and Wi-Fi evidence separate from the Bluetooth capture set.',
+      'Isolate one fixture where practical.'
+    ],
+    officialSources:[
+      'https://www.quasarscience.com/pages/starctrl',
+      'https://www.quasarscience.com/products/rainbow-2',
+      'https://www.quasarscience.com/collections/new/products/double-rainbow'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Enable starCTRL, connect one fixture, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one color-temperature change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one hue/saturation or color preset change per capture after DIM/CCT evidence is stable.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one Rainbow-series effect per capture only after simpler controls are understood.'}
+    },
+    secondaryPlans:[
+      {
+        id:'quasar-rainbow-model-scoped-wifi-capture-v1',
+        transport:'wifi',
+        target:'Rainbow 2 and Double Rainbow models whose product pages explicitly list WiFi',
+        commandSpecStatus:'public-wifi-command-spec-not-located-in-official-docs',
+        rule:'Capture only the vendor-documented Wi-Fi path for one exact fixture at a time. Do not infer a proprietary IP API from Wi-Fi presence, and do not reuse Bluetooth packet semantics.'
+      }
+    ],
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   Luxli: {
     id:'luxli-composer-direct-bluetooth-capture-v1',
     transport:'bluetooth',

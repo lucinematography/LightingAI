@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===561,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===10,'wireless manufacturer coverage must remain 10');
+expect(report.fixtureCount===565,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===11,'wireless manufacturer coverage must remain 11');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -37,6 +37,7 @@ expect(by.Aputure?.bluetoothFixtures===19,'Aputure Bluetooth count changed unexp
 expect(by.Creamsource?.bluetoothFixtures===8&&by.Creamsource?.wifiFixtures===0,'Creamsource Vortex wireless counts changed unexpectedly');
 expect(by.Rotolight?.bluetoothFixtures===7&&by.Rotolight?.wifiFixtures===5&&by.Rotolight?.bothFixtures===5,'Rotolight wireless counts changed unexpectedly');
 expect(by.Luxli?.bluetoothFixtures===7&&by.Luxli?.wifiFixtures===0,'Luxli wireless counts changed unexpectedly');
+expect(by['Quasar Science']?.bluetoothFixtures===4&&by['Quasar Science']?.wifiFixtures===4&&by['Quasar Science']?.bothFixtures===4,'Quasar Science wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

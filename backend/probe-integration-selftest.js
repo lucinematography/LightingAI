@@ -76,6 +76,7 @@ const allowed=new Set([
   'backend/aladdin-control-verification.js',
   'backend/nanlite-wireless-verification.js',
   'backend/evlight-wireless-verification.js',
+  'backend/astera-wireless-verification.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

@@ -487,9 +487,10 @@ for(const id of ['nanlite-sb-mp60','nanlite-rc-1-mixpanel60']){
 for(const id of ['nanlite-sb-mp150','nanlite-sbmp150o','nanlite-bt-v-26v270']){
   if(!accessoryById.get(id)?.compatibleWith?.includes('nanlite-mixpanel-150')) failures.push(id+' missing MixPanel 150');
 }
-for(const id of ['nanlite-ws-tb-1']){
-  const a=accessoryById.get(id);
-  for(const target of ['nanlite-mixpanel-60','nanlite-mixpanel-150']) if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
-}
+const mixTb=accessoryById.get('nanlite-ws-tb-1');
+for(const target of ['nanlite-mixpanel-60','nanlite-mixpanel-150']) if(!mixTb?.compatibleWith?.includes(target)) failures.push('WS-TB-1 missing '+target);
+const mixRc=accessoryById.get('nanlite-ws-rc-c2');
+for(const target of ['nanlite-mixpanel-60','nanlite-mixpanel-150']) if(mixRc?.compatibleWith?.includes(target)) failures.push('WS-RC-C2 must not be inferred for '+target);
+if(!accessoryById.get('nanlite-w-2-wifi-adapter')?.compatibleWith?.includes('nanlite-mixpanel-60')) failures.push('W-2 missing MixPanel 60');
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

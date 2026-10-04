@@ -51,10 +51,15 @@ for(const a of accessories){
 }
 
 const expected=[
-  'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
+  'nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
   'nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'
 ];
 for(const id of expected) if(!fixtureIds.has(id)) failures.push('Missing Nanlite fixture: '+id);
+const f60ii=fixtures.find(x=>x.id==='nanlite-forza-60-ii');
+if(f60ii?.powerDrawW!==72) failures.push('Forza 60 II rated power must remain 72W');
+if(f60ii?.cri!==95) failures.push('Forza 60 II CRI must remain 95');
+if(f60ii?.tlci!==98) failures.push('Forza 60 II TLCI must remain 98');
+if(f60ii?.cctK?.min!==5600||f60ii?.cctK?.max!==5600) failures.push('Forza 60 II must remain fixed 5600K daylight');
 
 for(const a of accessories){
   for(const target of a.compatibleWith||[]){

@@ -11,6 +11,7 @@ const RC='https://nanliteus.com/products/nanlink-ws-rc-c2-2-4ghz-remote-control'
 const TB='https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box';
 const CBFZ75='https://nanliteus.com/products/head-cable-24-7ft-for-forza-720-720b-500-ii-500b-ii-300-ii-300b-ii';
 const CBFZ12='https://nanliteus.com/products/head-cable-39-5ft-for-forza-720-720b-500-ii-500b-ii-300-ii-300b-ii';
+const CAPBW='https://nanliteus.com/nanlite-replacement-cob-cap-for-forza-720-720b-300b-200-and-fs-150/';
 
 function control(){
   return {
@@ -49,8 +50,16 @@ const BOTH=['nanlite-forza-300b-ii','nanlite-forza-500b-ii'];
 const DAYLIGHT_II=['nanlite-forza-300-ii','nanlite-forza-500-ii'];
 const FL20G_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'];
 const LONG_HEAD_CABLE_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720'];
+const CAP_BW_B_TARGETS=['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b'];
 
 export const NANLITE_FORZA_II_ACCESSORIES=[
+  {
+    id:'nanlite-as-cap-bw-b',manufacturer:'Nanlite',model:'AS-CAP-BW-B COB Protective Cap',
+    category:'Other',mount:'Bowens',compatibleWith:CAP_BW_B_TARGETS,compatibilityStatus:'Compatible',
+    includedWithFixtures:['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b'],
+    inclusionEvidenceNote:'Included-with list contains only current Forza models whose first-party package contents were explicitly verified; compatibility is broader.',
+    sourceUrl:CAPBW
+  },
   {
     id:'nanlite-cb-fz-7-5m',manufacturer:'Nanlite',model:'CB-FZ-7.5M Head Cable 7.5 m / 24.7 ft',
     category:'Cable',compatibleWith:LONG_HEAD_CABLE_TARGETS,compatibilityStatus:'Designed For',
@@ -96,11 +105,6 @@ export const NANLITE_FORZA_II_ACCESSORIES=[
     id:'nanlite-forza-300-ii-power-cable',manufacturer:'Nanlite',model:'Forza 300 II Power Cable 6 m',
     category:'Cable',compatibleWith:['nanlite-forza-300-ii'],compatibilityStatus:'Designed For',
     includedWithFixture:true,lengthM:6,sourceUrl:'https://nanliteus.com/nanlite-forza-300-ii-led-spotlight-2-light-kit/'
-  },
-  {
-    id:'nanlite-forza-300-ii-cob-cap',manufacturer:'Nanlite',model:'AS-CAP-BW-B COB Protective Cap — Forza 300 II',
-    category:'Other',compatibleWith:['nanlite-forza-300-ii'],compatibilityStatus:'Designed For',
-    includedWithFixture:true,sourceUrl:'https://nanliteus.com/nanlite-forza-300-ii-led-spotlight-2-light-kit/'
   },
   {
     id:'nanlite-forza-300b-ii-control-unit',manufacturer:'Nanlite',model:'Forza 300B II Control Unit with V-Mount Plates',

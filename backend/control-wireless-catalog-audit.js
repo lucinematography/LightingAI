@@ -94,6 +94,10 @@ for (const fixture of fixtures) {
 }
 
 const manufacturers = Object.fromEntries([...byManufacturer.entries()].sort((a,b)=>a[0].localeCompare(b[0])));
+const aputure=byManufacturer.get('Aputure');
+if(!aputure || aputure.fixtures!==19 || aputure.bluetooth!==19) {
+  failures.push('Aputure Sidus Bluetooth verification expected 19/19 fixtures');
+}
 const summary = {
   ok: failures.length === 0,
   fixtures: fixtures.length,

@@ -28,7 +28,7 @@ export const NANLITE_FORZA_720B_FIXTURES=[
     family:'Forza 720',category:'Light',discontinued:false,
     sourceType:'Bi-Color LED Spotlight',mount:'Bowens',
     cctK:{min:2700,max:6500},colorMode:'Bi-Color',
-    powerDrawW:800,cri:95,tlci:96,
+    powerDrawW:800,cri:96,tlci:97,
     batteryPowered:true,
     batteryOptions:['2x 14.8V V-Mount via Control Unit','2x 26V V-Mount via Control Unit','AC mains'],
     control:control(),sourceUrl:SRC.fixture

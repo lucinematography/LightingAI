@@ -45,8 +45,15 @@ const formFactorFixtureTotal=Object.values(report.byFormFactor).reduce((n,row)=>
 expect(familyFixtureTotal===report.wirelessFixtureCount,'family coverage must enumerate every wireless fixture exactly once');
 expect(sourceTypeFixtureTotal===report.wirelessFixtureCount,'sourceType coverage must enumerate every wireless fixture exactly once');
 expect(formFactorFixtureTotal===report.wirelessFixtureCount,'formFactor coverage must enumerate every wireless fixture exactly once');
+const signatureFixtureTotal=Object.values(report.byClassSignature).reduce((n,row)=>n+row.fixtureCount,0);
+expect(signatureFixtureTotal===report.wirelessFixtureCount,'classSignature coverage must enumerate every wireless fixture exactly once');
+expect(Object.keys(report.byClassSignature).length>=Math.max(familyKeys.length,sourceTypeKeys.length,formFactorKeys.length),
+  'composite class signatures are unexpectedly coarser than individual class dimensions');
 expect(classRows.every(row=>row.fixtureCount>0),'wireless class report contains empty class');
 expect(classRows.every(row=>row.manufacturers.length>0),'wireless class report contains class without manufacturer');
+const signatureRows=Object.values(report.byClassSignature);
+expect(signatureRows.every(row=>row.fixtureCount>0),'class signature report contains empty class');
+expect(signatureRows.every(row=>row.manufacturers.length>0),'class signature rows must include manufacturer provenance');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

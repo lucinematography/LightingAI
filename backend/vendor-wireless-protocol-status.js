@@ -36,6 +36,28 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  SIRUI: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'sirui-light-bluetooth-capture-v1',
+    evidence: [
+      'https://store.sirui.com/products/ultra-slim-led-video-panel-light-e30',
+      'https://s2.sirui.com/upload/manual/2022/0620/5zPcrkXX4y.pdf',
+      'https://s2.sirui.com/upload/manual/2022/0620/5SY5ERzGYn.pdf',
+      'https://store.sirui.com/products/t120-tube-light',
+      'https://s2.sirui.com/upload/manual/2024/0325/rS8iij8WSZ.pdf',
+      'https://store.sirui.com/products/sirui-100w-series-led-monolight',
+      'https://store.sirui.com/products/sirui-c300x-ii',
+      'https://store.sirui.com/products/sirui-dragon-series-curvy-rgb-panel-light-b25r',
+      'https://store.sirui.com/products/sirui-c150x-150w-handheld-pocket-light',
+      'https://store.sirui.com/products/sirui-c60x',
+      'https://store.sirui.com/products/sirui-t60x-telescopic-60w-rgb-pixel-tube-light-ll'
+    ],
+    note: 'Bluetooth/SIRUI Light control is verified only for the explicitly cataloged SIRUI models. LightingAI proprietary command semantics remain locked.'
+  },
+
   COLBOR: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

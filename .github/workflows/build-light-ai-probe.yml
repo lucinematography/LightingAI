@@ -124,6 +124,10 @@ jobs:
         working-directory: backend
         run: node wireless-route-classification-selftest.js
 
+      - name: Validate structural fixture classification
+        working-directory: backend
+        run: node fixture-structural-classification-selftest.js
+
       - name: Validate control system driver families
         working-directory: backend
         run: node control-system-drivers-selftest.js

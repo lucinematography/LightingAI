@@ -38,7 +38,8 @@
     "test:vendor-wireless-protocol-status": "node vendor-wireless-protocol-status-selftest.js",
     "test:vendor-wireless-capture-plans": "node vendor-wireless-capture-plans-selftest.js",
     "test:vendor-wireless-coverage": "node vendor-wireless-coverage-selftest.js",
-    "test:vendor-wireless-readiness": "node vendor-wireless-readiness-report-selftest.js"
+    "test:vendor-wireless-readiness": "node vendor-wireless-readiness-report-selftest.js",
+    "test:fixture-control-capabilities": "node fixture-control-capabilities-selftest.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

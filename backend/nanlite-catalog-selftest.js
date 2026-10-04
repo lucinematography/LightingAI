@@ -77,6 +77,21 @@ for(const id of ['nanlite-as-ba-fmm','nanlite-fl-11','nanlite-pj-fmm-19','nanlit
   if(!a) failures.push('Missing Nanlite shared FM accessory: '+id);
   else for(const target of expected) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing verified target ${target}`);
 }
+const npfLegacy=accessoryById.get('nanlite-bt-bg-fz60');
+for(const target of ['nanlite-forza-60','nanlite-forza-60b'])
+  if(!npfLegacy?.compatibleWith?.includes(target)) failures.push('BT-BG-FZ60 missing first-generation '+target);
+const vmLegacy=accessoryById.get('nanlite-bt-bg-v');
+for(const target of ['nanlite-forza-60','nanlite-forza-60b'])
+  if(!vmLegacy?.compatibleWith?.includes(target)) failures.push('BT-BG-V missing first-generation '+target);
+if(vmLegacy?.compatibleWith?.includes('nanlite-forza-60cr')) failures.push('BT-BG-V must not infer Forza 60CR compatibility');
+const dtap=accessoryById.get('nanlite-cb-dt-dc');
+if(!dtap) failures.push('Missing canonical CB-DT/DC D-Tap power cable');
+else {
+  for(const target of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr','nanlite-lumipad-11','nanlite-lumipad-25'])
+    if(!dtap.compatibleWith?.includes(target)) failures.push('CB-DT/DC missing documented target '+target);
+  if(dtap.compatibleWith?.includes('nanlite-pavotube-ii-6xr')) failures.push('CB-DT/DC must not be linked to USB-C-only PavoTube II 6XR');
+  if(dtap.connectorA!=='D-Tap'||dtap.connectorB!=='5.5mm DC barrel') failures.push('CB-DT/DC connector identity mismatch');
+}
 const npf=accessoryById.get('nanlite-bt-bg-fz60');
 for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b']) if(!npf?.compatibleWith?.includes(id)) failures.push('NP-F grip missing '+id);
 for(const target of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'])

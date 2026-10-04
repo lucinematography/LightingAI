@@ -38,7 +38,8 @@ const SRC = {
   dome:'https://nanliteus.com/products/diffusion-dome-for-fc-120b-and-forza-150b',
   case60:'https://nanliteus.com/products/padded-carrying-case-for-forza-60s-or-fs-60b',
   vmount98:'https://nanliteus.com/products/bt-v-14-4v98-mini-v-mount-battery-14-4v-98wh-li-ion',
-  pa15v6a:'https://nanliteus.com/products/pa-15v6a-fz60-forza-60-power-adapter-15v-6a'
+  pa15v6a:'https://nanliteus.com/products/pa-15v6a-fz60-forza-60-power-adapter-15v-6a',
+  cbDtdc:'https://nanliteus.com/products/d-tap-to-5-5mm-male-dc-barrel-power-cable'
 };
 
 function control({dmx=true,crmx=false}={}){
@@ -108,8 +109,8 @@ const PJ_FMM_CLASSIC_TARGETS = FMM_SHARED;
 const PJ_FMM_ZOOM_TARGETS = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-forza-150b','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'];
 const NANLINK_RC_SHARED=[...FMM_CURRENT,'nanlite-forza-150','nanlite-forza-150b','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b','nanlite-fc-720b','nanlite-fc-720c','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-alien-150c','nanlite-alien-300c','nanlite-pavobulb-10c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c','nanlite-lumipad-11','nanlite-forza-300-ii','nanlite-forza-500-ii','nanlite-forza-720','nanlite-fs-200b','nanlite-fs-300','nanlite-compac-200b'];
 const NANLINK_TB_SHARED=[...NANLINK_RC_SHARED,'nanlite-forza-500','nanlite-mixpanel-60','nanlite-mixpanel-150','nanlite-tk-140b','nanlite-tk-280b','nanlite-tk-200','nanlite-tk-450'];
-const SMALL_BATTERY = ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'];
-const VMOUNT_60 = ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fc-60b'];
+const SMALL_BATTERY = ['nanlite-forza-60','nanlite-forza-60b','nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'];
+const VMOUNT_60 = ['nanlite-forza-60','nanlite-forza-60b','nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fc-60b'];
 const VMOUNT_XLR = ['nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'];
 const MINI_REFLECTOR = ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b','nanlite-fs-60b'];
 const LARGE_REFLECTOR = ['nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'];
@@ -225,6 +226,20 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
   {
     id:'nanlite-bt-bg-v',manufacturer:'Nanlite',model:'BT-BG-V V-Mount Battery Grip',
     category:'Power',compatibleWith:VMOUNT_60,compatibilityStatus:'Designed For',sourceUrl:SRC.vmountGrip
+  },
+  {
+    id:'nanlite-cb-dt-dc',manufacturer:'Nanlite',model:'CB-DT/DC D-Tap to 5.5mm Male DC Barrel Power Cable',
+    category:'Cable',
+    compatibleWith:[
+      'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
+      'nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c',
+      'nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr',
+      'nanlite-lumipad-11','nanlite-lumipad-25'
+    ],
+    compatibilityStatus:'Designed For',
+    connectorA:'D-Tap',connectorB:'5.5mm DC barrel',
+    compatibilityEvidenceNote:'Current Nanlite product page explicitly lists PavoTube II 15C/30C, the PavoTube XR series, Forza 60B II/60C/60CR and the LumiPad series. PavoTube II 6XR is excluded because it uses USB-C power input.',
+    sourceUrl:SRC.cbDtdc
   },
   {
     id:'nanlite-bt-bg-xlr4-ii',manufacturer:'Nanlite',model:'BT-BG-XLR4-II V-Mount Battery Grip with 4-Pin XLR',

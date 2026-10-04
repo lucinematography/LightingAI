@@ -331,9 +331,10 @@ for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
   for(const target of ['nanlite-fc-1200b','nanlite-fc-1200c'])
     if(a?.compatibleWith?.includes(target)) failures.push(id+' must not infer 2.4G compatibility for '+target);
 }
-for(const target of ['nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c']){
+for(const target of ['nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-fs-150b','nanlite-fs-200b','nanlite-fs-300','nanlite-fs-300b','nanlite-fs-300c']){
   if(!accessoryById.get('nanlite-fl-20g')?.compatibleWith?.includes(target)) failures.push('Canonical FL-20G missing '+target);
 }
+if(!accessoryById.get('nanlite-fl-20g')?.compatibilityEvidenceNote) failures.push('Canonical FL-20G compatibility evidence note missing');
 for(const target of ['nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-forza-300b-ii','nanlite-forza-500b-ii']){
   if(!accessoryById.get('nanlite-pj-bm-25-45')?.compatibleWith?.includes(target)) failures.push('Canonical PJ-BM-25-45 missing '+target);
 }

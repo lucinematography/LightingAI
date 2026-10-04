@@ -1,4 +1,7 @@
 // Aladdin control verification: normalize runtime metadata without changing verified DMX semantics.
+const ALADDIN_MOSAIC_SOURCE='https://aladdin-lights.com/mosaic-2x4/';
+const ALADDIN_ALL_IN_ONE_SOURCE='https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-ONE-Manual-corrected-version-05.02.2024.pdf';
+const ALADDIN_ALL_IN_TWO_SOURCE='https://aladdin-lights.com/wp-content/uploads/2024/02/ALL-IN-TWO-Manual-corrected-version-05.02.2024.pdf';
 function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
 }
@@ -29,14 +32,30 @@ export function normalizeAladdinControl(fixtures = []) {
     const modeSources = Array.isArray(fixture.dmxModes)
       ? fixture.dmxModes.map(mode => mode?.sourceUrl)
       : [];
+    const bluetoothVerified = wireless.some(value => /bluetooth/i.test(String(value)));
+    const bluetoothSources = [];
+    if (fixture.id && fixture.id.startsWith('aladdin-mosaic-')) bluetoothSources.push(ALADDIN_MOSAIC_SOURCE);
+    if (fixture.id === 'aladdin-all-in-one') bluetoothSources.push(ALADDIN_ALL_IN_ONE_SOURCE);
+    if (fixture.id === 'aladdin-all-in-two') bluetoothSources.push(ALADDIN_ALL_IN_TWO_SOURCE);
     fixture.control = {
       local: unique(local),
       wired: unique(wired),
       wireless: unique(wireless),
       directLightingAI: [],
       externalInterfaceRequired: [],
-      sourceUrls: unique([fixture.sourceUrl, ...modeSources]).filter(url => String(url || '').startsWith('http')),
-      legacyLabels: labels
+      sourceUrls: unique([fixture.sourceUrl, ...modeSources, ...bluetoothSources]).filter(url => String(url || '').startsWith('http')),
+      legacyLabels: labels,
+      ...(bluetoothVerified ? {
+        wirelessVerification: {
+          bluetooth: {
+            verified: true,
+            family: 'Aladdin app Bluetooth',
+            scope: 'transport-capability-only',
+            sourceUrls: bluetoothSources,
+            note: 'Aladdin documents Bluetooth app control for this product family. LightingAI proprietary command semantics remain locked until separately verified.'
+          }
+        }
+      } : {})
     };
     const verifiedModes = Array.isArray(fixture.dmxModes)
       ? fixture.dmxModes.filter(mode => mode?.verified === true)

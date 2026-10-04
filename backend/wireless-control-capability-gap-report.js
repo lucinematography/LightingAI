@@ -19,7 +19,7 @@ function declaredFx(f){
   if(Array.isArray(f?.dmxModes) && f.dmxModes.some(mode=>/\b(?:fx|effect|effects)\b/i.test(String(mode?.name||'')))) return true;
   return /\b(?:fx|effect|effects)\b/i.test(String(f?.controlNotes||''));
 }
-function expectedCapabilities(f){
+export function expectedCapabilities(f){
   return {
     dim:String(f?.category||'').toLowerCase()==='light',
     cct:validCctRange(f),

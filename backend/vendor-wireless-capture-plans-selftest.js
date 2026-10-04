@@ -3,7 +3,7 @@ import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.j
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 
-for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Astera','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT']){
+for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Astera','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR']){
   const plan=VENDOR_WIRELESS_CAPTURE_PLANS[maker];
   expect(!!plan,maker+' capture plan missing');
   if(!plan) continue;
@@ -31,6 +31,7 @@ expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.Rotolight.secondaryPlans)&&VE
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS['Quasar Science'].secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS['Quasar Science'].secondaryPlans.some(x=>x.id==='quasar-rainbow-model-scoped-wifi-capture-v1'&&x.transport==='wifi'),'Quasar Science Wi-Fi secondary capture plan missing');
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.amaran.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.amaran.secondaryPlans.some(x=>x.id==='amaran-sm5c-direct-wifi-capture-v1'&&x.transport==='wifi'),'amaran SM5c Wi-Fi capture plan missing');
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.GVM.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.GVM.secondaryPlans.some(x=>x.id==='gvm-rgb10s-direct-wifi-capture-v1'&&x.transport==='wifi'),'GVM RGB-10S Wi-Fi capture plan missing');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.COLBOR?.id==='colbor-studio-bluetooth-capture-v1','COLBOR Bluetooth capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.PROLYCHT?.id==='prolycht-chromalink-bluetooth-capture-v1','PROLYCHT Bluetooth capture plan missing');
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.PROLYCHT?.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.PROLYCHT.secondaryPlans.some(x=>x.id==='prolycht-chromalink-wifi-capture-v1'&&x.transport==='wifi'),'PROLYCHT Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.ZHIYUN?.id==='zhiyun-zy-vega-bluetooth-capture-v1','ZHIYUN Bluetooth capture plan missing');

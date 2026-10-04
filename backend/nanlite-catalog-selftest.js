@@ -9,12 +9,13 @@ import { NANLITE_PAVOTUBE_10_CURRENT_FIXTURES, NANLITE_PAVOTUBE_10_CURRENT_ACCES
 import { NANLITE_PAVOTUBE_X_LEGACY_FIXTURES, NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES } from './nanlite-pavotube-x-legacy-library.js';
 import { NANLITE_FC_HIGH_OUTPUT_FIXTURES, NANLITE_FC_HIGH_OUTPUT_ACCESSORIES } from './nanlite-fc-high-output-library.js';
 import { NANLITE_FORZA_720B_FIXTURES, NANLITE_FORZA_720B_ACCESSORIES } from './nanlite-forza-720b-library.js';
+import { NANLITE_ALIEN_CURRENT_FIXTURES, NANLITE_ALIEN_CURRENT_ACCESSORIES } from './nanlite-alien-current-library.js';
 
 const failures=[];
-const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES];
+const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
 const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES];
 const fixtures=[...currentFixtures,...legacyFixtures];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 const accessoryModels=new Map();
@@ -228,5 +229,24 @@ for(const id of ['nanlite-fl-20g','nanlite-pj-bm-19','nanlite-pj-bm-25-45','nanl
   if(!a?.compatibleWith?.includes('nanlite-forza-720b')) failures.push(id+' missing Forza 720B');
 }
 for(const duplicateId of ['nanlite-fl-20g-fc','nanlite-pj-bm-25-45-fc']) if(accessoryById.has(duplicateId)) failures.push('Duplicate Nanlite accessory ID must stay removed: '+duplicateId);
+for(const id of ['nanlite-alien-150c','nanlite-alien-300c']){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing current Nanlite Alien fixture: '+id);
+  else {
+    if(f.discontinued!==false) failures.push('Alien fixture must be current: '+id);
+    if(!f.control?.builtInCRMX) failures.push('Alien fixture CRMX missing: '+id);
+    for(const p of ['DMX512','RDM']) if(!(f.control?.wired||[]).includes(p)) failures.push(id+' missing '+p);
+    for(const p of ['Bluetooth / NANLINK app','2.4G','LumenRadio CRMX']) if(!(f.control?.wireless||[]).includes(p)) failures.push(id+' missing '+p);
+  }
+}
+if(!fixtures.find(x=>x.id==='nanlite-alien-300c')?.batteryOptions?.some(x=>x.includes('45%'))) failures.push('Alien 300C single low-voltage V-Mount limit missing');
+for(const [fixtureId,barndoorsId] of [['nanlite-alien-150c','nanlite-bd-al150'],['nanlite-alien-300c','nanlite-bd-al300']]){
+  const a=accessoryById.get(barndoorsId);
+  if(!a?.compatibleWith?.includes(fixtureId)) failures.push(barndoorsId+' missing '+fixtureId);
+}
+for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-ascpqrfz']){
+  const a=accessoryById.get(id);
+  for(const target of ['nanlite-alien-150c','nanlite-alien-300c']) if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
+}
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

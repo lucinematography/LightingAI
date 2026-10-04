@@ -69,7 +69,7 @@ const FMM_ALL = [
   'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
   'nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'
 ];
-const NANLINK_SHARED=[...FMM_ALL,'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-fc-720b','nanlite-fc-720c','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-compac-200b'];
+const NANLINK_SHARED=[...FMM_ALL,'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-fc-720b','nanlite-fc-720c','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-6c','nanlite-compac-200b'];
 const SMALL_BATTERY = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'];
 const VMOUNT_60 = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fc-60b'];
 const VMOUNT_XLR = ['nanlite-fc-120b','nanlite-fc-120c'];

@@ -52,11 +52,11 @@ function included(id,model,category,target,sourceUrl){
 export const NANLITE_MIRO_CURRENT_ACCESSORIES=[
   {
     id:'nanlite-bt-npf750-miro',manufacturer:'Nanlite',model:'BT-NPF750 NP-F Battery',
-    category:'Battery',compatibleWith:BOTH,compatibilityStatus:'Compatible',sourceUrl:SRC.guide
+    category:'Battery',compatibleWith:[...BOTH,'nanlite-wand'],compatibilityStatus:'Compatible',sourceUrl:SRC.guide
   },
   {
     id:'nanlite-bt-npf970-miro',manufacturer:'Nanlite',model:'BT-NPF970 NP-F Battery',
-    category:'Battery',compatibleWith:BOTH,compatibilityStatus:'Compatible',sourceUrl:SRC.guide
+    category:'Battery',compatibleWith:[...BOTH,'nanlite-wand'],compatibilityStatus:'Compatible',sourceUrl:SRC.guide
   },
   {
     id:'nanlite-bt-cg-npf-2',manufacturer:'Nanlite',model:'BT-CG-NPF-2 Dual-Slot NP-F Battery Charger',

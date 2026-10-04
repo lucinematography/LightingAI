@@ -282,11 +282,16 @@ for(const id of ['nanlite-fc-1200b','nanlite-fc-1200c']) if(powerCtrl?.compatibl
 for(const id of ['nanlite-fc-1200b','nanlite-fc-1200c']){
   const f=fixtures.find(x=>x.id===id);
   if(f?.batteryPowered!==false) failures.push(id+' must remain AC-only');
+  if((f?.control?.wireless||[]).includes('2.4G')) failures.push(id+' must not claim 2.4G');
+  if(!(f?.control?.wireless||[]).includes('Bluetooth / NANLINK app')) failures.push(id+' Bluetooth/NANLINK missing');
+  if(!f?.control?.nfcPairing) failures.push(id+' NFC pairing missing');
 }
 for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
   const a=accessoryById.get(id);
-  for(const target of ['nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-1200b','nanlite-fc-1200c'])
+  for(const target of ['nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c'])
     if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
+  for(const target of ['nanlite-fc-1200b','nanlite-fc-1200c'])
+    if(a?.compatibleWith?.includes(target)) failures.push(id+' must not infer 2.4G compatibility for '+target);
 }
 for(const target of ['nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c']){
   if(!accessoryById.get('nanlite-fl-20g')?.compatibleWith?.includes(target)) failures.push('Canonical FL-20G missing '+target);

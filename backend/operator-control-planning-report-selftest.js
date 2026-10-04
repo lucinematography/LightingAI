@@ -5,8 +5,8 @@ const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildOperatorControlPlanningReport();
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
 
-expect(report.fixtureCount===644,'fixture total changed from verified catalog');
-expect(report.wirelessManufacturers===20,'wireless manufacturer count must remain 20');
+expect(report.fixtureCount===646,'fixture total changed from verified catalog');
+expect(report.wirelessManufacturers===21,'wireless manufacturer count must remain 21');
 expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
 expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
 expect(report.totals.dimControlVerified<=report.totals.dimCapable,'verified control totals must be bounded by physical DIM capability');
@@ -14,7 +14,7 @@ expect(report.totals.cctControlVerified<=report.totals.cctCapable,'verified CCT 
 expect(report.totals.colorControlVerified<=report.totals.colorCapable,'verified COLOR control total exceeds physical capability');
 expect(report.totals.fxControlVerified<=report.totals.fxCapable,'verified FX control total exceeds physical capability');
 
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR']){
   const row=by[maker];
   expect(!!row,maker+' planning row missing');
   if(!row) continue;
@@ -46,12 +46,13 @@ expect(by.Astera?.wirelessFixtures===23,'Astera unique wireless fixture count ch
 expect(by['DMG Lumiere']?.wirelessFixtures===3,'DMG Lumiere wireless fixture count changed unexpectedly');
 expect(by.ZHIYUN?.wirelessFixtures===16,'ZHIYUN wireless fixture count changed unexpectedly');
 expect(by.PROLYCHT?.wirelessFixtures===2,'PROLYCHT wireless fixture count changed unexpectedly');
+expect(by.COLBOR?.wirelessFixtures===2,'COLBOR wireless fixture count changed unexpectedly');
 
 for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight','Quasar Science','amaran','GVM','Litepanels','DMG Lumiere','PROLYCHT']){
   const transports=new Set(by[maker]?.requiredProductionTransports||[]);
   expect(transports.has('bluetooth')&&transports.has('wifi'),maker+' dual-transport production scope must require Bluetooth and Wi-Fi');
 }
-for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli','Kelvin','SmallRig','NEEWER','ZHIYUN']){
+for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli','Kelvin','SmallRig','NEEWER','ZHIYUN','COLBOR']){
   const transports=by[maker]?.requiredProductionTransports||[];
   expect(transports.length===1&&transports[0]==='bluetooth',maker+' current production scope should require Bluetooth only');
 }

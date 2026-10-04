@@ -43,7 +43,8 @@ export const NANLITE_FORZA_II_FIXTURES=[
 ];
 
 const BOTH=['nanlite-forza-300b-ii','nanlite-forza-500b-ii'];
-const FL20G_TARGETS=[...BOTH,'nanlite-forza-720b','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'];
+const DAYLIGHT_II=['nanlite-forza-300-ii','nanlite-forza-500-ii'];
+const FL20G_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'];
 
 export const NANLITE_FORZA_II_ACCESSORIES=[
   {
@@ -53,16 +54,16 @@ export const NANLITE_FORZA_II_ACCESSORIES=[
   },
   {
     id:'nanlite-ccsfz300ii',manufacturer:'Nanlite',model:'CCSFZ300II Padded Carrying Case for Forza 300 II / 500 II',
-    category:'Other',compatibleWith:BOTH,compatibilityStatus:'Designed For',sourceUrl:CASE
+    category:'Other',compatibleWith:[...BOTH,...DAYLIGHT_II],compatibilityStatus:'Designed For',sourceUrl:CASE
   },
   {
     id:'nanlite-rf-bm-55-forza-ii',manufacturer:'Nanlite',model:'RF-BM 55-Degree Bowens Mount Reflector',
-    category:'Reflector',mount:'Bowens',compatibleWith:BOTH,compatibilityStatus:'Designed For',
+    category:'Reflector',mount:'Bowens',compatibleWith:[...BOTH,...DAYLIGHT_II],compatibilityStatus:'Designed For',
     includedWithFixture:true,sourceUrl:SRC300
   },
   {
     id:'nanlite-ascpqrfz',manufacturer:'Nanlite',model:'ASCPQRFZ Quick-Release Super Clamp',
-    category:'Bracket',compatibleWith:[...BOTH,'nanlite-forza-720b','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-alien-150c','nanlite-alien-300c'],compatibilityStatus:'Designed For',
+    category:'Bracket',compatibleWith:[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-alien-150c','nanlite-alien-300c'],compatibilityStatus:'Designed For',
     includedWithFixture:true,sourceUrl:SRC300
   },
   {

@@ -39,4 +39,4 @@ const loadGel=index.indexOf('gel-filter-catalog.js');
 const loadCatalog=index.indexOf('catalog.js');
 const loadGelUi=index.indexOf('gel-filter-ui.js');
 if(loadGel<0||loadCatalog<0||loadGelUi<0||loadGel>loadCatalog||loadCatalog>loadGelUi)throw new Error('Gel catalog must load before Equipment catalog and gel UI after it');
-console.log('FILTERI/GEL integration self-test passed: 977 filters');
+console.log('FILTERI/GEL integration self-test passed: Rosco-only catalog');

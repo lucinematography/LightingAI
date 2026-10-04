@@ -265,8 +265,10 @@ for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-ascpqrfz']){
     if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
 }
 const mag=accessoryById.get('nanlite-as-mba-1-4-set');
+for(const target of ['nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c'])
+  if(!mag?.compatibleWith?.includes(target)) failures.push('Documented PavoSlim magnetic adapter target missing '+target);
 for(const target of ['nanlite-pavoslim-60cl','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c'])
-  if(!mag?.compatibleWith?.includes(target)) failures.push('Magnetic adapter missing '+target);
+  if(mag?.compatibleWith?.includes(target)) failures.push('Do not infer PavoSlim magnetic adapter compatibility for '+target);
 const sw=accessoryById.get('nanlite-asuhps');
 if(!sw?.compatibleWith?.includes('nanlite-pavoslim-60cl')) failures.push('PavoSlim 60CL shared swivel holder missing');
 const dmx35=accessoryById.get('nanlite-cb-dmx-3-5c-1-2');

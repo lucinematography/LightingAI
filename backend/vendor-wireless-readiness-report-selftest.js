@@ -32,7 +32,7 @@ expect(report.vendors[0]?.manufacturer==='Godox','Godox should remain highest wi
 expect(by.Godox?.bluetoothFixtures===68,'Godox Bluetooth count changed unexpectedly');
 expect(by.Nanlite?.bluetoothFixtures===59,'Nanlite Bluetooth count changed unexpectedly');
 expect(by.Nanlite?.wifiFixtures===8,'Nanlite Wi-Fi count changed unexpectedly');
-expect(by.Astera?.bluetoothFixtures===17&&by.Astera?.wifiFixtures===13,'Astera wireless counts changed unexpectedly');
+expect(by.Astera?.bluetoothFixtures===18&&by.Astera?.wifiFixtures===14,'Astera wireless counts changed unexpectedly');
 expect(by.Aputure?.bluetoothFixtures===19,'Aputure Bluetooth count changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));

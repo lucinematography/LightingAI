@@ -15,12 +15,16 @@ export const ASTERA_AX9_POWERPAR_FIXTURES = [
     batteryPowered: true,
     control: {
       wired: ['DMX'],
-      wireless: ['AsteraApp', 'Wireless DMX', 'CRMX'],
+      wireless: ['AsteraApp', 'Wireless DMX', 'CRMX', 'UHF', 'Bluetooth', 'WiFi'],
       builtInCRMX: true,
+      builtInBTB: true,
       directLightingAI: [],
       externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX/Wireless DMX transmitter for wireless DMX control'],
-      unavailableDirectProtocols: ['AsteraApp protocol is not publicly documented for third-party direct control'],
-      sourceUrls: ['https://astera-led.com/products/ax9-powerpar/downloads/']
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
+      sourceUrls: [
+        'https://astera-led.com/de/produkte/ax9-powerpar/specs/',
+        'https://astera-led.com/products/ax9-powerpar/downloads/'
+      ]
     },
     dmxModes: [{
       name: 'Profile 4 DIM RGB 4ch',

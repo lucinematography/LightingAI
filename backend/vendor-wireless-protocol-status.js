@@ -118,8 +118,7 @@ export function vendorWirelessProtocolStatus(manufacturer) {
 }
 
 
-export function vendorWideCommandProductionReady(manufacturer) {
-  const row=VENDOR_WIRELESS_PROTOCOL_STATUS[manufacturer]||null;
+export function commandProductionReadyForStatus(row) {
   if(row?.commandSpec!=='production_verified') return false;
   const scope=row?.productionScope;
   return !!(
@@ -128,5 +127,11 @@ export function vendorWideCommandProductionReady(manufacturer) {
     scope.allCurrentWirelessFixtures===true &&
     Array.isArray(scope.transports) &&
     scope.transports.length>0
+  );
+}
+
+export function vendorWideCommandProductionReady(manufacturer) {
+  return commandProductionReadyForStatus(
+    VENDOR_WIRELESS_PROTOCOL_STATUS[manufacturer]||null
   );
 }

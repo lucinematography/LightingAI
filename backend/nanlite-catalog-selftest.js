@@ -72,6 +72,16 @@ for(const id of ['nanlite-as-ba-fmm','nanlite-fl-11','nanlite-pj-fmm-19','nanlit
 }
 const npf=accessoryById.get('nanlite-bt-bg-fz60');
 for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b']) if(!npf?.compatibleWith?.includes(id)) failures.push('NP-F grip missing '+id);
+if(!npf?.includedWithFixtures?.includes('nanlite-fc-60b')) failures.push('FC-60B included BT-BG-FZ60 grip relation missing');
+for(const id of ['nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c']){
+  const f=fixtures.find(x=>x.id===id);
+  if(f?.batteryPowered!==true) failures.push(id+' battery power profile missing');
+  if(!f?.powerOptions?.some(x=>x.includes('AC'))) failures.push(id+' AC power option missing');
+  if(!f?.powerOptions?.some(x=>x.includes('USB-C PD'))) failures.push(id+' USB-C PD power option missing');
+}
+if(!fixtures.find(x=>x.id==='nanlite-fc-60b')?.powerOptions?.some(x=>x.includes('NP-F'))) failures.push('FC-60B NP-F power option missing');
+for(const id of ['nanlite-fc-120b','nanlite-fc-120c'])
+  if(!fixtures.find(x=>x.id===id)?.powerOptions?.some(x=>x.includes('V-Mount'))) failures.push(id+' V-Mount power option missing');
 const xlr=accessoryById.get('nanlite-bt-bg-xlr4-ii');
 for(const id of ['nanlite-fc-120b','nanlite-fc-120c']) if(!xlr?.compatibleWith?.includes(id)) failures.push('XLR V-Mount grip missing '+id);
 if(accessoryById.get('nanlite-bt-bg-v')?.compatibleWith?.includes('nanlite-forza-60cr')) failures.push('Do not infer BT-BG-V compatibility with Forza 60CR');

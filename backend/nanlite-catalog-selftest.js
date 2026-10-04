@@ -3,10 +3,11 @@ import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanli
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
 import { NANLITE_PAVOSLIM_60_120_FIXTURES, NANLITE_PAVOSLIM_60_120_ACCESSORIES } from './nanlite-pavoslim-60-120-library.js';
 import { NANLITE_PAVOTUBE_II_XR_FIXTURES, NANLITE_PAVOTUBE_II_XR_ACCESSORIES } from './nanlite-pavotube-ii-xr-library.js';
+import { NANLITE_PAVOTUBE_II_C_FIXTURES, NANLITE_PAVOTUBE_II_C_ACCESSORIES } from './nanlite-pavotube-ii-c-library.js';
 
 const failures=[];
-const fixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES];
+const fixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 
@@ -84,5 +85,22 @@ for(const id of ['nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-
 const lockDmx=accessoryById.get('nanlite-cb-dmx-acp-1-2');
 for(const id of ['nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr']) if(!lockDmx?.compatibleWith?.includes(id)) failures.push('Locking DMX adapter missing '+id);
 if(lockDmx?.compatibleWith?.includes('nanlite-pavotube-ii-6xr')) failures.push('Locking DMX adapter must not be linked to 6XR');
+for(const id of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c']){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing Nanlite PavoTube II C fixture: '+id);
+  else {
+    if(f.discontinued!==false) failures.push('Current PavoTube II C not marked current: '+id);
+    if(f.control?.builtInCRMX) failures.push('PavoTube II C must not claim built-in CRMX: '+id);
+    if(f.control?.dmxConnection!=='Locking metal DMX/RDM port') failures.push('PavoTube II C locking DMX path missing: '+id);
+  }
+}
+for(const id of ['nanlite-cb-dmx-acp-1-2','nanlite-pavotube-t12-clip-1-4','nanlite-pavotube-t12-clip-magnet','nanlite-pavotube-single-holder-swivel','nanlite-pavotube-single-holder-5-8','nanlite-pavotube-t12-clip-baby-pin']){
+  const a=accessoryById.get(id); if(!a) failures.push('Missing shared PavoTube II C accessory: '+id);
+  else for(const target of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
+}
+for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
+  const a=accessoryById.get(id); if(!a) failures.push('Missing shared NANLINK accessory for PavoTube II C: '+id);
+  else for(const target of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
+}
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

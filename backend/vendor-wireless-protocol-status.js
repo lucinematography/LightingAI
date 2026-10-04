@@ -118,10 +118,11 @@ export function vendorWirelessProtocolStatus(manufacturer) {
 }
 
 
-export function commandProductionReadyForStatus(row,requiredTransports=[],requiredFixtureIds=[]) {
+export function commandProductionReadyForStatus(row,requiredTransports=[],requiredFixtureIds=[],requiredRoutes=[]) {
   if(row?.commandSpec!=='production_verified') return false;
   if(!Array.isArray(requiredTransports)||requiredTransports.length===0) return false;
   if(!Array.isArray(requiredFixtureIds)||requiredFixtureIds.length===0) return false;
+  if(!Array.isArray(requiredRoutes)||requiredRoutes.length===0) return false;
   const scope=row?.productionScope;
   if(!(
     scope &&
@@ -148,6 +149,8 @@ export function commandProductionReadyForStatus(row,requiredTransports=[],requir
     evidence.verifiedTransports.length>0 &&
     Array.isArray(evidence.verifiedFixtureIds) &&
     evidence.verifiedFixtureIds.length>0 &&
+    Array.isArray(evidence.verifiedRoutes) &&
+    evidence.verifiedRoutes.length>0 &&
     Array.isArray(evidence.capturePlanIds) &&
     evidence.capturePlanIds.length>0
   )) return false;
@@ -160,13 +163,24 @@ export function commandProductionReadyForStatus(row,requiredTransports=[],requir
   const declaredFixtureIds=new Set(scope.fixtureIds.map(x=>String(x)));
   if(!requiredFixtureIds.every(id=>declaredFixtureIds.has(String(id)))) return false;
   const evidenceFixtureIds=new Set(evidence.verifiedFixtureIds.map(x=>String(x)));
-  return requiredFixtureIds.every(id=>evidenceFixtureIds.has(String(id)));
+  if(!requiredFixtureIds.every(id=>evidenceFixtureIds.has(String(id)))) return false;
+
+  const routeKey=route=>{
+    const fixtureId=String(route?.fixtureId||'').trim();
+    const transport=String(route?.transport||'').trim().toLowerCase();
+    return fixtureId&&transport?fixtureId+'::'+transport:'';
+  };
+  const requiredRouteKeys=new Set(requiredRoutes.map(routeKey).filter(Boolean));
+  if(requiredRouteKeys.size!==requiredRoutes.length) return false;
+  const evidenceRouteKeys=new Set(evidence.verifiedRoutes.map(routeKey).filter(Boolean));
+  return [...requiredRouteKeys].every(key=>evidenceRouteKeys.has(key));
 }
 
-export function vendorWideCommandProductionReady(manufacturer,requiredTransports=[],requiredFixtureIds=[]) {
+export function vendorWideCommandProductionReady(manufacturer,requiredTransports=[],requiredFixtureIds=[],requiredRoutes=[]) {
   return commandProductionReadyForStatus(
     VENDOR_WIRELESS_PROTOCOL_STATUS[manufacturer]||null,
     requiredTransports,
-    requiredFixtureIds
+    requiredFixtureIds,
+    requiredRoutes
   );
 }

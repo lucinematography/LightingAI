@@ -9,7 +9,9 @@ const SRC={
   p360c:'https://nanliteus.com/products/pavoslim-360c-4x2-led-rgbww-panel-light',
   cb240:'https://nanliteus.com/products/head-cable-for-pavoslim-240cl-led-panel-light',
   coupler240cl:'https://nanliteus.com/products/pavoslim-240cl-multi-panel-coupler-and-softbox-kit',
-  coupler360:'https://nanliteus.com/products/dual-panel-coupler-for-pavoslim-360c'
+  coupler360:'https://nanliteus.com/products/dual-panel-coupler-for-pavoslim-360c',
+  baby240cb:'https://nanliteus.com/products/5-8-baby-pin-holder-for-pavoslim-240c-b',
+  baby240cl:'https://nanliteus.com/products/5-8-baby-pin-holder-for-pavoslim-240cl'
 };
 
 function control(crmx){
@@ -58,6 +60,22 @@ export const NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES=[
     category:'Cable',compatibleWith:P240,compatibilityStatus:'Designed For',sourceUrl:SRC.cb240
   },
   {
+    id:'nanlite-asbphps-2x2',manufacturer:'Nanlite',model:'ASBPHPS-2x2 PavoSlim 240 Baby-Pin Holder',
+    category:'Mount',mount:'5/8 in baby pin',
+    compatibleWith:['nanlite-pavoslim-240b','nanlite-pavoslim-240c'],
+    compatibilityStatus:'Designed For',
+    includedWithFixtures:['nanlite-pavoslim-240c'],
+    sourceUrl:SRC.baby240cb
+  },
+  {
+    id:'nanlite-asbphpsl',manufacturer:'Nanlite',model:'ASBPHPSL PavoSlim 240CL Baby-Pin Holder',
+    category:'Mount',mount:'5/8 in baby pin',
+    compatibleWith:['nanlite-pavoslim-240cl'],
+    compatibilityStatus:'Designed For',
+    includedWithFixtures:['nanlite-pavoslim-240cl'],
+    sourceUrl:SRC.baby240cl
+  },
+  {
     id:'nanlite-asmpcps240clkit',manufacturer:'Nanlite',model:'ASMPCPS240CLKIT Multi-Panel Coupler and Softbox Kit',
     category:'Bracket',compatibleWith:['nanlite-pavoslim-240cl'],compatibilityStatus:'Designed For',
     bundledComponents:['2 coupling brackets','Folding softbox','2 diffusion sets','2 eggcrate grids','Carrying bag'],
@@ -74,7 +92,6 @@ export const NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES=[
   },
 
   included('nanlite-pavoslim-60cl-control-unit','PavoSlim 60CL Control Unit with 2 NP-F and 1 V-Mount Plates','Power','nanlite-pavoslim-60cl',SRC.p60cl),
-  included('nanlite-pavoslim-60cl-baby-pin','PavoSlim 60CL Baby-Pin Holder','Mount','nanlite-pavoslim-60cl',SRC.p60cl),
   included('nanlite-pavoslim-60cl-swivel','PavoSlim 60CL Swivel Holder','Mount','nanlite-pavoslim-60cl',SRC.p60cl),
   included('nanlite-pavoslim-60cl-dc-cable','PavoSlim 60CL DC Connection Cable 2.6 m','Cable','nanlite-pavoslim-60cl',SRC.p60cl),
   included('nanlite-pavoslim-60cl-ac-cable','PavoSlim 60CL AC Power Cable 4.5 m','Cable','nanlite-pavoslim-60cl',SRC.p60cl),
@@ -93,7 +110,6 @@ export const NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES=[
   included('nanlite-pavoslim-240b-case','PavoSlim 240B Padded Carrying Bag','Case','nanlite-pavoslim-240b',SRC.p240b),
 
   included('nanlite-pavoslim-240c-control-unit','PavoSlim 240C Control Unit with 2 V-Mount Plates','Power','nanlite-pavoslim-240c',SRC.p240c),
-  included('nanlite-pavoslim-240c-baby-pin','PavoSlim 240C Baby-Pin Holder','Mount','nanlite-pavoslim-240c',SRC.p240c),
   included('nanlite-pavoslim-240c-swivel','PavoSlim 240C Swivel Holder','Mount','nanlite-pavoslim-240c',SRC.p240c),
   included('nanlite-pavoslim-240c-dc-cable','PavoSlim 240C DC Connection Cable 5 m','Cable','nanlite-pavoslim-240c',SRC.p240c),
   included('nanlite-pavoslim-240c-ac-cable','PavoSlim 240C AC Power Cable 4.5 m','Cable','nanlite-pavoslim-240c',SRC.p240c),
@@ -103,7 +119,6 @@ export const NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES=[
   included('nanlite-pavoslim-240c-case','PavoSlim 240C Padded Carrying Bag','Case','nanlite-pavoslim-240c',SRC.p240c),
 
   included('nanlite-pavoslim-240cl-control-unit','PavoSlim 240CL Control Unit with 2 V-Mount Plates','Power','nanlite-pavoslim-240cl',SRC.p240cl),
-  included('nanlite-pavoslim-240cl-baby-pin','PavoSlim 240CL Baby-Pin Holder','Mount','nanlite-pavoslim-240cl',SRC.p240cl),
   included('nanlite-pavoslim-240cl-swivel','PavoSlim 240CL Swivel Holder','Mount','nanlite-pavoslim-240cl',SRC.p240cl),
   included('nanlite-pavoslim-240cl-dc-cable','PavoSlim 240CL DC Connection Cable 5 m','Cable','nanlite-pavoslim-240cl',SRC.p240cl),
   included('nanlite-pavoslim-240cl-ac-cable','PavoSlim 240CL AC Power Cable 4.5 m','Cable','nanlite-pavoslim-240cl',SRC.p240cl),

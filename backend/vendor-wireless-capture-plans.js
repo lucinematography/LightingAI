@@ -113,6 +113,29 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  Kinotehnik: {
+    id:'kinotehnik-practilite-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Practilite Remote Control App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Practilite model at a time with the official remote-control app.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer commands to Practilite 604/802 or other models without exact-model Bluetooth evidence.'
+    ],
+    officialSources:[
+      'https://kinotehnik.com/wp-content/uploads/2020/08/PRACTILITE-602_manual_for_web.pdf',
+      'https://kinotehnik.com/632_user_manual.pdf',
+      'https://kinotehnik.com/practilite-remote-control-app/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one Practilite fixture over Bluetooth LE, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   'Hive Lighting': {
     id:'hive-shot-bluetooth-capture-v1',
     transport:'bluetooth',

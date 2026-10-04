@@ -46,10 +46,12 @@ export function buildWirelessReadinessReport(){
     if(!bt&&!wifi) continue;
     if(!map.has(maker)) map.set(maker,{
       manufacturer:maker,totalWirelessFixtures:0,bluetoothFixtures:0,wifiFixtures:0,bothFixtures:0,
-      verifiedBluetoothEvidence:0,verifiedWifiEvidence:0,assistedBluetooth:0,assistedWifi:0
+      verifiedBluetoothEvidence:0,verifiedWifiEvidence:0,assistedBluetooth:0,assistedWifi:0,
+      fixtureIds:[]
     });
     const row=map.get(maker);
     row.totalWirelessFixtures++;
+    if(f?.id) row.fixtureIds.push(String(f.id));
     if(bt) row.bluetoothFixtures++;
     if(wifi) row.wifiFixtures++;
     if(bt&&wifi) row.bothFixtures++;
@@ -68,7 +70,7 @@ export function buildWirelessReadinessReport(){
       ...(row.bluetoothFixtures>0?['bluetooth']:[]),
       ...(row.wifiFixtures>0?['wifi']:[])
     ];
-    const commandReady=vendorWideCommandProductionReady(row.manufacturer,requiredTransports);
+    const commandReady=vendorWideCommandProductionReady(row.manufacturer,requiredTransports,row.fixtureIds);
     return {
       ...row,
       transportEvidenceComplete:

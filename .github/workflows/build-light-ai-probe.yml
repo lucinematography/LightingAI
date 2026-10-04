@@ -144,6 +144,11 @@ jobs:
         working-directory: backend
         run: node operator-control-planning-report-selftest.js
 
+      - name: Audit wireless control capability gaps
+        working-directory: backend
+        run: node wireless-control-capability-gap-report-selftest.js
+
+
 
 
 

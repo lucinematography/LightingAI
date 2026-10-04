@@ -53,6 +53,15 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       color:{runs:3,optional:true,rule:'Only after DIM/CCT evidence is stable; perform exactly one HSI/RGB change per capture on a supported fixture.'},
       fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; activate exactly one effect per capture.'}
     },
+    secondaryPlans:[
+      {
+        id:'nanlink-model-scoped-wifi-capture-v1',
+        transport:'wifi',
+        target:'Nanlite models whose catalog metadata explicitly verifies Wi-Fi control',
+        commandSpecStatus:'public-wifi-command-api-not-located-in-official-docs',
+        rule:'Use only the vendor-documented NANLINK/Wi-Fi path for the exact model. Preserve any W-2 or other external-interface requirement from catalog metadata. Capture three no-change sessions and three isolated DIM/CCT actions. Do not infer a proprietary IP API from the presence of Wi-Fi alone.'
+      }
+    ],
     safety:{
       officialAppWritesOnly:true,
       lightingAiWritesAllowed:false,
@@ -123,6 +132,50 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
         target:'SkyPanel S60 Pro Web Portal',
         commandSpecStatus:'public-http-command-api-not-located-in-official-docs',
         rule:'Use an isolated local network, access only the fixture Web Portal, capture browser HTTP traffic for three no-change sessions and three isolated DIM/CCT actions each. Do not infer endpoints from page labels alone.'
+      }
+    ],
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
+  Astera: {
+    id:'astera-physical-capture-set-v1',
+    transport:'bluetooth',
+    controllerApp:'AsteraApp',
+    commandSpecStatus:'physical-evidence-required',
+    existingToolchain:{
+      manifest:'backend/astera-physical-capture-set.example.json',
+      orchestrator:'backend/astera-physical-capture-set.js',
+      analyzers:[
+        'backend/astera-btsnoop-analyzer.js',
+        'backend/astera-att-session-consensus.js',
+        'backend/astera-att-diff.js',
+        'backend/astera-att-consensus.js',
+        'backend/astera-att-sweep.js'
+      ]
+    },
+    prerequisites:[
+      'Use the official AsteraApp and exactly one identified Astera fixture for the first capture set.',
+      'Use the existing connect-only, DIM and CCT physical capture methodology; proprietary LightingAI writes remain disabled.',
+      'Keep raw Bluetooth snoop logs out of the repository and commit only derived evidence.'
+    ],
+    officialSources:['catalog-first-party-product-and-manual-sources'],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Use the existing Astera physical capture-set methodology with three connect-only captures.'},
+      dim:{runs:3,rule:'Use the existing Astera physical capture-set methodology with three isolated DIM captures.'},
+      cct:{runs:3,rule:'Use the existing Astera physical capture-set methodology with three isolated CCT captures.'}
+    },
+    secondaryPlans:[
+      {
+        id:'astera-model-scoped-wifi-capture-v1',
+        transport:'wifi',
+        target:'Astera models whose catalog metadata explicitly verifies Wi-Fi control',
+        commandSpecStatus:'public-wifi-command-api-not-located-in-official-docs',
+        rule:'Use only the official model-documented Astera Wi-Fi control path on an isolated local network. Capture three no-change sessions and isolated DIM/CCT actions. Do not infer proprietary endpoints or command semantics from transport presence alone.'
       }
     ],
     safety:{

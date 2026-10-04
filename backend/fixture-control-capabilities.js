@@ -42,13 +42,16 @@ function deriveFixtureControlCapabilities(fixture){
   if(capabilityVerification(fixture,'dim')) dimEvidence.push('verified-official-app-capability');
   if(validCctRange(fixture)) cctEvidence.push('catalog-cct-range');
   if(hasAny(keys,['cct','kelvin','temperature','color_temperature'])) cctEvidence.push('verified-dmx-control');
+  if(appCapability(fixture,'cct')) cctEvidence.push('verified-official-app-capability');
 
   if(declaredColorEngine(fixture)) colorEvidence.push('catalog-color-engine');
+  if(appCapability(fixture,'color')) colorEvidence.push('verified-official-app-capability');
   if(hasAny(keys,['red','green','blue','white','amber','lime','cyan','hue','saturation','x','y','xy','crossfade'])) {
     colorEvidence.push('verified-dmx-control');
   }
 
   if([...keys].some(key=>key==='effect'||key==='effects'||key.startsWith('fx'))) fxEvidence.push('verified-dmx-control');
+  if(appCapability(fixture,'fx')) fxEvidence.push('verified-official-app-capability');
   if(capabilityVerification(fixture,'fx')) fxEvidence.push('verified-official-app-capability');
 
   return {

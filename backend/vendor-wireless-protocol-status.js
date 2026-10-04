@@ -52,7 +52,8 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     bluetooth: 'transport_verified_model_or_variant_scoped',
     wifi: 'transport_verified_model_scoped',
     commandSpec: 'physical-evidence-required',
-    nextStep: 'official-app-btsnoop-capture-and-replay-verification',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'astera-official-app-btsnoop-capture-v1',
     evidence: [
       'catalog-first-party-product-and-manual-sources',
       'verified-control-capture-toolchain'

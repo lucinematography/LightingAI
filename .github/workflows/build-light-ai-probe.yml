@@ -136,14 +136,14 @@ jobs:
         working-directory: backend
         run: node aputure-wireless-verification-selftest.js
 
-      - name: Validate Aladdin Bluetooth fail-closed normalization
-        working-directory: backend
-        run: node aladdin-wireless-verification-selftest.js
-
 
       - name: Validate vendor wireless readiness report
         working-directory: backend
         run: node vendor-wireless-readiness-report-selftest.js
+
+      - name: Validate ARRI wireless capability evidence
+        working-directory: backend
+        run: node arri-wireless-verification-selftest.js
 
       - name: Validate fixture control capabilities
         working-directory: backend

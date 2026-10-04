@@ -335,9 +335,10 @@ for(const target of ['nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanl
   if(!accessoryById.get('nanlite-fl-20g')?.compatibleWith?.includes(target)) failures.push('Canonical FL-20G missing '+target);
 }
 if(!accessoryById.get('nanlite-fl-20g')?.compatibilityEvidenceNote) failures.push('Canonical FL-20G compatibility evidence note missing');
-for(const target of ['nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-forza-300b-ii','nanlite-forza-500b-ii']){
+for(const target of ['nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b']){
   if(!accessoryById.get('nanlite-pj-bm-25-45')?.compatibleWith?.includes(target)) failures.push('Canonical PJ-BM-25-45 missing '+target);
 }
+if(!accessoryById.get('nanlite-pj-bm-25-45')?.compatibilityEvidenceNote) failures.push('Canonical PJ-BM-25-45 compatibility evidence note missing');
 for(const duplicateId of ['nanlite-fl-20g-fc','nanlite-pj-bm-25-45-fc']) if(accessoryById.has(duplicateId)) failures.push('Duplicate Nanlite accessory ID must be removed: '+duplicateId);
 const forza300day=fixtures.find(x=>x.id==='nanlite-forza-300-ii');
 if(!forza300day) failures.push('Missing Nanlite Forza 300 II daylight');

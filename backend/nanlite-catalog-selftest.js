@@ -90,6 +90,16 @@ for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
   else for(const target of ['nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-fc-720b','nanlite-fc-720c']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
 }
 for(const id of ['nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c']) if(!fixtureIds.has(id)) failures.push('Missing Nanlite PavoSlim fixture: '+id);
+for(const [id,sku] of [
+  ['nanlite-pavoslim-60b','PS60BQR'],
+  ['nanlite-pavoslim-60c','PS60C'],
+  ['nanlite-pavoslim-120b','PS120BQR'],
+  ['nanlite-pavoslim-120c','PS120C']
+]){
+  if(fixtures.find(f=>f.id===id)?.sku!==sku) failures.push(id+' SKU must remain '+sku);
+}
+for(const forbiddenId of ['nanlite-pavoslim-60bqr','nanlite-pavoslim-120bqr'])
+  if(fixtureIds.has(forbiddenId)) failures.push('QR SKU must not create duplicate PavoSlim fixture: '+forbiddenId);
 for(const id of ['nanlite-pavoslim-60b','nanlite-pavoslim-120b']) if(fixtures.find(f=>f.id===id)?.control?.builtInCRMX) failures.push('Bi-color PavoSlim must not claim built-in CRMX: '+id);
 for(const id of ['nanlite-pavoslim-60c','nanlite-pavoslim-120c']) if(!fixtures.find(f=>f.id===id)?.control?.builtInCRMX) failures.push('Color PavoSlim CRMX missing: '+id);
 for(const id of ['nanlite-cbps-2-6m','nanlite-cbps-7-5m','nanlite-as-mba-1-4-set','nanlite-asuhps']){

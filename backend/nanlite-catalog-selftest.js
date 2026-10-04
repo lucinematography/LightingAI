@@ -79,6 +79,16 @@ const npf=accessoryById.get('nanlite-bt-bg-fz60');
 for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b']) if(!npf?.compatibleWith?.includes(id)) failures.push('NP-F grip missing '+id);
 for(const target of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'])
   if(!npf?.includedWithFixtures?.includes(target)) failures.push('BT-BG-FZ60 included relation missing '+target);
+const paFz60=accessoryById.get('nanlite-pa-15v6a-fz60');
+if(!paFz60) failures.push('Missing PA-15V6A-FZ60 power adapter');
+else {
+  for(const target of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr']){
+    if(!paFz60.compatibleWith?.includes(target)) failures.push('PA-15V6A-FZ60 missing '+target);
+    if(!paFz60.includedWithFixtures?.includes(target)) failures.push('PA-15V6A-FZ60 included relation missing '+target);
+  }
+  if(paFz60.output!=='15V / 6A') failures.push('PA-15V6A-FZ60 electrical output must remain 15V / 6A');
+  if(paFz60.builtInVMountPlate!==true) failures.push('PA-15V6A-FZ60 built-in V-Mount plate missing');
+}
 for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr']){
   const f=fixtures.find(x=>x.id===id);
   if(f?.batteryPowered!==true) failures.push(id+' battery power profile missing');

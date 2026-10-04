@@ -36,6 +36,23 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  'DMG Lumiere': {
+    bluetooth: 'transport_verified_mixed_integrated_and_assisted',
+    wifi: 'transport_verified_mixed_integrated_and_assisted',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'dmg-mix-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['dmg-mix-wifi-capture-v1'],
+    evidence: [
+      'https://emea.rosco.com/en/mymix-app',
+      'https://us.rosco.com/sites/default/files/content/resource/2022-12/Rosco_DMG_USERMANUAL-MIX-CONTROL-2-1.pdf',
+      'https://us.rosco.com/en/product/dmg-mini',
+      'https://emea.rosco.com/en/product/dmg-sl1',
+      'https://us.rosco.com/en/product/dmg-maxi'
+    ],
+    note: 'DMG MINI/SL1 use the add-on MIX Controller; MAXI has the MIX Controller built in. Bluetooth/myMIX and Wi-Fi/Art-Net transports are documented, while LightingAI proprietary command semantics remain locked.'
+  },
+
   Litepanels: {
     bluetooth: 'transport_verified_mixed_direct_and_assisted',
     wifi: 'transport_verified_astra_ip_only',

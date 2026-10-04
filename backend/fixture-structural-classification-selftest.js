@@ -1,4 +1,4 @@
-import { deriveFixtureStructuralClass } from './fixture-structural-classification.js';
+import { deriveFixtureStructuralClass, deriveFixtureStructuralClassification } from './fixture-structural-classification.js';
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
@@ -20,6 +20,11 @@ const cases=[
 for(const [fixture,expected] of cases){
   expect(deriveFixtureStructuralClass(fixture)===expected,
     JSON.stringify(fixture)+' expected '+expected+' got '+deriveFixtureStructuralClass(fixture));
+  const structural=deriveFixtureStructuralClassification(fixture);
+  expect(!!structural.basis&&!!structural.evidence,
+    'structural classification must expose provenance for '+JSON.stringify(fixture));
+  expect(structural.auditOnly===true,
+    'structural classification must remain audit-only');
 }
 expect(deriveFixtureStructuralClass({manufacturer:'Unknown',model:'Mystery Light'})===null,
   'unknown fixture must remain unclassified instead of guessing');

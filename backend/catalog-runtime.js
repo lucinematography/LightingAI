@@ -158,6 +158,7 @@ import { normalizeAputureWirelessControl } from './aputure-wireless-verification
 import { normalizeArriWirelessControl } from './arri-wireless-verification.js';
 import { normalizeNanliteWirelessVerification } from './nanlite-wireless-verification.js';
 import { normalizeEvLightWirelessVerification } from './evlight-wireless-verification.js';
+import { normalizeAsteraWirelessVerification } from './astera-wireless-verification.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function unique(values = []) { return [...new Set(values)]; }
@@ -194,6 +195,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(ASTERA_AX1_PIXELTUBE_FIXTURES));
   fixtures.push(...clone(ASTERA_AX7_SPOTLITE_FIXTURES));
   fixtures.push(...clone(ASTERA_AX10_SPOTMAX_FIXTURES));
+  normalizeAsteraWirelessVerification(fixtures);
   fixtures.push(...clone(DESISTI_SUPER_LED_F47_FIXTURES));
   fixtures.push(...clone(DESISTI_LED_FRESNEL_FIXTURES));
   fixtures.push(...clone(DESISTI_PICCOLETTO_FIXTURES));

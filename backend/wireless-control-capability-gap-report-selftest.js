@@ -1,4 +1,4 @@
-import { buildWirelessCapabilityGapReport } from './wireless-control-capability-gap-report.js';
+import { buildWirelessCapabilityGapReport, expectedCapabilities } from './wireless-control-capability-gap-report.js';
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
@@ -19,8 +19,21 @@ expect(by.Godox?.missingDim===0,'Godox DIM official-app capability coverage chan
 expect(by.Nanlite?.missingDim===0,'Nanlite DIM official-app capability coverage changed');
 expect(by.Aputure?.missingDim===0,'Aputure DIM official-app capability coverage changed');
 expect(by.Aputure?.missingFx===0,'Aputure FX official-app capability coverage changed');
-expect(by.Astera?.missingCct===17,'Astera CCT gap baseline changed');
-expect(by.Aladdin?.missingFx===2,'Aladdin FX gap baseline changed');
+const daylight=expectedCapabilities({category:'Light',colorMode:'Daylight',cctK:{min:5600,max:5600}});
+expect(daylight.dim===true,'Daylight light should still expect DIM verification');
+expect(daylight.cct===false,'Fixed-daylight fixture must not be treated as a missing CCT-control gap');
+expect(daylight.color===false,'Daylight fixture must not be treated as a missing COLOR-control gap');
+expect(daylight.fx===false,'Fixture without independent FX declaration must not be treated as a missing FX gap');
+
+const bicolor=expectedCapabilities({category:'Light',colorMode:'Bi-Color',cctK:{min:2700,max:6500}});
+expect(bicolor.cct===true,'Variable-CCT fixture must expect CCT capability evidence');
+expect(bicolor.color===false,'Bi-Color fixture must not be treated as RGB/full-color');
+
+const rgb=expectedCapabilities({category:'Light',colorMode:'RGBWW',cctK:{min:2000,max:10000}});
+expect(rgb.color===true,'RGBWW fixture must expect COLOR capability evidence');
+
+const fx=expectedCapabilities({category:'Light',colorMode:'Daylight',cctK:{min:5600,max:5600},dmxModes:[{name:'Lighting & Effects 6ch'}]});
+expect(fx.fx===true,'Explicit Effects mode must make FX an expected capability');
 
 console.log(JSON.stringify({ok:failures.length===0,summary:{
   fixtureCount:report.fixtureCount,

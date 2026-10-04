@@ -25,12 +25,12 @@ expect(verifiedWirelessTransport({
 }).bluetooth===true,
   'Verified Bluetooth transport evidence must enter wireless gap scope');
 
-expect(report.fixtureCount===686,'fixture total changed from verified catalog');
-expect(report.wirelessFixtures===349,'verified wireless fixture total changed unexpectedly');
+expect(report.fixtureCount===692,'fixture total changed from verified catalog');
+expect(report.wirelessFixtures===355,'verified wireless fixture total changed unexpectedly');
 expect(report.fixturesWithAnyGap>0,'capability-gap audit unexpectedly empty');
 
 const by=report.byManufacturer;
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET']){
   expect(!!by[maker],maker+' capability-gap row missing');
 }
 

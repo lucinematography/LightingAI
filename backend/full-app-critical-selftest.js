@@ -16,6 +16,8 @@ const bootstrap=read('app/src/main/assets/control-bootstrap.js');
 const dashboard=read('app/src/main/assets/control-dashboard.js');
 const ble=read('app/src/main/assets/ble-control.js');
 const aiBridge=read('app/src/main/assets/ai-control-bridge.js');
+const classic=read('app/src/main/java/com/lightingai/app/AsteraBtbClassicInspector.java');
+const bond=read('app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java');
 const main=read('app/src/main/java/com/lightingai/app/MainActivity.java');
 expect(bootstrap.includes("window.LightingAIControlBootstrapMode='vendor-wireless'"),'CONTROL bootstrap is not vendor-wireless');
 for(const text of [bootstrap,dashboard,main])for(const forbidden of ['artnet-control.js','dmx-patch-planner.js','dmx-export.js','artNetSendDmx','sacnSendDmx','networkDmxDiagnostics'])expect(!text.includes(forbidden),'network CONTROL marker remains: '+forbidden);
@@ -31,6 +33,7 @@ for(const forbidden of [
 expect(!read('app/src/main/java/com/lightingai/app/BleGattInspector.java').includes('writeCharacteristic('),'BLE diagnostics may not send proprietary writes');
 for(const removed of ['app/src/main/assets/artnet-control.js','app/src/main/assets/dmx-patch-planner.js','app/src/main/assets/dmx-export.js'])expect(!exists(removed),'removed network asset still present: '+removed);
 const failClosedRuntime=[
+  ['control-bootstrap.js',bootstrap],
   ['control-system-drivers.js',read('app/src/main/assets/control-system-drivers.js')],
   ['control-routing.js',read('app/src/main/assets/control-routing.js')],
   ['control-dashboard.js',dashboard],
@@ -52,6 +55,14 @@ for(const nativePath of [
   'app/src/main/java/com/lightingai/app/BleGattInspector.java'
 ]){
   expect(!read(nativePath).includes('writeCharacteristic('),'Native CONTROL bridge may not expose proprietary characteristic writes before physical verification: '+nativePath);
+}
+for(const [name,text] of [
+  ['AsteraBtbClassicInspector.java',classic],
+  ['AsteraBtbBondManager.java',bond]
+]){
+  for(const forbidden of ['BluetoothSocket','createRfcommSocket','getOutputStream(','.write(']){
+    expect(!text.includes(forbidden),'Astera Classic/bond diagnostics may not open an output stream before physical verification: '+name+' matched '+forbidden);
+  }
 }
 console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'vendor-wireless-bluetooth-wifi',failures},null,2));
 if(failures.length)process.exit(1);

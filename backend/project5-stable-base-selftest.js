@@ -130,6 +130,8 @@ const exactAllowed = new Set([
   'backend/desisti-catalog-selftest.js',
   'backend/godox-continuous-library.js',
   'backend/godox-catalog-selftest.js',
+  'backend/nanlite-fm-current-library.js',
+  'backend/nanlite-catalog-selftest.js',
   'backend/aladdin-mosaic-library.js',
   'backend/aladdin-fabric-lite-library.js',
   'backend/aladdin-bi-flex-library.js',

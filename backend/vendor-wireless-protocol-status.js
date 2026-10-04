@@ -36,6 +36,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  Dracast: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'dracast-palette-v2-bluetooth-capture-v1',
+    evidence: [
+      'https://dracobroadcast.com/product/dracast-palette-series-ii-led4000-rgbw-soft-panel/',
+      'https://dracobroadcast.com/product/dracast-fresnel-pro-series-ii-led500-bi-color-light/'
+    ],
+    note: 'Bluetooth/Palette V2 App control is verified only for the explicitly cataloged Dracast models. LightingAI proprietary command semantics remain locked.'
+  },
+
   SWIT: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

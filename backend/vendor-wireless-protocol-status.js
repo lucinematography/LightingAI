@@ -36,6 +36,25 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  'Hive Lighting': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'hive-shot-bluetooth-capture-v1',
+    evidence: [
+      'https://hivelighting.com/is-control/',
+      'https://hivelighting.com/bb-25-cx/',
+      'https://hivelighting.com/products/bee-50-c-open-face-omni-color-led-light/',
+      'https://hivelighting.com/products/wasp-100-c-led-spot/',
+      'https://hivelighting.com/products/wasp-100-cx/',
+      'https://hivelighting.com/products/hornet-200-c-open-face-omni-color-led-light/',
+      'https://hivelighting.com/products/hornet-200-cx/',
+      'https://hivelighting.com/575-c-vs/'
+    ],
+    note: 'Bluetooth/Hive SHOT control is verified only for the explicitly cataloged Hive Lighting models. LightingAI proprietary command semantics remain locked.'
+  },
+
   Dracast: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

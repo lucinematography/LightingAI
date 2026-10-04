@@ -13,6 +13,8 @@ const SRC={
   bd15:'https://nanliteus.com/products/fabric-barndoors-and-grid-for-pavotube-ii-15x-led-pixel-tubes',
   bd30:'https://nanliteus.com/nanlite-fabric-barndoors-and-grid-for-pavotube-ii-30x-led-pixel-tubes/',
   waterproof60:'https://nanliteus.com/nanlite-waterproof-housing-for-pavotube-ii-60x-led-pixel-tubes/',
+  waterproof60Current:'https://nanliteus.com/products/waterproof-housing-for-pavotube-ii-60x-led-pixel-tubes',
+  floor8:'https://nanliteus.com/products/foldable-floor-stand-for-pavotube-ii-60x-and-long-t12-tube-lights-1',
   bag15:'https://nanliteus.com/nanlite-nanlite-carrying-bag-for-pavotube-ii-15x-holds-up-to-3-lights-and-accessories/'
 };
 
@@ -90,8 +92,22 @@ export const NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES=[
   accessory(
     'nanlite-aswtptii60x',
     'ASWTPTII60X Waterproof Housing',
-    'Other',['nanlite-pavotube-ii-60x'],SRC.waterproof60,
-    {conditions:['IP68 housing, rated to 10 m / 32.8 ft by Nanlite']}
+    'Other',['nanlite-pavotube-ii-60x','nanlite-pavotube-ii-60xr'],SRC.waterproof60Current,
+    {
+      conditions:['IP68 housing, rated to 10 m / 32.8 ft by Nanlite'],
+      mount:'1/4-20 receivers at both ends',
+      compatibilityEvidenceNote:'Archived Nanlite documentation covers PavoTube II 60X; the current Nanlite product page uses the same ASWTPTII60X SKU for PavoTube II 60XR.',
+      evidenceSources:[SRC.waterproof60,SRC.waterproof60Current]
+    }
+  ),
+  accessory(
+    'nanlite-lsflt12pt8ft',
+    'LSFLT12PT8FT Foldable Floor Stand for PavoTube II 60XR / Long T12 Tubes',
+    'Stand',['nanlite-pavotube-ii-60x','nanlite-pavotube-ii-60xr'],SRC.floor8,
+    {
+      compatibilityEvidenceNote:'Nanlite states this stand was designed for the 8-foot PavoTube II 60X and the current product title identifies PavoTube II 60XR; it also accepts standard T12 tubes up to 8 feet.',
+      conditions:['Wide-base vertical floor stand with cable clearance and rear display window']
+    }
   ),
   accessory(
     'nanlite-ccsptii15x',

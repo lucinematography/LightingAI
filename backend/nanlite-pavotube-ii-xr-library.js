@@ -12,7 +12,9 @@ const SRC={
   pavotubeSeries:'https://nanliteus.com/pages/pavotube-series',
   sixCompare:'https://nanliteus.com/blogs/learn/whats-the-difference-between-the-pavotube-ii-6c-6cp-6xr',
   grid6:'https://nanliteus.com/products/pavotube-ii-6c-fabric-grid',
-  frame8:'https://nanliteus.com/products/8-tube-light-frame-with-softbox-grid'
+  frame8:'https://nanliteus.com/products/8-tube-light-frame-with-softbox-grid',
+  waterproof15:'https://nanliteus.com/products/waterproof-housing-for-pavotube-ii-15x-led-pixel-tubes',
+  waterproof30:'https://nanliteus.com/products/waterproof-housing-for-pavotube-ii-30x-led-pixel-tubes'
 };
 
 function control({usbCdmx=false,twoPointFour=true,nfc=false}={}){
@@ -140,6 +142,18 @@ export const NANLITE_PAVOTUBE_II_XR_ACCESSORIES=[
     id:'nanlite-pavotube-30xr-fabric-barndoors-grid',manufacturer:'Nanlite',model:'Fabric Barndoors and Grid for PavoTube II 30XR',
     category:'Barndoors',compatibleWith:['nanlite-pavotube-ii-30xr'],compatibilityStatus:'Designed For',
     sourceUrl:SRC.xr1530Accessories
+  },
+  {
+    id:'nanlite-aswtptii15x',manufacturer:'Nanlite',model:'ASWTPTII15X Waterproof Housing for PavoTube II 15XR',
+    category:'Other',compatibleWith:['nanlite-pavotube-ii-15xr'],compatibilityStatus:'Designed For',
+    conditions:['IP68 waterproof housing rated to 10 m / 32.8 ft by Nanlite'],
+    mount:'1/4-20 receivers at both ends',sourceUrl:SRC.waterproof15
+  },
+  {
+    id:'nanlite-aswtptii30x',manufacturer:'Nanlite',model:'ASWTPTII30X Waterproof Housing for PavoTube II 30XR',
+    category:'Other',compatibleWith:['nanlite-pavotube-ii-30xr'],compatibilityStatus:'Designed For',
+    conditions:['IP68 waterproof housing rated to 10 m / 32.8 ft by Nanlite'],
+    mount:'1/4-20 receivers at both ends',sourceUrl:SRC.waterproof30
   },
 
   included('nanlite-pavotube-ii-6xr-usbc-cable','Braided USB-C Cable 1 m','Cable','nanlite-pavotube-ii-6xr',SRC.xr6),

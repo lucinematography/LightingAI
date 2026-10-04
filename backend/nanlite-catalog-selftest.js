@@ -443,6 +443,26 @@ for(const id of ['nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pa
     if(f.control?.dmxConnection!=='Locking aviation DMX/RDM port via CB-DMX-ACP-1/2') failures.push('Legacy PavoTube II X DMX path mismatch: '+id);
   }
 }
+for(const [id,target] of [['nanlite-aswtptii15x','nanlite-pavotube-ii-15xr'],['nanlite-aswtptii30x','nanlite-pavotube-ii-30xr']]){
+  const a=accessoryById.get(id);
+  if(!a) failures.push('Missing current XR waterproof housing: '+id);
+  else {
+    if(!a.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
+    if(!a.conditions?.some(x=>x.includes('IP68'))) failures.push(id+' IP68 evidence missing');
+  }
+}
+const waterproof60=accessoryById.get('nanlite-aswtptii60x');
+if(!waterproof60) failures.push('Missing canonical ASWTPTII60X waterproof housing');
+else {
+  for(const target of ['nanlite-pavotube-ii-60x','nanlite-pavotube-ii-60xr']) if(!waterproof60.compatibleWith?.includes(target)) failures.push('ASWTPTII60X missing '+target);
+  if(!waterproof60.conditions?.some(x=>x.includes('IP68'))) failures.push('ASWTPTII60X IP68 evidence missing');
+  if(!waterproof60.evidenceSources||waterproof60.evidenceSources.length<2) failures.push('ASWTPTII60X legacy/current evidence pair missing');
+}
+const floor8=accessoryById.get('nanlite-lsflt12pt8ft');
+if(!floor8) failures.push('Missing LSFLT12PT8FT floor stand');
+else {
+  for(const target of ['nanlite-pavotube-ii-60x','nanlite-pavotube-ii-60xr']) if(!floor8.compatibleWith?.includes(target)) failures.push('LSFLT12PT8FT missing '+target);
+}
 const xDmx=accessoryById.get('nanlite-cb-dmx-acp-1-2');
 for(const id of ['nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x']) if(!xDmx?.compatibleWith?.includes(id)) failures.push('ACP DMX adapter missing legacy X '+id);
 for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){

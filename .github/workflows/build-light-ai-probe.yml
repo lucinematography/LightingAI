@@ -128,6 +128,11 @@ jobs:
         working-directory: backend
         run: node vendor-wireless-capture-plans-selftest.js
 
+      - name: Validate vendor wireless coverage
+        working-directory: backend
+        run: node vendor-wireless-coverage-selftest.js
+
+
 
 
       - name: Set up Java 17

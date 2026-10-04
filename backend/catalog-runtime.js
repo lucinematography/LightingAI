@@ -93,6 +93,7 @@ import { SMALLRIG_BLE_FIXTURES } from './smallrig-ble-library.js';
 import { AMARAN_SIDUS_WIRELESS_FIXTURES } from './amaran-sidus-wireless-library.js';
 import { NEEWER_BLUETOOTH_FIXTURES } from './neewer-bluetooth-library.js';
 import { GVM_WIRELESS_FIXTURES } from './gvm-wireless-library.js';
+import { LITEPANELS_WIRELESS_FIXTURES } from './litepanels-wireless-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -231,6 +232,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(AMARAN_SIDUS_WIRELESS_FIXTURES));
   fixtures.push(...clone(NEEWER_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(GVM_WIRELESS_FIXTURES));
+  fixtures.push(...clone(LITEPANELS_WIRELESS_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

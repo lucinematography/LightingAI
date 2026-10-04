@@ -3,7 +3,7 @@ import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.j
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 
-for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Astera','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM']){
+for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Astera','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels']){
   const plan=VENDOR_WIRELESS_CAPTURE_PLANS[maker];
   expect(!!plan,maker+' capture plan missing');
   if(!plan) continue;
@@ -31,6 +31,8 @@ expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.Rotolight.secondaryPlans)&&VE
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS['Quasar Science'].secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS['Quasar Science'].secondaryPlans.some(x=>x.id==='quasar-rainbow-model-scoped-wifi-capture-v1'&&x.transport==='wifi'),'Quasar Science Wi-Fi secondary capture plan missing');
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.amaran.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.amaran.secondaryPlans.some(x=>x.id==='amaran-sm5c-direct-wifi-capture-v1'&&x.transport==='wifi'),'amaran SM5c Wi-Fi capture plan missing');
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.GVM.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.GVM.secondaryPlans.some(x=>x.id==='gvm-rgb10s-direct-wifi-capture-v1'&&x.transport==='wifi'),'GVM RGB-10S Wi-Fi capture plan missing');
+expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.Litepanels.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.Litepanels.secondaryPlans.some(x=>x.id==='litepanels-astra-ip-direct-wifi-capture-v1'&&x.transport==='wifi'),'Litepanels Astra IP Wi-Fi capture plan missing');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Litepanels.secondaryPlans.some(x=>x.id==='litepanels-assisted-bluetooth-capture-v1'&&x.transport==='bluetooth'),'Litepanels assisted Bluetooth capture plan missing');
 
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans.some(x=>x.id==='arri-skypanel-web-wifi-capture-v1'&&x.transport==='wifi'),'ARRI Wi-Fi secondary capture plan missing');
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS['EV Light'].secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS['EV Light'].secondaryPlans.some(x=>x.id==='evlight-model-scoped-wifi-capture-v1'&&x.transport==='wifi'),'EV Light Wi-Fi secondary capture plan missing');
@@ -41,5 +43,5 @@ for(const secondary of [...(VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans||[
 
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Astera.existingToolchain?.orchestrator==='backend/astera-physical-capture-set.js','Astera capture plan must point to verified orchestrator');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Astera.safety?.lightingAiWritesAllowed===false,'Astera evidence capture must keep LightingAI proprietary writes disabled');
-console.log(JSON.stringify({ok:failures.length===0,vendors:16,failures},null,2));
+console.log(JSON.stringify({ok:failures.length===0,vendors:17,failures},null,2));
 if(failures.length)process.exit(1);

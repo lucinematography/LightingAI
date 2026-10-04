@@ -36,6 +36,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  Litepanels: {
+    bluetooth: 'transport_verified_mixed_direct_and_assisted',
+    wifi: 'transport_verified_astra_ip_only',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'litepanels-astra-ip-direct-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['litepanels-astra-ip-direct-wifi-capture-v1','litepanels-assisted-bluetooth-capture-v1'],
+    evidence: [
+      'https://help.litepanels.com/en/basic-operation.html',
+      'https://help.litepanels.com/en/gemini-and-bluetooth.html',
+      'https://www.litepanels.com/en/product/astra-bluetooth-communications-module/',
+      'https://www.litepanels.com/en/products/astra/'
+    ],
+    note: 'Astra IP Bluetooth/Wi-Fi are native. Legacy Astra and Gemini Bluetooth routes require external modules/dongles. LightingAI command semantics remain locked.'
+  },
   GVM: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'transport_verified_rgb10s_only',

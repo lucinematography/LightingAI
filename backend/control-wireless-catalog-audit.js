@@ -172,6 +172,10 @@ const gvm=byManufacturer.get('GVM');
 if(!gvm || gvm.bluetooth!==10 || gvm.wifi!==1 || gvm.both!==0) {
   failures.push('GVM wireless coverage expected 10 Bluetooth / 1 Wi-Fi / 0 both');
 }
+const litepanels=byManufacturer.get('Litepanels');
+if(!litepanels || litepanels.bluetooth!==13 || litepanels.wifi!==3 || litepanels.both!==3) {
+  failures.push('Litepanels wireless coverage expected 13 Bluetooth / 3 Wi-Fi / 3 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

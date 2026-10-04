@@ -113,6 +113,53 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  Litepanels: {
+    id:'litepanels-astra-ip-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'starCTRL / compatible BLE lighting app',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one Astra IP Half/1x1/2x1 fixture for the direct native-Bluetooth capture set.',
+      'Keep legacy Astra Communications Module and Gemini dongle routes out of the direct set.',
+      'Use one official/supported Bluetooth lighting app and isolate one fixture where practical.',
+      'Record native Wi-Fi, legacy Astra module Bluetooth, and Gemini dongle Bluetooth as separate route classes.'
+    ],
+    officialSources:[
+      'https://help.litepanels.com/en/basic-operation.html',
+      'https://www.litepanels.com/en/product/astra-ip-2x1-bi-color-led-panel-standard-yoke-eu-power-cable/',
+      'https://www.litepanels.com/en/product-support/firmware-updates/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one Astra IP fixture over native Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'Only on a compatible full-color Litepanels route; never infer color commands for Astra IP bi-color fixtures.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported FX change per capture only after simpler controls are understood.'}
+    },
+    secondaryPlans:[
+      {
+        id:'litepanels-astra-ip-direct-wifi-capture-v1',
+        transport:'wifi',
+        target:'Astra IP Half/1x1/2x1 only',
+        commandSpecStatus:'public-wifi-command-spec-not-located-in-official-docs',
+        rule:'Capture native Astra IP Wi-Fi independently from Bluetooth. Do not infer proprietary IP/session semantics from Art-Net/sACN network capability.'
+      },
+      {
+        id:'litepanels-assisted-bluetooth-capture-v1',
+        transport:'bluetooth',
+        target:'Legacy Astra Bluetooth Communications Module and Gemini optional BLE dongles',
+        commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+        rule:'Use one exact assisted route at a time. Preserve module/dongle provenance and never treat the fixture as a built-in Bluetooth endpoint.'
+      }
+    ],
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   GVM: {
     id:'gvm-led-app-direct-bluetooth-capture-v1',
     transport:'bluetooth',

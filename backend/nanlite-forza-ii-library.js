@@ -61,8 +61,8 @@ export const NANLITE_FORZA_II_ACCESSORIES=[
     includedWithFixture:true,sourceUrl:SRC300
   },
   {
-    id:'nanlite-ascpqrfz-forza-ii',manufacturer:'Nanlite',model:'ASCPQRFZ Quick-Release Stand Clamp',
-    category:'Bracket',compatibleWith:BOTH,compatibilityStatus:'Designed For',
+    id:'nanlite-ascpqrfz',manufacturer:'Nanlite',model:'ASCPQRFZ Quick-Release Super Clamp',
+    category:'Bracket',compatibleWith:[...BOTH,'nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c'],compatibilityStatus:'Designed For',
     includedWithFixture:true,sourceUrl:SRC300
   },
   {

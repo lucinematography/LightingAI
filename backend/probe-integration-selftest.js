@@ -88,6 +88,8 @@ const allowed=new Set([
   'backend/fixture-control-capabilities-selftest.js',
   'backend/operator-control-planning-report.js',
   'backend/operator-control-planning-report-selftest.js',
+  'backend/wireless-control-capability-gap-report.js',
+  'backend/wireless-control-capability-gap-report-selftest.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

@@ -27,6 +27,21 @@ export function normalizeAputureWirelessControl(fixtures=[]){
         note:'Aputure documents Sidus Bluetooth control across Aputure fixtures. This verifies transport capability only; LightingAI proprietary command semantics remain locked until separately verified.'
       }
     };
+    control.capabilityVerification={
+      ...(control.capabilityVerification||{}),
+      dim:{
+        verified:true,
+        scope:'official-app-capability-only',
+        sourceUrls:['https://help.aputure.com/en/sidus-link-pro/sidus-link-mobile/wireless-lighting-control-system'],
+        note:'Sidus Link documents fixture intensity control for Sidus Mesh fixtures. This proves the operator capability, not the LightingAI Bluetooth command encoding.'
+      },
+      fx:{
+        verified:true,
+        scope:'official-app-capability-only',
+        sourceUrls:['https://help.aputure.com/en/sidus-link-pro/sidus-link-mobile/wireless-lighting-control-system'],
+        note:'Sidus Link documents Effects modes for Sidus Mesh Daylight, Bi-Color, X and Full-Color fixture classes. This proves feature availability in the official app, not the LightingAI Bluetooth command encoding.'
+      }
+    };
     fixture.control=control;
   }
   return fixtures;

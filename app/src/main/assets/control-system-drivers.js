@@ -53,17 +53,30 @@ function idFor(manufacturer,transport){
  }
  return 'vendor-'+m+'-'+transport;
 }
+function externalRequirements(fixture,transport){
+ var f=controlFields(fixture);
+ return arr(f.external).filter(function(value){
+  var s=lower(value);
+  if(transport==='wifi')return /wi-?fi|wifi|w-2|wireless adapter/.test(s);
+  return /bluetooth|\bble\b|bt dongle|bluetooth.*dongle|sidus link bridge/.test(s);
+ });
+}
 function candidate(fixture,transport){
  var manufacturer=String(fixture&&fixture.manufacturer||'Vendor');
+ var external=externalRequirements(fixture,transport);
+ var direct=external.length===0;
  return {
   id:idFor(manufacturer,transport),
   manufacturer:manufacturer,
   transport:transport,
-  scope:'vendor-direct',
+  scope:direct?'vendor-direct':'vendor-assisted',
   status:'required-unverified',
   production:false,
+  direct:direct,
+  requiresExternalInterface:external.length>0,
+  externalInterfaceRequired:external,
   label:labelFor(manufacturer,transport),
-  description:(transport==='wifi'?'Direct vendor Wi-Fi':'Direct vendor Bluetooth/BLE')+' candidate from documented catalog metadata. Output remains locked until the real vendor session and commands are physically verified.'
+  description:(direct?'Direct ':'Adapter-assisted ')+(transport==='wifi'?'vendor Wi-Fi':'vendor Bluetooth/BLE')+' candidate from documented catalog metadata. Output remains locked until the real vendor session and commands are physically verified.'
  };
 }
 function matchingDrivers(fixture){
@@ -85,7 +98,8 @@ function resolve(fixture){
   verifiedDmxModeCount:0,
   productionReady:false,
   transportKnown:bluetooth||wifi,
-  vendorDirectRequired:vendor.length>0,
+  vendorDirectRequired:vendor.some(function(d){return d.direct}),
+  vendorAssistedRequired:vendor.some(function(d){return d.requiresExternalInterface}),
   vendorDirectReady:false,
   vendorResearchOnly:vendor.length>0
  };

@@ -36,6 +36,25 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  GVM: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'transport_verified_rgb10s_only',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'gvm-led-app-direct-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['gvm-rgb10s-direct-wifi-capture-v1'],
+    evidence: [
+      'https://shop.gvmled.com/products/gvm-rgb20w-on-camera-rgb-led-video-light-with-bluetooth-app-control',
+      'https://gvmled.com/gvm-fa200c-aio/',
+      'https://gvmled.com/gvm-sd200r/',
+      'https://gvmled.com/gvm-800d-iii-dl/',
+      'https://gvmled.com/gvm-pro-yu150r/',
+      'https://gvmled.com/gvm-bd25r/',
+      'https://gvmled.com/wp-content/uploads/2026/03/%E6%A3%92%E7%81%AFGVM-BD100-BD60-%E8%AF%B4%E6%98%8E%E4%B9%A6%E3%80%90%E8%8B%B1%E6%96%87%E3%80%91V1.pdf',
+      'https://gvmled.com/rgb-10s-exp/'
+    ],
+    note: 'Bluetooth/Bluetooth Mesh is verified only for the ten explicitly listed Bluetooth models. Wi-Fi is verified only for RGB-10S in this checkpoint. Bluetooth Mesh and legacy Wi-Fi paths remain distinct.'
+  },
   NEEWER: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

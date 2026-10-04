@@ -113,6 +113,47 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  GVM: {
+    id:'gvm-led-app-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'GVM LED App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact GVM Bluetooth model from the transport-verified catalog set.',
+      'Reset Bluetooth on the fixture where the manual exposes a BT Reset action.',
+      'Use the official GVM LED App and isolate one fixture where practical.',
+      'Do not treat legacy Wi-Fi models or wireless master/slave radio traffic as Bluetooth command evidence.'
+    ],
+    officialSources:[
+      'https://gvmled.com/download-gvm-app/',
+      'https://gvmled.com/gvm-sd200r/',
+      'https://gvmled.com/gvm-800d-iii-dl/',
+      'https://gvmled.com/gvm-pro-yu150r/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Reset Bluetooth when documented, connect exactly one fixture in GVM LED App, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'On a variable-CCT model perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'Only on an RGB/full-color model; perform exactly one hue/saturation/RGB change per capture after DIM/CCT evidence is stable.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one documented scene/effect per capture only after simpler controls are understood.'}
+    },
+    secondaryPlans:[
+      {
+        id:'gvm-rgb10s-direct-wifi-capture-v1',
+        transport:'wifi',
+        target:'GVM RGB-10S only',
+        commandSpecStatus:'public-wifi-command-spec-not-located-in-official-docs',
+        rule:'Use only the vendor-documented Wi-Fi app path for RGB-10S. Keep this legacy Wi-Fi path separate from GVM Bluetooth Mesh fixtures and never reuse Bluetooth packet semantics.'
+      }
+    ],
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   NEEWER: {
     id:'neewer-app-direct-bluetooth-capture-v1',
     transport:'bluetooth',

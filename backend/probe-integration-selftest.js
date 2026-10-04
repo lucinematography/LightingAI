@@ -32,6 +32,7 @@ const allowed=new Set([
   'backend/smallrig-ble-library.js',
   'backend/amaran-sidus-wireless-library.js',
   'backend/neewer-bluetooth-library.js',
+  'backend/gvm-wireless-library.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js',
   'backend/probe-integration-selftest.js',

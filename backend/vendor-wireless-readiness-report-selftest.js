@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===599,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===15,'wireless manufacturer coverage must remain 15');
+expect(report.fixtureCount===610,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===16,'wireless manufacturer coverage must remain 16');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -42,6 +42,7 @@ expect(by.Kelvin?.bluetoothFixtures===6&&by.Kelvin?.wifiFixtures===0,'Kelvin wir
 expect(by.SmallRig?.bluetoothFixtures===4&&by.SmallRig?.wifiFixtures===0,'SmallRig wireless counts changed unexpectedly');
 expect(by.amaran?.bluetoothFixtures===20&&by.amaran?.wifiFixtures===1&&by.amaran?.bothFixtures===1,'amaran wireless counts changed unexpectedly');
 expect(by.NEEWER?.bluetoothFixtures===4&&by.NEEWER?.wifiFixtures===0,'NEEWER wireless counts changed unexpectedly');
+expect(by.GVM?.bluetoothFixtures===10&&by.GVM?.wifiFixtures===1&&by.GVM?.bothFixtures===0,'GVM wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

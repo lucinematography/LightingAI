@@ -168,6 +168,10 @@ const neewer=byManufacturer.get('NEEWER');
 if(!neewer || neewer.bluetooth!==4 || neewer.wifi!==0 || neewer.both!==0) {
   failures.push('NEEWER wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const gvm=byManufacturer.get('GVM');
+if(!gvm || gvm.bluetooth!==10 || gvm.wifi!==1 || gvm.both!==0) {
+  failures.push('GVM wireless coverage expected 10 Bluetooth / 1 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

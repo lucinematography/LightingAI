@@ -10,7 +10,7 @@ const readinessWifi=readiness.vendors.reduce((n,row)=>n+row.wifiFixtures,0);
 const readinessMakers=new Set(readiness.vendors.map(row=>row.manufacturer));
 const classMakers=new Set(Object.keys(report.byManufacturer));
 
-expect(report.fixtureCount===599,'fixture total changed from verified catalog');
+expect(report.fixtureCount===610,'fixture total changed from verified catalog');
 expect(report.wirelessFixtureCount>0,'wireless fixture coverage unexpectedly empty');
 expect(report.bluetoothRoutes>0,'Bluetooth route coverage unexpectedly empty');
 expect(report.wifiRoutes>0,'Wi-Fi route coverage unexpectedly empty');
@@ -27,7 +27,7 @@ const structuralBasisTotal=Object.values(report.structuralBasisCounts).reduce((n
 expect(structuralBasisTotal===report.wirelessFixtureCount,
   'structural provenance must account for every wireless fixture');
 
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM']){
   expect(!!report.byManufacturer[maker],maker+' missing from wireless class coverage');
 }
 for(const readinessRow of readiness.vendors){

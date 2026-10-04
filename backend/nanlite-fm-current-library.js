@@ -58,7 +58,7 @@ function fixture(id,model,family,cctMin,cctMax,powerDrawW,colorMode,cri,tlci,sou
 }
 
 export const NANLITE_FM_CURRENT_FIXTURES = [
-  fixture('nanlite-forza-60-ii','Forza 60 II','Forza',5600,5600,71,'Daylight',95,95,SRC.forza60ii,{control:control()}),
+  fixture('nanlite-forza-60-ii','Forza 60 II','Forza',5600,5600,null,'Daylight',null,null,SRC.forza60ii,{control:control(),batteryPowered:true,powerOptions:['NP-F batteries via BT-BG-FZ60','V-Mount via BT-BG-V','AC power adapter']}),
   fixture('nanlite-forza-60b-ii','Forza 60B II','Forza',2700,6500,72,'Bi-Color',96,98,SRC.forza60bii,{control:control()}),
   fixture('nanlite-forza-60c','Forza 60C','Forza',1800,20000,88,'RGBLAC',96,95,SRC.forza60c,{control:control()}),
   fixture('nanlite-forza-60cr','Forza 60CR','Forza',1800,20000,88,'RGBLAC',96,95,SRC.forza60cr,{control:control({crmx:true})}),

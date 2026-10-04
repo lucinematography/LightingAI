@@ -79,19 +79,9 @@ export const NANLITE_FC_HIGH_OUTPUT_ACCESSORIES=[
     bundledComponents:['DC Connection Cable 3 m'],sourceUrl:SRC.powerController
   },
   {
-    id:'nanlite-fl-20g-fc',manufacturer:'Nanlite',model:'FL-20G Fresnel Lens with Removable Metal Barndoors',
-    category:'Fresnel',mount:'Bowens',beamAngleDeg:{min:10,max:45},
-    compatibleWith:FL20G_TARGETS,compatibilityStatus:'Designed For',sourceUrl:SRC.fl20g
-  },
-  {
-    id:'nanlite-pj-bm-19-fc',manufacturer:'Nanlite',model:'PJ-BM Projection Attachment with 19° Lens',
+    id:'nanlite-pj-bm-19',manufacturer:'Nanlite',model:'PJ-BM Projection Attachment with 19° Lens',
     category:'Spotlight',mount:'Bowens',beamAngleDeg:19,compatibleWith:PJ_TARGETS,
     compatibilityStatus:'Designed For',sourceUrl:SRC.pj19
-  },
-  {
-    id:'nanlite-pj-bm-25-45-fc',manufacturer:'Nanlite',model:'PJ-BM-25-45 Bowens Zoom Projection Attachment',
-    category:'Spotlight',mount:'Bowens',beamAngleDeg:{min:25,max:45},compatibleWith:PJ_TARGETS,
-    compatibilityStatus:'Designed For',sourceUrl:SRC.pj2545
   },
   {
     id:'nanlite-cc-st-fc1200',manufacturer:'Nanlite',model:'CC-ST-FC1200 Rolling Padded Case',

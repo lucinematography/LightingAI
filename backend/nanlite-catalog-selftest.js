@@ -92,13 +92,17 @@ for(const id of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c']){
   else {
     if(f.discontinued!==false) failures.push('Current PavoTube II C not marked current: '+id);
     if(f.control?.builtInCRMX) failures.push('PavoTube II C must not claim built-in CRMX: '+id);
-    if(f.control?.dmxConnection!=='Locking metal DMX/RDM port') failures.push('PavoTube II C locking DMX path missing: '+id);
+    if(f.control?.dmxConnection!=='Locking 3.5mm DMX/RDM port') failures.push('PavoTube II C locking 3.5mm DMX path missing: '+id);
   }
 }
-for(const id of ['nanlite-cb-dmx-acp-1-2','nanlite-pavotube-t12-clip-1-4','nanlite-pavotube-t12-clip-magnet','nanlite-pavotube-single-holder-swivel','nanlite-pavotube-single-holder-5-8','nanlite-pavotube-t12-clip-baby-pin']){
+for(const id of ['nanlite-pavotube-t12-clip-1-4','nanlite-pavotube-t12-clip-magnet','nanlite-pavotube-single-holder-swivel','nanlite-pavotube-single-holder-5-8','nanlite-pavotube-t12-clip-baby-pin']){
   const a=accessoryById.get(id); if(!a) failures.push('Missing shared PavoTube II C accessory: '+id);
   else for(const target of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
 }
+
+const cDmx=accessoryById.get('nanlite-cb-dmx-3-5c-1-2');
+for(const id of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c']) if(!cDmx?.compatibleWith?.includes(id)) failures.push('PavoTube II C 3.5mm DMX adapter missing '+id);
+for(const id of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c']) if(lockDmx?.compatibleWith?.includes(id)) failures.push('XR aviation DMX adapter must not be linked to '+id);
 for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
   const a=accessoryById.get(id); if(!a) failures.push('Missing shared NANLINK accessory for PavoTube II C: '+id);
   else for(const target of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);

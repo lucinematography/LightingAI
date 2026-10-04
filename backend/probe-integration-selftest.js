@@ -81,6 +81,7 @@ const allowed=new Set([
   'backend/vendor-wireless-protocol-status-selftest.js',
   'backend/vendor-wireless-capture-plans.js',
   'backend/vendor-wireless-capture-plans-selftest.js',
+  'backend/vendor-wireless-coverage-selftest.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

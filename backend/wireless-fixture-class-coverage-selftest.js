@@ -23,6 +23,9 @@ expect(matrixMakers.size===readinessMakers.size&&[...matrixMakers].every(m=>read
 expect(report.unclassifiedFixtureIds.length===0,'wireless fixtures missing family/sourceType/formFactor classification: '+report.unclassifiedFixtureIds.join(', '));
 expect(report.structurallyUnclassifiedFixtureIds.length===0,
   'wireless fixtures remain structurally unclassified: '+report.structurallyUnclassifiedFixtureIds.join(', '));
+const structuralBasisTotal=Object.values(report.structuralBasisCounts).reduce((n,v)=>n+v,0);
+expect(structuralBasisTotal===report.wirelessFixtureCount,
+  'structural provenance must account for every wireless fixture');
 
 for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light']){
   expect(!!report.byManufacturer[maker],maker+' missing from wireless class coverage');

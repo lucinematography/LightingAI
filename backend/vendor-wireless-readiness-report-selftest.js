@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===626,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===18,'wireless manufacturer coverage must remain 18');
+expect(report.fixtureCount===642,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===19,'wireless manufacturer coverage must remain 19');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -47,6 +47,7 @@ expect(by.Litepanels?.bluetoothFixtures===13&&by.Litepanels?.wifiFixtures===3&&b
 expect(by.Litepanels?.assistedBluetooth===10,'Litepanels assisted Bluetooth count changed unexpectedly');
 expect(by['DMG Lumiere']?.bluetoothFixtures===3&&by['DMG Lumiere']?.wifiFixtures===3&&by['DMG Lumiere']?.bothFixtures===3,'DMG Lumiere wireless counts changed unexpectedly');
 expect(by['DMG Lumiere']?.assistedBluetooth===2&&by['DMG Lumiere']?.assistedWifi===2,'DMG Lumiere assisted route counts changed unexpectedly');
+expect(by.ZHIYUN?.bluetoothFixtures===16&&by.ZHIYUN?.wifiFixtures===0&&by.ZHIYUN?.bothFixtures===0,'ZHIYUN wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

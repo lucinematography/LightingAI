@@ -1,4 +1,4 @@
-import { buildWirelessCapabilityGapReport, expectedCapabilities } from './wireless-control-capability-gap-report.js';
+import { buildWirelessCapabilityGapReport, expectedCapabilities, verifiedWirelessTransport } from './wireless-control-capability-gap-report.js';
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
@@ -14,6 +14,16 @@ const rawOnlyFixture={
 };
 expect(!rawOnlyFixture.control?.wirelessVerification?.bluetooth?.verified,
   'Synthetic raw Bluetooth label must remain unverified');
+expect(verifiedWirelessTransport(rawOnlyFixture).any===false,
+  'Raw Bluetooth catalog label without verified transport evidence must be excluded from wireless gap scope');
+expect(verifiedWirelessTransport({
+  ...rawOnlyFixture,
+  control:{
+    wireless:['Bluetooth'],
+    wirelessVerification:{bluetooth:{verified:true}}
+  }
+}).bluetooth===true,
+  'Verified Bluetooth transport evidence must enter wireless gap scope');
 
 expect(report.fixtureCount===539,'fixture total changed from verified catalog');
 expect(report.wirelessFixtures===185,'verified wireless fixture total changed unexpectedly');

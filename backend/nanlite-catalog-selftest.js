@@ -89,6 +89,8 @@ else {
   if(paFz60.output!=='15V / 6A') failures.push('PA-15V6A-FZ60 electrical output must remain 15V / 6A');
   if(paFz60.builtInVMountPlate!==true) failures.push('PA-15V6A-FZ60 built-in V-Mount plate missing');
 }
+for(const duplicateId of ['nanlite-ps-forza-60b-ii','nanlite-ps-forza-60c','nanlite-ps-forza-60cr'])
+  if(accessoryById.has(duplicateId)) failures.push('Duplicate model-scoped PA-15V6A-FZ60 record must stay removed: '+duplicateId);
 for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr']){
   const f=fixtures.find(x=>x.id===id);
   if(f?.batteryPowered!==true) failures.push(id+' battery power profile missing');

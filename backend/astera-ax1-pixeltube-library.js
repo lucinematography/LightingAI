@@ -26,12 +26,12 @@ export const ASTERA_AX1_PIXELTUBE_FIXTURES = [
     dimensionsMm: { diameter: 42, length: 1035 },
     control: {
       wired: [],
-      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX', 'W-DMX', 'UHF'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX', 'W-DMX', 'UHF', 'Bluetooth on AX1-BTB variant', 'WiFi on AX1-BTB variant'],
       builtInCRMX: true,
-      builtInBTB: false,
+      builtInBTBVariant: 'AX1-BTB',
       directLightingAI: [],
       externalInterfaceRequired: ['CRMX/W-DMX transmitter for wireless DMX control', 'AsteraBox for AsteraApp/UHF control'],
-      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
       sourceUrls: [
         'https://astera-led.com/products/ax1-pixeltube/',
         'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf'

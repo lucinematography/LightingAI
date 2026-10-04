@@ -12,12 +12,13 @@ import { NANLITE_FORZA_720B_FIXTURES, NANLITE_FORZA_720B_ACCESSORIES } from './n
 import { NANLITE_ALIEN_CURRENT_FIXTURES, NANLITE_ALIEN_CURRENT_ACCESSORIES } from './nanlite-alien-current-library.js';
 import { NANLITE_PAVOSLIM_EXTENDED_FIXTURES, NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES } from './nanlite-pavoslim-extended-library.js';
 import { NANLITE_PAVOTUBE_T8_7X_FIXTURES, NANLITE_PAVOTUBE_T8_7X_ACCESSORIES } from './nanlite-pavotube-t8-7x-library.js';
+import { NANLITE_PAVOBULB_CURRENT_FIXTURES, NANLITE_PAVOBULB_CURRENT_ACCESSORIES } from './nanlite-pavobulb-current-library.js';
 
 const failures=[];
-const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOSLIM_EXTENDED_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_T8_7X_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
+const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOSLIM_EXTENDED_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_T8_7X_FIXTURES,...NANLITE_PAVOBULB_CURRENT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
 const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES];
 const fixtures=[...currentFixtures,...legacyFixtures];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_T8_7X_ACCESSORIES,...NANLITE_PAVOBULB_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 const accessoryModels=new Map();
@@ -290,6 +291,22 @@ if(!t8Dmx?.compatibleWith?.includes('nanlite-pavotube-t8-7x')) failures.push('Pa
 for(const id of ['nanlite-hd-t8-1-c','nanlite-lsflt8','nanlite-wc-usbc-c1','nanlite-aseb-eyebolt']){
   const a=accessoryById.get(id);
   if(!a?.compatibleWith?.includes('nanlite-pavotube-t8-7x')) failures.push(id+' missing PavoTube T8-7X');
+}
+const bulb=fixtures.find(x=>x.id==='nanlite-pavobulb-10c');
+if(!bulb) failures.push('Missing current Nanlite PavoBulb 10C');
+else {
+  if(bulb.discontinued!==false) failures.push('PavoBulb 10C must be current');
+  if(bulb.control?.builtInCRMX) failures.push('PavoBulb 10C must not claim CRMX');
+  for(const p of ['Bluetooth / NANLINK app','2.4G']) if(!(bulb.control?.wireless||[]).includes(p)) failures.push('PavoBulb 10C missing '+p);
+  for(const p of ['DMX512','RDM']) if(!(bulb.control?.wired||[]).includes(p)) failures.push('PavoBulb 10C missing '+p);
+}
+for(const id of ['nanlite-cb-dmx-usbc-1-3ii','nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-wc-usbc-c1']){
+  const a=accessoryById.get(id);
+  if(!a?.compatibleWith?.includes('nanlite-pavobulb-10c')) failures.push(id+' missing PavoBulb 10C');
+}
+for(const id of ['nanlite-as-mba-e27-v2','nanlite-bt-ba-snp-e27','nanlite-as-bsc']){
+  const a=accessoryById.get(id);
+  if(!a?.compatibleWith?.includes('nanlite-pavobulb-10c')) failures.push(id+' missing PavoBulb 10C');
 }
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

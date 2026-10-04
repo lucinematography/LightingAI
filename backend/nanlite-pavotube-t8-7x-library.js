@@ -44,7 +44,7 @@ export const NANLITE_PAVOTUBE_T8_7X_ACCESSORIES=[
   },
   {
     id:'nanlite-wc-usbc-c1',manufacturer:'Nanlite',model:'WC-USBC-C1 Control Bank',
-    category:'Control',compatibleWith:['nanlite-pavotube-t8-7x'],
+    category:'Control',compatibleWith:['nanlite-pavotube-t8-7x','nanlite-pavobulb-10c'],
     compatibilityStatus:'Designed For',
     conditions:['Adds external battery power, display and four control buttons'],
     sourceUrl:SRC.controlBank

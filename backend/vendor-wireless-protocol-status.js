@@ -36,6 +36,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  COLBOR: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'colbor-studio-bluetooth-capture-v1',
+    evidence: [
+      'https://www.colborlight.com/products/co-cl60',
+      'https://www.colborlight.com/products/co-cl100x',
+      'https://www.colborlight.com/blogs/articles/get-studio-lights-for-youtube',
+      'https://www.colborlight.com/blogs/articles/buyer-guide-to-light-for-streaming',
+      'https://www.colborlight.com/pages/colbor-apps-download'
+    ],
+    note: 'Bluetooth/COLBOR Studio control is verified only for CL60 and CL100X in this checkpoint. LightingAI proprietary command semantics remain locked.'
+  },
+
   PROLYCHT: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'transport_verified_model_scoped',

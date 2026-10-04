@@ -120,6 +120,11 @@ jobs:
         working-directory: backend
         run: node control-system-drivers-selftest.js
 
+      - name: Validate vendor wireless protocol readiness
+        working-directory: backend
+        run: node vendor-wireless-protocol-status-selftest.js
+
+
       - name: Set up Java 17
         uses: actions/setup-java@v6
         with:

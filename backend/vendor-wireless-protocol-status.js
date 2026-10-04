@@ -39,7 +39,9 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     bluetooth: 'transport_verified',
     wifi: 'transport_verified_model_scoped',
     commandSpec: 'third_party_path_documented_but_exact_command_spec_not_captured',
-    nextStep: 'research-lico-third-party-bluetooth-path-before-physical-capture',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'arri-lico-direct-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['arri-skypanel-web-wifi-capture-v1'],
     evidence: [
       'https://www.arri.com/en/learn-help/lighting/tools-apps/lico',
       'https://www.arri.com/en/lighting/led-panel-lights/skypanel-pro/faq'
@@ -61,7 +63,8 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',
     commandSpec: 'not_captured_from_public_vendor_docs',
-    nextStep: 'vendor-protocol-research-or-physical-capture',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'aladdin-app-ble-capture-v1',
     evidence: [
       'https://aladdin-lights.com/mosaic-2x4/',
       'https://aladdin-lights.com/wp-content/uploads/2023/09/MOSAIC-4x4-Manual-SINGLE-PAGE.pdf'
@@ -72,7 +75,9 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'transport_verified_model_scoped',
     commandSpec: 'not_captured_from_public_vendor_docs',
-    nextStep: 'vendor-protocol-research-or-physical-capture',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'evlight-direct-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['evlight-model-scoped-wifi-capture-v1'],
     evidence: [
       'https://www.evlightprofessional.com/quality-led-soft-light-panel-63424122.html',
       'https://www.evlightpro.com/led-soft-light-panel/68692360.html'

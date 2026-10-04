@@ -127,7 +127,7 @@ for(const [id,lengthM] of [['nanlite-cb-fz-7-5m',7.5],['nanlite-cb-fz-12m',12]])
       if(!(a.compatibleWith||[]).includes(target)) failures.push(id+' missing documented target '+target);
   }
 }
-for(const id of ['nanlite-forza-300-ii-control-unit','nanlite-forza-300-ii-head-cable','nanlite-forza-300-ii-power-cable','nanlite-forza-300-ii-cob-cap']){
+for(const id of ['nanlite-forza-300-ii-control-unit','nanlite-forza-300-ii-head-cable','nanlite-forza-300-ii-power-cable']){
   const a=accessoryById.get(id);
   if(!a) failures.push('Missing documented Forza 300 II kit component: '+id);
   else {
@@ -137,6 +137,17 @@ for(const id of ['nanlite-forza-300-ii-control-unit','nanlite-forza-300-ii-head-
 }
 if(accessoryById.get('nanlite-forza-300-ii-head-cable')?.lengthM!==3) failures.push('Forza 300 II included head cable must remain 3 m');
 if(accessoryById.get('nanlite-forza-300-ii-power-cable')?.lengthM!==6) failures.push('Forza 300 II included power cable must remain 6 m');
+const capBwB=accessoryById.get('nanlite-as-cap-bw-b');
+if(!capBwB) failures.push('Missing canonical AS-CAP-BW-B COB cap');
+else {
+  for(const target of ['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b'])
+    if(!capBwB.compatibleWith?.includes(target)) failures.push('AS-CAP-BW-B missing compatible target '+target);
+  for(const target of ['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b'])
+    if(!capBwB.includedWithFixtures?.includes(target)) failures.push('AS-CAP-BW-B verified inclusion missing '+target);
+  if(!capBwB.sourceUrl?.includes('replacement-cob-cap')) failures.push('AS-CAP-BW-B canonical source missing');
+}
+for(const duplicateId of ['nanlite-forza-300-ii-cob-cap','nanlite-forza-720b-cob-cap'])
+  if(accessoryById.has(duplicateId)) failures.push('Duplicate model-scoped AS-CAP-BW-B record must stay removed: '+duplicateId);
 for(const id of ['nanlite-fl-20g','nanlite-pj-bm-25-45']){
   const a=accessoryById.get(id); if(!a) failures.push('Missing shared Nanlite Bowens accessory: '+id);
   else for(const target of ['nanlite-fc-720b','nanlite-fc-720c']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);

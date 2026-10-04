@@ -26,7 +26,8 @@ const SRC = {
   rf45s:'https://nanliteus.com/products/forza-45-degree-mini-reflector-with-fm-mount',
   dome:'https://nanliteus.com/products/diffusion-dome-for-fc-120b-and-forza-150b',
   case60:'https://nanliteus.com/products/padded-carrying-case-for-forza-60s-or-fs-60b',
-  vmount98:'https://nanliteus.com/products/bt-v-14-4v98-mini-v-mount-battery-14-4v-98wh-li-ion'
+  vmount98:'https://nanliteus.com/products/bt-v-14-4v98-mini-v-mount-battery-14-4v-98wh-li-ion',
+  pa15v6a:'https://nanliteus.com/products/pa-15v6a-fz60-forza-60-power-adapter-15v-6a'
 };
 
 function control({dmx=true,crmx=false}={}){
@@ -136,6 +137,15 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
     id:'nanlite-sb-fmm-o-60',manufacturer:'Nanlite',model:'SB-FMM-O-60 60cm Octagonal Softbox with Grid',
     category:'Softbox',mount:'FM Mount',compatibleWith:FMM_SHARED,
     compatibilityStatus:'Designed For',sourceUrl:SRC.sb60
+  },
+  {
+    id:'nanlite-pa-15v6a-fz60',manufacturer:'Nanlite',model:'PA-15V6A-FZ60 Power Adapter 15V/6A',
+    category:'Power',compatibleWith:['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr'],
+    compatibilityStatus:'Designed For',
+    includedWithFixtures:['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr'],
+    input:'100-240 VAC, 50/60 Hz',output:'15V / 6A',builtInVMountPlate:true,
+    conditions:['Official Nanlite product page also names first-generation Forza 60 and 60B; those legacy fixture IDs are not inferred here because they are not present in the current catalog layer.'],
+    sourceUrl:SRC.pa15v6a
   },
   {
     id:'nanlite-bt-bg-fz60',manufacturer:'Nanlite',model:'BT-BG-FZ60 NP-F Battery Grip',

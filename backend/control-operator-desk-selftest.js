@@ -24,7 +24,7 @@ for(const marker of [
 
 expect(dashboard.includes('PRONAĐI BLUETOOTH / BLE RASVETU')&&dashboard.includes('DISCOVER BLUETOOTH / BLE FIXTURES'),'Primary CONTROL CTA must expose real BLE discovery');
 expect(dashboard.includes('Bluetooth/BLE i direktni vendor Wi-Fi')&&dashboard.includes('Bluetooth/BLE and direct vendor Wi-Fi'),'Primary CONTROL copy must describe Bluetooth + direct vendor Wi-Fi');
-expect(dashboard.includes('Wi-Fi se ne skenira generički')&&dashboard.includes('Wi-Fi is not scanned generically'),'Wi-Fi discovery safety copy missing');
+expect(dashboard.includes('Wi-Fi se ne skenira generički')&&dashboard.includes('Wi-Fi kontrola ostaje zaključana')&&dashboard.includes('Wi-Fi is not scanned generically')&&dashboard.includes('Wi-Fi control stays locked'),'Wi-Fi discovery safety copy must state that unverified vendor Wi-Fi remains locked');
 expect(dashboard.includes('BLUETOOTH / BLE')&&dashboard.includes('WI-FI'),'Transport status badges missing');
 expect(!dashboard.includes('controlLoadAdvanced')&&!dashboard.includes('DMX')&&!dashboard.includes('Art-Net')&&!dashboard.includes('sACN'),'Primary CONTROL dashboard must not expose Art-Net/sACN/DMX controls');
 expect(!bootstrap.includes('artnet-control.js')&&!bootstrap.includes('dmx-patch-planner.js')&&!bootstrap.includes('dmx-export.js'),'CONTROL bootstrap must not load network/DMX assets');

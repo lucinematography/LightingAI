@@ -102,6 +102,7 @@ const exactAllowed = new Set([
   'backend/dracast-bluetooth-library.js',
   'backend/hive-bluetooth-library.js',
   'backend/kinotehnik-practilite-bluetooth-library.js',
+  'backend/velvet-evo-wireless-library.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',

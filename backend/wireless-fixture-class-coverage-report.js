@@ -1,5 +1,6 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { wirelessTransportFlags, wirelessRouteKind } from './wireless-route-classification.js';
+import { deriveFixtureStructuralClass } from './fixture-structural-classification.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
 function wirelessFlags(f){return wirelessTransportFlags(f)}
@@ -74,10 +75,13 @@ export function buildWirelessFixtureClassCoverageReport(){
   const bySourceType=new Map();
   const byFormFactor=new Map();
   const byClassSignature=new Map();
+  const byStructuralClass=new Map();
+  const byManufacturerStructuralClass=new Map();
   const byManufacturerClassSignature=new Map();
   const byManufacturer=new Map();
   const wirelessFixtureIds=[];
   const unclassifiedFixtureIds=[];
+  const structurallyUnclassifiedFixtureIds=[];
   let bluetoothRoutes=0;
   let wifiRoutes=0;
   let bothFixtures=0;
@@ -97,13 +101,17 @@ export function buildWirelessFixtureClassCoverageReport(){
     const family=clean(fixture.family);
     const sourceType=clean(fixture.sourceType);
     const formFactor=clean(fixture.formFactor);
+    const structuralClass=deriveFixtureStructuralClass(fixture);
     if(!family&&!sourceType&&!formFactor) unclassifiedFixtureIds.push(id);
+    if(!structuralClass) structurallyUnclassifiedFixtureIds.push(id);
 
     add(byCategory,category||'Uncategorized',fixture,flags);
     add(byFamily,family||'Unspecified family',fixture,flags);
     add(bySourceType,sourceType||'Unspecified sourceType',fixture,flags);
     add(byFormFactor,formFactor||'Unspecified formFactor',fixture,flags);
     add(byClassSignature,classSignature(fixture),fixture,flags);
+    add(byStructuralClass,structuralClass||'Unspecified structural class',fixture,flags);
+    add(byManufacturerStructuralClass,(clean(fixture.manufacturer)||'Unknown')+' :: '+(structuralClass||'Unspecified structural class'),fixture,flags);
     add(byManufacturerClassSignature,manufacturerClassSignature(fixture),fixture,flags);
     add(byManufacturer,clean(fixture.manufacturer)||'Unknown',fixture,flags);
   }
@@ -116,11 +124,14 @@ export function buildWirelessFixtureClassCoverageReport(){
     wifiRoutes,
     bothFixtures,
     unclassifiedFixtureIds:[...new Set(unclassifiedFixtureIds)].sort(),
+    structurallyUnclassifiedFixtureIds:[...new Set(structurallyUnclassifiedFixtureIds)].sort(),
     byCategory:serialize(byCategory),
     byFamily:serialize(byFamily),
     bySourceType:serialize(bySourceType),
     byFormFactor:serialize(byFormFactor),
     byClassSignature:serialize(byClassSignature),
+    byStructuralClass:serialize(byStructuralClass),
+    byManufacturerStructuralClass:serialize(byManufacturerStructuralClass),
     byManufacturerClassSignature:serialize(byManufacturerClassSignature),
     byManufacturer:serialize(byManufacturer)
   };

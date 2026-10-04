@@ -51,8 +51,10 @@ export const NANLITE_FC_720_ACCESSORIES=[
   {
     id:'nanlite-pj-bm-25-45',manufacturer:'Nanlite',model:'PJ-BM-25-45 Bowens Mount Projection Attachment 25°-45°',
     category:'Spotlight',mount:'Bowens',beamAngleDeg:{min:25,max:45},
-    compatibleWith:['nanlite-fc-720b','nanlite-fc-720c','nanlite-fc-500b','nanlite-fc-500c','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'],
-    compatibilityStatus:'Designed For',sourceUrl:PJ
+    compatibleWith:['nanlite-fc-720b','nanlite-fc-720c','nanlite-fc-500b','nanlite-fc-500c','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'],
+    compatibilityStatus:'Designed For',
+    compatibilityEvidenceNote:'Nanlite PJ-BM-25-45 specifications explicitly list Forza 720 and Forza 720B alongside current FC/FS/Forza compatibility; FC-720B/C remain mapped through current product-family evidence and their Bowens mount / sub-800W profile.',
+    sourceUrl:PJ
   },
   {
     id:'nanlite-pj-fmm-ai-for-pj-bm',manufacturer:'Nanlite',model:'PJ-FMM-AI Adjustable Iris Diaphragm',

@@ -113,6 +113,36 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  'Hive Lighting': {
+    id:'hive-shot-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Hive SHOT',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Hive Lighting model at a time with Hive SHOT.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer commands across C and CX families without matching physical evidence.'
+    ],
+    officialSources:[
+      'https://hivelighting.com/is-control/',
+      'https://hivelighting.com/bb-25-cx/',
+      'https://hivelighting.com/products/bee-50-c-open-face-omni-color-led-light/',
+      'https://hivelighting.com/products/wasp-100-c-led-spot/',
+      'https://hivelighting.com/products/wasp-100-cx/',
+      'https://hivelighting.com/products/hornet-200-c-open-face-omni-color-led-light/',
+      'https://hivelighting.com/products/hornet-200-cx/',
+      'https://hivelighting.com/575-c-vs/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one Hive fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one color change per capture from the same initial state.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Dracast: {
     id:'dracast-palette-v2-bluetooth-capture-v1',
     transport:'bluetooth',

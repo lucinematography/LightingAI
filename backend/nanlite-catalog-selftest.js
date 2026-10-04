@@ -97,8 +97,8 @@ for(const id of ['nanlite-fc-720b','nanlite-fc-720c']){
   if((f?.control?.wireless||[]).includes('2.4G')) failures.push(id+' must not claim 2.4G');
   if(!(f?.control?.wireless||[]).includes('Bluetooth / NANLINK app')) failures.push(id+' Bluetooth/NANLINK missing');
 }
-if(fixtures.find(x=>x.id==='nanlite-fc-720b')?.control?.nfcPairing) failures.push('FC-720B must not claim NFC pairing');
-if(!fixtures.find(x=>x.id==='nanlite-fc-720c')?.control?.nfcPairing) failures.push('FC-720C NFC pairing missing');
+for(const id of ['nanlite-fc-720b','nanlite-fc-720c'])
+  if(!fixtures.find(x=>x.id===id)?.control?.nfcPairing) failures.push(id+' NFC pairing missing');
 for(const id of ['nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c']) if(!fixtureIds.has(id)) failures.push('Missing Nanlite PavoSlim fixture: '+id);
 for(const [id,sku] of [
   ['nanlite-pavoslim-60b','PS60BQR'],

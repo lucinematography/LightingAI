@@ -5,18 +5,21 @@
 const SRC_B='https://nanliteus.com/products/fc-720b-bi-color-led-spotlight';
 const SRC_C='https://nanliteus.com/products/fc-720c-rgbw-color-led-spotlight';
 const SERIES='https://nanliteus.com/pages/fc-720b-fc-720c';
+const SHOP='https://nanliteus.com/shop/';
 const PJ='https://nanliteus.com/products/bowens-mount-projection-attachment-25-45';
 
 function control({nfc=false}={}){
   return {
     wired:['DMX512','RDM'],
-    wireless:['Bluetooth / NANLINK app',...(nfc?['NFC pairing']:[])],
+    wireless:['Bluetooth / NANLINK app','2.4G',...(nfc?['NFC pairing']:[])],
     builtInBluetooth:true,
     builtInCRMX:false,
     nfcPairing:nfc,
     directLightingAI:[],
     externalInterfaceRequired:['Wired DMX interface for DMX512 control'],
-    unavailableDirectProtocols:['NANLINK Bluetooth control protocol is not publicly documented for third-party direct control']
+    unavailableDirectProtocols:['NANLINK Bluetooth/2.4G control protocol is not publicly documented for third-party direct control'],
+    sourceEvidenceNote:'FC-720 family and Nanlite shop pages explicitly list 2.4G remote control; individual product specification tables omit 2.4G but do not state it is unavailable.',
+    controlSources:[SERIES,SHOP]
   };
 }
 
@@ -69,8 +72,8 @@ export const NANLITE_FC_720_ACCESSORIES=[
   included('nanlite-fc-720b-hard-foam-case','FC-720B Hard-Foam Carrying Case','Other','nanlite-fc-720b',SRC_B),
   included('nanlite-fc-720c-hard-foam-case','FC-720C Hard-Foam Carrying Case','Other','nanlite-fc-720c',SRC_C),
   {
-    id:'nanlite-fc-720-series-control-note',manufacturer:'Nanlite',model:'FC-720 Bluetooth / DMX-RDM Control',
+    id:'nanlite-fc-720-series-control-note',manufacturer:'Nanlite',model:'FC-720 Bluetooth / 2.4G / NFC / DMX-RDM Control',
     category:'Control',compatibleWith:BOTH,compatibilityStatus:'Designed For',
-    conditions:['FC-720B and FC-720C support NFC pairing; official FC-720B/C product pages do not list 2.4G control'],sourceUrl:SERIES
+    conditions:['FC-720B and FC-720C support NFC pairing','FC-720 family and Nanlite shop pages explicitly list 2.4G remote control; individual product spec tables omit it'],sourceUrl:SERIES
   }
 ];

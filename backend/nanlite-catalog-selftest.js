@@ -347,6 +347,13 @@ for(const id of ['nanlite-fl-20g','nanlite-pj-bm-19','nanlite-pj-bm-25-45','nanl
   const a=accessoryById.get(id);
   if(!a?.compatibleWith?.includes('nanlite-forza-720b')) failures.push(id+' missing Forza 720B');
 }
+const f720Head=accessoryById.get('nanlite-forza-720b-head-cable');
+for(const target of ['nanlite-forza-720','nanlite-forza-720b']){
+  if(!f720Head?.compatibleWith?.includes(target)) failures.push('Forza 720 shared 5 m head cable missing '+target);
+  if(!f720Head?.includedWithFixtures?.includes(target)) failures.push('Forza 720 shared 5 m included relation missing '+target);
+}
+if(f720Head?.model!=='Forza 720 / 720B Head Cable 5 m') failures.push('Forza 720 shared 5 m head cable identity mismatch');
+if(!f720Head?.evidenceNote) failures.push('Forza 720 shared 5 m head cable evidence note missing');
 for(const duplicateId of ['nanlite-fl-20g-fc','nanlite-pj-bm-25-45-fc']) if(accessoryById.has(duplicateId)) failures.push('Duplicate Nanlite accessory ID must stay removed: '+duplicateId);
 for(const id of ['nanlite-alien-150c','nanlite-alien-300c']){
   const f=fixtures.find(x=>x.id===id);

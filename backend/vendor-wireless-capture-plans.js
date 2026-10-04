@@ -113,6 +113,38 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  ZHIYUN: {
+    id:'zhiyun-zy-vega-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'ZY Vega',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact ZHIYUN model at a time with ZY Vega.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer commands across MOLUS, FIVERAY, and CINEPEER families without matching physical evidence.'
+    ],
+    officialSources:[
+      'https://www.zhiyun-tech.com/en/product/param/757',
+      'https://www.zhiyun-tech.com/en/product/param/816',
+      'https://www.zhiyun-tech.com/en/product/param/934',
+      'https://www.zhiyun-tech.com/en/product/param/924',
+      'https://www.zhiyun-tech.com/en/product/param/901',
+      'https://store.zhiyun-tech.com/products/molus-x100',
+      'https://www.zhiyun-tech.com/en/product/param/1077',
+      'https://www.zhiyun-tech.com/en/product/param/1099',
+      'https://www.zhiyun-tech.com/en/product/param/1132',
+      'https://www.zhiyun-tech.com/en/product/param/1055'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'Only on RGB-capable models; perform exactly one color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   'DMG Lumiere': {
     id:'dmg-mix-bluetooth-capture-v1',
     transport:'bluetooth',

@@ -276,6 +276,10 @@ if(fixtures.find(x=>x.id==='nanlite-pavoslim-240b')?.control?.builtInCRMX) failu
 for(const id of ['nanlite-pavoslim-60cl','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c']){
   if(!fixtures.find(x=>x.id===id)?.control?.builtInCRMX) failures.push(id+' CRMX missing');
 }
+const p60cl=fixtures.find(x=>x.id==='nanlite-pavoslim-60cl');
+if(p60cl?.cctK?.min!==2700||p60cl?.cctK?.max!==7500) failures.push('PavoSlim 60CL technical CCT range must remain 2700K-7500K');
+if(!p60cl?.officialSourceConflict) failures.push('PavoSlim 60CL official-source CCT conflict must remain documented');
+if((p60cl?.conflictSources||[]).length<3) failures.push('PavoSlim 60CL conflict sources missing');
 for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-ascpqrfz']){
   const a=accessoryById.get(id);
   for(const target of ['nanlite-pavoslim-60cl','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c'])

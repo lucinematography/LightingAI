@@ -1,6 +1,12 @@
 // Godox control verification: preserve standards transport while unverified semantic DMX profiles fail closed.
+const GODOX_LIGHT_APP_SOURCE='https://www.godox.com/app/';
+const GODOX_LIGHT_APP_4_SOURCE='https://www.godox.com/product-e/Godox-Light-App.html';
 function unique(values = []) {
   return [...new Set(values.filter(Boolean))];
+}
+function hasBluetoothTransport(control = {}) {
+  const values=[...(control.wireless||[]),...(control.directLightingAI||[])].map(value=>String(value).toLowerCase());
+  return values.some(value=>/(^|[^a-z0-9])(bluetooth|ble)([^a-z0-9]|$)/.test(value));
 }
 function hasDmxTransport(control = {}) {
   const values = [
@@ -18,6 +24,24 @@ function hasDmxTransport(control = {}) {
 export function normalizeGodoxControl(fixtures = []) {
   for (const fixture of fixtures) {
     if (fixture?.manufacturer !== 'Godox' || !fixture.control || Array.isArray(fixture.control)) continue;
+    if (hasBluetoothTransport(fixture.control)) {
+      fixture.control.sourceUrls = unique([
+        ...(fixture.control.sourceUrls || []),
+        fixture.sourceUrl,
+        GODOX_LIGHT_APP_SOURCE,
+        GODOX_LIGHT_APP_4_SOURCE
+      ]);
+      fixture.control.wirelessVerification = {
+        ...(fixture.control.wirelessVerification || {}),
+        bluetooth: {
+          verified: true,
+          family: 'Godox Light Bluetooth',
+          scope: 'transport-capability-only',
+          sourceUrls: [GODOX_LIGHT_APP_SOURCE, GODOX_LIGHT_APP_4_SOURCE],
+          note: 'Godox documents Godox Light app control over Bluetooth for compatible LED fixtures. This verifies transport capability only; proprietary LightingAI command semantics remain locked until separately verified.'
+        }
+      };
+    }
     const verifiedModes = Array.isArray(fixture.dmxModes)
       ? fixture.dmxModes.filter(mode => mode?.verified === true)
       : [];

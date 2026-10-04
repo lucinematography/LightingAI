@@ -77,6 +77,8 @@ const allowed=new Set([
   'backend/nanlite-wireless-verification.js',
   'backend/evlight-wireless-verification.js',
   'backend/astera-wireless-verification.js',
+  'backend/vendor-wireless-protocol-status.js',
+  'backend/vendor-wireless-protocol-status-selftest.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

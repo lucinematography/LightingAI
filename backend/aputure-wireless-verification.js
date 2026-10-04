@@ -2,6 +2,13 @@ const APUTURE_SIDUS_SOURCE='https://aputure.com/en-US/pages/sidus-link';
 const APUTURE_SIDUS_HELP='https://help.aputure.com/en/general-help/sidus-link-control';
 
 function unique(values=[]){return [...new Set(values.filter(Boolean))]}
+function hasSidusEvidence(control={}){
+  const values=[
+    ...(Array.isArray(control.wireless)?control.wireless:[]),
+    ...(Array.isArray(control.legacyLabels)?control.legacyLabels:[])
+  ].map(String);
+  return values.some(value=>/sidus link|sidus bluetooth mesh/i.test(value));
+}
 
 export function normalizeAputureWirelessControl(fixtures=[]){
   for(const fixture of fixtures){
@@ -9,6 +16,7 @@ export function normalizeAputureWirelessControl(fixtures=[]){
     const control=fixture.control&&typeof fixture.control==='object'&&!Array.isArray(fixture.control)
       ? fixture.control
       : {legacyLabels:Array.isArray(fixture.control)?fixture.control.map(String):[]};
+    if(!hasSidusEvidence(control)) continue;
     const wireless=Array.isArray(control.wireless)?control.wireless:[];
     control.wireless=unique([...wireless,'Sidus Bluetooth Mesh']);
     control.sourceUrls=unique([
@@ -24,7 +32,7 @@ export function normalizeAputureWirelessControl(fixtures=[]){
         family:'Sidus Bluetooth Mesh',
         scope:'transport-capability-only',
         sourceUrls:[APUTURE_SIDUS_SOURCE,APUTURE_SIDUS_HELP],
-        note:'Aputure documents Sidus Bluetooth control across Aputure fixtures. This verifies transport capability only; LightingAI proprietary command semantics remain locked until separately verified.'
+        note:'This fixture already carries model-scoped Sidus Link evidence. The normalization only makes the Bluetooth transport explicit; LightingAI proprietary command semantics remain locked until separately verified.'
       }
     };
     control.capabilityVerification={

@@ -200,6 +200,10 @@ const fiilex=byManufacturer.get('Fiilex');
 if(!fiilex || fiilex.bluetooth!==0 || fiilex.wifi!==1 || fiilex.both!==0) {
   failures.push('Fiilex wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');
 }
+const harlowe=byManufacturer.get('Harlowe');
+if(!harlowe || harlowe.bluetooth!==11 || harlowe.wifi!==0 || harlowe.both!==0) {
+  failures.push('Harlowe wireless coverage expected 11 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

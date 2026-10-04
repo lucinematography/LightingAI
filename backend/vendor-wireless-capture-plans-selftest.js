@@ -3,7 +3,7 @@ import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.j
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 
-for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light']){
+for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Astera']){
   const plan=VENDOR_WIRELESS_CAPTURE_PLANS[maker];
   expect(!!plan,maker+' capture plan missing');
   if(!plan) continue;
@@ -30,5 +30,7 @@ for(const secondary of [...(VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans||[
   expect(/Do not infer|must not be converted/i.test(String(secondary.rule||'')),'secondary Wi-Fi plan must forbid undocumented API inference: '+secondary.id);
 }
 
-console.log(JSON.stringify({ok:failures.length===0,vendors:6,failures},null,2));
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Astera.analyzer?.orchestrator==='backend/astera-physical-capture-set.js','Astera capture plan must point to verified orchestrator');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Astera.safety?.lightingAiWritesAllowed===false,'Astera evidence capture must keep LightingAI proprietary writes disabled');
+console.log(JSON.stringify({ok:failures.length===0,vendors:7,failures},null,2));
 if(failures.length)process.exit(1);

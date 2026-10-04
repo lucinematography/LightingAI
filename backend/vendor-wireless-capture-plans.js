@@ -113,6 +113,41 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  'DMG Lumiere': {
+    id:'dmg-mix-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'myMIX',
+    commandSpecStatus:'public-proprietary-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact DMG MIX route at a time and preserve the fixture/controller topology in the derived evidence.',
+      'For MAXI, use the built-in MIX Controller route.',
+      'For MINI or SL1, use the required add-on MIX Controller / Driver and keep the route classified as assisted.',
+      'Keep Bluetooth, Wi-Fi/Art-Net, and CRMX/Wireless-DMX evidence in separate capture sets.'
+    ],
+    officialSources:[
+      'https://emea.rosco.com/en/mymix-app',
+      'https://us.rosco.com/sites/default/files/content/resource/2022-12/Rosco_DMG_USERMANUAL-MIX-CONTROL-2-1.pdf',
+      'https://us.rosco.com/en/product/dmg-mini',
+      'https://emea.rosco.com/en/product/dmg-sl1',
+      'https://us.rosco.com/en/product/dmg-maxi'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact DMG MIX Bluetooth route, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one color change per capture from the same initial state.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one documented effect per capture only after simpler controls are understood.'}
+    },
+    secondaryPlans:[{
+      id:'dmg-mix-wifi-capture-v1',
+      transport:'wifi',
+      target:'DMG MINI, SL1 and MAXI MIX Controller routes',
+      commandSpecStatus:'artnet-transport-documented-probe-output-disabled',
+      rule:'Capture Wi-Fi route evidence separately from Bluetooth. Preserve whether the MIX Controller is built in (MAXI) or add-on (MINI/SL1). Do not re-enable Probe Art-Net output.'
+    }],
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Litepanels: {
     id:'litepanels-astra-ip-direct-bluetooth-capture-v1',
     transport:'bluetooth',

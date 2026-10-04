@@ -37,6 +37,27 @@ expect(unverified.dim.supported===false,'Unverified DMX mode must not prove DIM'
 expect(unverified.fx.supported===false,'Unverified DMX mode must not prove FX');
 expect(unverified.color.supported===true,'Explicit RGB engine may prove COLOR independently of DMX semantics');
 
+
+const officialAppEvidence=deriveFixtureControlCapabilities({
+  colorMode:'Bi-Color',
+  cctK:{min:2700,max:6500},
+  control:{
+    capabilityVerification:{
+      dim:{verified:true,scope:'official-app-capability-only'},
+      fx:{verified:true,scope:'official-app-capability-only'}
+    }
+  }
+});
+expect(officialAppEvidence.dim.supported===true,'Verified official-app DIM capability must be accepted');
+expect(officialAppEvidence.fx.supported===true,'Verified official-app FX capability must be accepted');
+expect(officialAppEvidence.dim.evidence.includes('verified-official-app-capability'),'Official-app DIM evidence marker missing');
+
+const unverifiedAppEvidence=deriveFixtureControlCapabilities({
+  control:{capabilityVerification:{dim:{verified:false},fx:{verified:false}}}
+});
+expect(unverifiedAppEvidence.dim.supported===false,'Unverified app metadata must not prove DIM');
+expect(unverifiedAppEvidence.fx.supported===false,'Unverified app metadata must not prove FX');
+
 const report=buildFixtureControlCapabilityReport();
 expect(report.totals.fixtures===539,'fixture total changed from verified catalog');
 expect(report.totals.cct>0,'CCT capability audit unexpectedly empty');

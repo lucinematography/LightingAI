@@ -19,6 +19,10 @@ const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 const accessoryModels=new Map();
 for(const a of accessories){
+  // Included kit components often have generic labels (for example "Power Cable 3 m")
+  // without a unique Nanlite part number. Do not treat those labels as proof of one
+  // shared physical SKU. Dedupe only standalone catalog accessories.
+  if(a.includedWithFixture===true) continue;
   const key=(a.model||'').trim().toLowerCase();
   if(!key) continue;
   const prev=accessoryModels.get(key);

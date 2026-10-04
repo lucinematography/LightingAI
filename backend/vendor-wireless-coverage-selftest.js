@@ -1,5 +1,5 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
-import { VENDOR_WIRELESS_PROTOCOL_STATUS } from './vendor-wireless-protocol-status.js';
+import { VENDOR_WIRELESS_PROTOCOL_STATUS, vendorWideCommandProductionReady } from './vendor-wireless-protocol-status.js';
 import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.js';
 
 const failures=[];
@@ -30,9 +30,16 @@ for(const fixture of fixtures){
   const maker=fixture?.manufacturer||'Unknown';
   const bt=hasBt(fixture), wifi=hasWifi(fixture);
   if(!bt&&!wifi) continue;
-  if(!coverage[maker]) coverage[maker]={bluetooth:0,wifi:0};
-  if(bt) coverage[maker].bluetooth++;
-  if(wifi) coverage[maker].wifi++;
+  if(!coverage[maker]) coverage[maker]={bluetooth:0,wifi:0,fixtureIds:[],routes:[]};
+  if(fixture?.id) coverage[maker].fixtureIds.push(String(fixture.id));
+  if(bt){
+    coverage[maker].bluetooth++;
+    if(fixture?.id) coverage[maker].routes.push({fixtureId:String(fixture.id),transport:'bluetooth'});
+  }
+  if(wifi){
+    coverage[maker].wifi++;
+    if(fixture?.id) coverage[maker].routes.push({fixtureId:String(fixture.id),transport:'wifi'});
+  }
 }
 
 for(const [maker,row] of Object.entries(coverage)){
@@ -43,20 +50,24 @@ for(const [maker,row] of Object.entries(coverage)){
   const plan=VENDOR_WIRELESS_CAPTURE_PLANS[maker];
   const ids=planIds(plan);
 
+  const requiredTransports=[
+    ...(row.bluetooth>0?['bluetooth']:[]),
+    ...(row.wifi>0?['wifi']:[])
+  ];
+  const production=vendorWideCommandProductionReady(maker,requiredTransports,row.fixtureIds,row.routes);
+
   if(row.bluetooth>0){
-    const production=status.commandSpec==='production_verified';
     const primaryId=status.capturePlanId;
     expect(production || (!!primaryId && ids.has(primaryId)),
-      maker+' Bluetooth coverage has no verified driver or linked capture plan');
+      maker+' Bluetooth coverage has no verified production driver or linked capture plan');
   }
 
   if(row.wifi>0){
-    const production=status.commandSpec==='production_verified';
     const secondary=Array.isArray(status.secondaryCapturePlanIds)?status.secondaryCapturePlanIds:[];
     const linkedWifi=secondary.some(id=>ids.has(id) && (plan?.secondaryPlans||[]).some(x=>x?.id===id&&x?.transport==='wifi'));
     const primaryWifi=plan?.transport==='wifi' && status.capturePlanId===plan?.id;
     expect(production || primaryWifi || linkedWifi,
-      maker+' Wi-Fi coverage has no verified driver or linked Wi-Fi capture plan');
+      maker+' Wi-Fi coverage has no verified production driver or linked Wi-Fi capture plan');
   }
 }
 

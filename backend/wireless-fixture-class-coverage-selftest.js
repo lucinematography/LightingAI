@@ -25,6 +25,23 @@ expect(report.unclassifiedFixtureIds.length===0,'wireless fixtures missing famil
 for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light']){
   expect(!!report.byManufacturer[maker],maker+' missing from wireless class coverage');
 }
+for(const readinessRow of readiness.vendors){
+  const classRow=report.byManufacturer[readinessRow.manufacturer];
+  expect(!!classRow,readinessRow.manufacturer+' missing from manufacturer class totals');
+  if(!classRow) continue;
+  expect(classRow.bluetoothRoutes===readinessRow.bluetoothFixtures,
+    readinessRow.manufacturer+' Bluetooth class total diverges from readiness report');
+  expect(classRow.wifiRoutes===readinessRow.wifiFixtures,
+    readinessRow.manufacturer+' Wi-Fi class total diverges from readiness report');
+  expect(classRow.assistedBluetoothRoutes===readinessRow.assistedBluetooth,
+    readinessRow.manufacturer+' assisted Bluetooth class count diverges from readiness report');
+  expect(classRow.assistedWifiRoutes===readinessRow.assistedWifi,
+    readinessRow.manufacturer+' assisted Wi-Fi class count diverges from readiness report');
+  expect(classRow.directBluetoothRoutes===readinessRow.bluetoothFixtures-readinessRow.assistedBluetooth,
+    readinessRow.manufacturer+' direct Bluetooth class count diverges from readiness report');
+  expect(classRow.directWifiRoutes===readinessRow.wifiFixtures-readinessRow.assistedWifi,
+    readinessRow.manufacturer+' direct Wi-Fi class count diverges from readiness report');
+}
 for(const maker of ['Kino Flo','De Sisti','LiteGear']){
   expect(!report.byManufacturer[maker],maker+' unexpectedly entered direct Bluetooth/Wi-Fi class coverage');
 }

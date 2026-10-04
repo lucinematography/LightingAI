@@ -1,8 +1,11 @@
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
+import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 
 const failures=[];
-const fixtureIds=new Set(NANLITE_FM_CURRENT_FIXTURES.map(x=>x.id));
-const accessoryById=new Map(NANLITE_FM_CURRENT_ACCESSORIES.map(x=>[x.id,x]));
+const fixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES];
+const fixtureIds=new Set(fixtures.map(x=>x.id));
+const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 
 const expected=[
   'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
@@ -10,13 +13,13 @@ const expected=[
 ];
 for(const id of expected) if(!fixtureIds.has(id)) failures.push('Missing Nanlite fixture: '+id);
 
-for(const a of NANLITE_FM_CURRENT_ACCESSORIES){
+for(const a of accessories){
   for(const target of a.compatibleWith||[]){
     if(!fixtureIds.has(target)&&!accessoryById.has(target)) failures.push(`Broken Nanlite link: ${a.id} -> ${target}`);
   }
   if(!a.sourceUrl) failures.push('Missing Nanlite accessory source: '+a.id);
 }
-for(const f of NANLITE_FM_CURRENT_FIXTURES){
+for(const f of fixtures){
   if(!f.sourceUrl) failures.push('Missing Nanlite fixture source: '+f.id);
   if(f.discontinued!==false) failures.push('Current Nanlite fixture not explicitly current: '+f.id);
 }
@@ -30,5 +33,10 @@ for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr'
 const xlr=accessoryById.get('nanlite-bt-bg-xlr4-ii');
 for(const id of ['nanlite-fc-120b','nanlite-fc-120c']) if(!xlr?.compatibleWith?.includes(id)) failures.push('XLR V-Mount grip missing '+id);
 if(accessoryById.get('nanlite-bt-bg-v')?.compatibleWith?.includes('nanlite-forza-60cr')) failures.push('Do not infer BT-BG-V compatibility with Forza 60CR');
+for(const id of ['nanlite-forza-300b-ii','nanlite-forza-500b-ii']) if(!fixtureIds.has(id)) failures.push('Missing Nanlite Forza II fixture: '+id);
+for(const id of ['nanlite-fl-20g','nanlite-ccsfz300ii','nanlite-rf-bm-55-forza-ii']){
+  const a=accessoryById.get(id); if(!a) failures.push('Missing Nanlite Forza II accessory: '+id);
+  else for(const target of ['nanlite-forza-300b-ii','nanlite-forza-500b-ii']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
+}
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
-console.log(`Nanlite FM catalog self-test passed: ${NANLITE_FM_CURRENT_FIXTURES.length} fixtures, ${NANLITE_FM_CURRENT_ACCESSORIES.length} accessories.`);
+console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

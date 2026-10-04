@@ -14,6 +14,8 @@ for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Li
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
   expect(row.transportEvidenceComplete===true,maker+' transport evidence is incomplete');
+  expect(Array.isArray(row.fixtureIds)&&row.fixtureIds.length===row.totalWirelessFixtures,maker+' fixtureIds must enumerate every current wireless fixture');
+  expect(new Set(row.fixtureIds).size===row.fixtureIds.length,maker+' fixtureIds must not contain duplicates');
   if(row.bluetoothFixtures>0) expect(!!row.bluetoothPlan,maker+' Bluetooth capture plan missing');
   if(row.wifiFixtures>0) expect(!!row.wifiPlan,maker+' Wi-Fi capture plan missing');
   expect(row.commandReady===false,maker+' command driver must remain fail-closed');

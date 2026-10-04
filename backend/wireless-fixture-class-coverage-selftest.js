@@ -53,6 +53,10 @@ expect(Object.keys(report.byClassSignature).length>=Math.max(familyKeys.length,s
   'composite class signatures are unexpectedly coarser than individual class dimensions');
 expect(classRows.every(row=>row.fixtureCount>0),'wireless class report contains empty class');
 expect(classRows.every(row=>row.manufacturers.length>0),'wireless class report contains class without manufacturer');
+expect(classRows.every(row=>row.directBluetoothRoutes+row.assistedBluetoothRoutes===row.bluetoothRoutes),
+  'direct + assisted Bluetooth routes must equal total Bluetooth routes for every class');
+expect(classRows.every(row=>row.directWifiRoutes+row.assistedWifiRoutes===row.wifiRoutes),
+  'direct + assisted Wi-Fi routes must equal total Wi-Fi routes for every class');
 const signatureRows=Object.values(report.byClassSignature);
 expect(signatureRows.every(row=>row.fixtureCount>0),'class signature report contains empty class');
 expect(signatureRows.every(row=>row.manufacturers.length>0),'class signature rows must include manufacturer provenance');
@@ -62,6 +66,10 @@ expect(manufacturerClassFixtureTotal===report.wirelessFixtureCount,'manufacturer
 expect(manufacturerClassRows.length>=Object.keys(report.byManufacturer).length,'manufacturer-class matrix is unexpectedly narrower than manufacturer coverage');
 expect(manufacturerClassRows.every(([key,row])=>key.includes(' :: ')&&row.fixtureCount>0),'manufacturer-class matrix contains malformed or empty row');
 expect(manufacturerClassRows.every(([,row])=>row.manufacturers.length===1),'manufacturer-class row must belong to exactly one manufacturer');
+expect(manufacturerClassRows.every(([,row])=>row.directBluetoothRoutes+row.assistedBluetoothRoutes===row.bluetoothRoutes),
+  'manufacturer-class Bluetooth route split mismatch');
+expect(manufacturerClassRows.every(([,row])=>row.directWifiRoutes+row.assistedWifiRoutes===row.wifiRoutes),
+  'manufacturer-class Wi-Fi route split mismatch');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

@@ -120,6 +120,8 @@ export function vendorWirelessProtocolStatus(manufacturer) {
 
 export function commandProductionReadyForStatus(row,requiredTransports=[],requiredFixtureIds=[]) {
   if(row?.commandSpec!=='production_verified') return false;
+  if(!Array.isArray(requiredTransports)||requiredTransports.length===0) return false;
+  if(!Array.isArray(requiredFixtureIds)||requiredFixtureIds.length===0) return false;
   const scope=row?.productionScope;
   if(!(
     scope &&

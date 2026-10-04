@@ -130,6 +130,42 @@ const exactAllowed = new Set([
   'backend/desisti-catalog-selftest.js',
   'backend/godox-continuous-library.js',
   'backend/godox-catalog-selftest.js',
+  'backend/nanlite-alien-current-library.js',
+  'backend/nanlite-catalog-selftest.js',
+  'backend/nanlite-compac-current-library.js',
+  'backend/nanlite-compac-daylight-legacy-library.js',
+  'backend/nanlite-creator-compact-library.js',
+  'backend/nanlite-creator-handheld-library.js',
+  'backend/nanlite-fc-720-library.js',
+  'backend/nanlite-fc-high-output-library.js',
+  'backend/nanlite-fm-current-library.js',
+  'backend/nanlite-forza-150b-legacy-library.js',
+  'backend/nanlite-forza-60-legacy-library.js',
+  'backend/nanlite-forza-720b-library.js',
+  'backend/nanlite-forza-bowens-legacy-library.js',
+  'backend/nanlite-forza-daylight-library.js',
+  'backend/nanlite-forza-ii-library.js',
+  'backend/nanlite-fs-current-library.js',
+  'backend/nanlite-fs-legacy-library.js',
+  'backend/nanlite-halo-legacy-library.js',
+  'backend/nanlite-litolite-early-legacy-library.js',
+  'backend/nanlite-litolite-legacy-library.js',
+  'backend/nanlite-lumipad-current-library.js',
+  'backend/nanlite-miro-current-library.js',
+  'backend/nanlite-mixpad-library.js',
+  'backend/nanlite-mixpanel-legacy-library.js',
+  'backend/nanlite-pavobulb-current-library.js',
+  'backend/nanlite-pavoslim-60-120-library.js',
+  'backend/nanlite-pavoslim-extended-library.js',
+  'backend/nanlite-pavotube-10-current-library.js',
+  'backend/nanlite-pavotube-ii-c-library.js',
+  'backend/nanlite-pavotube-ii-xr-library.js',
+  'backend/nanlite-pavotube-t8-7x-library.js',
+  'backend/nanlite-pavotube-x-legacy-library.js',
+  'backend/nanlite-sa-legacy-library.js',
+  'backend/nanlite-tk-legacy-library.js',
+  'backend/build-equipment-catalog-snapshot.js',
+  '.github/workflows/build-light-ai-probe.yml',
   'backend/aladdin-mosaic-library.js',
   'backend/aladdin-fabric-lite-library.js',
   'backend/aladdin-bi-flex-library.js',
@@ -213,7 +249,9 @@ for (const protectedPath of [
 const manifestPath = 'app/src/main/AndroidManifest.xml';
 const stableManifest = git(['show', `${PROJECT510_QA_BASE}:${manifestPath}`]);
 const currentManifest = git(['show', `HEAD:${manifestPath}`]);
+if (!currentManifest.includes('android:label="@string/app_name"')) fail('Probe app label resource marker missing');
 const manifestWithoutBle = currentManifest
+  .replace('android:label="@string/app_name"', 'android:label="LIGHTING AI"')
   .split('\n')
   .filter((line) => !line.includes('android.permission.BLUETOOTH') && !line.includes('android.hardware.bluetooth_le') && !line.includes('android.permission.RECORD_AUDIO'))
   .join('\n');

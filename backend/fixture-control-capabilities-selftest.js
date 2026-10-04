@@ -1,0 +1,49 @@
+import {
+  deriveFixtureControlCapabilities,
+  buildFixtureControlCapabilityReport
+} from './fixture-control-capabilities.js';
+
+const failures=[];
+const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
+
+const bi=deriveFixtureControlCapabilities({
+  colorMode:'Bi-Color',
+  cctK:{min:2700,max:6500},
+  dmxModes:[{verified:true,controls:[{key:'dimmer'},{key:'cct'}]}]
+});
+expect(bi.dim.supported===true,'Bi-Color DIM should be supported from verified dimmer');
+expect(bi.cct.supported===true,'Bi-Color CCT should be supported');
+expect(bi.color.supported===false,'Bi-Color must not be promoted to COLOR');
+
+const rgb=deriveFixtureControlCapabilities({
+  colorMode:'RGBWW',
+  dmxModes:[{verified:true,controls:[{key:'dimmer'},{key:'red'},{key:'green'},{key:'blue'}]}]
+});
+expect(rgb.dim.supported===true,'RGB DIM should be supported');
+expect(rgb.color.supported===true,'RGB color capability missing');
+
+const fx=deriveFixtureControlCapabilities({
+  colorMode:'RGBACL Full Spectrum',
+  dmxModes:[{verified:true,controls:[{key:'effect'},{key:'fxSpeed'}]}]
+});
+expect(fx.color.supported===true,'Full Spectrum color capability missing');
+expect(fx.fx.supported===true,'FX capability missing from verified effect controls');
+
+const unverified=deriveFixtureControlCapabilities({
+  colorMode:'RGB',
+  dmxModes:[{verified:false,controls:[{key:'dimmer'},{key:'effect'}]}]
+});
+expect(unverified.dim.supported===false,'Unverified DMX mode must not prove DIM');
+expect(unverified.fx.supported===false,'Unverified DMX mode must not prove FX');
+expect(unverified.color.supported===true,'Explicit RGB engine may prove COLOR independently of DMX semantics');
+
+const report=buildFixtureControlCapabilityReport();
+expect(report.totals.fixtures===539,'fixture total changed from verified catalog');
+expect(report.totals.cct>0,'CCT capability audit unexpectedly empty');
+expect(report.totals.color>0,'COLOR capability audit unexpectedly empty');
+expect(report.totals.dim>0,'DIM capability audit unexpectedly empty');
+expect(report.totals.fx>0,'FX capability audit unexpectedly empty');
+expect(Object.keys(report.byManufacturer).length===10,'manufacturer total changed from verified catalog');
+
+console.log(JSON.stringify({ok:failures.length===0,totals:report.totals,byManufacturer:report.byManufacturer,failures},null,2));
+if(failures.length) process.exit(1);

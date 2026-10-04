@@ -113,6 +113,39 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  SIRUI: {
+    id:'sirui-light-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'SIRUI Light',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact SIRUI model at a time with SIRUI Light.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer commands across panel, tube, and monolight families without matching physical evidence.'
+    ],
+    officialSources:[
+      'https://store.sirui.com/products/ultra-slim-led-video-panel-light-e30',
+      'https://s2.sirui.com/upload/manual/2022/0620/5zPcrkXX4y.pdf',
+      'https://s2.sirui.com/upload/manual/2022/0620/5SY5ERzGYn.pdf',
+      'https://store.sirui.com/products/t120-tube-light',
+      'https://s2.sirui.com/upload/manual/2024/0325/rS8iij8WSZ.pdf',
+      'https://store.sirui.com/products/sirui-100w-series-led-monolight',
+      'https://store.sirui.com/products/sirui-c300x-ii',
+      'https://store.sirui.com/products/sirui-dragon-series-curvy-rgb-panel-light-b25r',
+      'https://store.sirui.com/products/sirui-c150x-150w-handheld-pocket-light',
+      'https://store.sirui.com/products/sirui-c60x',
+      'https://store.sirui.com/products/sirui-t60x-telescopic-60w-rgb-pixel-tube-light-ll'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state where supported.'},
+      color:{runs:3,optional:true,rule:'Only on RGB-capable models; perform exactly one color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   COLBOR: {
     id:'colbor-studio-bluetooth-capture-v1',
     transport:'bluetooth',

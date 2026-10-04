@@ -62,6 +62,19 @@ expect(evWirelessDmx?.vendorDrivers?.length===0,'EV Light Wireless DMX must not 
 const radioOnly=api?.resolve({manufacturer:'Godox',control:{wireless:['2.4 GHz wireless control']}});
 expect(radioOnly?.vendorDrivers?.length===0,'2.4 GHz radio metadata must not be guessed as Bluetooth/Wi-Fi');
 
+
+const verifiedTransport=api?.resolve({
+  manufacturer:'Godox',
+  control:{
+    wireless:['Bluetooth App Control'],
+    wirelessVerification:{bluetooth:{verified:true,family:'Godox Light Bluetooth',scope:'transport-capability-only'}}
+  }
+});
+const verifiedTransportDriver=verifiedTransport?.vendorDrivers?.find(x=>x.transport==='bluetooth');
+expect(verifiedTransportDriver?.transportVerified===true,'verified transport evidence not propagated to driver');
+expect(verifiedTransportDriver?.status==='transport-verified-command-unverified','verified transport must not imply command readiness');
+expect(verifiedTransport?.productionReady===false,'verified transport must remain non-production without command verification');
+
 const dmxOnly=api?.resolve({manufacturer:'Astera',control:{wired:['DMX512']},dmxModes:[{verified:true,channels:4}]});
 expect(dmxOnly?.vendorDrivers?.length===0&&dmxOnly?.productionReady===false,'DMX metadata must never create a fast CONTROL route');
 

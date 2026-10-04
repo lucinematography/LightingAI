@@ -11,7 +11,8 @@ for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Li
   expect(row.commandSpec!=='production_verified',maker+' proprietary command path must not be marked production verified');
 }
 
-expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.nextStep==='official-app-btsnoop-capture-and-replay-verification','Astera physical evidence path changed');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.nextStep==='capture-plan-required-before-driver','Astera physical evidence path changed');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.capturePlanId==='astera-official-app-btsnoop-capture-v1','Astera capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Godox.capturePlanId==='godox-light-bluetooth-capture-v1','Godox capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Nanlite.capturePlanId==='nanlink-direct-bluetooth-capture-v1','Nanlite capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Aputure.capturePlanId==='sidus-direct-bluetooth-capture-v1','Aputure capture plan link missing');

@@ -4,9 +4,9 @@ import { deriveFixtureControlCapabilities, validCctRange, declaredColorEngine } 
 function list(v){return Array.isArray(v)?v.map(String):[]}
 function wireless(f){
   const c=f?.control;
-  const values=Array.isArray(c)?list(c):[...list(c?.wireless),...list(c?.directLightingAI)];
-  const bluetooth=values.some(v=>/(^|[^a-z0-9])(bluetooth|ble)([^a-z0-9]|$)/i.test(v));
-  const wifi=values.some(v=>/(^|[^a-z0-9])(wi-?fi|wifi|wlan)([^a-z0-9]|$)/i.test(v));
+  if(!c||Array.isArray(c)||typeof c!=='object') return {bluetooth:false,wifi:false,any:false};
+  const bluetooth=c?.wirelessVerification?.bluetooth?.verified===true;
+  const wifi=c?.wirelessVerification?.wifi?.verified===true;
   return {bluetooth,wifi,any:bluetooth||wifi};
 }
 function declaredFx(f){

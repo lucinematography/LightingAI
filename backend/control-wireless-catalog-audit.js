@@ -106,6 +106,10 @@ const arri=byManufacturer.get('ARRI');
 if(!arri || arri.bluetooth!==5 || arri.wifi!==1 || arri.both!==1) {
   failures.push('ARRI wireless verification expected 5 Bluetooth / 1 Wi-Fi / 1 both');
 }
+const aladdin=byManufacturer.get('Aladdin');
+if(!aladdin || aladdin.bluetooth!==5) {
+  failures.push('Aladdin Bluetooth verification expected 5 fixtures');
+}
 const summary = {
   ok: failures.length === 0,
   fixtures: fixtures.length,

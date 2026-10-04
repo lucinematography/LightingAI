@@ -66,13 +66,13 @@ export const NANLITE_FM_CURRENT_FIXTURES = [
 ];
 
 const FMM_ALL = [
-  'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
+  'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-forza-150b',
   'nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'
 ];
-const NANLINK_SHARED=[...FMM_ALL,'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b','nanlite-fc-720b','nanlite-fc-720c','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-1200b','nanlite-fc-1200c','nanlite-alien-150c','nanlite-alien-300c','nanlite-pavobulb-10c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c','nanlite-lumipad-11','nanlite-compac-200b'];
+const NANLINK_SHARED=[...FMM_ALL,'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b','nanlite-fc-720b','nanlite-fc-720c','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-1200b','nanlite-fc-1200c','nanlite-alien-150c','nanlite-alien-300c','nanlite-pavobulb-10c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c','nanlite-lumipad-11','nanlite-forza-150b','nanlite-compac-200b'];
 const SMALL_BATTERY = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'];
 const VMOUNT_60 = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fc-60b'];
-const VMOUNT_XLR = ['nanlite-fc-120b','nanlite-fc-120c'];
+const VMOUNT_XLR = ['nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'];
 const MINI_REFLECTOR = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b','nanlite-fs-60b'];
 const LARGE_REFLECTOR = ['nanlite-fc-120b','nanlite-fc-120c'];
 const DMX_FMM = FMM_ALL.filter(id => id!=='nanlite-fs-60b');

@@ -36,6 +36,18 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  VILTROX: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'viltrox-weeylite-pro-bluetooth-capture-v1',
+    evidence: [
+      'https://viltrox.com/products/viltrox-ninja-30-30b'
+    ],
+    note: 'Bluetooth/Weeylite Pro app control is verified only for VILTROX Ninja 30 and Ninja 30B. LightingAI proprietary command semantics remain locked.'
+  },
+
   VELVET: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'transport_verified_model_scoped',

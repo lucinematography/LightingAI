@@ -25,7 +25,8 @@ const SRC = {
   rf45:'https://nanliteus.com/products/rf-fmm-45-45-degree-reflector-for-fm-mount',
   rf45s:'https://nanliteus.com/products/forza-45-degree-mini-reflector-with-fm-mount',
   dome:'https://nanliteus.com/products/diffusion-dome-for-fc-120b-and-forza-150b',
-  case60:'https://nanliteus.com/products/padded-carrying-case-for-forza-60s-or-fs-60b'
+  case60:'https://nanliteus.com/products/padded-carrying-case-for-forza-60s-or-fs-60b',
+  vmount98:'https://nanliteus.com/products/bt-v-14-4v98-mini-v-mount-battery-14-4v-98wh-li-ion'
 };
 
 function control({dmx=true,crmx=false}={}){
@@ -129,6 +130,19 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
   {
     id:'nanlite-bt-bg-xlr4-ii',manufacturer:'Nanlite',model:'BT-BG-XLR4-II V-Mount Battery Grip with 4-Pin XLR',
     category:'Power',compatibleWith:VMOUNT_XLR,compatibilityStatus:'Designed For',sourceUrl:SRC.xlrVmountGrip
+  },
+  {
+    id:'nanlite-bt-v-14-4v98',manufacturer:'Nanlite',model:'BT-V-14.4V98 Mini V-Mount Battery 14.4V 98Wh Li-ion',
+    category:'Battery',compatibleWith:['nanlite-bt-bg-v','nanlite-bt-bg-xlr4-ii'],
+    compatibilityStatus:'Designed For',voltageV:14.4,capacityWh:98,batteryChemistry:'Li-ion',
+    outputs:['2x D-Tap','USB-A','USB-C','Wireless charging'],
+    fixtureUseCases:['nanlite-forza-60c','nanlite-forza-60b-ii','nanlite-fc-60b','nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'],
+    conditions:[
+      'Use BT-BG-V grip with Forza 60C, Forza 60B II or FC-60B',
+      'Use BT-BG-XLR4-II grip with Forza 150B, FC-120B or FC-120C'
+    ],
+    sourceConflictNote:'One descriptive paragraph says FC-60C, while the same Nanlite product page note says FC-60B and no FC-60C product is established; catalog does not infer an FC-60C fixture.',
+    sourceUrl:SRC.vmount98
   },
   {
     id:'nanlite-ws-rc-c2',manufacturer:'Nanlite',model:'NANLINK WS-RC-C2 2.4GHz Remote Control',

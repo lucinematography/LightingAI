@@ -61,22 +61,31 @@ function externalRequirements(fixture,transport){
   return /bluetooth|\bble\b|bt dongle|bluetooth.*dongle|sidus link bridge/.test(s);
  });
 }
+function transportVerification(fixture,transport){
+ var c=fixture&&fixture.control;
+ var v=c&&typeof c==='object'&&!Array.isArray(c)?c.wirelessVerification:null;
+ var item=v&&v[transport];
+ return item&&item.verified===true?item:null;
+}
 function candidate(fixture,transport){
  var manufacturer=String(fixture&&fixture.manufacturer||'Vendor');
  var external=externalRequirements(fixture,transport);
  var direct=external.length===0;
+ var verification=transportVerification(fixture,transport);
  return {
   id:idFor(manufacturer,transport),
   manufacturer:manufacturer,
   transport:transport,
   scope:direct?'vendor-direct':'vendor-assisted',
-  status:'required-unverified',
+  status:verification?'transport-verified-command-unverified':'required-unverified',
   production:false,
+  transportVerified:!!verification,
+  transportEvidence:verification||null,
   direct:direct,
   requiresExternalInterface:external.length>0,
   externalInterfaceRequired:external,
   label:labelFor(manufacturer,transport),
-  description:(direct?'Direct ':'Adapter-assisted ')+(transport==='wifi'?'vendor Wi-Fi':'vendor Bluetooth/BLE')+' candidate from documented catalog metadata. Output remains locked until the real vendor session and commands are physically verified.'
+  description:(verification?'Verified transport capability. ':'Catalog transport candidate. ')+(direct?'Direct ':'Adapter-assisted ')+(transport==='wifi'?'vendor Wi-Fi':'vendor Bluetooth/BLE')+'. Output remains locked until the real vendor session and command semantics are verified.'
  };
 }
 function matchingDrivers(fixture){
@@ -100,6 +109,7 @@ function resolve(fixture){
   transportKnown:bluetooth||wifi,
   vendorDirectRequired:vendor.some(function(d){return d.direct}),
   vendorAssistedRequired:vendor.some(function(d){return d.requiresExternalInterface}),
+  transportEvidenceVerified:vendor.some(function(d){return d.transportVerified}),
   vendorDirectReady:false,
   vendorResearchOnly:vendor.length>0
  };

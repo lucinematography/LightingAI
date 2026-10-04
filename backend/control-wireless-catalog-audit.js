@@ -102,6 +102,10 @@ const godox=byManufacturer.get('Godox');
 if(!godox || godox.bluetooth!==68) {
   failures.push('Godox Bluetooth catalog coverage expected 68 fixtures');
 }
+const arri=byManufacturer.get('ARRI');
+if(!arri || arri.bluetooth!==5 || arri.wifi!==1 || arri.both!==1) {
+  failures.push('ARRI wireless verification expected 5 Bluetooth / 1 Wi-Fi / 1 both');
+}
 const summary = {
   ok: failures.length === 0,
   fixtures: fixtures.length,

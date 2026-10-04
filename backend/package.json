@@ -43,7 +43,8 @@
     "test:operator-control-planning": "node operator-control-planning-report-selftest.js",
     "test:wireless-capability-gaps": "node wireless-control-capability-gap-report-selftest.js",
     "test:aputure-wireless-verification": "node aputure-wireless-verification-selftest.js",
-    "test:arri-wireless-verification": "node arri-wireless-verification-selftest.js"
+    "test:arri-wireless-verification": "node arri-wireless-verification-selftest.js",
+    "test:aladdin-wireless-verification": "node aladdin-wireless-verification-selftest.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

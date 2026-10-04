@@ -434,6 +434,18 @@ for(const [fixtureId,accessoryId] of [
 ]){
   if(!accessoryById.get(accessoryId)?.compatibleWith?.includes(fixtureId)) failures.push(accessoryId+' missing '+fixtureId);
 }
+const forza150day=fixtures.find(x=>x.id==='nanlite-forza-150');
+if(!forza150day) failures.push('Missing legacy Nanlite Forza 150');
+else {
+  if(forza150day.discontinued!==true) failures.push('Forza 150 must be legacy/discontinued');
+  if(forza150day.cctK?.fixed!==5600) failures.push('Forza 150 daylight 5600K profile missing');
+  if((forza150day.control?.wired||[]).includes('RDM')) failures.push('Forza 150 must not infer RDM from DMX-only first-party evidence');
+  if(!(forza150day.control?.wired||[]).includes('DMX512')) failures.push('Forza 150 DMX512 missing');
+  for(const p of ['Bluetooth / NANLINK app','2.4G']) if(!(forza150day.control?.wireless||[]).includes(p)) failures.push('Forza 150 missing '+p);
+}
+for(const id of ['nanlite-as-ba-fmm','nanlite-fl-11','nanlite-pj-fmm-19','nanlite-pj-fmm-36','nanlite-sb-fmm-o-40','nanlite-sb-fmm-o-60','nanlite-ws-rc-c2','nanlite-ws-tb-1']){
+  if(!accessoryById.get(id)?.compatibleWith?.includes('nanlite-forza-150')) failures.push(id+' missing Forza 150');
+}
 const forza150=fixtures.find(x=>x.id==='nanlite-forza-150b');
 if(!forza150) failures.push('Missing legacy Nanlite Forza 150B');
 else {

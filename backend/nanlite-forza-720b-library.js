@@ -59,7 +59,9 @@ export const NANLITE_FORZA_720B_ACCESSORIES=[
   {
     id:'nanlite-cc-st-fz720',manufacturer:'Nanlite',model:'CC-ST-FZ720 Rolling Padded Case',
     category:'Case',compatibleWith:['nanlite-forza-720b','nanlite-forza-720'],compatibilityStatus:'Designed For',
-    includedWithFixture:true,sourceUrl:SRC.case
+    includedWithFixtures:['nanlite-forza-720b','nanlite-forza-720'],
+    inclusionEvidenceNote:'Nanlite launch documentation states a padded carrying case is included with both Forza 720 and Forza 720B.',
+    sourceUrl:SRC.case
   },
   {
     id:'nanlite-pj-bm-36',manufacturer:'Nanlite',model:'PJ-BM Projection Attachment with 36° Lens',

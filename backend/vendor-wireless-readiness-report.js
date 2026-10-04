@@ -64,7 +64,11 @@ export function buildWirelessReadinessReport(){
     const plan=VENDOR_WIRELESS_CAPTURE_PLANS[row.manufacturer]||null;
     const bluetoothPlan=transportPlan(plan,'bluetooth');
     const wifiPlan=transportPlan(plan,'wifi');
-    const commandReady=vendorWideCommandProductionReady(row.manufacturer);
+    const requiredTransports=[
+      ...(row.bluetoothFixtures>0?['bluetooth']:[]),
+      ...(row.wifiFixtures>0?['wifi']:[])
+    ];
+    const commandReady=vendorWideCommandProductionReady(row.manufacturer,requiredTransports);
     return {
       ...row,
       transportEvidenceComplete:

@@ -74,6 +74,7 @@ const allowed=new Set([
   'backend/godox-control-verification.js',
   'backend/arri-wireless-verification.js',
   'backend/aladdin-control-verification.js',
+  'backend/nanlite-wireless-verification.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

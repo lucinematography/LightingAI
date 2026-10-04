@@ -17,7 +17,7 @@
     "test:aputure:review": "node aputure-review-selftest.js",
     "test:visual-preview": "node visual-preview-selftest.js",
     "test:project5-safety": "node project5-feature-selftest.js",
-    "test:project5-base": "node project5-stable-base-selftest.js",
+    "test:project5-base":"node project5-stable-base-selftest.js",
     "test:project52-release": "node project52-release-gate-selftest.js",
     "test:server-syntax": "node --check server.js",
     "audit:sources": "node source-audit.js",

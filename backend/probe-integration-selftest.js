@@ -60,7 +60,7 @@ const allowed=new Set([
   'backend/nanlite-pavotube-t8-7x-library.js',
   'backend/nanlite-pavotube-x-legacy-library.js',
   'backend/nanlite-sa-legacy-library.js',
-  'backend/nanlite-tk-legacy-library.js'
+  'backend/nanlite-tk-legacy-library.js',
   'app/src/main/assets/control-bootstrap.js',
   'app/src/main/assets/control-routing.js',
   'app/src/main/assets/control-dashboard.js',

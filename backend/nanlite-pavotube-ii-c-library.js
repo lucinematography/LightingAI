@@ -50,8 +50,8 @@ function included(id,model,category,target,sourceUrl,extra={}){
 export const NANLITE_PAVOTUBE_II_C_ACCESSORIES=[
   {
     id:'nanlite-cb-dmx-3-5c-1-2',manufacturer:'Nanlite',model:'CB-DMX-3.5C-1/2 DMX Adapter Cable with Locking 3.5mm Connector',
-    category:'Control',compatibleWith:[...BOTH,'nanlite-pavoslim-360c'],compatibilityStatus:'Designed For',
-    conditions:['Required for wired DMX/RDM on PavoTube II 15C and 30C'],sourceUrl:'https://nanliteus.com/products/cb-dmx-3-5c-1-2-dmx-adapter-cable-with-locking-3-5mm-connector'
+    category:'Control',compatibleWith:["nanlite-forza-60b-ii","nanlite-forza-60c","nanlite-forza-150b","nanlite-pavotube-ii-15c","nanlite-pavotube-ii-30c","nanlite-fc-60b","nanlite-fc-120b","nanlite-fc-120c","nanlite-fc-300b","nanlite-fc-500b","nanlite-fc-500c","nanlite-pavoslim-60b","nanlite-pavoslim-60c","nanlite-pavoslim-60cl","nanlite-pavoslim-120b","nanlite-pavoslim-120c","nanlite-pavoslim-240b","nanlite-pavoslim-240c","nanlite-pavoslim-240cl","nanlite-pavoslim-360c"],compatibilityStatus:'Designed For',
+    conditions:['Adapts documented locking 3.5mm DMX/RDM ports to standard 5-pin XLR'],sourceUrl:'https://nanliteus.com/products/cb-dmx-3-5c-1-2-dmx-adapter-cable-with-locking-3-5mm-connector'
   },
   {
     id:'nanlite-lsflt12mii',manufacturer:'Nanlite',model:'LSFLT12MII Foldable Floor Stand for up to 4-Foot PavoTubes',

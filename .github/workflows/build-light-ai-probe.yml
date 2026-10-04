@@ -160,7 +160,11 @@ jobs:
           set -euo pipefail
           APK='app/build/outputs/apk/release/app-release.apk'
           test -s "$APK"
-          jarsigner -verify "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          test -x "$APKSIGNER"
+          SIGNING="$("$APKSIGNER" verify --verbose --print-certs "$APK")"
+          grep -Fq 'Verified using v2 scheme (APK Signature Scheme v2): true' <<<"$SIGNING"
+          grep -Fq '8bb97259c020b98a02a5129c5d3e4d2ace17a3fc7443e881982c9b30e103dae7' <<<"$(tr '[:upper:]' '[:lower:]' <<<"$SIGNING")"
 
           REQUIRED=(
             'assets/control-bootstrap.js'

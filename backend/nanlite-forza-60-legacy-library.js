@@ -22,7 +22,7 @@ export const NANLITE_FORZA_60_LEGACY_FIXTURES=[
     powerOptions:['AC power adapter','NP-F batteries via battery handgrip','V-Mount battery via battery handgrip'],
     control:{
       wired:[],
-      wireless:['2.4G','Bluetooth via NANLINK WS-TB-1 bridge'],
+      wireless:['2.4G via NANLINK WS-TB-1','Bluetooth via NANLINK WS-TB-1 bridge'],
       builtInBluetooth:false,builtInCRMX:false,
       directLightingAI:[],
       externalInterfaceRequired:['NANLINK WS-TB-1 Bluetooth-to-2.4G bridge for NANLINK app control'],

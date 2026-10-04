@@ -388,6 +388,15 @@ if(!f720Case?.inclusionEvidenceNote) failures.push('Forza 720 rolling case inclu
 if(!f720Case?.officialSourceConflict) failures.push('Forza 720 rolling case packaging conflict must remain documented');
 if((f720Case?.conflictSources||[]).length<3) failures.push('Forza 720 rolling case conflict sources missing');
 for(const duplicateId of ['nanlite-fl-20g-fc','nanlite-pj-bm-25-45-fc']) if(accessoryById.has(duplicateId)) failures.push('Duplicate Nanlite accessory ID must stay removed: '+duplicateId);
+for(const id of ['nanlite-pj-bm-19','nanlite-pj-bm-36']){
+  const a=accessoryById.get(id);
+  if(!a) failures.push('Missing canonical PJ-BM accessory: '+id);
+  else {
+    for(const target of ["nanlite-forza-300-ii","nanlite-forza-300b-ii","nanlite-forza-500-ii","nanlite-forza-500b-ii","nanlite-forza-720","nanlite-forza-720b","nanlite-fs-150b","nanlite-fs-200b","nanlite-fs-300","nanlite-fs-300b","nanlite-fs-300c","nanlite-fc-500b","nanlite-fc-500c"])
+      if(!a.compatibleWith?.includes(target)) failures.push(id+' missing documented target '+target);
+    if(!a.compatibilityEvidenceNote) failures.push(id+' compatibility evidence note missing');
+  }
+}
 for(const id of ['nanlite-alien-150c','nanlite-alien-300c']){
   const f=fixtures.find(x=>x.id===id);
   if(!f) failures.push('Missing current Nanlite Alien fixture: '+id);

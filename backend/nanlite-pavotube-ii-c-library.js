@@ -58,11 +58,6 @@ export const NANLITE_PAVOTUBE_II_C_ACCESSORIES=[
     category:'Stand',compatibleWith:BOTH,compatibilityStatus:'Designed For',sourceUrl:SRC.accessories
   },
   {
-    id:'nanlite-cb-dt-dc-pavotube-c',manufacturer:'Nanlite',model:'CB-DT/DC D-Tap to 5.5mm DC Barrel Power Cable',
-    category:'Cable',compatibleWith:BOTH,compatibilityStatus:'Compatible',
-    conditions:['Allows operation from an external battery with D-Tap output'],sourceUrl:SRC.accessories
-  },
-  {
     id:'nanlite-pavotube-ii-15c-barndoors-grid',manufacturer:'Nanlite',model:'Fabric Barndoors and Grid for PavoTube II 15C',
     category:'Barndoors',compatibleWith:['nanlite-pavotube-ii-15c'],compatibilityStatus:'Designed For',
     sourceUrl:SRC.accessories
@@ -83,14 +78,18 @@ export const NANLITE_PAVOTUBE_II_C_ACCESSORIES=[
     sourceUrl:SRC.accessories
   },
   {
-    id:'nanlite-pa-15v3a-pavotube',manufacturer:'Nanlite',model:'15V/3A Power Adapter for PavoTube II 15C / 15X',
-    category:'Power',compatibleWith:['nanlite-pavotube-ii-15c'],
-    compatibilityStatus:'Designed For',sourceUrl:SRC.accessories
+    id:'nanlite-pa-15v3a-pavotube',manufacturer:'Nanlite',model:'PA-15V3A-PT15 Power Adapter 15V/3A',
+    category:'Power',compatibleWith:['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-15x'],
+    compatibilityStatus:'Designed For',
+    compatibilityEvidenceNote:'Official Nanlite product page lists PavoTube II 15C and 15XR and also states compatibility with PavoTube II 15X.',
+    sourceUrl:'https://nanliteus.com/products/power-adapter-for-pavotube-15c-and-pavotube-ii-15x-15v-3a'
   },
   {
-    id:'nanlite-pa-15v4a-pavotube',manufacturer:'Nanlite',model:'15V/4A Power Adapter for PavoTube II 30C / 30XR',
-    category:'Power',compatibleWith:['nanlite-pavotube-ii-30c','nanlite-pavotube-ii-30xr'],
-    compatibilityStatus:'Designed For',sourceUrl:SRC.accessories
+    id:'nanlite-pa-15v4a-pavotube',manufacturer:'Nanlite',model:'PA-15V4A-PT30 Power Adapter 15V/4A',
+    category:'Power',compatibleWith:['nanlite-pavotube-ii-30c','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-30x'],
+    compatibilityStatus:'Designed For',
+    compatibilityEvidenceNote:'Official Nanlite product page lists PavoTube II 30C and 30XR and also states compatibility with PavoTube II 30X.',
+    sourceUrl:'https://nanliteus.com/products/power-adapter-for-pavotube-30c-and-pavotube-ii-30x-15v-4a'
   },
 
   included('nanlite-pavotube-ii-15c-power-adapter','PavoTube II 15C AC Power Adapter','Power','nanlite-pavotube-ii-15c',SRC.c15),

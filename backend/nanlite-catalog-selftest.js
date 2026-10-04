@@ -77,6 +77,13 @@ for(const id of ['nanlite-as-ba-fmm','nanlite-fl-11','nanlite-pj-fmm-19','nanlit
   if(!a) failures.push('Missing Nanlite shared FM accessory: '+id);
   else for(const target of expected) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing verified target ${target}`);
 }
+if(accessoryById.has('nanlite-cb-dt-dc-pavotube-c')) failures.push('Duplicate PavoTube-scoped CB-DT/DC record must stay removed');
+for(const target of ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr','nanlite-lumipad-11','nanlite-lumipad-25'])
+  if(!accessoryById.get('nanlite-cb-dt-dc')?.compatibleWith?.includes(target)) failures.push('Canonical CB-DT/DC missing '+target);
+for(const target of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-15x'])
+  if(!accessoryById.get('nanlite-pa-15v3a-pavotube')?.compatibleWith?.includes(target)) failures.push('PA-15V3A-PT15 missing '+target);
+for(const target of ['nanlite-pavotube-ii-30c','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-30x'])
+  if(!accessoryById.get('nanlite-pa-15v4a-pavotube')?.compatibleWith?.includes(target)) failures.push('PA-15V4A-PT30 missing '+target);
 const npfLegacy=accessoryById.get('nanlite-bt-bg-fz60');
 for(const target of ['nanlite-forza-60','nanlite-forza-60b'])
   if(!npfLegacy?.compatibleWith?.includes(target)) failures.push('BT-BG-FZ60 missing first-generation '+target);

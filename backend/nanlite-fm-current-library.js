@@ -231,14 +231,15 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
     id:'nanlite-cb-dt-dc',manufacturer:'Nanlite',model:'CB-DT/DC D-Tap to 5.5mm Male DC Barrel Power Cable',
     category:'Cable',
     compatibleWith:[
-      'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
+      'nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
       'nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c',
       'nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr',
       'nanlite-lumipad-11','nanlite-lumipad-25'
     ],
     compatibilityStatus:'Designed For',
     connectorA:'D-Tap',connectorB:'5.5mm DC barrel',
-    compatibilityEvidenceNote:'Current Nanlite product page explicitly lists PavoTube II 15C/30C, the PavoTube XR series, Forza 60B II/60C/60CR and the LumiPad series. PavoTube II 6XR is excluded because it uses USB-C power input.',
+    compatibilityEvidenceNote:'Current Nanlite CB-DT/DC page explicitly lists PavoTube II 15C/30C, the PavoTube XR series, Forza 60B II/60C/60CR and the LumiPad series. Nanlite PA-15V6A-FZ60 documentation separately confirms Forza 60 II use with this D-Tap cable. PavoTube II 6XR is excluded because its power input is USB-C rather than a 5.5mm DC barrel.',
+    evidenceSources:[SRC.cbDtdc,SRC.pa15v6a],
     sourceUrl:SRC.cbDtdc
   },
   {

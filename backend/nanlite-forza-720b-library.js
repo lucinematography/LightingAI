@@ -6,7 +6,8 @@ const SRC={
   case:'https://nanliteus.com/products/rolling-padded-case-for-forza-720-720b',
   pj36:'https://nanliteus.com/products/pj-bm-projection-attachment-with-36-lens-for-bowens-mount',
   pj19:'https://nanliteus.com/products/pj-bm-projection-attachment-with-19-lens-for-bowens-mount',
-  sharedHeadCableEvidence:'https://nanliteus.com/products/head-cable-24-7ft-for-forza-720-720b-500-ii-500b-ii-300-ii-300b-ii'
+  sharedHeadCableEvidence:'https://nanliteus.com/products/head-cable-24-7ft-for-forza-720-720b-500-ii-500b-ii-300-ii-300b-ii',
+  launch:'https://nanliteus.com/blogs/learn/the-new-nanlite-forza-720-and-720b-redefine-high-output-fixtures'
 };
 
 function control(){
@@ -61,6 +62,9 @@ export const NANLITE_FORZA_720B_ACCESSORIES=[
     category:'Case',compatibleWith:['nanlite-forza-720b','nanlite-forza-720'],compatibilityStatus:'Designed For',
     includedWithFixtures:['nanlite-forza-720b','nanlite-forza-720'],
     inclusionEvidenceNote:'Nanlite launch documentation states a padded carrying case is included with both Forza 720 and Forza 720B.',
+    officialSourceConflict:true,
+    conflictNote:'Nanlite launch documentation and the Forza 720B product page describe the padded rolling case as included, while the standalone CC-ST-FZ720 accessory page lists the case as sold separately. Catalog preserves the documented kit inclusion and records the packaging-channel conflict explicitly.',
+    conflictSources:[SRC.launch,SRC.fixture,SRC.case],
     sourceUrl:SRC.case
   },
   {

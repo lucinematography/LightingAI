@@ -57,14 +57,5 @@ export const NANLITE_CREATOR_HANDHELD_ACCESSORIES=[
     id:'nanlite-ec-pico',manufacturer:'Nanlite',model:'EC-PICO Magnetic Eggcrate',
     category:'Grid',compatibleWith:['nanlite-pico'],compatibilityStatus:'Designed For',
     beamAngleDeg:27,sourceUrl:SRC.picoGrid
-  },
-
-  {
-    id:'nanlite-bt-npf750-wand',manufacturer:'Nanlite',model:'BT-NPF750 NP-F Battery',
-    category:'Battery',compatibleWith:['nanlite-wand'],compatibilityStatus:'Compatible',sourceUrl:SRC.wand
-  },
-  {
-    id:'nanlite-bt-npf970-wand',manufacturer:'Nanlite',model:'BT-NPF970 NP-F Battery',
-    category:'Battery',compatibleWith:['nanlite-wand'],compatibilityStatus:'Compatible',sourceUrl:SRC.wand
   }
 ];

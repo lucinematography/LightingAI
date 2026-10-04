@@ -184,6 +184,10 @@ const zhiyun=byManufacturer.get('ZHIYUN');
 if(!zhiyun || zhiyun.bluetooth!==16 || zhiyun.wifi!==0 || zhiyun.both!==0) {
   failures.push('ZHIYUN wireless coverage expected 16 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const prolycht=byManufacturer.get('PROLYCHT');
+if(!prolycht || prolycht.bluetooth!==2 || prolycht.wifi!==2 || prolycht.both!==2) {
+  failures.push('PROLYCHT wireless coverage expected 2 Bluetooth / 2 Wi-Fi / 2 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

@@ -8,7 +8,7 @@ for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Ast
   expect(!!plan,maker+' capture plan missing');
   if(!plan) continue;
   expect(plan.transport==='bluetooth',maker+' plan must remain direct Bluetooth capture');
-  expect(plan.commandSpecStatus==='public-command-spec-not-located-in-official-docs',maker+' command spec status changed');
+  expect(maker==='Astera'?plan.commandSpecStatus==='physical-evidence-required':plan.commandSpecStatus==='public-command-spec-not-located-in-official-docs',maker+' command spec status changed');
   expect(plan.captureSets?.connectOnly?.runs>=3,maker+' connect-only requires at least 3 runs');
   expect(plan.captureSets?.dim?.runs>=3,maker+' DIM requires at least 3 runs');
   expect(plan.captureSets?.cct?.runs>=3,maker+' CCT requires at least 3 runs');

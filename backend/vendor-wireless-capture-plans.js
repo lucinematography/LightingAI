@@ -113,6 +113,40 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  Harlowe: {
+    id:'harlowe-app-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Harlowe App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Harlowe/HOBOLITE model at a time with the Harlowe App.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer commands across Micro, Mini, Max, Avant, Pro, and Blade families without matching physical evidence.'
+    ],
+    officialSources:[
+      'https://www.harlowe.com/pages/harlowe-app',
+      'https://www.harlowe.com/products/micro-portable-led-lighting-kit',
+      'https://www.harlowe.com/products/micro-8w-spectra-rgbcw-portable-continuous-led-light-kit',
+      'https://www.harlowe.com/products/mini-ii-20w-bi-color-studio-light-kit',
+      'https://www.harlowe.com/products/mini-x-portable-led-lighting-kit',
+      'https://www.harlowe.com/products/max-80w-videography-photography-light-kit',
+      'https://www.harlowe.com/products/max-x-80w-videography-photography-light-kit',
+      'https://www.harlowe.com/products/avant-content-creator-lighting-kit',
+      'https://www.harlowe.com/products/pro-300w-studio-light-kit-photo-video',
+      'https://www.harlowe.com/products/pro-300w-spectra-rgbcw-studio-light-kit',
+      'https://www.harlowe.com/products/blade-5-bi-color-rgb-tube-light',
+      'https://www.harlowe.com/products/blade-5-10-bi-color-rgb-tube-light-kit'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state where supported.'},
+      color:{runs:3,optional:true,rule:'Only on Spectra/Blade RGB-capable models; perform exactly one color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Fiilex: {
     id:'fiilex-matrix-wifi-capture-v1',
     transport:'wifi',

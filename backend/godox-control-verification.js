@@ -41,6 +41,15 @@ export function normalizeGodoxControl(fixtures = []) {
           note: 'Godox documents Godox Light app control over Bluetooth for compatible LED fixtures. This verifies transport capability only; proprietary LightingAI command semantics remain locked until separately verified.'
         }
       };
+      fixture.control.capabilityVerification = {
+        ...(fixture.control.capabilityVerification || {}),
+        dim: {
+          verified: true,
+          scope: 'official-app-capability-only',
+          sourceUrls: [GODOX_LIGHT_APP_SOURCE],
+          note: 'Godox documents brightness control in Godox Light for compatible Bluetooth LED fixtures. This proves the operator capability, not the LightingAI Bluetooth command encoding.'
+        }
+      };
     }
     const verifiedModes = Array.isArray(fixture.dmxModes)
       ? fixture.dmxModes.filter(mode => mode?.verified === true)

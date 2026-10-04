@@ -18,6 +18,8 @@ expect(report.wirelessFixtureCount===readiness.totalWirelessFixtureRows,'class c
 expect(report.bluetoothRoutes===readinessBluetooth,'class coverage Bluetooth route total diverges from readiness report');
 expect(report.wifiRoutes===readinessWifi,'class coverage Wi-Fi route total diverges from readiness report');
 expect(classMakers.size===readinessMakers.size&&[...classMakers].every(m=>readinessMakers.has(m)),'class coverage manufacturer set diverges from readiness report');
+const matrixMakers=new Set(Object.keys(report.byManufacturerClassSignature).map(key=>key.split(' :: ')[0]));
+expect(matrixMakers.size===readinessMakers.size&&[...matrixMakers].every(m=>readinessMakers.has(m)),'manufacturer-class matrix manufacturer set diverges from readiness report');
 expect(report.unclassifiedFixtureIds.length===0,'wireless fixtures missing family/sourceType/formFactor classification: '+report.unclassifiedFixtureIds.join(', '));
 
 for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light']){
@@ -54,6 +56,12 @@ expect(classRows.every(row=>row.manufacturers.length>0),'wireless class report c
 const signatureRows=Object.values(report.byClassSignature);
 expect(signatureRows.every(row=>row.fixtureCount>0),'class signature report contains empty class');
 expect(signatureRows.every(row=>row.manufacturers.length>0),'class signature rows must include manufacturer provenance');
+const manufacturerClassRows=Object.entries(report.byManufacturerClassSignature);
+const manufacturerClassFixtureTotal=manufacturerClassRows.reduce((n,[,row])=>n+row.fixtureCount,0);
+expect(manufacturerClassFixtureTotal===report.wirelessFixtureCount,'manufacturer-class matrix must enumerate every wireless fixture exactly once');
+expect(manufacturerClassRows.length>=Object.keys(report.byManufacturer).length,'manufacturer-class matrix is unexpectedly narrower than manufacturer coverage');
+expect(manufacturerClassRows.every(([key,row])=>key.includes(' :: ')&&row.fixtureCount>0),'manufacturer-class matrix contains malformed or empty row');
+expect(manufacturerClassRows.every(([,row])=>row.manufacturers.length===1),'manufacturer-class row must belong to exactly one manufacturer');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

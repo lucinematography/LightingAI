@@ -4,10 +4,10 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const route=(fixtureId,transport)=>({fixtureId,transport});
 
-const expected=['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kino Flo','De Sisti','LiteGear'];
+const expected=['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','Kino Flo','De Sisti','LiteGear'];
 for(const maker of expected) expect(!!VENDOR_WIRELESS_PROTOCOL_STATUS[maker],maker+' protocol status missing');
 
-for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science']){
+for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin']){
   const row=VENDOR_WIRELESS_PROTOCOL_STATUS[maker];
   expect(row.commandSpec!=='production_verified',maker+' proprietary command path must not be marked production verified');
   expect(vendorWideCommandProductionReady(maker)===false,maker+' vendor-wide readiness must remain false without explicit production scope inputs');
@@ -151,6 +151,8 @@ expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Rotolight.secondaryCapturePlanIds?.includ
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Luxli.capturePlanId==='luxli-composer-direct-bluetooth-capture-v1','Luxli Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Quasar Science'].capturePlanId==='quasar-starctrl-direct-bluetooth-capture-v1','Quasar Science Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Quasar Science'].secondaryCapturePlanIds?.includes('quasar-rainbow-model-scoped-wifi-capture-v1'),'Quasar Science Wi-Fi capture plan link missing');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Kelvin.capturePlanId==='kelvin-narrator-direct-bluetooth-capture-v1','Kelvin Bluetooth capture plan link missing');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Kelvin.publicReferenceImplementation?.verifiedFixtureIds?.length===4,'Kelvin public BLE reference scope changed unexpectedly');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Kino Flo'].bluetooth==='not_verified_for_current_catalog','Kino Flo Bluetooth must remain unverified');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Kino Flo'].wifi==='not_verified_for_current_catalog','Kino Flo Wi-Fi must remain unverified');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS['De Sisti'].bluetooth==='not_verified_for_current_catalog','De Sisti Bluetooth must remain unverified');

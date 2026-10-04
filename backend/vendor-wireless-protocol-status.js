@@ -36,6 +36,28 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  Kelvin: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'public_reference_implementation_model_scoped',
+    nextStep: 'validate-public-reference-and-physical-replay-before-driver',
+    capturePlanId: 'kelvin-narrator-direct-bluetooth-capture-v1',
+    publicReferenceImplementation: {
+      sourceUrl: 'https://github.com/KelvinLights/k-lights-interface-py',
+      transport: 'bluetooth',
+      verifiedFixtureIds: ['kelvin-play','kelvin-play-pro','kelvin-epos-300','kelvin-epos-600'],
+      excludedFixtureIds: ['kelvin-play-air','kelvin-play-hero'],
+      note: 'KelvinLights publishes an official Python BLE interface with support table entries for Play/Play Pro, Epos 300 and Epos 600. Play Air/Hero remain transport-verified but outside that published reference scope.'
+    },
+    evidence: [
+      'https://www.kelvinlight.com/product/play-air/',
+      'https://www.kelvinlight.com/product/play_hero_rgbacl_led_panel_pocket_light_with_wireless_dmx/',
+      'https://www.kelvinlight.com/product/epos_300_rgbacl_led_studio_light_travel_kit_for/',
+      'https://www.kelvinlight.com/product/epos_600_rgbacl_led_studio_light_travel_kit_for/',
+      'https://github.com/KelvinLights/k-lights-interface-py'
+    ],
+    note: 'All six catalog models have model-specific Bluetooth/Narrator evidence. A vendor public BLE reference implementation exists only for Play/Play Pro/Epos 300/Epos 600 and does not by itself satisfy LightingAI production replay requirements.'
+  },
   'Quasar Science': {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'transport_verified_model_scoped',

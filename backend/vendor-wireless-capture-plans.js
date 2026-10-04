@@ -113,6 +113,37 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  Kelvin: {
+    id:'kelvin-narrator-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Kelvin Narrator',
+    commandSpecStatus:'public-reference-implementation-available-model-scoped',
+    prerequisites:[
+      'Use one Kelvin fixture whose catalog entry explicitly verifies Bluetooth/Narrator control.',
+      'Use the official Kelvin Narrator app for primary packet capture and keep CRMX/DMX paths separate.',
+      'For Play, Play Pro, Epos 300 and Epos 600, compare derived behavior with the vendor-published KelvinLights/k-lights-interface-py reference implementation.',
+      'Do not extend public-reference command semantics to Play Air or Play Hero unless the vendor reference implementation explicitly adds those models or physical evidence independently proves equivalence.'
+    ],
+    officialSources:[
+      'https://www.kelvinlight.com/app-narrator/',
+      'https://www.kelvinlight.com/product/epos_300_rgbacl_led_studio_light_travel_kit_for/',
+      'https://github.com/KelvinLights/k-lights-interface-py'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one fixture through Kelvin Narrator over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT/tint change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one RGB/HSI/XY change per capture after DIM/CCT evidence is stable.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one Kelvin effect per capture only after simpler controls are understood.'}
+    },
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   'Quasar Science': {
     id:'quasar-starctrl-direct-bluetooth-capture-v1',
     transport:'bluetooth',

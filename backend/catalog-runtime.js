@@ -88,6 +88,7 @@ import { CREAMSOURCE_VORTEX_FIXTURES } from './creamsource-vortex-library.js';
 import { ROTOLIGHT_APP_WIRELESS_FIXTURES } from './rotolight-app-wireless-library.js';
 import { LUXLI_ORCHESTRA_BLUETOOTH_FIXTURES } from './luxli-orchestra-bluetooth-library.js';
 import { QUASAR_RAINBOW_WIRELESS_FIXTURES } from './quasar-rainbow-wireless-library.js';
+import { KELVIN_NARRATOR_BLUETOOTH_FIXTURES } from './kelvin-narrator-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -221,6 +222,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(ROTOLIGHT_APP_WIRELESS_FIXTURES));
   fixtures.push(...clone(LUXLI_ORCHESTRA_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(QUASAR_RAINBOW_WIRELESS_FIXTURES));
+  fixtures.push(...clone(KELVIN_NARRATOR_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

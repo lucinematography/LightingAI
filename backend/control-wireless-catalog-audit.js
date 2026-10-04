@@ -152,6 +152,10 @@ const quasar=byManufacturer.get('Quasar Science');
 if(!quasar || quasar.bluetooth!==4 || quasar.wifi!==4 || quasar.both!==4) {
   failures.push('Quasar Science wireless coverage expected 4 Bluetooth / 4 Wi-Fi / 4 both');
 }
+const kelvin=byManufacturer.get('Kelvin');
+if(!kelvin || kelvin.bluetooth!==6 || kelvin.wifi!==0 || kelvin.both!==0) {
+  failures.push('Kelvin wireless coverage expected 6 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

@@ -149,6 +149,7 @@ const exactAllowed = new Set([
   'backend/nanlite-lumipad-current-library.js',
   'backend/nanlite-miro-current-library.js',
   'backend/nanlite-creator-handheld-library.js',
+  'backend/nanlite-creator-compact-library.js',
   'backend/nanlite-catalog-selftest.js',
   'backend/aladdin-mosaic-library.js',
   'backend/aladdin-fabric-lite-library.js',

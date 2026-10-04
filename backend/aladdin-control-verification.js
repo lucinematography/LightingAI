@@ -35,11 +35,12 @@ export function normalizeAladdinControl(fixtures = []) {
     const modeSources = Array.isArray(fixture.dmxModes)
       ? fixture.dmxModes.map(mode => mode?.sourceUrl)
       : [];
-    const bluetoothVerified = wireless.some(value => /bluetooth/i.test(String(value)));
+    const bluetoothCandidate = wireless.some(value => /bluetooth/i.test(String(value)));
     const bluetoothSources = [];
     if (fixture.id && fixture.id.startsWith('aladdin-mosaic-')) bluetoothSources.push(ALADDIN_MOSAIC_SOURCE);
     if (fixture.id === 'aladdin-all-in-one') bluetoothSources.push(ALADDIN_ALL_IN_ONE_SOURCE);
     if (fixture.id === 'aladdin-all-in-two') bluetoothSources.push(ALADDIN_ALL_IN_TWO_SOURCE);
+    const bluetoothVerified = bluetoothCandidate && bluetoothSources.length > 0;
     fixture.control = {
       local: unique(local),
       wired: unique(wired),

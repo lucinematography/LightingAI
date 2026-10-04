@@ -128,6 +128,14 @@ export function commandProductionReadyForStatus(row,requiredTransports=[]) {
     Array.isArray(scope.transports) &&
     scope.transports.length>0
   )) return false;
+  const evidence=row?.productionEvidence;
+  if(!(
+    evidence &&
+    evidence.physicalReplayVerified===true &&
+    Array.isArray(evidence.derivedEvidenceRefs) &&
+    evidence.derivedEvidenceRefs.length>0 &&
+    evidence.derivedEvidenceRefs.every(ref=>typeof ref==='string'&&ref.trim().length>0)
+  )) return false;
   const declared=new Set(scope.transports.map(x=>String(x).toLowerCase()));
   return requiredTransports.every(t=>declared.has(String(t).toLowerCase()));
 }

@@ -36,6 +36,24 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  SWIT: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'swit-console-bluetooth-capture-v1',
+    evidence: [
+      'https://swit.cc/index.php?c=article&id=2501',
+      'https://swit.cc/index.php?c=article&id=2502',
+      'https://swit.cc/index.php?c=article&id=2613',
+      'https://www.swit.cc/index.php?c=article&id=3114',
+      'https://www.swit.cc/index.php?c=article&id=3115',
+      'https://swit.cc/index.php?c=article&id=2670',
+      'https://www.swit.cc/index.php?c=article&id=4440'
+    ],
+    note: 'Bluetooth/SWIT Console control is verified only for the explicitly cataloged SWIT models. LightingAI proprietary command semantics remain locked.'
+  },
+
   Harlowe: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

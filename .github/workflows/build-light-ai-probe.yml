@@ -120,6 +120,10 @@ jobs:
         working-directory: backend
         run: node wireless-fixture-class-coverage-selftest.js
 
+      - name: Validate wireless direct and assisted route classification
+        working-directory: backend
+        run: node wireless-route-classification-selftest.js
+
       - name: Validate control system driver families
         working-directory: backend
         run: node control-system-drivers-selftest.js

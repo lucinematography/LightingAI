@@ -30,7 +30,7 @@ function fixture(id,model,sourceUrl,extra={}){
 
 export const NANLITE_FORZA_DAYLIGHT_FIXTURES=[
   fixture('nanlite-forza-300-ii','Forza 300 II',SRC.f300,{
-    cri:96,tlci:97,batteryPowered:true,
+    powerDrawW:350,cri:96,tlci:97,beamAngleDeg:120,batteryPowered:true,
     batteryOptions:['1x or 2x V-Mount via Control Unit','AC mains']
   }),
   fixture('nanlite-forza-500-ii','Forza 500 II',SRC.f500,{

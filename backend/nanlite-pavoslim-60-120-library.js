@@ -32,24 +32,24 @@ function control(crmx=false){
     ]
   };
 }
-function fixture(id,model,cctMin,cctMax,powerDrawW,colorMode,cri,tlci,sourceUrl,crmx,batteryOptions){
+function fixture(id,model,cctMin,cctMax,powerDrawW,colorMode,cri,tlci,sourceUrl,crmx,batteryOptions,extra={}){
   return {
     id,manufacturer:'Nanlite',model,family:'PavoSlim 60/120',category:'Light',discontinued:false,
     sourceType:'LED Panel',formFactor:model.startsWith('PavoSlim 60')?'1x1 panel':'2x1 panel',
     cctK:{min:cctMin,max:cctMax},powerDrawW,colorMode,cri,tlci,batteryPowered:true,
-    batteryOptions,control:control(crmx),sourceUrl
+    batteryOptions,control:control(crmx),sourceUrl,...extra
   };
 }
 
 export const NANLITE_PAVOSLIM_60_120_FIXTURES=[
   fixture('nanlite-pavoslim-60b','PavoSlim 60B',2700,6500,72,'Bi-Color',95,97,SRC.p60b,false,
-    ['2x NP-F via Control Unit','V-Mount via Control Unit','AC mains']),
+    ['2x NP-F via Control Unit','V-Mount via Control Unit','AC mains'],{sku:'PS60BQR'}),
   fixture('nanlite-pavoslim-60c','PavoSlim 60C',2700,7500,72,'RGBWW',96,97,SRC.p60c,true,
-    ['2x NP-F via Control Unit','V-Mount via Control Unit','AC mains']),
+    ['2x NP-F via Control Unit','V-Mount via Control Unit','AC mains'],{sku:'PS60C'}),
   fixture('nanlite-pavoslim-120b','PavoSlim 120B',2700,6500,150,'Bi-Color',95,97,SRC.p120b,false,
-    ['V-Mount via Control Unit','AC mains']),
+    ['V-Mount via Control Unit','AC mains'],{sku:'PS120BQR'}),
   fixture('nanlite-pavoslim-120c','PavoSlim 120C',2700,7500,150,'RGBWW',96,97,SRC.p120c,true,
-    ['V-Mount via Control Unit','AC mains'])
+    ['V-Mount via Control Unit','AC mains'],{sku:'PS120C'})
 ];
 
 const ALL=['nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c'];

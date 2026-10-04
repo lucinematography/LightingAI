@@ -83,6 +83,26 @@ export const NANLITE_FORZA_II_ACCESSORIES=[
     sourceUrl:CLAMP
   },
   {
+    id:'nanlite-forza-300-ii-control-unit',manufacturer:'Nanlite',model:'Forza 300 II Control Unit with V-Mount Plates',
+    category:'Power',compatibleWith:['nanlite-forza-300-ii'],compatibilityStatus:'Designed For',
+    includedWithFixture:true,sourceUrl:'https://nanliteus.com/nanlite-forza-300-ii-led-spotlight-2-light-kit/'
+  },
+  {
+    id:'nanlite-forza-300-ii-head-cable',manufacturer:'Nanlite',model:'Forza 300 II Head Cable 3 m',
+    category:'Cable',compatibleWith:['nanlite-forza-300-ii'],compatibilityStatus:'Designed For',
+    includedWithFixture:true,lengthM:3,sourceUrl:'https://nanliteus.com/nanlite-forza-300-ii-led-spotlight-2-light-kit/'
+  },
+  {
+    id:'nanlite-forza-300-ii-power-cable',manufacturer:'Nanlite',model:'Forza 300 II Power Cable 6 m',
+    category:'Cable',compatibleWith:['nanlite-forza-300-ii'],compatibilityStatus:'Designed For',
+    includedWithFixture:true,lengthM:6,sourceUrl:'https://nanliteus.com/nanlite-forza-300-ii-led-spotlight-2-light-kit/'
+  },
+  {
+    id:'nanlite-forza-300-ii-cob-cap',manufacturer:'Nanlite',model:'AS-CAP-BW-B COB Protective Cap — Forza 300 II',
+    category:'Other',compatibleWith:['nanlite-forza-300-ii'],compatibilityStatus:'Designed For',
+    includedWithFixture:true,sourceUrl:'https://nanliteus.com/nanlite-forza-300-ii-led-spotlight-2-light-kit/'
+  },
+  {
     id:'nanlite-forza-300b-ii-control-unit',manufacturer:'Nanlite',model:'Forza 300B II Control Unit with V-Mount Plates',
     category:'Power',compatibleWith:['nanlite-forza-300b-ii'],compatibilityStatus:'Designed For',
     includedWithFixture:true,sourceUrl:SRC300

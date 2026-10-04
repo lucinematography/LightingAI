@@ -116,3 +116,17 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
 export function vendorWirelessProtocolStatus(manufacturer) {
   return VENDOR_WIRELESS_PROTOCOL_STATUS[manufacturer] || null;
 }
+
+
+export function vendorWideCommandProductionReady(manufacturer) {
+  const row=VENDOR_WIRELESS_PROTOCOL_STATUS[manufacturer]||null;
+  if(row?.commandSpec!=='production_verified') return false;
+  const scope=row?.productionScope;
+  return !!(
+    scope &&
+    scope.kind==='vendor-wide' &&
+    scope.allCurrentWirelessFixtures===true &&
+    Array.isArray(scope.transports) &&
+    scope.transports.length>0
+  );
+}

@@ -1,5 +1,5 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
-import { deriveFixtureControlCapabilities, validCctRange, declaredColorEngine } from './fixture-control-capabilities.js';
+import { deriveVerifiedControlCapabilities, validCctRange, declaredColorEngine } from './fixture-control-capabilities.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
 export function verifiedWirelessTransport(f){
@@ -30,7 +30,7 @@ export function expectedCapabilities(f){
 function gapRow(f){
   const flags=verifiedWirelessTransport(f);
   if(!flags.any) return null;
-  const caps=deriveFixtureControlCapabilities(f);
+  const caps=deriveVerifiedControlCapabilities(f);
   const expected=expectedCapabilities(f);
   const missing=[];
   const notApplicable=[];

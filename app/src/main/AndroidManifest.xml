@@ -20,7 +20,7 @@
 
     <application
         android:theme="@style/AppTheme"
-        android:label="LIGHTING AI"
+        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
         android:usesCleartextTraffic="false">

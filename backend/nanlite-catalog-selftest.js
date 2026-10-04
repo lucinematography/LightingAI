@@ -361,6 +361,8 @@ for(const target of ['nanlite-forza-720','nanlite-forza-720b']){
   if(!f720Case?.includedWithFixtures?.includes(target)) failures.push('Forza 720 rolling case inclusion missing '+target);
 }
 if(!f720Case?.inclusionEvidenceNote) failures.push('Forza 720 rolling case inclusion evidence note missing');
+if(!f720Case?.officialSourceConflict) failures.push('Forza 720 rolling case packaging conflict must remain documented');
+if((f720Case?.conflictSources||[]).length<3) failures.push('Forza 720 rolling case conflict sources missing');
 for(const duplicateId of ['nanlite-fl-20g-fc','nanlite-pj-bm-25-45-fc']) if(accessoryById.has(duplicateId)) failures.push('Duplicate Nanlite accessory ID must stay removed: '+duplicateId);
 for(const id of ['nanlite-alien-150c','nanlite-alien-300c']){
   const f=fixtures.find(x=>x.id===id);

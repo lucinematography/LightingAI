@@ -188,6 +188,10 @@ const prolycht=byManufacturer.get('PROLYCHT');
 if(!prolycht || prolycht.bluetooth!==2 || prolycht.wifi!==2 || prolycht.both!==2) {
   failures.push('PROLYCHT wireless coverage expected 2 Bluetooth / 2 Wi-Fi / 2 both');
 }
+const colbor=byManufacturer.get('COLBOR');
+if(!colbor || colbor.bluetooth!==2 || colbor.wifi!==0 || colbor.both!==0) {
+  failures.push('COLBOR wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

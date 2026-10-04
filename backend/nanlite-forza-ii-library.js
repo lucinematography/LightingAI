@@ -43,24 +43,17 @@ export const NANLITE_FORZA_II_FIXTURES=[
 ];
 
 const BOTH=['nanlite-forza-300b-ii','nanlite-forza-500b-ii'];
+const FL20G_TARGETS=[...BOTH,'nanlite-fc-720b','nanlite-fc-720c'];
 
 export const NANLITE_FORZA_II_ACCESSORIES=[
   {
     id:'nanlite-fl-20g',manufacturer:'Nanlite',model:'FL-20G Fresnel Lens with Removable Metal Barndoors',
-    category:'Fresnel',mount:'Bowens',compatibleWith:BOTH,compatibilityStatus:'Designed For',
+    category:'Fresnel',mount:'Bowens',beamAngleDeg:{min:10,max:45},compatibleWith:FL20G_TARGETS,compatibilityStatus:'Designed For',
     sourceUrl:FL20G
   },
   {
     id:'nanlite-ccsfz300ii',manufacturer:'Nanlite',model:'CCSFZ300II Padded Carrying Case for Forza 300 II / 500 II',
     category:'Other',compatibleWith:BOTH,compatibilityStatus:'Designed For',sourceUrl:CASE
-  },
-  {
-    id:'nanlite-ws-rc-c2-forza-ii',manufacturer:'Nanlite',model:'NANLINK WS-RC-C2 2.4GHz Remote Control',
-    category:'Control',compatibleWith:BOTH,compatibilityStatus:'Compatible',sourceUrl:RC
-  },
-  {
-    id:'nanlite-ws-tb-1-forza-ii',manufacturer:'Nanlite',model:'NANLINK WS-TB-1 Transmitter Box',
-    category:'Control',compatibleWith:BOTH,compatibilityStatus:'Compatible',sourceUrl:TB
   },
   {
     id:'nanlite-rf-bm-55-forza-ii',manufacturer:'Nanlite',model:'RF-BM 55-Degree Bowens Mount Reflector',

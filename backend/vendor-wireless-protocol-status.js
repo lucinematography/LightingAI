@@ -118,7 +118,7 @@ export function vendorWirelessProtocolStatus(manufacturer) {
 }
 
 
-export function commandProductionReadyForStatus(row,requiredTransports=[]) {
+export function commandProductionReadyForStatus(row,requiredTransports=[],requiredFixtureIds=[]) {
   if(row?.commandSpec!=='production_verified') return false;
   const scope=row?.productionScope;
   if(!(
@@ -126,7 +126,9 @@ export function commandProductionReadyForStatus(row,requiredTransports=[]) {
     scope.kind==='vendor-wide' &&
     scope.allCurrentWirelessFixtures===true &&
     Array.isArray(scope.transports) &&
-    scope.transports.length>0
+    scope.transports.length>0 &&
+    Array.isArray(scope.fixtureIds) &&
+    scope.fixtureIds.length>0
   )) return false;
   const evidence=row?.productionEvidence;
   if(!(
@@ -137,12 +139,15 @@ export function commandProductionReadyForStatus(row,requiredTransports=[]) {
     evidence.derivedEvidenceRefs.every(ref=>typeof ref==='string'&&ref.trim().length>0)
   )) return false;
   const declared=new Set(scope.transports.map(x=>String(x).toLowerCase()));
-  return requiredTransports.every(t=>declared.has(String(t).toLowerCase()));
+  if(!requiredTransports.every(t=>declared.has(String(t).toLowerCase()))) return false;
+  const declaredFixtureIds=new Set(scope.fixtureIds.map(x=>String(x)));
+  return requiredFixtureIds.every(id=>declaredFixtureIds.has(String(id)));
 }
 
-export function vendorWideCommandProductionReady(manufacturer,requiredTransports=[]) {
+export function vendorWideCommandProductionReady(manufacturer,requiredTransports=[],requiredFixtureIds=[]) {
   return commandProductionReadyForStatus(
     VENDOR_WIRELESS_PROTOCOL_STATUS[manufacturer]||null,
-    requiredTransports
+    requiredTransports,
+    requiredFixtureIds
   );
 }

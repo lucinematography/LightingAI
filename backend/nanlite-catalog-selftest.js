@@ -75,6 +75,16 @@ for(const id of ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr'
 const xlr=accessoryById.get('nanlite-bt-bg-xlr4-ii');
 for(const id of ['nanlite-fc-120b','nanlite-fc-120c']) if(!xlr?.compatibleWith?.includes(id)) failures.push('XLR V-Mount grip missing '+id);
 if(accessoryById.get('nanlite-bt-bg-v')?.compatibleWith?.includes('nanlite-forza-60cr')) failures.push('Do not infer BT-BG-V compatibility with Forza 60CR');
+const vm98=accessoryById.get('nanlite-bt-v-14-4v98');
+if(!vm98) failures.push('Missing Nanlite BT-V-14.4V98 battery');
+else {
+  for(const grip of ['nanlite-bt-bg-v','nanlite-bt-bg-xlr4-ii']) if(!vm98.compatibleWith?.includes(grip)) failures.push('BT-V-14.4V98 missing grip '+grip);
+  for(const target of ['nanlite-forza-60c','nanlite-forza-60b-ii','nanlite-fc-60b','nanlite-forza-150b','nanlite-fc-120b','nanlite-fc-120c'])
+    if(!vm98.fixtureUseCases?.includes(target)) failures.push('BT-V-14.4V98 missing fixture use case '+target);
+  if(vm98.voltageV!==14.4||vm98.capacityWh!==98) failures.push('BT-V-14.4V98 electrical identity must remain 14.4V / 98Wh');
+  if(!vm98.sourceConflictNote) failures.push('BT-V-14.4V98 FC-60C/FC-60B source conflict note missing');
+}
+if(fixtureIds.has('nanlite-fc-60c')) failures.push('Do not create FC-60C fixture from Nanlite battery-page typo');
 for(const id of ['nanlite-forza-300b-ii','nanlite-forza-500b-ii']) if(!fixtureIds.has(id)) failures.push('Missing Nanlite Forza II fixture: '+id);
 for(const id of ['nanlite-fc-720b','nanlite-fc-720c']) if(!fixtureIds.has(id)) failures.push('Missing Nanlite FC-720 fixture: '+id);
 for(const id of ['nanlite-fl-20g','nanlite-ccsfz300ii','nanlite-rf-bm-55-forza-ii']){

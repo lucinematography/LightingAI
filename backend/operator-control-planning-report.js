@@ -1,15 +1,15 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
-import { deriveFixtureControlCapabilities } from './fixture-control-capabilities.js';
+import { deriveFixtureControlCapabilities, deriveVerifiedControlCapabilities } from './fixture-control-capabilities.js';
 import { VENDOR_WIRELESS_PROTOCOL_STATUS } from './vendor-wireless-protocol-status.js';
 import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
 function wirelessFlags(f){
   const c=f?.control;
-  const values=Array.isArray(c)?list(c):[...list(c?.wireless),...list(c?.directLightingAI)];
+  if(!c||Array.isArray(c)||typeof c!=='object') return {bluetooth:false,wifi:false};
   return {
-    bluetooth:values.some(v=>/(^|[^a-z0-9])(bluetooth|ble)([^a-z0-9]|$)/i.test(v)),
-    wifi:values.some(v=>/(^|[^a-z0-9])(wi-?fi|wifi|wlan)([^a-z0-9]|$)/i.test(v))
+    bluetooth:c?.wirelessVerification?.bluetooth?.verified===true,
+    wifi:c?.wirelessVerification?.wifi?.verified===true
   };
 }
 function planFor(plan,transport){
@@ -34,10 +34,15 @@ export function buildOperatorControlPlanningReport(){
       dimCapable:0,
       cctCapable:0,
       colorCapable:0,
-      fxCapable:0
+      fxCapable:0,
+      dimControlVerified:0,
+      cctControlVerified:0,
+      colorControlVerified:0,
+      fxControlVerified:0
     });
     const row=by.get(maker);
     const caps=deriveFixtureControlCapabilities(fixture);
+    const verified=deriveVerifiedControlCapabilities(fixture);
     row.wirelessFixtures++;
     if(flags.bluetooth) row.bluetoothFixtures++;
     if(flags.wifi) row.wifiFixtures++;
@@ -45,6 +50,10 @@ export function buildOperatorControlPlanningReport(){
     if(caps.cct.supported) row.cctCapable++;
     if(caps.color.supported) row.colorCapable++;
     if(caps.fx.supported) row.fxCapable++;
+    if(verified.dim.supported) row.dimControlVerified++;
+    if(verified.cct.supported) row.cctControlVerified++;
+    if(verified.color.supported) row.colorControlVerified++;
+    if(verified.fx.supported) row.fxControlVerified++;
   }
 
   const vendors=[...by.values()].map(row=>{
@@ -74,7 +83,11 @@ export function buildOperatorControlPlanningReport(){
       dimCapable:vendors.reduce((n,v)=>n+v.dimCapable,0),
       cctCapable:vendors.reduce((n,v)=>n+v.cctCapable,0),
       colorCapable:vendors.reduce((n,v)=>n+v.colorCapable,0),
-      fxCapable:vendors.reduce((n,v)=>n+v.fxCapable,0)
+      fxCapable:vendors.reduce((n,v)=>n+v.fxCapable,0),
+      dimControlVerified:vendors.reduce((n,v)=>n+v.dimControlVerified,0),
+      cctControlVerified:vendors.reduce((n,v)=>n+v.cctControlVerified,0),
+      colorControlVerified:vendors.reduce((n,v)=>n+v.colorControlVerified,0),
+      fxControlVerified:vendors.reduce((n,v)=>n+v.fxControlVerified,0)
     },
     vendors
   };

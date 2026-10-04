@@ -383,6 +383,31 @@ for(const id of ['nanlite-as-wb-ptii6c','nanlite-pavotube-t12-clip-1-4','nanlite
   const a=accessoryById.get(id); if(!a) failures.push('Missing shared 10-inch PavoTube accessory: '+id);
   else for(const target of ['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-6xr']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
 }
+const sixCoupler=accessoryById.get('nanlite-as-cp-1-4');
+if(!sixCoupler) failures.push('Missing AS-CP-1/4 PavoTube II 6C coupler');
+else {
+  if(!sixCoupler.compatibleWith?.includes('nanlite-pavotube-ii-6c')) failures.push('AS-CP-1/4 missing PavoTube II 6C');
+  for(const forbidden of ['nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-6xr']) if(sixCoupler.compatibleWith?.includes(forbidden)) failures.push('AS-CP-1/4 must not infer '+forbidden);
+}
+const miniBall=accessoryById.get('nanlite-as-bh-1-4');
+if(!miniBall) failures.push('Missing AS-BH-1/4 mini ball head');
+else {
+  for(const target of ['nanlite-litolite-5c','nanlite-pavotube-ii-6c']) if(!miniBall.compatibleWith?.includes(target)) failures.push('AS-BH-1/4 missing '+target);
+  for(const forbidden of ['nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-6xr']) if(miniBall.compatibleWith?.includes(forbidden)) failures.push('AS-BH-1/4 must not infer '+forbidden);
+}
+const eyebolt=accessoryById.get('nanlite-aseb-eyebolt');
+if(!eyebolt) failures.push('Missing canonical ASEB eyebolt');
+else {
+  for(const target of ['nanlite-pavotube-t8-7x','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6xr','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x'])
+    if(!eyebolt.compatibleWith?.includes(target)) failures.push('ASEB missing '+target);
+  if(eyebolt.compatibleWith?.includes('nanlite-pavotube-ii-6cp')) failures.push('ASEB must not infer PavoTube II 6CP');
+}
+const multiAngle=accessoryById.get('nanlite-asmamptiix');
+if(!multiAngle) failures.push('Missing ASMAMPTIIX multi-angle mount');
+else {
+  for(const target of ['nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr'])
+    if(!multiAngle.compatibleWith?.includes(target)) failures.push('ASMAMPTIIX missing '+target);
+}
 const sixGrid=accessoryById.get('nanlite-ec-ptii6c');
 if(!sixGrid) failures.push('Missing EC-PTII6C fabric grid');
 else {

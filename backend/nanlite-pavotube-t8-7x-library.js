@@ -6,7 +6,9 @@ const SRC={
   clip:'https://nanliteus.com/products/transparent-led-tube-mounting-clip-for-pavotube-t8-7x',
   stand:'https://nanliteus.com/products/foldable-floor-stand-for-pavotube-t8-7x-led-tube-light',
   controlBank:'https://nanliteus.com/products/control-bank',
-  eyebolt:'https://nanliteus.com/products/20-eyebolts-for-pavotube-ii-led-pixel-tubes'
+  eyebolt:'https://nanliteus.com/products/20-eyebolts-for-pavotube-ii-led-pixel-tubes',
+  pavo6cAccessories:'https://nanliteus.com/shop/by-collection/accessories/pavotube-ii-6c/',
+  legacyX:'https://nanliteus.com/blogs/learn/introducing-the-nanlite-pavotube-ii-15x-30x-and-60x-led-tube-lights'
 };
 
 export const NANLITE_PAVOTUBE_T8_7X_FIXTURES=[
@@ -52,10 +54,13 @@ export const NANLITE_PAVOTUBE_T8_7X_ACCESSORIES=[
   {
     id:'nanlite-aseb-eyebolt',manufacturer:'Nanlite',model:'ASEB 1/4-20 Eyebolts',
     category:'Mount',compatibleWith:[
-      'nanlite-pavotube-t8-7x','nanlite-pavotube-ii-6xr',
-      'nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr'
+      'nanlite-pavotube-t8-7x','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6xr',
+      'nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr',
+      'nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x'
     ],
-    compatibilityStatus:'Compatible',sourceUrl:SRC.eyebolt
+    compatibilityStatus:'Compatible',
+    compatibilityEvidenceNote:'Current Nanlite ASEB page explicitly lists T8-7X and XR-series tubes; the PavoTube II 6C accessory collection explicitly lists ASEB; Nanlite first-generation X-series documentation states that each X-series fixture included two eyebolts.',
+    evidenceSources:[SRC.eyebolt,SRC.pavo6cAccessories,SRC.legacyX],sourceUrl:SRC.eyebolt
   },
   {
     id:'nanlite-pavotube-t8-7x-usbc-cable',manufacturer:'Nanlite',model:'PavoTube T8-7X USB-C Cable',

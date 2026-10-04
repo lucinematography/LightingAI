@@ -8,6 +8,7 @@ const SRC={
   current:'https://nanliteus.com/pages/pavotube-series',
   x60:'https://nanliteus.com/nanlite-pavotube-ii-60x-8-rgbww-led-pixel-tube-4-light-kit-with-internal-battery-and-carrying-bag/',
   multi:'https://nanliteus.com/nanlite-multi-angle-mount/',
+  multiCurrent:'https://nanliteus.com/products/multi-angle-mount',
   floor1530:'https://nanliteus.com/products/foldable-floor-stand-for-pavotube-ii-15x-and-30x-led-pixel-tubes',
   bd15:'https://nanliteus.com/products/fabric-barndoors-and-grid-for-pavotube-ii-15x-led-pixel-tubes',
   bd30:'https://nanliteus.com/nanlite-fabric-barndoors-and-grid-for-pavotube-ii-30x-led-pixel-tubes/',
@@ -68,7 +69,8 @@ export const NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES=[
   accessory(
     'nanlite-asmamptiix',
     'ASMAMPTIIX Multi-Angle Mount',
-    'Mount',ALL,SRC.multi
+    'Mount',[...ALL,'nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr'],SRC.multiCurrent,
+    {compatibilityEvidenceNote:'Archived Nanlite documentation covers PavoTube II 15X/30X/60X; the current Nanlite product page explicitly covers PavoTube II 15XR/30XR/60XR.',evidenceSources:[SRC.multi,SRC.multiCurrent]}
   ),
   accessory(
     'nanlite-lsfl-pavotube-x',

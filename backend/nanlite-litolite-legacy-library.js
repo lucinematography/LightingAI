@@ -5,7 +5,8 @@ const SRC={
   product:'https://nanliteus.com/nanlite-litolite-5c-rgbww-mini-led-panel/',
   accessories:'https://nanliteus.com/shop/by-collection/accessories/litolite-5c/',
   faq:'https://nanliteus.com/pages/faq',
-  miniTripod:'https://nanliteus.com/products/mini-tripod-hand-grip-with-1-4-20-mount-1'
+  miniTripod:'https://nanliteus.com/products/mini-tripod-hand-grip-with-1-4-20-mount-1',
+  pavo6cAccessories:'https://nanliteus.com/shop/by-collection/accessories/pavotube-ii-6c/'
 };
 
 export const NANLITE_LITOLITE_LEGACY_FIXTURES=[
@@ -41,8 +42,10 @@ export const NANLITE_LITOLITE_LEGACY_ACCESSORIES=[
   },
   {
     id:'nanlite-as-bh-1-4',manufacturer:'Nanlite',model:'AS-BH-1/4 Mini Ball Head with Hot Shoe Adapter',
-    category:'Mount',compatibleWith:['nanlite-litolite-5c'],compatibilityStatus:'Compatible',
-    mount:'1/4-20',sourceUrl:SRC.accessories
+    category:'Mount',compatibleWith:['nanlite-litolite-5c','nanlite-pavotube-ii-6c'],compatibilityStatus:'Compatible',
+    mount:'1/4-20',
+    compatibilityEvidenceNote:'Nanlite LitoLite accessory catalog supports LitoLite 5C; Nanlite PavoTube II 6C accessory collection explicitly lists AS-BH-1/4.',
+    evidenceSources:[SRC.accessories,SRC.pavo6cAccessories],sourceUrl:SRC.pavo6cAccessories
   },
   {
     id:'nanlite-as-csa-1-4',manufacturer:'Nanlite',model:'AS-CSA-1/4 Hot/Cold Shoe Adapter',

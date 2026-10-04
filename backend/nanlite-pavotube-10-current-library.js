@@ -5,6 +5,7 @@ const SRC={
   c6:'https://nanliteus.com/products/pavotube-ii-6c-rgbww-led-tube-light',
   cp6:'https://nanliteus.com/products/pavotube-ii-6cp-10-inch-nebula-c4-led-tube-light',
   compare:'https://nanliteus.com/blogs/learn/whats-the-difference-between-the-pavotube-ii-6c-6cp-6xr',
+  coupler:'https://nanliteus.com/nanlite-pavotube-ii-6c-coupler/',
   collection:'https://nanliteus.com/collections/pavotube'
 };
 
@@ -68,6 +69,13 @@ function included(id,model,category,target,sourceUrl){
 }
 
 export const NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES=[
+  {
+    id:'nanlite-as-cp-1-4',manufacturer:'Nanlite',model:'AS-CP-1/4 PavoTube II 6C Coupler',
+    category:'Mount',mount:'1/4-20 male-to-male',compatibleWith:['nanlite-pavotube-ii-6c'],
+    compatibilityStatus:'Designed For',
+    conditions:['Designed to connect multiple PavoTube II 6C fixtures end-to-end'],
+    sourceUrl:SRC.coupler
+  },
   included('nanlite-pavotube-ii-6c-usbc-cable','PavoTube II 6C USB-C to USB-A Cable','Cable','nanlite-pavotube-ii-6c',SRC.c6),
   included('nanlite-pavotube-ii-6c-iron-plates','PavoTube II 6C Iron Mounting Plates (set of 3)','Mount','nanlite-pavotube-ii-6c',SRC.c6),
   included('nanlite-pavotube-ii-6c-wrist-strap','PavoTube II 6C Wrist Strap','Mount','nanlite-pavotube-ii-6c',SRC.c6),

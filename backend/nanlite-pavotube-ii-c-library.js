@@ -14,9 +14,9 @@ function control(){
     wireless:['Bluetooth / NANLINK app','2.4G'],
     builtInBluetooth:true,
     builtInCRMX:false,
-    dmxConnection:'Locking metal DMX/RDM port',
+    dmxConnection:'Locking 3.5mm DMX/RDM port',
     directLightingAI:[],
-    externalInterfaceRequired:['CB-DMX-ACP-1/2 adapter cable plus wired DMX interface'],
+    externalInterfaceRequired:['CB-DMX-3.5C-1/2 adapter cable plus wired DMX interface'],
     unavailableDirectProtocols:[
       'NANLINK Bluetooth/2.4G control protocol is not publicly documented for third-party direct control'
     ]
@@ -49,6 +49,11 @@ function included(id,model,category,target,sourceUrl,extra={}){
 
 export const NANLITE_PAVOTUBE_II_C_ACCESSORIES=[
   {
+    id:'nanlite-cb-dmx-3-5c-1-2',manufacturer:'Nanlite',model:'CB-DMX-3.5C-1/2 DMX Adapter Cable with Locking 3.5mm Connector',
+    category:'Control',compatibleWith:BOTH,compatibilityStatus:'Designed For',
+    conditions:['Required for wired DMX/RDM on PavoTube II 15C and 30C'],sourceUrl:'https://nanliteus.com/products/cb-dmx-3-5c-1-2-dmx-adapter-cable-with-locking-3-5mm-connector'
+  },
+  {
     id:'nanlite-lsflt12mii',manufacturer:'Nanlite',model:'LSFLT12MII Foldable Floor Stand for up to 4-Foot PavoTubes',
     category:'Stand',compatibleWith:BOTH,compatibilityStatus:'Designed For',sourceUrl:SRC.accessories
   },
@@ -78,8 +83,8 @@ export const NANLITE_PAVOTUBE_II_C_ACCESSORIES=[
     sourceUrl:SRC.accessories
   },
   {
-    id:'nanlite-pa-15v3a-pavotube',manufacturer:'Nanlite',model:'15V/3A Power Adapter for PavoTube II 15C / 15XR',
-    category:'Power',compatibleWith:['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-15xr'],
+    id:'nanlite-pa-15v3a-pavotube',manufacturer:'Nanlite',model:'15V/3A Power Adapter for PavoTube II 15C / 15X',
+    category:'Power',compatibleWith:['nanlite-pavotube-ii-15c'],
     compatibilityStatus:'Designed For',sourceUrl:SRC.accessories
   },
   {

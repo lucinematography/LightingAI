@@ -24,6 +24,10 @@ export function normalizeArriWirelessControl(fixtures=[]){
       : 'ARRI LiCo Bluetooth 5.0';
     const extra=fixture.id==='arri-skypanel-s60-pro'?['Wi-Fi Web Portal']:[];
     control.wireless=unique([...wireless,btLabel,...extra]);
+    control.externalInterfaceRequired=unique([
+      ...(Array.isArray(control.externalInterfaceRequired)?control.externalInterfaceRequired:[]),
+      ...(fixture.id==='arri-orbiter'?['Supported Bluetooth 5.0 USB dongle']:[])
+    ]);
     control.sourceUrls=unique([
       ...(Array.isArray(control.sourceUrls)?control.sourceUrls:[]),
       fixture.sourceUrl,

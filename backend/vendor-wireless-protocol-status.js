@@ -36,6 +36,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  Kinotehnik: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'kinotehnik-practilite-bluetooth-capture-v1',
+    evidence: [
+      'https://kinotehnik.com/wp-content/uploads/2020/08/PRACTILITE-602_manual_for_web.pdf',
+      'https://kinotehnik.com/632_user_manual.pdf',
+      'https://kinotehnik.com/practilite-remote-control-app/'
+    ],
+    note: 'Bluetooth LE Practilite app control is verified only for Practilite 602 and 632. LightingAI proprietary command semantics remain locked.'
+  },
+
   'Hive Lighting': {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

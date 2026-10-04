@@ -1,7 +1,8 @@
 plugins { id 'com.android.application' }
 
-def releaseVersionCode = (project.findProperty('releaseVersionCode') ?: '13') as Integer
-def releaseVersionName = String.valueOf(project.findProperty('releaseVersionName') ?: '2.1')
+def releaseVersionCode = (project.findProperty('releaseVersionCode') ?: '1') as Integer
+def releaseVersionName = String.valueOf(project.findProperty('releaseVersionName') ?: 'Probe')
+def probeAppLabel = String.valueOf(project.findProperty('probeAppLabel') ?: 'Light AI Proba')
 def releaseStoreFile = System.getenv('LIGHTINGAI_KEYSTORE_PATH')
 def releaseStorePassword = System.getenv('LIGHTINGAI_KEYSTORE_PASSWORD')
 def releaseKeyAlias = System.getenv('LIGHTINGAI_KEY_ALIAS')
@@ -10,11 +11,12 @@ def hasReleaseSigning = [releaseStoreFile, releaseStorePassword, releaseKeyAlias
 
 android { namespace 'com.lightingai.app'; compileSdk 35
     defaultConfig {
-        applicationId 'com.lightingai.app'
+        applicationId 'com.lightingai.probe'
         minSdk 26
         targetSdk 35
         versionCode releaseVersionCode
         versionName releaseVersionName
+        resValue 'string', 'app_name', probeAppLabel
     }
 
     signingConfigs {
@@ -30,8 +32,8 @@ android { namespace 'com.lightingai.app'; compileSdk 35
 
     buildTypes {
         debug {
-            applicationIdSuffix '.review13'
-            versionNameSuffix '-review13'
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
         }
         release {
             minifyEnabled false

@@ -252,6 +252,8 @@ else {
   if(forza720.control?.builtInCRMX) failures.push('Forza 720B must not claim built-in CRMX');
   for(const p of ['DMX512','RDM']) if(!(forza720.control?.wired||[]).includes(p)) failures.push('Forza 720B missing '+p);
   for(const p of ['Bluetooth / NANLINK app','2.4G']) if(!(forza720.control?.wireless||[]).includes(p)) failures.push('Forza 720B missing '+p);
+  if(forza720.cri!==95) failures.push('Forza 720B CRI must remain 95');
+  if(forza720.tlci!==96) failures.push('Forza 720B TLCI must remain 96');
 }
 for(const id of ['nanlite-fl-20g','nanlite-pj-bm-19','nanlite-pj-bm-25-45','nanlite-ascpqrfz','nanlite-ws-rc-c2','nanlite-ws-tb-1']){
   const a=accessoryById.get(id);

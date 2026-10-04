@@ -113,6 +113,37 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  Luxli: {
+    id:'luxli-composer-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Luxli Composer',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one Luxli fixture whose catalog entry explicitly verifies Composer Bluetooth control.',
+      'Use the official Luxli Composer app and isolate one fixture where practical.',
+      'Do not infer Bluetooth support for Taiko or any other Luxli model that is not explicitly included in the current verified catalog set.',
+      'Keep DMX control separate from Bluetooth capture evidence.'
+    ],
+    officialSources:[
+      'https://www.luxlilight.com/composer',
+      'https://www.luxlilight.com/product/16565/Luxli-ORC_TIMPANI_M2-Timpani%26sup2%3B%201%26times%3B1-RGBAW-LED-Light-Panel',
+      'https://www.luxlilight.com/product/15842/Luxli-ORC_CELLO_M2-Cello%26sup2%3B-10%22-RGBAW-LED-Light'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one fixture through Luxli Composer over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'On a CCT-capable fixture perform exactly one white-balance/CCT change per capture.'},
+      color:{runs:3,rule:'On a full-color fixture perform exactly one color change per capture after DIM/CCT evidence is stable.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; activate exactly one app effect per capture.'}
+    },
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   Rotolight: {
     id:'rotolight-app-direct-bluetooth-capture-v1',
     transport:'bluetooth',

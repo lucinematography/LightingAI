@@ -5,8 +5,8 @@ const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildOperatorControlPlanningReport();
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
 
-expect(report.fixtureCount===554,'fixture total changed from verified catalog');
-expect(report.wirelessManufacturers===9,'wireless manufacturer count must remain 9');
+expect(report.fixtureCount===561,'fixture total changed from verified catalog');
+expect(report.wirelessManufacturers===10,'wireless manufacturer count must remain 10');
 expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
 expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
 expect(report.totals.dimControlVerified<=report.totals.dimCapable,'verified control totals must be bounded by physical DIM capability');
@@ -14,7 +14,7 @@ expect(report.totals.cctControlVerified<=report.totals.cctCapable,'verified CCT 
 expect(report.totals.colorControlVerified<=report.totals.colorCapable,'verified COLOR control total exceeds physical capability');
 expect(report.totals.fxControlVerified<=report.totals.fxCapable,'verified FX control total exceeds physical capability');
 
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli']){
   const row=by[maker];
   expect(!!row,maker+' planning row missing');
   if(!row) continue;
@@ -48,7 +48,7 @@ for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight']){
   const transports=new Set(by[maker]?.requiredProductionTransports||[]);
   expect(transports.has('bluetooth')&&transports.has('wifi'),maker+' dual-transport production scope must require Bluetooth and Wi-Fi');
 }
-for(const maker of ['Godox','Aputure','Aladdin','Creamsource']){
+for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli']){
   const transports=by[maker]?.requiredProductionTransports||[];
   expect(transports.length===1&&transports[0]==='bluetooth',maker+' current production scope should require Bluetooth only');
 }

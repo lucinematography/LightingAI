@@ -86,6 +86,7 @@ import { DESISTI_CONVENTIONAL_EXTRA_FIXTURES, DESISTI_CONVENTIONAL_EXTRA_ACCESSO
 import { GODOX_CONTINUOUS_FIXTURES, GODOX_CONTINUOUS_ACCESSORIES } from './godox-continuous-library.js';
 import { CREAMSOURCE_VORTEX_FIXTURES } from './creamsource-vortex-library.js';
 import { ROTOLIGHT_APP_WIRELESS_FIXTURES } from './rotolight-app-wireless-library.js';
+import { LUXLI_ORCHESTRA_BLUETOOTH_FIXTURES } from './luxli-orchestra-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -217,6 +218,7 @@ export function buildRuntimeCatalog() {
   normalizeGodoxControl(fixtures);
   fixtures.push(...clone(CREAMSOURCE_VORTEX_FIXTURES));
   fixtures.push(...clone(ROTOLIGHT_APP_WIRELESS_FIXTURES));
+  fixtures.push(...clone(LUXLI_ORCHESTRA_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

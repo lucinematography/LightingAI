@@ -36,6 +36,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  Luxli: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'luxli-composer-direct-bluetooth-capture-v1',
+    evidence: [
+      'https://www.luxlilight.com/composer',
+      'https://www.luxlilight.com/product/10017/Luxli-ORC_VIOLA_5-Viola-5%22-On_Camera-RGB-LED-Light',
+      'https://www.luxlilight.com/product/15842/Luxli-ORC_CELLO_M2-Cello%26sup2%3B-10%22-RGBAW-LED-Light',
+      'https://www.luxlilight.com/timpani'
+    ],
+    note: 'Luxli Composer Bluetooth is verified only for the explicitly listed model set; Taiko remains outside this transport-verified scope until model-specific first-party Bluetooth evidence is captured.'
+  },
   Rotolight: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'transport_verified_model_scoped',

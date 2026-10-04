@@ -80,7 +80,7 @@ export const NANLITE_FC_HIGH_OUTPUT_ACCESSORIES=[
   },
   {
     id:'nanlite-pj-bm-19',manufacturer:'Nanlite',model:'PJ-BM Projection Attachment with 19° Lens',
-    category:'Spotlight',mount:'Bowens',beamAngleDeg:19,compatibleWith:PJ_TARGETS,
+    category:'Spotlight',mount:'Bowens',beamAngleDeg:19,compatibleWith:[...PJ_TARGETS,'nanlite-forza-720b'],
     compatibilityStatus:'Designed For',sourceUrl:SRC.pj19
   },
   {

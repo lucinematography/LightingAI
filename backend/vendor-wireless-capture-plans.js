@@ -115,14 +115,14 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
   VELVET: {
     id:'velvet-evo-wireless-capture-v1',
-    transport:'bluetooth+wifi',
+    transport:'bluetooth',
     controllerApp:'VELVET GOYA',
     commandSpecStatus:'public-command-spec-not-located-in-official-docs',
     prerequisites:[
-      'Use one exact VELVET EVO model at a time with the official GOYA app.',
-      'Record whether the session uses Bluetooth or Wi-Fi Art-Net before each capture.',
+      'Use one exact Bluetooth-verified VELVET EVO model at a time with the official GOYA app.',
       'Reset to a known lighting state before each capture.',
-      'Do not infer Bluetooth support for Studio variants unless the exact model evidence explicitly confirms it.'
+      'Do not infer Bluetooth support for Studio variants unless the exact model evidence explicitly confirms it.',
+      'Keep Bluetooth and Wi-Fi Art-Net capture sets separate.'
     ],
     officialSources:[
       'https://www.velvetlight.tv/velvet-evo/',
@@ -130,12 +130,19 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       'https://www.velvetlight.tv/support/'
     ],
     captureSets:{
-      connectOnly:{runs:3,rule:'Connect one EVO fixture over the selected wireless transport, wait 15 seconds, make no lighting changes, then disconnect.'},
+      connectOnly:{runs:3,rule:'Connect one Bluetooth-verified EVO fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
       dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
       cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
       color:{runs:3,rule:'Perform exactly one color change per capture from the same initial state.'},
       fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
     },
+    secondaryPlans:[{
+      id:'velvet-evo-wifi-artnet-capture-v1',
+      transport:'wifi',
+      controllerApp:'VELVET GOYA / Art-Net',
+      commandSpecStatus:'artnet-transport-documented-proprietary-session-unverified',
+      rule:'Capture Wi-Fi Art-Net independently from Bluetooth on an exact Wi-Fi-verified EVO model. Do not infer proprietary GOYA session semantics or Bluetooth equivalence from Art-Net transport availability.'
+    }],
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 

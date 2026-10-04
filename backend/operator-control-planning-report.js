@@ -61,7 +61,10 @@ export function buildOperatorControlPlanningReport(){
     const plan=VENDOR_WIRELESS_CAPTURE_PLANS[row.manufacturer]||null;
     return {
       ...row,
-      commandReady:vendorWideCommandProductionReady(row.manufacturer),
+      commandReady:vendorWideCommandProductionReady(row.manufacturer,[
+        ...(row.bluetoothFixtures>0?['bluetooth']:[]),
+        ...(row.wifiFixtures>0?['wifi']:[])
+      ]),
       bluetoothPlanId:row.bluetoothFixtures?planFor(plan,'bluetooth'):null,
       wifiPlanId:row.wifiFixtures?planFor(plan,'wifi'):null,
       nextStep:status?.nextStep||'status-missing'

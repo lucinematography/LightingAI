@@ -45,6 +45,7 @@ const allowed=new Set([
   'backend/dracast-bluetooth-library.js',
   'backend/hive-bluetooth-library.js',
   'backend/kinotehnik-practilite-bluetooth-library.js',
+  'backend/velvet-evo-wireless-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

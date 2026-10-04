@@ -102,6 +102,7 @@ import { SIRUI_BLUETOOTH_FIXTURES } from './sirui-bluetooth-library.js';
 import { FIILEX_MATRIX_WIFI_FIXTURES } from './fiilex-matrix-wifi-library.js';
 import { HARLOWE_BLUETOOTH_FIXTURES } from './harlowe-bluetooth-library.js';
 import { SWIT_BLUETOOTH_FIXTURES } from './swit-bluetooth-library.js';
+import { DRACAST_BLUETOOTH_FIXTURES } from './dracast-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -249,6 +250,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(FIILEX_MATRIX_WIFI_FIXTURES));
   fixtures.push(...clone(HARLOWE_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(SWIT_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(DRACAST_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

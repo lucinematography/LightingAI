@@ -204,16 +204,13 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
     sourceUrl:NANLITE_FM_CURRENT_FIXTURES.find(f=>f.id===target).sourceUrl
   })),
   included('nanlite-ps-forza-60-ii','Power Adapter — Forza 60 II','Power','nanlite-forza-60-ii',SRC.forza60ii),
-  included('nanlite-ps-forza-60b-ii','Power Adapter — Forza 60B II','Power','nanlite-forza-60b-ii',SRC.forza60bii),
   {
     id:'nanlite-ccsfz60ii',manufacturer:'Nanlite',model:'CCSFZ60II Padded Carrying Case',
     category:'Case',compatibleWith:['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fs-60b','nanlite-fc-60b'],
     compatibilityStatus:'Designed For',includedWithFixtures:['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fs-60b','nanlite-fc-60b'],
     sourceUrl:SRC.case60
   },
-  included('nanlite-ps-forza-60c','Power Adapter — Forza 60C','Power','nanlite-forza-60c',SRC.forza60c),
   included('nanlite-case-forza-60c','Padded Carrying Case — Forza 60C','Case','nanlite-forza-60c',SRC.forza60c),
-  included('nanlite-ps-forza-60cr','15V/6A Power Adapter with V-Mount Plate — Forza 60CR','Power','nanlite-forza-60cr',SRC.forza60cr),
   included('nanlite-case-forza-60cr','Padded Carrying Case — Forza 60CR','Case','nanlite-forza-60cr',SRC.forza60cr),
   included('nanlite-ps-fc-60b','Power Adapter — FC-60B','Power','nanlite-fc-60b',SRC.fc60b),
   included('nanlite-case-fc-60b','Carry Case — FC-60B','Case','nanlite-fc-60b',SRC.fc60b),

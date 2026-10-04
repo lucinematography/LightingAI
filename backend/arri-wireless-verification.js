@@ -55,6 +55,27 @@ export function normalizeArriWirelessControl(fixtures=[]){
         }
       }:{})
     };
+    control.capabilityVerification={
+      ...(control.capabilityVerification||{}),
+      dim:{
+        verified:true,
+        scope:'official-app-capability-only',
+        sourceUrls:[LICO_SOURCE],
+        note:'ARRI LiCo documents dimming control for SkyPanel Pro, SkyPanel X and Orbiter. This proves operator capability only, not Bluetooth command encoding.'
+      },
+      color:{
+        verified:true,
+        scope:'official-app-capability-only',
+        sourceUrls:[LICO_SOURCE],
+        note:'ARRI LiCo documents color control for SkyPanel Pro, SkyPanel X and Orbiter. This proves operator capability only, not Bluetooth command encoding.'
+      },
+      fx:{
+        verified:true,
+        scope:'official-app-capability-only',
+        sourceUrls:[LICO_SOURCE],
+        note:'ARRI LiCo documents effects control for SkyPanel Pro, SkyPanel X and Orbiter. This proves operator capability only, not Bluetooth command encoding.'
+      }
+    };
     fixture.control=control;
   }
   return fixtures;

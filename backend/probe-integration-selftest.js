@@ -94,6 +94,8 @@ const allowed=new Set([
   'backend/wireless-fixture-class-coverage-selftest.js',
   'backend/wireless-route-classification.js',
   'backend/wireless-route-classification-selftest.js',
+  'backend/fixture-structural-classification.js',
+  'backend/fixture-structural-classification-selftest.js',
   '.github/workflows/build-apk.yml',
   'backend/aputure-wireless-verification-selftest.js',
   'backend/aladdin-wireless-verification-selftest.js',

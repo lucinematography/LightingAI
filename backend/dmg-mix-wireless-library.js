@@ -15,7 +15,7 @@ function assistedMixControl(sourceUrl){
     wireless:['Bluetooth via DMG MIX Controller / myMIX','Wi-Fi / Art-Net via DMG MIX Controller'],
     builtInBluetooth:false,
     directLightingAI:[],
-    externalInterfaceRequired:['DMG MIX Controller / Driver'],
+    externalInterfaceRequired:['DMG MIX Controller / Driver for Bluetooth/myMIX control','DMG MIX Controller / Driver for Wi-Fi/Art-Net control'],
     unavailableDirectProtocols:['MINI/SL1 require the add-on MIX Controller; LightingAI proprietary MIX command/session semantics are not production-verified'],
     sourceUrls:[sourceUrl,SRC.mymix,SRC.mixController],
     wirelessVerification:{

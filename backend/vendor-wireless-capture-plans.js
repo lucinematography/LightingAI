@@ -113,6 +113,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  Phottix: {
+    id:'phottix-lighting-control-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Phottix Lighting Control',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Phottix model at a time with the official Phottix Lighting Control app.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer compatibility to twin-kit packaging entries or unrelated Phottix lights.'
+    ],
+    officialSources:[
+      'https://www.phottix.com/phottix-app-download/',
+      'https://www.phottix.com/product/phottix-nuada-c60a-curved-led-light/',
+      'https://www.phottix.com/product/phottix-nuada-s3a-led-light/',
+      'https://www.phottix.com/product/phottix-nuada-r3a-led-light/',
+      'https://www.phottix.com/product/phottix-kali50ra-rgb-led-light/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one Phottix fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'Only on Kali50Ra; perform exactly one color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   VILTROX: {
     id:'viltrox-weeylite-pro-bluetooth-capture-v1',
     transport:'bluetooth',

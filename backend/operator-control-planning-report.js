@@ -1,6 +1,6 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { deriveFixtureControlCapabilities, deriveVerifiedControlCapabilities } from './fixture-control-capabilities.js';
-import { VENDOR_WIRELESS_PROTOCOL_STATUS } from './vendor-wireless-protocol-status.js';
+import { VENDOR_WIRELESS_PROTOCOL_STATUS, vendorWideCommandProductionReady } from './vendor-wireless-protocol-status.js';
 import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
@@ -61,7 +61,7 @@ export function buildOperatorControlPlanningReport(){
     const plan=VENDOR_WIRELESS_CAPTURE_PLANS[row.manufacturer]||null;
     return {
       ...row,
-      commandReady:status?.commandSpec==='production_verified',
+      commandReady:vendorWideCommandProductionReady(row.manufacturer),
       bluetoothPlanId:row.bluetoothFixtures?planFor(plan,'bluetooth'):null,
       wifiPlanId:row.wifiFixtures?planFor(plan,'wifi'):null,
       nextStep:status?.nextStep||'status-missing'

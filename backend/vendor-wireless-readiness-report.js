@@ -1,6 +1,7 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { VENDOR_WIRELESS_PROTOCOL_STATUS, vendorWideCommandProductionReady } from './vendor-wireless-protocol-status.js';
 import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.js';
+import { wirelessTransportFlags, wirelessRouteKind } from './wireless-route-classification.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
 function hasBt(f){return wirelessTransportFlags(f).bluetooth}

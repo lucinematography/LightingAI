@@ -2,6 +2,7 @@ import { VENDOR_WIRELESS_PROTOCOL_STATUS, vendorWideCommandProductionReady, comm
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
+const route=(fixtureId,transport)=>({fixtureId,transport});
 
 const expected=['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Kino Flo','De Sisti','LiteGear'];
 for(const maker of expected) expect(!!VENDOR_WIRELESS_PROTOCOL_STATUS[maker],maker+' protocol status missing');
@@ -9,116 +10,127 @@ for(const maker of expected) expect(!!VENDOR_WIRELESS_PROTOCOL_STATUS[maker],mak
 for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light']){
   const row=VENDOR_WIRELESS_PROTOCOL_STATUS[maker];
   expect(row.commandSpec!=='production_verified',maker+' proprietary command path must not be marked production verified');
-}
-for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light']){
-  expect(vendorWideCommandProductionReady(maker)===false,maker+' vendor-wide readiness must remain false without explicit vendor-wide production scope');
+  expect(vendorWideCommandProductionReady(maker)===false,maker+' vendor-wide readiness must remain false without explicit production scope inputs');
 }
 
-const syntheticStatus=VENDOR_WIRELESS_PROTOCOL_STATUS.__synthetic_missing_scope;
 expect(vendorWideCommandProductionReady('__synthetic_missing_scope')===false,'Missing vendor status must remain fail-closed');
-expect(commandProductionReadyForStatus({commandSpec:'production_verified'})===false,
-  'production_verified without scope must remain fail-closed');
-expect(commandProductionReadyForStatus({
+expect(commandProductionReadyForStatus({commandSpec:'production_verified'})===false,'production_verified without scope must remain fail-closed');
+
+const singleRoute=[route('fixture-a','bluetooth')];
+const singleBase={
   commandSpec:'production_verified',
   capturePlanId:'bt-plan',
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/replay.json'],verifiedTransports:['bluetooth'],verifiedFixtureIds:['fixture-a'],capturePlanIds:['bt-plan']}
-})===false,
-  'omitted required transport scope must remain fail-closed');
+  productionScope:{
+    kind:'vendor-wide',
+    allCurrentWirelessFixtures:true,
+    transports:['bluetooth'],
+    fixtureIds:['fixture-a']
+  },
+  productionEvidence:{
+    physicalReplayVerified:true,
+    derivedEvidenceRefs:['derived/fixture-a-bluetooth-replay.json'],
+    verifiedTransports:['bluetooth'],
+    verifiedFixtureIds:['fixture-a'],
+    verifiedRoutes:singleRoute,
+    capturePlanIds:['bt-plan']
+  }
+};
+
+expect(commandProductionReadyForStatus(singleBase)===false,'omitted required production scope inputs must remain fail-closed');
+expect(commandProductionReadyForStatus(singleBase,['bluetooth'],[],singleRoute)===false,'omitted required fixture IDs must remain fail-closed');
+expect(commandProductionReadyForStatus(singleBase,['bluetooth'],['fixture-a'],[])===false,'omitted required route matrix must remain fail-closed');
 expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/replay.json'],verifiedTransports:['bluetooth'],verifiedFixtureIds:['fixture-a'],capturePlanIds:['bt-plan']}
-},['bluetooth'],[])===false,
-  'omitted required fixture scope must remain fail-closed');
-expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  productionScope:{kind:'model-family',allCurrentWirelessFixtures:false,transports:['bluetooth']}
-})===false,
-  'model/family scoped production proof must not unlock an entire vendor');
-expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']}
-},['bluetooth'],['fixture-a'])===false,
-  'vendor-wide scope without physical replay evidence must remain fail-closed');
-expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/fixture-family-replay.json'],verifiedTransports:['bluetooth'],verifiedFixtureIds:['fixture-a'],capturePlanIds:['bt-plan']}
-},['bluetooth'],['fixture-a'])===true,
-  'vendor-wide scope with physical replay evidence and complete fixture coverage should be accepted');
+  ...singleBase,
+  productionScope:{...singleBase.productionScope,kind:'model-family',allCurrentWirelessFixtures:false}
+},['bluetooth'],['fixture-a'],singleRoute)===false,'model/family scope must not unlock an entire vendor');
 
 expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:[],verifiedTransports:['bluetooth'],verifiedFixtureIds:['fixture-a'],capturePlanIds:['bt-plan']}
-},['bluetooth'],['fixture-a'])===false,
-  'empty derived evidence references must remain fail-closed');
-expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']},
-  productionEvidence:{physicalReplayVerified:false,derivedEvidenceRefs:['derived/unverified.json'],verifiedTransports:['bluetooth'],verifiedFixtureIds:['fixture-a'],capturePlanIds:['bt-plan']}
-},['bluetooth'],['fixture-a'])===false,
-  'unverified physical replay must remain fail-closed');
+  ...singleBase,
+  productionEvidence:undefined
+},['bluetooth'],['fixture-a'],singleRoute)===false,'vendor-wide scope without physical replay evidence must remain fail-closed');
 
 expect(commandProductionReadyForStatus({
+  ...singleBase,
+  productionEvidence:{...singleBase.productionEvidence,derivedEvidenceRefs:[]}
+},['bluetooth'],['fixture-a'],singleRoute)===false,'empty derived evidence references must remain fail-closed');
+
+expect(commandProductionReadyForStatus({
+  ...singleBase,
+  productionEvidence:{...singleBase.productionEvidence,physicalReplayVerified:false}
+},['bluetooth'],['fixture-a'],singleRoute)===false,'unverified physical replay must remain fail-closed');
+
+expect(commandProductionReadyForStatus({
+  ...singleBase,
+  productionEvidence:{...singleBase.productionEvidence,capturePlanIds:[]}
+},['bluetooth'],['fixture-a'],singleRoute)===false,'missing linked capture-plan evidence must remain fail-closed');
+
+expect(commandProductionReadyForStatus(singleBase,['bluetooth'],['fixture-a'],singleRoute)===true,
+  'single-transport vendor-wide scope with replay and route evidence should be accepted');
+
+const dualRoutes=[route('fixture-a','bluetooth'),route('fixture-b','wifi')];
+const dualBase={
   commandSpec:'production_verified',
   capturePlanId:'bt-plan',
   secondaryCapturePlanIds:['wifi-plan'],
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a','fixture-b']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/vendor-wide-replay.json'],verifiedTransports:['bluetooth','wifi'],verifiedFixtureIds:['fixture-a','fixture-b'],capturePlanIds:['bt-plan','wifi-plan']}
-},['bluetooth','wifi'],['fixture-a','fixture-b'])===false,
-  'vendor-wide scope missing Wi-Fi must remain fail-closed for a Bluetooth + Wi-Fi vendor');
-expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  secondaryCapturePlanIds:['wifi-plan'],
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth','wifi'],fixtureIds:['fixture-a','fixture-b']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/vendor-wide-replay.json'],verifiedTransports:['bluetooth','wifi'],verifiedFixtureIds:['fixture-a','fixture-b'],capturePlanIds:['bt-plan','wifi-plan']}
-},['bluetooth','wifi'],['fixture-a','fixture-b'])===true,
-  'vendor-wide scope covering every active transport and fixture with physical replay evidence should be accepted');
+  productionScope:{
+    kind:'vendor-wide',
+    allCurrentWirelessFixtures:true,
+    transports:['bluetooth','wifi'],
+    fixtureIds:['fixture-a','fixture-b']
+  },
+  productionEvidence:{
+    physicalReplayVerified:true,
+    derivedEvidenceRefs:['derived/vendor-wide-replay.json'],
+    verifiedTransports:['bluetooth','wifi'],
+    verifiedFixtureIds:['fixture-a','fixture-b'],
+    verifiedRoutes:dualRoutes,
+    capturePlanIds:['bt-plan','wifi-plan']
+  }
+};
 
 expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  secondaryCapturePlanIds:['wifi-plan'],
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth','wifi'],fixtureIds:['fixture-a','fixture-b']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/vendor-wide-replay.json'],verifiedTransports:['bluetooth','wifi'],verifiedFixtureIds:['fixture-a','fixture-b'],capturePlanIds:['bt-plan']}
-},['bluetooth','wifi'],['fixture-a','fixture-b'])===false,
-  'physical evidence missing linked Wi-Fi capture plan must remain fail-closed');
+  ...dualBase,
+  productionScope:{...dualBase.productionScope,transports:['bluetooth']}
+},['bluetooth','wifi'],['fixture-a','fixture-b'],dualRoutes)===false,
+  'vendor-wide scope missing Wi-Fi must remain fail-closed');
 
 expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  secondaryCapturePlanIds:['wifi-plan'],
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth','wifi'],fixtureIds:['fixture-a','fixture-b']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/vendor-wide-replay.json'],verifiedTransports:['bluetooth'],verifiedFixtureIds:['fixture-a','fixture-b'],capturePlanIds:['bt-plan','wifi-plan']}
-},['bluetooth','wifi'],['fixture-a','fixture-b'])===false,
-  'physical evidence missing Wi-Fi must remain fail-closed');
+  ...dualBase,
+  productionScope:{...dualBase.productionScope,fixtureIds:['fixture-a']}
+},['bluetooth','wifi'],['fixture-a','fixture-b'],dualRoutes)===false,
+  'vendor-wide scope missing one current wireless fixture must remain fail-closed');
 
 expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  secondaryCapturePlanIds:['wifi-plan'],
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth','wifi'],fixtureIds:['fixture-a','fixture-b']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/vendor-wide-replay.json'],verifiedTransports:['bluetooth','wifi'],verifiedFixtureIds:['fixture-a'],capturePlanIds:['bt-plan','wifi-plan']}
-},['bluetooth','wifi'],['fixture-a','fixture-b'])===false,
+  ...dualBase,
+  productionEvidence:{...dualBase.productionEvidence,verifiedTransports:['bluetooth']}
+},['bluetooth','wifi'],['fixture-a','fixture-b'],dualRoutes)===false,
+  'physical evidence missing Wi-Fi transport must remain fail-closed');
+
+expect(commandProductionReadyForStatus({
+  ...dualBase,
+  productionEvidence:{...dualBase.productionEvidence,verifiedFixtureIds:['fixture-a']}
+},['bluetooth','wifi'],['fixture-a','fixture-b'],dualRoutes)===false,
   'physical evidence missing one fixture must remain fail-closed');
 
 expect(commandProductionReadyForStatus({
-  commandSpec:'production_verified',
-  capturePlanId:'bt-plan',
-  secondaryCapturePlanIds:['wifi-plan'],
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth','wifi'],fixtureIds:['fixture-a']},
-  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/vendor-wide-replay.json'],verifiedTransports:['bluetooth','wifi'],verifiedFixtureIds:['fixture-a','fixture-b'],capturePlanIds:['bt-plan','wifi-plan']}
-},['bluetooth','wifi'],['fixture-a','fixture-b'])===false,
-  'vendor-wide scope missing one current wireless fixture must remain fail-closed');
+  ...dualBase,
+  productionEvidence:{...dualBase.productionEvidence,verifiedRoutes:[route('fixture-a','bluetooth')]}
+},['bluetooth','wifi'],['fixture-a','fixture-b'],dualRoutes)===false,
+  'physical evidence missing fixture+transport route must remain fail-closed');
 
+expect(commandProductionReadyForStatus({
+  ...dualBase,
+  productionEvidence:{...dualBase.productionEvidence,capturePlanIds:['bt-plan']}
+},['bluetooth','wifi'],['fixture-a','fixture-b'],dualRoutes)===false,
+  'physical evidence missing linked Wi-Fi capture plan must remain fail-closed');
+
+expect(commandProductionReadyForStatus(dualBase,['bluetooth','wifi'],['fixture-a','fixture-b'],dualRoutes)===true,
+  'vendor-wide scope covering every transport, fixture, route and capture plan should be accepted');
+
+expect(commandProductionReadyForStatus(dualBase,['bluetooth','wifi'],['fixture-a','fixture-b'],[
+  route('fixture-a','bluetooth'),
+  {fixtureId:'',transport:'wifi'}
+])===false,'malformed required route matrix must remain fail-closed');
 
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.nextStep==='capture-plan-required-before-driver','Astera physical evidence path changed');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.capturePlanId==='astera-physical-capture-set-v1','Astera capture plan link missing');

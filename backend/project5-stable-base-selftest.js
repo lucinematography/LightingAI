@@ -155,6 +155,7 @@ const exactAllowed = new Set([
   'backend/nanlite-fs-legacy-library.js',
   'backend/nanlite-compac-daylight-legacy-library.js',
   'backend/nanlite-mixpanel-legacy-library.js',
+  'backend/nanlite-mixpad-library.js',
   'backend/nanlite-catalog-selftest.js',
   'backend/aladdin-mosaic-library.js',
   'backend/aladdin-fabric-lite-library.js',

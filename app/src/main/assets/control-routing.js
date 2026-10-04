@@ -13,6 +13,13 @@ function classify(fixture){
  var vendor=system&&Array.isArray(system.vendorDrivers)?system.vendorDrivers:[];
  var bluetooth=vendor.some(function(d){return d&&d.transport==='bluetooth'});
  var wifi=vendor.some(function(d){return d&&d.transport==='wifi'});
+ var assisted=vendor.filter(function(d){return d&&d.requiresExternalInterface===true});
+ var externalInterfaces=[];
+ assisted.forEach(function(d){
+  list(d.externalInterfaceRequired).forEach(function(value){
+   if(externalInterfaces.indexOf(value)<0)externalInterfaces.push(value);
+  });
+ });
  var label='NO VERIFIED BLUETOOTH / WI-FI ROUTE';
  if(bluetooth&&wifi)label='BLUETOOTH + WI-FI · VERIFICATION REQUIRED';
  else if(bluetooth)label='BLUETOOTH · VERIFICATION REQUIRED';
@@ -26,8 +33,8 @@ function classify(fixture){
   semanticReady:false,
   verifiedDmxModeCount:0,
   system:system,
-  requiresInterface:false,
-  externalInterfaces:[],
+  requiresInterface:assisted.length>0,
+  externalInterfaces:externalInterfaces,
   direct:fields.direct,
   wired:fields.wired,
   wireless:fields.wireless

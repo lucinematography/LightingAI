@@ -58,9 +58,9 @@ jobs:
         working-directory: backend
         run: npm run test:project5-safety
 
-      - name: Validate Project 5 stable base
+      - name: Validate Probe integration against verified CONTROL base
         working-directory: backend
-        run: npm run test:project5-base
+        run: node probe-integration-selftest.js
 
       - name: Validate Project 5.2 release gate
         working-directory: backend

@@ -9,6 +9,8 @@ const CASE='https://nanliteus.com/products/padded-carrying-case-for-forza-300-ii
 const CLAMP='https://nanliteus.com/products/quick-release-super-clamp-for-forza-720-500-300-and-pavoslim';
 const RC='https://nanliteus.com/products/nanlink-ws-rc-c2-2-4ghz-remote-control';
 const TB='https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box';
+const CBFZ75='https://nanliteus.com/products/head-cable-24-7ft-for-forza-720-720b-500-ii-500b-ii-300-ii-300b-ii';
+const CBFZ12='https://nanliteus.com/products/head-cable-39-5ft-for-forza-720-720b-500-ii-500b-ii-300-ii-300b-ii';
 
 function control(){
   return {
@@ -46,8 +48,19 @@ export const NANLITE_FORZA_II_FIXTURES=[
 const BOTH=['nanlite-forza-300b-ii','nanlite-forza-500b-ii'];
 const DAYLIGHT_II=['nanlite-forza-300-ii','nanlite-forza-500-ii'];
 const FL20G_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'];
+const LONG_HEAD_CABLE_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720'];
 
 export const NANLITE_FORZA_II_ACCESSORIES=[
+  {
+    id:'nanlite-cb-fz-7-5m',manufacturer:'Nanlite',model:'CB-FZ-7.5M Head Cable 7.5 m / 24.7 ft',
+    category:'Cable',compatibleWith:LONG_HEAD_CABLE_TARGETS,compatibilityStatus:'Designed For',
+    lengthM:7.5,sourceUrl:CBFZ75
+  },
+  {
+    id:'nanlite-cb-fz-12m',manufacturer:'Nanlite',model:'CB-FZ-12M Head Cable 12 m / 39.5 ft',
+    category:'Cable',compatibleWith:LONG_HEAD_CABLE_TARGETS,compatibilityStatus:'Designed For',
+    lengthM:12,sourceUrl:CBFZ12
+  },
   {
     id:'nanlite-fl-20g',manufacturer:'Nanlite',model:'FL-20G Fresnel Lens with Removable Metal Barndoors',
     category:'Fresnel',mount:'Bowens',beamAngleDeg:{min:10,max:45},compatibleWith:FL20G_TARGETS,compatibilityStatus:'Designed For',

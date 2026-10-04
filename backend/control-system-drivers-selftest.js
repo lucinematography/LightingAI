@@ -47,6 +47,18 @@ const assistedBt=api?.resolve({manufacturer:'ARRI',control:{wireless:['ARRI LiCo
 const assistedBtDriver=assistedBt?.vendorDrivers?.find(x=>x.transport==='bluetooth');
 expect(assistedBtDriver?.requiresExternalInterface===true&&assistedBtDriver?.direct===false,'adapter-assisted Bluetooth candidate not marked');
 
+
+const evBluetooth=api?.resolve({manufacturer:'EV Light',control:{wireless:['Bluetooth App Control']}});
+expect(evBluetooth?.candidateTransports?.bluetooth===true,'EV Light Bluetooth candidate not classified');
+expect(evBluetooth?.productionReady===false,'EV Light Bluetooth candidate must remain fail-closed');
+
+const evWifi=api?.resolve({manufacturer:'EV Light',control:{wireless:['WiFi-DMX','App control']}});
+expect(evWifi?.candidateTransports?.wifi===true,'EV Light Wi-Fi candidate not classified');
+expect(evWifi?.productionReady===false,'EV Light Wi-Fi candidate must remain fail-closed');
+
+const evWirelessDmx=api?.resolve({manufacturer:'EV Light',control:{wireless:['Wireless DMX']}});
+expect(evWirelessDmx?.vendorDrivers?.length===0,'EV Light Wireless DMX must not be inferred as Bluetooth/Wi-Fi');
+
 const radioOnly=api?.resolve({manufacturer:'Godox',control:{wireless:['2.4 GHz wireless control']}});
 expect(radioOnly?.vendorDrivers?.length===0,'2.4 GHz radio metadata must not be guessed as Bluetooth/Wi-Fi');
 

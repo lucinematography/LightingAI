@@ -9,6 +9,13 @@ function wirelessFlags(f){
     wifi:values.some(v=>/(^|[^a-z0-9])(wi-?fi|wifi|wlan)([^a-z0-9]|$)/i.test(v))
   };
 }
+function externalFor(fixture,transport){
+  const c=fixture?.control;
+  if(!c||Array.isArray(c)||typeof c!=='object') return false;
+  const rows=list(c?.externalInterfaceRequired).map(v=>v.toLowerCase());
+  if(transport==='wifi') return rows.some(v=>/wi-?fi|wifi|w-2|wireless adapter/.test(v));
+  return rows.some(v=>/bluetooth|\bble\b|bt dongle|bluetooth.*dongle|sidus link bridge/.test(v));
+}
 function clean(v){
   const s=String(v??'').trim();
   return s||null;
@@ -31,7 +38,11 @@ function bucket(map,key){
     fixtures:new Set(),
     manufacturers:new Set(),
     bluetoothRoutes:0,
-    wifiRoutes:0
+    wifiRoutes:0,
+    directBluetoothRoutes:0,
+    assistedBluetoothRoutes:0,
+    directWifiRoutes:0,
+    assistedWifiRoutes:0
   });
   return map.get(key);
 }
@@ -40,8 +51,16 @@ function add(map,key,fixture,flags){
   const row=bucket(map,key);
   row.fixtures.add(String(fixture.id));
   row.manufacturers.add(String(fixture.manufacturer||'Unknown'));
-  if(flags.bluetooth) row.bluetoothRoutes++;
-  if(flags.wifi) row.wifiRoutes++;
+  if(flags.bluetooth){
+    row.bluetoothRoutes++;
+    if(externalFor(fixture,'bluetooth')) row.assistedBluetoothRoutes++;
+    else row.directBluetoothRoutes++;
+  }
+  if(flags.wifi){
+    row.wifiRoutes++;
+    if(externalFor(fixture,'wifi')) row.assistedWifiRoutes++;
+    else row.directWifiRoutes++;
+  }
 }
 function serialize(map){
   return Object.fromEntries(
@@ -51,6 +70,10 @@ function serialize(map){
         fixtureCount:row.fixtures.size,
         bluetoothRoutes:row.bluetoothRoutes,
         wifiRoutes:row.wifiRoutes,
+        directBluetoothRoutes:row.directBluetoothRoutes,
+        assistedBluetoothRoutes:row.assistedBluetoothRoutes,
+        directWifiRoutes:row.directWifiRoutes,
+        assistedWifiRoutes:row.assistedWifiRoutes,
         manufacturers:[...row.manufacturers].sort()
       }])
   );

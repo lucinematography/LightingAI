@@ -25,7 +25,7 @@ export const NANLITE_FC_720_FIXTURES=[
     id:'nanlite-fc-720b',manufacturer:'Nanlite',model:'FC-720B',family:'FC-720',
     category:'Light',discontinued:false,sourceType:'Bi-Color LED Spotlight',mount:'Bowens',
     cctK:{min:2700,max:6500},colorMode:'Bi-Color',cri:96,tlci:98,powerDrawW:750,
-    batteryPowered:false,powerMode:'AC only',control:control(),sourceUrl:SRC_B
+    batteryPowered:false,powerMode:'AC only',control:control({nfc:true}),sourceUrl:SRC_B
   },
   {
     id:'nanlite-fc-720c',manufacturer:'Nanlite',model:'FC-720C',family:'FC-720',
@@ -71,6 +71,6 @@ export const NANLITE_FC_720_ACCESSORIES=[
   {
     id:'nanlite-fc-720-series-control-note',manufacturer:'Nanlite',model:'FC-720 Bluetooth / DMX-RDM Control',
     category:'Control',compatibleWith:BOTH,compatibilityStatus:'Designed For',
-    conditions:['FC-720C additionally supports NFC pairing; official FC-720B/C product pages do not list 2.4G control'],sourceUrl:SERIES
+    conditions:['FC-720B and FC-720C support NFC pairing; official FC-720B/C product pages do not list 2.4G control'],sourceUrl:SERIES
   }
 ];

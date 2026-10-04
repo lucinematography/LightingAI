@@ -13,12 +13,13 @@ const SRC={
   sixCompare:'https://nanliteus.com/blogs/learn/whats-the-difference-between-the-pavotube-ii-6c-6cp-6xr'
 };
 
-function control({usbCdmx=false,twoPointFour=true}={}){
+function control({usbCdmx=false,twoPointFour=true,nfc=false}={}){
   return {
     wired:['DMX512','RDM'],
-    wireless:['LumenRadio CRMX','Bluetooth / NANLINK app',...(twoPointFour?['2.4G']:[])],
+    wireless:['LumenRadio CRMX','Bluetooth / NANLINK app',...(twoPointFour?['2.4G']:[]),...(nfc?['NFC pairing']:[])],
     builtInBluetooth:true,
     builtInCRMX:true,
+    nfcPairing:nfc,
     dmxConnection:usbCdmx?'USB-C via CB-DMX-USBC-1/3II adapter':'Locking metal DMX/RDM port',
     directLightingAI:[],
     externalInterfaceRequired:[
@@ -41,7 +42,7 @@ function fixture(id,model,lengthLabel,powerDrawW,batteryMah,cri,tlci,sourceUrl,e
 
 export const NANLITE_PAVOTUBE_II_XR_FIXTURES=[
   fixture('nanlite-pavotube-ii-6xr','PavoTube II 6XR','10-inch T12 tube',16,3200,96,97,SRC.xr6,{
-    control:control({usbCdmx:true,twoPointFour:false}),
+    control:control({usbCdmx:true,twoPointFour:false,nfc:true}),
     powerOptions:['Internal battery','USB-C PD 3.0','USB power bank','AC via USB-C PD adapter']
   }),
   fixture('nanlite-pavotube-ii-15xr','PavoTube II 15XR','2-foot T12 tube',35,2200,97,98,SRC.xr15,{

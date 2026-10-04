@@ -12,6 +12,9 @@ const TB='https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box';
 const CBFZ75='https://nanliteus.com/products/head-cable-24-7ft-for-forza-720-720b-500-ii-500b-ii-300-ii-300b-ii';
 const CBFZ12='https://nanliteus.com/products/head-cable-39-5ft-for-forza-720-720b-500-ii-500b-ii-300-ii-300b-ii';
 const CAPBW='https://nanliteus.com/nanlite-replacement-cob-cap-for-forza-720-720b-300b-200-and-fs-150/';
+const CAPFAQ='https://nanliteus.com/pages/faq';
+const DAY300='https://nanliteus.com/nanlite-forza-300-ii-led-spotlight-2-light-kit/';
+const F720B='https://nanliteus.com/products/forza-720b-bi-color-led-spotlight-with-rolling-case';
 
 function control(){
   return {
@@ -50,7 +53,7 @@ const BOTH=['nanlite-forza-300b-ii','nanlite-forza-500b-ii'];
 const DAYLIGHT_II=['nanlite-forza-300-ii','nanlite-forza-500-ii'];
 const FL20G_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'];
 const LONG_HEAD_CABLE_TARGETS=[...BOTH,...DAYLIGHT_II,'nanlite-forza-720b','nanlite-forza-720'];
-const CAP_BW_B_TARGETS=['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b'];
+const CAP_BW_B_TARGETS=['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b'];
 
 export const NANLITE_FORZA_II_ACCESSORIES=[
   {
@@ -58,6 +61,9 @@ export const NANLITE_FORZA_II_ACCESSORIES=[
     category:'Other',mount:'Bowens',compatibleWith:CAP_BW_B_TARGETS,compatibilityStatus:'Compatible',
     includedWithFixtures:['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b'],
     inclusionEvidenceNote:'Included-with list contains only current Forza models whose first-party package contents were explicitly verified; compatibility is broader.',
+    officialSourceConflict:true,
+    conflictNote:'Nanlite FAQ lists an older AS-CAP-BW-B compatibility set, while current Forza 300 II, 300B II, 500B II and 720B package pages explicitly include AS-CAP-BW-B. Forza 500 II is not inferred without equally direct first-party evidence.',
+    conflictSources:[CAPFAQ,DAY300,SRC300,SRC500,F720B],
     sourceUrl:CAPBW
   },
   {

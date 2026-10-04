@@ -152,7 +152,7 @@ jobs:
           LIGHTINGAI_KEY_ALIAS: lightai-probe
           LIGHTINGAI_KEY_PASSWORD: probe-test-only
         run: |
-          gradle assembleRelease -PreleaseVersionCode=1 -PreleaseVersionName=Probe -PprobeAppLabel="Light AI Proba"
+          gradle assembleRelease -PreleaseVersionCode=2 -PreleaseVersionName="Proba 1" -PprobeAppLabel="Light AI Proba 1"
 
       - name: Verify packaged Light AI Proba APK
         shell: bash
@@ -203,15 +203,15 @@ jobs:
           test -x "$AAPT"
           BADGING="$("$AAPT" dump badging "$APK")"
           grep -Fq "package: name='com.lightingai.probe'" <<<"$BADGING"
-          grep -Fq "application-label:'Light AI Proba'" <<<"$BADGING"
+          grep -Fq "application-label:'Light AI Proba 1'" <<<"$BADGING"
 
-          cp "$APK" "app/build/outputs/apk/release/Light-AI-Proba.apk"
-          echo "Light AI Proba signed APK verified"
+          cp "$APK" "app/build/outputs/apk/release/Light-AI-Proba-1.apk"
+          echo "Light AI Proba 1 signed APK verified"
 
       - name: Upload Light AI Proba APK
         uses: actions/upload-artifact@v7
         with:
-          name: Light-AI-Proba.apk
-          path: app/build/outputs/apk/release/Light-AI-Proba.apk
+          name: Light-AI-Proba-1.apk
+          path: app/build/outputs/apk/release/Light-AI-Proba-1.apk
           archive: false
           retention-days: 30

@@ -113,6 +113,37 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  NEEWER: {
+    id:'neewer-app-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'NEEWER App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact NEEWER model from the transport-verified catalog set.',
+      'Confirm the fixture Bluetooth indicator is active/blinking as documented before app connection.',
+      'Use the official NEEWER App and isolate one fixture where practical.',
+      'Do not treat built-in 2.4G group-control radio traffic as Bluetooth command evidence.'
+    ],
+    officialSources:[
+      'https://neewer.com/pages/faq',
+      'https://eu.neewer.com/collections/all-products/products/neewer-nt-bt-bluetooth-usb-transmitter-for-pc-mac-66605690',
+      'https://neewer.com/products/neewer-cri-97-50w-660-prorgb-led-light-66600136'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Enable Bluetooth pairing/indicator, connect exactly one fixture in the NEEWER App, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same initial intensity perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'Only on RGB/full-color models; perform one HSI/RGB change per capture after DIM/CCT evidence is stable.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one documented scene/effect per capture only after simpler controls are understood.'}
+    },
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   amaran: {
     id:'amaran-sidus-direct-bluetooth-capture-v1',
     transport:'bluetooth',

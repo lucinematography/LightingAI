@@ -31,6 +31,7 @@ const allowed=new Set([
   'backend/kelvin-narrator-bluetooth-library.js',
   'backend/smallrig-ble-library.js',
   'backend/amaran-sidus-wireless-library.js',
+  'backend/neewer-bluetooth-library.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js',
   'backend/probe-integration-selftest.js',

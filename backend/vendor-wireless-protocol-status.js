@@ -36,6 +36,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  NEEWER: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'neewer-app-direct-bluetooth-capture-v1',
+    evidence: [
+      'https://neewer.com/pages/faq',
+      'https://eu.neewer.com/collections/all-products/products/neewer-nt-bt-bluetooth-usb-transmitter-for-pc-mac-66605690',
+      'https://neewer.com/products/neewer-cri-97-50w-660-prorgb-led-light-66600136',
+      'https://neewer.com/collections/all-led-lights/products/neewer-rgb1200-app-control-rgb-light-66601606',
+      'https://neewer.com/products/neewer-cb60b-bi-color-70w-led-video-light-66602613',
+      'https://neewer.com/products/neewer-led-video-light-66601007'
+    ],
+    note: 'Bluetooth is verified only for RGB660 PRO II, RGB1200, CB60B and CB60 RGB in this checkpoint. Built-in 2.4G/Infinity grouping is kept distinct from the Bluetooth app transport.'
+  },
   amaran: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'transport_verified_sm5c_only',

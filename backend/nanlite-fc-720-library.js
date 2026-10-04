@@ -47,7 +47,7 @@ export const NANLITE_FC_720_ACCESSORIES=[
   {
     id:'nanlite-pj-bm-25-45',manufacturer:'Nanlite',model:'PJ-BM-25-45 Bowens Mount Projection Attachment 25°-45°',
     category:'Spotlight',mount:'Bowens',beamAngleDeg:{min:25,max:45},
-    compatibleWith:['nanlite-fc-720b','nanlite-fc-720c','nanlite-fc-500b','nanlite-fc-500c','nanlite-forza-300b-ii','nanlite-forza-500b-ii'],
+    compatibleWith:['nanlite-fc-720b','nanlite-fc-720c','nanlite-fc-500b','nanlite-fc-500c','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b'],
     compatibilityStatus:'Designed For',sourceUrl:PJ
   },
   {

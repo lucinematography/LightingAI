@@ -39,12 +39,12 @@ const failClosedRuntime=[
 ];
 for(const [name,text] of failClosedRuntime){
   for(const forbidden of [
-    /production\s*:\s*true/,
-    /productionReady\s*:\s*true/,
-    /vendorDirectReady\s*:\s*true/,
-    /status\s*:\s*['"]production['"]/,
-    /semanticReady\s*:\s*true/,
-    /transportReady\s*:\s*true/
+    /production\s*[:=]\s*true/,
+    /productionReady\s*[:=]\s*true/,
+    /vendorDirectReady\s*[:=]\s*true/,
+    /status\s*[:=]\s*['"]production['"]/,
+    /semanticReady\s*[:=]\s*true/,
+    /transportReady\s*[:=]\s*true/
   ]) expect(!forbidden.test(text),'CONTROL runtime must remain fail-closed until physical driver verification: '+name+' matched '+String(forbidden));
 }
 for(const nativePath of [

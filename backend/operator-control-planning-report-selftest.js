@@ -46,11 +46,11 @@ expect(by.Astera?.wirelessFixtures===23,'Astera unique wireless fixture count ch
 expect(by['DMG Lumiere']?.wirelessFixtures===3,'DMG Lumiere wireless fixture count changed unexpectedly');
 expect(by.ZHIYUN?.wirelessFixtures===16,'ZHIYUN wireless fixture count changed unexpectedly');
 
-for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight','Quasar Science','amaran','GVM','Litepanels','DMG Lumiere','ZHIYUN']){
+for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight','Quasar Science','amaran','GVM','Litepanels','DMG Lumiere']){
   const transports=new Set(by[maker]?.requiredProductionTransports||[]);
   expect(transports.has('bluetooth')&&transports.has('wifi'),maker+' dual-transport production scope must require Bluetooth and Wi-Fi');
 }
-for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli','Kelvin','SmallRig','NEEWER']){
+for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli','Kelvin','SmallRig','NEEWER','ZHIYUN']){
   const transports=by[maker]?.requiredProductionTransports||[];
   expect(transports.length===1&&transports[0]==='bluetooth',maker+' current production scope should require Bluetooth only');
 }

@@ -103,6 +103,7 @@ import { NANLITE_FS_CURRENT_FIXTURES, NANLITE_FS_CURRENT_ACCESSORIES } from './n
 import { NANLITE_LUMIPAD_CURRENT_FIXTURES, NANLITE_LUMIPAD_CURRENT_ACCESSORIES } from './nanlite-lumipad-current-library.js';
 import { NANLITE_MIRO_CURRENT_FIXTURES, NANLITE_MIRO_CURRENT_ACCESSORIES } from './nanlite-miro-current-library.js';
 import { NANLITE_CREATOR_HANDHELD_FIXTURES, NANLITE_CREATOR_HANDHELD_ACCESSORIES } from './nanlite-creator-handheld-library.js';
+import { NANLITE_CREATOR_COMPACT_FIXTURES, NANLITE_CREATOR_COMPACT_ACCESSORIES } from './nanlite-creator-compact-library.js';
 import { ALADDIN_MOSAIC_FIXTURES, ALADDIN_MOSAIC_ACCESSORIES } from './aladdin-mosaic-library.js';
 import { ALADDIN_FABRIC_LITE_FIXTURES, ALADDIN_FABRIC_LITE_ACCESSORIES } from './aladdin-fabric-lite-library.js';
 import { ALADDIN_BI_FLEX_FIXTURES, ALADDIN_BI_FLEX_ACCESSORIES } from './aladdin-bi-flex-library.js';
@@ -203,6 +204,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(NANLITE_LUMIPAD_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_MIRO_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_CREATOR_HANDHELD_FIXTURES));
+  fixtures.push(...clone(NANLITE_CREATOR_COMPACT_FIXTURES));
   fixtures.push(...clone(ALADDIN_MOSAIC_FIXTURES));
   fixtures.push(...clone(ALADDIN_FABRIC_LITE_FIXTURES));
   fixtures.push(...clone(ALADDIN_BI_FLEX_FIXTURES));
@@ -288,6 +290,7 @@ export function buildRuntimeCatalog() {
   accessoryDefinitions.push(...clone(NANLITE_LUMIPAD_CURRENT_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_MIRO_CURRENT_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_CREATOR_HANDHELD_ACCESSORIES));
+  accessoryDefinitions.push(...clone(NANLITE_CREATOR_COMPACT_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_MOSAIC_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_FABRIC_LITE_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_BI_FLEX_ACCESSORIES));

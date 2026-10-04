@@ -89,6 +89,7 @@ import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanli
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
 import { NANLITE_PAVOSLIM_60_120_FIXTURES, NANLITE_PAVOSLIM_60_120_ACCESSORIES } from './nanlite-pavoslim-60-120-library.js';
 import { NANLITE_PAVOTUBE_II_XR_FIXTURES, NANLITE_PAVOTUBE_II_XR_ACCESSORIES } from './nanlite-pavotube-ii-xr-library.js';
+import { NANLITE_PAVOTUBE_II_C_FIXTURES, NANLITE_PAVOTUBE_II_C_ACCESSORIES } from './nanlite-pavotube-ii-c-library.js';
 import { ALADDIN_MOSAIC_FIXTURES, ALADDIN_MOSAIC_ACCESSORIES } from './aladdin-mosaic-library.js';
 import { ALADDIN_FABRIC_LITE_FIXTURES, ALADDIN_FABRIC_LITE_ACCESSORIES } from './aladdin-fabric-lite-library.js';
 import { ALADDIN_BI_FLEX_FIXTURES, ALADDIN_BI_FLEX_ACCESSORIES } from './aladdin-bi-flex-library.js';
@@ -175,6 +176,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));
   fixtures.push(...clone(NANLITE_PAVOSLIM_60_120_FIXTURES));
   fixtures.push(...clone(NANLITE_PAVOTUBE_II_XR_FIXTURES));
+  fixtures.push(...clone(NANLITE_PAVOTUBE_II_C_FIXTURES));
   fixtures.push(...clone(ALADDIN_MOSAIC_FIXTURES));
   fixtures.push(...clone(ALADDIN_FABRIC_LITE_FIXTURES));
   fixtures.push(...clone(ALADDIN_BI_FLEX_FIXTURES));
@@ -246,6 +248,7 @@ export function buildRuntimeCatalog() {
   accessoryDefinitions.push(...clone(NANLITE_FC_720_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_PAVOSLIM_60_120_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_PAVOTUBE_II_XR_ACCESSORIES));
+  accessoryDefinitions.push(...clone(NANLITE_PAVOTUBE_II_C_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_MOSAIC_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_FABRIC_LITE_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_BI_FLEX_ACCESSORIES));

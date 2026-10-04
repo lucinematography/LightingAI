@@ -427,11 +427,18 @@ for(const id of ['nanlite-miro-30c','nanlite-miro-60c']){
     if(!(f.control?.wireless||[]).includes('Bluetooth / NANLINK app')) failures.push('miro Bluetooth/NANLINK missing: '+id);
   }
 }
-for(const id of ['nanlite-bt-npf750-miro','nanlite-bt-npf970-miro','nanlite-bt-cg-npf-2','nanlite-as-pbh-npf']){
+for(const id of ['nanlite-bt-npf750','nanlite-bt-npf970','nanlite-as-pbh-npf']){
   const a=accessoryById.get(id);
   for(const target of ['nanlite-miro-30c','nanlite-miro-60c'])
     if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
 }
+const npfCharger=accessoryById.get('nanlite-bt-cg-npf-2');
+for(const target of ['nanlite-bt-npf750','nanlite-bt-npf970'])
+  if(!npfCharger?.compatibleWith?.includes(target)) failures.push('BT-CG-NPF-2 missing battery '+target);
+for(const target of ['nanlite-miro-30c','nanlite-miro-60c','nanlite-wand'])
+  if(npfCharger?.compatibleWith?.includes(target)) failures.push('BT-CG-NPF-2 must link to batteries, not directly to fixture '+target);
+for(const legacyId of ['nanlite-bt-npf750-miro','nanlite-bt-npf970-miro'])
+  if(accessoryById.has(legacyId)) failures.push('Legacy miro-scoped NP-F accessory ID must stay removed: '+legacyId);
 for(const id of ['nanlite-wand','nanlite-pico']){
   const f=fixtures.find(x=>x.id===id);
   if(!f) failures.push('Missing current Nanlite creator fixture: '+id);
@@ -443,7 +450,7 @@ for(const id of ['nanlite-wand','nanlite-pico']){
     if(!(f.control?.wireless||[]).includes('Bluetooth / NANLINK app')) failures.push('Creator Bluetooth/NANLINK missing: '+id);
   }
 }
-for(const id of ['nanlite-bt-npf750-miro','nanlite-bt-npf970-miro']){
+for(const id of ['nanlite-bt-npf750','nanlite-bt-npf970']){
   if(!accessoryById.get(id)?.compatibleWith?.includes('nanlite-wand')) failures.push(id+' missing wand');
 }
 for(const id of ['nanlite-wand-barndoors','nanlite-wand-diffuser','nanlite-wand-case']){

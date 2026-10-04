@@ -116,6 +116,10 @@ jobs:
         working-directory: backend
         run: node control-wireless-catalog-audit.js
 
+      - name: Audit Bluetooth and Wi-Fi fixture classes
+        working-directory: backend
+        run: node wireless-fixture-class-coverage-selftest.js
+
       - name: Validate control system driver families
         working-directory: backend
         run: node control-system-drivers-selftest.js

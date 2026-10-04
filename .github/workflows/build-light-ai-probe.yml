@@ -116,6 +116,11 @@ jobs:
         working-directory: backend
         run: node control-wireless-catalog-audit.js
 
+      - name: Validate Aputure wireless verification
+        working-directory: backend
+        run: node aputure-wireless-verification-selftest.js
+
+
       - name: Validate control system driver families
         working-directory: backend
         run: node control-system-drivers-selftest.js

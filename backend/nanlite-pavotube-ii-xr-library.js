@@ -10,7 +10,9 @@ const SRC={
   xr60Accessories:'https://nanliteus.com/collections/pavotube-ii-60xr-accessories',
   dmxUsbC:'https://nanliteus.com/products/usb-c-to-dmx-cable',
   pavotubeSeries:'https://nanliteus.com/pages/pavotube-series',
-  sixCompare:'https://nanliteus.com/blogs/learn/whats-the-difference-between-the-pavotube-ii-6c-6cp-6xr'
+  sixCompare:'https://nanliteus.com/blogs/learn/whats-the-difference-between-the-pavotube-ii-6c-6cp-6xr',
+  grid6:'https://nanliteus.com/products/pavotube-ii-6c-fabric-grid',
+  frame8:'https://nanliteus.com/products/8-tube-light-frame-with-softbox-grid'
 };
 
 function control({usbCdmx=false,twoPointFour=true,nfc=false}={}){
@@ -110,9 +112,19 @@ export const NANLITE_PAVOTUBE_II_XR_ACCESSORIES=[
     category:'Mount',compatibleWith:LOCKING,compatibilityStatus:'Compatible',sourceUrl:SRC.xr1530Accessories
   },
   {
+    id:'nanlite-fr-t12-8-sb',manufacturer:'Nanlite',model:'FR-T12-8+SB 8-Tube Light Frame with Softbox & Grid',
+    sku:'FRT128SB',category:'Frame',mount:'Junior pin',
+    compatibleWith:['nanlite-pavotube-ii-30c','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-30x'],
+    compatibilityStatus:'Compatible',
+    bundledComponents:['Frame with yoke','Softbox','4 softbox rods','2 diffusion layers','Grid','2 rear panel covers','Softbox carrying bag'],
+    compatibilityEvidenceNote:'Official Nanlite specifications explicitly list PavoTube II 30C, 30XR and 30X compatibility.',
+    sourceUrl:SRC.frame8
+  },
+  {
     id:'nanlite-ec-ptii6c',manufacturer:'Nanlite',model:'EC-PTII6C Fabric Grid',
-    category:'Grid',compatibleWith:['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-6xr'],compatibilityStatus:'Compatible',
-    sourceUrl:SRC.sixCompare
+    category:'Grid',beamAngleDeg:40,compatibleWith:['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6xr'],compatibilityStatus:'Compatible',
+    compatibilityEvidenceNote:'Official Nanlite product page explicitly names PavoTube II 6C and 6XR. PavoTube II 6CP is not inferred.',
+    sourceUrl:SRC.grid6
   },
   {
     id:'nanlite-as-wb-ptii6c',manufacturer:'Nanlite',model:'AS-WB-PTII6C Waterproof Bag',

@@ -379,9 +379,28 @@ if((sixCP?.control?.wired||[]).length) failures.push('PavoTube II 6CP must not c
 if((sixCP?.control?.wireless||[]).includes('2.4G')) failures.push('PavoTube II 6CP must not infer 2.4G');
 if(!sixCP?.control?.nfcPairing) failures.push('PavoTube II 6CP NFC pairing missing');
 if(sixCP?.control?.builtInCRMX) failures.push('PavoTube II 6CP must not claim CRMX');
-for(const id of ['nanlite-ec-ptii6c','nanlite-as-wb-ptii6c','nanlite-pavotube-t12-clip-1-4','nanlite-pavotube-t12-clip-magnet']){
+for(const id of ['nanlite-as-wb-ptii6c','nanlite-pavotube-t12-clip-1-4','nanlite-pavotube-t12-clip-magnet']){
   const a=accessoryById.get(id); if(!a) failures.push('Missing shared 10-inch PavoTube accessory: '+id);
   else for(const target of ['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-6xr']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
+}
+const sixGrid=accessoryById.get('nanlite-ec-ptii6c');
+if(!sixGrid) failures.push('Missing EC-PTII6C fabric grid');
+else {
+  for(const target of ['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6xr']) if(!sixGrid.compatibleWith?.includes(target)) failures.push('EC-PTII6C missing '+target);
+  if(sixGrid.compatibleWith?.includes('nanlite-pavotube-ii-6cp')) failures.push('EC-PTII6C must not infer PavoTube II 6CP compatibility');
+  if(sixGrid.beamAngleDeg!==40) failures.push('EC-PTII6C beam angle must remain 40 degrees');
+}
+const miniTripod=accessoryById.get('nanlite-as-mt-hg-1-4');
+if(!miniTripod) failures.push('Missing AS-MT/HG-1/4 mini tripod');
+else {
+  if(!miniTripod.compatibleWith?.includes('nanlite-pavotube-ii-6c')) failures.push('AS-MT/HG-1/4 missing PavoTube II 6C');
+  if(miniTripod.compatibleWith?.includes('nanlite-pavotube-ii-6cp')||miniTripod.compatibleWith?.includes('nanlite-pavotube-ii-6xr')) failures.push('AS-MT/HG-1/4 must not infer unlisted 6CP/6XR compatibility');
+}
+const frame8=accessoryById.get('nanlite-fr-t12-8-sb');
+if(!frame8) failures.push('Missing FR-T12-8+SB 8-tube frame');
+else {
+  for(const target of ['nanlite-pavotube-ii-30c','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-30x']) if(!frame8.compatibleWith?.includes(target)) failures.push('FR-T12-8+SB missing '+target);
+  if(frame8.sku!=='FRT128SB') failures.push('FR-T12-8+SB SKU mismatch');
 }
 const usb6=accessoryById.get('nanlite-cb-dmx-usbc-1-3ii');
 for(const id of ['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp']) if(usb6?.compatibleWith?.includes(id)) failures.push('USB-C DMX adapter must not be inferred for '+id);

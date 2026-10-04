@@ -90,6 +90,7 @@ const allowed=new Set([
   'backend/operator-control-planning-report-selftest.js',
   'backend/wireless-control-capability-gap-report.js',
   'backend/wireless-control-capability-gap-report-selftest.js',
+  '.github/workflows/build-apk.yml',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

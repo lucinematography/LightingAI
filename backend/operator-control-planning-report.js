@@ -12,6 +12,14 @@ function wirelessFlags(f){
     wifi:c?.wirelessVerification?.wifi?.verified===true
   };
 }
+function catalogWirelessFlags(f){
+  const c=f?.control;
+  const values=Array.isArray(c)?list(c):[...list(c?.wireless),...list(c?.directLightingAI)];
+  return {
+    bluetooth:values.some(v=>/(^|[^a-z0-9])(bluetooth|ble)([^a-z0-9]|$)/i.test(v)),
+    wifi:values.some(v=>/(^|[^a-z0-9])(wi-?fi|wifi|wlan)([^a-z0-9]|$)/i.test(v))
+  };
+}
 function planFor(plan,transport){
   if(!plan) return null;
   if(plan.transport===transport) return plan.id||null;
@@ -21,6 +29,14 @@ function planFor(plan,transport){
 export function buildOperatorControlPlanningReport(){
   const {fixtures}=buildRuntimeCatalog();
   const by=new Map();
+  const requiredFixtureIdsByMaker=new Map();
+  for(const fixture of fixtures){
+    const flags=catalogWirelessFlags(fixture);
+    if(!flags.bluetooth&&!flags.wifi) continue;
+    const maker=fixture?.manufacturer||'Unknown';
+    if(!requiredFixtureIdsByMaker.has(maker)) requiredFixtureIdsByMaker.set(maker,[]);
+    if(fixture?.id) requiredFixtureIdsByMaker.get(maker).push(String(fixture.id));
+  }
 
   for(const fixture of fixtures){
     const flags=wirelessFlags(fixture);
@@ -64,7 +80,7 @@ export function buildOperatorControlPlanningReport(){
       commandReady:vendorWideCommandProductionReady(row.manufacturer,[
         ...(row.bluetoothFixtures>0?['bluetooth']:[]),
         ...(row.wifiFixtures>0?['wifi']:[])
-      ]),
+      ],requiredFixtureIdsByMaker.get(row.manufacturer)||[]),
       bluetoothPlanId:row.bluetoothFixtures?planFor(plan,'bluetooth'):null,
       wifiPlanId:row.wifiFixtures?planFor(plan,'wifi'):null,
       nextStep:status?.nextStep||'status-missing'

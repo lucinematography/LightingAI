@@ -98,6 +98,10 @@ const aputure=byManufacturer.get('Aputure');
 if(!aputure || aputure.fixtures!==19 || aputure.bluetooth!==19) {
   failures.push('Aputure Sidus Bluetooth verification expected 19/19 fixtures');
 }
+const godox=byManufacturer.get('Godox');
+if(!godox || godox.bluetooth!==68) {
+  failures.push('Godox Bluetooth catalog coverage expected 68 fixtures');
+}
 const summary = {
   ok: failures.length === 0,
   fixtures: fixtures.length,

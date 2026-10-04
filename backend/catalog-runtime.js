@@ -155,6 +155,7 @@ import { normalizeAladdinControl } from './aladdin-control-verification.js';
 import { qualifyLiteGearSpectrumG2Profiles } from './litegear-control-verification.js';
 import { normalizeKinoFloControl } from './kinoflo-control-verification.js';
 import { normalizeAputureWirelessControl } from './aputure-wireless-verification.js';
+import { normalizeArriWirelessControl } from './arri-wireless-verification.js';
 
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function unique(values = []) { return [...new Set(values)]; }
@@ -170,6 +171,7 @@ function mergeAccessory(base, extra) {
 export function buildRuntimeCatalog() {
   const fixtures = [...clone(FIXTURE_LIBRARY), ...clone(ARRI_SKYPANEL_X_FIXTURES), ...clone(ARRI_SKYPANEL_PRO_FIXTURES), ...clone(ARRI_SKYPANEL_CLASSIC_S30_FIXTURES), ...clone(ARRI_SKYPANEL_CLASSIC_S60_FIXTURES), ...clone(ARRI_SKYPANEL_CLASSIC_S120_FIXTURES), ...clone(ARRI_SKYPANEL_CLASSIC_S360_FIXTURES), ...clone(ARRI_SKYPANEL_DISCONTINUED_FIXTURES), ...clone(ARRI_L_SERIES_PLUS_FIXTURES), ...clone(ARRI_ORBITER_FIXTURES), ...clone(ARRI_L_SERIES_C_DISCONTINUED_FIXTURES), ...clone(ARRI_L_SERIES_DT_TT_DISCONTINUED_FIXTURES), ...clone(ARRI_CASTER_SERIES_DISCONTINUED_FIXTURES), ...clone(ARRI_M_SERIES_M8_FIXTURES), ...clone(ARRI_M_SERIES_M18_FIXTURES), ...clone(ARRI_M_SERIES_M40_FIXTURES), ...clone(ARRI_M_SERIES_M90_FIXTURES), ...clone(ARRI_M_SERIES_ARRIMAX_18_12_FIXTURES), ...clone(ARRI_TRUE_BLUE_D5_FIXTURES), ...clone(ARRI_TRUE_BLUE_D12_FIXTURES), ...clone(ARRI_TRUE_BLUE_D25_FIXTURES), ...clone(ARRI_TRUE_BLUE_D40_FIXTURES), ...clone(ARRI_DAYLIGHT_18_12_FIXTURES), ...clone(ARRI_ARRISUN_DISCONTINUED_FIXTURES), ...clone(ARRI_ARRISUN_EVENT_DISCONTINUED_FIXTURES), ...clone(ARRI_COMPACT_THEATER_DISCONTINUED_FIXTURES), ...clone(ARRI_COMPACT_DISCONTINUED_FIXTURES), ...clone(ARRI_ARRILUX_DISCONTINUED_FIXTURES), ...clone(ARRI_X_SERIES_DISCONTINUED_FIXTURES), ...clone(ARRI_ARRILITE_PLUS_FIXTURES), ...clone(ARRI_JUNIOR_FIXTURES), ...clone(ARRI_TRUE_BLUE_T1_FIXTURES), ...clone(ARRI_TRUE_BLUE_T2_FIXTURES), ...clone(ARRI_TRUE_BLUE_T5_FIXTURES), ...clone(ARRI_TRUE_BLUE_ST1_FIXTURES), ...clone(ARRI_TRUE_BLUE_ST2_3_FIXTURES), ...clone(ARRI_TRUE_BLUE_ST5_FIXTURES), ...clone(ARRI_TRUE_BLUE_ST_THEATER_FIXTURES), ...clone(ARRI_STUDIO_T_FIXTURES), ...clone(ARRI_TUNGSTEN_DISCONTINUED_FIXTURES)];
   normalizeAputureWirelessControl(fixtures);
+  normalizeArriWirelessControl(fixtures);
   fixtures.push(...clone(ASTERA_TITANTUBE_FIXTURES));
   fixtures.push(...clone(ASTERA_HELIOSTUBE_FIXTURES));
   fixtures.push(...clone(ASTERA_HYPERIONTUBE_FIXTURES));

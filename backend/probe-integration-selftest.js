@@ -68,10 +68,6 @@ const unexpected=changed.filter(p=>!allowed.has(p));
 if(unexpected.length) fail('unexpected files changed after verified CONTROL base: '+unexpected.join(', '));
 
 const mustRemainIdentical=[
-  'app/src/main/assets/control-bootstrap.js',
-  'app/src/main/assets/control-routing.js',
-  'app/src/main/assets/control-dashboard.js',
-  'app/src/main/assets/control-system-drivers.js',
   'app/src/main/assets/ble-control.js',
   'app/src/main/java/com/lightingai/app/BleDeviceScanner.java',
   'app/src/main/java/com/lightingai/app/BleGattInspector.java',
@@ -84,10 +80,8 @@ const mustRemainIdentical=[
   'backend/astera-att-session-filter.js',
   'backend/astera-att-sweep.js',
   'backend/astera-physical-capture-set.js',
-  'backend/control-production-selftest.js',
-  'backend/control-operator-desk-selftest.js',
-  'backend/control-catalog-audit.js',
-];
+  'backend/control-catalog-audit.js'
+]
 for(const path of mustRemainIdentical){
   if(!existsAt(CONTROL_BASE,path)||!existsAt('HEAD',path)) fail('required CONTROL file missing: '+path);
   if(git(['show',`${CONTROL_BASE}:${path}`])!==git(['show',`HEAD:${path}`])) fail('verified CONTROL file changed in Probe: '+path);

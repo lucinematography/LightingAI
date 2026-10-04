@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===623,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===17,'wireless manufacturer coverage must remain 17');
+expect(report.fixtureCount===626,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===18,'wireless manufacturer coverage must remain 18');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -45,6 +45,8 @@ expect(by.NEEWER?.bluetoothFixtures===4&&by.NEEWER?.wifiFixtures===0,'NEEWER wir
 expect(by.GVM?.bluetoothFixtures===10&&by.GVM?.wifiFixtures===1&&by.GVM?.bothFixtures===0,'GVM wireless counts changed unexpectedly');
 expect(by.Litepanels?.bluetoothFixtures===13&&by.Litepanels?.wifiFixtures===3&&by.Litepanels?.bothFixtures===3,'Litepanels wireless counts changed unexpectedly');
 expect(by.Litepanels?.assistedBluetooth===10,'Litepanels assisted Bluetooth count changed unexpectedly');
+expect(by['DMG Lumiere']?.bluetoothFixtures===3&&by['DMG Lumiere']?.wifiFixtures===3&&by['DMG Lumiere']?.bothFixtures===3,'DMG Lumiere wireless counts changed unexpectedly');
+expect(by['DMG Lumiere']?.assistedBluetooth===2&&by['DMG Lumiere']?.assistedWifi===2,'DMG Lumiere assisted route counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

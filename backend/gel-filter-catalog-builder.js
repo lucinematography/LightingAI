@@ -87,28 +87,6 @@ function uniqueRecords(items = []) {
   return [...map.values()];
 }
 
-export function parseLeeHtml(html, source) {
-  const out = [];
-  const h3 = /<h3\b[^>]*>([\s\S]*?)<\/h3>/gi;
-  let match;
-  while ((match = h3.exec(String(html)))) {
-    const text = cleanName(match[1]);
-    const m = text.match(/^((?:[0-9]{3}[A-Z]?|SC[0-9]{2}))\s+(.+)$/i);
-    if (!m) continue;
-    const item = record(source, m[1], m[2]);
-    if (item) out.push(item);
-  }
-  if (out.length) return uniqueRecords(out);
-
-  const text = stripTags(html);
-  const rx = /\b((?:[0-9]{3}[A-Z]?|SC[0-9]{2}))\s+([A-Z][A-Za-z0-9+/'().,& -]{2,80}?)(?=\s+(?:[0-9]{3}[A-Z]?|SC[0-9]{2})\s+|$)/g;
-  while ((match = rx.exec(text))) {
-    const item = record(source, match[1], match[2]);
-    if (item) out.push(item);
-  }
-  return uniqueRecords(out);
-}
-
 function roscoCodeRegex(source) {
   return source.codePrefix === 'E' ? /\bE\d{3}\b/g : /\bR\d{2,4}\b/g;
 }
@@ -151,7 +129,7 @@ export function parseRoscoHtml(html, source) {
 }
 
 function parseSource(html, source) {
-  return source.parser === 'lee' ? parseLeeHtml(html, source) : parseRoscoHtml(html, source);
+  return parseRoscoHtml(html, source);
 }
 
 async function fetchText(fetchImpl, url) {
@@ -170,9 +148,6 @@ async function fetchText(fetchImpl, url) {
 }
 
 async function loadSource(source, fetchImpl) {
-  if (source.parser === 'lee') {
-    return parseSource(await fetchText(fetchImpl, source.url), source);
-  }
   const all = [];
   let emptyPages = 0;
   for (let page = 0; page < (source.maxPages || 1); page++) {

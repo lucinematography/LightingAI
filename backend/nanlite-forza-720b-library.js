@@ -56,7 +56,6 @@ export const NANLITE_FORZA_720B_ACCESSORIES=[
     sourceUrl:SRC.sharedHeadCableEvidence
   },
   included('nanlite-forza-720b-power-cable','Forza 720B Power Cable 6 m','Cable',SRC.fixture),
-  included('nanlite-forza-720b-cob-cap','AS-CAP-BW-B COB Protective Cap','Other',SRC.fixture),
   {
     id:'nanlite-cc-st-fz720',manufacturer:'Nanlite',model:'CC-ST-FZ720 Rolling Padded Case',
     category:'Case',compatibleWith:['nanlite-forza-720b','nanlite-forza-720'],compatibilityStatus:'Designed For',

@@ -1,5 +1,5 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
-import { deriveFixtureControlCapabilities } from './fixture-control-capabilities.js';
+import { deriveFixtureControlCapabilities, validCctRange, declaredColorEngine } from './fixture-control-capabilities.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
 function wireless(f){
@@ -9,12 +9,38 @@ function wireless(f){
   const wifi=values.some(v=>/(^|[^a-z0-9])(wi-?fi|wifi|wlan)([^a-z0-9]|$)/i.test(v));
   return {bluetooth,wifi,any:bluetooth||wifi};
 }
+function declaredFx(f){
+  const direct=[
+    ...(Array.isArray(f?.effects)?f.effects:[]),
+    ...(Array.isArray(f?.fx)?f.fx:[]),
+    ...(Array.isArray(f?.effectModes)?f.effectModes:[])
+  ];
+  if(direct.length) return true;
+  if(Array.isArray(f?.dmxModes) && f.dmxModes.some(mode=>/\b(?:fx|effect|effects)\b/i.test(String(mode?.name||'')))) return true;
+  return /\b(?:fx|effect|effects)\b/i.test(String(f?.controlNotes||''));
+}
+function expectedCapabilities(f){
+  return {
+    dim:String(f?.category||'').toLowerCase()==='light',
+    cct:validCctRange(f),
+    color:declaredColorEngine(f),
+    fx:declaredFx(f)
+  };
+}
 function gapRow(f){
   const flags=wireless(f);
   if(!flags.any) return null;
   const caps=deriveFixtureControlCapabilities(f);
+  const expected=expectedCapabilities(f);
   const missing=[];
-  for(const key of ['dim','cct','color','fx']) if(!caps[key].supported) missing.push(key);
+  const notApplicable=[];
+  for(const key of ['dim','cct','color','fx']){
+    if(!expected[key]){
+      notApplicable.push(key);
+      continue;
+    }
+    if(!caps[key].supported) missing.push(key);
+  }
   return {
     id:f?.id||'',
     manufacturer:f?.manufacturer||'Unknown',
@@ -22,6 +48,8 @@ function gapRow(f){
     bluetooth:flags.bluetooth,
     wifi:flags.wifi,
     missing,
+    notApplicable,
+    expected,
     capabilities:caps,
     sourceUrl:f?.sourceUrl||''
   };

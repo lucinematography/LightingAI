@@ -113,6 +113,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  VELVET: {
+    id:'velvet-evo-wireless-capture-v1',
+    transport:'bluetooth+wifi',
+    controllerApp:'VELVET GOYA',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact VELVET EVO model at a time with the official GOYA app.',
+      'Record whether the session uses Bluetooth or Wi-Fi Art-Net before each capture.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer Bluetooth support for Studio variants unless the exact model evidence explicitly confirms it.'
+    ],
+    officialSources:[
+      'https://www.velvetlight.tv/velvet-evo/',
+      'https://www.velvetlight.tv/serie/evo/',
+      'https://www.velvetlight.tv/support/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one EVO fixture over the selected wireless transport, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one color change per capture from the same initial state.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Kinotehnik: {
     id:'kinotehnik-practilite-bluetooth-capture-v1',
     transport:'bluetooth',

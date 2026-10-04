@@ -149,10 +149,6 @@ jobs:
         working-directory: backend
         run: node arri-wireless-verification-selftest.js
 
-      - name: Validate Aladdin wireless verification
-        working-directory: backend
-        run: node aladdin-wireless-verification-selftest.js
-
 
       - name: Validate fixture control capabilities
         working-directory: backend

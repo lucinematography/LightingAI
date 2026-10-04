@@ -89,6 +89,7 @@ const exactAllowed = new Set([
   'backend/catalog-runtime.js',
   'backend/dmg-mix-wireless-library.js',
   'backend/zhiyun-bluetooth-library.js',
+  'backend/prolycht-orion-wireless-library.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',

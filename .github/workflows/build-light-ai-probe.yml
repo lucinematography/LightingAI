@@ -34,10 +34,6 @@ jobs:
         working-directory: backend
         run: npm run audit:dependencies
 
-      - name: Build official FILTERI GEL catalog
-        working-directory: backend
-        run: npm run build:gels
-
       - name: Build embedded equipment catalog snapshot
         run: node backend/build-equipment-catalog-snapshot.js
 

@@ -83,10 +83,11 @@ export const NANLITE_PAVOSLIM_60_120_ACCESSORIES=[
     includedWithFixtures:['nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c'],sourceUrl:SRC.swivel
   },
   {
-    id:'nanlite-asbhpps',manufacturer:'Nanlite',model:'ASBHPPS Baby-Pin Holder for PavoSlim 60/120',
-    category:'Mount',mount:'5/8 in baby pin',compatibleWith:ALL,
+    id:'nanlite-asbhpps',manufacturer:'Nanlite',model:'ASBPHPS Baby-Pin Holder for PavoSlim 60/120',
+    category:'Mount',mount:'5/8 in baby pin',
+    compatibleWith:[...ALL,'nanlite-pavoslim-60cl'],
     compatibilityStatus:'Designed For',
-    includedWithFixtures:['nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c'],
+    includedWithFixtures:['nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c'],
     sourceUrl:SRC.baby
   },
   {

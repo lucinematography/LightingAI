@@ -55,7 +55,7 @@ export const NANLITE_PAVOTUBE_II_XR_FIXTURES=[
   })
 ];
 
-const ALL=['nanlite-pavotube-ii-6xr','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c'];
+const ALL=['nanlite-pavotube-ii-6xr','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c'];
 const LOCKING=['nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr','nanlite-pavotube-ii-60xr'];
 const T1530=['nanlite-pavotube-ii-15xr','nanlite-pavotube-ii-30xr'];
 
@@ -107,12 +107,12 @@ export const NANLITE_PAVOTUBE_II_XR_ACCESSORIES=[
   },
   {
     id:'nanlite-ec-ptii6c',manufacturer:'Nanlite',model:'EC-PTII6C Fabric Grid',
-    category:'Grid',compatibleWith:['nanlite-pavotube-ii-6xr'],compatibilityStatus:'Compatible',
+    category:'Grid',compatibleWith:['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-6xr'],compatibilityStatus:'Compatible',
     sourceUrl:SRC.sixCompare
   },
   {
     id:'nanlite-as-wb-ptii6c',manufacturer:'Nanlite',model:'AS-WB-PTII6C Waterproof Bag',
-    category:'Other',compatibleWith:['nanlite-pavotube-ii-6xr'],compatibilityStatus:'Compatible',
+    category:'Other',compatibleWith:['nanlite-pavotube-ii-6c','nanlite-pavotube-ii-6cp','nanlite-pavotube-ii-6xr'],compatibilityStatus:'Compatible',
     conditions:['For underwater / wet-environment use as specified by Nanlite'],sourceUrl:SRC.sixCompare
   },
   {

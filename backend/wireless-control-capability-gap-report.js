@@ -2,7 +2,7 @@ import { buildRuntimeCatalog } from './catalog-runtime.js';
 import { deriveFixtureControlCapabilities, validCctRange, declaredColorEngine } from './fixture-control-capabilities.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
-function wireless(f){
+export function verifiedWirelessTransport(f){
   const c=f?.control;
   if(!c||Array.isArray(c)||typeof c!=='object') return {bluetooth:false,wifi:false,any:false};
   const bluetooth=c?.wirelessVerification?.bluetooth?.verified===true;
@@ -28,7 +28,7 @@ export function expectedCapabilities(f){
   };
 }
 function gapRow(f){
-  const flags=wireless(f);
+  const flags=verifiedWirelessTransport(f);
   if(!flags.any) return null;
   const caps=deriveFixtureControlCapabilities(f);
   const expected=expectedCapabilities(f);

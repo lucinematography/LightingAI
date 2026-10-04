@@ -61,6 +61,12 @@ const allowed=new Set([
   'backend/nanlite-pavotube-x-legacy-library.js',
   'backend/nanlite-sa-legacy-library.js',
   'backend/nanlite-tk-legacy-library.js'
+  'app/src/main/assets/control-bootstrap.js',
+  'app/src/main/assets/control-routing.js',
+  'app/src/main/assets/control-dashboard.js',
+  'app/src/main/assets/control-system-drivers.js',
+  'backend/control-production-selftest.js',
+  'backend/control-operator-desk-selftest.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

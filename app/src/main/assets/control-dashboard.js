@@ -23,16 +23,17 @@ function stateFor(f){
   var bluetooth=vendors.some(function(d){return d&&d.transport==='bluetooth'});
   var wifi=vendors.some(function(d){return d&&d.transport==='wifi'});
   var ready=vendors.some(function(d){return d&&d.status==='production'&&d.production===true});
+  var transportVerified=vendors.some(function(d){return d&&d.transportVerified===true});
   var assisted=vendors.filter(function(d){return d&&d.requiresExternalInterface});
-  return {bluetooth:bluetooth,wifi:wifi,ready:ready,assisted:assisted};
- }catch(e){return {bluetooth:false,wifi:false,ready:false,assisted:[]}}
+  return {bluetooth:bluetooth,wifi:wifi,ready:ready,transportVerified:transportVerified,assisted:assisted};
+ }catch(e){return {bluetooth:false,wifi:false,ready:false,transportVerified:false,assisted:[]}}
 }
 function transportBadge(label,on,color){
  return '<span style="padding:4px 7px;border-radius:999px;border:1px solid '+(on?color:'#353a42')+';background:'+(on?'#151a20':'#111318')+';color:'+(on?color:'#707780')+';font-size:10px;font-weight:900">'+esc(label)+'</span>';
 }
 function fixtureCard(row){
  var f=row.fixture,s=stateFor(f),name=(f.manufacturer||'')+' '+(f.model||f.id||'')+(row.count>1?' #'+(row.index+1):'');
- var status=s.ready?(sr()?'VERIFIKOVAN DRIVER':'VERIFIED DRIVER'):((s.bluetooth||s.wifi)?(sr()?'ČEKA VERIFIKOVAN DRIVER':'WAITING FOR VERIFIED DRIVER'):(sr()?'NEMA BT/WI-FI PROFILA':'NO BT/WI-FI PROFILE'));
+ var status=s.ready?(sr()?'VERIFIKOVAN DRIVER':'VERIFIED DRIVER'):(s.transportVerified?(sr()?'TRANSPORT POTVRĐEN · DRIVER ČEKA VERIFIKACIJU':'TRANSPORT VERIFIED · DRIVER AWAITS VERIFICATION'):((s.bluetooth||s.wifi)?(sr()?'TRANSPORT KANDIDAT · DRIVER ČEKA VERIFIKACIJU':'TRANSPORT CANDIDATE · DRIVER AWAITS VERIFICATION'):(sr()?'NEMA BT/WI-FI PROFILA':'NO BT/WI-FI PROFILE')));
  var assistedText=s.assisted.length?(sr()?'POTREBAN DODATNI INTERFEJS: ':'EXTERNAL INTERFACE REQUIRED: ')+s.assisted.map(function(d){return (d.externalInterfaceRequired||[]).join(', ')}).filter(Boolean).join(' · '):'';
  return '<div class="card" style="margin-bottom:9px;border-color:#303842">'+
   '<div style="font-weight:900">'+esc(name)+'</div><div class="muted small">'+esc(f.family||f.type||'')+'</div>'+

@@ -5,6 +5,7 @@ const SRC={
   f300:'https://nanliteus.com/nanlite-forza-300-ii-led-spotlight-2-light-kit/',
   f500:'https://nanliteus.com/products/forza-500b-ii-led-spotlight',
   f720:'https://nanliteus.com/shop/by-collection/monolight-style/forza-720-720b/',
+  f720Spec:'https://es.nanliteus.com/forza-720-de-monolight-led/',
   case300500:'https://nanliteus.com/products/padded-carrying-case-for-forza-300-ii-and-500-ii',
   case720:'https://nanliteus.com/products/rolling-padded-case-for-forza-720-720b'
 };
@@ -37,7 +38,9 @@ export const NANLITE_FORZA_DAYLIGHT_FIXTURES=[
     sourceNote:'Nanlite Forza 500B II page explicitly identifies the daylight-only Forza 500 II as the companion model'
   }),
   fixture('nanlite-forza-720','Forza 720',SRC.f720,{
-    batteryPowered:true,batteryOptions:['2x V-Mount via Control Unit','AC mains']
+    powerDrawW:800,cri:95,tlci:96,beamAngleDeg:120,
+    batteryPowered:true,batteryOptions:['2x V-Mount via Control Unit','AC mains'],
+    specSourceUrl:SRC.f720Spec
   })
 ];
 

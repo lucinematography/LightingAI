@@ -3,7 +3,8 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     bluetooth: 'transport_verified',
     wifi: 'not_direct_fixture_route_in_current_catalog',
     commandSpec: 'not_captured_from_public_vendor_docs',
-    nextStep: 'vendor-protocol-research-or-physical-capture',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'sidus-direct-bluetooth-capture-v1',
     evidence: [
       'https://aputure.com/en-US/pages/sidus-link',
       'https://help.aputure.com/en/general-help/sidus-link-control'
@@ -14,7 +15,8 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     bluetooth: 'transport_verified',
     wifi: 'not_verified_for_current_direct-fixture-control-set',
     commandSpec: 'not_captured_from_public_vendor_docs',
-    nextStep: 'vendor-protocol-research-or-physical-capture',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'godox-light-bluetooth-capture-v1',
     evidence: [
       'https://www.godox.com/app/',
       'https://www.godox.com/product-e/Godox-Light-App.html'
@@ -25,7 +27,8 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     bluetooth: 'transport_verified',
     wifi: 'transport_verified_model_scoped',
     commandSpec: 'not_captured_from_public_vendor_docs',
-    nextStep: 'separate-direct-bluetooth-from-adapter-assisted-wifi-and-physical-verify',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'nanlink-direct-bluetooth-capture-v1',
     evidence: [
       'https://nanliteus.com/pages/free-nanlink-app',
       'https://www.nanlink.com/en/h-col-242.html'

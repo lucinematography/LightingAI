@@ -90,6 +90,8 @@ const allowed=new Set([
   'backend/operator-control-planning-report-selftest.js',
   'backend/wireless-control-capability-gap-report.js',
   'backend/wireless-control-capability-gap-report-selftest.js',
+  'backend/wireless-fixture-class-coverage-report.js',
+  'backend/wireless-fixture-class-coverage-selftest.js',
   '.github/workflows/build-apk.yml',
   'backend/aputure-wireless-verification-selftest.js',
   'backend/aladdin-wireless-verification-selftest.js',

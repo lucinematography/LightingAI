@@ -914,9 +914,25 @@ if(!mp150?.control?.controlEvidenceIncomplete) failures.push('MixPanel 150 incom
 for(const id of ['nanlite-sb-mp60','nanlite-rc-1-mixpanel60']){
   if(!accessoryById.get(id)?.compatibleWith?.includes('nanlite-mixpanel-60')) failures.push(id+' missing MixPanel 60');
 }
-for(const id of ['nanlite-sb-mp150','nanlite-sbmp150o','nanlite-bt-v-26v270']){
+for(const id of ['nanlite-sb-mp150','nanlite-sbmp150o','nanlite-bt-v-26v270','nanlite-bt-v-26v230']){
   if(!accessoryById.get(id)?.compatibleWith?.includes('nanlite-mixpanel-150')) failures.push(id+' missing MixPanel 150');
 }
+for(const id of ['nanlite-bt-v-26v270','nanlite-bt-v-26v230']){
+  const a=accessoryById.get(id);
+  if(!a?.compatibleWith?.includes('nanlite-forza-500')) failures.push(id+' missing documented Forza 500');
+  if(a?.voltageV!==25.9) failures.push(id+' maximum output voltage must remain 25.9V');
+  if(a?.maxWorkingCurrentA!==12) failures.push(id+' maximum working current must remain 12A');
+}
+if(accessoryById.get('nanlite-bt-v-26v230')?.capacityWh!==230) failures.push('BT-V-26V230 capacity must remain 230Wh');
+if(accessoryById.get('nanlite-bt-v-26v270')?.capacityWh!==270) failures.push('BT-V-26V270 capacity must remain 270Wh');
+for(const id of ['nanlite-bt-cgv-26v-1','nanlite-bt-cgv-26v-2']){
+  const a=accessoryById.get(id);
+  if(!a) failures.push('Missing Nanlite 26V battery charger: '+id);
+  else for(const battery of ['nanlite-bt-v-26v230','nanlite-bt-v-26v270'])
+    if(!a.compatibleWith?.includes(battery)) failures.push(id+' missing '+battery);
+}
+if(accessoryById.get('nanlite-bt-cgv-26v-1')?.slots!==1) failures.push('BT-CGV-26V-1 slot count must remain 1');
+if(accessoryById.get('nanlite-bt-cgv-26v-2')?.slots!==2) failures.push('BT-CGV-26V-2 slot count must remain 2');
 const mixTb=accessoryById.get('nanlite-ws-tb-1');
 for(const target of ['nanlite-mixpanel-60','nanlite-mixpanel-150']) if(!mixTb?.compatibleWith?.includes(target)) failures.push('WS-TB-1 missing '+target);
 const mixRc=accessoryById.get('nanlite-ws-rc-c2');

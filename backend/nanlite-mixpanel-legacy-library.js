@@ -7,7 +7,9 @@ const SRC={
   mp60:'https://nanliteus.com/nanlite-mixpanel-60-bicolor-rgb-hard-and-soft-light-led-panel-open-box/',
   sb60:'https://nanliteus.com/nanlite-mixpanel-60-softbox-includes-fabric-grids/',
   wsTb:'https://nanliteus.com/products/nanlink-ws-tb-1-transmitter-box',
-  battery26:'https://nanliteus.com/nanlite-26v-270wh-li-ion-v-mount-battery/'
+  battery26:'https://nanliteus.com/nanlite-26v-270wh-li-ion-v-mount-battery/',
+  battery26_230:'https://nanliteus.com/nanlite-26v-230wh-li-ion-v-mount-battery/',
+  charger26Single:'https://nanliteus.com/products/single-26v-v-mount-battery-charger-with-d-tap-output'
 };
 
 export const NANLITE_MIXPANEL_LEGACY_FIXTURES=[
@@ -75,8 +77,30 @@ export const NANLITE_MIXPANEL_LEGACY_ACCESSORIES=[
   },
   {
     id:'nanlite-bt-v-26v270',manufacturer:'Nanlite',model:'BT-V-26V270 26V 270Wh Li-Ion V-Mount Battery',
-    category:'Battery',compatibleWith:['nanlite-mixpanel-150'],
-    compatibilityStatus:'Compatible',sourceUrl:SRC.battery26
+    category:'Battery',compatibleWith:['nanlite-forza-500','nanlite-mixpanel-150'],
+    compatibilityStatus:'Compatible',voltageV:25.9,capacityWh:270,maxWorkingCurrentA:12,batteryChemistry:'Li-ion',
+    sourceUrl:SRC.battery26
+  },
+  {
+    id:'nanlite-bt-v-26v230',manufacturer:'Nanlite',model:'BT-V-26V230 26V 230Wh Li-Ion V-Mount Battery',
+    category:'Battery',compatibleWith:['nanlite-forza-500','nanlite-mixpanel-150'],
+    compatibilityStatus:'Compatible',voltageV:25.9,capacityWh:230,maxWorkingCurrentA:12,batteryChemistry:'Li-ion',
+    lifecycleStatus:'legacy/out-of-stock',
+    sourceUrl:SRC.battery26_230
+  },
+  {
+    id:'nanlite-bt-cgv-26v-1',manufacturer:'Nanlite',model:'BT-CGV-26V-1 Single 26V V-Mount Battery Charger with D-Tap Output',
+    category:'Power',compatibleWith:['nanlite-bt-v-26v230','nanlite-bt-v-26v270'],
+    compatibilityStatus:'Compatible',slots:1,chargeTimeFullHours:6,chargeTime80PercentHours:4.5,
+    lifecycleStatus:'out-of-stock',sourceUrl:SRC.charger26Single
+  },
+  {
+    id:'nanlite-bt-cgv-26v-2',manufacturer:'Nanlite',model:'BT-CGV-26V-2 Dual 26V V-Mount Battery Deck Charger',
+    category:'Power',compatibleWith:['nanlite-bt-v-26v230','nanlite-bt-v-26v270'],
+    compatibilityStatus:'Compatible',slots:2,
+    lifecycleStatus:'legacy',
+    compatibilityEvidenceNote:'Both Nanlite BT-V-26V230 and BT-V-26V270 battery pages explicitly name BT-CGV-26V-2 as a supported charger.',
+    evidenceSources:[SRC.battery26_230,SRC.battery26],sourceUrl:SRC.battery26_230
   },
   {
     id:'nanlite-mixpanel-60-barndoors',manufacturer:'Nanlite',model:'MixPanel 60 Metal Barndoors',

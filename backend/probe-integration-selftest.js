@@ -43,6 +43,7 @@ const allowed=new Set([
   'backend/harlowe-bluetooth-library.js',
   'backend/swit-bluetooth-library.js',
   'backend/dracast-bluetooth-library.js',
+  'backend/hive-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

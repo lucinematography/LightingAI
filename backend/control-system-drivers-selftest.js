@@ -39,6 +39,14 @@ expect(nanlite24g?.vendorDrivers?.length===0,'Nanlite 2.4GHz via WS-TB-1 must no
 const wifiOnly=api?.resolve({manufacturer:'Kino Flo',control:{wireless:['Vendor Wi-Fi app control']}});
 expect(wifiOnly?.candidateTransports?.wifi===true&&wifiOnly?.candidateTransports?.bluetooth===false,'Wi-Fi-only candidate not classified');
 
+const assistedWifi=api?.resolve({manufacturer:'Nanlite',control:{wireless:['Wi-Fi via Nanlite W-2 adapter'],externalInterfaceRequired:['Nanlite W-2 Wi-Fi adapter']}});
+const assistedWifiDriver=assistedWifi?.vendorDrivers?.find(x=>x.transport==='wifi');
+expect(assistedWifiDriver?.requiresExternalInterface===true&&assistedWifiDriver?.direct===false,'adapter-assisted Wi-Fi candidate not marked');
+
+const assistedBt=api?.resolve({manufacturer:'ARRI',control:{wireless:['ARRI LiCo Bluetooth 5.0 via supported USB dongle'],externalInterfaceRequired:['Supported Bluetooth 5.0 USB dongle']}});
+const assistedBtDriver=assistedBt?.vendorDrivers?.find(x=>x.transport==='bluetooth');
+expect(assistedBtDriver?.requiresExternalInterface===true&&assistedBtDriver?.direct===false,'adapter-assisted Bluetooth candidate not marked');
+
 const radioOnly=api?.resolve({manufacturer:'Godox',control:{wireless:['2.4 GHz wireless control']}});
 expect(radioOnly?.vendorDrivers?.length===0,'2.4 GHz radio metadata must not be guessed as Bluetooth/Wi-Fi');
 

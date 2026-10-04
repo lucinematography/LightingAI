@@ -6,10 +6,13 @@ import { NANLITE_PAVOTUBE_II_XR_FIXTURES, NANLITE_PAVOTUBE_II_XR_ACCESSORIES } f
 import { NANLITE_PAVOTUBE_II_C_FIXTURES, NANLITE_PAVOTUBE_II_C_ACCESSORIES } from './nanlite-pavotube-ii-c-library.js';
 import { NANLITE_COMPAC_CURRENT_FIXTURES, NANLITE_COMPAC_CURRENT_ACCESSORIES } from './nanlite-compac-current-library.js';
 import { NANLITE_PAVOTUBE_10_CURRENT_FIXTURES, NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES } from './nanlite-pavotube-10-current-library.js';
+import { NANLITE_PAVOTUBE_X_LEGACY_FIXTURES, NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES } from './nanlite-pavotube-x-legacy-library.js';
 
 const failures=[];
-const fixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES];
+const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES];
+const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES];
+const fixtures=[...currentFixtures,...legacyFixtures];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 
@@ -25,10 +28,9 @@ for(const a of accessories){
   }
   if(!a.sourceUrl) failures.push('Missing Nanlite accessory source: '+a.id);
 }
-for(const f of fixtures){
-  if(!f.sourceUrl) failures.push('Missing Nanlite fixture source: '+f.id);
-  if(f.discontinued!==false) failures.push('Current Nanlite fixture not explicitly current: '+f.id);
-}
+for(const f of fixtures) if(!f.sourceUrl) failures.push('Missing Nanlite fixture source: '+f.id);
+for(const f of currentFixtures) if(f.discontinued!==false) failures.push('Current Nanlite fixture not explicitly current: '+f.id);
+for(const f of legacyFixtures) if(f.discontinued!==true) failures.push('Legacy Nanlite fixture not explicitly discontinued: '+f.id);
 for(const id of ['nanlite-as-ba-fmm','nanlite-fl-11','nanlite-pj-fmm-19','nanlite-pj-fmm-36','nanlite-sb-fmm-o-40','nanlite-sb-fmm-o-60']){
   const a=accessoryById.get(id);
   if(!a) failures.push('Missing Nanlite shared FM accessory: '+id);
@@ -159,6 +161,21 @@ for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
   const a=accessoryById.get(id);
   if(!a?.compatibleWith?.includes('nanlite-pavotube-ii-6c')) failures.push(id+' missing PavoTube II 6C');
   if(a?.compatibleWith?.includes('nanlite-pavotube-ii-6cp')) failures.push(id+' must not be inferred for PavoTube II 6CP');
+}
+for(const id of ['nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x']){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing legacy PavoTube II X fixture: '+id);
+  else {
+    if(f.discontinued!==true) failures.push('Legacy PavoTube II X must be discontinued: '+id);
+    if(f.control?.builtInCRMX) failures.push('Legacy PavoTube II X must not claim CRMX: '+id);
+    if(f.control?.dmxConnection!=='Locking aviation DMX/RDM port via CB-DMX-ACP-1/2') failures.push('Legacy PavoTube II X DMX path mismatch: '+id);
+  }
+}
+const xDmx=accessoryById.get('nanlite-cb-dmx-acp-1-2');
+for(const id of ['nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x']) if(!xDmx?.compatibleWith?.includes(id)) failures.push('ACP DMX adapter missing legacy X '+id);
+for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
+  const a=accessoryById.get(id);
+  for(const target of ['nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x']) if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing legacy '+target);
 }
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

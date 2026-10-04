@@ -126,15 +126,19 @@ else {
   if(!vm98.sourceConflictNote) failures.push('BT-V-14.4V98 FC-60C/FC-60B source conflict note missing');
 }
 if(fixtureIds.has('nanlite-fc-60c')) failures.push('Do not create FC-60C fixture from Nanlite battery-page typo');
-const pjTargets=['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-forza-150b','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'];
-for(const id of ['nanlite-pj-fmm-19','nanlite-pj-fmm-36','nanlite-pj-fmm-18-36']){
+const pjClassicTargets=['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b','nanlite-forza-60','nanlite-forza-60b','nanlite-forza-150','nanlite-forza-150b'];
+for(const id of ['nanlite-pj-fmm-19','nanlite-pj-fmm-36']){
   const a=accessoryById.get(id);
-  if(!a) failures.push('Missing current PJ-FMM projection attachment: '+id);
-  else {
-    for(const target of pjTargets) if(!a.compatibleWith?.includes(target)) failures.push(id+' missing documented target '+target);
-    for(const forbidden of ['nanlite-forza-60-ii','nanlite-forza-60','nanlite-forza-60b','nanlite-forza-150'])
-      if(a.compatibleWith?.includes(forbidden)) failures.push(id+' must not infer undocumented target '+forbidden);
-  }
+  if(!a) failures.push('Missing classic PJ-FMM projection attachment: '+id);
+  else for(const target of pjClassicTargets) if(!a.compatibleWith?.includes(target)) failures.push(id+' missing verified target '+target);
+}
+const pjZoomTargets=['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-forza-150b','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'];
+const pjZoomCurrent=accessoryById.get('nanlite-pj-fmm-18-36');
+if(!pjZoomCurrent) failures.push('Missing current PJ-FMM-18-36 projection attachment');
+else {
+  for(const target of pjZoomTargets) if(!pjZoomCurrent.compatibleWith?.includes(target)) failures.push('PJ-FMM-18-36 missing documented target '+target);
+  for(const forbidden of ['nanlite-forza-60-ii','nanlite-forza-60','nanlite-forza-60b','nanlite-forza-150'])
+    if(pjZoomCurrent.compatibleWith?.includes(forbidden)) failures.push('PJ-FMM-18-36 must not infer undocumented target '+forbidden);
 }
 const pjZoom=accessoryById.get('nanlite-pj-fmm-18-36');
 if(pjZoom?.beamAngleDeg?.min!==18||pjZoom?.beamAngleDeg?.max!==36||pjZoom?.rotationDeg!==360)

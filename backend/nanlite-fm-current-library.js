@@ -101,7 +101,8 @@ const FMM_CURRENT = [
   'nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'
 ];
 const FMM_SHARED = [...FMM_CURRENT,'nanlite-forza-60','nanlite-forza-60b','nanlite-forza-150','nanlite-forza-150b'];
-const PJ_FMM_TARGETS = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-forza-150b','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'];
+const PJ_FMM_CLASSIC_TARGETS = FMM_SHARED;
+const PJ_FMM_ZOOM_TARGETS = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-forza-150b','nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'];
 const NANLINK_RC_SHARED=[...FMM_CURRENT,'nanlite-forza-150','nanlite-forza-150b','nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b','nanlite-fc-720b','nanlite-fc-720c','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c','nanlite-pavotube-ii-6c','nanlite-pavotube-ii-15x','nanlite-pavotube-ii-30x','nanlite-pavotube-ii-60x','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-alien-150c','nanlite-alien-300c','nanlite-pavobulb-10c','nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c','nanlite-lumipad-11','nanlite-forza-300-ii','nanlite-forza-500-ii','nanlite-forza-720','nanlite-fs-200b','nanlite-fs-300','nanlite-compac-200b'];
 const NANLINK_TB_SHARED=[...NANLINK_RC_SHARED,'nanlite-forza-500','nanlite-mixpanel-60','nanlite-mixpanel-150','nanlite-tk-140b','nanlite-tk-280b','nanlite-tk-200','nanlite-tk-450'];
 const SMALL_BATTERY = ['nanlite-forza-60-ii','nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'];
@@ -129,18 +130,18 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
   },
   {
     id:'nanlite-pj-fmm-19',manufacturer:'Nanlite',model:'PJ-FMM Projection Attachment with 19° Lens',
-    category:'Spotlight',mount:'FM Mount',beamAngleDeg:19,compatibleWith:PJ_FMM_TARGETS,
+    category:'Spotlight',mount:'FM Mount',beamAngleDeg:19,compatibleWith:PJ_FMM_CLASSIC_TARGETS,
     compatibilityStatus:'Designed For',sourceUrl:SRC.pj19
   },
   {
     id:'nanlite-pj-fmm-36',manufacturer:'Nanlite',model:'PJ-FMM Projection Attachment with 36° Lens',
-    category:'Spotlight',mount:'FM Mount',beamAngleDeg:36,compatibleWith:PJ_FMM_TARGETS,
+    category:'Spotlight',mount:'FM Mount',beamAngleDeg:36,compatibleWith:PJ_FMM_CLASSIC_TARGETS,
     compatibilityStatus:'Designed For',sourceUrl:SRC.pj36
   },
   {
     id:'nanlite-pj-fmm-18-36',manufacturer:'Nanlite',model:'PJ-FMM-18-36 Zoom Projection Attachment',
     category:'Spotlight',mount:'FM Mount',beamAngleDeg:{min:18,max:36},rotationDeg:360,
-    compatibleWith:PJ_FMM_TARGETS,compatibilityStatus:'Designed For',sourceUrl:SRC.pjZoom
+    compatibleWith:PJ_FMM_ZOOM_TARGETS,compatibilityStatus:'Designed For',sourceUrl:SRC.pjZoom
   },
   {
     id:'nanlite-pj-fmm-lens-10',manufacturer:'Nanlite',model:'PJFMMLENS10 10° Interchangeable Lens',

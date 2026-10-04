@@ -63,9 +63,18 @@ export const NANLITE_FM_CURRENT_FIXTURES = [
   fixture('nanlite-forza-60b-ii','Forza 60B II','Forza',2700,6500,72,'Bi-Color',96,98,SRC.forza60bii,{control:control()}),
   fixture('nanlite-forza-60c','Forza 60C','Forza',1800,20000,88,'RGBLAC',96,95,SRC.forza60c,{control:control()}),
   fixture('nanlite-forza-60cr','Forza 60CR','Forza',1800,20000,88,'RGBLAC',96,95,SRC.forza60cr,{control:control({crmx:true})}),
-  fixture('nanlite-fc-60b','FC-60B','FC',2700,6500,78,'Bi-Color',96,98,SRC.fc60b,{control:control()}),
-  fixture('nanlite-fc-120b','FC-120B','FC',2700,6500,145,'Bi-Color',96,98,SRC.fc120b,{control:control()}),
-  fixture('nanlite-fc-120c','FC-120C','FC',2700,7500,145,'Full Color',95,94,SRC.fc120c,{control:control()}),
+  fixture('nanlite-fc-60b','FC-60B','FC',2700,6500,78,'Bi-Color',96,98,SRC.fc60b,{
+    control:control(),batteryPowered:true,
+    powerOptions:['AC power adapter','2x NP-F via included BT-BG-FZ60 grip','V-Mount via optional BT-BG-V grip','USB-C PD 30W+ power bank or charger']
+  }),
+  fixture('nanlite-fc-120b','FC-120B','FC',2700,6500,145,'Bi-Color',96,98,SRC.fc120b,{
+    control:control(),batteryPowered:true,
+    powerOptions:['AC power adapter','V-Mount via optional BT-BG-XLR4-II grip','USB-C PD 30W+ power bank or charger']
+  }),
+  fixture('nanlite-fc-120c','FC-120C','FC',2700,7500,145,'Full Color',95,94,SRC.fc120c,{
+    control:control(),batteryPowered:true,
+    powerOptions:['AC power adapter','V-Mount via optional BT-BG-XLR4-II grip','USB-C PD 30W+ power bank or charger']
+  }),
   fixture('nanlite-fs-60b','FS-60B','FS',2700,6500,70,'Bi-Color',96,97,SRC.fs60b,{control:control({dmx:false})})
 ];
 
@@ -121,7 +130,8 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
   },
   {
     id:'nanlite-bt-bg-fz60',manufacturer:'Nanlite',model:'BT-BG-FZ60 NP-F Battery Grip',
-    category:'Power',compatibleWith:SMALL_BATTERY,compatibilityStatus:'Designed For',sourceUrl:SRC.npfGrip
+    category:'Power',compatibleWith:SMALL_BATTERY,compatibilityStatus:'Designed For',
+    includedWithFixtures:['nanlite-fc-60b'],sourceUrl:SRC.npfGrip
   },
   {
     id:'nanlite-bt-bg-v',manufacturer:'Nanlite',model:'BT-BG-V V-Mount Battery Grip',

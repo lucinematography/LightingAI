@@ -12,6 +12,7 @@ const PROJECT57_MULTI_BASE = '48f497e26f882b2ff618667832dcb938e4750ba9';
 const PROJECT58_SUN_BASE = '0c13256a49160ba5c48fd3aa92c406f834f7e531';
 const PROJECT59_DMX_BASE = '3d112dd60da64fc66b42e61072ff2f012dfb6995';
 const PROJECT510_QA_BASE = '5bf13f433454c048a7e87cf515e19aa92d8199ba';
+const PROBE_CONTROL_BASE = '94f275f579399b26f8bd1c882b2a32a59bc4684a';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -33,7 +34,8 @@ for (const [label, sha] of [
   ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE],
   ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE],
   ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE],
-  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE]
+  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE],
+  ['Light AI Probe verified CONTROL base', PROBE_CONTROL_BASE]
 ]) {
   try { git(['cat-file', '-e', `${sha}^{commit}`]); }
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
@@ -65,7 +67,7 @@ for (const [label, sha] of [
 
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
-const changed = git(['diff', '--name-only', `${PROJECT510_QA_BASE}...HEAD`])
+const changed = git(['diff', '--name-only', `${PROBE_CONTROL_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
 
 const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
@@ -737,9 +739,10 @@ console.log(JSON.stringify({
   dmxAiBase: PROJECT58_SUN_BASE,
   finalQaBase: PROJECT59_DMX_BASE,
   releasePrepBase: PROJECT510_QA_BASE,
+  probeControlBase: PROBE_CONTROL_BASE,
   stableBuilds: [510, 655, 686, 701, 713, 721, 727, 739, 746, 753, 762, 767],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
+  protectedByDefault: 'historical Project 5 invariants remain protected; Probe diff allowlist is measured from the last verified CONTROL base',
   featureSurface: 'Project 5.2 redesign with Planner / Equipment / Control / AI / Tools, safe AI-to-Control staging, verified DMX patch mapping, and explicit confirmation before physical Art-Net/sACN output'
 }, null, 2));

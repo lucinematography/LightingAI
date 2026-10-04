@@ -140,7 +140,7 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
   {
     id:'nanlite-bt-bg-fz60',manufacturer:'Nanlite',model:'BT-BG-FZ60 NP-F Battery Grip',
     category:'Power',compatibleWith:SMALL_BATTERY,compatibilityStatus:'Designed For',
-    includedWithFixtures:['nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'],sourceUrl:SRC.npfGrip
+    includedWithFixtures:['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'],sourceUrl:SRC.npfGrip
   },
   {
     id:'nanlite-bt-bg-v',manufacturer:'Nanlite',model:'BT-BG-V V-Mount Battery Grip',

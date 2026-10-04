@@ -69,6 +69,7 @@ const FMM_ALL = [
   'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
   'nanlite-fc-60b','nanlite-fc-120b','nanlite-fc-120c','nanlite-fs-60b'
 ];
+const NANLINK_SHARED=[...FMM_ALL,'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-fc-720b','nanlite-fc-720c'];
 const SMALL_BATTERY = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr','nanlite-fc-60b'];
 const VMOUNT_60 = ['nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-fc-60b'];
 const VMOUNT_XLR = ['nanlite-fc-120b','nanlite-fc-120c'];
@@ -126,11 +127,11 @@ export const NANLITE_FM_CURRENT_ACCESSORIES = [
   },
   {
     id:'nanlite-ws-rc-c2',manufacturer:'Nanlite',model:'NANLINK WS-RC-C2 2.4GHz Remote Control',
-    category:'Control',compatibleWith:FMM_ALL,compatibilityStatus:'Compatible',sourceUrl:SRC.rc
+    category:'Control',compatibleWith:NANLINK_SHARED,compatibilityStatus:'Compatible',sourceUrl:SRC.rc
   },
   {
     id:'nanlite-ws-tb-1',manufacturer:'Nanlite',model:'NANLINK WS-TB-1 Transmitter Box',
-    category:'Control',compatibleWith:FMM_ALL,compatibilityStatus:'Compatible',sourceUrl:SRC.tb
+    category:'Control',compatibleWith:NANLINK_SHARED,compatibilityStatus:'Compatible',sourceUrl:SRC.tb
   },
   {
     id:'nanlite-rf-fmm-45-s',manufacturer:'Nanlite',model:'RF-FMM-45-S 45-Degree Mini Reflector',

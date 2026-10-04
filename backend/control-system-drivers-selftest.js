@@ -29,6 +29,13 @@ expect(aputureSidus?.productionReady===false,'Aputure Sidus candidate must remai
 const nanliteBoth=api?.resolve({manufacturer:'Nanlite',control:{wireless:['NANLINK Bluetooth','NANLINK Wi-Fi']}});
 expect(nanliteBoth?.candidateTransports?.bluetooth===true&&nanliteBoth?.candidateTransports?.wifi===true,'Nanlite Bluetooth + Wi-Fi candidates not classified');
 
+
+const nanliteDirect=api?.resolve({manufacturer:'Nanlite',control:{wireless:['NANLINK Bluetooth']}});
+expect(nanliteDirect?.candidateTransports?.bluetooth===true,'Nanlite NANLINK Bluetooth candidate not classified');
+expect(nanliteDirect?.productionReady===false,'Nanlite Bluetooth candidate must remain fail-closed until protocol verification');
+const nanlite24g=api?.resolve({manufacturer:'Nanlite',control:{wireless:['NANLINK 2.4GHz via WS-TB-1']}});
+expect(nanlite24g?.vendorDrivers?.length===0,'Nanlite 2.4GHz via WS-TB-1 must not be inferred as direct Bluetooth/Wi-Fi');
+
 const wifiOnly=api?.resolve({manufacturer:'Kino Flo',control:{wireless:['Vendor Wi-Fi app control']}});
 expect(wifiOnly?.candidateTransports?.wifi===true&&wifiOnly?.candidateTransports?.bluetooth===false,'Wi-Fi-only candidate not classified');
 

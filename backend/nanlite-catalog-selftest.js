@@ -4,10 +4,11 @@ import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-f
 import { NANLITE_PAVOSLIM_60_120_FIXTURES, NANLITE_PAVOSLIM_60_120_ACCESSORIES } from './nanlite-pavoslim-60-120-library.js';
 import { NANLITE_PAVOTUBE_II_XR_FIXTURES, NANLITE_PAVOTUBE_II_XR_ACCESSORIES } from './nanlite-pavotube-ii-xr-library.js';
 import { NANLITE_PAVOTUBE_II_C_FIXTURES, NANLITE_PAVOTUBE_II_C_ACCESSORIES } from './nanlite-pavotube-ii-c-library.js';
+import { NANLITE_COMPAC_CURRENT_FIXTURES, NANLITE_COMPAC_CURRENT_ACCESSORIES } from './nanlite-compac-current-library.js';
 
 const failures=[];
-const fixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES];
+const fixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 
@@ -101,6 +102,33 @@ for(const id of ['nanlite-cb-dmx-acp-1-2','nanlite-pavotube-t12-clip-1-4','nanli
 for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
   const a=accessoryById.get(id); if(!a) failures.push('Missing shared NANLINK accessory for PavoTube II C: '+id);
   else for(const target of ['nanlite-pavotube-ii-15c','nanlite-pavotube-ii-30c']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
+}
+for(const id of ['nanlite-compac-68b','nanlite-compac-100b','nanlite-compac-200b']){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing Nanlite Compac fixture: '+id);
+  else if(f.discontinued!==false) failures.push('Current Nanlite Compac not marked current: '+id);
+}
+for(const id of ['nanlite-compac-68b','nanlite-compac-100b']){
+  const f=fixtures.find(x=>x.id===id);
+  if((f?.control?.wireless||[]).length) failures.push(id+' must not claim wireless control');
+}
+const compac200=fixtures.find(x=>x.id==='nanlite-compac-200b');
+for(const p of ['Bluetooth / NANLINK app','2.4G']) if(!(compac200?.control?.wireless||[]).includes(p)) failures.push('Compac 200B missing '+p);
+for(const [fixtureId,softboxId,lanternId] of [
+  ['nanlite-compac-68b','nanlite-compac-68-softbox','nanlite-compac-68-lantern'],
+  ['nanlite-compac-100b','nanlite-compac-100-softbox','nanlite-compac-100-lantern'],
+  ['nanlite-compac-200b','nanlite-compac-200-softbox','nanlite-compac-200-lantern']
+]){
+  for(const id of [softboxId,lanternId]){
+    const a=accessoryById.get(id);
+    if(!a) failures.push('Missing Compac modifier: '+id);
+    else if(!(a.compatibleWith||[]).includes(fixtureId)) failures.push(id+' missing '+fixtureId);
+  }
+}
+for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
+  const a=accessoryById.get(id);
+  if(!a?.compatibleWith?.includes('nanlite-compac-200b')) failures.push(id+' missing Compac 200B');
+  if(a?.compatibleWith?.includes('nanlite-compac-68b')||a?.compatibleWith?.includes('nanlite-compac-100b')) failures.push(id+' must not be inferred for Compac 68B/100B');
 }
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

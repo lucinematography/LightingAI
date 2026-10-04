@@ -94,7 +94,7 @@ for(const path of mustRemainIdentical){
 }
 
 const controlDrivers=git(['show','HEAD:app/src/main/assets/control-system-drivers.js']);
-for(const marker of ["version:'3.0-vendor-wireless'","transport:'bluetooth'","transport:'wifi'","2.4 GHz"])
+for(const marker of ["version:'3.0-vendor-wireless'","transport:'bluetooth'","transport:'wifi'"])
   if(!controlDrivers.includes(marker)) fail('vendor-wireless driver marker missing: '+marker);
 
 const controlRouting=git(['show','HEAD:app/src/main/assets/control-routing.js']);

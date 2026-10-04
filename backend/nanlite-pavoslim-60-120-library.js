@@ -52,7 +52,7 @@ export const NANLITE_PAVOSLIM_60_120_FIXTURES=[
     ['V-Mount via Control Unit','AC mains'])
 ];
 
-const ALL=['nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c'];
+const ALL=['nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c'];
 const P120=['nanlite-pavoslim-120b','nanlite-pavoslim-120c'];
 
 function included(id,model,category,target,sourceUrl,extra={}){

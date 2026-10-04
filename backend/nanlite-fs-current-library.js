@@ -41,6 +41,7 @@ export const NANLITE_FS_CURRENT_FIXTURES=[
 ];
 
 const ALL=['nanlite-fs-150b','nanlite-fs-300b','nanlite-fs-300c'];
+const ALL_WITH_LEGACY=[...ALL,'nanlite-fs-200b','nanlite-fs-300'];
 
 function included(id,model,category,target,sourceUrl){
   return {
@@ -52,11 +53,11 @@ function included(id,model,category,target,sourceUrl){
 export const NANLITE_FS_CURRENT_ACCESSORIES=[
   {
     id:'nanlite-cc-s-fs',manufacturer:'Nanlite',model:'CC-S-FS Padded Carrying Case for FS-Series Lights',
-    category:'Case',compatibleWith:ALL,compatibilityStatus:'Designed For',sourceUrl:SRC.caseFs
+    category:'Case',compatibleWith:ALL_WITH_LEGACY,compatibilityStatus:'Designed For',sourceUrl:SRC.caseFs
   },
   {
     id:'nanlite-bd-bm-rf45',manufacturer:'Nanlite',model:'BD-BM-RF45 Barndoors and Grid',
-    category:'Barndoors',compatibleWith:ALL,compatibilityStatus:'Designed For',
+    category:'Barndoors',compatibleWith:ALL_WITH_LEGACY,compatibilityStatus:'Designed For',
     conditions:['Requires the RF-BM Bowens-mount reflector'],sourceUrl:SRC.barndoors
   },
 

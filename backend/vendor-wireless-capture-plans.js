@@ -113,6 +113,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  Dracast: {
+    id:'dracast-palette-v2-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Dracast Palette V2 App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Dracast model at a time with Palette V2 App.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer commands between Palette Series II and Fresnel Pro Series II without matching physical evidence.'
+    ],
+    officialSources:[
+      'https://dracobroadcast.com/product/dracast-palette-series-ii-led4000-rgbw-soft-panel/',
+      'https://dracobroadcast.com/product/dracast-fresnel-pro-series-ii-led500-bi-color-light/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'Only on RGB-capable models; perform exactly one color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one supported effect per capture only after simpler controls are understood.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   SWIT: {
     id:'swit-console-bluetooth-capture-v1',
     transport:'bluetooth',

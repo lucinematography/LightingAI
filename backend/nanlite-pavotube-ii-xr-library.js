@@ -43,7 +43,10 @@ function fixture(id,model,lengthLabel,powerDrawW,batteryMah,cri,tlci,sourceUrl,e
 export const NANLITE_PAVOTUBE_II_XR_FIXTURES=[
   fixture('nanlite-pavotube-ii-6xr','PavoTube II 6XR','10-inch T12 tube',16,3200,96,97,SRC.xr6,{
     control:control({usbCdmx:true,twoPointFour:false,nfc:true}),
-    powerOptions:['Internal battery','USB-C PD 3.0','USB power bank','AC via USB-C PD adapter']
+    powerOptions:['Internal battery','USB-C PD 3.0','USB power bank','AC via USB-C PD adapter'],
+    officialSourceConflict:true,
+    conflictNote:'Nanlite product page and PavoTube series table state 2700K-12000K; the 6C/6CP/6XR comparison article states 2400K-12000K. Catalog keeps 2700K-12000K because two current product-facing sources agree.',
+    conflictSources:[SRC.xr6,SRC.pavotubeSeries,SRC.sixCompare]
   }),
   fixture('nanlite-pavotube-ii-15xr','PavoTube II 15XR','2-foot T12 tube',35,2200,97,98,SRC.xr15,{
     control:control(),powerOptions:['Internal battery','15V/2A AC adapter']

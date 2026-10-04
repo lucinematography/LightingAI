@@ -118,6 +118,15 @@ for(const id of ['nanlite-fl-20g','nanlite-ccsfz300ii','nanlite-rf-bm-55-forza-i
   const a=accessoryById.get(id); if(!a) failures.push('Missing Nanlite Forza II accessory: '+id);
   else for(const target of ['nanlite-forza-300b-ii','nanlite-forza-500b-ii']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);
 }
+for(const [id,lengthM] of [['nanlite-cb-fz-7-5m',7.5],['nanlite-cb-fz-12m',12]]){
+  const a=accessoryById.get(id);
+  if(!a) failures.push('Missing shared Forza II head cable: '+id);
+  else {
+    if(a.lengthM!==lengthM) failures.push(id+' length identity mismatch');
+    for(const target of ['nanlite-forza-300-ii','nanlite-forza-300b-ii','nanlite-forza-500-ii','nanlite-forza-500b-ii','nanlite-forza-720','nanlite-forza-720b'])
+      if(!(a.compatibleWith||[]).includes(target)) failures.push(id+' missing documented target '+target);
+  }
+}
 for(const id of ['nanlite-fl-20g','nanlite-pj-bm-25-45']){
   const a=accessoryById.get(id); if(!a) failures.push('Missing shared Nanlite Bowens accessory: '+id);
   else for(const target of ['nanlite-fc-720b','nanlite-fc-720c']) if(!(a.compatibleWith||[]).includes(target)) failures.push(`${id} missing ${target}`);

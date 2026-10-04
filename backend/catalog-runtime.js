@@ -96,6 +96,7 @@ import { GVM_WIRELESS_FIXTURES } from './gvm-wireless-library.js';
 import { LITEPANELS_WIRELESS_FIXTURES } from './litepanels-wireless-library.js';
 import { DMG_MIX_WIRELESS_FIXTURES } from './dmg-mix-wireless-library.js';
 import { ZHIYUN_BLUETOOTH_FIXTURES } from './zhiyun-bluetooth-library.js';
+import { PROLYCHT_ORION_WIRELESS_FIXTURES } from './prolycht-orion-wireless-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -237,6 +238,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(LITEPANELS_WIRELESS_FIXTURES));
   fixtures.push(...clone(DMG_MIX_WIRELESS_FIXTURES));
   fixtures.push(...clone(ZHIYUN_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(PROLYCHT_ORION_WIRELESS_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

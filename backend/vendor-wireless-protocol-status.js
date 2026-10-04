@@ -118,20 +118,23 @@ export function vendorWirelessProtocolStatus(manufacturer) {
 }
 
 
-export function commandProductionReadyForStatus(row) {
+export function commandProductionReadyForStatus(row,requiredTransports=[]) {
   if(row?.commandSpec!=='production_verified') return false;
   const scope=row?.productionScope;
-  return !!(
+  if(!(
     scope &&
     scope.kind==='vendor-wide' &&
     scope.allCurrentWirelessFixtures===true &&
     Array.isArray(scope.transports) &&
     scope.transports.length>0
-  );
+  )) return false;
+  const declared=new Set(scope.transports.map(x=>String(x).toLowerCase()));
+  return requiredTransports.every(t=>declared.has(String(t).toLowerCase()));
 }
 
-export function vendorWideCommandProductionReady(manufacturer) {
+export function vendorWideCommandProductionReady(manufacturer,requiredTransports=[]) {
   return commandProductionReadyForStatus(
-    VENDOR_WIRELESS_PROTOCOL_STATUS[manufacturer]||null
+    VENDOR_WIRELESS_PROTOCOL_STATUS[manufacturer]||null,
+    requiredTransports
   );
 }

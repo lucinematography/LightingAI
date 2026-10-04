@@ -201,6 +201,45 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       derivedEvidenceOnly:true,
       resultStatus:'candidate_only_until_physical_replay'
     }
+  },
+  Astera: {
+    id:'astera-official-app-btsnoop-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'AsteraApp',
+    commandSpecStatus:'physical-evidence-required',
+    prerequisites:[
+      'Use one Astera fixture whose catalog entry explicitly lists Bluetooth/BTB capability.',
+      'Prefer Titan Tube FP1-BTB for the first physical validation because the existing analyzer/toolchain is already scoped to the observed BTB private service fingerprint.',
+      'Use the official AsteraApp as the only command source during capture.',
+      'Record 3 connect-only captures before any parameter-change captures.',
+      'Do not transmit proprietary LightingAI BLE writes during evidence collection.'
+    ],
+    officialSources:[
+      'catalog-first-party-product-and-manual-sources',
+      'verified-control-capture-toolchain'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect with AsteraApp, wait through the stable session startup, make no lighting parameter changes, then disconnect.'},
+      dim:{runs:3,rule:'Use the same initial intensity and perform exactly one isolated DIM change per capture.'},
+      cct:{runs:3,rule:'Use the same initial state and perform exactly one isolated CCT change per capture.'},
+      color:{runs:3,optional:true,rule:'Only after DIM/CCT evidence is stable and physically replay-verified; perform exactly one color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; perform exactly one FX selection/change per capture.'}
+    },
+    analyzer:{
+      manifestExample:'backend/astera-physical-capture-set.example.json',
+      orchestrator:'backend/astera-physical-capture-set.js',
+      sessionConsensus:'backend/astera-att-session-consensus.js',
+      differential:'backend/astera-att-diff.js',
+      consensus:'backend/astera-att-consensus.js',
+      sweep:'backend/astera-att-sweep.js'
+    },
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
   }
 });
 

@@ -77,6 +77,7 @@ const allowed=new Set([
   'backend/nanlite-wireless-verification.js',
   'backend/evlight-wireless-verification.js',
   'backend/astera-wireless-verification.js',
+  'backend/astera-ax9-powerpar-library.js',
   'backend/vendor-wireless-protocol-status.js',
   'backend/vendor-wireless-protocol-status-selftest.js',
   'backend/vendor-wireless-capture-plans.js',

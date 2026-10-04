@@ -36,6 +36,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  Fiilex: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'fiilex-matrix-wifi-capture-v1',
+    evidence: [
+      'https://fiilex.com/downloads/Legacy/Matrix_User_Manual_2016_0720.pdf',
+      'https://fiilex.com/downloads/Legacy/Matrix_DataSheet_20160817.pdf'
+    ],
+    note: 'Original Fiilex Matrix Wi-Fi/app control is model-scoped. Bluetooth is not inferred, and LightingAI command/session semantics remain locked.'
+  },
+
   SIRUI: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

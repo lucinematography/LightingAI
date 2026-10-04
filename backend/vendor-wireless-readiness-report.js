@@ -3,27 +3,14 @@ import { VENDOR_WIRELESS_PROTOCOL_STATUS, vendorWideCommandProductionReady } fro
 import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
-function hasBt(f){
-  const c=f?.control;
-  const values=Array.isArray(c)?list(c):[...list(c?.wireless),...list(c?.directLightingAI)];
-  return values.some(v=>/(^|[^a-z0-9])(bluetooth|ble)([^a-z0-9]|$)/i.test(v));
-}
-function hasWifi(f){
-  const c=f?.control;
-  const values=Array.isArray(c)?list(c):[...list(c?.wireless),...list(c?.directLightingAI)];
-  return values.some(v=>/(^|[^a-z0-9])(wi-?fi|wifi|wlan)([^a-z0-9]|$)/i.test(v));
-}
+function hasBt(f){return wirelessTransportFlags(f).bluetooth}
+function hasWifi(f){return wirelessTransportFlags(f).wifi}
 function verification(f,t){
   const c=f?.control;
   if(!c||Array.isArray(c)||typeof c!=='object') return false;
   return c?.wirelessVerification?.[t]?.verified===true;
 }
-function externalFor(f,t){
-  const c=f?.control;
-  const rows=list(c?.externalInterfaceRequired).map(v=>v.toLowerCase());
-  if(t==='wifi') return rows.some(v=>/wi-?fi|wifi|w-2|wireless adapter/.test(v));
-  return rows.some(v=>/bluetooth|\bble\b|bt dongle|bluetooth.*dongle|sidus link bridge/.test(v));
-}
+function externalFor(f,t){return wirelessRouteKind(f,t)==='assisted'}
 function planIds(plan){
   return [
     plan?.id,

@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===694,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===30,'wireless manufacturer coverage must remain 30');
+expect(report.fixtureCount===698,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===31,'wireless manufacturer coverage must remain 31');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -59,6 +59,7 @@ expect(by['Hive Lighting']?.bluetoothFixtures===7&&by['Hive Lighting']?.wifiFixt
 expect(by.Kinotehnik?.bluetoothFixtures===2&&by.Kinotehnik?.wifiFixtures===0&&by.Kinotehnik?.bothFixtures===0,'Kinotehnik wireless counts changed unexpectedly');
 expect(by.VELVET?.bluetoothFixtures===4&&by.VELVET?.wifiFixtures===6&&by.VELVET?.bothFixtures===4,'VELVET wireless counts changed unexpectedly');
 expect(by.VILTROX?.bluetoothFixtures===2&&by.VILTROX?.wifiFixtures===0&&by.VILTROX?.bothFixtures===0,'VILTROX wireless counts changed unexpectedly');
+expect(by.Phottix?.bluetoothFixtures===4&&by.Phottix?.wifiFixtures===0&&by.Phottix?.bothFixtures===0,'Phottix wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

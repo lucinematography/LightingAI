@@ -47,13 +47,19 @@ export function buildWirelessReadinessReport(){
     if(!map.has(maker)) map.set(maker,{
       manufacturer:maker,totalWirelessFixtures:0,bluetoothFixtures:0,wifiFixtures:0,bothFixtures:0,
       verifiedBluetoothEvidence:0,verifiedWifiEvidence:0,assistedBluetooth:0,assistedWifi:0,
-      fixtureIds:[]
+      fixtureIds:[],requiredProductionRoutes:[]
     });
     const row=map.get(maker);
     row.totalWirelessFixtures++;
     if(f?.id) row.fixtureIds.push(String(f.id));
-    if(bt) row.bluetoothFixtures++;
-    if(wifi) row.wifiFixtures++;
+    if(bt) {
+      row.bluetoothFixtures++;
+      if(f?.id) row.requiredProductionRoutes.push({fixtureId:String(f.id),transport:'bluetooth'});
+    }
+    if(wifi) {
+      row.wifiFixtures++;
+      if(f?.id) row.requiredProductionRoutes.push({fixtureId:String(f.id),transport:'wifi'});
+    }
     if(bt&&wifi) row.bothFixtures++;
     if(bt&&verification(f,'bluetooth')) row.verifiedBluetoothEvidence++;
     if(wifi&&verification(f,'wifi')) row.verifiedWifiEvidence++;
@@ -70,7 +76,7 @@ export function buildWirelessReadinessReport(){
       ...(row.bluetoothFixtures>0?['bluetooth']:[]),
       ...(row.wifiFixtures>0?['wifi']:[])
     ];
-    const commandReady=vendorWideCommandProductionReady(row.manufacturer,requiredTransports,row.fixtureIds);
+    const commandReady=vendorWideCommandProductionReady(row.manufacturer,requiredTransports,row.fixtureIds,row.requiredProductionRoutes);
     return {
       ...row,
       transportEvidenceComplete:

@@ -10,12 +10,13 @@ import { NANLITE_PAVOTUBE_X_LEGACY_FIXTURES, NANLITE_PAVOTUBE_X_LEGACY_ACCESSORI
 import { NANLITE_FC_HIGH_OUTPUT_FIXTURES, NANLITE_FC_HIGH_OUTPUT_ACCESSORIES } from './nanlite-fc-high-output-library.js';
 import { NANLITE_FORZA_720B_FIXTURES, NANLITE_FORZA_720B_ACCESSORIES } from './nanlite-forza-720b-library.js';
 import { NANLITE_ALIEN_CURRENT_FIXTURES, NANLITE_ALIEN_CURRENT_ACCESSORIES } from './nanlite-alien-current-library.js';
+import { NANLITE_PAVOSLIM_EXTENDED_FIXTURES, NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES } from './nanlite-pavoslim-extended-library.js';
 
 const failures=[];
-const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
+const currentFixtures=[...NANLITE_FM_CURRENT_FIXTURES,...NANLITE_FORZA_II_FIXTURES,...NANLITE_FC_720_FIXTURES,...NANLITE_PAVOSLIM_60_120_FIXTURES,...NANLITE_PAVOSLIM_EXTENDED_FIXTURES,...NANLITE_PAVOTUBE_II_XR_FIXTURES,...NANLITE_PAVOTUBE_II_C_FIXTURES,...NANLITE_COMPAC_CURRENT_FIXTURES,...NANLITE_PAVOTUBE_10_CURRENT_FIXTURES,...NANLITE_FC_HIGH_OUTPUT_FIXTURES,...NANLITE_FORZA_720B_FIXTURES,...NANLITE_ALIEN_CURRENT_FIXTURES];
 const legacyFixtures=[...NANLITE_PAVOTUBE_X_LEGACY_FIXTURES];
 const fixtures=[...currentFixtures,...legacyFixtures];
-const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
+const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOSLIM_EXTENDED_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES,...NANLITE_FORZA_720B_ACCESSORIES,...NANLITE_ALIEN_CURRENT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
 const accessoryModels=new Map();
@@ -248,5 +249,30 @@ for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-ascpqrfz']){
   const a=accessoryById.get(id);
   for(const target of ['nanlite-alien-150c','nanlite-alien-300c']) if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
 }
+for(const id of ['nanlite-pavoslim-60cl','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c']){
+  const f=fixtures.find(x=>x.id===id);
+  if(!f) failures.push('Missing extended PavoSlim fixture: '+id);
+  else if(f.discontinued!==false) failures.push('Extended PavoSlim must be current: '+id);
+}
+if(fixtures.find(x=>x.id==='nanlite-pavoslim-240b')?.control?.builtInCRMX) failures.push('PavoSlim 240B must not claim CRMX');
+for(const id of ['nanlite-pavoslim-60cl','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c']){
+  if(!fixtures.find(x=>x.id===id)?.control?.builtInCRMX) failures.push(id+' CRMX missing');
+}
+for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-ascpqrfz']){
+  const a=accessoryById.get(id);
+  for(const target of ['nanlite-pavoslim-60cl','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c'])
+    if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
+}
+const mag=accessoryById.get('nanlite-as-mba-1-4-set');
+for(const target of ['nanlite-pavoslim-60cl','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c'])
+  if(!mag?.compatibleWith?.includes(target)) failures.push('Magnetic adapter missing '+target);
+const sw=accessoryById.get('nanlite-asuhps');
+if(!sw?.compatibleWith?.includes('nanlite-pavoslim-60cl')) failures.push('PavoSlim 60CL shared swivel holder missing');
+const dmx35=accessoryById.get('nanlite-cb-dmx-3-5c-1-2');
+if(!dmx35?.compatibleWith?.includes('nanlite-pavoslim-360c')) failures.push('PavoSlim 360C 3.5mm DMX adapter missing');
+for(const target of ['nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl'])
+  if(!accessoryById.get('nanlite-cbps5m')?.compatibleWith?.includes(target)) failures.push('CBPS5M missing '+target);
+if(!accessoryById.get('nanlite-asmpcps240clkit')?.compatibleWith?.includes('nanlite-pavoslim-240cl')) failures.push('240CL coupler kit missing');
+if(!accessoryById.get('nanlite-asdpcps360')?.compatibleWith?.includes('nanlite-pavoslim-360c')) failures.push('360C dual-panel coupler missing');
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

@@ -2,28 +2,106 @@
 'use strict';
 function arr(v){return Array.isArray(v)?v.filter(Boolean):[]}
 function lower(v){return String(v||'').toLowerCase()}
-function vendorControl(fixture){
+function controlFields(fixture){
  var c=fixture&&fixture.control;
- if(Array.isArray(c))return c.slice();
- if(!c||typeof c!=='object')return [];
- return [].concat(arr(c.directLightingAI),arr(c.wired),arr(c.wireless),arr(c.externalInterfaceRequired),arr(c.unavailableDirectProtocols));
+ if(Array.isArray(c))return {direct:[],wireless:c.slice(),wired:[],external:[]};
+ if(!c||typeof c!=='object')return {direct:[],wireless:[],wired:[],external:[]};
+ return {direct:arr(c.directLightingAI),wireless:arr(c.wireless),wired:arr(c.wired),external:arr(c.externalInterfaceRequired)};
 }
-function includesAny(values,needles){return arr(values).some(function(v){var s=lower(v);return needles.some(function(n){return s.indexOf(n)>=0})})}
-
-// CONTROL exposes only direct vendor Bluetooth families. Network/DMX metadata is not executable.
-var DRIVERS=[
- {id:'vendor-astera-wireless',manufacturer:'Astera',label:'Astera Bluetooth',description:'Direct Astera Bluetooth candidate. Output remains locked until the real session and commands are physically verified.',match:function(f){return lower(f&&f.manufacturer)==='astera'&&includesAny(vendorControl(f),['asteraapp','bluetooth','btb','uhf','wi-fi','wifi'])}},
- {id:'vendor-aputure-sidus',manufacturer:'Aputure',label:'Aputure Sidus Bluetooth',description:'Direct Aputure Bluetooth/Sidus candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='aputure'&&includesAny(vendorControl(f),['sidus','mesh','bluetooth','ble'])}},
- {id:'vendor-godox-app',manufacturer:'Godox',label:'Godox Bluetooth',description:'Direct Godox Bluetooth candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='godox'&&includesAny(vendorControl(f),['bluetooth','app','2.4g','2.4 ghz','2.4ghz'])}},
- {id:'vendor-aladdin-app',manufacturer:'Aladdin',label:'Aladdin Bluetooth',description:'Direct Aladdin Bluetooth candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='aladdin'&&includesAny(vendorControl(f),['bluetooth','app','wireless'])}},
- {id:'vendor-nanlite-nanlink',manufacturer:'Nanlite',label:'NANLINK Bluetooth',description:'Direct NANLINK Bluetooth candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='nanlite'&&includesAny(vendorControl(f),['nanlink','bluetooth','ble','wireless'])}},
- {id:'vendor-arri-lico',manufacturer:'ARRI',label:'ARRI LiCo Bluetooth',description:'Direct ARRI LiCo Bluetooth candidate. Output remains locked until physically verified.',match:function(f){return lower(f&&f.manufacturer)==='arri'&&includesAny(vendorControl(f),['lico','bluetooth','ble','wireless'])}}
-];
-function matchingDrivers(fixture){return DRIVERS.filter(function(d){try{return d.match(fixture)}catch(e){return false}})}
+function wirelessValues(fixture){
+ var f=controlFields(fixture);
+ return [].concat(f.direct,f.wireless);
+}
+function hasBluetooth(values){
+ return arr(values).some(function(v){
+  var s=lower(v);
+  return /(^|[^a-z0-9])(bluetooth|ble)([^a-z0-9]|$)/.test(s)||s.indexOf('sidus mesh bluetooth')>=0||s.indexOf('asteraapp via bluetooth')>=0;
+ });
+}
+function hasWifi(values){
+ return arr(values).some(function(v){
+  var s=lower(v);
+  return /(^|[^a-z0-9])(wi-fi|wifi|wlan)([^a-z0-9]|$)/.test(s);
+ });
+}
+function labelFor(manufacturer,transport){
+ var m=lower(manufacturer);
+ var labels={
+  astera:{bluetooth:'Astera Bluetooth',wifi:'Astera Wi-Fi'},
+  aputure:{bluetooth:'Aputure Sidus Bluetooth',wifi:'Aputure / Sidus Wi-Fi'},
+  godox:{bluetooth:'Godox Bluetooth',wifi:'Godox Wi-Fi'},
+  aladdin:{bluetooth:'Aladdin Bluetooth',wifi:'Aladdin Wi-Fi'},
+  nanlite:{bluetooth:'NANLINK Bluetooth',wifi:'NANLINK Wi-Fi'},
+  arri:{bluetooth:'ARRI LiCo Bluetooth',wifi:'ARRI Wi-Fi'},
+  'kino flo':{bluetooth:'Kino Flo Bluetooth',wifi:'Kino Flo Wi-Fi'},
+  litegear:{bluetooth:'LiteGear Bluetooth',wifi:'LiteGear Wi-Fi'},
+  'ev light':{bluetooth:'EV Light Bluetooth',wifi:'EV Light Wi-Fi'},
+  desisti:{bluetooth:'De Sisti Bluetooth',wifi:'De Sisti Wi-Fi'}
+ };
+ var named=labels[m]&&labels[m][transport];
+ return named||String(manufacturer||'Vendor')+' '+(transport==='wifi'?'Wi-Fi':'Bluetooth');
+}
+function idFor(manufacturer,transport){
+ var m=lower(manufacturer).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'vendor';
+ if(transport==='bluetooth'){
+  if(m==='astera')return 'vendor-astera-wireless';
+  if(m==='aputure')return 'vendor-aputure-sidus';
+  if(m==='godox')return 'vendor-godox-app';
+  if(m==='aladdin')return 'vendor-aladdin-app';
+  if(m==='nanlite')return 'vendor-nanlite-nanlink';
+  if(m==='arri')return 'vendor-arri-lico';
+ }
+ return 'vendor-'+m+'-'+transport;
+}
+function candidate(fixture,transport){
+ var manufacturer=String(fixture&&fixture.manufacturer||'Vendor');
+ return {
+  id:idFor(manufacturer,transport),
+  manufacturer:manufacturer,
+  transport:transport,
+  scope:'vendor-direct',
+  status:'required-unverified',
+  production:false,
+  label:labelFor(manufacturer,transport),
+  description:(transport==='wifi'?'Direct vendor Wi-Fi':'Direct vendor Bluetooth/BLE')+' candidate from documented catalog metadata. Output remains locked until the real vendor session and commands are physically verified.'
+ };
+}
+function matchingDrivers(fixture){
+ var values=wirelessValues(fixture),out=[];
+ if(hasBluetooth(values))out.push(candidate(fixture,'bluetooth'));
+ if(hasWifi(values))out.push(candidate(fixture,'wifi'));
+ return out;
+}
 function resolve(fixture){
  var vendor=matchingDrivers(fixture);
- return {productionDriver:null,standardDrivers:[],vendorDrivers:vendor,verifiedDmxModeCount:0,productionReady:false,transportKnown:false,vendorDirectRequired:vendor.length>0,vendorDirectReady:false,vendorResearchOnly:vendor.length>0};
+ var bluetooth=vendor.some(function(d){return d.transport==='bluetooth'});
+ var wifi=vendor.some(function(d){return d.transport==='wifi'});
+ return {
+  productionDriver:null,
+  standardDrivers:[],
+  vendorDrivers:vendor,
+  wirelessDrivers:vendor,
+  candidateTransports:{bluetooth:bluetooth,wifi:wifi},
+  verifiedDmxModeCount:0,
+  productionReady:false,
+  transportKnown:bluetooth||wifi,
+  vendorDirectRequired:vendor.length>0,
+  vendorDirectReady:false,
+  vendorResearchOnly:vendor.length>0
+ };
 }
-function listDrivers(){return DRIVERS.map(function(d){return {id:d.id,scope:'vendor',status:'required-unverified',manufacturer:d.manufacturer,label:d.label,description:d.description}})}
-window.LightingAIControlSystemDrivers={version:'2.0-bluetooth-only',resolve:resolve,matchingDrivers:matchingDrivers,listDrivers:listDrivers};
+function listDrivers(){
+ return [
+  {id:'vendor-direct-bluetooth',scope:'vendor-direct',status:'required-unverified',transport:'bluetooth',label:'Catalog-driven Bluetooth/BLE vendor driver'},
+  {id:'vendor-direct-wifi',scope:'vendor-direct',status:'required-unverified',transport:'wifi',label:'Catalog-driven direct Wi-Fi vendor driver'}
+ ];
+}
+window.LightingAIControlSystemDrivers={
+ version:'3.0-vendor-wireless',
+ resolve:resolve,
+ matchingDrivers:matchingDrivers,
+ listDrivers:listDrivers,
+ hasBluetooth:hasBluetooth,
+ hasWifi:hasWifi
+};
 })();

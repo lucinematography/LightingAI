@@ -39,6 +39,7 @@ expect(commandProductionReadyForStatus({
   'model/family scoped production proof must not unlock an entire vendor');
 expect(commandProductionReadyForStatus({
   commandSpec:'production_verified',
+  capturePlanId:'bt-plan',
   productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']}
 },['bluetooth'],['fixture-a'])===false,
   'vendor-wide scope without physical replay evidence must remain fail-closed');

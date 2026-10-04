@@ -160,6 +160,10 @@ const smallrig=byManufacturer.get('SmallRig');
 if(!smallrig || smallrig.bluetooth!==4 || smallrig.wifi!==0 || smallrig.both!==0) {
   failures.push('SmallRig wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const amaran=byManufacturer.get('amaran');
+if(!amaran || amaran.bluetooth!==20 || amaran.wifi!==1 || amaran.both!==1) {
+  failures.push('amaran wireless coverage expected 20 Bluetooth / 1 Wi-Fi / 1 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

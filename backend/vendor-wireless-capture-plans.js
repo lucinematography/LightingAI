@@ -113,6 +113,46 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  amaran: {
+    id:'amaran-sidus-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'amaran App / Sidus Link',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact amaran model from the transport-verified catalog set.',
+      'Perform the documented Bluetooth reset before each clean capture set.',
+      'Use the official amaran App or Sidus Link and isolate one fixture where practical.',
+      'Do not reuse Aputure command semantics solely because both product families use Sidus transport.'
+    ],
+    officialSources:[
+      'https://help.amarancreators.com/en/amaran-mobile-app/connect-devices',
+      'https://help.amarancreators.com/en/amaran-150c-300c/sidus-link-control',
+      'https://help.amarancreators.com/en/amaran-flexible-lights/light-configuration-settings'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Reset Bluetooth, connect one fixture in the official app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'On a variable-CCT model perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'Only on a full-color model; perform exactly one HSI/RGB color change per capture after DIM/CCT evidence is stable.'},
+      fx:{runs:3,optional:true,rule:'Activate exactly one documented effect per capture only after simpler controls are understood.'}
+    },
+    secondaryPlans:[
+      {
+        id:'amaran-sm5c-direct-wifi-capture-v1',
+        transport:'wifi',
+        target:'amaran SM5c only',
+        commandSpecStatus:'public-wifi-command-spec-not-located-in-official-docs',
+        rule:'Use only the official Tuya Smart path documented for SM5c. Capture Wi-Fi independently of Sidus Bluetooth and do not infer the same IP/session behavior for other amaran fixtures.'
+      }
+    ],
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   SmallRig: {
     id:'smallrig-smallgogo-direct-ble-capture-v1',
     transport:'bluetooth',

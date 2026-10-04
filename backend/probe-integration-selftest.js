@@ -30,6 +30,7 @@ const allowed=new Set([
   'backend/quasar-rainbow-wireless-library.js',
   'backend/kelvin-narrator-bluetooth-library.js',
   'backend/smallrig-ble-library.js',
+  'backend/amaran-sidus-wireless-library.js',
   'backend/package.json',
   'backend/project5-stable-base-selftest.js',
   'backend/probe-integration-selftest.js',

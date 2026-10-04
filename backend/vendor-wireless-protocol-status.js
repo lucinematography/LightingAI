@@ -36,6 +36,24 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  amaran: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'transport_verified_sm5c_only',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'amaran-sidus-direct-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['amaran-sm5c-direct-wifi-capture-v1'],
+    evidence: [
+      'https://help.amarancreators.com/en/amaran-60ds-60xs/sidus-link-control',
+      'https://help.amarancreators.com/en/amaran-100ds-200ds/control-options-faq',
+      'https://help.amarancreators.com/en/amaran-150c-300c/sidus-link-control',
+      'https://help.amarancreators.com/en/amaran-flexible-lights/light-configuration-settings',
+      'https://help.amarancreators.com/en/amaran-tube/menu-options',
+      'https://help.amarancreators.com/en/amaran-pixel-tubes/light-configuration-settings',
+      'https://help.amarancreators.com/en/sm5c-pixel-tape/control-options'
+    ],
+    note: 'Bluetooth is verified only for the 20 explicitly listed model records. Wi-Fi is verified only for SM5c via its documented Tuya Smart path. LightingAI command semantics remain locked.'
+  },
   SmallRig: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

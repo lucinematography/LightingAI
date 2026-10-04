@@ -123,7 +123,7 @@ for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-ascpqrfz']){
 }
 const qrClamp=accessoryById.get('nanlite-ascpqrfz');
 if(qrClamp?.includedWithFixture===true) failures.push('ASCPQRFZ must not use generic includedWithFixture flag');
-for(const target of ['nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-300-ii','nanlite-forza-500-ii','nanlite-forza-720b','nanlite-forza-720','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-240c','nanlite-alien-150c','nanlite-alien-300c'])
+for(const target of ['nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-300-ii','nanlite-forza-500-ii','nanlite-forza-720b','nanlite-forza-720','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-60cl','nanlite-pavoslim-120b','nanlite-pavoslim-120c','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c','nanlite-alien-150c','nanlite-alien-300c'])
   if(!qrClamp?.includedWithFixtures?.includes(target)) failures.push('ASCPQRFZ verified inclusion missing '+target);
 if(!qrClamp?.sourceUrl?.includes('quick-release-super-clamp')) failures.push('ASCPQRFZ must use its canonical product page as source');
 if(!qrClamp?.inclusionEvidenceNote) failures.push('ASCPQRFZ conservative inclusion evidence note missing');

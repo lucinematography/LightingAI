@@ -552,5 +552,17 @@ for(const id of ['nanlite-litolite-8f','nanlite-litolite-28f','nanlite-litolite-
     if((f.control?.wired||[]).length||(f.control?.wireless||[]).length) failures.push('Early LitoLite must remain local-only: '+id);
   }
 }
+const forza60ii=fixtures.find(x=>x.id==='nanlite-forza-60-ii');
+if(!forza60ii) failures.push('Missing current Nanlite Forza 60 II');
+else {
+  if(forza60ii.discontinued!==false) failures.push('Forza 60 II must be current');
+  if(forza60ii.cctK?.fixed!==5600 && !(forza60ii.cctK?.min===5600 && forza60ii.cctK?.max===5600)) failures.push('Forza 60 II daylight 5600K profile missing');
+  for(const p of ['DMX512','RDM']) if(!(forza60ii.control?.wired||[]).includes(p)) failures.push('Forza 60 II missing '+p);
+  for(const p of ['Bluetooth / NANLINK app','2.4G']) if(!(forza60ii.control?.wireless||[]).includes(p)) failures.push('Forza 60 II missing '+p);
+}
+for(const id of ['nanlite-as-ba-fmm','nanlite-fl-11','nanlite-pj-fmm-19','nanlite-pj-fmm-36','nanlite-sb-fmm-o-40','nanlite-sb-fmm-o-60','nanlite-bt-bg-fz60','nanlite-bt-bg-v','nanlite-rf-fmm-45-s','nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-ccsfz60ii']){
+  if(!accessoryById.get(id)?.compatibleWith?.includes('nanlite-forza-60-ii')) failures.push(id+' missing Forza 60 II');
+}
+if(accessoryById.has('nanlite-case-forza-60b-ii')) failures.push('Generic Forza 60B II case duplicate must stay removed');
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

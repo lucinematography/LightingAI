@@ -7,6 +7,8 @@ const cases=[
   [{manufacturer:'Astera',family:'TitanTube',sourceType:'RGBMintAmber LED tube'},'Tube'],
   [{manufacturer:'Astera',family:'PlutoFresnel',sourceType:'Titan LED Engine RGBMintAmber'},'Fresnel'],
   [{manufacturer:'Astera',family:'LunaBulb',sourceType:'Titan LED Engine RGBMintAmber'},'Bulb'],
+  [{manufacturer:'Astera',model:'LunaBulb FP7 E27',family:'LunaBulb',sourceType:'Titan LED Engine RGBMintAmber'},'Bulb'],
+  [{manufacturer:'Astera',model:'SolaBulb E26',family:'SolaBulb',sourceType:'Titan LED Engine RGBMintAmber'},'Bulb'],
   [{manufacturer:'Aputure',model:'INFINIBAR PB12',sourceType:'RGBWW Pixel Bar'},'Pixel Bar'],
   [{manufacturer:'Aputure',model:'LS 300x',sourceType:'Bi-Color LED COB'},'Spotlight / Monolight'],
   [{manufacturer:'Nanlite',family:'Halo',sourceType:'Bi-Color LED Ring Light'},'Ring Light'],

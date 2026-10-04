@@ -73,7 +73,7 @@ function included(id,model,category,target,sourceUrl,extra={}){
 export const NANLITE_PAVOTUBE_II_XR_ACCESSORIES=[
   {
     id:'nanlite-cb-dmx-usbc-1-3ii',manufacturer:'Nanlite',model:'CB-DMX-USBC-1/3II USB-C to DMX Cable',
-    category:'Control',compatibleWith:['nanlite-pavotube-ii-6xr','nanlite-pavotube-t8-7x','nanlite-pavobulb-10c'],compatibilityStatus:'Designed For',
+    category:'Control',compatibleWith:['nanlite-pavotube-ii-6xr','nanlite-pavotube-t8-7x'],compatibilityStatus:'Designed For',
     conditions:['Required for wired DMX/RDM on PavoTube II 6XR'],sourceUrl:SRC.dmxUsbC
   },
   {

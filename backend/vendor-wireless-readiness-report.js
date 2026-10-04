@@ -1,5 +1,5 @@
 import { buildRuntimeCatalog } from './catalog-runtime.js';
-import { VENDOR_WIRELESS_PROTOCOL_STATUS } from './vendor-wireless-protocol-status.js';
+import { VENDOR_WIRELESS_PROTOCOL_STATUS, vendorWideCommandProductionReady } from './vendor-wireless-protocol-status.js';
 import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.js';
 
 function list(v){return Array.isArray(v)?v.map(String):[]}
@@ -64,7 +64,7 @@ export function buildWirelessReadinessReport(){
     const plan=VENDOR_WIRELESS_CAPTURE_PLANS[row.manufacturer]||null;
     const bluetoothPlan=transportPlan(plan,'bluetooth');
     const wifiPlan=transportPlan(plan,'wifi');
-    const commandReady=status?.commandSpec==='production_verified';
+    const commandReady=vendorWideCommandProductionReady(row.manufacturer);
     return {
       ...row,
       transportEvidenceComplete:

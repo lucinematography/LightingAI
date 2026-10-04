@@ -36,6 +36,29 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  Harlowe: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'harlowe-app-bluetooth-capture-v1',
+    evidence: [
+      'https://www.harlowe.com/pages/harlowe-app',
+      'https://www.harlowe.com/products/micro-portable-led-lighting-kit',
+      'https://www.harlowe.com/products/micro-8w-spectra-rgbcw-portable-continuous-led-light-kit',
+      'https://www.harlowe.com/products/mini-ii-20w-bi-color-studio-light-kit',
+      'https://www.harlowe.com/products/mini-x-portable-led-lighting-kit',
+      'https://www.harlowe.com/products/max-80w-videography-photography-light-kit',
+      'https://www.harlowe.com/products/max-x-80w-videography-photography-light-kit',
+      'https://www.harlowe.com/products/avant-content-creator-lighting-kit',
+      'https://www.harlowe.com/products/pro-300w-studio-light-kit-photo-video',
+      'https://www.harlowe.com/products/pro-300w-spectra-rgbcw-studio-light-kit',
+      'https://www.harlowe.com/products/blade-5-bi-color-rgb-tube-light',
+      'https://www.harlowe.com/products/blade-5-10-bi-color-rgb-tube-light-kit'
+    ],
+    note: 'Harlowe, formerly HOBOLITE, Bluetooth app control is verified only for the explicitly cataloged models. LightingAI proprietary command semantics remain locked.'
+  },
+
   Fiilex: {
     bluetooth: 'not_verified_for_current_catalog',
     wifi: 'transport_verified_model_scoped',

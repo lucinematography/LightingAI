@@ -74,6 +74,27 @@ const verifiedTransportDriver=verifiedTransport?.vendorDrivers?.find(x=>x.transp
 expect(verifiedTransportDriver?.transportVerified===true,'verified transport evidence not propagated to driver');
 expect(verifiedTransportDriver?.status==='transport-verified-command-unverified','verified transport must not imply command readiness');
 expect(verifiedTransport?.productionReady===false,'verified transport must remain non-production without command verification');
+const partialTransportEvidence=api?.resolve({
+  manufacturer:'Nanlite',
+  control:{
+    wireless:['NANLINK Bluetooth','NANLINK Wi-Fi'],
+    wirelessVerification:{bluetooth:{verified:true,family:'NANLINK Bluetooth',scope:'transport-capability-only'}}
+  }
+});
+expect(partialTransportEvidence?.anyTransportEvidenceVerified===true,'partial transport evidence should report at least one verified transport');
+expect(partialTransportEvidence?.transportEvidenceVerified===false,'aggregate transport verification must stay false until every candidate transport is verified');
+
+const fullTransportEvidence=api?.resolve({
+  manufacturer:'Nanlite',
+  control:{
+    wireless:['NANLINK Bluetooth','NANLINK Wi-Fi'],
+    wirelessVerification:{
+      bluetooth:{verified:true,family:'NANLINK Bluetooth',scope:'transport-capability-only'},
+      wifi:{verified:true,family:'NANLINK Wi-Fi',scope:'transport-capability-only'}
+    }
+  }
+});
+expect(fullTransportEvidence?.transportEvidenceVerified===true,'aggregate transport verification should become true only when every candidate transport is verified');
 
 const dmxOnly=api?.resolve({manufacturer:'Astera',control:{wired:['DMX512']},dmxModes:[{verified:true,channels:4}]});
 expect(dmxOnly?.vendorDrivers?.length===0&&dmxOnly?.productionReady===false,'DMX metadata must never create a fast CONTROL route');

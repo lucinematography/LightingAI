@@ -138,27 +138,19 @@ jobs:
       - name: Android unit tests
         run: gradle testDebugUnitTest
 
-      - name: Require release signing secrets
+      - name: Prepare dedicated Probe signing key
         shell: bash
-        env:
-          KEYSTORE_B64: ${{ secrets.LIGHTINGAI_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          test -n "$KEYSTORE_B64"
-          test -n "$STORE_PASSWORD"
-          test -n "$KEY_ALIAS"
-          test -n "$KEY_PASSWORD"
-          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lightingai-release.jks"
+          base64 --decode .github/light-ai-probe-test-keystore.b64 > "$RUNNER_TEMP/light-ai-probe.jks"
+          keytool -list -keystore "$RUNNER_TEMP/light-ai-probe.jks" -storepass probe-test-only -alias lightai-probe >/dev/null
 
       - name: Build signed Light AI Proba APK
         env:
-          LIGHTINGAI_KEYSTORE_PATH: ${{ runner.temp }}/lightingai-release.jks
-          LIGHTINGAI_KEYSTORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
-          LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
-          LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
+          LIGHTINGAI_KEYSTORE_PATH: ${{ runner.temp }}/light-ai-probe.jks
+          LIGHTINGAI_KEYSTORE_PASSWORD: probe-test-only
+          LIGHTINGAI_KEY_ALIAS: lightai-probe
+          LIGHTINGAI_KEY_PASSWORD: probe-test-only
         run: |
           gradle assembleRelease -PreleaseVersionCode=1 -PreleaseVersionName=Probe -PprobeAppLabel="Light AI Proba"
 

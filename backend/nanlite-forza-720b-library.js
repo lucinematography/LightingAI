@@ -50,14 +50,14 @@ export const NANLITE_FORZA_720B_ACCESSORIES=[
   included('nanlite-forza-720b-cob-cap','AS-CAP-BW-B COB Protective Cap','Other',SRC.fixture),
   {
     id:'nanlite-cc-st-fz720',manufacturer:'Nanlite',model:'CC-ST-FZ720 Rolling Padded Case',
-    category:'Case',compatibleWith:['nanlite-forza-720b'],compatibilityStatus:'Designed For',
+    category:'Case',compatibleWith:['nanlite-forza-720b','nanlite-forza-720'],compatibilityStatus:'Designed For',
     includedWithFixture:true,sourceUrl:SRC.case
   },
   {
     id:'nanlite-pj-bm-36',manufacturer:'Nanlite',model:'PJ-BM Projection Attachment with 36° Lens',
     category:'Spotlight',mount:'Bowens',beamAngleDeg:36,
     compatibleWith:[
-      'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-720b',
+      'nanlite-forza-300b-ii','nanlite-forza-500b-ii','nanlite-forza-300-ii','nanlite-forza-500-ii','nanlite-forza-720b','nanlite-forza-720',
       'nanlite-fc-500b','nanlite-fc-500c'
     ],
     compatibilityStatus:'Designed For',sourceUrl:SRC.pj36

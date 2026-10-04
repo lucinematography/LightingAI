@@ -20,13 +20,25 @@ expect(commandProductionReadyForStatus({commandSpec:'production_verified'})===fa
   'production_verified without scope must remain fail-closed');
 expect(commandProductionReadyForStatus({
   commandSpec:'production_verified',
+  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']},
+  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/replay.json']}
+})===false,
+  'omitted required transport scope must remain fail-closed');
+expect(commandProductionReadyForStatus({
+  commandSpec:'production_verified',
+  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']},
+  productionEvidence:{physicalReplayVerified:true,derivedEvidenceRefs:['derived/replay.json']}
+},['bluetooth'],[])===false,
+  'omitted required fixture scope must remain fail-closed');
+expect(commandProductionReadyForStatus({
+  commandSpec:'production_verified',
   productionScope:{kind:'model-family',allCurrentWirelessFixtures:false,transports:['bluetooth']}
 })===false,
   'model/family scoped production proof must not unlock an entire vendor');
 expect(commandProductionReadyForStatus({
   commandSpec:'production_verified',
-  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth']}
-})===false,
+  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth'],fixtureIds:['fixture-a']}
+},['bluetooth'],['fixture-a'])===false,
   'vendor-wide scope without physical replay evidence must remain fail-closed');
 expect(commandProductionReadyForStatus({
   commandSpec:'production_verified',

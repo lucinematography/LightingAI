@@ -16,6 +16,14 @@ const fixtures=[...currentFixtures,...legacyFixtures];
 const accessories=[...NANLITE_FM_CURRENT_ACCESSORIES,...NANLITE_FORZA_II_ACCESSORIES,...NANLITE_FC_720_ACCESSORIES,...NANLITE_PAVOSLIM_60_120_ACCESSORIES,...NANLITE_PAVOTUBE_II_XR_ACCESSORIES,...NANLITE_PAVOTUBE_II_C_ACCESSORIES,...NANLITE_COMPAC_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_10_CURRENT_ACCESSORIES,...NANLITE_PAVOTUBE_X_LEGACY_ACCESSORIES,...NANLITE_FC_HIGH_OUTPUT_ACCESSORIES];
 const fixtureIds=new Set(fixtures.map(x=>x.id));
 const accessoryById=new Map(accessories.map(x=>[x.id,x]));
+const accessoryModels=new Map();
+for(const a of accessories){
+  const key=(a.model||'').trim().toLowerCase();
+  if(!key) continue;
+  const prev=accessoryModels.get(key);
+  if(prev&&prev!==a.id) failures.push(`Duplicate Nanlite physical accessory model: ${a.model} -> ${prev}, ${a.id}`);
+  else accessoryModels.set(key,a.id);
+}
 
 const expected=[
   'nanlite-forza-60b-ii','nanlite-forza-60c','nanlite-forza-60cr',
@@ -195,5 +203,12 @@ for(const id of ['nanlite-ws-rc-c2','nanlite-ws-tb-1']){
   for(const target of ['nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-1200b','nanlite-fc-1200c'])
     if(!a?.compatibleWith?.includes(target)) failures.push(id+' missing '+target);
 }
+for(const target of ['nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c']){
+  if(!accessoryById.get('nanlite-fl-20g')?.compatibleWith?.includes(target)) failures.push('Canonical FL-20G missing '+target);
+}
+for(const target of ['nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c','nanlite-forza-300b-ii','nanlite-forza-500b-ii']){
+  if(!accessoryById.get('nanlite-pj-bm-25-45')?.compatibleWith?.includes(target)) failures.push('Canonical PJ-BM-25-45 missing '+target);
+}
+for(const duplicateId of ['nanlite-fl-20g-fc','nanlite-pj-bm-25-45-fc']) if(accessoryById.has(duplicateId)) failures.push('Duplicate Nanlite accessory ID must be removed: '+duplicateId);
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}
 console.log(`Nanlite catalog self-test passed: ${fixtures.length} fixtures, ${accessories.length} accessories.`);

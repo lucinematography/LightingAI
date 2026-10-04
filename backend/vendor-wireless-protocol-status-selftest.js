@@ -4,10 +4,10 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const route=(fixtureId,transport)=>({fixtureId,transport});
 
-const expected=['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Kino Flo','De Sisti','LiteGear'];
+const expected=['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Kino Flo','De Sisti','LiteGear'];
 for(const maker of expected) expect(!!VENDOR_WIRELESS_PROTOCOL_STATUS[maker],maker+' protocol status missing');
 
-for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT']){
+for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast']){
   const row=VENDOR_WIRELESS_PROTOCOL_STATUS[maker];
   expect(row.commandSpec!=='production_verified',maker+' proprietary command path must not be marked production verified');
   expect(vendorWideCommandProductionReady(maker)===false,maker+' vendor-wide readiness must remain false without explicit production scope inputs');
@@ -159,6 +159,7 @@ expect(VENDOR_WIRELESS_PROTOCOL_STATUS.amaran.secondaryCapturePlanIds?.includes(
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.NEEWER.capturePlanId==='neewer-app-direct-bluetooth-capture-v1','NEEWER Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.GVM.capturePlanId==='gvm-led-app-direct-bluetooth-capture-v1','GVM Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.GVM.secondaryCapturePlanIds?.includes('gvm-rgb10s-direct-wifi-capture-v1'),'GVM RGB-10S Wi-Fi capture plan link missing');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Dracast?.capturePlanId==='dracast-palette-v2-bluetooth-capture-v1','Dracast Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.SWIT?.capturePlanId==='swit-console-bluetooth-capture-v1','SWIT Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Harlowe?.capturePlanId==='harlowe-app-bluetooth-capture-v1','Harlowe Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Fiilex?.capturePlanId==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan link missing');

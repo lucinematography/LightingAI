@@ -36,6 +36,18 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  Creamsource: {
+    bluetooth: 'transport_verified_model_family_scoped',
+    wifi: 'not_direct_fixture_route_in_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'creamsource-vortex-crmx-ble-capture-v1',
+    evidence: [
+      'https://knowledge.creamsource.com/best-of-class-connectivity',
+      'https://knowledge.creamsource.com/how-to-control-vortex-with-bluetooth-using-luminair-app'
+    ],
+    note: 'Vortex CRMX BLE/direct Bluetooth transport is documented. LightingAI command semantics remain locked.'
+  },
   ARRI: {
     bluetooth: 'transport_verified',
     wifi: 'transport_verified_model_scoped',

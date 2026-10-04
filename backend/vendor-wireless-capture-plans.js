@@ -82,6 +82,37 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  Creamsource: {
+    id:'creamsource-vortex-crmx-ble-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Creamsource Slyyd',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one Vortex fixture whose catalog entry explicitly lists CRMX BLE/Bluetooth.',
+      'Enable CRMX and CRMX BLE on the fixture.',
+      'Use the Creamsource Slyyd app for the primary capture set; do not infer that CRMX DMX frames reveal proprietary fixture configuration semantics.',
+      'Keep other nearby Vortex BLE fixtures out of the test session where practical.'
+    ],
+    officialSources:[
+      'https://knowledge.creamsource.com/best-of-class-connectivity',
+      'https://knowledge.creamsource.com/how-to-control-vortex-with-bluetooth-using-luminair-app',
+      'https://creamsource.com/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Enable CRMX BLE, discover and connect to one Vortex, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one intensity change per capture.'},
+      cct:{runs:3,rule:'From the same initial state perform exactly one CCT change per capture.'},
+      color:{runs:3,rule:'After DIM/CCT evidence is stable, perform exactly one HSI/RGB/xy color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger one documented effect per capture.'}
+    },
+    safety:{
+      officialAppWritesOnly:true,
+      lightingAiWritesAllowed:false,
+      rawCaptureCommitAllowed:false,
+      derivedEvidenceOnly:true,
+      resultStatus:'candidate_only_until_physical_replay'
+    }
+  },
   Aputure: {
     id:'sidus-direct-bluetooth-capture-v1',
     transport:'bluetooth',

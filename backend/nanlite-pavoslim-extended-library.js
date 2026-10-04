@@ -3,6 +3,8 @@
 
 const SRC={
   p60cl:'https://nanliteus.com/products/pavoslim-60cl-2x-5-rgbww-led-panel-light-with-crmx',
+  pavoslimFamily:'https://nanliteus.com/pages/pavoslim',
+  p60clDmx:'https://cdn-aliyun.nanlite.com/release/1713318978534-782112-1124121241519342-PavoSlim_60C_60CL_120C_240C_DMX_REFERENCE_GUIDE_EN.pdf',
   p240b:'https://nanliteus.com/products/pavoslim-240b-2x2-bi-color-led-panel-light',
   p240c:'https://nanliteus.com/products/pavoslim-240c-2x2-rgbww-led-panel-light-with-crmx',
   p240cl:'https://nanliteus.com/products/pavoslim-240cl-4x1-rgbww-led-panel-light-with-crmx',
@@ -27,17 +29,21 @@ function control(crmx){
     unavailableDirectProtocols:['NANLINK Bluetooth/2.4G control protocol is not publicly documented for third-party direct control']
   };
 }
-function fixture(id,model,formFactor,cctMin,cctMax,powerDrawW,colorMode,cri,tlci,sourceUrl,crmx,batteryOptions){
+function fixture(id,model,formFactor,cctMin,cctMax,powerDrawW,colorMode,cri,tlci,sourceUrl,crmx,batteryOptions,extra={}){
   return {
     id,manufacturer:'Nanlite',model,family:'PavoSlim Extended',category:'Light',discontinued:false,
     sourceType:'LED Panel',formFactor,cctK:{min:cctMin,max:cctMax},powerDrawW,colorMode,cri,tlci,
-    batteryPowered:true,batteryOptions,control:control(crmx),sourceUrl
+    batteryPowered:true,batteryOptions,control:control(crmx),sourceUrl,...extra
   };
 }
 
 export const NANLITE_PAVOSLIM_EXTENDED_FIXTURES=[
-  fixture('nanlite-pavoslim-60cl','PavoSlim 60CL','2x0.5 panel',2700,6500,72,'RGBWW',96,97,SRC.p60cl,true,
-    ['2x NP-F via Control Unit','1x V-Mount via Control Unit','AC mains']),
+  fixture('nanlite-pavoslim-60cl','PavoSlim 60CL','2x0.5 panel',2700,7500,72,'RGBWW',96,97,SRC.p60cl,true,
+    ['2x NP-F via Control Unit','1x V-Mount via Control Unit','AC mains'],{
+      officialSourceConflict:true,
+      conflictNote:'Nanlite 60CL product copy, photometrics and official DMX guide support 2700K-7500K; the product specifications table and PavoSlim family comparison currently show 2700K-6500K. Catalog uses 7500K because the DMX technical guide and measured 7500K photometrics corroborate it.',
+      conflictSources:[SRC.p60cl,SRC.p60clDmx,SRC.pavoslimFamily]
+    }),
   fixture('nanlite-pavoslim-240b','PavoSlim 240B','2x2 folding panel',2700,7500,260,'Bi-Color',95,97,SRC.p240b,false,
     ['V-Mount via Control Unit','AC mains']),
   fixture('nanlite-pavoslim-240c','PavoSlim 240C','2x2 folding panel',2700,7500,260,'RGBWW',96,97,SRC.p240c,true,

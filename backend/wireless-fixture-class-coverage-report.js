@@ -13,6 +13,13 @@ function clean(v){
   const s=String(v??'').trim();
   return s||null;
 }
+function classSignature(fixture){
+  return [
+    clean(fixture?.family)||'Unspecified family',
+    clean(fixture?.sourceType)||'Unspecified sourceType',
+    clean(fixture?.formFactor)||'Unspecified formFactor'
+  ].join(' | ');
+}
 function bucket(map,key){
   if(!map.has(key)) map.set(key,{
     fixtures:new Set(),
@@ -49,6 +56,7 @@ export function buildWirelessFixtureClassCoverageReport(){
   const byFamily=new Map();
   const bySourceType=new Map();
   const byFormFactor=new Map();
+  const byClassSignature=new Map();
   const byManufacturer=new Map();
   const wirelessFixtureIds=[];
   const unclassifiedFixtureIds=[];
@@ -77,6 +85,7 @@ export function buildWirelessFixtureClassCoverageReport(){
     add(byFamily,family||'Unspecified family',fixture,flags);
     add(bySourceType,sourceType||'Unspecified sourceType',fixture,flags);
     add(byFormFactor,formFactor||'Unspecified formFactor',fixture,flags);
+    add(byClassSignature,classSignature(fixture),fixture,flags);
     add(byManufacturer,clean(fixture.manufacturer)||'Unknown',fixture,flags);
   }
 
@@ -92,6 +101,7 @@ export function buildWirelessFixtureClassCoverageReport(){
     byFamily:serialize(byFamily),
     bySourceType:serialize(bySourceType),
     byFormFactor:serialize(byFormFactor),
+    byClassSignature:serialize(byClassSignature),
     byManufacturer:serialize(byManufacturer)
   };
 }

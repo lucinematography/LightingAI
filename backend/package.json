@@ -36,7 +36,8 @@
     "test:nanlite": "node nanlite-catalog-selftest.js",
     "audit:wireless-control": "node control-wireless-catalog-audit.js",
     "test:vendor-wireless-protocol-status": "node vendor-wireless-protocol-status-selftest.js",
-    "test:vendor-wireless-capture-plans": "node vendor-wireless-capture-plans-selftest.js"
+    "test:vendor-wireless-capture-plans": "node vendor-wireless-capture-plans-selftest.js",
+    "test:vendor-wireless-coverage": "node vendor-wireless-coverage-selftest.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

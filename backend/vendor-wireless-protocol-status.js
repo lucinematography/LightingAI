@@ -138,12 +138,20 @@ export function commandProductionReadyForStatus(row,requiredTransports=[],requir
     evidence.physicalReplayVerified===true &&
     Array.isArray(evidence.derivedEvidenceRefs) &&
     evidence.derivedEvidenceRefs.length>0 &&
-    evidence.derivedEvidenceRefs.every(ref=>typeof ref==='string'&&ref.trim().length>0)
+    evidence.derivedEvidenceRefs.every(ref=>typeof ref==='string'&&ref.trim().length>0) &&
+    Array.isArray(evidence.verifiedTransports) &&
+    evidence.verifiedTransports.length>0 &&
+    Array.isArray(evidence.verifiedFixtureIds) &&
+    evidence.verifiedFixtureIds.length>0
   )) return false;
   const declared=new Set(scope.transports.map(x=>String(x).toLowerCase()));
   if(!requiredTransports.every(t=>declared.has(String(t).toLowerCase()))) return false;
+  const evidenceTransports=new Set(evidence.verifiedTransports.map(x=>String(x).toLowerCase()));
+  if(!requiredTransports.every(t=>evidenceTransports.has(String(t).toLowerCase()))) return false;
   const declaredFixtureIds=new Set(scope.fixtureIds.map(x=>String(x)));
-  return requiredFixtureIds.every(id=>declaredFixtureIds.has(String(id)));
+  if(!requiredFixtureIds.every(id=>declaredFixtureIds.has(String(id)))) return false;
+  const evidenceFixtureIds=new Set(evidence.verifiedFixtureIds.map(x=>String(x)));
+  return requiredFixtureIds.every(id=>evidenceFixtureIds.has(String(id)));
 }
 
 export function vendorWideCommandProductionReady(manufacturer,requiredTransports=[],requiredFixtureIds=[]) {

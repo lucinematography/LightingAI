@@ -43,9 +43,9 @@ export const NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES=[
 export const NANLITE_COMPAC_DAYLIGHT_LEGACY_ACCESSORIES=[
   {
     id:'nanlite-w-2-wifi-adapter',manufacturer:'Nanlite',model:'W-2 Wi-Fi Adapter',
-    category:'Control',compatibleWith:['nanlite-compac-200','nanlite-compac-200b'],
+    category:'Control',compatibleWith:['nanlite-compac-200','nanlite-compac-200b','nanlite-mixpanel-60'],
     compatibilityStatus:'Compatible',
-    conditions:['Enables wireless control with the NANLINK mobile app on Compac 200 / 200B'],
+    conditions:['Enables documented Wi-Fi control on supported legacy Nanlite fixtures'],
     sourceUrl:SRC.guide
   }
 ];

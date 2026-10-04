@@ -36,6 +36,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  PROLYCHT: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'prolycht-chromalink-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['prolycht-chromalink-wifi-capture-v1'],
+    evidence: [
+      'https://www.prolycht.com/orion300fs/index.aspx',
+      'https://prolycht.com/orion675fs/index.aspx',
+      'https://prolycht.com/uploadfiles/2021/11/20211125172104110.pdf',
+      'https://prolycht.com/uploadfiles/2022/10/20221014151213506.pdf'
+    ],
+    note: 'Orion 300 FS and Orion 675 FS have model-scoped Bluetooth and Wi-Fi/ChromaLink transport evidence. LightingAI proprietary command semantics remain locked.'
+  },
+
   ZHIYUN: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

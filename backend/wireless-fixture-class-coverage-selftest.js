@@ -21,6 +21,8 @@ expect(classMakers.size===readinessMakers.size&&[...classMakers].every(m=>readin
 const matrixMakers=new Set(Object.keys(report.byManufacturerClassSignature).map(key=>key.split(' :: ')[0]));
 expect(matrixMakers.size===readinessMakers.size&&[...matrixMakers].every(m=>readinessMakers.has(m)),'manufacturer-class matrix manufacturer set diverges from readiness report');
 expect(report.unclassifiedFixtureIds.length===0,'wireless fixtures missing family/sourceType/formFactor classification: '+report.unclassifiedFixtureIds.join(', '));
+expect(report.structurallyUnclassifiedFixtureIds.length===0,
+  'wireless fixtures remain structurally unclassified: '+report.structurallyUnclassifiedFixtureIds.join(', '));
 
 for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light']){
   expect(!!report.byManufacturer[maker],maker+' missing from wireless class coverage');
@@ -66,6 +68,10 @@ expect(sourceTypeFixtureTotal===report.wirelessFixtureCount,'sourceType coverage
 expect(formFactorFixtureTotal===report.wirelessFixtureCount,'formFactor coverage must enumerate every wireless fixture exactly once');
 const signatureFixtureTotal=Object.values(report.byClassSignature).reduce((n,row)=>n+row.fixtureCount,0);
 expect(signatureFixtureTotal===report.wirelessFixtureCount,'classSignature coverage must enumerate every wireless fixture exactly once');
+const structuralFixtureTotal=Object.values(report.byStructuralClass).reduce((n,row)=>n+row.fixtureCount,0);
+expect(structuralFixtureTotal===report.wirelessFixtureCount,'structural class coverage must enumerate every wireless fixture exactly once');
+const manufacturerStructuralFixtureTotal=Object.values(report.byManufacturerStructuralClass).reduce((n,row)=>n+row.fixtureCount,0);
+expect(manufacturerStructuralFixtureTotal===report.wirelessFixtureCount,'manufacturer-structural matrix must enumerate every wireless fixture exactly once');
 expect(Object.keys(report.byClassSignature).length>=Math.max(familyKeys.length,sourceTypeKeys.length,formFactorKeys.length),
   'composite class signatures are unexpectedly coarser than individual class dimensions');
 expect(classRows.every(row=>row.fixtureCount>0),'wireless class report contains empty class');

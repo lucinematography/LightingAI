@@ -16,7 +16,7 @@ export function normalizeAsteraWirelessVerification(fixtures=[]){
     const sourceUrls=unique([
       fixture.sourceUrl,
       ...(Array.isArray(control.sourceUrls)?control.sourceUrls:[])
-    ]).filter(url=>/^https?:///i.test(String(url)));
+    ]).filter(url=>String(url||'').startsWith('http://')||String(url||'').startsWith('https://'));
     if(!sourceUrls.length) continue;
 
     const verification={...(control.wirelessVerification||{})};

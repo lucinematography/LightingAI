@@ -43,7 +43,7 @@ export const NANLITE_FORZA_II_FIXTURES=[
 ];
 
 const BOTH=['nanlite-forza-300b-ii','nanlite-forza-500b-ii'];
-const FL20G_TARGETS=[...BOTH,'nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c'];
+const FL20G_TARGETS=[...BOTH,'nanlite-forza-720b','nanlite-fc-300b','nanlite-fc-500b','nanlite-fc-500c','nanlite-fc-720b','nanlite-fc-720c'];
 
 export const NANLITE_FORZA_II_ACCESSORIES=[
   {
@@ -62,7 +62,7 @@ export const NANLITE_FORZA_II_ACCESSORIES=[
   },
   {
     id:'nanlite-ascpqrfz',manufacturer:'Nanlite',model:'ASCPQRFZ Quick-Release Super Clamp',
-    category:'Bracket',compatibleWith:[...BOTH,'nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c'],compatibilityStatus:'Designed For',
+    category:'Bracket',compatibleWith:[...BOTH,'nanlite-forza-720b','nanlite-pavoslim-60b','nanlite-pavoslim-60c','nanlite-pavoslim-120b','nanlite-pavoslim-120c'],compatibilityStatus:'Designed For',
     includedWithFixture:true,sourceUrl:SRC300
   },
   {

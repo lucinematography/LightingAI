@@ -29,6 +29,17 @@ expect(commandProductionReadyForStatus({
 })===true,
   'explicit vendor-wide production scope should be accepted');
 
+expect(commandProductionReadyForStatus({
+  commandSpec:'production_verified',
+  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth']}
+},['bluetooth','wifi'])===false,
+  'vendor-wide scope missing Wi-Fi must remain fail-closed for a Bluetooth + Wi-Fi vendor');
+expect(commandProductionReadyForStatus({
+  commandSpec:'production_verified',
+  productionScope:{kind:'vendor-wide',allCurrentWirelessFixtures:true,transports:['bluetooth','wifi']}
+},['bluetooth','wifi'])===true,
+  'vendor-wide scope covering every active transport should be accepted');
+
 
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.nextStep==='capture-plan-required-before-driver','Astera physical evidence path changed');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Astera.capturePlanId==='astera-physical-capture-set-v1','Astera capture plan link missing');

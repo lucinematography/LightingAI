@@ -134,6 +134,7 @@ const exactAllowed = new Set([
   'backend/nanlite-forza-ii-library.js',
   'backend/nanlite-fc-720-library.js',
   'backend/nanlite-pavoslim-60-120-library.js',
+  'backend/nanlite-pavotube-ii-xr-library.js',
   'backend/nanlite-catalog-selftest.js',
   'backend/aladdin-mosaic-library.js',
   'backend/aladdin-fabric-lite-library.js',

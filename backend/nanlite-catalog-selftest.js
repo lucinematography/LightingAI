@@ -343,12 +343,17 @@ else {
   if(bulb.discontinued!==false) failures.push('PavoBulb 10C must be current');
   if(bulb.control?.builtInCRMX) failures.push('PavoBulb 10C must not claim CRMX');
   for(const p of ['Bluetooth / NANLINK app','2.4G']) if(!(bulb.control?.wireless||[]).includes(p)) failures.push('PavoBulb 10C missing '+p);
-  for(const p of ['DMX512','RDM']) if(!(bulb.control?.wired||[]).includes(p)) failures.push('PavoBulb 10C missing '+p);
+  if(!(bulb.control?.wired||[]).includes('DMX512')) failures.push('PavoBulb 10C DMX512 missing');
+  if((bulb.control?.wired||[]).includes('RDM')) failures.push('PavoBulb 10C must not infer RDM without explicit first-party evidence');
+  if(bulb.control?.dmxConnection!=='USB-C via CB-DMX-USBC-1/3 adapter') failures.push('PavoBulb 10C legacy USB-C DMX adapter path missing');
+  if(!bulb.control?.controlEvidenceNote) failures.push('PavoBulb 10C control evidence note missing');
 }
-for(const id of ['nanlite-cb-dmx-usbc-1-3ii','nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-wc-usbc-c1']){
+for(const id of ['nanlite-cb-dmx-usbc-1-3','nanlite-ws-rc-c2','nanlite-ws-tb-1','nanlite-wc-usbc-c1']){
   const a=accessoryById.get(id);
   if(!a?.compatibleWith?.includes('nanlite-pavobulb-10c')) failures.push(id+' missing PavoBulb 10C');
 }
+if(accessoryById.get('nanlite-cb-dmx-usbc-1-3ii')?.compatibleWith?.includes('nanlite-pavobulb-10c'))
+  failures.push('CB-DMX-USBC-1/3II must not be inferred for PavoBulb 10C');
 for(const id of ['nanlite-as-mba-e27-v2','nanlite-bt-ba-snp-e27','nanlite-as-bsc']){
   const a=accessoryById.get(id);
   if(!a?.compatibleWith?.includes('nanlite-pavobulb-10c')) failures.push(id+' missing PavoBulb 10C');

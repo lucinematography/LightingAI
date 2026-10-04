@@ -111,6 +111,7 @@ import { NANLITE_COMPAC_DAYLIGHT_LEGACY_FIXTURES, NANLITE_COMPAC_DAYLIGHT_LEGACY
 import { NANLITE_MIXPANEL_LEGACY_FIXTURES, NANLITE_MIXPANEL_LEGACY_ACCESSORIES } from './nanlite-mixpanel-legacy-library.js';
 import { NANLITE_MIXPAD_FIXTURES, NANLITE_MIXPAD_ACCESSORIES } from './nanlite-mixpad-library.js';
 import { NANLITE_LITOLITE_LEGACY_FIXTURES, NANLITE_LITOLITE_LEGACY_ACCESSORIES } from './nanlite-litolite-legacy-library.js';
+import { NANLITE_HALO_LEGACY_FIXTURES, NANLITE_HALO_LEGACY_ACCESSORIES } from './nanlite-halo-legacy-library.js';
 import { ALADDIN_MOSAIC_FIXTURES, ALADDIN_MOSAIC_ACCESSORIES } from './aladdin-mosaic-library.js';
 import { ALADDIN_FABRIC_LITE_FIXTURES, ALADDIN_FABRIC_LITE_ACCESSORIES } from './aladdin-fabric-lite-library.js';
 import { ALADDIN_BI_FLEX_FIXTURES, ALADDIN_BI_FLEX_ACCESSORIES } from './aladdin-bi-flex-library.js';
@@ -219,6 +220,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(NANLITE_MIXPANEL_LEGACY_FIXTURES));
   fixtures.push(...clone(NANLITE_MIXPAD_FIXTURES));
   fixtures.push(...clone(NANLITE_LITOLITE_LEGACY_FIXTURES));
+  fixtures.push(...clone(NANLITE_HALO_LEGACY_FIXTURES));
   fixtures.push(...clone(ALADDIN_MOSAIC_FIXTURES));
   fixtures.push(...clone(ALADDIN_FABRIC_LITE_FIXTURES));
   fixtures.push(...clone(ALADDIN_BI_FLEX_FIXTURES));
@@ -312,6 +314,7 @@ export function buildRuntimeCatalog() {
   accessoryDefinitions.push(...clone(NANLITE_MIXPANEL_LEGACY_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_MIXPAD_ACCESSORIES));
   accessoryDefinitions.push(...clone(NANLITE_LITOLITE_LEGACY_ACCESSORIES));
+  accessoryDefinitions.push(...clone(NANLITE_HALO_LEGACY_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_MOSAIC_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_FABRIC_LITE_ACCESSORIES));
   accessoryDefinitions.push(...clone(ALADDIN_BI_FLEX_ACCESSORIES));

@@ -1,0 +1,33 @@
+import { buildOperatorControlPlanningReport } from './operator-control-planning-report.js';
+
+const failures=[];
+const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
+const report=buildOperatorControlPlanningReport();
+const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
+
+expect(report.fixtureCount===539,'fixture total changed from verified catalog');
+expect(report.wirelessManufacturers===7,'wireless manufacturer count must remain 7');
+expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
+expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
+
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light']){
+  const row=by[maker];
+  expect(!!row,maker+' planning row missing');
+  if(!row) continue;
+  if(row.bluetoothFixtures>0) expect(!!row.bluetoothPlanId,maker+' Bluetooth plan missing from planning report');
+  if(row.wifiFixtures>0) expect(!!row.wifiPlanId,maker+' Wi-Fi plan missing from planning report');
+  expect(row.commandReady===false,maker+' commandReady must remain false');
+  expect(row.dimCapable<=row.wirelessFixtures,maker+' DIM capability count exceeds wireless fixtures');
+  expect(row.cctCapable<=row.wirelessFixtures,maker+' CCT capability count exceeds wireless fixtures');
+  expect(row.colorCapable<=row.wirelessFixtures,maker+' COLOR capability count exceeds wireless fixtures');
+  expect(row.fxCapable<=row.wirelessFixtures,maker+' FX capability count exceeds wireless fixtures');
+}
+
+expect(report.vendors[0]?.manufacturer==='Godox','Godox should remain first by current wireless fixture coverage');
+expect(by.Godox?.wirelessFixtures===68,'Godox wireless fixture count changed unexpectedly');
+expect(by.Nanlite?.wirelessFixtures===66,'Nanlite unique wireless fixture count changed unexpectedly');
+expect(by.Aputure?.wirelessFixtures===19,'Aputure wireless fixture count changed unexpectedly');
+expect(by.Astera?.wirelessFixtures===17,'Astera unique wireless fixture count changed unexpectedly');
+
+console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
+if(failures.length)process.exit(1);

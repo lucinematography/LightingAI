@@ -117,7 +117,7 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     id:'dmg-mix-bluetooth-capture-v1',
     transport:'bluetooth',
     controllerApp:'myMIX',
-    commandSpecStatus:'public-proprietary-command-spec-not-located-in-official-docs',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
     prerequisites:[
       'Use one exact DMG MIX route at a time and preserve the fixture/controller topology in the derived evidence.',
       'For MAXI, use the built-in MIX Controller route.',

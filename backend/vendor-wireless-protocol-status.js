@@ -42,6 +42,7 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     commandSpec: 'not_captured_from_public_vendor_docs',
     nextStep: 'capture-plan-required-before-driver',
     capturePlanId: 'velvet-evo-wireless-capture-v1',
+    secondaryCapturePlanIds: ['velvet-evo-wifi-artnet-capture-v1'],
     evidence: [
       'https://www.velvetlight.tv/velvet-evo/',
       'https://www.velvetlight.tv/serie/evo/',

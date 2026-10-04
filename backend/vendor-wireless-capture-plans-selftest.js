@@ -32,6 +32,7 @@ expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS['Quasar Science'].secondaryPl
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.amaran.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.amaran.secondaryPlans.some(x=>x.id==='amaran-sm5c-direct-wifi-capture-v1'&&x.transport==='wifi'),'amaran SM5c Wi-Fi capture plan missing');
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.GVM.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.GVM.secondaryPlans.some(x=>x.id==='gvm-rgb10s-direct-wifi-capture-v1'&&x.transport==='wifi'),'GVM RGB-10S Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.VELVET?.id==='velvet-evo-wireless-capture-v1','VELVET wireless capture plan missing');
+expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.VELVET?.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.VELVET.secondaryPlans.some(x=>x.id==='velvet-evo-wifi-artnet-capture-v1'&&x.transport==='wifi'),'VELVET Wi-Fi Art-Net secondary capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Kinotehnik?.id==='kinotehnik-practilite-bluetooth-capture-v1','Kinotehnik Bluetooth capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['Hive Lighting']?.id==='hive-shot-bluetooth-capture-v1','Hive Lighting Bluetooth capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Dracast?.id==='dracast-palette-v2-bluetooth-capture-v1','Dracast Bluetooth capture plan missing');

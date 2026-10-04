@@ -24,11 +24,12 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     weightKg: 4.5,
     control: {
       wired: ['DMX'],
-      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX', 'Bluetooth on AX2-50-BTB variant', 'WiFi on AX2-50-BTB variant'],
       builtInCRMX: true,
+      builtInBTBVariant: 'AX2-50-BTB',
       directLightingAI: [],
       externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX transmitter for CRMX control', 'AsteraBox for AsteraApp/UHF control'],
-      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
       sourceUrls: [
         'https://update.astera-led.com/release_notes/ax2_50/release_notes',
         'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf'
@@ -68,11 +69,12 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     weightKg: 7.4,
     control: {
       wired: ['DMX'],
-      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX', 'Bluetooth on AX2-100-BTB variant', 'WiFi on AX2-100-BTB variant'],
       builtInCRMX: true,
+      builtInBTBVariant: 'AX2-100-BTB',
       directLightingAI: [],
       externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX transmitter for CRMX control', 'AsteraBox for AsteraApp/UHF control'],
-      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
       sourceUrls: [
         'https://update.astera-led.com/release_notes/ax2_50/release_notes',
         'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf'

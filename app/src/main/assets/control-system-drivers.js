@@ -109,7 +109,8 @@ function resolve(fixture){
   transportKnown:bluetooth||wifi,
   vendorDirectRequired:vendor.some(function(d){return d.direct}),
   vendorAssistedRequired:vendor.some(function(d){return d.requiresExternalInterface}),
-  transportEvidenceVerified:vendor.some(function(d){return d.transportVerified}),
+  transportEvidenceVerified:vendor.length>0&&vendor.every(function(d){return d.transportVerified}),
+  anyTransportEvidenceVerified:vendor.some(function(d){return d.transportVerified}),
   vendorDirectReady:false,
   vendorResearchOnly:vendor.length>0
  };

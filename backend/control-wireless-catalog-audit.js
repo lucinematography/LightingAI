@@ -220,6 +220,10 @@ const kinotehnik=byManufacturer.get('Kinotehnik');
 if(!kinotehnik || kinotehnik.bluetooth!==2 || kinotehnik.wifi!==0 || kinotehnik.both!==0) {
   failures.push('Kinotehnik wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const velvet=byManufacturer.get('VELVET');
+if(!velvet || velvet.bluetooth!==4 || velvet.wifi!==6 || velvet.both!==4) {
+  failures.push('VELVET wireless coverage expected 4 Bluetooth / 6 Wi-Fi / 4 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

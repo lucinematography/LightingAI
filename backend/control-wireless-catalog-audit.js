@@ -176,6 +176,10 @@ const litepanels=byManufacturer.get('Litepanels');
 if(!litepanels || litepanels.bluetooth!==13 || litepanels.wifi!==3 || litepanels.both!==3) {
   failures.push('Litepanels wireless coverage expected 13 Bluetooth / 3 Wi-Fi / 3 both');
 }
+const dmg=byManufacturer.get('DMG Lumiere');
+if(!dmg || dmg.bluetooth!==3 || dmg.wifi!==3 || dmg.both!==3) {
+  failures.push('DMG Lumiere wireless coverage expected 3 Bluetooth / 3 Wi-Fi / 3 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

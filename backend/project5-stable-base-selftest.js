@@ -249,24 +249,11 @@ for (const protectedPath of [
 }
 
 const manifestPath = 'app/src/main/AndroidManifest.xml';
-const stableManifest = git(['show', `${PROJECT510_QA_BASE}:${manifestPath}`]);
+const controlManifest = git(['show', `${PROBE_CONTROL_BASE}:${manifestPath}`]);
 const currentManifest = git(['show', `HEAD:${manifestPath}`]);
 if (!currentManifest.includes('android:label="@string/app_name"')) fail('Probe app label resource marker missing');
-const manifestWithoutBle = currentManifest
-  .replace('android:label="@string/app_name"', 'android:label="LIGHTING AI"')
-  .split('\n')
-  .filter((line) => !line.includes('android.permission.BLUETOOTH') && !line.includes('android.hardware.bluetooth_le') && !line.includes('android.permission.RECORD_AUDIO'))
-  .join('\n');
-if (manifestWithoutBle !== stableManifest) fail('AndroidManifest changed outside the isolated BLE permission/feature additions');
-for (const marker of [
-  'android.permission.BLUETOOTH" android:maxSdkVersion="30"',
-  'android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"',
-  'android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"',
-  'android.permission.BLUETOOTH_CONNECT',
-  'android.hardware.bluetooth_le" android:required="false"'
-]) {
-  if (!currentManifest.includes(marker)) fail(`BLE manifest marker missing: ${marker}`);
-}
+const manifestAsControl = currentManifest.replace('android:label="@string/app_name"', 'android:label="LIGHTING AI"');
+if (manifestAsControl !== controlManifest) fail('Probe AndroidManifest differs from verified CONTROL base outside the app label');
 const allowedPermissions = new Set([
   'android.permission.INTERNET',
   'android.permission.ACCESS_COARSE_LOCATION',

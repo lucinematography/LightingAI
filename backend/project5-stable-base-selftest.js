@@ -87,6 +87,7 @@ const exactAllowed = new Set([
   'app/src/main/assets/planner-layout-lock.js',
   'app/src/main/assets/catalog.js',
   'backend/catalog-runtime.js',
+  'backend/dmg-mix-wireless-library.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',

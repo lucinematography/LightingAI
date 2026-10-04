@@ -74,7 +74,8 @@ export const NANLITE_PAVOSLIM_60_120_ACCESSORIES=[
   },
   {
     id:'nanlite-as-mba-1-4-set',manufacturer:'Nanlite',model:'AS-MBA-1/4-SET Magnetic Mounting Adapters',
-    category:'Mount Adapter',mount:'1/4-20 magnetic',compatibleWith:ALL,
+    category:'Mount Adapter',mount:'1/4-20 magnetic',
+    compatibleWith:[...ALL,'nanlite-pavoslim-60cl','nanlite-pavoslim-240b','nanlite-pavoslim-240c','nanlite-pavoslim-240cl','nanlite-pavoslim-360c'],
     compatibilityStatus:'Designed For',sourceUrl:SRC.magnets
   },
   {

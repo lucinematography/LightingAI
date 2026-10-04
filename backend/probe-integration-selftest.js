@@ -91,6 +91,7 @@ const allowed=new Set([
   'backend/wireless-control-capability-gap-report.js',
   'backend/wireless-control-capability-gap-report-selftest.js',
   '.github/workflows/build-apk.yml',
+  'backend/aputure-wireless-verification-selftest.js',
 ]);
 
 const changed=git(['diff','--name-only',`${CONTROL_BASE}...HEAD`]).split('\n').map(x=>x.trim()).filter(Boolean);

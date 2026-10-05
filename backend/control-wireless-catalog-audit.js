@@ -232,6 +232,10 @@ const phottix=byManufacturer.get('Phottix');
 if(!phottix || phottix.bluetooth!==4 || phottix.wifi!==0 || phottix.both!==0) {
   failures.push('Phottix wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const yongnuo=byManufacturer.get('YONGNUO');
+if(!yongnuo || yongnuo.bluetooth!==4 || yongnuo.wifi!==0 || yongnuo.both!==0) {
+  failures.push('YONGNUO wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

@@ -52,6 +52,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Moman: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'moman-pc8-bluetooth-capture-v1',
+    evidence: [
+      'https://momanx.com/products/led-light-for-dslr-camera-moman-pc8',
+      'https://momanx.com/ja/pages/moman-lighting-app',
+      'https://momanx.com/it/blogs/moman-ideas/best-lighting-equipment-for-youtube-videos-for-any-budget'
+    ],
+    note: 'Bluetooth/Moman Light app transport is verified only for PC8 in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   Tolifo: {
     bluetooth: 'not_verified_for_current_catalog',
     wifi: 'transport_verified_model_scoped',

@@ -260,6 +260,10 @@ const cameTv=byManufacturer.get('CAME-TV');
 if(!cameTv || cameTv.bluetooth!==0 || cameTv.wifi!==8 || cameTv.both!==0) {
   failures.push('CAME-TV wireless coverage expected 0 Bluetooth / 8 Wi-Fi / 0 both');
 }
+const soonwell=byManufacturer.get('SOONWELL');
+if(!soonwell || soonwell.bluetooth!==1 || soonwell.wifi!==0 || soonwell.both!==0) {
+  failures.push('SOONWELL wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

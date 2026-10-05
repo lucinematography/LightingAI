@@ -139,6 +139,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Moman: {
+    id:'moman-pc8-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Moman Light',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Moman PC8 fixture with the official Moman Light app.',
+      'Start every capture from the same known lighting state and a clean Bluetooth session.',
+      'Do not infer Bluetooth support to other Moman lights without exact-model first-party evidence.'
+    ],
+    officialSources:[
+      'https://momanx.com/products/led-light-for-dslr-camera-moman-pc8',
+      'https://momanx.com/ja/pages/moman-lighting-app',
+      'https://momanx.com/it/blogs/moman-ideas/best-lighting-equipment-for-youtube-videos-for-any-budget'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one PC8 over Bluetooth in Moman Light, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one HSI/RGB color change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Tolifo: {
     id:'tolifo-gk2016-wifi-capture-v1',
     transport:'wifi',

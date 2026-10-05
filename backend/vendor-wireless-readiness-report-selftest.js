@@ -63,6 +63,7 @@ expect(by.Phottix?.bluetoothFixtures===4&&by.Phottix?.wifiFixtures===0&&by.Phott
 expect(by.YONGNUO?.bluetoothFixtures===4&&by.YONGNUO?.wifiFixtures===0&&by.YONGNUO?.bothFixtures===0,'YONGNUO wireless counts changed unexpectedly');
 expect(by.PIXEL?.bluetoothFixtures===2&&by.PIXEL?.wifiFixtures===0&&by.PIXEL?.bothFixtures===0,'PIXEL wireless counts changed unexpectedly');
 expect(by['Falcon Eyes']?.bluetoothFixtures===4&&by['Falcon Eyes']?.wifiFixtures===0&&by['Falcon Eyes']?.bothFixtures===0,'Falcon Eyes wireless counts changed unexpectedly');
+expect(by['Falcon Eyes']?.bluetoothFixtures===4&&by['Falcon Eyes']?.wifiFixtures===0&&by['Falcon Eyes']?.bothFixtures===0,'Falcon Eyes wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

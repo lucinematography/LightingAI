@@ -256,6 +256,10 @@ const ulanzi=byManufacturer.get('Ulanzi');
 if(!ulanzi || ulanzi.bluetooth!==5 || ulanzi.wifi!==0 || ulanzi.both!==0) {
   failures.push('Ulanzi wireless coverage expected 5 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const cameTv=byManufacturer.get('CAME-TV');
+if(!cameTv || cameTv.bluetooth!==0 || cameTv.wifi!==8 || cameTv.both!==0) {
+  failures.push('CAME-TV wireless coverage expected 0 Bluetooth / 8 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

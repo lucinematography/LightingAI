@@ -52,6 +52,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Ulanzi: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'ulanzi-connect-bluetooth-capture-v1',
+    evidence: [
+      'https://www.ulanzi.com/en-au/pages/ulanzi-app',
+      'https://www.ulanzi.com/collections/continuous-lighting/products/120w-v-mount-light-l074cna1',
+      'https://www.ulanzi.com/collections/continuous-lighting/products/vl-200bi-200w-video-light-l079cna1',
+      'https://www.ulanzi.com/collections/continuous-lighting/products/65w-portable-bi-color-led-video-light-l184',
+      'https://www.ulanzi.com/collections/continuous-lighting/products/inflatable-led-air-tube-light-l096'
+    ],
+    note: 'Bluetooth/Ulanzi Connect transport is verified only for VL-120Bi, VL-120C, VL-200Bi, EC65 and AL60 in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   NiceFoto: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

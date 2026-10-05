@@ -3,7 +3,7 @@ import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.j
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 
-for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Astera','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi']){
+for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Astera','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV']){
   const plan=VENDOR_WIRELESS_CAPTURE_PLANS[maker];
   expect(!!plan,maker+' capture plan missing');
   if(!plan) continue;
@@ -45,6 +45,8 @@ expect(VENDOR_WIRELESS_CAPTURE_PLANS.SWIT?.id==='swit-console-bluetooth-capture-
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Harlowe?.id==='harlowe-app-bluetooth-capture-v1','Harlowe Bluetooth capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.transport==='wifi','CAME-TV capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Fiilex command spec status changed');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.captureSets?.connectOnly?.runs>=3,'Fiilex connect-only requires at least 3 runs');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.captureSets?.dim?.runs>=3,'Fiilex DIM requires at least 3 runs');

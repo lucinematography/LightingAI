@@ -112,6 +112,7 @@ const exactAllowed = new Set([
   'backend/nicefoto-tc-bluetooth-library.js',
   'backend/ulanzi-connect-bluetooth-library.js',
   'backend/came-tv-wifi-library.js',
+  'backend/soonwell-g900-bluetooth-library.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',

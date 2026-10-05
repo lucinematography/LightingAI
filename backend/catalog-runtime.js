@@ -112,6 +112,7 @@ import { YONGNUO_BLUETOOTH_FIXTURES } from './yongnuo-bluetooth-library.js';
 import { PIXEL_BLUETOOTH_FIXTURES } from './pixel-bluetooth-library.js';
 import { FALCON_EYES_BLUETOOTH_FIXTURES } from './falcon-eyes-bluetooth-library.js';
 import { LISHUAI_LIGHTREEL_BLUETOOTH_FIXTURES } from './lishuai-lightreel-bluetooth-library.js';
+import { NICEFOTO_TC_BLUETOOTH_FIXTURES } from './nicefoto-tc-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -269,6 +270,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(PIXEL_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(FALCON_EYES_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(LISHUAI_LIGHTREEL_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(NICEFOTO_TC_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

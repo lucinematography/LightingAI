@@ -47,6 +47,15 @@ expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.transport==='wifi','CAME-TV capture plan must remain Wi-Fi only');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.id==='tolifo-gk2016-wifi-capture-v1','Tolifo Wi-Fi capture plan missing');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.transport==='wifi','Tolifo capture plan must remain Wi-Fi only');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Tolifo command spec status changed');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.captureSets?.connectOnly?.runs>=3,'Tolifo connect-only requires at least 3 runs');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.captureSets?.dim?.runs>=3,'Tolifo DIM requires at least 3 runs');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.safety?.officialAppWritesOnly===true,'Tolifo official-app-only capture safety missing');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.safety?.lightingAiWritesAllowed===false,'Tolifo LightingAI writes must stay disabled during capture');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.safety?.rawCaptureCommitAllowed===false,'Tolifo raw captures must never be committed');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.safety?.derivedEvidenceOnly===true,'Tolifo only derived evidence may enter repo');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','CAME-TV command spec status changed');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.captureSets?.connectOnly?.runs>=3,'CAME-TV connect-only requires at least 3 runs');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.captureSets?.dim?.runs>=3,'CAME-TV DIM requires at least 3 runs');

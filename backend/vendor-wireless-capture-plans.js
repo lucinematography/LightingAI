@@ -139,6 +139,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Lishuai: {
+    id:'lishuai-lightreel-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Lishuai Light Reel',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Lishuai COOLCAM P60G or P120G fixture at a time with the official Light Reel app.',
+      'Use the fixture Bluetooth reset before each clean capture session.',
+      'Keep the separate 2.4G remote-control path out of Bluetooth captures.',
+      'Do not infer compatibility to other Lishuai models without exact-model Bluetooth evidence.'
+    ],
+    officialSources:[
+      'https://www.lishuai.com.cn/lishuai/2023/12/19/coolcamp60gp120gshuomingshu.pdf',
+      'https://www.lishuai.com.cn/service/zi-liao-xia-zai/',
+      'https://www.lishuai.com.cn/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Reset Bluetooth, connect one Lishuai fixture in Light Reel, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   PIXEL: {
     id:'pixel-app-bluetooth-capture-v1',
     transport:'bluetooth',

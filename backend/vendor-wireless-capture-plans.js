@@ -139,6 +139,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Ulanzi: {
+    id:'ulanzi-connect-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Ulanzi Connect',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact supported Ulanzi fixture at a time with Ulanzi Connect.',
+      'Start every capture from the same known lighting state and a clean Bluetooth session.',
+      'Do not infer compatibility to additional Ulanzi lighting models outside the first-party supported-model list.'
+    ],
+    officialSources:[
+      'https://www.ulanzi.com/en-au/pages/ulanzi-app',
+      'https://www.ulanzi.com/collections/continuous-lighting/products/120w-v-mount-light-l074cna1',
+      'https://www.ulanzi.com/collections/continuous-lighting/products/vl-200bi-200w-video-light-l079cna1',
+      'https://www.ulanzi.com/collections/continuous-lighting/products/65w-portable-bi-color-led-video-light-l184',
+      'https://www.ulanzi.com/collections/continuous-lighting/products/inflatable-led-air-tube-light-l096'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one supported Ulanzi fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'For color-capable models only, perform exactly one HSI/RGB color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   NiceFoto: {
     id:'nicefoto-tc-bluetooth-mesh-capture-v1',
     transport:'bluetooth',

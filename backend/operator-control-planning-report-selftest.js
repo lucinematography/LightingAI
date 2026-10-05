@@ -5,8 +5,8 @@ const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildOperatorControlPlanningReport();
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
 
-expect(report.fixtureCount===734,'fixture total changed from verified catalog');
-expect(report.wirelessManufacturers===40,'wireless manufacturer count must remain 34');
+expect(report.fixtureCount===735,'fixture total changed from verified catalog');
+expect(report.wirelessManufacturers===41,'wireless manufacturer count must remain 34');
 expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
 expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
 expect(report.totals.dimControlVerified<=report.totals.dimCapable,'verified control totals must be bounded by physical DIM capability');
@@ -14,7 +14,7 @@ expect(report.totals.cctControlVerified<=report.totals.cctCapable,'verified CCT 
 expect(report.totals.colorControlVerified<=report.totals.colorCapable,'verified COLOR control total exceeds physical capability');
 expect(report.totals.fxControlVerified<=report.totals.fxCapable,'verified FX control total exceeds physical capability');
 
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman']){
   const row=by[maker];
   expect(!!row,maker+' planning row missing');
   if(!row) continue;
@@ -66,6 +66,7 @@ expect(by.Ulanzi?.wirelessFixtures===5,'Ulanzi wireless fixture count changed un
 expect(by['CAME-TV']?.wirelessFixtures===8,'CAME-TV wireless fixture count changed unexpectedly');
 expect(by.SOONWELL?.wirelessFixtures===1,'SOONWELL wireless fixture count changed unexpectedly');
 expect(by.Tolifo?.wirelessFixtures===2,'Tolifo wireless fixture count changed unexpectedly');
+expect(by.Moman?.wirelessFixtures===1,'Moman wireless fixture count changed unexpectedly');
 
 for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight','Quasar Science','amaran','GVM','Litepanels','DMG Lumiere','PROLYCHT']){
   const transports=new Set(by[maker]?.requiredProductionTransports||[]);

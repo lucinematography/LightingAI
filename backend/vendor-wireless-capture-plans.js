@@ -113,6 +113,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  'Falcon Eyes': {
+    id:'falcon-eyes-desal-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Falcon Eyes DESAL',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Falcon Eyes DESAL model at a time with the official Falcon Eyes app.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer compatibility to other Falcon Eyes series without exact-model Bluetooth evidence.'
+    ],
+    officialSources:[
+      'https://www.falconeyeshk.com/product-page/ds812',
+      'https://www.falconeyeshk.com/product-page/ds-300c-pro',
+      'https://www.falconeyeshk.com/zh/product-page/dm2',
+      'https://www.falconeyeshk.com/zh/product-page/dm4',
+      'https://www.falconeyeshk.com/app-bluetooth'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one Falcon Eyes fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one color change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   PIXEL: {
     id:'pixel-app-bluetooth-capture-v1',
     transport:'bluetooth',

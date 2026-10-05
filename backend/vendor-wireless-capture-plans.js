@@ -113,6 +113,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  YONGNUO: {
+    id:'yongnuo-app-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'YONGNUO App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact YONGNUO model at a time with the official YONGNUO app.',
+      'Reset to a known lighting state before each capture.',
+      'Keep Bluetooth captures separate from YONGNUO 2.4G RF control.',
+      'Do not infer compatibility to non-cataloged YONGNUO models.'
+    ],
+    officialSources:[
+      'https://th.hkyongnuo.com/u_file/2408/05/file/YN150SeriesUserManual.pdf',
+      'https://th.hkyongnuo.com/products/yn216-ii',
+      'https://www.th.hkyongnuo.com/products/yn300-iii',
+      'https://www.th.hkyongnuo.com/products/yn600l-ii',
+      'https://www.hkyongnuo.com/app'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one YONGNUO fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Phottix: {
     id:'phottix-lighting-control-bluetooth-capture-v1',
     transport:'bluetooth',

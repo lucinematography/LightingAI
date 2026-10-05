@@ -244,6 +244,10 @@ const falconEyes=byManufacturer.get('Falcon Eyes');
 if(!falconEyes || falconEyes.bluetooth!==4 || falconEyes.wifi!==0 || falconEyes.both!==0) {
   failures.push('Falcon Eyes wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const lishuai=byManufacturer.get('Lishuai');
+if(!lishuai || lishuai.bluetooth!==2 || lishuai.wifi!==0 || lishuai.both!==0) {
+  failures.push('Lishuai wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

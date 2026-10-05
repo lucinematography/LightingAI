@@ -139,6 +139,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  NiceFoto: {
+    id:'nicefoto-tc-bluetooth-mesh-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'NiceFoto APP',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact NiceFoto TC-series fixture at a time with the official NiceFoto APP.',
+      'Start each run from the same known lighting state and clean Bluetooth session.',
+      'Keep NiceFoto Bluetooth Mesh captures separate from any non-Bluetooth remote-control path.',
+      'Do not infer compatibility to non-TC NiceFoto families without exact-model evidence.'
+    ],
+    officialSources:[
+      'https://nicefoto.cn/app',
+      'https://nicefoto.cn/shuomingshu'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one NiceFoto TC-series fixture over Bluetooth Mesh, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one HSI/RGB color change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Lishuai: {
     id:'lishuai-lightreel-bluetooth-capture-v1',
     transport:'bluetooth',

@@ -107,6 +107,7 @@ const exactAllowed = new Set([
   'backend/phottix-bluetooth-library.js',
   'backend/yongnuo-bluetooth-library.js',
   'backend/pixel-bluetooth-library.js',
+  'backend/falcon-eyes-bluetooth-library.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',

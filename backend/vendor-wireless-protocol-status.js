@@ -36,6 +36,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  PIXEL: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'pixel-app-bluetooth-capture-v1',
+    evidence: [
+      'https://www.pixelhk.com/en/product/liber-3',
+      'https://cdn.pixelhk.com/storage/product/download/manual/liber-3/Liber-RGB-Povket-Video-Light_%2B~.pdf',
+      'https://www.pixelhk.com/en/product/p80-Metal-Light-3',
+      'https://cdn.pixelhk.com/storage/product/download/manual/p80-Metal-Light-3/P80_Manual.pdf'
+    ],
+    note: 'Bluetooth app transport is verified only for PIXEL Liber and P80 RGB in this checkpoint. Ambiguous K80/G1S variants remain excluded. LightingAI proprietary command semantics remain locked.'
+  },
+
   YONGNUO: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

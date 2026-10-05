@@ -113,6 +113,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       resultStatus:'candidate_only_until_physical_replay'
     }
   },
+  PIXEL: {
+    id:'pixel-app-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'PIXEL Link / PIXEL LCS',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact PIXEL Liber or P80 RGB fixture at a time with its documented PIXEL app.',
+      'Reset to a known lighting state before each capture.',
+      'Do not infer compatibility to K80, G1S or other PIXEL models without exact-model Bluetooth evidence.'
+    ],
+    officialSources:[
+      'https://www.pixelhk.com/en/product/liber-3',
+      'https://cdn.pixelhk.com/storage/product/download/manual/liber-3/Liber-RGB-Povket-Video-Light_%2B~.pdf',
+      'https://www.pixelhk.com/en/product/p80-Metal-Light-3',
+      'https://cdn.pixelhk.com/storage/product/download/manual/p80-Metal-Light-3/P80_Manual.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one PIXEL fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one color change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   YONGNUO: {
     id:'yongnuo-app-bluetooth-capture-v1',
     transport:'bluetooth',

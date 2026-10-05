@@ -52,6 +52,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Tolifo: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'tolifo-gk2016-wifi-capture-v1',
+    evidence: [
+      'https://www.tolifo.com/news/835-cn.html',
+      'https://us.tolifo.com/product/product.php?class2=41',
+      'https://us.tolifo.com/product/showproduct.php?id=80'
+    ],
+    note: 'Wi-Fi mobile-app transport is verified only for GK-2016B PRO and GK-2016S PRO in this checkpoint. Separate 2.4G wireless control is not classified as Wi-Fi. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   SOONWELL: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

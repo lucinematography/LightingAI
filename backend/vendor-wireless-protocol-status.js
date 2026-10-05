@@ -52,6 +52,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  NiceFoto: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'nicefoto-tc-bluetooth-mesh-capture-v1',
+    evidence: [
+      'https://nicefoto.cn/app',
+      'https://nicefoto.cn/shuomingshu'
+    ],
+    note: 'NiceFoto documents standard Mesh Bluetooth control for TC-series multi-color lights. This checkpoint is limited to the eight TC models explicitly listed in the manufacturer manual/download center. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   Lishuai: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

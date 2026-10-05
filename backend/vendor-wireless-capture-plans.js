@@ -139,6 +139,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Tolifo: {
+    id:'tolifo-gk2016-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'Tolifo mobile APP',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Tolifo GK-2016B PRO or GK-2016S PRO fixture at a time with the official Tolifo mobile app.',
+      'Start every capture from the same known lighting state and a clean Wi-Fi session.',
+      'Keep Tolifo 2.4G wireless control out of Wi-Fi captures.',
+      'Do not infer Wi-Fi support to other Tolifo models without exact-model first-party evidence.'
+    ],
+    officialSources:[
+      'https://www.tolifo.com/news/835-cn.html',
+      'https://us.tolifo.com/product/product.php?class2=41',
+      'https://us.tolifo.com/product/showproduct.php?id=80'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one GK-2016 PRO fixture over its documented Wi-Fi app route, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,optional:true,rule:'On the bi-color variant only, perform exactly one CCT change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   SOONWELL: {
     id:'soonwell-g900-sensei-link-bluetooth-capture-v1',
     transport:'bluetooth',

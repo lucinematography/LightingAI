@@ -139,6 +139,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  'CAME-TV': {
+    id:'came-tv-boltzen-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'CAME-TV BOLTZEN APP',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact cataloged CAME-TV Boltzen Wi-Fi model/variant at a time with the official CAME-TV app.',
+      'Start every run from the same known lighting state and a clean Wi-Fi session.',
+      'Do not infer Wi-Fi support to other CAME-TV models without exact-model first-party evidence.'
+    ],
+    officialSources:[
+      'https://www.came-tv.com/collections/all/products/boltzen-andromeda-slim-tube-led-light-3ft',
+      'https://www.came-tv.com/collections/video-lights-1/products/boltzen-andromeda-mkii-slim-tube-led-light',
+      'https://www.came-tv.com/collections/special-video-lights/products/boltzen-cassiopeia-folding-rgbdt-50-watt-ring-light-led',
+      'https://www.came-tv.com/products/came-tv-boltzen-perseus-bi-color-55w-smd-soft-travel-lights-that-are-stackable-and-ready-to-fly',
+      'https://www.came-tv.com/pages/software-downloads'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one CAME-TV fixture over its documented Wi-Fi app route, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'For tunable-white models, perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'For color-capable models only, perform exactly one HSI/RGB color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Ulanzi: {
     id:'ulanzi-connect-bluetooth-capture-v1',
     transport:'bluetooth',

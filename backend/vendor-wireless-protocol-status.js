@@ -52,6 +52,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  SOONWELL: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'soonwell-g900-sensei-link-bluetooth-capture-v1',
+    evidence: [
+      'https://www.soonwell.com/product-page/soonwell-element-series-g900-bi-color-bowens-mount-led-spotlight',
+      'https://www.soonwell.com/soonwell-app',
+      'https://fcc.report/FCC-ID/2a6flg900/5962642.pdf'
+    ],
+    note: 'Bluetooth/Sensei Link transport is verified only for G900 in this checkpoint. The separate 2.4G route is not classified as Bluetooth. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   'CAME-TV': {
     bluetooth: 'not_verified_for_current_catalog',
     wifi: 'transport_verified_model_scoped',

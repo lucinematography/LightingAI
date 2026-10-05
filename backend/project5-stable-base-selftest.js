@@ -114,6 +114,7 @@ const exactAllowed = new Set([
   'backend/came-tv-wifi-library.js',
   'backend/soonwell-g900-bluetooth-library.js',
   'backend/tolifo-gk2016-wifi-library.js',
+  'backend/moman-pc8-bluetooth-library.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',

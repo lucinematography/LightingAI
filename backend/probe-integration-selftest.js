@@ -48,6 +48,7 @@ const allowed=new Set([
   'backend/velvet-evo-wireless-library.js',
   'backend/viltrox-bluetooth-library.js',
   'backend/phottix-bluetooth-library.js',
+  'backend/yongnuo-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

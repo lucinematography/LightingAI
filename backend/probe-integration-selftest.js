@@ -56,6 +56,7 @@ const allowed=new Set([
   'backend/ulanzi-connect-bluetooth-library.js',
   'backend/came-tv-wifi-library.js',
   'backend/soonwell-g900-bluetooth-library.js',
+  'backend/tolifo-gk2016-wifi-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

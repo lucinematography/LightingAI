@@ -139,6 +139,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  SOONWELL: {
+    id:'soonwell-g900-sensei-link-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'SOONWELL Sensei Link',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact SOONWELL G900 fixture with the official Sensei Link app.',
+      'Start every capture from the same known lighting state and a clean Bluetooth session.',
+      'Keep the separate 2.4G control path out of Bluetooth captures.',
+      'Do not infer Bluetooth support to other SOONWELL models without exact-model evidence.'
+    ],
+    officialSources:[
+      'https://www.soonwell.com/product-page/soonwell-element-series-g900-bi-color-bowens-mount-led-spotlight',
+      'https://www.soonwell.com/soonwell-app',
+      'https://fcc.report/FCC-ID/2a6flg900/5962642.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one G900 over Bluetooth in Sensei Link, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   'CAME-TV': {
     id:'came-tv-boltzen-wifi-capture-v1',
     transport:'wifi',

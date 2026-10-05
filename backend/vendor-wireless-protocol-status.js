@@ -52,6 +52,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  'CAME-TV': {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'came-tv-boltzen-wifi-capture-v1',
+    evidence: [
+      'https://www.came-tv.com/collections/all/products/boltzen-andromeda-slim-tube-led-light-3ft',
+      'https://www.came-tv.com/collections/video-lights-1/products/boltzen-andromeda-mkii-slim-tube-led-light',
+      'https://www.came-tv.com/collections/special-video-lights/products/boltzen-cassiopeia-folding-rgbdt-50-watt-ring-light-led',
+      'https://www.came-tv.com/products/came-tv-boltzen-perseus-bi-color-55w-smd-soft-travel-lights-that-are-stackable-and-ready-to-fly',
+      'https://www.came-tv.com/pages/software-downloads'
+    ],
+    note: 'Built-in Wi-Fi/app control is verified only for the eight explicitly cataloged CAME-TV Boltzen model variants in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   Ulanzi: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

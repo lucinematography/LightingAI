@@ -36,6 +36,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
+  'Falcon Eyes': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'falcon-eyes-desal-bluetooth-capture-v1',
+    evidence: [
+      'https://www.falconeyeshk.com/product-page/ds812',
+      'https://www.falconeyeshk.com/product-page/ds-300c-pro',
+      'https://www.falconeyeshk.com/zh/product-page/dm2',
+      'https://www.falconeyeshk.com/zh/product-page/dm4',
+      'https://www.falconeyeshk.com/app-bluetooth'
+    ],
+    note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
+  },
+
   PIXEL: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

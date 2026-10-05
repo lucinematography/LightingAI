@@ -52,6 +52,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Lishuai: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'lishuai-lightreel-bluetooth-capture-v1',
+    evidence: [
+      'https://www.lishuai.com.cn/lishuai/2023/12/19/coolcamp60gp120gshuomingshu.pdf',
+      'https://www.lishuai.com.cn/service/zi-liao-xia-zai/',
+      'https://www.lishuai.com.cn/'
+    ],
+    note: 'Bluetooth/Light Reel control is verified only for COOLCAM P60G and P120G in this checkpoint. Separate 2.4G remote control is not classified as Bluetooth. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   PIXEL: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

@@ -108,6 +108,7 @@ import { KINOTEHNIK_PRACTILITE_BLUETOOTH_FIXTURES } from './kinotehnik-practilit
 import { VELVET_EVO_WIRELESS_FIXTURES } from './velvet-evo-wireless-library.js';
 import { VILTROX_BLUETOOTH_FIXTURES } from './viltrox-bluetooth-library.js';
 import { PHOTTIX_BLUETOOTH_FIXTURES } from './phottix-bluetooth-library.js';
+import { YONGNUO_BLUETOOTH_FIXTURES } from './yongnuo-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -261,6 +262,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(VELVET_EVO_WIRELESS_FIXTURES));
   fixtures.push(...clone(VILTROX_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(PHOTTIX_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(YONGNUO_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

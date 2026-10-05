@@ -52,6 +52,7 @@ const allowed=new Set([
   'backend/pixel-bluetooth-library.js',
   'backend/falcon-eyes-bluetooth-library.js',
   'backend/lishuai-lightreel-bluetooth-library.js',
+  'backend/nicefoto-tc-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

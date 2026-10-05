@@ -268,6 +268,10 @@ const tolifo=byManufacturer.get('Tolifo');
 if(!tolifo || tolifo.bluetooth!==0 || tolifo.wifi!==2 || tolifo.both!==0) {
   failures.push('Tolifo wireless coverage expected 0 Bluetooth / 2 Wi-Fi / 0 both');
 }
+const moman=byManufacturer.get('Moman');
+if(!moman || moman.bluetooth!==1 || moman.wifi!==0 || moman.both!==0) {
+  failures.push('Moman wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

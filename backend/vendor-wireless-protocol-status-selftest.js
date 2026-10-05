@@ -4,10 +4,10 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const route=(fixtureId,transport)=>({fixtureId,transport});
 
-const expected=['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Kino Flo','De Sisti','LiteGear'];
+const expected=['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','Kino Flo','De Sisti','LiteGear'];
 for(const maker of expected) expect(!!VENDOR_WIRELESS_PROTOCOL_STATUS[maker],maker+' protocol status missing');
 
-for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto']){
+for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi']){
   const row=VENDOR_WIRELESS_PROTOCOL_STATUS[maker];
   expect(row.commandSpec!=='production_verified',maker+' proprietary command path must not be marked production verified');
   expect(vendorWideCommandProductionReady(maker)===false,maker+' vendor-wide readiness must remain false without explicit production scope inputs');
@@ -162,6 +162,7 @@ expect(VENDOR_WIRELESS_PROTOCOL_STATUS.GVM.secondaryCapturePlanIds?.includes('gv
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Falcon Eyes']?.capturePlanId==='falcon-eyes-desal-bluetooth-capture-v1','Falcon Eyes Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Lishuai?.capturePlanId==='lishuai-lightreel-bluetooth-capture-v1','Lishuai Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.NiceFoto?.capturePlanId==='nicefoto-tc-bluetooth-mesh-capture-v1','NiceFoto Bluetooth capture plan link missing');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Ulanzi?.capturePlanId==='ulanzi-connect-bluetooth-capture-v1','Ulanzi Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.PIXEL?.capturePlanId==='pixel-app-bluetooth-capture-v1','PIXEL Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.YONGNUO?.capturePlanId==='yongnuo-app-bluetooth-capture-v1','YONGNUO Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Phottix?.capturePlanId==='phottix-lighting-control-bluetooth-capture-v1','Phottix Bluetooth capture plan link missing');

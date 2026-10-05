@@ -60,6 +60,7 @@ expect(by.Phottix?.wirelessFixtures===4,'Phottix wireless fixture count changed 
 expect(by.YONGNUO?.wirelessFixtures===4,'YONGNUO wireless fixture count changed unexpectedly');
 expect(by.PIXEL?.wirelessFixtures===2,'PIXEL wireless fixture count changed unexpectedly');
 expect(by['Falcon Eyes']?.wirelessFixtures===4,'Falcon Eyes wireless fixture count changed unexpectedly');
+expect(by['Falcon Eyes']?.wirelessFixtures===4,'Falcon Eyes wireless fixture count changed unexpectedly');
 
 for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight','Quasar Science','amaran','GVM','Litepanels','DMG Lumiere','PROLYCHT']){
   const transports=new Set(by[maker]?.requiredProductionTransports||[]);

@@ -52,6 +52,29 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Rollei: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'rollei-bluetooth-capture-v1',
+    evidence: [
+      'https://www.rollei.de/en/products/candela-100-bi-color-20119',
+      'https://www.rollei.de/en/products/candela-220-bi-color-20120',
+      'https://www.rollei.de/en/products/candela-220-rgb-20167',
+      'https://www.rollei.de/en/products/candela-200-studio-bi-color-28936',
+      'https://www.rollei.de/en/products/candela-200-studio-rgb-28938',
+      'https://www.rollei.de/en/products/candela-300-studio-bi-color-28942',
+      'https://www.rollei.de/products/candela-300-studio-rgb',
+      'https://www.rollei.de/en/collections/led-dauerlicht/products/candela-600-pro-bi-color-20186',
+      'https://www.rollei.de/en/products/lux-bi-color',
+      'https://www.rollei.de/en/products/vibe-studio-200-bi-color-28880',
+      'https://www.rollei.de/products/vibe-panel-900-rgb-28643',
+      'https://www.rollei.de/en/pages/rollei-apps'
+    ],
+    note: 'Bluetooth app transport is verified only for the 12 exact Rollei fixtures in the current checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   'Logitech G': {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

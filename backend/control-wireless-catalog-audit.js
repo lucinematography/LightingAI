@@ -280,6 +280,10 @@ const jinbei=byManufacturer.get('Jinbei');
 if(!jinbei || jinbei.bluetooth!==3 || jinbei.wifi!==0 || jinbei.both!==0) {
   failures.push('Jinbei wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const lumeCube=byManufacturer.get('Lume Cube');
+if(!lumeCube || lumeCube.bluetooth!==4 || lumeCube.wifi!==0 || lumeCube.both!==0) {
+  failures.push('Lume Cube wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

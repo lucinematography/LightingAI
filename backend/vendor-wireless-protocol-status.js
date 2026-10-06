@@ -748,12 +748,14 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     capturePlanId: 'elgato-control-center-wifi-capture-v1',
     evidence: [
       'https://www.elgato.com/us/en/p/key-light',
+      'https://help.elgato.com/hc/en-us/articles/20934004416269-Elgato-Key-Light-MK-2-Technical-Specifications',
+      'https://help.elgato.com/hc/en-us/articles/20935383021965-Elgato-Key-Light-How-to-Identify-if-You-Have-a-Key-Light-or-Key-Light-MK-2',
       'https://help.elgato.com/hc/en-us/article_attachments/360081486532',
       'https://www.elgato.com/us/en/explorer/products/lighting/key-light-air-mk2-quick-start-guide/',
       'https://www.elgato.com/ww/en/s/user-manual/key-light-neo',
       'https://help.elgato.com/hc/en-us/article_attachments/360081559211'
     ],
-    note: 'Wi-Fi/Control Center transport is verified for Key Light, Key Light Air, Key Light Air MK.2, Key Light Neo and Ring Light. Bluetooth pairing on Key Light Air MK.2 is setup-only and is not counted as a production control transport. LightingAI proprietary network semantics remain locked.'
+    note: 'Wi-Fi/Control Center transport is exact-model verified for Key Light, Key Light MK.2, Key Light Air, Key Light Air MK.2, Key Light Neo and Ring Light. Elgato first-party identification distinguishes original Key Light model 20GAK9901 from Key Light MK.2 model 20GAK9902. Bluetooth pairing where documented remains setup-only and is not counted as a production control transport. LightingAI proprietary network semantics remain locked.'
   },
 
   Genaray: {

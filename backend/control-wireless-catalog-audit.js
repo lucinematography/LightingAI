@@ -157,8 +157,8 @@ if(!kelvin || kelvin.bluetooth!==6 || kelvin.wifi!==0 || kelvin.both!==0) {
   failures.push('Kelvin wireless coverage expected 6 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const smallrig=byManufacturer.get('SmallRig');
-if(!smallrig || smallrig.bluetooth!==4 || smallrig.wifi!==0 || smallrig.both!==0) {
-  failures.push('SmallRig wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+if(!smallrig || smallrig.bluetooth!==5 || smallrig.wifi!==0 || smallrig.both!==0) {
+  failures.push('SmallRig wireless coverage expected 5 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const amaran=byManufacturer.get('amaran');
 if(!amaran || amaran.bluetooth!==25 || amaran.wifi!==1 || amaran.both!==1) {

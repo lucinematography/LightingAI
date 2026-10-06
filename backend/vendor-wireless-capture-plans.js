@@ -664,6 +664,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  dedolight: {
+    id:'dedolight-neo-assisted-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'dedolight NEO DTneo+/DTN7C+ Bluetooth control path',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one SETDLED7N+BI, SETDLED7N+D, SETDLED7N+T or DLED7N-C + DTN7C+ per first capture set and record exact light head, control ballast and firmware.',
+      'Use only the vendor-documented Bluetooth path through the required DTneo+/DTN7C+ control ballast.',
+      'Disable wired DMX/RDM and LumenRadio CRMX during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer direct light-head Bluetooth, GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented assisted-Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.dedoweigertfilm.de/dwf-en/products/Price-Lists/dedolight_neo_Pricelist_0924_Customer.pdf',
+      'https://www.dedoweigertfilm.de/dwf-en/media/PDF/dedolight/dedolight_DTneo_tec_sheet.pdf',
+      'https://www.dedoweigertfilm.de/dwf-en/media/PDF/dedolight/dedolight_DTneo_color_tec_sheet.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact NEO system through its DTneo+/DTN7C+ Bluetooth path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only for bi-color/full-color systems; perform one color-temperature change per capture.'},
+      color:{runs:3,optional:true,rule:'Only for DLED7N-C + DTN7C+; perform one documented color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

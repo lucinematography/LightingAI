@@ -396,6 +396,10 @@ const sumolight=byManufacturer.get('SUMOLIGHT');
 if(!sumolight || sumolight.bluetooth!==0 || sumolight.wifi!==1 || sumolight.both!==0) {
   failures.push('SUMOLIGHT wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');
 }
+const prolights=byManufacturer.get('PROLIGHTS');
+if(!prolights || prolights.bluetooth!==0 || prolights.wifi!==3 || prolights.both!==0) {
+  failures.push('PROLIGHTS wireless coverage expected 0 Bluetooth / 3 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

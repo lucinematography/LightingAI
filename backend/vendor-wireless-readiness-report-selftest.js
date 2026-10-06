@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===886,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===79,'wireless manufacturer coverage must remain 79');
+expect(report.fixtureCount===890,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===80,'wireless manufacturer coverage must remain 80');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','SHEHDS','Weeylite','IMRELAX','Kenro','Selens','Fomex','BB&S Lighting','SUMOLIGHT','PROLIGHTS','Lightstar Lights','Mole-Richardson','ZOLAR','Filmgear','Rosco']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','SHEHDS','Weeylite','IMRELAX','Kenro','Selens','Fomex','BB&S Lighting','SUMOLIGHT','PROLIGHTS','Lightstar Lights','Mole-Richardson','ZOLAR','Filmgear','Rosco','dedolight']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -131,6 +131,8 @@ expect(by.Filmgear?.bluetoothFixtures===5&&by.Filmgear?.wifiFixtures===0&&by.Fil
 expect(by.Filmgear?.assistedBluetooth===0,'Filmgear must remain direct Bluetooth');
 expect(by.Rosco?.bluetoothFixtures===4&&by.Rosco?.wifiFixtures===0&&by.Rosco?.bothFixtures===0,'Rosco wireless counts changed unexpectedly');
 expect(by.Rosco?.assistedBluetooth===4,'Rosco Miro Cube 2 must remain assisted Bluetooth via myMIX Connect');
+expect(by.dedolight?.bluetoothFixtures===4&&by.dedolight?.wifiFixtures===0&&by.dedolight?.bothFixtures===0,'dedolight wireless counts changed unexpectedly');
+expect(by.dedolight?.assistedBluetooth===4,'dedolight NEO must remain assisted Bluetooth via DTneo+/DTN7C+');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

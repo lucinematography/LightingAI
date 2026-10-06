@@ -151,6 +151,7 @@ import { FOMEX_FLEXCOLOR_BLUETOOTH_FIXTURES } from './fomex-flexcolor-bluetooth-
 import { BBS_CASAMBI_BLUETOOTH_FIXTURES } from './bbs-casambi-bluetooth-library.js';
 import { SUMOLIGHT_WIFI_FIXTURES } from './sumolight-wifi-library.js';
 import { PROLIGHTS_WIFI_FIXTURES } from './prolights-wifi-library.js';
+import { LIGHTSTAR_LUXED_BLUETOOTH_FIXTURES } from './lightstar-luxed-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -347,6 +348,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(BBS_CASAMBI_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(SUMOLIGHT_WIFI_FIXTURES));
   fixtures.push(...clone(PROLIGHTS_WIFI_FIXTURES));
+  fixtures.push(...clone(LIGHTSTAR_LUXED_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

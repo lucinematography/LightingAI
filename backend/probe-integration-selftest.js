@@ -194,6 +194,7 @@ const allowed=new Set([
   'backend/fixture-structural-classification-selftest.js',
   '.github/workflows/build-apk.yml',
   'backend/aputure-wireless-verification-selftest.js',
+  'backend/aputure-review-selftest.js',
   'backend/aladdin-wireless-verification-selftest.js',
   'backend/arri-wireless-verification-selftest.js',
 ]);

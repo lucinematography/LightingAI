@@ -1416,6 +1416,7 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       'https://lumecube.com/products/panel-pro',
       'https://lumecube.com/products/tube-light-mini',
       'https://lumecube.com/products/tube-light-xl',
+      'https://lumecube.com/products/lume-cube-rgb-tube-light-l',
       'https://lumecube.com/products/lume-cube-xl-60w-rgb-mini-cob-led-light'
     ],
     captureSets:{

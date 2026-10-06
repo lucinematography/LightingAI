@@ -388,6 +388,10 @@ const fomex=byManufacturer.get('Fomex');
 if(!fomex || fomex.bluetooth!==2 || fomex.wifi!==0 || fomex.both!==0) {
   failures.push('Fomex wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const bbs=byManufacturer.get('BB&S Lighting');
+if(!bbs || bbs.bluetooth!==2 || bbs.wifi!==0 || bbs.both!==0) {
+  failures.push('BB&S Lighting wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

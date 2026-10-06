@@ -992,9 +992,13 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://www.phottix.com/product/phottix-nuada-c60a-curved-led-light/',
       'https://www.phottix.com/product/phottix-nuada-s3a-led-light/',
       'https://www.phottix.com/product/phottix-nuada-r3a-led-light/',
-      'https://www.phottix.com/product/phottix-kali50ra-rgb-led-light/'
+      'https://www.phottix.com/product/phottix-kali50ra-rgb-led-light/',
+      'https://www.phottix.com/phottix-x-photoolex-app-download/',
+      'https://www.phottix.com/product/phottix-x-photoolex-theia-q100c-cob-rgb-led-light/',
+      'https://www.phottix.com/product/phottix-x-photoolex-theia-q40c-cob-rgb-led-light/',
+      'https://www.phottix.com/product/phottix-x-photoolex-helios2077-rgb-led-light-kit/'
     ],
-    note: 'Bluetooth/Phottix Lighting Control app transport is verified only for Nuada C60a, Nuada S3a, Nuada R3a and Kali50Ra. LightingAI proprietary command semantics remain locked.'
+    note: 'Bluetooth app transport is verified only for Nuada C60a, Nuada S3a, Nuada R3a, Kali50Ra, Theia Q100C, Theia Q40C and Helios 2077. LightingAI proprietary command semantics remain locked.'
   },
 
   VILTROX: {

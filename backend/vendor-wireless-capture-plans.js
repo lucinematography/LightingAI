@@ -798,6 +798,35 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  iFootage: {
+    id:'ifootage-anglerfish-lumin-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'iFootage Lumin / Lumin+ App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one SL1 400BNS, SL1 200BNA, SL1 320DN, SL1 220DN, SL1 60DN or HL1 C4 per first capture set and record the exact model and firmware/app version.',
+      'Use only the first-party iFootage Lumin/Lumin+ Bluetooth app path documented for that exact model.',
+      'Keep other controllable iFootage fixtures and alternate control paths inactive during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.ifootagegear.com/pages/product-support-400bns',
+      'https://www.ifootagegear.com/pages/product-support-anglerfish-sl1-200bna',
+      'https://www.ifootagegear.com/pages/product-support-anglerfish-sl1-320dn',
+      'https://eu.ifootagegear.com/products/anglerfish-sl1-220dn',
+      'https://eu.ifootagegear.com/collections/lighting-collection/products/anglerfish-sl1-60dn',
+      'https://www.ifootagegear.com/pages/product-support-anglerfish-handy-light-hl1-c4'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact iFootage Anglerfish fixture through the documented Lumin/Lumin+ Bluetooth path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only on exact variable-CCT models (SL1 400BNS, SL1 200BNA or HL1 C4); perform exactly one color-temperature change per capture.'},
+      color:{runs:3,optional:true,rule:'Only on HL1 C4; perform exactly one HSI/RGBW color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

@@ -520,6 +520,20 @@ expect(roxx?.safety?.rawCaptureCommitAllowed===false,'ROXX raw captures must nev
 expect(roxx?.safety?.derivedEvidenceOnly===true,'ROXX only derived evidence may enter repo');
 expect(roxx?.safety?.resultStatus==='candidate_only_until_physical_replay','ROXX capture result must remain candidate-only');
 
+const ifootage=VENDOR_WIRELESS_CAPTURE_PLANS.iFootage;
+expect(ifootage?.id==='ifootage-anglerfish-lumin-bluetooth-capture-v1','iFootage Bluetooth capture plan missing');
+expect(ifootage?.transport==='bluetooth','iFootage capture plan must remain Bluetooth only');
+expect(ifootage?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','iFootage command spec status changed');
+expect(ifootage?.captureSets?.connectOnly?.runs>=3,'iFootage connect-only requires at least 3 runs');
+expect(ifootage?.captureSets?.dim?.runs>=3,'iFootage DIM requires at least 3 runs');
+expect(ifootage?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'iFootage capture plan must forbid proprietary GATT inference');
+expect(ifootage?.prerequisites?.some(x=>/exact model/i.test(x)),'iFootage capture plan must remain exact-model scoped');
+expect(ifootage?.safety?.officialAppWritesOnly===true,'iFootage official-app-only capture safety missing');
+expect(ifootage?.safety?.lightingAiWritesAllowed===false,'iFootage LightingAI writes must stay disabled during capture');
+expect(ifootage?.safety?.rawCaptureCommitAllowed===false,'iFootage raw captures must never be committed');
+expect(ifootage?.safety?.derivedEvidenceOnly===true,'iFootage only derived evidence may enter repo');
+expect(ifootage?.safety?.resultStatus==='candidate_only_until_physical_replay','iFootage capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

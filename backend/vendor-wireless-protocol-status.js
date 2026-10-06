@@ -427,6 +427,24 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  iFootage: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'ifootage-anglerfish-lumin-bluetooth-capture-v1',
+    evidence: [
+      'https://www.ifootagegear.com/pages/product-support-400bns',
+      'https://www.ifootagegear.com/pages/product-support-anglerfish-sl1-200bna',
+      'https://www.ifootagegear.com/pages/product-support-anglerfish-sl1-320dn',
+      'https://eu.ifootagegear.com/products/anglerfish-sl1-220dn',
+      'https://eu.ifootagegear.com/collections/lighting-collection/products/anglerfish-sl1-60dn',
+      'https://www.ifootagegear.com/pages/product-support-anglerfish-handy-light-hl1-c4'
+    ],
+    note: 'Direct Bluetooth Lumin/Lumin+ app transport is first-party verified only for SL1 400BNS, SL1 200BNA, SL1 320DN, SL1 220DN, SL1 60DN and HL1 C4 in this checkpoint. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

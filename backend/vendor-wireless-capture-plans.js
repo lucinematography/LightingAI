@@ -139,6 +139,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  'Lume Cube': {
+    id:'lume-cube-lume-control-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Lume Control',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact cataloged Lume Cube Bluetooth model at a time with the official Lume Control app.',
+      'Start every capture from the same known lighting state and a clean Bluetooth session.',
+      'Do not infer command semantics or Bluetooth Mesh behavior across models without physical evidence.'
+    ],
+    officialSources:[
+      'https://help.lumecube.com/en-US/what-apps-can-i-use-with-my-lume-cube-products-321666',
+      'https://help.lumecube.com/en-US/where-can-i-find-app-support-321667',
+      'https://lumecube.com/pages/lume-control-app',
+      'https://lumecube.com/products/panel-pro',
+      'https://lumecube.com/products/tube-light-mini',
+      'https://lumecube.com/products/tube-light-xl',
+      'https://lumecube.com/products/lume-cube-xl-60w-rgb-mini-cob-led-light'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one supported Lume Cube fixture in Lume Control, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one HSI/RGB color change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Jinbei: {
     id:'jinbei-studio-bluetooth-capture-v1',
     transport:'bluetooth',

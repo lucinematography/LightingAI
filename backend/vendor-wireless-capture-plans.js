@@ -2720,6 +2720,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  Cineo: {
+    id:'cineo-stagelynx-r10-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'Cineo StageLynx',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged Reflex R10 White Tower or Reflex R10 Color Tower per first capture set and record the exact tower configuration.',
+      'Use only the official Cineo StageLynx path over Wi-Fi/IP; keep Ethernet and any other controller path isolated during the first Wi-Fi capture set.',
+      'Do not infer undocumented StageLynx discovery, addressing, session, private payload or command semantics from the documented sACN transport.',
+      'Record the exact R10 tower configuration, fixture firmware/StageLynx OS version and StageLynx app version with every capture.'
+    ],
+    officialSources:[
+      'https://cineolighting.com/news/cineo-lighting-unveils-new-reflex-r10-at-2024-bsc-expo',
+      'https://cineolighting.com/news/cineo-reflex-r10-color-tower-now-available',
+      'https://cineolighting.com/stagelynx',
+      'https://play.google.com/store/apps/details?id=com.cineolighting.stagelynx'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact R10 configuration through StageLynx over Wi-Fi, wait 15 seconds, make no lighting changes, then close the control session.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one dimmer change per capture through StageLynx.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture through StageLynx.'},
+      color:{runs:3,optional:true,rule:'Reflex R10 Color Tower only: after DIM/CCT evidence is stable, perform exactly one RGBWW/color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
 });
 
 export function vendorWirelessCapturePlan(manufacturer){

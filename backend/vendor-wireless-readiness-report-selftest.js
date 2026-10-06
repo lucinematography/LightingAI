@@ -28,7 +28,7 @@ for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Li
 for(const maker of ['Kino Flo','De Sisti','LiteGear']){
   expect(!by[maker],maker+' unexpectedly entered direct Bluetooth/Wi-Fi readiness');
 }
-expect(report.vendors[0]?.manufacturer==='Nanlite','Nanlite should lead current wireless-coverage vendor count after verified WS-TB-1 assisted routes');
+expect(report.vendors[0]?.manufacturer==='Godox','Godox should lead current wireless-coverage vendor count after verified current-model Bluetooth expansion');
 expect(by.Godox?.bluetoothFixtures===107,'Godox Bluetooth count changed unexpectedly');
 expect(by.Nanlite?.bluetoothFixtures===70,'Nanlite Bluetooth count changed unexpectedly');
 expect(by.Nanlite?.wifiFixtures===8,'Nanlite Wi-Fi count changed unexpectedly');

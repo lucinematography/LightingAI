@@ -117,6 +117,7 @@ const exactAllowed = new Set([
   'backend/moman-pc8-bluetooth-library.js',
   'backend/ikan-idc150-bluetooth-library.js',
   'backend/jinbei-bluetooth-library.js',
+  'backend/lume-cube-bluetooth-library.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',

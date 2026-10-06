@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===927,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===928,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -91,7 +91,7 @@ expect(by['Ape Labs']?.bluetoothFixtures===2&&by['Ape Labs']?.wifiFixtures===0&&
 expect(by['Ape Labs']?.assistedBluetooth===2,'Ape Labs must remain assisted Bluetooth via CONNECT');
 expect(by.Pilotfly?.bluetoothFixtures===4&&by.Pilotfly?.wifiFixtures===0&&by.Pilotfly?.bothFixtures===0,'Pilotfly wireless counts changed unexpectedly');
 expect(by.Pilotfly?.assistedBluetooth===0,'Pilotfly AtomCUBE must remain direct Bluetooth Mesh');
-expect(by.LUXCEO?.bluetoothFixtures===4&&by.LUXCEO?.wifiFixtures===0&&by.LUXCEO?.bothFixtures===0,'LUXCEO wireless counts changed unexpectedly');
+expect(by.LUXCEO?.bluetoothFixtures===5&&by.LUXCEO?.wifiFixtures===0&&by.LUXCEO?.bothFixtures===0,'LUXCEO wireless counts changed unexpectedly');
 expect(by.LUXCEO?.assistedBluetooth===0,'LUXCEO must remain direct Bluetooth');
 expect(by.Yidoblo?.bluetoothFixtures===4&&by.Yidoblo?.wifiFixtures===0&&by.Yidoblo?.bothFixtures===0,'Yidoblo wireless counts changed unexpectedly');
 expect(by.Yidoblo?.assistedBluetooth===0,'Yidoblo must remain direct Bluetooth');

@@ -2471,7 +2471,11 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     officialSources:[
       'https://www.arri.com/en/learn-help/lighting/tools-apps/lico',
       'https://www.arri.com/en/lighting/led-panel-lights/skypanel-pro/faq',
-      'https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/control-options'
+      'https://www.arri.com/en/lighting/led-panel-lights/skypanel-x/control-options',
+      'https://www.arri.com/en/lighting/led-linear-lights/omnibar',
+      'https://www.arri.com/en/lighting/led-linear-lights/omnibar/omnibar-tech-data-downloads',
+      'https://www.arri.com/en/learn/lighting/tools-apps/omnibar-app',
+      'https://www.arri.com/en/lighting/led-linear-lights/omnibar/omnibar-faq'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Enable fixture Bluetooth, connect only the test fixture in LiCo, wait 15 seconds, make no lighting change, then disconnect.'},
@@ -2487,6 +2491,13 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
         target:'SkyPanel S60 Pro Web Portal',
         commandSpecStatus:'public-http-command-api-not-located-in-official-docs',
         rule:'Use an isolated local network, access only the fixture Web Portal, capture browser HTTP traffic for three no-change sessions and three isolated DIM/CCT actions each. Do not infer endpoints from page labels alone.'
+      },
+      {
+        id:'arri-omnibar-bluetooth-mesh-capture-v1',
+        transport:'bluetooth',
+        target:'ARRI Omnibar 2 / Omnibar 4 via Omnibar Control App',
+        commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+        rule:'Use exactly one Omnibar 2 or Omnibar 4 with the official Omnibar Control App and no CRMX/Omnibase data path. Capture three connect-only sessions, then isolated intensity, CCT, color and effect actions. Do not infer proprietary Bluetooth Mesh packet, session, UUID or cross-model command semantics from app behavior alone.'
       }
     ],
     safety:{

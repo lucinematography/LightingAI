@@ -304,6 +304,10 @@ const elgato=byManufacturer.get('Elgato');
 if(!elgato || elgato.bluetooth!==0 || elgato.wifi!==5 || elgato.both!==0) {
   failures.push('Elgato wireless coverage expected 0 Bluetooth / 5 Wi-Fi / 0 both');
 }
+const westcott=byManufacturer.get('Westcott');
+if(!westcott || westcott.bluetooth!==4 || westcott.wifi!==0 || westcott.both!==0) {
+  failures.push('Westcott wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

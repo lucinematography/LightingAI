@@ -432,6 +432,10 @@ const elinchrom=byManufacturer.get('Elinchrom');
 if(!elinchrom || elinchrom.bluetooth!==3 || elinchrom.wifi!==0 || elinchrom.both!==0) {
   failures.push('Elinchrom wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const cinelight=byManufacturer.get('CineLight');
+if(!cinelight || cinelight.bluetooth!==3 || cinelight.wifi!==0 || cinelight.both!==0) {
+  failures.push('CineLight wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

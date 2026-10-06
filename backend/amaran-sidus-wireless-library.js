@@ -15,10 +15,16 @@ const SRC={
   pano120c:'https://amarancreators.com/pages/amaran-pano-120c',
   verge:'https://amarancreators.com/pages/amaran-verge/',
   vergeMax:'https://amarancreators.com/pages/amaran-verge-max/',
-  go:'https://eu.amarancreators.com/pages/amaran-go'
+  go:'https://eu.amarancreators.com/pages/amaran-go',
+  ace25c:'https://amarancreators.com/pages/amaran-ace-25c',
+  ace25x:'https://amarancreators.com/pages/amaran-ace-25x',
+  ray60c:'https://amarancreators.com/pages/amaran-ray-60c',
+  ray120c:'https://amarancreators.com/pages/amaran-ray-120c',
+  ray360c:'https://amarancreators.com/pages/amaran-ray-360c',
+  ray660c:'https://amarancreators.com/pages/amaran-ray-660c'
 };
 
-function btControl(sourceUrl,{wifi=false,fullColor=false,cct=true,fx=true}={}){
+function btControl(sourceUrl,{wifi=false,fullColor=false,cct=true,fx=true,wired=[],external=[],nfc=false}={}){
   const wireless=['Bluetooth via Sidus Link / amaran App'];
   if(wifi) wireless.push('WiFi via Tuya Smart');
   const wirelessVerification={
@@ -38,11 +44,12 @@ function btControl(sourceUrl,{wifi=false,fullColor=false,cct=true,fx=true}={}){
     note:'amaran documents direct Wi-Fi reset and Tuya Smart control for SM5c. This verifies transport capability only; proprietary IP/session semantics remain locked.'
   };
   return {
-    wired:[],
+    wired,
     wireless,
     builtInBluetooth:true,
     directLightingAI:[],
-    externalInterfaceRequired:[],
+    externalInterfaceRequired:external,
+    ...(nfc?{nfcPairing:true}:{}),
     unavailableDirectProtocols:[
       'amaran documents app transport and operator control, but LightingAI proprietary command/session semantics are not production-verified'
     ],
@@ -83,7 +90,7 @@ function fixture(id,model,family,sourceType,formFactor,sourceUrl,options={}){
     sourceType,formFactor,
     ...(options.cctK?{cctK:options.cctK}:{}),
     colorMode:options.fullColor?'Full Color':options.daylight?'Daylight':'Bi-Color',
-    control:btControl(sourceUrl,{wifi:!!options.wifi,fullColor:!!options.fullColor,cct:!options.daylight,fx:options.fx!==false}),
+    control:btControl(sourceUrl,{wifi:!!options.wifi,fullColor:!!options.fullColor,cct:!options.daylight,fx:options.fx!==false,wired:options.wired||[],external:options.external||[],nfc:!!options.nfc}),
     sourceUrl
   };
 }
@@ -113,5 +120,11 @@ export const AMARAN_SIDUS_WIRELESS_FIXTURES=[
   fixture('amaran-pano-120c','Pano 120c','Pano','RGBWW LED Panel','Panel',SRC.pano120c,{fullColor:true,cctK:{min:2300,max:10000},fx:false}),
   fixture('amaran-verge','Verge','Verge','Bi-Color LED Panel','Panel',SRC.verge,{cctK:{min:2700,max:6500},fx:false}),
   fixture('amaran-verge-max','Verge Max','Verge','Bi-Color LED Panel','Panel',SRC.vergeMax,{cctK:{min:2700,max:6500},fx:false}),
-  fixture('amaran-go','Go','Go','Bi-Color Pocket LED Light','Pocket / Handheld',SRC.go,{cctK:{min:2700,max:6500},fx:false})
+  fixture('amaran-go','Go','Go','Bi-Color Pocket LED Light','Pocket / Handheld',SRC.go,{cctK:{min:2700,max:6500},fx:false}),
+  fixture('amaran-ace-25c','Ace 25c','Ace','RGBWW Pocket LED Light','Pocket / Handheld',SRC.ace25c,{fullColor:true,cctK:{min:2300,max:10000}}),
+  fixture('amaran-ace-25x','Ace 25x','Ace','Bi-Color Pocket LED Light','Pocket / Handheld',SRC.ace25x,{cctK:{min:2700,max:6500}}),
+  fixture('amaran-ray-60c','Ray 60c','Ray','OmniColor COB LED Light','Spotlight / Monolight',SRC.ray60c,{fullColor:true,cctK:{min:2300,max:10000},nfc:true}),
+  fixture('amaran-ray-120c','Ray 120c','Ray','OmniColor COB LED Light','Spotlight / Monolight',SRC.ray120c,{fullColor:true,cctK:{min:2300,max:10000},nfc:true}),
+  fixture('amaran-ray-360c','Ray 360c','Ray','OmniColor COB LED Light','Spotlight / Monolight',SRC.ray360c,{fullColor:true,cctK:{min:2300,max:10000},nfc:true,wired:['DMX512 via USB-C adapter'],external:['amaran USB-C to 5-Pin DMX In & Out Adapter for wired DMX512 control']}),
+  fixture('amaran-ray-660c','Ray 660c','Ray','OmniColor COB LED Light','Spotlight / Monolight',SRC.ray660c,{fullColor:true,cctK:{min:2300,max:10000},nfc:true,wired:['DMX512 via USB-C adapter'],external:['amaran USB-C to 5-Pin DMX In & Out Adapter for wired DMX512 control']})
 ];

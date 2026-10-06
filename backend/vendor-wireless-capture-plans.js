@@ -1729,17 +1729,18 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     controllerApp:'Weeylite Pro',
     commandSpecStatus:'public-command-spec-not-located-in-official-docs',
     prerequisites:[
-      'Use one exact VILTROX Ninja 30 or Ninja 30B fixture at a time with Weeylite Pro.',
+      'Use one exact VILTROX Ninja 30, Ninja 30B, Ninja 20 or Ninja 20B fixture at a time with Weeylite Pro.',
       'Reset to a known lighting state before each capture.',
       'Do not infer compatibility to unrelated Weeylite/Viltrox models without exact-model evidence.'
     ],
     officialSources:[
-      'https://viltrox.com/products/viltrox-ninja-30-30b'
+      'https://viltrox.com/products/viltrox-ninja-30-30b',
+      'https://viltrox.com/products/weeylite-200w-5600k-app-control-professional-cob-sudio-light'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Connect one VILTROX fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
       dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
-      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state on Ninja 30B; keep Ninja 30 fixed-daylight captures separate.'}
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state on Ninja 30B or Ninja 20B; keep Ninja 30 and Ninja 20 fixed-daylight captures separate.'}
     },
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },

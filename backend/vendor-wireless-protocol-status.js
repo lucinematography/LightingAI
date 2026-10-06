@@ -410,6 +410,23 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  ROXX: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'roxx-app-bluetooth-capture-v1',
+    evidence: [
+      'https://roxxlight.com/e-show-tw/',
+      'https://roxxlight.com/wp-content/uploads/2021/06/manual-e-show-fc-rev-01.pdf',
+      'https://roxxlight.com/e-show-mini-tw/',
+      'https://roxxlight.com/wp-content/uploads/2025/05/manual-e-show-mini-tw-fc-rev-1.pdf',
+      'https://roxxlight.com/wp-content/uploads/2023/08/manual-roxx-app-rev-03.pdf'
+    ],
+    note: 'Direct Bluetooth/ROXX.APP transport is first-party verified only for E.SHOW TW+, E.SHOW FC, E.SHOW mini TW+ and E.SHOW mini FC in this checkpoint. CRMX/W-DMX remains a separate wireless-DMX path. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

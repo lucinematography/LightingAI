@@ -139,6 +139,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  'CHAUVET DJ': {
+    id:'chauvet-dj-btair-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'CHAUVET DJ BTAir',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact cataloged CHAUVET DJ BT fixture at a time with the official BTAir app.',
+      'Put the fixture into its documented Bluetooth control mode before capture.',
+      'Start every capture from the same known lighting state and a clean BTAir session.',
+      'Do not infer BTAir command semantics from DMX, ILS, D-Fi or other CHAUVET control routes.',
+      'Exclude non-light accessories such as EZLink FSBT from fixture command capture.'
+    ],
+    officialSources:[
+      'https://www.chauvetdj.com/bluetooth/',
+      'https://www.chauvetdj.com/products/btair/',
+      'https://www.chauvetdj.com/wp-content/uploads/2018/02/BTAir_UM_Rev1_WO.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Enable Bluetooth mode on one supported fixture, connect it in BTAir, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one supported color change per capture from the same initial state.'},
+      program:{runs:3,optional:true,rule:'Perform exactly one supported static/program selection per capture, without mixing unrelated operations.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   'Lume Cube': {
     id:'lume-cube-lume-control-bluetooth-capture-v1',
     transport:'bluetooth',

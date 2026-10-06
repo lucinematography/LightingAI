@@ -139,6 +139,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Mettle: {
+    id:'mettle-tube-x-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Mettle App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Mettle Tube Light X1, X2 or X4 whose model is recorded before capture.',
+      'Use the official Mettle App over the documented Bluetooth route.',
+      'For X2/X4 keep DMX disconnected; do not infer DMX semantics into Bluetooth.',
+      'Keep other Mettle Bluetooth fixtures disconnected during the first capture set.'
+    ],
+    officialSources:[
+      'https://en.mettlecorp.cn/LED/TubeLightX4'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect only the selected Tube Light in Mettle App, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known CCT/intensity perform exactly one CCT change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one HSI/RGBWW color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; activate exactly one known EFX preset per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   NANLUX: {
     id:'nanlux-evoke-2400b-nanlink-bluetooth-capture-v1',
     transport:'bluetooth',

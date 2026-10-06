@@ -324,6 +324,10 @@ const nanlux=byManufacturer.get('NANLUX');
 if(!nanlux || nanlux.bluetooth!==1 || nanlux.wifi!==0 || nanlux.both!==0) {
   failures.push('NANLUX wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const mettle=byManufacturer.get('Mettle');
+if(!mettle || mettle.bluetooth!==3 || mettle.wifi!==0 || mettle.both!==0) {
+  failures.push('Mettle wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

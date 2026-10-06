@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===939,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===978,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -29,7 +29,7 @@ for(const maker of ['Kino Flo','De Sisti','LiteGear']){
   expect(!by[maker],maker+' unexpectedly entered direct Bluetooth/Wi-Fi readiness');
 }
 expect(report.vendors[0]?.manufacturer==='Nanlite','Nanlite should lead current wireless-coverage vendor count after verified WS-TB-1 assisted routes');
-expect(by.Godox?.bluetoothFixtures===68,'Godox Bluetooth count changed unexpectedly');
+expect(by.Godox?.bluetoothFixtures===107,'Godox Bluetooth count changed unexpectedly');
 expect(by.Nanlite?.bluetoothFixtures===70,'Nanlite Bluetooth count changed unexpectedly');
 expect(by.Nanlite?.wifiFixtures===8,'Nanlite Wi-Fi count changed unexpectedly');
 expect(by.Astera?.bluetoothFixtures===23&&by.Astera?.wifiFixtures===19,'Astera wireless counts changed unexpectedly');

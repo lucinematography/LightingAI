@@ -637,6 +637,33 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Rosco: {
+    id:'rosco-mymix-connect-assisted-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Rosco myMIX app through myMIX Connect RJ45 dongle',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Miro Cube 2 WNC, 4C, 4CA or UV365 per first capture set and record the exact model, firmware and myMIX Connect accessory.',
+      'Use only the Rosco-documented myMIX Connect assisted-Bluetooth path for the first capture set.',
+      'Disable wired DMX/RDM and 0-10V control during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer direct fixture Bluetooth, GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented assisted-Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://us.rosco.com/en/product/miro-cube-2-wnc',
+      'https://us.rosco.com/en/product/miro-cube-2-4c-4ca',
+      'https://us.rosco.com/en/product/miro-cube-2-uv365',
+      'https://us.rosco.com/en/product/mymix-connect'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Miro Cube 2 through myMIX Connect and the myMIX app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only for WNC/4C/4CA where documented; perform one color-temperature change per capture.'},
+      color:{runs:3,optional:true,rule:'Only for 4C/4CA where documented; perform one color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

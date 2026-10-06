@@ -6,6 +6,8 @@ const SRC={
   andromedaMk2:'https://www.came-tv.com/collections/video-lights-1/products/boltzen-andromeda-mkii-slim-tube-led-light',
   cassiopeia:'https://www.came-tv.com/collections/special-video-lights/products/boltzen-cassiopeia-folding-rgbdt-50-watt-ring-light-led',
   perseus1800:'https://www.came-tv.com/products/came-tv-boltzen-perseus-bi-color-55w-smd-soft-travel-lights-that-are-stackable-and-ready-to-fly',
+  b100:'https://www.came-tv.com/products/came-tv-boltzen-100w-fresnel-fanless-focusable-led-daylight-29700-lux-1m',
+  f150:'https://www.came-tv.com/products/came-tv-boltzen-150w-travel-kits-fresnel-focusable-led-daylight-46800-lux-1m',
   app:'https://www.came-tv.com/pages/software-downloads'
 };
 
@@ -57,5 +59,7 @@ export const CAME_TV_WIFI_FIXTURES=[
   fixture('came-tv-andromeda-mkii-3ftr','Andromeda MKII 3FTR-MK2','Boltzen Andromeda MKII','RGBDT LED Tube','Tube',SRC.andromedaMk2,'RGBDT'),
   fixture('came-tv-andromeda-mkii-4ftr','Andromeda MKII 4FTR-MK2','Boltzen Andromeda MKII','RGBDT LED Tube','Tube',SRC.andromedaMk2,'RGBDT'),
   fixture('came-tv-cassiopeia-c50','Cassiopeia C-50','Boltzen Cassiopeia','RGBDT LED Ring Light','Ring Light',SRC.cassiopeia,'RGBDT',50),
-  fixture('came-tv-perseus-p1800b','Perseus P-1800B','Boltzen Perseus','Bi-Color SMD LED Panel','Panel',SRC.perseus1800,'Bi-Color')
+  fixture('came-tv-perseus-p1800b','Perseus P-1800B','Boltzen Perseus','Bi-Color SMD LED Panel','Panel',SRC.perseus1800,'Bi-Color'),
+  fixture('came-tv-boltzen-b100w','Boltzen B-100W','Boltzen MKII','Daylight COB LED Fresnel','Fresnel',SRC.b100,'Daylight',100),
+  fixture('came-tv-boltzen-f150w','Boltzen F-150W (F150W-MK2)','Boltzen MKII','Daylight COB LED Fresnel','Fresnel',SRC.f150,'Daylight',150)
 ];

@@ -618,6 +618,20 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const cineo=VENDOR_WIRELESS_CAPTURE_PLANS.Cineo;
+expect(cineo?.id==='cineo-stagelynx-r10-wifi-capture-v1','Cineo Wi-Fi capture plan missing');
+expect(cineo?.transport==='wifi','Cineo capture plan must remain Wi-Fi only');
+expect(cineo?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Cineo command spec status changed');
+expect(cineo?.captureSets?.connectOnly?.runs>=3,'Cineo connect-only requires at least 3 runs');
+expect(cineo?.captureSets?.dim?.runs>=3,'Cineo DIM requires at least 3 runs');
+expect(cineo?.captureSets?.cct?.runs>=3,'Cineo CCT requires at least 3 runs');
+expect(cineo?.prerequisites?.some(x=>/Do not infer undocumented StageLynx/i.test(x)),'Cineo capture plan must forbid proprietary StageLynx inference');
+expect(cineo?.safety?.officialAppWritesOnly===true,'Cineo official-app-only capture safety missing');
+expect(cineo?.safety?.lightingAiWritesAllowed===false,'Cineo LightingAI writes must stay disabled during capture');
+expect(cineo?.safety?.rawCaptureCommitAllowed===false,'Cineo raw captures must never be committed');
+expect(cineo?.safety?.derivedEvidenceOnly===true,'Cineo only derived evidence may enter repo');
+expect(cineo?.safety?.resultStatus==='candidate_only_until_physical_replay','Cineo capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

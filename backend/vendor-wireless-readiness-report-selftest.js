@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===809,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===58,'wireless manufacturer coverage must remain 58');
+expect(report.fixtureCount===813,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===59,'wireless manufacturer coverage must remain 58');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -89,6 +89,8 @@ expect(by['Ape Labs']?.bluetoothFixtures===2&&by['Ape Labs']?.wifiFixtures===0&&
 expect(by['Ape Labs']?.assistedBluetooth===2,'Ape Labs must remain assisted Bluetooth via CONNECT');
 expect(by.Pilotfly?.bluetoothFixtures===4&&by.Pilotfly?.wifiFixtures===0&&by.Pilotfly?.bothFixtures===0,'Pilotfly wireless counts changed unexpectedly');
 expect(by.Pilotfly?.assistedBluetooth===0,'Pilotfly AtomCUBE must remain direct Bluetooth Mesh');
+expect(by.LUXCEO?.bluetoothFixtures===4&&by.LUXCEO?.wifiFixtures===0&&by.LUXCEO?.bothFixtures===0,'LUXCEO wireless counts changed unexpectedly');
+expect(by.LUXCEO?.assistedBluetooth===0,'LUXCEO must remain direct Bluetooth');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

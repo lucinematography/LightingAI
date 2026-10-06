@@ -190,6 +190,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  LUXCEO: {
+    id:'luxceo-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'LUXCEO documented smartphone APP',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one LUXCEO P6, P200, P120 or P7RGB Pro per first capture set and record the exact model.',
+      'Use only the smartphone app/control path documented by LUXCEO for that exact model.',
+      'Disable the included handheld/IR remote where present so Bluetooth traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats or cross-model command compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.luxceo.com/en/rgb-fill-light/13',
+      'https://www.luxceo.com/en/shoot/107',
+      'https://www.luxceo.com/index.php/en/shoot/112',
+      'https://www.luxceo.com/en/shoot/111'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect only one exact LUXCEO model with the documented smartphone app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one color-temperature change per capture.'},
+      color:{runs:3,rule:'From the same initial state perform exactly one RGB/color-palette change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger one documented scene/effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

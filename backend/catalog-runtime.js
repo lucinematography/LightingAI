@@ -135,6 +135,7 @@ import { METTLE_TUBE_X_BLUETOOTH_FIXTURES } from './mettle-tube-x-bluetooth-libr
 import { PIXAPRO_NEON_BLUETOOTH_FIXTURES } from './pixapro-neon-bluetooth-library.js';
 import { APE_LABS_ASSISTED_BLUETOOTH_FIXTURES } from './ape-labs-assisted-bluetooth-library.js';
 import { PILOTFLY_ATOMCUBE_BLUETOOTH_FIXTURES } from './pilotfly-atomcube-bluetooth-library.js';
+import { LUXCEO_BLUETOOTH_FIXTURES } from './luxceo-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -315,6 +316,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(PIXAPRO_NEON_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(APE_LABS_ASSISTED_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(PILOTFLY_ATOMCUBE_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(LUXCEO_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

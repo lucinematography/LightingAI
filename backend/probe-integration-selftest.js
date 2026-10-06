@@ -75,6 +75,7 @@ const allowed=new Set([
   'backend/pixapro-neon-bluetooth-library.js',
   'backend/ape-labs-assisted-bluetooth-library.js',
   'backend/pilotfly-atomcube-bluetooth-library.js',
+  'backend/luxceo-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

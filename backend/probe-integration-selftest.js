@@ -162,6 +162,7 @@ const allowed=new Set([
   'backend/aputure-control-verification.js',
   'backend/godox-control-verification.js',
   'backend/arri-wireless-verification.js',
+  'backend/arri-omnibar-library.js',
   'backend/aladdin-control-verification.js',
   'backend/nanlite-wireless-verification.js',
   'backend/evlight-wireless-verification.js',

@@ -300,6 +300,10 @@ const genaray=byManufacturer.get('Genaray');
 if(!genaray || genaray.bluetooth!==7 || genaray.wifi!==0 || genaray.both!==0) {
   failures.push('Genaray wireless coverage expected 7 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const elgato=byManufacturer.get('Elgato');
+if(!elgato || elgato.bluetooth!==0 || elgato.wifi!==5 || elgato.both!==0) {
+  failures.push('Elgato wireless coverage expected 0 Bluetooth / 5 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

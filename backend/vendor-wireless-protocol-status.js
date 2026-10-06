@@ -52,6 +52,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Elgato: {
+    bluetooth: 'setup_only_not_control',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'elgato-control-center-wifi-capture-v1',
+    evidence: [
+      'https://www.elgato.com/us/en/p/key-light',
+      'https://help.elgato.com/hc/en-us/article_attachments/360081486532',
+      'https://www.elgato.com/us/en/explorer/products/lighting/key-light-air-mk2-quick-start-guide/',
+      'https://www.elgato.com/ww/en/s/user-manual/key-light-neo',
+      'https://help.elgato.com/hc/en-us/article_attachments/360081559211'
+    ],
+    note: 'Wi-Fi/Control Center transport is verified for Key Light, Key Light Air, Key Light Air MK.2, Key Light Neo and Ring Light. Bluetooth pairing on Key Light Air MK.2 is setup-only and is not counted as a production control transport. LightingAI proprietary network semantics remain locked.'
+  },
+
   Genaray: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

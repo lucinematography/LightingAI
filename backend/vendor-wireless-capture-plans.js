@@ -717,6 +717,33 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Elinchrom: {
+    id:'elinchrom-studio-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Elinchrom Studio App / Software',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Elinchrom ONE, THREE or FIVE per first capture set and record exact model and firmware.',
+      'Use only the vendor-documented built-in Bluetooth app/software path during the first capture set.',
+      'Disable Elinchrom Skyport remote control during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, bridge protocol, packet framing, command encoding or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://dev.elinchrom.com/products/elinchrom-one/',
+      'https://www.elinchrom.com/news/press-release/elinchrom-one-pr/',
+      'https://dev.elinchrom.com/news/press-release/elinchrom-three-pr/',
+      'https://dev.elinchrom.com/news/press-release/elinchrom-five-pr/',
+      'https://elinchrom.com/enSG/Home/Shop/Software/Elinchrom_Studio_App?id=EL-0001'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Elinchrom ONE/THREE/FIVE through Elinchrom Studio Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one modeling-light brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one modeling-light color-temperature change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

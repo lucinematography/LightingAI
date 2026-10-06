@@ -37,6 +37,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
 
+  PiXAPRO: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'pixapro-neon-bluetooth-capture-v1',
+    evidence: [
+      'https://www.essentialphoto.co.uk/products/neon-rgb-flex-ip67-waterproof-rgb-led-light-rope-with-bluetooth-functionality',
+      'https://www.essentialphoto.co.uk/products/neon-rgb-strips-rgb-led-light-rope-with-bluetooth-functionality',
+      'https://www.essentialphoto.co.uk/pages/about-us'
+    ],
+    note: 'Bluetooth smartphone-app transport is verified only for PiXAPRO C-130602 and C-130601 in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
   Mettle: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

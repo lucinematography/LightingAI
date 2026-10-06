@@ -333,8 +333,8 @@ if(!pixapro || pixapro.bluetooth!==2 || pixapro.wifi!==0 || pixapro.both!==0) {
   failures.push('PiXAPRO wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const apeLabs=byManufacturer.get('Ape Labs');
-if(!apeLabs || apeLabs.bluetooth!==2 || apeLabs.wifi!==0 || apeLabs.both!==0) {
-  failures.push('Ape Labs wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+if(!apeLabs || apeLabs.bluetooth!==8 || apeLabs.wifi!==0 || apeLabs.both!==0) {
+  failures.push('Ape Labs wireless coverage expected 8 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const pilotfly=byManufacturer.get('Pilotfly');
 if(!pilotfly || pilotfly.bluetooth!==4 || pilotfly.wifi!==0 || pilotfly.both!==0) {

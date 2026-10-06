@@ -68,6 +68,7 @@ const allowed=new Set([
   'backend/elgato-wifi-library.js',
   'backend/westcott-studiolink-bluetooth-library.js',
   'backend/logitech-g-litra-bluetooth-library.js',
+  'backend/rollei-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

@@ -139,6 +139,28 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Ikan: {
+    id:'ikan-idc150-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Ikan Bluetooth controller',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Ikan IDC150 fixture at a time.',
+      'Start every capture from the same known lighting state and a clean Bluetooth session.',
+      'Do not infer Bluetooth support to other Ikan fixtures without exact-model first-party evidence.'
+    ],
+    officialSources:[
+      'https://ikancorp.com/Downloads/catalogs/IkanNABCatalog2018.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one IDC150 over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one RGBW color change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Moman: {
     id:'moman-pc8-bluetooth-capture-v1',
     transport:'bluetooth',

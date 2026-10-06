@@ -65,7 +65,7 @@ function fixture(id,model,family,powerDrawW,cctMin,cctMax,cri,tlci,sourceUrl,for
 export const FILMGEAR_BLUETOOTH_FIXTURES=[
   fixture('filmgear-zenith-900c-plus','Zenith 900C Plus','Zenith Plus',900,2000,15000,96,95,SRC.zenith900c,'High-Power LED Panel'),
   fixture('filmgear-zenith-2000c-plus','Zenith 2000C Plus','Zenith Plus',2000,2000,15000,96,95,SRC.zenith2000c,'High-Power LED Panel'),
-  fixture('filmgear-mega-1200c','MEGA 1200C','MEGA',1200,2000,15000,96,95,SRC.mega1200c,'Maxi-Brute / LED Array'),
+  fixture('filmgear-mega-1200c','MEGA 1200C','MEGA',1200,2000,15000,96,95,SRC.mega1200c,'Megabrute / Multi-Head Wash System'),
   fixture('filmgear-aurora-a700c','Aurora A700C','Aurora',750,1800,15000,95,95,SRC.aurora700c,'LED Panel'),
   fixture('filmgear-aurora-a1200c','Aurora A1200C','Aurora',1500,1800,15000,95,95,SRC.aurora1200c,'LED Panel')
 ];

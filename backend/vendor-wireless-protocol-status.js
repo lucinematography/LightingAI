@@ -1084,7 +1084,12 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://www.swit.cc/index.php?c=article&id=3114',
       'https://www.swit.cc/index.php?c=article&id=3115',
       'https://swit.cc/index.php?c=article&id=2670',
-      'https://www.swit.cc/index.php?c=article&id=4440'
+      'https://www.swit.cc/index.php?c=article&id=4440',
+      'https://swit.cc/index.php?c=article&id=1887',
+      'https://www.swit.cc/index.php?c=article&id=1893',
+      'https://www.swit.cc/index.php?c=article&id=175',
+      'https://www.swit.cc/index.php?c=article&id=130',
+      'https://www.swit.cc/uploads/2019/12/230845127830.pdf'
     ],
     note: 'Bluetooth/SWIT Console control is verified only for the explicitly cataloged SWIT models. LightingAI proprietary command semantics remain locked.'
   },

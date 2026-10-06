@@ -52,6 +52,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  'CHAUVET DJ': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'chauvet-dj-btair-bluetooth-capture-v1',
+    evidence: [
+      'https://www.chauvetdj.com/bluetooth/',
+      'https://www.chauvetdj.com/products/btair/',
+      'https://www.chauvetdj.com/products/category/ils/',
+      'https://www.chauvetdj.com/products/category/ils/page/2/',
+      'https://www.chauvetdj.com/products/category/washlights/'
+    ],
+    note: 'Built-in Bluetooth/BTAir transport is verified for the 21 exact CHAUVET DJ BT fixtures cataloged in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   'Lume Cube': {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

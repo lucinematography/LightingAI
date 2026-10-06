@@ -744,6 +744,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  CineLight: {
+    id:'cinelight-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'LinkLite App / Desal Lite+ App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one CineCOB HUE X15, CineFLEX 400 Bi-Color or CineFLEX 700 Bi-Color per first capture set and record exact model, controller and firmware.',
+      'For CineCOB HUE X15 use only the documented direct Bluetooth app path; for CineFLEX 400/700 use only the required external controller Bluetooth path.',
+      'Disable wired DMX, Wireless DMX and separate 2.4 GHz radio control during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://cinelight.com/fr/led-spotlights/cinecob-hue-x15-rgbw',
+      'https://cinelight.com/en/module/producttopdf/view?id_product=761',
+      'https://cinelight.com/en/module/producttopdf/view?id_product=762'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact CineLight model through its documented Bluetooth path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one color-temperature change per capture.'},
+      color:{runs:3,optional:true,rule:'Only for CineCOB HUE X15; perform one RGB/HSI color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

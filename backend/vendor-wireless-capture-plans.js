@@ -139,6 +139,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Westcott: {
+    id:'westcott-studiolink-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Westcott StudioLink',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact cataloged Westcott Bluetooth model at a time with the official StudioLink app.',
+      'Start every capture from the same known lighting state and a clean Bluetooth session.',
+      'Do not infer command semantics between L-Series COBs and Ice Light 3 without physical evidence.',
+      'Do not infer Bluetooth support to older Ice Light generations or other Westcott lights without exact-model evidence.'
+    ],
+    officialSources:[
+      'https://help.fjwestcott.com/en-US/using-the-westcott-studio-link-app-3574014',
+      'https://help.fjwestcott.com/en-US/connecting-the-l60-b-and-l120-b-to-the-westcott-studiolink-app-1024676',
+      'https://help.fjwestcott.com/en-US/how-do-i-connect-my-ice-light-3-to-the-studiolink-mobile-app-1810587'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one supported Westcott fixture over Bluetooth in StudioLink, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'For Ice Light 3 RGBWW only, perform exactly one HSI/RGB color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Elgato: {
     id:'elgato-control-center-wifi-capture-v1',
     transport:'wifi',

@@ -162,6 +162,8 @@ const allowed=new Set([
   'backend/aputure-infinimat-library.js',
   'backend/aputure-control-verification.js',
   'backend/godox-control-verification.js',
+  'backend/godox-current-wireless-library.js',
+  'backend/godox-catalog-selftest.js',
   'backend/arri-wireless-verification.js',
   'backend/arri-omnibar-library.js',
   'backend/aladdin-control-verification.js',

@@ -331,6 +331,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  'K&F Concept': {
+    id:'kf-concept-pl60b-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Linklite',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one K&F Concept PL-60B / KF34.045 per first capture set and record the exact model.',
+      'Use only the Bluetooth Linklite path documented by K&F Concept for PL-60B.',
+      'Disable multi-light grouping during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats or compatibility with other K&F Concept lights from PL-60B app-control documentation.'
+    ],
+    officialSources:[
+      'https://www.kfconcept.com/KF34.045_pl-60b-60w-bi-color-cob-light'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one PL-60B with Linklite over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

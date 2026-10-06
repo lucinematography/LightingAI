@@ -147,6 +147,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  'K&F Concept': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'kf-concept-pl60b-bluetooth-capture-v1',
+    evidence: [
+      'https://www.kfconcept.com/KF34.045_pl-60b-60w-bi-color-cob-light'
+    ],
+    note: 'Direct Bluetooth Linklite app transport is verified only for PL-60B / KF34.045 in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

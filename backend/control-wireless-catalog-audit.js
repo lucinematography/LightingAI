@@ -356,6 +356,10 @@ const ycOnion=byManufacturer.get('YC Onion');
 if(!ycOnion || ycOnion.bluetooth!==1 || ycOnion.wifi!==0 || ycOnion.both!==0) {
   failures.push('YC Onion wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const kfConcept=byManufacturer.get('K&F Concept');
+if(!kfConcept || kfConcept.bluetooth!==1 || kfConcept.wifi!==0 || kfConcept.both!==0) {
+  failures.push('K&F Concept wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

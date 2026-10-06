@@ -211,6 +211,20 @@ expect(ycOnion?.safety?.rawCaptureCommitAllowed===false,'YC Onion raw captures m
 expect(ycOnion?.safety?.derivedEvidenceOnly===true,'YC Onion only derived evidence may enter repo');
 expect(ycOnion?.safety?.resultStatus==='candidate_only_until_physical_replay','YC Onion capture result must remain candidate-only');
 
+const kfConcept=VENDOR_WIRELESS_CAPTURE_PLANS['K&F Concept'];
+expect(kfConcept?.id==='kf-concept-pl60b-bluetooth-capture-v1','K&F Concept Bluetooth capture plan missing');
+expect(kfConcept?.transport==='bluetooth','K&F Concept capture plan must remain Bluetooth only');
+expect(kfConcept?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','K&F Concept command spec status changed');
+expect(kfConcept?.captureSets?.connectOnly?.runs>=3,'K&F Concept connect-only requires at least 3 runs');
+expect(kfConcept?.captureSets?.dim?.runs>=3,'K&F Concept DIM requires at least 3 runs');
+expect(kfConcept?.captureSets?.cct?.runs>=3,'K&F Concept CCT requires at least 3 runs');
+expect(kfConcept?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'K&F Concept capture plan must forbid proprietary GATT inference');
+expect(kfConcept?.safety?.officialAppWritesOnly===true,'K&F Concept official-app-only capture safety missing');
+expect(kfConcept?.safety?.lightingAiWritesAllowed===false,'K&F Concept LightingAI writes must stay disabled during capture');
+expect(kfConcept?.safety?.rawCaptureCommitAllowed===false,'K&F Concept raw captures must never be committed');
+expect(kfConcept?.safety?.derivedEvidenceOnly===true,'K&F Concept only derived evidence may enter repo');
+expect(kfConcept?.safety?.resultStatus==='candidate_only_until_physical_replay','K&F Concept capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

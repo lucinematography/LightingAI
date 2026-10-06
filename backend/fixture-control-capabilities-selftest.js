@@ -103,7 +103,7 @@ expect(report.totals.cct>0,'CCT capability audit unexpectedly empty');
 expect(report.totals.color>0,'COLOR capability audit unexpectedly empty');
 expect(report.totals.dim>0,'DIM capability audit unexpectedly empty');
 expect(report.totals.fx>0,'FX capability audit unexpectedly empty');
-expect(Object.keys(report.byManufacturer).length===94,'manufacturer total changed from verified catalog');
+expect(Object.keys(report.byManufacturer).length===95,'manufacturer total changed from verified catalog');
 
 console.log(JSON.stringify({ok:failures.length===0,totals:report.totals,byManufacturer:report.byManufacturer,failures},null,2));
 if(failures.length) process.exit(1);

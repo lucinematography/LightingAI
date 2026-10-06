@@ -245,8 +245,8 @@ if(!falconEyes || falconEyes.bluetooth!==14 || falconEyes.wifi!==0 || falconEyes
   failures.push('Falcon Eyes wireless coverage expected 14 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const lishuai=byManufacturer.get('Lishuai');
-if(!lishuai || lishuai.bluetooth!==2 || lishuai.wifi!==0 || lishuai.both!==0) {
-  failures.push('Lishuai wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+if(!lishuai || lishuai.bluetooth!==4 || lishuai.wifi!==0 || lishuai.both!==0) {
+  failures.push('Lishuai wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const niceFoto=byManufacturer.get('NiceFoto');
 if(!niceFoto || niceFoto.bluetooth!==8 || niceFoto.wifi!==0 || niceFoto.both!==0) {

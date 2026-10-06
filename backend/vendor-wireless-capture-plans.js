@@ -690,6 +690,33 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  'ADJ Lighting': {
+    id:'adj-aria-x2-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'ADJ Aria X2 BLE App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one COB Cannon LP200X, COB Cannon LP200STX or Mirage Q6 IP per first capture set and record exact model and firmware.',
+      'Use only the vendor-documented embedded Aria X2 BLE app-control path during the first capture set.',
+      'Disable wired DMX and any non-BLE Aria X2 wireless management/DMX path during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, Aria X2 mesh or serial framing, command encoding or cross-model compatibility from the documented BLE capability.'
+    ],
+    officialSources:[
+      'https://www.adj.com/products/cob-cannon-lp200x',
+      'https://www.adj.com/products/cob-cannon-lp200stx',
+      'https://www.adj.com/products/mirage-q6-pak',
+      'https://www.adj.com/products/aria-x2'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact ADJ fixture through Aria X2 BLE, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only on COB Cannon models; perform one color-temperature change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one documented color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

@@ -25,8 +25,8 @@ expect(verifiedWirelessTransport({
 }).bluetooth===true,
   'Verified Bluetooth transport evidence must enter wireless gap scope');
 
-expect(report.fixtureCount===1065,'fixture total changed from verified catalog');
-expect(report.wirelessFixtures===728,'verified wireless fixture total changed unexpectedly');
+expect(report.fixtureCount===1066,'fixture total changed from verified catalog');
+expect(report.wirelessFixtures===729,'verified wireless fixture total changed unexpectedly');
 expect(report.fixturesWithAnyGap>0,'capability-gap audit unexpectedly empty');
 
 const by=report.byManufacturer;

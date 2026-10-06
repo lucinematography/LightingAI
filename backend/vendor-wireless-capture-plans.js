@@ -538,6 +538,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  'BB&S Lighting': {
+    id:'bbs-track-casambi-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Casambi app with BB&S Casambi track-driver configuration',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one BB&S Compact Beamlight 1 Bi-Color or Compact Fresnel Light Bi-Color configured with the vendor-listed Casambi track driver per first capture set and record the exact configuration.',
+      'Use only the BB&S-documented Casambi track-driver path and the Casambi app for Bluetooth control.',
+      'Disable or disconnect DMX/RDM and DALI control during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, Casambi mesh payloads, commissioning keys, packet formats or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.brothers-sons.dk/da_DK/shop/compact-beamlight-1-incl-eutrac-track-mount-and-led-driver-9521',
+      'https://brothers-sonsamerica.com/products/track-lighting/compact-fresnel-light-bi-color-incl-eutrac-track-mount-and-led-driver/',
+      'https://www.brothers-sons.dk/track-lights'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact BB&S Casambi track-light configuration through the Casambi app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one color-temperature change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

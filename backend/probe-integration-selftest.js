@@ -63,6 +63,7 @@ const allowed=new Set([
   'backend/lume-cube-bluetooth-library.js',
   'backend/chauvet-dj-bluetooth-library.js',
   'backend/fotodiox-prizmo-bluetooth-library.js',
+  'backend/broncolor-led-f160-wifi-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

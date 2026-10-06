@@ -139,6 +139,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  PiXAPRO: {
+    id:'pixapro-neon-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'PiXAPRO documented smartphone app',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one PiXAPRO C-130602 or C-130601 model per first capture set.',
+      'Use only the smartphone-app control path documented on the exact PiXAPRO product page.',
+      'Keep the included IR remote inactive during Bluetooth capture to avoid mixed-control traffic.',
+      'Do not infer packet semantics between C-130602 and C-130601 without physical evidence.'
+    ],
+    officialSources:[
+      'https://www.essentialphoto.co.uk/products/neon-rgb-flex-ip67-waterproof-rgb-led-light-rope-with-bluetooth-functionality',
+      'https://www.essentialphoto.co.uk/products/neon-rgb-strips-rgb-led-light-rope-with-bluetooth-functionality',
+      'https://www.essentialphoto.co.uk/pages/about-us'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect only one exact PiXAPRO NEON model using its documented smartphone app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one brightness change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one RGB/RGBIC color change per capture from the same initial state.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; activate exactly one documented lighting effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Mettle: {
     id:'mettle-tube-x-bluetooth-capture-v1',
     transport:'bluetooth',

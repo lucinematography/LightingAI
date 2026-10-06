@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===1035,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===1037,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -60,7 +60,7 @@ expect(by.Dracast?.bluetoothFixtures===2&&by.Dracast?.wifiFixtures===0&&by.Draca
 expect(by['Hive Lighting']?.bluetoothFixtures===7&&by['Hive Lighting']?.wifiFixtures===0&&by['Hive Lighting']?.bothFixtures===0,'Hive Lighting wireless counts changed unexpectedly');
 expect(by.Kinotehnik?.bluetoothFixtures===2&&by.Kinotehnik?.wifiFixtures===0&&by.Kinotehnik?.bothFixtures===0,'Kinotehnik wireless counts changed unexpectedly');
 expect(by.VELVET?.bluetoothFixtures===4&&by.VELVET?.wifiFixtures===6&&by.VELVET?.bothFixtures===4,'VELVET wireless counts changed unexpectedly');
-expect(by.VILTROX?.bluetoothFixtures===2&&by.VILTROX?.wifiFixtures===0&&by.VILTROX?.bothFixtures===0,'VILTROX wireless counts changed unexpectedly');
+expect(by.VILTROX?.bluetoothFixtures===4&&by.VILTROX?.wifiFixtures===0&&by.VILTROX?.bothFixtures===0,'VILTROX wireless counts changed unexpectedly');
 expect(by.Phottix?.bluetoothFixtures===4&&by.Phottix?.wifiFixtures===0&&by.Phottix?.bothFixtures===0,'Phottix wireless counts changed unexpectedly');
 expect(by.YONGNUO?.bluetoothFixtures===4&&by.YONGNUO?.wifiFixtures===0&&by.YONGNUO?.bothFixtures===0,'YONGNUO wireless counts changed unexpectedly');
 expect(by.PIXEL?.bluetoothFixtures===2&&by.PIXEL?.wifiFixtures===0&&by.PIXEL?.bothFixtures===0,'PIXEL wireless counts changed unexpectedly');

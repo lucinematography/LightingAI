@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===978,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===984,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -42,7 +42,7 @@ expect(by.Luxli?.bluetoothFixtures===7&&by.Luxli?.wifiFixtures===0,'Luxli wirele
 expect(by['Quasar Science']?.bluetoothFixtures===4&&by['Quasar Science']?.wifiFixtures===4&&by['Quasar Science']?.bothFixtures===4,'Quasar Science wireless counts changed unexpectedly');
 expect(by.Kelvin?.bluetoothFixtures===6&&by.Kelvin?.wifiFixtures===0,'Kelvin wireless counts changed unexpectedly');
 expect(by.SmallRig?.bluetoothFixtures===5&&by.SmallRig?.wifiFixtures===0,'SmallRig wireless counts changed unexpectedly');
-expect(by.amaran?.bluetoothFixtures===25&&by.amaran?.wifiFixtures===1&&by.amaran?.bothFixtures===1,'amaran wireless counts changed unexpectedly');
+expect(by.amaran?.bluetoothFixtures===31&&by.amaran?.wifiFixtures===1&&by.amaran?.bothFixtures===1,'amaran wireless counts changed unexpectedly');
 expect(by.NEEWER?.bluetoothFixtures===4&&by.NEEWER?.wifiFixtures===0,'NEEWER wireless counts changed unexpectedly');
 expect(by.GVM?.bluetoothFixtures===10&&by.GVM?.wifiFixtures===1&&by.GVM?.bothFixtures===0,'GVM wireless counts changed unexpectedly');
 expect(by.Litepanels?.bluetoothFixtures===13&&by.Litepanels?.wifiFixtures===3&&by.Litepanels?.bothFixtures===3,'Litepanels wireless counts changed unexpectedly');

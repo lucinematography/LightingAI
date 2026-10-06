@@ -131,7 +131,7 @@ expect(apeLabs?.commandSpecStatus==='public-command-spec-not-located-in-official
 expect(apeLabs?.captureSets?.connectOnly?.runs>=3,'Ape Labs connect-only requires at least 3 runs');
 expect(apeLabs?.captureSets?.dim?.runs>=3,'Ape Labs DIM requires at least 3 runs');
 expect(apeLabs?.captureSets?.color?.runs>=3,'Ape Labs COLOR requires at least 3 runs');
-expect(apeLabs?.prerequisites?.some(x=>/do not treat the fixture itself as (?:a )?Bluetooth(?: light-control)? endpoint/i.test(x)),'Ape Labs capture plan must forbid direct-BLE inference');
+expect(apeLabs?.prerequisites?.some(x=>/do not treat the fixture itself as (?:(?:a|the) )?Bluetooth(?: light-control)? endpoint/i.test(x)),'Ape Labs capture plan must forbid direct-BLE inference');
 expect(apeLabs?.safety?.officialAppWritesOnly===true,'Ape Labs official-app-only capture safety missing');
 expect(apeLabs?.safety?.lightingAiWritesAllowed===false,'Ape Labs LightingAI writes must stay disabled during capture');
 expect(apeLabs?.safety?.rawCaptureCommitAllowed===false,'Ape Labs raw captures must never be committed');

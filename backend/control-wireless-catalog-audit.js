@@ -257,8 +257,8 @@ if(!ulanzi || ulanzi.bluetooth!==6 || ulanzi.wifi!==0 || ulanzi.both!==0) {
   failures.push('Ulanzi wireless coverage expected 6 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const cameTv=byManufacturer.get('CAME-TV');
-if(!cameTv || cameTv.bluetooth!==0 || cameTv.wifi!==8 || cameTv.both!==0) {
-  failures.push('CAME-TV wireless coverage expected 0 Bluetooth / 8 Wi-Fi / 0 both');
+if(!cameTv || cameTv.bluetooth!==0 || cameTv.wifi!==10 || cameTv.both!==0) {
+  failures.push('CAME-TV wireless coverage expected 0 Bluetooth / 10 Wi-Fi / 0 both');
 }
 const soonwell=byManufacturer.get('SOONWELL');
 if(!soonwell || soonwell.bluetooth!==1 || soonwell.wifi!==0 || soonwell.both!==0) {

@@ -344,6 +344,20 @@ expect(bbs?.safety?.rawCaptureCommitAllowed===false,'BB&S Lighting raw captures 
 expect(bbs?.safety?.derivedEvidenceOnly===true,'BB&S Lighting only derived evidence may enter repo');
 expect(bbs?.safety?.resultStatus==='candidate_only_until_physical_replay','BB&S Lighting capture result must remain candidate-only');
 
+const sumolight=VENDOR_WIRELESS_CAPTURE_PLANS.SUMOLIGHT;
+expect(sumolight?.id==='sumolight-sumospace-plus-wifi-capture-v1','SUMOLIGHT Wi-Fi capture plan missing');
+expect(sumolight?.transport==='wifi','SUMOLIGHT capture plan must remain Wi-Fi only');
+expect(sumolight?.commandSpecStatus==='standard-artnet-sacn-documented-exact-hardware-replay-pending','SUMOLIGHT command spec status changed');
+expect(sumolight?.captureSets?.connectOnly?.runs>=3,'SUMOLIGHT connect-only requires at least 3 runs');
+expect(sumolight?.captureSets?.dim?.runs>=3,'SUMOLIGHT DIM requires at least 3 runs');
+expect(sumolight?.captureSets?.cct?.runs>=3,'SUMOLIGHT CCT requires at least 3 runs');
+expect(sumolight?.prerequisites?.some(x=>/Do not infer undocumented vendor discovery/i.test(x)),'SUMOLIGHT capture plan must forbid undocumented network inference');
+expect(sumolight?.safety?.standardsControllerOnly===true,'SUMOLIGHT standards-controller safety missing');
+expect(sumolight?.safety?.lightingAiWritesAllowed===false,'SUMOLIGHT LightingAI writes must stay disabled during capture');
+expect(sumolight?.safety?.rawCaptureCommitAllowed===false,'SUMOLIGHT raw captures must never be committed');
+expect(sumolight?.safety?.derivedEvidenceOnly===true,'SUMOLIGHT only derived evidence may enter repo');
+expect(sumolight?.safety?.resultStatus==='candidate_only_until_physical_replay','SUMOLIGHT capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

@@ -347,6 +347,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  dedolight: {
+    bluetooth: 'transport_verified_assisted_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'dedolight-neo-assisted-bluetooth-capture-v1',
+    evidence: [
+      'https://www.dedoweigertfilm.de/dwf-en/products/Price-Lists/dedolight_neo_Pricelist_0924_Customer.pdf',
+      'https://www.dedoweigertfilm.de/dwf-en/media/PDF/dedolight/dedolight_DTneo_tec_sheet.pdf',
+      'https://www.dedoweigertfilm.de/dwf-en/media/PDF/dedolight/dedolight_DTneo_color_tec_sheet.pdf'
+    ],
+    note: 'Bluetooth is verified only as assisted transport through the required DTneo+/DTN7C+ control ballast for SETDLED7N+BI, +D, +T and DLED7N-C + DTN7C+. Direct light-head Bluetooth is not claimed. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

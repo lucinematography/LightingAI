@@ -266,6 +266,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  'BB&S Lighting': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'bbs-track-casambi-bluetooth-capture-v1',
+    evidence: [
+      'https://www.brothers-sons.dk/da_DK/shop/compact-beamlight-1-incl-eutrac-track-mount-and-led-driver-9521',
+      'https://brothers-sonsamerica.com/products/track-lighting/compact-fresnel-light-bi-color-incl-eutrac-track-mount-and-led-driver/',
+      'https://www.brothers-sons.dk/track-lights'
+    ],
+    note: 'Casambi Bluetooth Low Energy mesh transport is verified only for the BB&S Compact Beamlight 1 Bi-Color and Compact Fresnel Light Bi-Color configurations that include a vendor-listed Casambi track driver. This does not prove a fixture-body GATT protocol, Casambi mesh payload semantics, commissioning keys or LightingAI command encoding. Wi-Fi is not verified for these catalog entries.'
+  },
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

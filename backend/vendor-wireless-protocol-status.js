@@ -1500,6 +1500,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  Cineo: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'cineo-stagelynx-r10-wifi-capture-v1',
+    evidence: [
+      'https://cineolighting.com/news/cineo-lighting-unveils-new-reflex-r10-at-2024-bsc-expo',
+      'https://cineolighting.com/news/cineo-reflex-r10-color-tower-now-available',
+      'https://cineolighting.com/stagelynx',
+      'https://play.google.com/store/apps/details?id=com.cineolighting.stagelynx'
+    ],
+    note: 'Wi-Fi/IP StageLynx transport is exact-model verified only for Reflex R10 White Tower and Reflex R10 Color Tower in this checkpoint. Cineo documents sACN over wired or wireless IP networks, but LightingAI exact discovery, addressing, private StageLynx session semantics and physical replay remain locked.'
+  },
   'Kino Flo': {
     bluetooth: 'not_verified_for_current_catalog',
     wifi: 'not_verified_for_current_catalog',

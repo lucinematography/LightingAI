@@ -770,6 +770,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  ROXX: {
+    id:'roxx-app-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'ROXX.APP',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one E.SHOW TW+, E.SHOW FC, E.SHOW mini TW+ or E.SHOW mini FC per first capture set and record exact model and firmware.',
+      'Use only the vendor-documented direct Bluetooth / ROXX.APP path during the first capture set.',
+      'Disable wired DMX/RDM and CRMX/W-DMX during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://roxxlight.com/e-show-tw/',
+      'https://roxxlight.com/wp-content/uploads/2021/06/manual-e-show-fc-rev-01.pdf',
+      'https://roxxlight.com/e-show-mini-tw/',
+      'https://roxxlight.com/wp-content/uploads/2025/05/manual-e-show-mini-tw-fc-rev-1.pdf',
+      'https://roxxlight.com/wp-content/uploads/2023/08/manual-roxx-app-rev-03.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact ROXX E.SHOW fixture through ROXX.APP Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only on TW+ models; perform one color-temperature change per capture.'},
+      color:{runs:3,optional:true,rule:'Only on FC models; perform one documented color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

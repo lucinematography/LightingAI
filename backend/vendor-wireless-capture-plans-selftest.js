@@ -96,6 +96,20 @@ expect(nanlux?.safety?.rawCaptureCommitAllowed===false,'NANLUX raw captures must
 expect(nanlux?.safety?.derivedEvidenceOnly===true,'NANLUX only derived evidence may enter repo');
 expect(nanlux?.safety?.resultStatus==='candidate_only_until_physical_replay','NANLUX capture result must remain candidate-only');
 
+const mettle=VENDOR_WIRELESS_CAPTURE_PLANS.Mettle;
+expect(mettle?.id==='mettle-tube-x-bluetooth-capture-v1','Mettle Bluetooth capture plan missing');
+expect(mettle?.transport==='bluetooth','Mettle capture plan must remain Bluetooth only');
+expect(mettle?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Mettle command spec status changed');
+expect(mettle?.captureSets?.connectOnly?.runs>=3,'Mettle connect-only requires at least 3 runs');
+expect(mettle?.captureSets?.dim?.runs>=3,'Mettle DIM requires at least 3 runs');
+expect(mettle?.captureSets?.cct?.runs>=3,'Mettle CCT requires at least 3 runs');
+expect(mettle?.captureSets?.color?.runs>=3,'Mettle COLOR requires at least 3 runs');
+expect(mettle?.safety?.officialAppWritesOnly===true,'Mettle official-app-only capture safety missing');
+expect(mettle?.safety?.lightingAiWritesAllowed===false,'Mettle LightingAI writes must stay disabled during capture');
+expect(mettle?.safety?.rawCaptureCommitAllowed===false,'Mettle raw captures must never be committed');
+expect(mettle?.safety?.derivedEvidenceOnly===true,'Mettle only derived evidence may enter repo');
+expect(mettle?.safety?.resultStatus==='candidate_only_until_physical_replay','Mettle capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

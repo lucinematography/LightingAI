@@ -166,6 +166,21 @@ expect(yidoblo?.safety?.rawCaptureCommitAllowed===false,'Yidoblo raw captures mu
 expect(yidoblo?.safety?.derivedEvidenceOnly===true,'Yidoblo only derived evidence may enter repo');
 expect(yidoblo?.safety?.resultStatus==='candidate_only_until_physical_replay','Yidoblo capture result must remain candidate-only');
 
+const feelworld=VENDOR_WIRELESS_CAPTURE_PLANS.FEELWORLD;
+expect(feelworld?.id==='feelworld-light-bluetooth-capture-v1','FEELWORLD Bluetooth capture plan missing');
+expect(feelworld?.transport==='bluetooth','FEELWORLD capture plan must remain Bluetooth only');
+expect(feelworld?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','FEELWORLD command spec status changed');
+expect(feelworld?.captureSets?.connectOnly?.runs>=3,'FEELWORLD connect-only requires at least 3 runs');
+expect(feelworld?.captureSets?.dim?.runs>=3,'FEELWORLD DIM requires at least 3 runs');
+expect(feelworld?.captureSets?.cct?.optional===true,'FEELWORLD CCT capture must stay model-scoped/optional');
+expect(feelworld?.captureSets?.color?.optional===true,'FEELWORLD COLOR capture must stay MT2-scoped/optional');
+expect(feelworld?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'FEELWORLD capture plan must forbid proprietary GATT inference');
+expect(feelworld?.safety?.officialAppWritesOnly===true,'FEELWORLD official-app-only capture safety missing');
+expect(feelworld?.safety?.lightingAiWritesAllowed===false,'FEELWORLD LightingAI writes must stay disabled during capture');
+expect(feelworld?.safety?.rawCaptureCommitAllowed===false,'FEELWORLD raw captures must never be committed');
+expect(feelworld?.safety?.derivedEvidenceOnly===true,'FEELWORLD only derived evidence may enter repo');
+expect(feelworld?.safety?.resultStatus==='candidate_only_until_physical_replay','FEELWORLD capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

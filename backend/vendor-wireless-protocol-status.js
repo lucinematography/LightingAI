@@ -98,6 +98,24 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  FEELWORLD: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'feelworld-light-bluetooth-capture-v1',
+    evidence: [
+      'https://www.feelworld.cn/feelworld-fl125b-125w-bi-color-point-source-video-light-bluetooth-app-control/',
+      'https://www.feelworld.cn/feelworld-fl125d-125w-daylight-point-source-video-light-bluetooth-app-control/',
+      'https://www.feelworld.cn/feelworld-fl225b-225w-bi-color-point-source-video-light-bluetooth-app-control/',
+      'https://www.feelworld.cn/feelworld-fl225d-225w-daylight-point-source-video-light-bluetooth-app-control/',
+      'https://www.feelworld.cn/feelworld-mt2-rgbww-mini-pixel-tube-light-handheld-built-in-3000mah-battery-bluetooth-app-control/',
+      'https://www.feelworld.cn/UpLoadFiles/EN_Product_YSD/2024/9/MT2-user-manual.pdf'
+    ],
+    note: 'Direct Bluetooth FEELWORLD Light app transport is verified only for FL125B, FL125D, FL225B, FL225D and MT2 in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

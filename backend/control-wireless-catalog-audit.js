@@ -344,6 +344,10 @@ const yidoblo=byManufacturer.get('Yidoblo');
 if(!yidoblo || yidoblo.bluetooth!==4 || yidoblo.wifi!==0 || yidoblo.both!==0) {
   failures.push('Yidoblo wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const feelworld=byManufacturer.get('FEELWORLD');
+if(!feelworld || feelworld.bluetooth!==5 || feelworld.wifi!==0 || feelworld.both!==0) {
+  failures.push('FEELWORLD wireless coverage expected 5 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

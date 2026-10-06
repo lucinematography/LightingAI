@@ -246,6 +246,36 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  FEELWORLD: {
+    id:'feelworld-light-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'FEELWORLD Light',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one FEELWORLD FL125B, FL125D, FL225B, FL225D or MT2 per first capture set and record the exact model.',
+      'Use only the FEELWORLD Light Bluetooth app path documented for that exact model.',
+      'Disable other wireless/group-control paths during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats or cross-model command compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.feelworld.cn/feelworld-fl125b-125w-bi-color-point-source-video-light-bluetooth-app-control/',
+      'https://www.feelworld.cn/feelworld-fl125d-125w-daylight-point-source-video-light-bluetooth-app-control/',
+      'https://www.feelworld.cn/feelworld-fl225b-225w-bi-color-point-source-video-light-bluetooth-app-control/',
+      'https://www.feelworld.cn/feelworld-fl225d-225w-daylight-point-source-video-light-bluetooth-app-control/',
+      'https://www.feelworld.cn/feelworld-mt2-rgbww-mini-pixel-tube-light-handheld-built-in-3000mah-battery-bluetooth-app-control/',
+      'https://www.feelworld.cn/UpLoadFiles/EN_Product_YSD/2024/9/MT2-user-manual.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect only one exact FEELWORLD model with FEELWORLD Light, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only for FL125B, FL225B and MT2; perform exactly one CCT change per capture. Do not run this on fixed-daylight FL125D/FL225D.'},
+      color:{runs:3,optional:true,rule:'Only for MT2; perform exactly one HSI/color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

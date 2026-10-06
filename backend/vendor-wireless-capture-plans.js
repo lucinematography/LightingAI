@@ -509,6 +509,38 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  'Lightstar Lights': {
+    id:'lightstar-luxed-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Lightstar LUXED Bluetooth app control',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Lightstar LUXED-P2, P4, P6, P9, P12 or LUXED PRO-P2, PRO-P4, PRO-P9, PRO-P12 per first capture set and record the exact model and firmware.',
+      'Use only the Bluetooth App Control path documented by Lightstar for that exact model.',
+      'Disable wired DMX and LumenRadio CRMX/W-DMX during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://lightstar-lights.com/luxed-p2/',
+      'https://lightstar-lights.com/luxed-p4/',
+      'https://lightstar-lights.com/luxed-p6/',
+      'https://lightstar-lights.com/luxed-p9/',
+      'https://lightstar-lights.com/luxed-p12/',
+      'https://lightstar-lights.com/luxed-pro-p2/',
+      'https://lightstar-lights.com/luxed-pro-p4/',
+      'https://lightstar-lights.com/luxed-p9-pro/',
+      'https://lightstar-lights.com/luxed-p12-pro/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact LUXED model through the vendor Bluetooth app-control path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one color-temperature change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB/HSI color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

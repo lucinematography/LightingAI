@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===797,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===53,'wireless manufacturer coverage must remain 34');
+expect(report.fixtureCount===798,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===54,'wireless manufacturer coverage must remain 34');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -82,6 +82,7 @@ expect(by.Westcott?.bluetoothFixtures===4&&by.Westcott?.wifiFixtures===0&&by.Wes
 expect(by['Logitech G']?.bluetoothFixtures===2&&by['Logitech G']?.wifiFixtures===0&&by['Logitech G']?.bothFixtures===0,'Logitech G wireless counts changed unexpectedly');
 expect(by.Rollei?.bluetoothFixtures===12&&by.Rollei?.wifiFixtures===0&&by.Rollei?.bothFixtures===0,'Rollei wireless counts changed unexpectedly');
 expect(by.Razer?.bluetoothFixtures===0&&by.Razer?.wifiFixtures===1&&by.Razer?.bothFixtures===0,'Razer wireless counts changed unexpectedly');
+expect(by.NANLUX?.bluetoothFixtures===1&&by.NANLUX?.wifiFixtures===0&&by.NANLUX?.bothFixtures===0,'NANLUX wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

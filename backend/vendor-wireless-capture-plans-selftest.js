@@ -123,6 +123,20 @@ expect(pixapro?.safety?.rawCaptureCommitAllowed===false,'PiXAPRO raw captures mu
 expect(pixapro?.safety?.derivedEvidenceOnly===true,'PiXAPRO only derived evidence may enter repo');
 expect(pixapro?.safety?.resultStatus==='candidate_only_until_physical_replay','PiXAPRO capture result must remain candidate-only');
 
+const apeLabs=VENDOR_WIRELESS_CAPTURE_PLANS['Ape Labs'];
+expect(apeLabs?.id==='ape-labs-connect-assisted-bluetooth-capture-v1','Ape Labs assisted Bluetooth capture plan missing');
+expect(apeLabs?.transport==='bluetooth','Ape Labs capture plan must remain Bluetooth');
+expect(apeLabs?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Ape Labs command spec status changed');
+expect(apeLabs?.captureSets?.connectOnly?.runs>=3,'Ape Labs connect-only requires at least 3 runs');
+expect(apeLabs?.captureSets?.dim?.runs>=3,'Ape Labs DIM requires at least 3 runs');
+expect(apeLabs?.captureSets?.color?.runs>=3,'Ape Labs COLOR requires at least 3 runs');
+expect(apeLabs?.prerequisites?.some(x=>/do not treat the fixture itself as a Bluetooth endpoint/i.test(x)),'Ape Labs capture plan must forbid direct-BLE inference');
+expect(apeLabs?.safety?.officialAppWritesOnly===true,'Ape Labs official-app-only capture safety missing');
+expect(apeLabs?.safety?.lightingAiWritesAllowed===false,'Ape Labs LightingAI writes must stay disabled during capture');
+expect(apeLabs?.safety?.rawCaptureCommitAllowed===false,'Ape Labs raw captures must never be committed');
+expect(apeLabs?.safety?.derivedEvidenceOnly===true,'Ape Labs only derived evidence may enter repo');
+expect(apeLabs?.safety?.resultStatus==='candidate_only_until_physical_replay','Ape Labs capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

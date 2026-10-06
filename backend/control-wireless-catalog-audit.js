@@ -316,6 +316,10 @@ const rollei=byManufacturer.get('Rollei');
 if(!rollei || rollei.bluetooth!==12 || rollei.wifi!==0 || rollei.both!==0) {
   failures.push('Rollei wireless coverage expected 12 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const razer=byManufacturer.get('Razer');
+if(!razer || razer.bluetooth!==0 || razer.wifi!==1 || razer.both!==0) {
+  failures.push('Razer wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

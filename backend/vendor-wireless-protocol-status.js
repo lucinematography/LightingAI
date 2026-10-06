@@ -222,6 +222,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Kenro: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'kenro-lightsystem-bluetooth-capture-v1',
+    evidence: [
+      'https://www.kenro.ie/products/kenro-smart-lite-rgb-compact-led-video-light',
+      'https://www.kenro.ie/products/kenro-smart-lite-rgb-video-light-panel',
+      'https://www.kenro.ie/products/kenro-smart-lite-19-rgb-ring-light-kit-9'
+    ],
+    note: 'Direct Bluetooth LightSystem app transport is verified only for KSLP102, KSLP103 and KSLR101 in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

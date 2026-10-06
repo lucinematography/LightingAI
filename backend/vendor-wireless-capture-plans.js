@@ -459,6 +459,33 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Kenro: {
+    id:'kenro-lightsystem-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Kenro LightSystem',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Kenro KSLP102, KSLP103 or KSLR101 per first capture set and record the exact model.',
+      'Use only the LightSystem Bluetooth app path documented by Kenro for that exact model.',
+      'Disable other remote/group-control paths during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats or compatibility with other Kenro Smart Lite fixtures from these exact-model app-control pages.'
+    ],
+    officialSources:[
+      'https://www.kenro.ie/products/kenro-smart-lite-rgb-compact-led-video-light',
+      'https://www.kenro.ie/products/kenro-smart-lite-rgb-video-light-panel',
+      'https://www.kenro.ie/products/kenro-smart-lite-19-rgb-ring-light-kit-9'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Kenro model with LightSystem over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB/saturation change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger exactly one documented lighting effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

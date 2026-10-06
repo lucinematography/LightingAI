@@ -85,6 +85,7 @@ const allowed=new Set([
   'backend/shehds-wifi-library.js',
   'backend/weeylite-bluetooth-library.js',
   'backend/imrelax-wifi-library.js',
+  'backend/kenro-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

@@ -283,6 +283,21 @@ expect(imrelax?.safety?.rawCaptureCommitAllowed===false,'IMRELAX raw captures mu
 expect(imrelax?.safety?.derivedEvidenceOnly===true,'IMRELAX only derived evidence may enter repo');
 expect(imrelax?.safety?.resultStatus==='candidate_only_until_physical_replay','IMRELAX capture result must remain candidate-only');
 
+const kenro=VENDOR_WIRELESS_CAPTURE_PLANS.Kenro;
+expect(kenro?.id==='kenro-lightsystem-bluetooth-capture-v1','Kenro Bluetooth capture plan missing');
+expect(kenro?.transport==='bluetooth','Kenro capture plan must remain Bluetooth only');
+expect(kenro?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Kenro command spec status changed');
+expect(kenro?.captureSets?.connectOnly?.runs>=3,'Kenro connect-only requires at least 3 runs');
+expect(kenro?.captureSets?.dim?.runs>=3,'Kenro DIM requires at least 3 runs');
+expect(kenro?.captureSets?.cct?.runs>=3,'Kenro CCT requires at least 3 runs');
+expect(kenro?.captureSets?.color?.runs>=3,'Kenro COLOR requires at least 3 runs');
+expect(kenro?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Kenro capture plan must forbid proprietary GATT inference');
+expect(kenro?.safety?.officialAppWritesOnly===true,'Kenro official-app-only capture safety missing');
+expect(kenro?.safety?.lightingAiWritesAllowed===false,'Kenro LightingAI writes must stay disabled during capture');
+expect(kenro?.safety?.rawCaptureCommitAllowed===false,'Kenro raw captures must never be committed');
+expect(kenro?.safety?.derivedEvidenceOnly===true,'Kenro only derived evidence may enter repo');
+expect(kenro?.safety?.resultStatus==='candidate_only_until_physical_replay','Kenro capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

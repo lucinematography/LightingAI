@@ -145,6 +145,7 @@ import { PROFOTO_BLUETOOTH_FIXTURES } from './profoto-bluetooth-library.js';
 import { SHEHDS_WIFI_FIXTURES } from './shehds-wifi-library.js';
 import { WEEYLITE_BLUETOOTH_FIXTURES } from './weeylite-bluetooth-library.js';
 import { IMRELAX_WIFI_FIXTURES } from './imrelax-wifi-library.js';
+import { KENRO_BLUETOOTH_FIXTURES } from './kenro-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -335,6 +336,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(SHEHDS_WIFI_FIXTURES));
   fixtures.push(...clone(WEEYLITE_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(IMRELAX_WIFI_FIXTURES));
+  fixtures.push(...clone(KENRO_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

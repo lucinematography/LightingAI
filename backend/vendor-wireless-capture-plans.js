@@ -139,6 +139,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  'Ape Labs': {
+    id:'ape-labs-connect-assisted-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Ape Labs App + Ape Labs CONNECT',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one ApeLight Mini V2 or ApeLight Maxi V2 and one Ape Labs CONNECT.',
+      'Pair/control through the official Ape Labs app and CONNECT; do not treat the fixture itself as a Bluetooth endpoint.',
+      'Keep other Ape Labs lights and wireless DMX controllers inactive during the first capture set.',
+      'Record app, CONNECT and fixture firmware versions with every capture.'
+    ],
+    officialSources:[
+      'https://apelabs.com/en/apelight-mini',
+      'https://apelabs.com/en/apelight-maxi',
+      'https://apelabs.com/en/faq'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect the smartphone app to CONNECT over Bluetooth with exactly one target fixture active, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same initial fixture state perform exactly one dimmer change per capture through the official app/CONNECT path.'},
+      color:{runs:3,rule:'From the same initial state perform exactly one color change per capture through the official app/CONNECT path.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',
     transport:'bluetooth',

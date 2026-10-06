@@ -14,6 +14,7 @@ const SRC={
   colorT3Ils:'https://www.chauvetdj.com/products/colorband-t3bt-ils/',
   slimQ12Ils:'https://www.chauvetdj.com/products/slimpar-q12bt-ils/',
   slimT12Ils:'https://www.chauvetdj.com/products/slimpar-t12bt-ils/',
+  slimT6:'https://www.chauvetdj.com/products/slimpar-t6bt/',
   slimT6Ils:'https://www.chauvetdj.com/products/slimpar-t6bt-ils/'
 };
 
@@ -66,6 +67,7 @@ export const CHAUVET_DJ_BLUETOOTH_FIXTURES=[
   fixture('chauvet-4bar-ltbt','4BAR LTBT','4BAR','RGB Multi-Head Wash System','Bar System'),
   fixture('chauvet-4bar-lt-quadbt','4BAR LT QuadBT','4BAR','RGBA Multi-Head Wash System','Bar System'),
   fixture('chauvet-slimpar-t12bt','SlimPAR T12BT','SlimPAR','RGB Wash Light','PAR'),
+  fixture('chauvet-slimpar-t6bt','SlimPAR T6BT','SlimPAR','RGB Wash Light','PAR',SRC.slimT6),
   fixture('chauvet-slimpar-q12bt','SlimPAR Q12BT','SlimPAR','RGBA Wash Light','PAR'),
 
   // Current ILS variants with exact first-party Bluetooth product evidence.

@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===1011,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===1013,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -49,7 +49,7 @@ expect(by.Litepanels?.bluetoothFixtures===13&&by.Litepanels?.wifiFixtures===3&&b
 expect(by.Litepanels?.assistedBluetooth===10,'Litepanels assisted Bluetooth count changed unexpectedly');
 expect(by['DMG Lumiere']?.bluetoothFixtures===3&&by['DMG Lumiere']?.wifiFixtures===3&&by['DMG Lumiere']?.bothFixtures===3,'DMG Lumiere wireless counts changed unexpectedly');
 expect(by['DMG Lumiere']?.assistedBluetooth===2&&by['DMG Lumiere']?.assistedWifi===2,'DMG Lumiere assisted route counts changed unexpectedly');
-expect(by.ZHIYUN?.bluetoothFixtures===16&&by.ZHIYUN?.wifiFixtures===0&&by.ZHIYUN?.bothFixtures===0,'ZHIYUN wireless counts changed unexpectedly');
+expect(by.ZHIYUN?.bluetoothFixtures===18&&by.ZHIYUN?.wifiFixtures===0&&by.ZHIYUN?.bothFixtures===0,'ZHIYUN wireless counts changed unexpectedly');
 expect(by.PROLYCHT?.bluetoothFixtures===2&&by.PROLYCHT?.wifiFixtures===2&&by.PROLYCHT?.bothFixtures===2,'PROLYCHT wireless counts changed unexpectedly');
 expect(by.COLBOR?.bluetoothFixtures===2&&by.COLBOR?.wifiFixtures===0&&by.COLBOR?.bothFixtures===0,'COLBOR wireless counts changed unexpectedly');
 expect(by.SIRUI?.bluetoothFixtures===10&&by.SIRUI?.wifiFixtures===0&&by.SIRUI?.bothFixtures===0,'SIRUI wireless counts changed unexpectedly');

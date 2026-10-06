@@ -10,7 +10,7 @@ const readinessWifi=readiness.vendors.reduce((n,row)=>n+row.wifiFixtures,0);
 const readinessMakers=new Set(readiness.vendors.map(row=>row.manufacturer));
 const classMakers=new Set(Object.keys(report.byManufacturer));
 
-expect(report.fixtureCount===1088,'fixture total changed from verified catalog');
+expect(report.fixtureCount===1094,'fixture total changed from verified catalog');
 expect(report.wirelessFixtureCount>0,'wireless fixture coverage unexpectedly empty');
 expect(report.bluetoothRoutes>0,'Bluetooth route coverage unexpectedly empty');
 expect(report.wifiRoutes>0,'Wi-Fi route coverage unexpectedly empty');

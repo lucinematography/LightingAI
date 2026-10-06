@@ -122,7 +122,7 @@ export const MANFROTTO_BLUETOOTH_FIXTURES=[
     family:'Lumimuse',
     category:'Light',
     sourceType:'On-Camera LED Light',
-    formFactor:'Mini / On-Camera',
+    formFactor:'Pocket / Handheld / On-Camera',
     colorMode:'Daylight',
     cctK:{min:5600,max:5600},
     cri:92,

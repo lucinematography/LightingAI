@@ -108,6 +108,7 @@ const allowed=new Set([
   'backend/bresser-bluetooth-library.js',
   'backend/digitek-bluetooth-library.js',
   'backend/manfrotto-bluetooth-library.js',
+  'backend/cineo-stagelynx-wifi-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

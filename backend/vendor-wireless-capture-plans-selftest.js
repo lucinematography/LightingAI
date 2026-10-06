@@ -433,6 +433,20 @@ expect(filmgear?.safety?.rawCaptureCommitAllowed===false,'Filmgear raw captures 
 expect(filmgear?.safety?.derivedEvidenceOnly===true,'Filmgear only derived evidence may enter repo');
 expect(filmgear?.safety?.resultStatus==='candidate_only_until_physical_replay','Filmgear capture result must remain candidate-only');
 
+const rosco=VENDOR_WIRELESS_CAPTURE_PLANS.Rosco;
+expect(rosco?.id==='rosco-mymix-connect-assisted-bluetooth-capture-v1','Rosco assisted Bluetooth capture plan missing');
+expect(rosco?.transport==='bluetooth','Rosco capture plan must remain Bluetooth only');
+expect(rosco?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Rosco command spec status changed');
+expect(rosco?.captureSets?.connectOnly?.runs>=3,'Rosco connect-only requires at least 3 runs');
+expect(rosco?.captureSets?.dim?.runs>=3,'Rosco DIM requires at least 3 runs');
+expect(rosco?.prerequisites?.some(x=>/Do not infer direct fixture Bluetooth/i.test(x)),'Rosco capture plan must forbid direct fixture Bluetooth inference');
+expect(rosco?.prerequisites?.some(x=>/myMIX Connect/i.test(x)),'Rosco capture plan must remain scoped to myMIX Connect');
+expect(rosco?.safety?.officialAppWritesOnly===true,'Rosco official-app-only capture safety missing');
+expect(rosco?.safety?.lightingAiWritesAllowed===false,'Rosco LightingAI writes must stay disabled during capture');
+expect(rosco?.safety?.rawCaptureCommitAllowed===false,'Rosco raw captures must never be committed');
+expect(rosco?.safety?.derivedEvidenceOnly===true,'Rosco only derived evidence may enter repo');
+expect(rosco?.safety?.resultStatus==='candidate_only_until_physical_replay','Rosco capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

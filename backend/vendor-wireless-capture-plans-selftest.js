@@ -110,6 +110,19 @@ expect(mettle?.safety?.rawCaptureCommitAllowed===false,'Mettle raw captures must
 expect(mettle?.safety?.derivedEvidenceOnly===true,'Mettle only derived evidence may enter repo');
 expect(mettle?.safety?.resultStatus==='candidate_only_until_physical_replay','Mettle capture result must remain candidate-only');
 
+const pixapro=VENDOR_WIRELESS_CAPTURE_PLANS.PiXAPRO;
+expect(pixapro?.id==='pixapro-neon-bluetooth-capture-v1','PiXAPRO Bluetooth capture plan missing');
+expect(pixapro?.transport==='bluetooth','PiXAPRO capture plan must remain Bluetooth only');
+expect(pixapro?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','PiXAPRO command spec status changed');
+expect(pixapro?.captureSets?.connectOnly?.runs>=3,'PiXAPRO connect-only requires at least 3 runs');
+expect(pixapro?.captureSets?.dim?.runs>=3,'PiXAPRO DIM requires at least 3 runs');
+expect(pixapro?.captureSets?.color?.runs>=3,'PiXAPRO COLOR requires at least 3 runs');
+expect(pixapro?.safety?.officialAppWritesOnly===true,'PiXAPRO official-app-only capture safety missing');
+expect(pixapro?.safety?.lightingAiWritesAllowed===false,'PiXAPRO LightingAI writes must stay disabled during capture');
+expect(pixapro?.safety?.rawCaptureCommitAllowed===false,'PiXAPRO raw captures must never be committed');
+expect(pixapro?.safety?.derivedEvidenceOnly===true,'PiXAPRO only derived evidence may enter repo');
+expect(pixapro?.safety?.resultStatus==='candidate_only_until_physical_replay','PiXAPRO capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

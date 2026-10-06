@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===735,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===41,'wireless manufacturer coverage must remain 34');
+expect(report.fixtureCount===736,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===42,'wireless manufacturer coverage must remain 34');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -70,6 +70,7 @@ expect(by['CAME-TV']?.bluetoothFixtures===0&&by['CAME-TV']?.wifiFixtures===8&&by
 expect(by.SOONWELL?.bluetoothFixtures===1&&by.SOONWELL?.wifiFixtures===0&&by.SOONWELL?.bothFixtures===0,'SOONWELL wireless counts changed unexpectedly');
 expect(by.Tolifo?.bluetoothFixtures===0&&by.Tolifo?.wifiFixtures===2&&by.Tolifo?.bothFixtures===0,'Tolifo wireless counts changed unexpectedly');
 expect(by.Moman?.bluetoothFixtures===1&&by.Moman?.wifiFixtures===0&&by.Moman?.bothFixtures===0,'Moman wireless counts changed unexpectedly');
+expect(by.Ikan?.bluetoothFixtures===1&&by.Ikan?.wifiFixtures===0&&by.Ikan?.bothFixtures===0,'Ikan wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

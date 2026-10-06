@@ -17,7 +17,8 @@ function classifyText(value,manufacturer){
   if(/flexible.*panel|foldable.*panel|\bfabric\b|\bmat\b|\bmosaic\b/.test(text)) return 'Flexible Panel / Mat';
   if(/\bpanel\b|softlight|soft light|mixpanel|mixpad|skypanel|hydrapanel/.test(text)) return 'Panel';
   if(/pocket|handheld/.test(text)) return 'Pocket / Handheld';
-  if(/\bpar\b|lightdrop|triplepar|powerpar/.test(text)) return 'PAR / Point Light';
+  if(/practical\s*light|table\s*light/.test(text)) return 'Practical Light';
+  if(/\bpar\b|point\s*light|uplight|lightdrop|triplepar|powerpar/.test(text)) return 'PAR / Point Light';
   if(/spotlight|monolight|\bcob\b|focusable|quikspot|quikbeam|quikpunch/.test(text)) return 'Spotlight / Monolight';
   if(/\b(ls|storm|electro storm)\b/.test(text) && manufacturer==='Aputure') return 'Spotlight / Monolight';
   if(/\b(knowled m|knowled mg|knowled ms|litemons la|sl cob|ml portable cob)\b/.test(text) && manufacturer==='Godox') return 'Spotlight / Monolight';

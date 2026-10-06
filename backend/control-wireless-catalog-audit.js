@@ -293,8 +293,8 @@ if(!fotodiox || fotodiox.bluetooth!==1 || fotodiox.wifi!==0 || fotodiox.both!==0
   failures.push('Fotodiox wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const broncolor=byManufacturer.get('broncolor');
-if(!broncolor || broncolor.bluetooth!==0 || broncolor.wifi!==1 || broncolor.both!==0) {
-  failures.push('broncolor wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');
+if(!broncolor || broncolor.bluetooth!==0 || broncolor.wifi!==5 || broncolor.both!==0) {
+  failures.push('broncolor wireless coverage expected 0 Bluetooth / 5 Wi-Fi / 0 both');
 }
 const genaray=byManufacturer.get('Genaray');
 if(!genaray || genaray.bluetooth!==7 || genaray.wifi!==0 || genaray.both!==0) {

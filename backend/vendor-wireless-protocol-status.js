@@ -235,6 +235,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  PROLIGHTS: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'prolights-smartcolors-wifi-capture-v1',
+    evidence: [
+      'https://www.prolights.it/en/product/SMARTBATIP',
+      'https://www.prolights.it/en/product/SMARTTUBE32',
+      'https://www.prolights.it/en/product/SMARTBATTENQ',
+      'https://www.prolights.it/en/product/WIFIBOX'
+    ],
+    note: 'Direct built-in Wi-Fi / SmartColors transport is verified only for SMARTBATIP, SMARTTUBE32 and legacy SMARTBATTENQ in this checkpoint. SMARTBATTENQ remains cataloged as discontinued. LightingAI discovery, addressing and proprietary network command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

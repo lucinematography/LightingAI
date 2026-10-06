@@ -181,8 +181,8 @@ if(!dmg || dmg.bluetooth!==3 || dmg.wifi!==3 || dmg.both!==3) {
   failures.push('DMG Lumiere wireless coverage expected 3 Bluetooth / 3 Wi-Fi / 3 both');
 }
 const zhiyun=byManufacturer.get('ZHIYUN');
-if(!zhiyun || zhiyun.bluetooth!==16 || zhiyun.wifi!==0 || zhiyun.both!==0) {
-  failures.push('ZHIYUN wireless coverage expected 16 Bluetooth / 0 Wi-Fi / 0 both');
+if(!zhiyun || zhiyun.bluetooth!==18 || zhiyun.wifi!==0 || zhiyun.both!==0) {
+  failures.push('ZHIYUN wireless coverage expected 18 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const prolycht=byManufacturer.get('PROLYCHT');
 if(!prolycht || prolycht.bluetooth!==2 || prolycht.wifi!==2 || prolycht.both!==2) {

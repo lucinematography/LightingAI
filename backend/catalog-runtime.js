@@ -120,6 +120,7 @@ import { TOLIFO_GK2016_WIFI_FIXTURES } from './tolifo-gk2016-wifi-library.js';
 import { MOMAN_PC8_BLUETOOTH_FIXTURES } from './moman-pc8-bluetooth-library.js';
 import { IKAN_IDC150_BLUETOOTH_FIXTURES } from './ikan-idc150-bluetooth-library.js';
 import { JINBEI_BLUETOOTH_FIXTURES } from './jinbei-bluetooth-library.js';
+import { LUME_CUBE_BLUETOOTH_FIXTURES } from './lume-cube-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -285,6 +286,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(MOMAN_PC8_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(IKAN_IDC150_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(JINBEI_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(LUME_CUBE_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

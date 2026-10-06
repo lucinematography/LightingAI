@@ -139,6 +139,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Genaray: {
+    id:'genaray-rgb-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Genaray Bluetooth mobile app (model-documented)',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact cataloged Genaray Bluetooth model at a time with the vendor-documented mobile app.',
+      'Start every capture from the same known lighting state and a clean Bluetooth session.',
+      'Do not infer command semantics between PX tubes, panels or SSL strip fixtures without physical evidence.',
+      'Do not infer Bluetooth support to Genaray models that only document generic wireless remote control.'
+    ],
+    officialSources:[
+      'https://www.genaray.com/products/Lights/Panel-LEDs',
+      'https://www.genaray.com/products/Lights/Strip-Lights',
+      'https://www.genaray.com/products/Lights/Wand-Style-%26-Tube-Lights',
+      'https://www.genaray.com/product/21381/Genaray-PX_MOD_3-RGB-Series-Modular-RGB-Pixel-Panel%3C%2Astrong%3E'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one supported Genaray fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one HSI/RGB color change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   broncolor: {
     id:'broncolor-led-f160-wifi-capture-v1',
     transport:'wifi',

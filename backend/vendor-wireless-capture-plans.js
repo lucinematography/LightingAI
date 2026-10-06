@@ -2220,7 +2220,7 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     controllerApp:'amaran App / Sidus Link',
     commandSpecStatus:'public-command-spec-not-located-in-official-docs',
     prerequisites:[
-      'Use one exact amaran model from the transport-verified catalog set.',
+      'Use one exact amaran model from the 25-model transport-verified catalog set, including Pano 60c, Pano 120c, Verge, Verge Max or Go where applicable.',
       'Perform the documented Bluetooth reset before each clean capture set.',
       'Use the official amaran App or Sidus Link and isolate one fixture where practical.',
       'Do not reuse Aputure command semantics solely because both product families use Sidus transport.'
@@ -2228,7 +2228,12 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     officialSources:[
       'https://help.amarancreators.com/en/amaran-mobile-app/connect-devices',
       'https://help.amarancreators.com/en/amaran-150c-300c/sidus-link-control',
-      'https://help.amarancreators.com/en/amaran-flexible-lights/light-configuration-settings'
+      'https://help.amarancreators.com/en/amaran-flexible-lights/light-configuration-settings',
+      'https://amarancreators.com/pages/amaran-pano-60c',
+      'https://amarancreators.com/pages/amaran-pano-120c',
+      'https://amarancreators.com/pages/amaran-verge/',
+      'https://amarancreators.com/pages/amaran-verge-max/',
+      'https://eu.amarancreators.com/pages/amaran-go'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Reset Bluetooth, connect one fixture in the official app, wait 15 seconds, make no lighting changes, then disconnect.'},

@@ -56,6 +56,19 @@ expect(broncolor?.safety?.rawCaptureCommitAllowed===false,'broncolor raw capture
 expect(broncolor?.safety?.derivedEvidenceOnly===true,'broncolor only derived evidence may enter repo');
 expect(broncolor?.safety?.resultStatus==='candidate_only_until_physical_replay','broncolor capture result must remain candidate-only');
 
+const elgato=VENDOR_WIRELESS_CAPTURE_PLANS.Elgato;
+expect(elgato?.id==='elgato-control-center-wifi-capture-v1','Elgato Wi-Fi capture plan missing');
+expect(elgato?.transport==='wifi','Elgato capture plan must remain Wi-Fi only');
+expect(elgato?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Elgato command spec status changed');
+expect(elgato?.captureSets?.connectOnly?.runs>=3,'Elgato connect-only requires at least 3 runs');
+expect(elgato?.captureSets?.dim?.runs>=3,'Elgato DIM requires at least 3 runs');
+expect(elgato?.captureSets?.cct?.runs>=3,'Elgato CCT requires at least 3 runs');
+expect(elgato?.safety?.officialAppWritesOnly===true,'Elgato official-app-only capture safety missing');
+expect(elgato?.safety?.lightingAiWritesAllowed===false,'Elgato LightingAI writes must stay disabled during capture');
+expect(elgato?.safety?.rawCaptureCommitAllowed===false,'Elgato raw captures must never be committed');
+expect(elgato?.safety?.derivedEvidenceOnly===true,'Elgato only derived evidence may enter repo');
+expect(elgato?.safety?.resultStatus==='candidate_only_until_physical_replay','Elgato capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

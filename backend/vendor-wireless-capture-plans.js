@@ -1712,7 +1712,11 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       'https://www.phottix.com/product/phottix-nuada-c60a-curved-led-light/',
       'https://www.phottix.com/product/phottix-nuada-s3a-led-light/',
       'https://www.phottix.com/product/phottix-nuada-r3a-led-light/',
-      'https://www.phottix.com/product/phottix-kali50ra-rgb-led-light/'
+      'https://www.phottix.com/product/phottix-kali50ra-rgb-led-light/',
+      'https://www.phottix.com/phottix-x-photoolex-app-download/',
+      'https://www.phottix.com/product/phottix-x-photoolex-theia-q100c-cob-rgb-led-light/',
+      'https://www.phottix.com/product/phottix-x-photoolex-theia-q40c-cob-rgb-led-light/',
+      'https://www.phottix.com/product/phottix-x-photoolex-helios2077-rgb-led-light-kit/'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Connect one Phottix fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},

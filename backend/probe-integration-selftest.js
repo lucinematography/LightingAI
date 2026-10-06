@@ -100,6 +100,7 @@ const allowed=new Set([
   'backend/adj-aria-x2-bluetooth-library.js',
   'backend/elinchrom-bluetooth-library.js',
   'backend/cinelight-bluetooth-library.js',
+  'backend/roxx-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

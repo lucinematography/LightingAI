@@ -179,9 +179,13 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://profoto.com/globalassets/support/user-guides/b10-and-b10-plus/profoto-b10--b10-plus-user-guide-english.pdf',
       'https://www.profoto.com/int/en/shop/products/lights/monolights/battery-powered/profoto-b10x-and-b10x-plus/',
       'https://profoto.com/globalassets/support/user-guides/b10x-and-b10x-plus/profoto-b10x--b10x-plus-user-guide-english.pdf',
-      'https://support.profoto.com/support/solutions/articles/79000117433-how-do-i-activate-and-adjust-the-continuous-light-on-my-profoto-device-'
+      'https://support.profoto.com/support/solutions/articles/79000117433-how-do-i-activate-and-adjust-the-continuous-light-on-my-profoto-device-',
+      'https://www.profoto.com/cy/en/still-photography/experience/profoto-b20-b30',
+      'https://www.profoto.com/us/en/cinema/experience/profoto-l1600d/',
+      'https://profoto.com/int/en/shop/products/lights/monoled/profoto-l600d-int/',
+      'https://www.profoto.com/int/en/shop/products/lights/monoled/profoto-l600c/'
     ],
-    note: 'Direct Bluetooth Profoto app transport is verified only for B10, B10 Plus, B10X and B10X Plus in this checkpoint. Profoto Air/AirX radio is not classified as Wi-Fi. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+    note: 'Direct Bluetooth Profoto app transport is verified only for B10, B10 Plus, B10X, B10X Plus, B20, B30, L1600D, L600D and L600C in this checkpoint. Profoto Air/AirX radio is not classified as Wi-Fi. LightingAI proprietary Bluetooth command/session semantics remain locked.'
   },
 
 

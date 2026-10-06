@@ -929,9 +929,10 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://www.ulanzi.com/collections/continuous-lighting/products/120w-v-mount-light-l074cna1',
       'https://www.ulanzi.com/collections/continuous-lighting/products/vl-200bi-200w-video-light-l079cna1',
       'https://www.ulanzi.com/collections/continuous-lighting/products/65w-portable-bi-color-led-video-light-l184',
-      'https://www.ulanzi.com/collections/continuous-lighting/products/inflatable-led-air-tube-light-l096'
+      'https://www.ulanzi.com/collections/continuous-lighting/products/inflatable-led-air-tube-light-l096',
+      'https://www.ulanzi.com/en-sg/products/ulanzi-k6500-ulanzi-studio-magnetic-bluetooth-video-light'
     ],
-    note: 'Bluetooth/Ulanzi Connect transport is verified only for VL-120Bi, VL-120C, VL-200Bi, EC65 and AL60 in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+    note: 'Bluetooth/Ulanzi Connect transport is exact-model scoped to VL-120Bi, VL-120C, VL-200Bi, EC65, AL60 and K6500 in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
   },
 
   NiceFoto: {

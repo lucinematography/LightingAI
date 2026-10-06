@@ -2440,7 +2440,7 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     controllerApp:'Sidus Link Mobile',
     commandSpecStatus:'public-command-spec-not-located-in-official-docs',
     prerequisites:[
-      'Use one Aputure fixture with built-in Sidus Bluetooth Mesh from the current catalog.',
+      'Use one Aputure fixture with built-in Sidus Bluetooth Mesh from the current catalog, including INFINIMAT 1x2, 1x4, 2x4, 4x4 or 8x8 where applicable.',
       'Do not use Sidus Link Bridge, Sidus One, CRMX, or legacy 2.4G as part of this direct-Bluetooth capture set.',
       'Reset Sidus BT on the fixture before a clean test session.',
       'Connect through the Sidus Link app interface, not the phone system Bluetooth pairing screen.',
@@ -2449,7 +2449,13 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     officialSources:[
       'https://help.aputure.com/en/sidus-link-pro/sidus-link-mobile/wireless-lighting-control-system',
       'https://help.aputure.com/en/sidus-link-pro/sidus-link-mobile/connecting-your-fixtures',
-      'https://aputure.com/EN-US/products/sidus-link-bridge'
+      'https://aputure.com/EN-US/products/sidus-link-bridge',
+      'https://aputure.com/en-US/products/aputure-infinimat-1x2-with-clear-softbox',
+      'https://aputure.com/en-US/products/aputure-infinimat-1x4-with-clear-softbox',
+      'https://aputure.com/en-US/products/aputure-infinimat-2x4-with-clear-softbox',
+      'https://aputure.com/en-US/products/aputure-infinimat-4x4-with-clear-softbox',
+      'https://aputure.com/en-US/products/aputure-infinimat-8x8-with-clear-softbox',
+      'https://aputure.com/en-US/product-families/infinimat'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Reset Sidus BT, add only the test fixture in a fresh scene, connect, wait 15 seconds, make no lighting changes.'},

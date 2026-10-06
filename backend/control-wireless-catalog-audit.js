@@ -332,6 +332,10 @@ const pixapro=byManufacturer.get('PiXAPRO');
 if(!pixapro || pixapro.bluetooth!==2 || pixapro.wifi!==0 || pixapro.both!==0) {
   failures.push('PiXAPRO wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const apeLabs=byManufacturer.get('Ape Labs');
+if(!apeLabs || apeLabs.bluetooth!==2 || apeLabs.wifi!==0 || apeLabs.both!==0) {
+  failures.push('Ape Labs wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

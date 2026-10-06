@@ -10,6 +10,7 @@ function classifyText(value,manufacturer){
   if(/ring light|\bhalo\b/.test(text)) return 'Ring Light';
   if(/pixel\s*bar|infinibar|light\s*bar/.test(text)) return 'Pixel Bar';
   if(/linear\s*wash|\bstrip\b|\bcolorband\b/.test(text)) return 'Linear Wash / Bar';
+  if(/linear\s*key\s*light|streaming\s*key\s*light/.test(text)) return 'Linear Key Light';
   if(/multi-head\s*wash|\b4bar\b/.test(text)) return 'Multi-Head Wash System';
   if(/wedge\s*wash|\bwedge\b/.test(text)) return 'Wedge / Uplight';
   if(/pixelbrick|\bbrick\b/.test(text)) return 'Brick / Compact Pixel';

@@ -5,8 +5,8 @@ const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildOperatorControlPlanningReport();
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
 
-expect(report.fixtureCount===852,'fixture total changed from verified catalog');
-expect(report.wirelessManufacturers===74,'wireless manufacturer count must remain 74');
+expect(report.fixtureCount===861,'fixture total changed from verified catalog');
+expect(report.wirelessManufacturers===75,'wireless manufacturer count must remain 75');
 expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
 expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
 expect(report.totals.dimControlVerified<=report.totals.dimCapable,'verified control totals must be bounded by physical DIM capability');
@@ -14,7 +14,7 @@ expect(report.totals.cctControlVerified<=report.totals.cctCapable,'verified CCT 
 expect(report.totals.colorControlVerified<=report.totals.colorCapable,'verified COLOR control total exceeds physical capability');
 expect(report.totals.fxControlVerified<=report.totals.fxCapable,'verified FX control total exceeds physical capability');
 
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','SHEHDS','Weeylite','IMRELAX','Kenro','Selens','Fomex','BB&S Lighting','SUMOLIGHT','PROLIGHTS']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','SHEHDS','Weeylite','IMRELAX','Kenro','Selens','Fomex','BB&S Lighting','SUMOLIGHT','PROLIGHTS','Lightstar Lights']){
   const row=by[maker];
   expect(!!row,maker+' planning row missing');
   if(!row) continue;
@@ -100,12 +100,13 @@ expect(by.Fomex?.wirelessFixtures===2,'Fomex wireless fixture count changed unex
 expect(by['BB&S Lighting']?.wirelessFixtures===2,'BB&S Lighting wireless fixture count changed unexpectedly');
 expect(by.SUMOLIGHT?.wirelessFixtures===1,'SUMOLIGHT wireless fixture count changed unexpectedly');
 expect(by.PROLIGHTS?.wirelessFixtures===3,'PROLIGHTS wireless fixture count changed unexpectedly');
+expect(by['Lightstar Lights']?.wirelessFixtures===9,'Lightstar Lights wireless fixture count changed unexpectedly');
 
 for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight','Quasar Science','amaran','GVM','Litepanels','DMG Lumiere','PROLYCHT']){
   const transports=new Set(by[maker]?.requiredProductionTransports||[]);
   expect(transports.has('bluetooth')&&transports.has('wifi'),maker+' dual-transport production scope must require Bluetooth and Wi-Fi');
 }
-for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli','Kelvin','SmallRig','NEEWER','ZHIYUN','COLBOR','SIRUI','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','Weeylite','Kenro','Selens','Fomex','BB&S Lighting']){
+for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli','Kelvin','SmallRig','NEEWER','ZHIYUN','COLBOR','SIRUI','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','Weeylite','Kenro','Selens','Fomex','BB&S Lighting','Lightstar Lights']){
   const transports=by[maker]?.requiredProductionTransports||[];
   expect(transports.length===1&&transports[0]==='bluetooth',maker+' current production scope should require Bluetooth only');
 }

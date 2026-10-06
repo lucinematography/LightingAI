@@ -436,12 +436,16 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     evidence: [
       'https://www.ifootagegear.com/pages/product-support-400bns',
       'https://www.ifootagegear.com/pages/product-support-anglerfish-sl1-200bna',
+      'https://www.ifootagegear.com/products/sl1-130bna',
+      'https://www.ifootagegear.com/products/sl1-60bna',
       'https://www.ifootagegear.com/pages/product-support-anglerfish-sl1-320dn',
       'https://eu.ifootagegear.com/products/anglerfish-sl1-220dn',
+      'https://www.ifootagegear.com/products/sl1-200dna',
+      'https://www.ifootagegear.com/products/sl1-130dna',
       'https://eu.ifootagegear.com/collections/lighting-collection/products/anglerfish-sl1-60dn',
       'https://www.ifootagegear.com/pages/product-support-anglerfish-handy-light-hl1-c4'
     ],
-    note: 'Direct Bluetooth Lumin/Lumin+ app transport is first-party verified only for SL1 400BNS, SL1 200BNA, SL1 320DN, SL1 220DN, SL1 60DN and HL1 C4 in this checkpoint. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
+    note: 'Direct Bluetooth Lumin/Lumin+ app transport is first-party verified only for SL1 400BNS, SL1 200BNA, SL1 130BNA, SL1 60BNA, SL1 320DN, SL1 220DN, SL1 200DNA, SL1 130DNA, SL1 60DN and HL1 C4 in this checkpoint. PL1 80BN/80C remain excluded because explicit exact-model Bluetooth transport evidence was not located. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
   },
 
 

@@ -94,6 +94,7 @@ const allowed=new Set([
   'backend/lightstar-luxed-bluetooth-library.js',
   'backend/mole-richardson-bluetooth-library.js',
   'backend/zolar-wireless-library.js',
+  'backend/filmgear-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

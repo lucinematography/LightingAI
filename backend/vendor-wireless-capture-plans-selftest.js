@@ -603,6 +603,20 @@ expect(digitek?.safety?.rawCaptureCommitAllowed===false,'Digitek raw captures mu
 expect(digitek?.safety?.derivedEvidenceOnly===true,'Digitek only derived evidence may enter repo');
 expect(digitek?.safety?.resultStatus==='candidate_only_until_physical_replay','Digitek capture result must remain candidate-only');
 
+const manfrotto=VENDOR_WIRELESS_CAPTURE_PLANS.Manfrotto;
+expect(manfrotto?.id==='manfrotto-lykos-lumimuse-bluetooth-capture-v1','Manfrotto Bluetooth capture plan missing');
+expect(manfrotto?.transport==='bluetooth','Manfrotto capture plan must remain Bluetooth only');
+expect(manfrotto?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Manfrotto command spec status changed');
+expect(manfrotto?.captureSets?.connectOnly?.runs>=3,'Manfrotto connect-only requires at least 3 runs');
+expect(manfrotto?.prerequisites?.some(x=>/LYKOS Bluetooth dongle/i.test(x)),'Manfrotto assisted LYKOS dongle requirement missing');
+expect(manfrotto?.prerequisites?.some(x=>/do not begin app-driven capture/i.test(x)),'Manfrotto Lykos 2.0 app inference guard missing');
+expect(manfrotto?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Manfrotto proprietary GATT inference must stay forbidden');
+expect(manfrotto?.safety?.officialAppWritesOnly===true,'Manfrotto official-app-only capture safety missing');
+expect(manfrotto?.safety?.lightingAiWritesAllowed===false,'Manfrotto LightingAI writes must stay disabled during capture');
+expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw captures must never be committed');
+expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
+expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

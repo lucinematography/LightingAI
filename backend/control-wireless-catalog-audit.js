@@ -464,6 +464,10 @@ const digitek=byManufacturer.get('Digitek');
 if(!digitek || digitek.bluetooth!==1 || digitek.wifi!==0 || digitek.both!==0) {
   failures.push('Digitek wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const manfrotto=byManufacturer.get('Manfrotto');
+if(!manfrotto || manfrotto.bluetooth!==3 || manfrotto.wifi!==0 || manfrotto.both!==0) {
+  failures.push('Manfrotto wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

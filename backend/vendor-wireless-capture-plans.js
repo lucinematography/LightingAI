@@ -959,6 +959,35 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Manfrotto: {
+    id:'manfrotto-lykos-lumimuse-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Model-specific Manfrotto path: LYKOS iPhone/Digital Director, Lumimuse App; Lykos 2.0 app identity must be first-party confirmed before capture',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one supported Manfrotto model per first capture set and record the exact fixture, accessory, app and OS versions.',
+      'For LYKOS Daylight MLL1500-D, install the optional Manfrotto LYKOS Bluetooth dongle and use only the first-party-documented dedicated iPhone or Digital Director path.',
+      'For Lumimuse8 Bluetooth, use only the first-party-documented Lumimuse iOS app path.',
+      'For Lykos 2.0, do not begin app-driven capture until the exact controller app and platform are confirmed from first-party product/manual material; Bluetooth transport alone does not authorize an inferred app path.',
+      'Keep other Bluetooth lighting devices inactive during the first capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or compatibility with other Manfrotto lights.'
+    ],
+    officialSources:[
+      'https://www.manfrotto.com/ie-en/led-light-lykos-daylight-mll1500-d/',
+      'https://www.manfrotto.com/nl-en/products/studio-lighting-systems/',
+      'https://www.manfrotto.com/ch-de/kollektionen/beleuchtung/lykos/',
+      'https://www.manfrotto.com/global-en/digital-director-for-ipad-mini-3-and-ipad-mini-2-mvddm23/',
+      'https://www.manfrotto.com/global-uk/stories/food-photography-guide/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Using the exact model-specific first-party control path, connect one supported Manfrotto light, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,optional:true,rule:'Only where the exact first-party app path exposes brightness control; perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only where the exact first-party model supports variable CCT through the documented Bluetooth path; do not run this set for fixed-daylight models.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

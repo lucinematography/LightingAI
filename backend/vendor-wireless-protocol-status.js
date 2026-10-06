@@ -519,6 +519,23 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Manfrotto: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'manfrotto-lykos-lumimuse-bluetooth-capture-v1',
+    evidence: [
+      'https://www.manfrotto.com/ie-en/led-light-lykos-daylight-mll1500-d/',
+      'https://www.manfrotto.com/nl-en/products/studio-lighting-systems/',
+      'https://www.manfrotto.com/ch-de/kollektionen/beleuchtung/lykos/',
+      'https://www.manfrotto.com/global-en/digital-director-for-ipad-mini-3-and-ipad-mini-2-mvddm23/',
+      'https://www.manfrotto.com/global-uk/stories/food-photography-guide/'
+    ],
+    note: 'Bluetooth transport is first-party verified only for LYKOS Daylight MLL1500-D, Lykos 2.0 2 in 1 water-resistant with Bluetooth, and Lumimuse8 LED with Bluetooth Wireless Technology in this checkpoint. MLL1500-D is adapter-assisted via the optional LYKOS Bluetooth dongle; the other two listed products have integrated Bluetooth. Lumimuse8 app control is scoped to the documented iOS path. LightingAI proprietary Bluetooth/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

@@ -119,11 +119,11 @@ expect(by.BRESSER?.wirelessFixtures===5,'BRESSER wireless fixture count changed 
 expect(by.Digitek?.wirelessFixtures===1,'Digitek wireless fixture count changed unexpectedly');
 expect(by.Manfrotto?.wirelessFixtures===3,'Manfrotto wireless fixture count changed unexpectedly');
 
-for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight','Quasar Science','amaran','GVM','Litepanels','DMG Lumiere','PROLYCHT','ZOLAR']){
+for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight','Quasar Science','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','PROLYCHT','ZOLAR']){
   const transports=new Set(by[maker]?.requiredProductionTransports||[]);
   expect(transports.has('bluetooth')&&transports.has('wifi'),maker+' dual-transport production scope must require Bluetooth and Wi-Fi');
 }
-for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli','Kelvin','SmallRig','NEEWER','ZHIYUN','COLBOR','SIRUI','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','Weeylite','Kenro','Selens','Fomex','BB&S Lighting','Lightstar Lights','Mole-Richardson','Filmgear','Rosco','dedolight','ADJ Lighting','Elinchrom','CineLight','ROXX','iFootage','Cineroid','Sokani','FotorGear','BRESSER','Digitek','Manfrotto']){
+for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli','Kelvin','SmallRig','ZHIYUN','COLBOR','SIRUI','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','Weeylite','Kenro','Selens','Fomex','BB&S Lighting','Lightstar Lights','Mole-Richardson','Filmgear','Rosco','dedolight','ADJ Lighting','Elinchrom','CineLight','ROXX','iFootage','Cineroid','Sokani','FotorGear','BRESSER','Digitek','Manfrotto']){
   const transports=by[maker]?.requiredProductionTransports||[];
   expect(transports.length===1&&transports[0]==='bluetooth',maker+' current production scope should require Bluetooth only');
 }

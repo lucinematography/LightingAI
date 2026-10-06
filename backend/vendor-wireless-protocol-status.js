@@ -477,6 +477,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  FotorGear: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'fotorgear-cob-flash-ios-bluetooth-capture-v1',
+    evidence: [
+      'https://www.fotorgear.com/products/cob-light'
+    ],
+    note: 'Bluetooth transport is first-party verified only for COB Smartphone Bluetooth Flash SKU 10477 and only for the documented iOS interactive path in this checkpoint. FotorGear explicitly states Android Bluetooth-controlled flash via the phone is not supported. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

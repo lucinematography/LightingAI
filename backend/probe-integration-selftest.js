@@ -104,6 +104,7 @@ const allowed=new Set([
   'backend/ifootage-anglerfish-bluetooth-library.js',
   'backend/cineroid-bluetooth-library.js',
   'backend/sokani-bluetooth-library.js',
+  'backend/fotorgear-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

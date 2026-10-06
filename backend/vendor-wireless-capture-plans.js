@@ -881,6 +881,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  FotorGear: {
+    id:'fotorgear-cob-flash-ios-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'FotorGear App (iOS only for verified interactive Bluetooth path)',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one FotorGear COB Smartphone Bluetooth Flash SKU 10477 per first capture set and record the exact product/app/iOS versions.',
+      'Use only the first-party-documented iOS interactive Bluetooth path through the FotorGear App.',
+      'Do not run Android capture as equivalent evidence because FotorGear explicitly states Bluetooth-controlled flash via the phone is not supported on Android for this product.',
+      'Keep other Bluetooth accessories inactive during the first capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, trigger encoding, brightness encoding or compatibility with any other FotorGear light.'
+    ],
+    officialSources:[
+      'https://www.fotorgear.com/products/cob-light'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'On iOS, connect one exact SKU 10477 through the documented FotorGear App Bluetooth path, wait 15 seconds, make no lighting/trigger changes, then disconnect.'},
+      trigger:{runs:3,rule:'On iOS and from the same known state, perform exactly one documented flash trigger per capture using only the official app.'},
+      dim:{runs:3,optional:true,rule:'Only if the official app exposes a brightness control for this exact unit during physical capture; change exactly one brightness value per capture and do not infer semantics otherwise.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

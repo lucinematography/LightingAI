@@ -452,6 +452,10 @@ const sokani=byManufacturer.get('Sokani');
 if(!sokani || sokani.bluetooth!==1 || sokani.wifi!==0 || sokani.both!==0) {
   failures.push('Sokani wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const fotorgear=byManufacturer.get('FotorGear');
+if(!fotorgear || fotorgear.bluetooth!==1 || fotorgear.wifi!==0 || fotorgear.both!==0) {
+  failures.push('FotorGear wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

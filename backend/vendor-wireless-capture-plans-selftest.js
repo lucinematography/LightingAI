@@ -562,6 +562,20 @@ expect(sokani?.safety?.rawCaptureCommitAllowed===false,'Sokani raw captures must
 expect(sokani?.safety?.derivedEvidenceOnly===true,'Sokani only derived evidence may enter repo');
 expect(sokani?.safety?.resultStatus==='candidate_only_until_physical_replay','Sokani capture result must remain candidate-only');
 
+const fotorgear=VENDOR_WIRELESS_CAPTURE_PLANS.FotorGear;
+expect(fotorgear?.id==='fotorgear-cob-flash-ios-bluetooth-capture-v1','FotorGear Bluetooth capture plan missing');
+expect(fotorgear?.transport==='bluetooth','FotorGear capture plan must remain Bluetooth only');
+expect(fotorgear?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','FotorGear command spec status changed');
+expect(fotorgear?.captureSets?.connectOnly?.runs>=3,'FotorGear connect-only requires at least 3 runs');
+expect(fotorgear?.captureSets?.trigger?.runs>=3,'FotorGear trigger capture requires at least 3 runs');
+expect(fotorgear?.prerequisites?.some(x=>/Do not run Android capture/i.test(x)),'FotorGear Android exclusion must remain explicit');
+expect(fotorgear?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'FotorGear capture plan must forbid proprietary GATT inference');
+expect(fotorgear?.safety?.officialAppWritesOnly===true,'FotorGear official-app-only capture safety missing');
+expect(fotorgear?.safety?.lightingAiWritesAllowed===false,'FotorGear LightingAI writes must stay disabled during capture');
+expect(fotorgear?.safety?.rawCaptureCommitAllowed===false,'FotorGear raw captures must never be committed');
+expect(fotorgear?.safety?.derivedEvidenceOnly===true,'FotorGear only derived evidence may enter repo');
+expect(fotorgear?.safety?.resultStatus==='candidate_only_until_physical_replay','FotorGear capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

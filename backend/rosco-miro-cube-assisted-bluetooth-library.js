@@ -27,7 +27,7 @@ function assistedBluetoothControl(sourceUrls,model,opts={}){
     wireless:['Bluetooth via Rosco myMIX Connect RJ45 dongle and myMIX App'],
     builtInBluetooth:false,
     directLightingAI:[],
-    externalInterfaceRequired:['Rosco myMIX Connect RJ45 dongle (515800000046)'],
+    externalInterfaceRequired:['Rosco myMIX Connect Bluetooth / RJ45 dongle (515800000046)'],
     unavailableDirectProtocols:[
       'Rosco documents Bluetooth app control for '+model+' only through the external myMIX Connect accessory; direct fixture Bluetooth is not claimed',
       'LightingAI proprietary BLE/GATT discovery, pairing, service/characteristic UUIDs and command/session semantics are not production-verified'

@@ -1112,7 +1112,13 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://www.harlowe.com/products/pro-300w-studio-light-kit-photo-video',
       'https://www.harlowe.com/products/pro-300w-spectra-rgbcw-studio-light-kit',
       'https://www.harlowe.com/products/blade-5-bi-color-rgb-tube-light',
-      'https://www.harlowe.com/products/blade-5-10-bi-color-rgb-tube-light-kit'
+      'https://www.harlowe.com/products/blade-5-10-bi-color-rgb-tube-light-kit',
+      'https://www.harlowe.com/products/sol-5-spectra-rgbcw-mobile-light-for-magsafe',
+      'https://www.harlowe.com/products/iris-5w-spectra-rgbcw-continuous-led-light-kit-for-content-creation',
+      'https://www.harlowe.com/products/sol-30w-portable-led-surface-light-kit',
+      'https://www.harlowe.com/en-eu/products/sol-40w-round-led-panel-light',
+      'https://www.harlowe.com/en-eu/products/sol-100w-round-led-panel-light',
+      'https://www.harlowe.com/products/max-spectra-rgbcw-led-video-photography-light-kit'
     ],
     note: 'Harlowe, formerly HOBOLITE, Bluetooth app control is verified only for the explicitly cataloged models. LightingAI proprietary command semantics remain locked.'
   },

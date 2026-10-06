@@ -251,6 +251,27 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  'Lightstar Lights': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'lightstar-luxed-bluetooth-capture-v1',
+    evidence: [
+      'https://lightstar-lights.com/luxed-p2/',
+      'https://lightstar-lights.com/luxed-p4/',
+      'https://lightstar-lights.com/luxed-p6/',
+      'https://lightstar-lights.com/luxed-p9/',
+      'https://lightstar-lights.com/luxed-p12/',
+      'https://lightstar-lights.com/luxed-pro-p2/',
+      'https://lightstar-lights.com/luxed-pro-p4/',
+      'https://lightstar-lights.com/luxed-p9-pro/',
+      'https://lightstar-lights.com/luxed-p12-pro/'
+    ],
+    note: 'Direct Bluetooth App Control is first-party verified only for LUXED-P2/P4/P6/P9/P12 and LUXED PRO-P2/P4/P9/P12 in this checkpoint. LumenRadio CRMX/W-DMX is a separate wireless-DMX path. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

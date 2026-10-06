@@ -139,6 +139,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Razer: {
+    id:'razer-key-light-chroma-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'Razer Streaming App / Razer Synapse',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact Razer Key Light Chroma RZ19-0412 with the official Razer Streaming App or Razer Synapse.',
+      'Connect the light and controller device to the same documented 2.4 GHz Wi-Fi network.',
+      'Start every capture from the same known lighting state and a clean local-network session.',
+      'Do not infer Key Light Chroma network semantics to Aether, Chroma room-lighting or other Razer devices.'
+    ],
+    officialSources:[
+      'https://www.razer.com/streaming-accessories/razer-key-light-chroma',
+      'https://mysupport.razer.com/app/answers/detail/a_id/5911/~/how-to-customize-the-razer-key-light-chroma',
+      'https://mysupport.razer.com/app/answers/detail/a_id/6194/~/how-to-add-wi-fi-devices-on-razer-synapse-3'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one Key Light Chroma over the documented 2.4 GHz Wi-Fi route, wait 15 seconds, make no lighting changes, then close the control session.'},
+      dim:{runs:3,rule:'Perform exactly one brightness change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one color-temperature change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one Chroma RGB color change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Rollei: {
     id:'rollei-bluetooth-capture-v1',
     transport:'bluetooth',

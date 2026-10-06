@@ -152,6 +152,20 @@ expect(pilotfly?.safety?.rawCaptureCommitAllowed===false,'Pilotfly raw captures 
 expect(pilotfly?.safety?.derivedEvidenceOnly===true,'Pilotfly only derived evidence may enter repo');
 expect(pilotfly?.safety?.resultStatus==='candidate_only_until_physical_replay','Pilotfly capture result must remain candidate-only');
 
+const yidoblo=VENDOR_WIRELESS_CAPTURE_PLANS.Yidoblo;
+expect(yidoblo?.id==='yidoblo-bluetooth-capture-v1','Yidoblo Bluetooth capture plan missing');
+expect(yidoblo?.transport==='bluetooth','Yidoblo capture plan must remain Bluetooth only');
+expect(yidoblo?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Yidoblo command spec status changed');
+expect(yidoblo?.captureSets?.connectOnly?.runs>=3,'Yidoblo connect-only requires at least 3 runs');
+expect(yidoblo?.captureSets?.dim?.runs>=3,'Yidoblo DIM requires at least 3 runs');
+expect(yidoblo?.captureSets?.cct?.runs>=3,'Yidoblo CCT requires at least 3 runs');
+expect(yidoblo?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Yidoblo capture plan must forbid proprietary GATT inference');
+expect(yidoblo?.safety?.officialAppWritesOnly===true,'Yidoblo official-app-only capture safety missing');
+expect(yidoblo?.safety?.lightingAiWritesAllowed===false,'Yidoblo LightingAI writes must stay disabled during capture');
+expect(yidoblo?.safety?.rawCaptureCommitAllowed===false,'Yidoblo raw captures must never be committed');
+expect(yidoblo?.safety?.derivedEvidenceOnly===true,'Yidoblo only derived evidence may enter repo');
+expect(yidoblo?.safety?.resultStatus==='candidate_only_until_physical_replay','Yidoblo capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

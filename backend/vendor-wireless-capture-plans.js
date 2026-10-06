@@ -218,6 +218,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Yidoblo: {
+    id:'yidoblo-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Yidoblo documented Bluetooth mobile app',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Yidoblo ZE-150Bi, ZD-300II, ZC-60C or ZR-300BI per first capture set and record the exact model.',
+      'Use only the Bluetooth mobile-app path documented on the first-party Yidoblo page for that exact model.',
+      'Disable DMX, handheld remotes and other control paths during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats or cross-model command compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.yidobloled.com/sale-44067604-yidoblo-new-design-150w-cob-pocket-fill-light-bi-color-lighting-led-studio-light-2700-7500k.html',
+      'https://www.yidobloled.com/sale-49797900-yidoblo-300w-studio-video-light-stage-effect-lighting-with-remote-controller-photography-equipment.html',
+      'https://www.yidobloled.com/sale-43853152-wholesale-portable-led-video-light-zc-60rgb-full-colors-rgb-with-cct-2700-7500k-app-lighting-for-con.html',
+      'https://www.yidobloled.com/sale-53851987-yidoblo-300w-soft-led-video-light-photo-studio-lamp-professional-studio-light-led-film-lighting-zr-3.html'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect only one exact Yidoblo model with the documented Bluetooth app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture.'},
+      color:{runs:3,optional:true,rule:'Only on exact models with first-party RGB/HSI evidence; perform exactly one color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

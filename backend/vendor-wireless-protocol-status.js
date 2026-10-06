@@ -82,6 +82,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Yidoblo: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'yidoblo-bluetooth-capture-v1',
+    evidence: [
+      'https://www.yidobloled.com/sale-44067604-yidoblo-new-design-150w-cob-pocket-fill-light-bi-color-lighting-led-studio-light-2700-7500k.html',
+      'https://www.yidobloled.com/sale-49797900-yidoblo-300w-studio-video-light-stage-effect-lighting-with-remote-controller-photography-equipment.html',
+      'https://www.yidobloled.com/sale-43853152-wholesale-portable-led-video-light-zc-60rgb-full-colors-rgb-with-cct-2700-7500k-app-lighting-for-con.html',
+      'https://www.yidobloled.com/sale-53851987-yidoblo-300w-soft-led-video-light-photo-studio-lamp-professional-studio-light-led-film-lighting-zr-3.html'
+    ],
+    note: 'Direct Bluetooth mobile-app transport is verified only for ZE-150Bi, ZD-300II, ZC-60C and ZR-300BI in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

@@ -913,9 +913,11 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://www.came-tv.com/collections/video-lights-1/products/boltzen-andromeda-mkii-slim-tube-led-light',
       'https://www.came-tv.com/collections/special-video-lights/products/boltzen-cassiopeia-folding-rgbdt-50-watt-ring-light-led',
       'https://www.came-tv.com/products/came-tv-boltzen-perseus-bi-color-55w-smd-soft-travel-lights-that-are-stackable-and-ready-to-fly',
+      'https://www.came-tv.com/products/came-tv-boltzen-100w-fresnel-fanless-focusable-led-daylight-29700-lux-1m',
+      'https://www.came-tv.com/products/came-tv-boltzen-150w-travel-kits-fresnel-focusable-led-daylight-46800-lux-1m',
       'https://www.came-tv.com/pages/software-downloads'
     ],
-    note: 'Built-in Wi-Fi/app control is verified only for the eight explicitly cataloged CAME-TV Boltzen model variants in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+    note: 'Built-in Wi-Fi/app control is exact-model verified for ten CAME-TV Boltzen variants in this checkpoint, including B-100W and F-150W (F150W-MK2). LightingAI proprietary command/session semantics remain locked.'
   },
 
   Ulanzi: {

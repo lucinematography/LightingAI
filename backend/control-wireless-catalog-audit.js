@@ -249,8 +249,8 @@ if(!lishuai || lishuai.bluetooth!==4 || lishuai.wifi!==0 || lishuai.both!==0) {
   failures.push('Lishuai wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const niceFoto=byManufacturer.get('NiceFoto');
-if(!niceFoto || niceFoto.bluetooth!==8 || niceFoto.wifi!==0 || niceFoto.both!==0) {
-  failures.push('NiceFoto wireless coverage expected 8 Bluetooth / 0 Wi-Fi / 0 both');
+if(!niceFoto || niceFoto.bluetooth!==12 || niceFoto.wifi!==0 || niceFoto.both!==0) {
+  failures.push('NiceFoto wireless coverage expected 12 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const ulanzi=byManufacturer.get('Ulanzi');
 if(!ulanzi || ulanzi.bluetooth!==5 || ulanzi.wifi!==0 || ulanzi.both!==0) {

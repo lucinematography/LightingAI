@@ -817,9 +817,10 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://lumecube.com/products/panel-pro',
       'https://lumecube.com/products/tube-light-mini',
       'https://lumecube.com/products/tube-light-xl',
+      'https://lumecube.com/products/lume-cube-rgb-tube-light-l',
       'https://lumecube.com/products/lume-cube-xl-60w-rgb-mini-cob-led-light'
     ],
-    note: 'Bluetooth/Lume Control transport is verified only for RGB Panel Pro 2.0, RGB Tube Light Mini, RGB Tube Light XL and Lume Cube XL in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+    note: 'Bluetooth/Lume Control transport is verified only for RGB Panel Pro 2.0, RGB Tube Light Mini, RGB Tube Light Large (2 ft), RGB Tube Light XL and Lume Cube XL in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
   },
 
   Jinbei: {

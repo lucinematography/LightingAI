@@ -482,6 +482,33 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  PROLIGHTS: {
+    id:'prolights-smartcolors-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'PROLIGHTS SmartColors app / integrated Wi-Fi path',
+    commandSpecStatus:'public-network-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one PROLIGHTS SMARTBATIP, SMARTTUBE32 or SMARTBATTENQ per first capture set and record the exact model and firmware.',
+      'Use only the built-in Wi-Fi / SmartColors path documented by PROLIGHTS for that exact model.',
+      'Disable wired DMX and any non-Wi-Fi remote/control path during the first capture so traffic attribution stays unambiguous.',
+      'Do not infer TCP/UDP ports, discovery protocol, pairing/authentication flow, addressing, packet framing, channel mapping or cross-model payload compatibility from the documented Wi-Fi capability.'
+    ],
+    officialSources:[
+      'https://www.prolights.it/en/product/SMARTBATIP',
+      'https://www.prolights.it/en/product/SMARTTUBE32',
+      'https://www.prolights.it/en/product/SMARTBATTENQ',
+      'https://www.prolights.it/en/product/WIFIBOX'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact PROLIGHTS model through its built-in SmartColors Wi-Fi path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB/RGBW colour change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only on exact models with documented white-preset/CCT behavior; perform one documented white-temperature/preset change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

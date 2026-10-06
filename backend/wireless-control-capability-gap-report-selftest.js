@@ -25,8 +25,8 @@ expect(verifiedWirelessTransport({
 }).bluetooth===true,
   'Verified Bluetooth transport evidence must enter wireless gap scope');
 
-expect(report.fixtureCount===1013,'fixture total changed from verified catalog');
-expect(report.wirelessFixtures===676,'verified wireless fixture total changed unexpectedly');
+expect(report.fixtureCount===1018,'fixture total changed from verified catalog');
+expect(report.wirelessFixtures===681,'verified wireless fixture total changed unexpectedly');
 expect(report.fixturesWithAnyGap>0,'capability-gap audit unexpectedly empty');
 
 const by=report.byManufacturer;
@@ -43,7 +43,7 @@ expect(by.FEELWORLD?.wirelessFixtures===5,'FEELWORLD wireless count changed');
 expect(by.SUTEFOTO?.wirelessFixtures===2,'SUTEFOTO wireless count changed');
 expect(by['YC Onion']?.wirelessFixtures===1,'YC Onion wireless count changed');
 expect(by['K&F Concept']?.wirelessFixtures===1,'K&F Concept wireless count changed');
-expect(by.Profoto?.wirelessFixtures===4,'Profoto wireless count changed');
+expect(by.Profoto?.wirelessFixtures===9,'Profoto wireless count changed');
 expect(by.SHEHDS?.wirelessFixtures===2,'SHEHDS wireless count changed');
 expect(by.Weeylite?.wirelessFixtures===6,'Weeylite wireless count changed');
 expect(by.IMRELAX?.wirelessFixtures===1,'IMRELAX wireless count changed');

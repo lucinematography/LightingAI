@@ -39,7 +39,7 @@ export const PIXAPRO_NEON_BLUETOOTH_FIXTURES=[
     family:'NEON RGB',
     category:'Light',
     sourceType:'RGBIC LED Practical Rope Light',
-    formFactor:'Flexible Rope',
+    formFactor:'Flexible Strip / Rope',
     colorMode:'RGBIC / Effects',
     control:bluetoothControl(SRC.rope,'3m NEON RGB Flex IP67 C-130602'),
     sourceUrl:SRC.rope

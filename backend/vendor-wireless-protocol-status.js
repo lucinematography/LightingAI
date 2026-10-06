@@ -37,6 +37,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'NANLINK direct Bluetooth, WS-TB-1 assisted Bluetooth-to-2.4G, and model-scoped Wi-Fi paths remain distinct.'
   },
 
+  'Ape Labs': {
+    bluetooth: 'transport_verified_assisted_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'ape-labs-connect-assisted-bluetooth-capture-v1',
+    evidence: [
+      'https://apelabs.com/en/apelight-mini',
+      'https://apelabs.com/en/apelight-maxi',
+      'https://apelabs.com/en/faq'
+    ],
+    note: 'Bluetooth is verified only as smartphone-to-CONNECT assisted transport for ApeLight Mini V2 and Maxi V2. Direct fixture Bluetooth is not claimed; fixture-side 2.4 GHz semantics remain locked.'
+  },
+
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

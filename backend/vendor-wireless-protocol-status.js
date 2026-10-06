@@ -942,9 +942,12 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     capturePlanId: 'nicefoto-tc-bluetooth-mesh-capture-v1',
     evidence: [
       'https://nicefoto.cn/app',
-      'https://nicefoto.cn/shuomingshu'
+      'https://nicefoto.cn/shuomingshu',
+      'https://nicefoto.cn/product/%E6%89%8B%E6%8C%81%E5%85%A8%E5%BD%A9%E6%A3%92%E7%81%AFtc-298rgb-w',
+      'https://nicefoto.cn/product/tc-209rgb-w',
+      'https://nicefoto.cn/product-category/yingshizhibo'
     ],
-    note: 'NiceFoto documents standard Mesh Bluetooth control for TC-series multi-color lights. This checkpoint is limited to the eight TC models explicitly listed in the manufacturer manual/download center. LightingAI proprietary command/session semantics remain locked.'
+    note: 'NiceFoto documents standard Mesh Bluetooth control for TC-series multi-color lights. This checkpoint is exact-model scoped to twelve TC fixtures, including TC-298RGB.W, TC-209RGB.W, TC-313RGB.W and TC-318RGB.W from first-party product/category evidence. LightingAI proprietary command/session semantics remain locked.'
   },
 
   Lishuai: {

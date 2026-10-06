@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===852,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===74,'wireless manufacturer coverage must remain 74');
+expect(report.fixtureCount===861,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===75,'wireless manufacturer coverage must remain 75');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','SHEHDS','Weeylite','IMRELAX','Kenro','Selens','Fomex','BB&S Lighting','SUMOLIGHT','PROLIGHTS']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','SHEHDS','Weeylite','IMRELAX','Kenro','Selens','Fomex','BB&S Lighting','SUMOLIGHT','PROLIGHTS','Lightstar Lights']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -121,6 +121,8 @@ expect(by.SUMOLIGHT?.bluetoothFixtures===0&&by.SUMOLIGHT?.wifiFixtures===1&&by.S
 expect(by.SUMOLIGHT?.assistedWifi===0,'SUMOLIGHT must remain direct Wi-Fi');
 expect(by.PROLIGHTS?.bluetoothFixtures===0&&by.PROLIGHTS?.wifiFixtures===3&&by.PROLIGHTS?.bothFixtures===0,'PROLIGHTS wireless counts changed unexpectedly');
 expect(by.PROLIGHTS?.assistedWifi===0,'PROLIGHTS must remain direct Wi-Fi');
+expect(by['Lightstar Lights']?.bluetoothFixtures===9&&by['Lightstar Lights']?.wifiFixtures===0&&by['Lightstar Lights']?.bothFixtures===0,'Lightstar Lights wireless counts changed unexpectedly');
+expect(by['Lightstar Lights']?.assistedBluetooth===0,'Lightstar Lights must remain direct Bluetooth');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

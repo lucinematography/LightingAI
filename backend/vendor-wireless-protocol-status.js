@@ -779,10 +779,12 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     capturePlanId: 'broncolor-led-f160-wifi-capture-v1',
     evidence: [
       'https://broncolor.swiss/products/led-f160',
+      'https://broncolor.swiss/products/siros-s',
+      'https://broncolor.swiss/products/siros-l',
       'https://broncolor.swiss/products/broncontrol-1?variant=1421',
       'https://broncolor.swiss/software'
     ],
-    note: 'Wi-Fi/bronControl transport is verified only for LED F160 in this checkpoint. LightingAI proprietary network command/session semantics remain locked.'
+    note: 'Wi-Fi/bronControl transport is exact-model verified for LED F160 plus Siros 400 S WiFi, Siros 800 S WiFi, Siros 400 L WiFi and Siros 800 L WiFi. Scoro/Satos power packs are not cataloged as fixtures here. LightingAI proprietary network command/session semantics remain locked.'
   },
 
   Fotodiox: {

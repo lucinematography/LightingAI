@@ -52,6 +52,24 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Westcott: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'westcott-studiolink-bluetooth-capture-v1',
+    evidence: [
+      'https://help.fjwestcott.com/en-US/using-the-westcott-studio-link-app-3574014',
+      'https://help.fjwestcott.com/en-US/connecting-the-l60-b-and-l120-b-to-the-westcott-studiolink-app-1024676',
+      'https://help.fjwestcott.com/en-US/how-do-i-connect-my-ice-light-3-to-the-studiolink-mobile-app-1810587',
+      'https://www.fjwestcott.com/products/l60-b-bi-color-cob-led-60w',
+      'https://www.fjwestcott.com/products/l120-b-bi-color-cob-led-120w',
+      'https://www.fjwestcott.com/products/ice-light-3-bi-color-led-kit-with-ac-power',
+      'https://www.fjwestcott.com/products/ice-light-3-rgbww-led-kit-with-ac-power'
+    ],
+    note: 'Bluetooth/StudioLink transport is verified for L60-B, L120-B, Ice Light 3 Bi-Color and Ice Light 3 RGBWW in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   Elgato: {
     bluetooth: 'setup_only_not_control',
     wifi: 'transport_verified_model_scoped',

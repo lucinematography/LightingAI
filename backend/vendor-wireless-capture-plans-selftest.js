@@ -329,6 +329,21 @@ expect(fomex?.safety?.rawCaptureCommitAllowed===false,'Fomex raw captures must n
 expect(fomex?.safety?.derivedEvidenceOnly===true,'Fomex only derived evidence may enter repo');
 expect(fomex?.safety?.resultStatus==='candidate_only_until_physical_replay','Fomex capture result must remain candidate-only');
 
+const bbs=VENDOR_WIRELESS_CAPTURE_PLANS['BB&S Lighting'];
+expect(bbs?.id==='bbs-track-casambi-bluetooth-capture-v1','BB&S Lighting Bluetooth capture plan missing');
+expect(bbs?.transport==='bluetooth','BB&S Lighting capture plan must remain Bluetooth only');
+expect(bbs?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','BB&S Lighting command spec status changed');
+expect(bbs?.captureSets?.connectOnly?.runs>=3,'BB&S Lighting connect-only requires at least 3 runs');
+expect(bbs?.captureSets?.dim?.runs>=3,'BB&S Lighting DIM requires at least 3 runs');
+expect(bbs?.captureSets?.cct?.runs>=3,'BB&S Lighting CCT requires at least 3 runs');
+expect(bbs?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'BB&S Lighting capture plan must forbid proprietary GATT inference');
+expect(bbs?.prerequisites?.some(x=>/Casambi track driver/i.test(x)),'BB&S Lighting capture plan must stay scoped to Casambi track-driver variants');
+expect(bbs?.safety?.officialAppWritesOnly===true,'BB&S Lighting official-app-only capture safety missing');
+expect(bbs?.safety?.lightingAiWritesAllowed===false,'BB&S Lighting LightingAI writes must stay disabled during capture');
+expect(bbs?.safety?.rawCaptureCommitAllowed===false,'BB&S Lighting raw captures must never be committed');
+expect(bbs?.safety?.derivedEvidenceOnly===true,'BB&S Lighting only derived evidence may enter repo');
+expect(bbs?.safety?.resultStatus==='candidate_only_until_physical_replay','BB&S Lighting capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

@@ -25,8 +25,8 @@ expect(verifiedWirelessTransport({
 }).bluetooth===true,
   'Verified Bluetooth transport evidence must enter wireless gap scope');
 
-expect(report.fixtureCount===939,'fixture total changed from verified catalog');
-expect(report.wirelessFixtures===602,'verified wireless fixture total changed unexpectedly');
+expect(report.fixtureCount===978,'fixture total changed from verified catalog');
+expect(report.wirelessFixtures===641,'verified wireless fixture total changed unexpectedly');
 expect(report.fixturesWithAnyGap>0,'capability-gap audit unexpectedly empty');
 
 const by=report.byManufacturer;
@@ -34,7 +34,7 @@ for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Li
   expect(!!by[maker],maker+' capability-gap row missing');
 }
 
-expect(by.Godox?.wirelessFixtures===68,'Godox wireless count changed');
+expect(by.Godox?.wirelessFixtures===107,'Godox wireless count changed');
 expect(by.Nanlite?.wirelessFixtures===77,'Nanlite wireless count changed');
 expect(by.Pilotfly?.wirelessFixtures===4,'Pilotfly wireless count changed');
 expect(by.LUXCEO?.wirelessFixtures===5,'LUXCEO wireless count changed');

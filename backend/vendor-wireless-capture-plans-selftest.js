@@ -372,6 +372,22 @@ expect(prolights?.safety?.rawCaptureCommitAllowed===false,'PROLIGHTS raw capture
 expect(prolights?.safety?.derivedEvidenceOnly===true,'PROLIGHTS only derived evidence may enter repo');
 expect(prolights?.safety?.resultStatus==='candidate_only_until_physical_replay','PROLIGHTS capture result must remain candidate-only');
 
+const lightstar=VENDOR_WIRELESS_CAPTURE_PLANS['Lightstar Lights'];
+expect(lightstar?.id==='lightstar-luxed-bluetooth-capture-v1','Lightstar Lights Bluetooth capture plan missing');
+expect(lightstar?.transport==='bluetooth','Lightstar Lights capture plan must remain Bluetooth only');
+expect(lightstar?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Lightstar Lights command spec status changed');
+expect(lightstar?.captureSets?.connectOnly?.runs>=3,'Lightstar Lights connect-only requires at least 3 runs');
+expect(lightstar?.captureSets?.dim?.runs>=3,'Lightstar Lights DIM requires at least 3 runs');
+expect(lightstar?.captureSets?.cct?.runs>=3,'Lightstar Lights CCT requires at least 3 runs');
+expect(lightstar?.captureSets?.color?.runs>=3,'Lightstar Lights COLOR requires at least 3 runs');
+expect(lightstar?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Lightstar Lights capture plan must forbid proprietary GATT inference');
+expect(lightstar?.prerequisites?.some(x=>/CRMX\/W-DMX/i.test(x)),'Lightstar Lights capture plan must isolate Bluetooth from CRMX/W-DMX');
+expect(lightstar?.safety?.officialAppWritesOnly===true,'Lightstar Lights official-app-only capture safety missing');
+expect(lightstar?.safety?.lightingAiWritesAllowed===false,'Lightstar Lights LightingAI writes must stay disabled during capture');
+expect(lightstar?.safety?.rawCaptureCommitAllowed===false,'Lightstar Lights raw captures must never be committed');
+expect(lightstar?.safety?.derivedEvidenceOnly===true,'Lightstar Lights only derived evidence may enter repo');
+expect(lightstar?.safety?.resultStatus==='candidate_only_until_physical_replay','Lightstar Lights capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

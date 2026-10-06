@@ -229,8 +229,8 @@ if(!viltrox || viltrox.bluetooth!==4 || viltrox.wifi!==0 || viltrox.both!==0) {
   failures.push('VILTROX wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const phottix=byManufacturer.get('Phottix');
-if(!phottix || phottix.bluetooth!==4 || phottix.wifi!==0 || phottix.both!==0) {
-  failures.push('Phottix wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+if(!phottix || phottix.bluetooth!==7 || phottix.wifi!==0 || phottix.both!==0) {
+  failures.push('Phottix wireless coverage expected 7 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const yongnuo=byManufacturer.get('YONGNUO');
 if(!yongnuo || yongnuo.bluetooth!==4 || yongnuo.wifi!==0 || yongnuo.both!==0) {

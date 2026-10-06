@@ -1398,7 +1398,8 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     officialSources:[
       'https://www.chauvetdj.com/bluetooth/',
       'https://www.chauvetdj.com/products/btair/',
-      'https://www.chauvetdj.com/wp-content/uploads/2018/02/BTAir_UM_Rev1_WO.pdf'
+      'https://www.chauvetdj.com/wp-content/uploads/2018/02/BTAir_UM_Rev1_WO.pdf',
+      'https://www.chauvetdj.com/products/slimpar-t6bt/'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Enable Bluetooth mode on one supported fixture, connect it in BTAir, wait 15 seconds, make no lighting changes, then disconnect.'},

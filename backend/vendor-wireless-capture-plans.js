@@ -139,6 +139,33 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Rollei: {
+    id:'rollei-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Rollei Candela | LUX LED App / VIBE LED App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact cataloged Rollei Bluetooth fixture at a time with its documented Rollei app.',
+      'Start every capture from the same known lighting state and a clean Bluetooth session.',
+      'Do not infer command semantics between Candela, LUX and VIBE families without physical evidence.',
+      'Do not infer Bluetooth support to LUMIS or other Rollei lights that do not document app-light control.'
+    ],
+    officialSources:[
+      'https://www.rollei.de/en/pages/rollei-apps',
+      'https://www.rollei.de/en/products/candela-100-bi-color-20119',
+      'https://www.rollei.de/en/products/lux-bi-color',
+      'https://www.rollei.de/en/products/vibe-studio-200-bi-color-28880',
+      'https://www.rollei.de/products/vibe-panel-900-rgb-28643'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one supported Rollei fixture over Bluetooth in its documented Rollei app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'For RGB-capable Rollei fixtures only, perform exactly one HSI/RGB color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   'Logitech G': {
     id:'logitech-g-litra-bluetooth-capture-v1',
     transport:'bluetooth',

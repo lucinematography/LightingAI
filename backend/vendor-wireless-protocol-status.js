@@ -955,10 +955,13 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     capturePlanId: 'lishuai-lightreel-bluetooth-capture-v1',
     evidence: [
       'https://www.lishuai.com.cn/lishuai/2023/12/19/coolcamp60gp120gshuomingshu.pdf',
+      'https://www.lishuai.com.cn/lishuai/2023/12/19/coolcam120xg200dg200xgshuomingshu.pdf',
+      'https://www.lishuai.com.cn/lishuai/2023/12/19/coolcam300dg300xgshuomingshu.pdf',
       'https://www.lishuai.com.cn/service/zi-liao-xia-zai/',
-      'https://www.lishuai.com.cn/'
+      'https://www.lishuai.com.cn/product/coolcam-gu-jin-xi-lie/',
+      'https://www.lishuai.com.cn/product/light-reel-app/'
     ],
-    note: 'Bluetooth/Light Reel control is verified only for COOLCAM P60G and P120G in this checkpoint. Separate 2.4G remote control is not classified as Bluetooth. LightingAI proprietary command/session semantics remain locked.'
+    note: 'Bluetooth/Light Reel transport is exact-model scoped to COOLCAM P60G, P120G, 200X(G) and 300X(G) in this checkpoint. Separate 2.4G remote control is not classified as Bluetooth. LightingAI proprietary command/session semantics remain locked.'
   },
 
   PIXEL: {

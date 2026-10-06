@@ -52,6 +52,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  broncolor: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'broncolor-led-f160-wifi-capture-v1',
+    evidence: [
+      'https://broncolor.swiss/products/led-f160',
+      'https://broncolor.swiss/products/broncontrol-1?variant=1421',
+      'https://broncolor.swiss/software'
+    ],
+    note: 'Wi-Fi/bronControl transport is verified only for LED F160 in this checkpoint. LightingAI proprietary network command/session semantics remain locked.'
+  },
+
   Fotodiox: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

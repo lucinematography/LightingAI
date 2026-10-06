@@ -165,8 +165,8 @@ if(!amaran || amaran.bluetooth!==31 || amaran.wifi!==1 || amaran.both!==1) {
   failures.push('amaran wireless coverage expected 31 Bluetooth / 1 Wi-Fi / 1 both');
 }
 const neewer=byManufacturer.get('NEEWER');
-if(!neewer || neewer.bluetooth!==4 || neewer.wifi!==0 || neewer.both!==0) {
-  failures.push('NEEWER wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+if(!neewer || neewer.bluetooth!==19 || neewer.wifi!==1 || neewer.both!==1) {
+  failures.push('NEEWER wireless coverage expected 19 Bluetooth / 1 Wi-Fi / 1 both');
 }
 const gvm=byManufacturer.get('GVM');
 if(!gvm || gvm.bluetooth!==10 || gvm.wifi!==1 || gvm.both!==0) {

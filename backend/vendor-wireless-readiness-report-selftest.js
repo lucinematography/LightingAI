@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===1048,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===1049,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -74,7 +74,7 @@ expect(by.Tolifo?.bluetoothFixtures===0&&by.Tolifo?.wifiFixtures===2&&by.Tolifo?
 expect(by.Moman?.bluetoothFixtures===1&&by.Moman?.wifiFixtures===0&&by.Moman?.bothFixtures===0,'Moman wireless counts changed unexpectedly');
 expect(by.Ikan?.bluetoothFixtures===1&&by.Ikan?.wifiFixtures===0&&by.Ikan?.bothFixtures===0,'Ikan wireless counts changed unexpectedly');
 expect(by.Jinbei?.bluetoothFixtures===3&&by.Jinbei?.wifiFixtures===0&&by.Jinbei?.bothFixtures===0,'Jinbei wireless counts changed unexpectedly');
-expect(by['Lume Cube']?.bluetoothFixtures===4&&by['Lume Cube']?.wifiFixtures===0&&by['Lume Cube']?.bothFixtures===0,'Lume Cube wireless counts changed unexpectedly');
+expect(by['Lume Cube']?.bluetoothFixtures===5&&by['Lume Cube']?.wifiFixtures===0&&by['Lume Cube']?.bothFixtures===0,'Lume Cube wireless counts changed unexpectedly');
 expect(by['CHAUVET DJ']?.bluetoothFixtures===21&&by['CHAUVET DJ']?.wifiFixtures===0&&by['CHAUVET DJ']?.bothFixtures===0,'CHAUVET DJ wireless counts changed unexpectedly');
 expect(by.Fotodiox?.bluetoothFixtures===1&&by.Fotodiox?.wifiFixtures===0&&by.Fotodiox?.bothFixtures===0,'Fotodiox wireless counts changed unexpectedly');
 expect(by.broncolor?.bluetoothFixtures===0&&by.broncolor?.wifiFixtures===1&&by.broncolor?.bothFixtures===0,'broncolor wireless counts changed unexpectedly');

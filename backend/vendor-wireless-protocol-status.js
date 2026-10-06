@@ -449,6 +449,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Cineroid: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'cineroid-app-bluetooth-capture-v1',
+    evidence: [
+      'https://www.cineroid.com/upload/2020/12/2020%20CINEROID%20CATALOG_web%20%282%29.pdf',
+      'https://www.cineroid.com/upload/2023/10/23%20Cineroid%20catalog_web2.pdf'
+    ],
+    note: 'Bluetooth transport is first-party verified only for CFL1600V in this checkpoint: the Cineroid catalog links the exact model to mobile-app control and the first-party app documentation states that the app connects by Bluetooth. LightingAI proprietary Bluetooth/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

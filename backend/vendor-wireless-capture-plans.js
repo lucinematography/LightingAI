@@ -831,6 +831,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Cineroid: {
+    id:'cineroid-app-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Cineroid App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one CFL1600V per first capture set and record the exact fixture/controller and app versions.',
+      'Use only the first-party Cineroid mobile-app path documented for CFL1600V.',
+      'Disable wired DMX and keep other Cineroid controllable fixtures inactive during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or compatibility with any other Cineroid model.'
+    ],
+    officialSources:[
+      'https://www.cineroid.com/upload/2020/12/2020%20CINEROID%20CATALOG_web%20%282%29.pdf',
+      'https://www.cineroid.com/upload/2023/10/23%20Cineroid%20catalog_web2.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one CFL1600V through the documented Cineroid App Bluetooth path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture using only the official app.'},
+      cct:{runs:3,optional:true,rule:'Only after connect/DIM attribution is stable; perform exactly one color-temperature change per capture.'},
+      color:{runs:3,optional:true,rule:'Only after connect/DIM attribution is stable; perform exactly one RGB/full-color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

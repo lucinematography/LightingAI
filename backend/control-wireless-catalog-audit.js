@@ -444,6 +444,10 @@ const ifootage=byManufacturer.get('iFootage');
 if(!ifootage || ifootage.bluetooth!==10 || ifootage.wifi!==0 || ifootage.both!==0) {
   failures.push('iFootage wireless coverage expected 10 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const cineroid=byManufacturer.get('Cineroid');
+if(!cineroid || cineroid.bluetooth!==1 || cineroid.wifi!==0 || cineroid.both!==0) {
+  failures.push('Cineroid wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

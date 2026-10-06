@@ -12,7 +12,8 @@ const SRC={
   b25r:'https://store.sirui.com/products/sirui-dragon-series-curvy-rgb-panel-light-b25r',
   c150x:'https://store.sirui.com/products/sirui-c150x-150w-handheld-pocket-light',
   c60x:'https://store.sirui.com/products/sirui-c60x',
-  t60x:'https://store.sirui.com/products/sirui-t60x-telescopic-60w-rgb-pixel-tube-light-ll'
+  t60x:'https://store.sirui.com/products/sirui-t60x-telescopic-60w-rgb-pixel-tube-light-ll',
+  c300Colorful:'https://s2.sirui.com/upload/manual/2024/0223/x4dxexzKcZ.pdf'
 };
 
 function bluetoothControl(sourceUrls,family='SIRUI Light Bluetooth'){
@@ -63,5 +64,22 @@ export const SIRUI_BLUETOOTH_FIXTURES=[
   fixture('sirui-b25r','B25R','Dragon Series','RGB Bendable LED Panel','Panel',[SRC.b25r],{cctK:{min:2700,max:8500},colorMode:'RGB Full Color'}),
   fixture('sirui-c150x','C150X','C Series','Bi-Color COB LED Light','Spotlight / Monolight',[SRC.c150x],{cctK:{min:2800,max:6500},colorMode:'Bi-Color',powerDrawW:150}),
   fixture('sirui-c60x','C60X','C Series','Bi-Color COB LED Light','Spotlight / Monolight',[SRC.c60x],{cctK:{min:2500,max:6500},colorMode:'Bi-Color',powerDrawW:60}),
-  fixture('sirui-t60x','T60X','T Series','RGB Pixel Tube Light','Tube',[SRC.t60x],{cctK:{min:2500,max:10000},colorMode:'RGB Full Color',powerDrawW:20})
+  fixture('sirui-t60x','T60X','T Series','RGB Pixel Tube Light','Tube',[SRC.t60x],{cctK:{min:2500,max:10000},colorMode:'RGB Full Color',powerDrawW:20}),
+  {
+    id:'sirui-c300-colorful',manufacturer:'SIRUI',model:'C300 Colorful',family:'C Series',category:'Light',
+    sourceType:'6-Color Full-Spectrum Point Source Light',formFactor:'Spotlight / Monolight',
+    cctK:{min:2000,max:20000},colorMode:'RGB Full Color',powerDrawW:300,cri:98,tlci:99,
+    control:{
+      ...bluetoothControl([SRC.c300Colorful]),
+      wired:['DMX512'],
+      wireless:['Bluetooth via SIRUI Light App','Wireless DMX'],
+      externalInterfaceRequired:['Compatible wireless DMX transmitter for the documented Wireless DMX path']
+    },
+    dmxProfileVerification:{
+      status:'HOLD',
+      reason:'SIRUI documents DMX control for C300 Colorful, but LightingAI has not encoded and independently verified a manufacturer-published per-channel profile for production control.',
+      sourceUrls:[SRC.c300Colorful]
+    },
+    sourceUrl:SRC.c300Colorful
+  }
 ];

@@ -158,6 +158,8 @@ expect(VENDOR_WIRELESS_PROTOCOL_STATUS.SmallRig.capturePlanId==='smallrig-smallg
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.amaran.capturePlanId==='amaran-sidus-direct-bluetooth-capture-v1','amaran Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.amaran.secondaryCapturePlanIds?.includes('amaran-sm5c-direct-wifi-capture-v1'),'amaran SM5c Wi-Fi capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.NEEWER.capturePlanId==='neewer-app-direct-bluetooth-capture-v1','NEEWER Bluetooth capture plan link missing');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.NEEWER.secondaryCapturePlanIds?.includes('neewer-gl25c-direct-wifi-capture-v1'),'NEEWER GL25C Wi-Fi capture plan link missing');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.NEEWER.wifi==='transport_verified_gl25c_only','NEEWER GL25C Wi-Fi transport scope changed');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.GVM.capturePlanId==='gvm-led-app-direct-bluetooth-capture-v1','GVM Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.GVM.secondaryCapturePlanIds?.includes('gvm-rgb10s-direct-wifi-capture-v1'),'GVM RGB-10S Wi-Fi capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Falcon Eyes']?.capturePlanId==='falcon-eyes-desal-bluetooth-capture-v1','Falcon Eyes Bluetooth capture plan link missing');

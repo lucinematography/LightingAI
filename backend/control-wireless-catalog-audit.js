@@ -285,8 +285,8 @@ if(!lumeCube || lumeCube.bluetooth!==5 || lumeCube.wifi!==0 || lumeCube.both!==0
   failures.push('Lume Cube wireless coverage expected 5 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const chauvetDj=byManufacturer.get('CHAUVET DJ');
-if(!chauvetDj || chauvetDj.bluetooth!==21 || chauvetDj.wifi!==0 || chauvetDj.both!==0) {
-  failures.push('CHAUVET DJ wireless coverage expected 21 Bluetooth / 0 Wi-Fi / 0 both');
+if(!chauvetDj || chauvetDj.bluetooth!==22 || chauvetDj.wifi!==0 || chauvetDj.both!==0) {
+  failures.push('CHAUVET DJ wireless coverage expected 22 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const fotodiox=byManufacturer.get('Fotodiox');
 if(!fotodiox || fotodiox.bluetooth!==1 || fotodiox.wifi!==0 || fotodiox.both!==0) {

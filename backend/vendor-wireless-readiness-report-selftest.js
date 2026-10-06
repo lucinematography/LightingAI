@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===1088,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===1094,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -87,8 +87,8 @@ expect(by.Razer?.bluetoothFixtures===0&&by.Razer?.wifiFixtures===1&&by.Razer?.bo
 expect(by.NANLUX?.bluetoothFixtures===6&&by.NANLUX?.wifiFixtures===0&&by.NANLUX?.bothFixtures===0,'NANLUX wireless counts changed unexpectedly');
 expect(by.Mettle?.bluetoothFixtures===3&&by.Mettle?.wifiFixtures===0&&by.Mettle?.bothFixtures===0,'Mettle wireless counts changed unexpectedly');
 expect(by.PiXAPRO?.bluetoothFixtures===2&&by.PiXAPRO?.wifiFixtures===0&&by.PiXAPRO?.bothFixtures===0,'PiXAPRO wireless counts changed unexpectedly');
-expect(by['Ape Labs']?.bluetoothFixtures===2&&by['Ape Labs']?.wifiFixtures===0&&by['Ape Labs']?.bothFixtures===0,'Ape Labs wireless counts changed unexpectedly');
-expect(by['Ape Labs']?.assistedBluetooth===2,'Ape Labs must remain assisted Bluetooth via CONNECT');
+expect(by['Ape Labs']?.bluetoothFixtures===8&&by['Ape Labs']?.wifiFixtures===0&&by['Ape Labs']?.bothFixtures===0,'Ape Labs wireless counts changed unexpectedly');
+expect(by['Ape Labs']?.assistedBluetooth===8,'Ape Labs must remain assisted Bluetooth via CONNECT');
 expect(by.Pilotfly?.bluetoothFixtures===4&&by.Pilotfly?.wifiFixtures===0&&by.Pilotfly?.bothFixtures===0,'Pilotfly wireless counts changed unexpectedly');
 expect(by.Pilotfly?.assistedBluetooth===0,'Pilotfly AtomCUBE must remain direct Bluetooth Mesh');
 expect(by.LUXCEO?.bluetoothFixtures===5&&by.LUXCEO?.wifiFixtures===0&&by.LUXCEO?.bothFixtures===0,'LUXCEO wireless counts changed unexpectedly');

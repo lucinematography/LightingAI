@@ -7,9 +7,15 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     capturePlanId: 'sidus-direct-bluetooth-capture-v1',
     evidence: [
       'https://aputure.com/en-US/pages/sidus-link',
-      'https://help.aputure.com/en/general-help/sidus-link-control'
+      'https://help.aputure.com/en/general-help/sidus-link-control',
+      'https://aputure.com/en-US/products/aputure-infinimat-1x2-with-clear-softbox',
+      'https://aputure.com/en-US/products/aputure-infinimat-1x4-with-clear-softbox',
+      'https://aputure.com/en-US/products/aputure-infinimat-2x4-with-clear-softbox',
+      'https://aputure.com/en-US/products/aputure-infinimat-4x4-with-clear-softbox',
+      'https://aputure.com/en-US/products/aputure-infinimat-8x8-with-clear-softbox',
+      'https://aputure.com/en-US/product-families/infinimat'
     ],
-    note: 'Sidus Bluetooth Mesh is documented. LightingAI command semantics remain locked.'
+    note: 'Sidus Bluetooth Mesh is documented for the current Aputure catalog, including INFINIMAT 1x2, 1x4, 2x4, 4x4 and 8x8 exact models. LightingAI command semantics remain locked.'
   },
   Godox: {
     bluetooth: 'transport_verified',

@@ -463,6 +463,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Sokani: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'sokani-ss-led-bluetooth-capture-v1',
+    evidence: [
+      'https://www.sokani.net/pt-br/video-light/',
+      'https://www.sokani.net/en/shop/catalogue/?selected_facets=brand_exact%3ASOKANI&selected_facets=product_class_exact%3AContinuous+Lighting&selected_facets=product_class_exact%3ATripods'
+    ],
+    note: 'Direct Bluetooth transport is first-party verified only for exact model X100 RGB in this checkpoint. Sokani explicitly documents a 60 ft Bluetooth connection and SS LED Video Light app for that model. X8 RGB app support and other Sokani fixtures are not promoted to Bluetooth transport without equally explicit transport evidence. LightingAI proprietary Bluetooth/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

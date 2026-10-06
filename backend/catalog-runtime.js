@@ -163,6 +163,7 @@ import { CINELIGHT_BLUETOOTH_FIXTURES } from './cinelight-bluetooth-library.js';
 import { ROXX_BLUETOOTH_FIXTURES } from './roxx-bluetooth-library.js';
 import { IFOOTAGE_ANGLERFISH_BLUETOOTH_FIXTURES } from './ifootage-anglerfish-bluetooth-library.js';
 import { CINEROID_BLUETOOTH_FIXTURES } from './cineroid-bluetooth-library.js';
+import { SOKANI_BLUETOOTH_FIXTURES } from './sokani-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -371,6 +372,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(ROXX_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(IFOOTAGE_ANGLERFISH_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(CINEROID_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(SOKANI_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

@@ -856,6 +856,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Sokani: {
+    id:'sokani-ss-led-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'SS LED Video Light',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Sokani X100 RGB per first capture set and record the exact fixture and app versions.',
+      'Use only the first-party-documented Bluetooth path through the SS LED Video Light app.',
+      'Keep other Bluetooth lighting fixtures inactive during the first capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or compatibility with X8 RGB, X60 RGB, X100 Bi or any other Sokani model.'
+    ],
+    officialSources:[
+      'https://www.sokani.net/pt-br/video-light/',
+      'https://www.sokani.net/en/shop/catalogue/?selected_facets=brand_exact%3ASOKANI&selected_facets=product_class_exact%3AContinuous+Lighting&selected_facets=product_class_exact%3ATripods'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact X100 RGB through SS LED Video Light over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture using only the official app.'},
+      cct:{runs:3,optional:true,rule:'Only after connect/DIM attribution is stable; perform exactly one color-temperature change per capture.'},
+      color:{runs:3,optional:true,rule:'Only after connect/DIM attribution is stable; perform exactly one RGB/HSI color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

@@ -548,6 +548,20 @@ expect(cineroid?.safety?.rawCaptureCommitAllowed===false,'Cineroid raw captures 
 expect(cineroid?.safety?.derivedEvidenceOnly===true,'Cineroid only derived evidence may enter repo');
 expect(cineroid?.safety?.resultStatus==='candidate_only_until_physical_replay','Cineroid capture result must remain candidate-only');
 
+const sokani=VENDOR_WIRELESS_CAPTURE_PLANS.Sokani;
+expect(sokani?.id==='sokani-ss-led-bluetooth-capture-v1','Sokani Bluetooth capture plan missing');
+expect(sokani?.transport==='bluetooth','Sokani capture plan must remain Bluetooth only');
+expect(sokani?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Sokani command spec status changed');
+expect(sokani?.captureSets?.connectOnly?.runs>=3,'Sokani connect-only requires at least 3 runs');
+expect(sokani?.captureSets?.dim?.runs>=3,'Sokani DIM requires at least 3 runs');
+expect(sokani?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Sokani capture plan must forbid proprietary GATT inference');
+expect(sokani?.prerequisites?.some(x=>/exactly one Sokani X100 RGB/i.test(x)),'Sokani capture plan must remain exact-model scoped');
+expect(sokani?.safety?.officialAppWritesOnly===true,'Sokani official-app-only capture safety missing');
+expect(sokani?.safety?.lightingAiWritesAllowed===false,'Sokani LightingAI writes must stay disabled during capture');
+expect(sokani?.safety?.rawCaptureCommitAllowed===false,'Sokani raw captures must never be committed');
+expect(sokani?.safety?.derivedEvidenceOnly===true,'Sokani only derived evidence may enter repo');
+expect(sokani?.safety?.resultStatus==='candidate_only_until_physical_replay','Sokani capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

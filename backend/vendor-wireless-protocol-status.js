@@ -52,6 +52,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Genaray: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'genaray-rgb-bluetooth-capture-v1',
+    evidence: [
+      'https://www.genaray.com/products/Lights/Panel-LEDs',
+      'https://www.genaray.com/products/Lights/Strip-Lights',
+      'https://www.genaray.com/products/Lights/Wand-Style-%26-Tube-Lights',
+      'https://www.genaray.com/product/21381/Genaray-PX_MOD_3-RGB-Series-Modular-RGB-Pixel-Panel%3C%2Astrong%3E'
+    ],
+    note: 'Bluetooth app transport is verified only for PX-MOD-3, BL-5X7-RGB, SSL-36-RGB, PX4-RGB, PX2-RGB-C, PX1-RGB and PX2-RGB in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   broncolor: {
     bluetooth: 'not_verified_for_current_catalog',
     wifi: 'transport_verified_model_scoped',

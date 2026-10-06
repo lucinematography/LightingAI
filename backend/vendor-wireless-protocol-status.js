@@ -1289,9 +1289,11 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     evidence: [
       'https://static.smallrig.com/mall/img/public/ikoxo2sh29-1740738075427_.pdf',
       'https://static.smallrig.com/mall/img/public/5wglduq1wx7-1748506964081_.pdf',
-      'https://static.smallrig.com/mall/img/public/1732525071182_.pdf'
+      'https://static.smallrig.com/mall/img/public/1732525071182_.pdf',
+      'https://www.smallrig.com/smallrig-rc-120b-point-source-video-light-japanese-standard-3937.html',
+      'https://static.smallrig.com/mall/img/public/p59mpr7j55o-1743675771522_.pdf'
     ],
-    note: 'BLE is verified only for RC 100B, RC 220C, RC 350B and RC 450B. RC 120B and other SmallGoGo models remain outside this scope until exact-model Bluetooth/BLE evidence is captured.'
+    note: 'BLE is verified only for RC 100B, RC 120B, RC 220C, RC 350B and RC 450B. RC 120B exact-model manual explicitly states App Control Type: BLE and SmallGoGo pairing. Other SmallGoGo models remain outside this scope until exact-model Bluetooth/BLE evidence is captured.'
   },
   Kelvin: {
     bluetooth: 'transport_verified_model_scoped',

@@ -9,6 +9,9 @@ function classifyText(value,manufacturer){
   if(/bulb/.test(text)) return 'Bulb';
   if(/ring light|\bhalo\b/.test(text)) return 'Ring Light';
   if(/pixel\s*bar|infinibar|light\s*bar/.test(text)) return 'Pixel Bar';
+  if(/linear\s*wash|\bstrip\b|\bcolorband\b/.test(text)) return 'Linear Wash / Bar';
+  if(/multi-head\s*wash|\b4bar\b/.test(text)) return 'Multi-Head Wash System';
+  if(/wedge\s*wash|\bwedge\b/.test(text)) return 'Wedge / Uplight';
   if(/pixelbrick|\bbrick\b/.test(text)) return 'Brick / Compact Pixel';
   if(/flexible.*panel|foldable.*panel|\bfabric\b|\bmat\b|\bmosaic\b/.test(text)) return 'Flexible Panel / Mat';
   if(/\bpanel\b|softlight|soft light|mixpanel|mixpad|skypanel|hydrapanel/.test(text)) return 'Panel';

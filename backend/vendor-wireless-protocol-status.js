@@ -76,9 +76,11 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://www.luxceo.com/en/rgb-fill-light/13',
       'https://www.luxceo.com/en/shoot/107',
       'https://www.luxceo.com/index.php/en/shoot/112',
-      'https://www.luxceo.com/en/shoot/111'
+      'https://www.luxceo.com/en/shoot/111',
+      'https://www.luxceo.com/en/products/51',
+      'https://www.luxceo.com/storage/files/1735e97eed7bd45220531d97e29720f4.pdf'
     ],
-    note: 'Direct Bluetooth smartphone-app transport is verified only for P6, P200, P120 and P7RGB Pro in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+    note: 'Direct Bluetooth smartphone-app transport is verified only for P6, P200, P120, P7RGB Pro and P120S in this checkpoint. P120S exact-model manual documents eLinks Bluetooth connection and app control. LightingAI proprietary Bluetooth command/session semantics remain locked.'
   },
 
 

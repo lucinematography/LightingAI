@@ -5,7 +5,7 @@ const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildOperatorControlPlanningReport();
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
 
-expect(report.fixtureCount===1066,'fixture total changed from verified catalog');
+expect(report.fixtureCount===1068,'fixture total changed from verified catalog');
 expect(report.wirelessManufacturers===91,'wireless manufacturer count must remain 91');
 expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
 expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
@@ -64,7 +64,7 @@ expect(by['Falcon Eyes']?.wirelessFixtures===14,'Falcon Eyes wireless fixture co
 expect(by.Lishuai?.wirelessFixtures===4,'Lishuai wireless fixture count changed unexpectedly');
 expect(by.NiceFoto?.wirelessFixtures===12,'NiceFoto wireless fixture count changed unexpectedly');
 expect(by.Ulanzi?.wirelessFixtures===6,'Ulanzi wireless fixture count changed unexpectedly');
-expect(by['CAME-TV']?.wirelessFixtures===8,'CAME-TV wireless fixture count changed unexpectedly');
+expect(by['CAME-TV']?.wirelessFixtures===10,'CAME-TV wireless fixture count changed unexpectedly');
 expect(by.SOONWELL?.wirelessFixtures===1,'SOONWELL wireless fixture count changed unexpectedly');
 expect(by.Tolifo?.wirelessFixtures===2,'Tolifo wireless fixture count changed unexpectedly');
 expect(by.Moman?.wirelessFixtures===1,'Moman wireless fixture count changed unexpectedly');

@@ -50,11 +50,17 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     nextStep: 'capture-plan-required-before-driver',
     capturePlanId: 'ape-labs-connect-assisted-bluetooth-capture-v1',
     evidence: [
-      'https://apelabs.com/en/apelight-mini',
-      'https://apelabs.com/en/apelight-maxi',
-      'https://apelabs.com/en/faq'
+      'https://apelabs.com/en/produkt/apelight-mini-tn-2/',
+      'https://apelabs.com/en/produkt/variabler-artikel/',
+      'https://apelabs.com/en/produkt/apelight-lightcan-tn/',
+      'https://apelabs.com/en/produkt/apelight-tablelight-tn/',
+      'https://apelabs.com/en/apelight-apecoin/',
+      'https://apelabs.com/en/produkt/apelight-apecoin-gu10-tn/',
+      'https://apelabs.com/en/produkt/apelight-apestick-tn/',
+      'https://apelabs.com/en/produkt/apelight-apestick-xl-tn/',
+      'https://apelabs.com/en/manual/connect/control.html'
     ],
-    note: 'Bluetooth is verified only as smartphone-to-CONNECT assisted transport for ApeLight Mini V2 and Maxi V2. Direct fixture Bluetooth is not claimed; fixture-side 2.4 GHz semantics remain locked.'
+    note: 'Bluetooth is exact-model verified only as smartphone/tablet-to-CONNECT assisted transport for eight Ape Labs fixtures: ApeLight Mini V2, ApeLight Maxi V2, LightCan V2, TableLight V2, ApeCoin V2, ApeCoin GU10, ApeStick L and ApeStick XL. Direct fixture Bluetooth light control is not claimed; fixture-side 2.4 GHz semantics remain locked.'
   },
 
   Pilotfly: {

@@ -139,6 +139,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  'Logitech G': {
+    id:'logitech-g-litra-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Logitech G HUB',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact cataloged Logitech G Litra model at a time with G HUB on a supported desktop system.',
+      'Use a clean Bluetooth pairing/session and start every capture from the same known lighting state.',
+      'Do not infer Bluetooth semantics between Litra Beam and Litra Beam LX without physical evidence.',
+      'Do not infer Bluetooth support to Litra Glow or other Logitech lights without exact-model evidence.'
+    ],
+    officialSources:[
+      'https://www.logitechg.com/en-us/shop/p/litra-beam-streaming-light',
+      'https://www.logitechg.com/en-us/shop/p/litra-beam-lx-led-light.946-000013'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one supported Litra light to G HUB over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one brightness change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one color-temperature change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'For Litra Beam LX only, perform exactly one RGB/LIGHTSYNC color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Westcott: {
     id:'westcott-studiolink-bluetooth-capture-v1',
     transport:'bluetooth',

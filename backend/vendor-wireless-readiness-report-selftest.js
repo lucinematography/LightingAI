@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===1059,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===1061,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -65,7 +65,7 @@ expect(by.Phottix?.bluetoothFixtures===7&&by.Phottix?.wifiFixtures===0&&by.Phott
 expect(by.YONGNUO?.bluetoothFixtures===12&&by.YONGNUO?.wifiFixtures===0&&by.YONGNUO?.bothFixtures===0,'YONGNUO wireless counts changed unexpectedly');
 expect(by.PIXEL?.bluetoothFixtures===2&&by.PIXEL?.wifiFixtures===0&&by.PIXEL?.bothFixtures===0,'PIXEL wireless counts changed unexpectedly');
 expect(by['Falcon Eyes']?.bluetoothFixtures===14&&by['Falcon Eyes']?.wifiFixtures===0&&by['Falcon Eyes']?.bothFixtures===0,'Falcon Eyes wireless counts changed unexpectedly');
-expect(by.Lishuai?.bluetoothFixtures===2&&by.Lishuai?.wifiFixtures===0&&by.Lishuai?.bothFixtures===0,'Lishuai wireless counts changed unexpectedly');
+expect(by.Lishuai?.bluetoothFixtures===4&&by.Lishuai?.wifiFixtures===0&&by.Lishuai?.bothFixtures===0,'Lishuai wireless counts changed unexpectedly');
 expect(by.NiceFoto?.bluetoothFixtures===8&&by.NiceFoto?.wifiFixtures===0&&by.NiceFoto?.bothFixtures===0,'NiceFoto wireless counts changed unexpectedly');
 expect(by.Ulanzi?.bluetoothFixtures===5&&by.Ulanzi?.wifiFixtures===0&&by.Ulanzi?.bothFixtures===0,'Ulanzi wireless counts changed unexpectedly');
 expect(by['CAME-TV']?.bluetoothFixtures===0&&by['CAME-TV']?.wifiFixtures===8&&by['CAME-TV']?.bothFixtures===0,'CAME-TV wireless counts changed unexpectedly');

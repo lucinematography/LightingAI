@@ -10,10 +10,15 @@ const SRC={
   tube:'https://help.amarancreators.com/en/amaran-tube/menu-options',
   pixelTube:'https://help.amarancreators.com/en/amaran-pixel-tubes/light-configuration-settings',
   sm5c:'https://help.amarancreators.com/en/sm5c-pixel-tape/control-options',
-  sm5cFaq:'https://help.amarancreators.com/en/sm5c-pixel-tape/control-options-faq'
+  sm5cFaq:'https://help.amarancreators.com/en/sm5c-pixel-tape/control-options-faq',
+  pano60c:'https://amarancreators.com/pages/amaran-pano-60c',
+  pano120c:'https://amarancreators.com/pages/amaran-pano-120c',
+  verge:'https://amarancreators.com/pages/amaran-verge/',
+  vergeMax:'https://amarancreators.com/pages/amaran-verge-max/',
+  go:'https://eu.amarancreators.com/pages/amaran-go'
 };
 
-function btControl(sourceUrl,{wifi=false,fullColor=false,cct=true}={}){
+function btControl(sourceUrl,{wifi=false,fullColor=false,cct=true,fx=true}={}){
   const wireless=['Bluetooth via Sidus Link / amaran App'];
   if(wifi) wireless.push('WiFi via Tuya Smart');
   const wirelessVerification={
@@ -22,7 +27,7 @@ function btControl(sourceUrl,{wifi=false,fullColor=false,cct=true}={}){
       family:'amaran Sidus Bluetooth',
       scope:'transport-capability-only',
       sourceUrls:[sourceUrl],
-      note:'amaran documents Bluetooth reset/pairing and app control for this exact model. This verifies transport capability only; LightingAI command semantics remain locked.'
+      note:'amaran first-party documentation identifies Bluetooth transport and app control for this exact model or exact model family. This verifies transport capability only; LightingAI command semantics remain locked.'
     }
   };
   if(wifi) wirelessVerification.wifi={
@@ -62,12 +67,12 @@ function btControl(sourceUrl,{wifi=false,fullColor=false,cct=true}={}){
         sourceUrls:[sourceUrl],
         note:'amaran documents HSI/RGB/full-color app control for this fixture family. This proves operator capability only.'
       }}:{}),
-      fx:{
+      ...(fx?{fx:{
         verified:true,
         scope:'official-app-capability-only',
         sourceUrls:[sourceUrl],
         note:'amaran documents app lighting-effect control for this fixture family. This proves operator capability only.'
-      }
+      }}:{})
     }
   };
 }
@@ -78,7 +83,7 @@ function fixture(id,model,family,sourceType,formFactor,sourceUrl,options={}){
     sourceType,formFactor,
     ...(options.cctK?{cctK:options.cctK}:{}),
     colorMode:options.fullColor?'Full Color':options.daylight?'Daylight':'Bi-Color',
-    control:btControl(sourceUrl,{wifi:!!options.wifi,fullColor:!!options.fullColor,cct:!options.daylight}),
+    control:btControl(sourceUrl,{wifi:!!options.wifi,fullColor:!!options.fullColor,cct:!options.daylight,fx:options.fx!==false}),
     sourceUrl
   };
 }
@@ -103,5 +108,10 @@ export const AMARAN_SIDUS_WIRELESS_FIXTURES=[
   fixture('amaran-pt1c','PT1c','PT Pixel Tube','Full-Color Pixel LED Tube','Tube',SRC.pixelTube,{fullColor:true}),
   fixture('amaran-pt2c','PT2c','PT Pixel Tube','Full-Color Pixel LED Tube','Tube',SRC.pixelTube,{fullColor:true}),
   fixture('amaran-pt4c','PT4c','PT Pixel Tube','Full-Color Pixel LED Tube','Tube',SRC.pixelTube,{fullColor:true}),
-  fixture('amaran-sm5c','SM5c','Pixel Tape','Full-Color Pixel LED Tape','Flexible Panel / Mat',SRC.sm5c,{wifi:true,fullColor:true})
+  fixture('amaran-sm5c','SM5c','Pixel Tape','Full-Color Pixel LED Tape','Flexible Panel / Mat',SRC.sm5c,{wifi:true,fullColor:true}),
+  fixture('amaran-pano-60c','Pano 60c','Pano','RGBWW LED Panel','Panel',SRC.pano60c,{fullColor:true,cctK:{min:2300,max:10000},fx:false}),
+  fixture('amaran-pano-120c','Pano 120c','Pano','RGBWW LED Panel','Panel',SRC.pano120c,{fullColor:true,cctK:{min:2300,max:10000},fx:false}),
+  fixture('amaran-verge','Verge','Verge','Bi-Color LED Panel','Panel',SRC.verge,{cctK:{min:2700,max:6500},fx:false}),
+  fixture('amaran-verge-max','Verge Max','Verge','Bi-Color LED Panel','Panel',SRC.vergeMax,{cctK:{min:2700,max:6500},fx:false}),
+  fixture('amaran-go','Go','Go','Bi-Color Pocket LED Light','Pocket / Handheld',SRC.go,{cctK:{min:2700,max:6500},fx:false})
 ];

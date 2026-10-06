@@ -52,6 +52,24 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  'Lume Cube': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'lume-cube-lume-control-bluetooth-capture-v1',
+    evidence: [
+      'https://help.lumecube.com/en-US/what-apps-can-i-use-with-my-lume-cube-products-321666',
+      'https://help.lumecube.com/en-US/where-can-i-find-app-support-321667',
+      'https://lumecube.com/pages/lume-control-app',
+      'https://lumecube.com/products/panel-pro',
+      'https://lumecube.com/products/tube-light-mini',
+      'https://lumecube.com/products/tube-light-xl',
+      'https://lumecube.com/products/lume-cube-xl-60w-rgb-mini-cob-led-light'
+    ],
+    note: 'Bluetooth/Lume Control transport is verified only for RGB Panel Pro 2.0, RGB Tube Light Mini, RGB Tube Light XL and Lume Cube XL in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   Jinbei: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

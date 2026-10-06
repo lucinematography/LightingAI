@@ -159,6 +159,7 @@ const allowed=new Set([
   'backend/full-app-critical-selftest.js',
   'backend/control-wireless-catalog-audit.js',
   'backend/aputure-wireless-verification.js',
+  'backend/aputure-infinimat-library.js',
   'backend/aputure-control-verification.js',
   'backend/godox-control-verification.js',
   'backend/arri-wireless-verification.js',

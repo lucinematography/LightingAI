@@ -1622,7 +1622,10 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     ],
     officialSources:[
       'https://nicefoto.cn/app',
-      'https://nicefoto.cn/shuomingshu'
+      'https://nicefoto.cn/shuomingshu',
+      'https://nicefoto.cn/product/%E6%89%8B%E6%8C%81%E5%85%A8%E5%BD%A9%E6%A3%92%E7%81%AFtc-298rgb-w',
+      'https://nicefoto.cn/product/tc-209rgb-w',
+      'https://nicefoto.cn/product-category/yingshizhibo'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Connect one NiceFoto TC-series fixture over Bluetooth Mesh, wait 15 seconds, make no lighting changes, then disconnect.'},

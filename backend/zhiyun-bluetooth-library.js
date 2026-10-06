@@ -11,7 +11,9 @@ const SRC={
   x100rgb:'https://www.zhiyun-tech.com/en/product/param/1077',
   x200:'https://www.zhiyun-tech.com/en/product/param/1099',
   m60Ultra:'https://www.zhiyun-tech.com/en/product/param/1132',
-  cx50:'https://www.zhiyun-tech.com/en/product/param/1055'
+  cx50:'https://www.zhiyun-tech.com/en/product/param/1055',
+  m20c:'https://store.zhiyun-tech.com/collections/creator-lighting/products/zhiyun-fiveray-m20c-20w-rgb-portable-led-video-light',
+  c100:'https://store.zhiyun-tech.com/products/cinepeer-c100'
 };
 
 function bluetoothControl(sourceUrl,family='ZHIYUN Bluetooth app / ZY Vega'){
@@ -66,5 +68,8 @@ export const ZHIYUN_BLUETOOTH_FIXTURES=[
   fixture('zhiyun-fiveray-m60-ultra','FIVERAY M60 Ultra','FIVERAY','Full-Color RGB LED Pocket Light',SRC.m60Ultra,{min:2500,max:10000},'RGB Full Color',60,'Pocket / Handheld'),
 
   fixture('zhiyun-cinepeer-cx50','CINEPEER CX50','CINEPEER CX','Bi-Color COB LED Light',SRC.cx50,{min:2700,max:6500},'Bi-Color',50),
-  fixture('zhiyun-cinepeer-cx50-rgb','CINEPEER CX50 RGB','CINEPEER CX','Full-Color RGB COB LED Light',SRC.cx50,{min:2700,max:6500},'RGB Full Color',50)
+  fixture('zhiyun-cinepeer-cx50-rgb','CINEPEER CX50 RGB','CINEPEER CX','Full-Color RGB COB LED Light',SRC.cx50,{min:2700,max:6500},'RGB Full Color',50),
+
+  fixture('zhiyun-fiveray-m20c','FIVERAY M20C','FIVERAY','Full-Color RGBWW Pocket LED Light',SRC.m20c,{min:2500,max:10000},'RGB Full Color',20,'Pocket / Handheld'),
+  fixture('zhiyun-cinepeer-c100','CINEPEER C100','CINEPEER C','Full-Color RGB LED Bar Light',SRC.c100,{min:2700,max:6500},'RGB Full Color',100,'Pixel Bar / Light Wand')
 ];

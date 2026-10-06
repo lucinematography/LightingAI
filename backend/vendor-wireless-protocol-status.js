@@ -976,6 +976,7 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://th.hkyongnuo.com/products/yn216-ii',
       'https://www.th.hkyongnuo.com/products/yn300-iii',
       'https://www.th.hkyongnuo.com/products/yn600l-ii',
+      'https://th.hkyongnuo.com/u_file/2309/08/file/YONGNUOICELIGHT.pdf',
       'https://www.hkyongnuo.com/app'
     ],
     note: 'Bluetooth app transport is verified only for the explicitly cataloged YONGNUO models. 2.4G RF remains separate. LightingAI proprietary command semantics remain locked.'

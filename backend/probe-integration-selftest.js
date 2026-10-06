@@ -59,6 +59,7 @@ const allowed=new Set([
   'backend/tolifo-gk2016-wifi-library.js',
   'backend/moman-pc8-bluetooth-library.js',
   'backend/ikan-idc150-bluetooth-library.js',
+  'backend/jinbei-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

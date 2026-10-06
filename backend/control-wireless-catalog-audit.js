@@ -308,6 +308,10 @@ const westcott=byManufacturer.get('Westcott');
 if(!westcott || westcott.bluetooth!==4 || westcott.wifi!==0 || westcott.both!==0) {
   failures.push('Westcott wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const logitechG=byManufacturer.get('Logitech G');
+if(!logitechG || logitechG.bluetooth!==2 || logitechG.wifi!==0 || logitechG.both!==0) {
+  failures.push('Logitech G wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

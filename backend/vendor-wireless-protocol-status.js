@@ -841,11 +841,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     capturePlanId: 'jinbei-studio-bluetooth-capture-v1',
     evidence: [
       'https://www.jinbei-deutschland.de/en/blogs/jinbeisphotobox/creative-light-management-made-easy-the-jinbei-studio-app',
+      'https://www.jinbei-deutschland.de/en/products/b-ware-ef-80bi-led-continuouslight',
       'https://www.jinbei-deutschland.de/en/products/ef-120c-rgb-led-dauerlicht',
       'https://www.jinbei-deutschland.de/en/products/ef-200x-led-dauerlicht',
+      'https://www.jinbei-deutschland.de/en/collections/sale/products/eft-220-rgb-stick-light-2478',
+      'https://www.jinbei-deutschland.de/en/collections/neuheiten-1/products/0_template-for-article-installation-35',
+      'https://www.jinbei-deutschland.de/en/collections/neuheiten-1/products/0_template-for-article-installation-33',
+      'https://www.jinbei-deutschland.de/en/collections/led-continuous-light-studio-and-mobile/products/0_template-for-article-installation-29',
+      'https://www.jinbei-deutschland.de/en/products/jl-300bi-led-continuous-light-2568',
+      'https://www.jinbei-deutschland.de/en/collections/all/products/jl-300c-rgb-led-continuous-light',
+      'https://www.jinbei-deutschland.de/en/products/0_template-for-article-installation-39',
       'https://www.jinbei-deutschland.de/en/products/jl-600c-rgb-led-dauerlicht'
     ],
-    note: 'Bluetooth 5.0/app transport is verified only for EF-120C, EF-200X and JL-600RGB in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+    note: 'Bluetooth 5.0/app transport is exact-model verified for twelve Jinbei continuous-light fixtures in this checkpoint: EF-80Bi, EF-120C, EF-200X, EFT-220, EFT-360III, EFT-560Bi, JL-160Bi, JL-220Bi, JL-300Bi, JL-300C, JL-500Bi and JL-600RGB. LightingAI proprietary command/session semantics remain locked.'
   },
 
   Ikan: {

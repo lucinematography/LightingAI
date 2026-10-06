@@ -6,7 +6,8 @@ const SRC={
   vl120:'https://www.ulanzi.com/collections/continuous-lighting/products/120w-v-mount-light-l074cna1',
   vl200bi:'https://www.ulanzi.com/collections/continuous-lighting/products/vl-200bi-200w-video-light-l079cna1',
   ec65:'https://www.ulanzi.com/collections/continuous-lighting/products/65w-portable-bi-color-led-video-light-l184',
-  al60:'https://www.ulanzi.com/collections/continuous-lighting/products/inflatable-led-air-tube-light-l096'
+  al60:'https://www.ulanzi.com/collections/continuous-lighting/products/inflatable-led-air-tube-light-l096',
+  k6500:'https://www.ulanzi.com/en-sg/products/ulanzi-k6500-ulanzi-studio-magnetic-bluetooth-video-light'
 };
 
 function bluetoothControl(sourceUrl){
@@ -54,5 +55,6 @@ export const ULANZI_CONNECT_BLUETOOTH_FIXTURES=[
   fixture('ulanzi-vl-120c','VL-120C','RGB COB LED','COB / Monolight',SRC.vl120,{min:2700,max:6500},120,'RGB / HSI / CCT'),
   fixture('ulanzi-vl-200bi','VL-200Bi','Bi-Color COB LED','COB / Monolight',SRC.vl200bi,{min:2700,max:6500},200,'Bi-Color'),
   fixture('ulanzi-ec65','EC65','Bi-Color COB LED','Cube / Mini COB',SRC.ec65,{min:2500,max:6500},70,'Bi-Color'),
-  fixture('ulanzi-al60','AL60','Bi-Color LED Air Tube','Inflatable Tube / Mat',SRC.al60,{min:2700,max:6500},68,'Bi-Color')
+  fixture('ulanzi-al60','AL60','Bi-Color LED Air Tube','Inflatable Tube / Mat',SRC.al60,{min:2700,max:6500},68,'Bi-Color'),
+  fixture('ulanzi-k6500','K6500','Magnetic Bluetooth Video Light','Pocket / Magnetic Panel',SRC.k6500,null,null,'App-controlled RGB / effects')
 ];

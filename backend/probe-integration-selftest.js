@@ -65,6 +65,7 @@ const allowed=new Set([
   'backend/fotodiox-prizmo-bluetooth-library.js',
   'backend/broncolor-led-f160-wifi-library.js',
   'backend/genaray-rgb-bluetooth-library.js',
+  'backend/elgato-wifi-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

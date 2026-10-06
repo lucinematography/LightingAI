@@ -576,6 +576,39 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  ZOLAR: {
+    id:'zolar-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'ZOLAR Mobile App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one ZOLAR Blade 60C, Toliman 30C or Vega 30C per first capture set and record exact model and firmware.',
+      'Use only the vendor-documented Bluetooth mobile-app path during the Bluetooth capture set.',
+      'Disable Wi-Fi, Ethernet, Art-Net/sACN, DMX/RDM and ZolarLink during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.z-cam.com/products/led-light-panels/zolar-blade-60c/',
+      'https://www.z-cam.com/products/led-light-panels/zolar-toliman-30c/',
+      'https://www.z-cam.com/products/led-light-panels/zolar-vega-30c/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact ZOLAR model through the Bluetooth app path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one color-temperature change per capture.'},
+      color:{runs:3,optional:true,rule:'Only on exact RGB-capable models; perform one documented color change per capture.'}
+    },
+    secondaryPlans:[{
+      id:'zolar-wifi-capture-v1',
+      transport:'wifi',
+      target:'Blade 60C, Toliman 30C and Vega 30C',
+      commandSpecStatus:'public-wifi-command-spec-not-located-in-official-docs',
+      rule:'Capture Wi-Fi app and standards-based Art-Net/sACN behavior independently from Bluetooth. Do not infer undocumented discovery, authentication/session or private payload semantics.'
+    }],
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

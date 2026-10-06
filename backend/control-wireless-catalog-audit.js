@@ -201,8 +201,8 @@ if(!fiilex || fiilex.bluetooth!==0 || fiilex.wifi!==1 || fiilex.both!==0) {
   failures.push('Fiilex wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');
 }
 const harlowe=byManufacturer.get('Harlowe');
-if(!harlowe || harlowe.bluetooth!==11 || harlowe.wifi!==0 || harlowe.both!==0) {
-  failures.push('Harlowe wireless coverage expected 11 Bluetooth / 0 Wi-Fi / 0 both');
+if(!harlowe || harlowe.bluetooth!==22 || harlowe.wifi!==0 || harlowe.both!==0) {
+  failures.push('Harlowe wireless coverage expected 22 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const swit=byManufacturer.get('SWIT');
 if(!swit || swit.bluetooth!==12 || swit.wifi!==0 || swit.both!==0) {

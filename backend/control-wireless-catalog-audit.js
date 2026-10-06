@@ -320,6 +320,10 @@ const razer=byManufacturer.get('Razer');
 if(!razer || razer.bluetooth!==0 || razer.wifi!==1 || razer.both!==0) {
   failures.push('Razer wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');
 }
+const nanlux=byManufacturer.get('NANLUX');
+if(!nanlux || nanlux.bluetooth!==1 || nanlux.wifi!==0 || nanlux.both!==0) {
+  failures.push('NANLUX wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

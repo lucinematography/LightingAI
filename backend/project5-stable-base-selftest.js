@@ -119,6 +119,8 @@ const exactAllowed = new Set([
   'backend/jinbei-bluetooth-library.js',
   'backend/lume-cube-bluetooth-library.js',
   'backend/chauvet-dj-bluetooth-library.js',
+  'backend/fixture-structural-classification.js',
+  'backend/fixture-structural-classification-selftest.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',

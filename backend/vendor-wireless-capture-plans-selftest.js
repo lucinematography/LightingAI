@@ -69,6 +69,20 @@ expect(elgato?.safety?.rawCaptureCommitAllowed===false,'Elgato raw captures must
 expect(elgato?.safety?.derivedEvidenceOnly===true,'Elgato only derived evidence may enter repo');
 expect(elgato?.safety?.resultStatus==='candidate_only_until_physical_replay','Elgato capture result must remain candidate-only');
 
+const razer=VENDOR_WIRELESS_CAPTURE_PLANS.Razer;
+expect(razer?.id==='razer-key-light-chroma-wifi-capture-v1','Razer Wi-Fi capture plan missing');
+expect(razer?.transport==='wifi','Razer capture plan must remain Wi-Fi only');
+expect(razer?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Razer command spec status changed');
+expect(razer?.captureSets?.connectOnly?.runs>=3,'Razer connect-only requires at least 3 runs');
+expect(razer?.captureSets?.dim?.runs>=3,'Razer DIM requires at least 3 runs');
+expect(razer?.captureSets?.cct?.runs>=3,'Razer CCT requires at least 3 runs');
+expect(razer?.captureSets?.color?.runs>=3,'Razer COLOR requires at least 3 runs');
+expect(razer?.safety?.officialAppWritesOnly===true,'Razer official-app-only capture safety missing');
+expect(razer?.safety?.lightingAiWritesAllowed===false,'Razer LightingAI writes must stay disabled during capture');
+expect(razer?.safety?.rawCaptureCommitAllowed===false,'Razer raw captures must never be committed');
+expect(razer?.safety?.derivedEvidenceOnly===true,'Razer only derived evidence may enter repo');
+expect(razer?.safety?.resultStatus==='candidate_only_until_physical_replay','Razer capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

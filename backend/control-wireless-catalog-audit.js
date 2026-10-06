@@ -161,8 +161,8 @@ if(!smallrig || smallrig.bluetooth!==5 || smallrig.wifi!==0 || smallrig.both!==0
   failures.push('SmallRig wireless coverage expected 5 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const amaran=byManufacturer.get('amaran');
-if(!amaran || amaran.bluetooth!==25 || amaran.wifi!==1 || amaran.both!==1) {
-  failures.push('amaran wireless coverage expected 25 Bluetooth / 1 Wi-Fi / 1 both');
+if(!amaran || amaran.bluetooth!==31 || amaran.wifi!==1 || amaran.both!==1) {
+  failures.push('amaran wireless coverage expected 31 Bluetooth / 1 Wi-Fi / 1 both');
 }
 const neewer=byManufacturer.get('NEEWER');
 if(!neewer || neewer.bluetooth!==4 || neewer.wifi!==0 || neewer.both!==0) {

@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===765,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===46,'wireless manufacturer coverage must remain 34');
+expect(report.fixtureCount===766,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===47,'wireless manufacturer coverage must remain 34');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -75,6 +75,7 @@ expect(by.Jinbei?.bluetoothFixtures===3&&by.Jinbei?.wifiFixtures===0&&by.Jinbei?
 expect(by['Lume Cube']?.bluetoothFixtures===4&&by['Lume Cube']?.wifiFixtures===0&&by['Lume Cube']?.bothFixtures===0,'Lume Cube wireless counts changed unexpectedly');
 expect(by['CHAUVET DJ']?.bluetoothFixtures===21&&by['CHAUVET DJ']?.wifiFixtures===0&&by['CHAUVET DJ']?.bothFixtures===0,'CHAUVET DJ wireless counts changed unexpectedly');
 expect(by.Fotodiox?.bluetoothFixtures===1&&by.Fotodiox?.wifiFixtures===0&&by.Fotodiox?.bothFixtures===0,'Fotodiox wireless counts changed unexpectedly');
+expect(by.broncolor?.bluetoothFixtures===0&&by.broncolor?.wifiFixtures===1&&by.broncolor?.bothFixtures===0,'broncolor wireless counts changed unexpectedly');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

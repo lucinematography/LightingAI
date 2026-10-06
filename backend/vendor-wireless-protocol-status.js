@@ -314,6 +314,23 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Filmgear: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'filmgear-fg-app-bluetooth-capture-v1',
+    evidence: [
+      'https://www.filmgear.net/index.php?product_id=1137&route=product%2Fproduct',
+      'https://www.filmgear.net/index.php?product_id=1132&route=product%2Fproduct',
+      'https://www.filmgear.net/index.php?product_id=1127&route=product%2Fproduct',
+      'https://www.filmgear.net/index.php?path=521_195_555&product_id=1133&route=product%2Fproduct',
+      'https://www.filmgear.net/index.php?manufacturer_id=15&product_id=1134&route=product%2Fproduct'
+    ],
+    note: 'Direct Bluetooth/FG App transport is first-party verified only for Zenith 900C Plus, Zenith 2000C Plus, MEGA 1200C, Aurora A700C and Aurora A1200C in this checkpoint. Ethernet is not treated as Wi-Fi. CRMX/Wireless DMX is a separate path. LightingAI proprietary BLE/GATT semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

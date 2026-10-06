@@ -126,6 +126,7 @@ const exactAllowed = new Set([
   'backend/westcott-studiolink-bluetooth-library.js',
   'backend/logitech-g-litra-bluetooth-library.js',
   'backend/rollei-bluetooth-library.js',
+  'backend/razer-key-light-chroma-wifi-library.js',
   'backend/fixture-structural-classification.js',
   'backend/fixture-structural-classification-selftest.js',
   'backend/fixture-library.js',

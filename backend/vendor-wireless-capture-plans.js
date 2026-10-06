@@ -486,6 +486,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Selens: {
+    id:'selens-link-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Selens Link',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Selens Apollo P400S / SLC4-P400S or P800S / SLC4-P800S per first capture set and record the exact model.',
+      'Use only the Selens Link Bluetooth app path documented by Selens for compatible lights and listed as a control method for these exact models.',
+      'Disable DMX512, Art-Net and the separate 2.4 GHz remote during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats or compatibility with other Selens fixtures from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://selens.com/wp-content/uploads/2025/03/Selens-catalogue.pdf',
+      'https://selens.com/app-download/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact P400S or P800S with Selens Link over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one color-temperature change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB/color-value change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

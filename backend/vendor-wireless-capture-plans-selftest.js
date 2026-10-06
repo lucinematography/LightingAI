@@ -298,6 +298,21 @@ expect(kenro?.safety?.rawCaptureCommitAllowed===false,'Kenro raw captures must n
 expect(kenro?.safety?.derivedEvidenceOnly===true,'Kenro only derived evidence may enter repo');
 expect(kenro?.safety?.resultStatus==='candidate_only_until_physical_replay','Kenro capture result must remain candidate-only');
 
+const selens=VENDOR_WIRELESS_CAPTURE_PLANS.Selens;
+expect(selens?.id==='selens-link-bluetooth-capture-v1','Selens Bluetooth capture plan missing');
+expect(selens?.transport==='bluetooth','Selens capture plan must remain Bluetooth only');
+expect(selens?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Selens command spec status changed');
+expect(selens?.captureSets?.connectOnly?.runs>=3,'Selens connect-only requires at least 3 runs');
+expect(selens?.captureSets?.dim?.runs>=3,'Selens DIM requires at least 3 runs');
+expect(selens?.captureSets?.cct?.runs>=3,'Selens CCT requires at least 3 runs');
+expect(selens?.captureSets?.color?.runs>=3,'Selens COLOR requires at least 3 runs');
+expect(selens?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Selens capture plan must forbid proprietary GATT inference');
+expect(selens?.safety?.officialAppWritesOnly===true,'Selens official-app-only capture safety missing');
+expect(selens?.safety?.lightingAiWritesAllowed===false,'Selens LightingAI writes must stay disabled during capture');
+expect(selens?.safety?.rawCaptureCommitAllowed===false,'Selens raw captures must never be committed');
+expect(selens?.safety?.derivedEvidenceOnly===true,'Selens only derived evidence may enter repo');
+expect(selens?.safety?.resultStatus==='candidate_only_until_physical_replay','Selens capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

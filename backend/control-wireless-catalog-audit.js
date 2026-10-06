@@ -380,6 +380,10 @@ const kenro=byManufacturer.get('Kenro');
 if(!kenro || kenro.bluetooth!==3 || kenro.wifi!==0 || kenro.both!==0) {
   failures.push('Kenro wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const selens=byManufacturer.get('Selens');
+if(!selens || selens.bluetooth!==2 || selens.wifi!==0 || selens.both!==0) {
+  failures.push('Selens wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

@@ -237,6 +237,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Selens: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'selens-link-bluetooth-capture-v1',
+    evidence: [
+      'https://selens.com/wp-content/uploads/2025/03/Selens-catalogue.pdf',
+      'https://selens.com/app-download/'
+    ],
+    note: 'Direct Bluetooth Selens Link app transport is verified only for Apollo P400S / SLC4-P400S and Apollo P800S / SLC4-P800S in this checkpoint. Their separate 2.4 GHz remote path is not classified as Bluetooth or Wi-Fi. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

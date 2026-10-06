@@ -155,6 +155,7 @@ import { LIGHTSTAR_LUXED_BLUETOOTH_FIXTURES } from './lightstar-luxed-bluetooth-
 import { MOLE_RICHARDSON_BLUETOOTH_FIXTURES } from './mole-richardson-bluetooth-library.js';
 import { ZOLAR_WIRELESS_FIXTURES } from './zolar-wireless-library.js';
 import { FILMGEAR_BLUETOOTH_FIXTURES } from './filmgear-bluetooth-library.js';
+import { ROSCO_MIRO_CUBE_ASSISTED_BLUETOOTH_FIXTURES } from './rosco-miro-cube-assisted-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -355,6 +356,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(MOLE_RICHARDSON_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(ZOLAR_WIRELESS_FIXTURES));
   fixtures.push(...clone(FILMGEAR_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(ROSCO_MIRO_CUBE_ASSISTED_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

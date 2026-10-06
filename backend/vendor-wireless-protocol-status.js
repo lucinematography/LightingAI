@@ -209,6 +209,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  IMRELAX: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'imrelax-im-btwp1218-wifi-capture-v1',
+    evidence: [
+      'https://shop.imrelax.com/products/12x18w-ip65-battery-wireless-led-par-light'
+    ],
+    note: 'Direct Wi-Fi iOS/Android app transport is verified only for exact SKU IM-BTWP1218 in this checkpoint. Its separate 2.4 GHz wireless DMX path is not classified as Wi-Fi. LightingAI proprietary network command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

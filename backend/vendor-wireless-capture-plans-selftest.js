@@ -269,6 +269,20 @@ expect(weeylite?.safety?.rawCaptureCommitAllowed===false,'Weeylite raw captures 
 expect(weeylite?.safety?.derivedEvidenceOnly===true,'Weeylite only derived evidence may enter repo');
 expect(weeylite?.safety?.resultStatus==='candidate_only_until_physical_replay','Weeylite capture result must remain candidate-only');
 
+const imrelax=VENDOR_WIRELESS_CAPTURE_PLANS.IMRELAX;
+expect(imrelax?.id==='imrelax-im-btwp1218-wifi-capture-v1','IMRELAX Wi-Fi capture plan missing');
+expect(imrelax?.transport==='wifi','IMRELAX capture plan must remain Wi-Fi only');
+expect(imrelax?.commandSpecStatus==='public-network-command-spec-not-located-in-official-docs','IMRELAX network command spec status changed');
+expect(imrelax?.captureSets?.connectOnly?.runs>=3,'IMRELAX connect-only requires at least 3 runs');
+expect(imrelax?.captureSets?.dim?.runs>=3,'IMRELAX DIM requires at least 3 runs');
+expect(imrelax?.captureSets?.color?.runs>=3,'IMRELAX COLOR requires at least 3 runs');
+expect(imrelax?.prerequisites?.some(x=>/Do not infer TCP\/UDP ports/i.test(x)),'IMRELAX capture plan must forbid proprietary network inference');
+expect(imrelax?.safety?.officialAppWritesOnly===true,'IMRELAX official-app-only capture safety missing');
+expect(imrelax?.safety?.lightingAiWritesAllowed===false,'IMRELAX LightingAI writes must stay disabled during capture');
+expect(imrelax?.safety?.rawCaptureCommitAllowed===false,'IMRELAX raw captures must never be committed');
+expect(imrelax?.safety?.derivedEvidenceOnly===true,'IMRELAX only derived evidence may enter repo');
+expect(imrelax?.safety?.resultStatus==='candidate_only_until_physical_replay','IMRELAX capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

@@ -436,6 +436,29 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  IMRELAX: {
+    id:'imrelax-im-btwp1218-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'IMRELAX vendor-documented iOS/Android app',
+    commandSpecStatus:'public-network-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one IMRELAX IM-BTWP1218 per first capture set and record the exact SKU.',
+      'Use only the Wi-Fi phone-app control path documented by IMRELAX for IM-BTWP1218.',
+      'Disable DMX512, 2.4 GHz wireless DMX, IR remote, auto and sound-active control during the first Wi-Fi capture so traffic attribution stays unambiguous.',
+      'Do not infer TCP/UDP ports, discovery protocol, authentication/session flow, message framing or payload encoding from the documented Wi-Fi app capability.'
+    ],
+    officialSources:[
+      'https://shop.imrelax.com/products/12x18w-ip65-battery-wireless-led-par-light'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact IM-BTWP1218 with the vendor-documented iOS/Android Wi-Fi app path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGBWA+UV color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

@@ -372,6 +372,10 @@ const weeylite=byManufacturer.get('Weeylite');
 if(!weeylite || weeylite.bluetooth!==6 || weeylite.wifi!==0 || weeylite.both!==0) {
   failures.push('Weeylite wireless coverage expected 6 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const imrelax=byManufacturer.get('IMRELAX');
+if(!imrelax || imrelax.bluetooth!==0 || imrelax.wifi!==1 || imrelax.both!==0) {
+  failures.push('IMRELAX wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

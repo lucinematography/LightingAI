@@ -461,6 +461,21 @@ expect(dedolight?.safety?.rawCaptureCommitAllowed===false,'dedolight raw capture
 expect(dedolight?.safety?.derivedEvidenceOnly===true,'dedolight only derived evidence may enter repo');
 expect(dedolight?.safety?.resultStatus==='candidate_only_until_physical_replay','dedolight capture result must remain candidate-only');
 
+const adj=VENDOR_WIRELESS_CAPTURE_PLANS['ADJ Lighting'];
+expect(adj?.id==='adj-aria-x2-bluetooth-capture-v1','ADJ Lighting Bluetooth capture plan missing');
+expect(adj?.transport==='bluetooth','ADJ Lighting capture plan must remain Bluetooth only');
+expect(adj?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','ADJ Lighting command spec status changed');
+expect(adj?.captureSets?.connectOnly?.runs>=3,'ADJ Lighting connect-only requires at least 3 runs');
+expect(adj?.captureSets?.dim?.runs>=3,'ADJ Lighting DIM requires at least 3 runs');
+expect(adj?.captureSets?.color?.runs>=3,'ADJ Lighting COLOR requires at least 3 runs');
+expect(adj?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'ADJ Lighting capture plan must forbid proprietary GATT inference');
+expect(adj?.prerequisites?.some(x=>/Aria X2/i.test(x)),'ADJ Lighting capture plan must remain scoped to Aria X2');
+expect(adj?.safety?.officialAppWritesOnly===true,'ADJ Lighting official-app-only capture safety missing');
+expect(adj?.safety?.lightingAiWritesAllowed===false,'ADJ Lighting LightingAI writes must stay disabled during capture');
+expect(adj?.safety?.rawCaptureCommitAllowed===false,'ADJ Lighting raw captures must never be committed');
+expect(adj?.safety?.derivedEvidenceOnly===true,'ADJ Lighting only derived evidence may enter repo');
+expect(adj?.safety?.resultStatus==='candidate_only_until_physical_replay','ADJ Lighting capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

@@ -590,6 +590,19 @@ expect(bresser?.safety?.rawCaptureCommitAllowed===false,'BRESSER raw captures mu
 expect(bresser?.safety?.derivedEvidenceOnly===true,'BRESSER only derived evidence may enter repo');
 expect(bresser?.safety?.resultStatus==='candidate_only_until_physical_replay','BRESSER capture result must remain candidate-only');
 
+const digitek=VENDOR_WIRELESS_CAPTURE_PLANS.Digitek;
+expect(digitek?.id==='digitek-smartlife-bluetooth-capture-v1','Digitek Bluetooth capture plan missing');
+expect(digitek?.transport==='bluetooth','Digitek capture plan must remain Bluetooth only');
+expect(digitek?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Digitek command spec status changed');
+expect(digitek?.captureSets?.connectOnly?.runs>=3,'Digitek connect-only requires at least 3 runs');
+expect(digitek?.prerequisites?.some(x=>/Do not generalize/i.test(x)),'Digitek cross-model transport inference must stay forbidden');
+expect(digitek?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Digitek proprietary GATT inference must stay forbidden');
+expect(digitek?.safety?.officialAppWritesOnly===true,'Digitek official-app-only capture safety missing');
+expect(digitek?.safety?.lightingAiWritesAllowed===false,'Digitek LightingAI writes must stay disabled during capture');
+expect(digitek?.safety?.rawCaptureCommitAllowed===false,'Digitek raw captures must never be committed');
+expect(digitek?.safety?.derivedEvidenceOnly===true,'Digitek only derived evidence may enter repo');
+expect(digitek?.safety?.resultStatus==='candidate_only_until_physical_replay','Digitek capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

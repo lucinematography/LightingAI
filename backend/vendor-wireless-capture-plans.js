@@ -936,6 +936,29 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Digitek: {
+    id:'digitek-smartlife-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Smartlife APP',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Digitek DCL 100 WBC per first capture set and record the exact fixture, firmware, phone OS and app versions.',
+      'Use only the first-party-documented Smartlife APP Bluetooth path for exact model DCL 100 WBC.',
+      'Do not generalize this transport proof to other Digitek app-controlled fixtures unless their exact-model first-party evidence explicitly establishes Bluetooth.',
+      'Keep other Bluetooth lighting devices inactive during the first capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility.'
+    ],
+    officialSources:['https://www.digitek.net.in/products/digitek-dcl-100-wbc-100w-bi-color-continuous-led-light-with-reflector-mini-bowen-mount-a-unique-modern-meticulous-design-to-cater-to-the-photographers-aesthetic-idea-for-professional-photography'],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact DCL 100 WBC through the documented Smartlife Bluetooth path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,optional:true,rule:'Only if Smartlife exposes brightness for the exact unit during physical capture; perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only if Smartlife exposes CCT for the exact unit during physical capture; perform exactly one color-temperature change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only if Smartlife exposes FX for the exact unit during physical capture; trigger exactly one effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

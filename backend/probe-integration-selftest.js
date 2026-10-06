@@ -106,6 +106,7 @@ const allowed=new Set([
   'backend/sokani-bluetooth-library.js',
   'backend/fotorgear-bluetooth-library.js',
   'backend/bresser-bluetooth-library.js',
+  'backend/digitek-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

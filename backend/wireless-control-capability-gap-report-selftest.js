@@ -25,8 +25,8 @@ expect(verifiedWirelessTransport({
 }).bluetooth===true,
   'Verified Bluetooth transport evidence must enter wireless gap scope');
 
-expect(report.fixtureCount===925,'fixture total changed from verified catalog');
-expect(report.wirelessFixtures===588,'verified wireless fixture total changed unexpectedly');
+expect(report.fixtureCount===927,'fixture total changed from verified catalog');
+expect(report.wirelessFixtures===590,'verified wireless fixture total changed unexpectedly');
 expect(report.fixturesWithAnyGap>0,'capability-gap audit unexpectedly empty');
 
 const by=report.byManufacturer;
@@ -72,6 +72,7 @@ expect(by.Digitek?.wirelessFixtures===1,'Digitek wireless count changed');
 expect(by.Manfrotto?.wirelessFixtures===3,'Manfrotto wireless count changed');
 expect(by.Godox?.missingDim===0,'Godox DIM official-app capability coverage changed');
 expect(by.Nanlite?.missingDim===0,'Nanlite DIM official-app capability coverage changed');
+expect(by.ARRI?.wirelessFixtures===7,'ARRI wireless count changed');
 expect(by.Aputure?.missingDim===0,'Aputure DIM official-app capability coverage changed');
 expect(by.Aputure?.missingFx===0,'Aputure FX official-app capability coverage changed');
 const daylight=expectedCapabilities({category:'Light',colorMode:'Daylight',cctK:{min:5600,max:5600}});

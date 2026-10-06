@@ -253,8 +253,8 @@ if(!niceFoto || niceFoto.bluetooth!==12 || niceFoto.wifi!==0 || niceFoto.both!==
   failures.push('NiceFoto wireless coverage expected 12 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const ulanzi=byManufacturer.get('Ulanzi');
-if(!ulanzi || ulanzi.bluetooth!==5 || ulanzi.wifi!==0 || ulanzi.both!==0) {
-  failures.push('Ulanzi wireless coverage expected 5 Bluetooth / 0 Wi-Fi / 0 both');
+if(!ulanzi || ulanzi.bluetooth!==6 || ulanzi.wifi!==0 || ulanzi.both!==0) {
+  failures.push('Ulanzi wireless coverage expected 6 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const cameTv=byManufacturer.get('CAME-TV');
 if(!cameTv || cameTv.bluetooth!==0 || cameTv.wifi!==8 || cameTv.both!==0) {

@@ -406,6 +406,36 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Weeylite: {
+    id:'weeylite-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Weeylite / WeeylitePro',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Weeylite S03, S05, K21, WP35, RB9 or Ninja 200 per first capture set and record the exact model.',
+      'Use only the mobile-app/Bluetooth path documented on the first-party Viltrox/Weeylite product page for that exact model.',
+      'Disable separate Bluetooth remotes, channel/group peers and other wireless control paths during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats or cross-model command compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://viltrox.com/products/weeylite-s03-4w-colorful-pocket-rgb-light',
+      'https://viltrox.com/products/weeylite-s05-2800-6800k-pocket-rgb-led-video-light-with-360-full-color-oled-display-app-control-26-fx-effects-1',
+      'https://viltrox.com/products/weeylite-k21-handheld-2500k-8500k-rgb-led-light-stick',
+      'https://viltrox.com/en-gb/products/weeylite-wp-35-full-color-rgb-led-panel-with-2800k-6800k-bi-color-ra-95-tlci-97-26fx-lighting-effects-app-control',
+      'https://viltrox.com/products/weeylite-rb9-rgbw-compact-led-light',
+      'https://viltrox.com/products/weeylite-ninja-200-portable-bi-color-cob-led-light'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Weeylite model with the documented app/Bluetooth path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'For CCT-capable models, perform exactly one color-temperature change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'Only for S03, S05, K21, WP35 or RB9; perform exactly one RGB/HSI color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only on exact models with first-party FX evidence; trigger exactly one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

@@ -368,6 +368,10 @@ const shehds=byManufacturer.get('SHEHDS');
 if(!shehds || shehds.bluetooth!==0 || shehds.wifi!==2 || shehds.both!==0) {
   failures.push('SHEHDS wireless coverage expected 0 Bluetooth / 2 Wi-Fi / 0 both');
 }
+const weeylite=byManufacturer.get('Weeylite');
+if(!weeylite || weeylite.bluetooth!==6 || weeylite.wifi!==0 || weeylite.both!==0) {
+  failures.push('Weeylite wireless coverage expected 6 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

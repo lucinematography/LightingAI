@@ -254,6 +254,21 @@ expect(shehds?.safety?.rawCaptureCommitAllowed===false,'SHEHDS raw captures must
 expect(shehds?.safety?.derivedEvidenceOnly===true,'SHEHDS only derived evidence may enter repo');
 expect(shehds?.safety?.resultStatus==='candidate_only_until_physical_replay','SHEHDS capture result must remain candidate-only');
 
+const weeylite=VENDOR_WIRELESS_CAPTURE_PLANS.Weeylite;
+expect(weeylite?.id==='weeylite-bluetooth-capture-v1','Weeylite Bluetooth capture plan missing');
+expect(weeylite?.transport==='bluetooth','Weeylite capture plan must remain Bluetooth only');
+expect(weeylite?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Weeylite command spec status changed');
+expect(weeylite?.captureSets?.connectOnly?.runs>=3,'Weeylite connect-only requires at least 3 runs');
+expect(weeylite?.captureSets?.dim?.runs>=3,'Weeylite DIM requires at least 3 runs');
+expect(weeylite?.captureSets?.cct?.runs>=3,'Weeylite CCT requires at least 3 runs');
+expect(weeylite?.captureSets?.color?.optional===true,'Weeylite COLOR capture must remain model-scoped/optional');
+expect(weeylite?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Weeylite capture plan must forbid proprietary GATT inference');
+expect(weeylite?.safety?.officialAppWritesOnly===true,'Weeylite official-app-only capture safety missing');
+expect(weeylite?.safety?.lightingAiWritesAllowed===false,'Weeylite LightingAI writes must stay disabled during capture');
+expect(weeylite?.safety?.rawCaptureCommitAllowed===false,'Weeylite raw captures must never be committed');
+expect(weeylite?.safety?.derivedEvidenceOnly===true,'Weeylite only derived evidence may enter repo');
+expect(weeylite?.safety?.resultStatus==='candidate_only_until_physical_replay','Weeylite capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

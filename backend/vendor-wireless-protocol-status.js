@@ -191,6 +191,24 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Weeylite: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'weeylite-bluetooth-capture-v1',
+    evidence: [
+      'https://viltrox.com/products/weeylite-s03-4w-colorful-pocket-rgb-light',
+      'https://viltrox.com/products/weeylite-s05-2800-6800k-pocket-rgb-led-video-light-with-360-full-color-oled-display-app-control-26-fx-effects-1',
+      'https://viltrox.com/products/weeylite-k21-handheld-2500k-8500k-rgb-led-light-stick',
+      'https://viltrox.com/en-gb/products/weeylite-wp-35-full-color-rgb-led-panel-with-2800k-6800k-bi-color-ra-95-tlci-97-26fx-lighting-effects-app-control',
+      'https://viltrox.com/products/weeylite-rb9-rgbw-compact-led-light',
+      'https://viltrox.com/products/weeylite-ninja-200-portable-bi-color-cob-led-light'
+    ],
+    note: 'Direct Bluetooth/app transport is verified only for Weeylite S03, S05, K21, WP35, RB9 and Ninja 200 in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

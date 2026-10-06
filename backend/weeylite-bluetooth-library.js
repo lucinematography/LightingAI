@@ -81,7 +81,7 @@ export const WEEYLITE_BLUETOOTH_FIXTURES=[
     family:'K Series',
     category:'Light',
     sourceType:'RGB LED Light Stick',
-    formFactor:'Light Stick',
+    formFactor:'Handheld Light Stick',
     colorMode:'RGBW / CCT / FX',
     cctK:{min:2500,max:8500},
     control:bluetoothControl(SRC.k21,'K21',{cct:true,color:true,fx:true}),

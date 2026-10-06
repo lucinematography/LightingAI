@@ -506,6 +506,20 @@ expect(cinelight?.safety?.rawCaptureCommitAllowed===false,'CineLight raw capture
 expect(cinelight?.safety?.derivedEvidenceOnly===true,'CineLight only derived evidence may enter repo');
 expect(cinelight?.safety?.resultStatus==='candidate_only_until_physical_replay','CineLight capture result must remain candidate-only');
 
+const roxx=VENDOR_WIRELESS_CAPTURE_PLANS.ROXX;
+expect(roxx?.id==='roxx-app-bluetooth-capture-v1','ROXX Bluetooth capture plan missing');
+expect(roxx?.transport==='bluetooth','ROXX capture plan must remain Bluetooth only');
+expect(roxx?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','ROXX command spec status changed');
+expect(roxx?.captureSets?.connectOnly?.runs>=3,'ROXX connect-only requires at least 3 runs');
+expect(roxx?.captureSets?.dim?.runs>=3,'ROXX DIM requires at least 3 runs');
+expect(roxx?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'ROXX capture plan must forbid proprietary GATT inference');
+expect(roxx?.prerequisites?.some(x=>/CRMX\/W-DMX/i.test(x)),'ROXX capture plan must isolate Bluetooth from CRMX/W-DMX');
+expect(roxx?.safety?.officialAppWritesOnly===true,'ROXX official-app-only capture safety missing');
+expect(roxx?.safety?.lightingAiWritesAllowed===false,'ROXX LightingAI writes must stay disabled during capture');
+expect(roxx?.safety?.rawCaptureCommitAllowed===false,'ROXX raw captures must never be committed');
+expect(roxx?.safety?.derivedEvidenceOnly===true,'ROXX only derived evidence may enter repo');
+expect(roxx?.safety?.resultStatus==='candidate_only_until_physical_replay','ROXX capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

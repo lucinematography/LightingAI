@@ -402,6 +402,21 @@ expect(mole?.safety?.rawCaptureCommitAllowed===false,'Mole-Richardson raw captur
 expect(mole?.safety?.derivedEvidenceOnly===true,'Mole-Richardson only derived evidence may enter repo');
 expect(mole?.safety?.resultStatus==='candidate_only_until_physical_replay','Mole-Richardson capture result must remain candidate-only');
 
+const zolar=VENDOR_WIRELESS_CAPTURE_PLANS.ZOLAR;
+expect(zolar?.id==='zolar-bluetooth-capture-v1','ZOLAR Bluetooth capture plan missing');
+expect(zolar?.transport==='bluetooth','ZOLAR primary capture plan must remain Bluetooth');
+expect(zolar?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','ZOLAR Bluetooth command spec status changed');
+expect(zolar?.captureSets?.connectOnly?.runs>=3,'ZOLAR connect-only requires at least 3 runs');
+expect(zolar?.captureSets?.dim?.runs>=3,'ZOLAR DIM requires at least 3 runs');
+expect(zolar?.captureSets?.cct?.runs>=3,'ZOLAR CCT requires at least 3 runs');
+expect(zolar?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'ZOLAR capture plan must forbid proprietary GATT inference');
+expect(Array.isArray(zolar?.secondaryPlans)&&zolar.secondaryPlans.some(x=>x.id==='zolar-wifi-capture-v1'&&x.transport==='wifi'),'ZOLAR Wi-Fi secondary capture plan missing');
+expect(zolar?.safety?.officialAppWritesOnly===true,'ZOLAR official-app-only capture safety missing');
+expect(zolar?.safety?.lightingAiWritesAllowed===false,'ZOLAR LightingAI writes must stay disabled during capture');
+expect(zolar?.safety?.rawCaptureCommitAllowed===false,'ZOLAR raw captures must never be committed');
+expect(zolar?.safety?.derivedEvidenceOnly===true,'ZOLAR only derived evidence may enter repo');
+expect(zolar?.safety?.resultStatus==='candidate_only_until_physical_replay','ZOLAR capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

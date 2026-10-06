@@ -362,6 +362,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  'ADJ Lighting': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'adj-aria-x2-bluetooth-capture-v1',
+    evidence: [
+      'https://www.adj.com/products/cob-cannon-lp200x',
+      'https://www.adj.com/products/cob-cannon-lp200stx',
+      'https://www.adj.com/products/mirage-q6-pak',
+      'https://www.adj.com/products/aria-x2'
+    ],
+    note: 'Direct embedded Aria X2 BLE transport is first-party verified only for COB Cannon LP200X, COB Cannon LP200STX and Mirage Q6 IP in this checkpoint. LightingAI proprietary BLE/mesh/serial command semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

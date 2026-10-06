@@ -51,6 +51,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth is verified only as smartphone-to-CONNECT assisted transport for ApeLight Mini V2 and Maxi V2. Direct fixture Bluetooth is not claimed; fixture-side 2.4 GHz semantics remain locked.'
   },
 
+  Pilotfly: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'pilotfly-atomcube-bluetooth-capture-v1',
+    evidence: [
+      'https://pilotfly.com/home/20-pilotfly-atomcube-rx1-video-light.html',
+      'https://pilotfly.com/pocket-led-lights/59-atomcube-rx7-pocket-rgbww-leg-light.html',
+      'https://pilotfly.com/home/80-atomcuben-rx7lite-pocket-rgbww-led-light.html',
+      'https://pilotfly.com/home/62-atomcube-rx50-10-portable-rgbww-led-light-panel-lite-version.html'
+    ],
+    note: 'Bluetooth Mesh/CUBERSYNC transport is verified only for AtomCUBE RX1, RX7, RX7 Lite and RX50 in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

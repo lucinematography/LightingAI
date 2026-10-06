@@ -4,10 +4,10 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const route=(fixtureId,transport)=>({fixtureId,transport});
 
-const expected=['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Kino Flo','De Sisti','LiteGear'];
+const expected=['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','Kino Flo','De Sisti','LiteGear'];
 for(const maker of expected) expect(!!VENDOR_WIRELESS_PROTOCOL_STATUS[maker],maker+' protocol status missing');
 
-for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs']){
+for(const maker of ['Aputure','Godox','Nanlite','ARRI','Astera','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly']){
   const row=VENDOR_WIRELESS_PROTOCOL_STATUS[maker];
   expect(row.commandSpec!=='production_verified',maker+' proprietary command path must not be marked production verified');
   expect(vendorWideCommandProductionReady(maker)===false,maker+' vendor-wide readiness must remain false without explicit production scope inputs');
@@ -183,6 +183,9 @@ expect(VENDOR_WIRELESS_PROTOCOL_STATUS.NANLUX?.capturePlanId==='nanlux-evoke-240
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Mettle?.capturePlanId==='mettle-tube-x-bluetooth-capture-v1','Mettle Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.PiXAPRO?.capturePlanId==='pixapro-neon-bluetooth-capture-v1','PiXAPRO Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS['Ape Labs']?.capturePlanId==='ape-labs-connect-assisted-bluetooth-capture-v1','Ape Labs assisted Bluetooth capture plan link missing');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Pilotfly?.capturePlanId==='pilotfly-atomcube-bluetooth-capture-v1','Pilotfly Bluetooth capture plan link missing');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Pilotfly?.bluetooth==='transport_verified_model_scoped','Pilotfly Bluetooth transport scope changed');
+expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Pilotfly?.wifi==='not_verified_for_current_catalog','Pilotfly Wi-Fi must remain unverified for current catalog');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.PIXEL?.capturePlanId==='pixel-app-bluetooth-capture-v1','PIXEL Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.YONGNUO?.capturePlanId==='yongnuo-app-bluetooth-capture-v1','YONGNUO Bluetooth capture plan link missing');
 expect(VENDOR_WIRELESS_PROTOCOL_STATUS.Phottix?.capturePlanId==='phottix-lighting-control-bluetooth-capture-v1','Phottix Bluetooth capture plan link missing');

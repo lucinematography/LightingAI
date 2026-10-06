@@ -163,6 +163,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Pilotfly: {
+    id:'pilotfly-atomcube-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Pilotfly CUBERSYNC / AtomCUBE app documented for the exact model',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one AtomCUBE RX1, RX7, RX7 Lite or RX50 per first capture set and record the exact model.',
+      'Use only the official app path documented by Pilotfly for that exact model.',
+      'Disable RX7/RX50 DMX connections and MeshSync peer control during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, characteristics, packet formats or cross-model command compatibility from Bluetooth Mesh marketing text.'
+    ],
+    officialSources:[
+      'https://pilotfly.com/home/20-pilotfly-atomcube-rx1-video-light.html',
+      'https://pilotfly.com/pocket-led-lights/59-atomcube-rx7-pocket-rgbww-leg-light.html',
+      'https://pilotfly.com/home/80-atomcuben-rx7lite-pocket-rgbww-led-light.html',
+      'https://pilotfly.com/home/62-atomcube-rx50-10-portable-rgbww-led-light-panel-lite-version.html'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect only one exact AtomCUBE model with the official app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'For models with documented adjustable CCT, perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,rule:'Perform exactly one color change per capture from the same initial state.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',
     transport:'bluetooth',

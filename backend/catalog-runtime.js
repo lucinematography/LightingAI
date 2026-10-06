@@ -160,6 +160,7 @@ import { DEDOLIGHT_NEO_ASSISTED_BLUETOOTH_FIXTURES } from './dedolight-neo-assis
 import { ADJ_ARIA_X2_BLUETOOTH_FIXTURES } from './adj-aria-x2-bluetooth-library.js';
 import { ELINCHROM_BLUETOOTH_FIXTURES } from './elinchrom-bluetooth-library.js';
 import { CINELIGHT_BLUETOOTH_FIXTURES } from './cinelight-bluetooth-library.js';
+import { ROXX_BLUETOOTH_FIXTURES } from './roxx-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -365,6 +366,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(ADJ_ARIA_X2_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(ELINCHROM_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(CINELIGHT_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(ROXX_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

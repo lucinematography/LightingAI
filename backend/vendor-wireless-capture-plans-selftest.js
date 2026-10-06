@@ -670,6 +670,7 @@ expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.Litepanels.secondaryPlans)&&V
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Litepanels.secondaryPlans.some(x=>x.id==='litepanels-assisted-bluetooth-capture-v1'&&x.transport==='bluetooth'),'Litepanels assisted Bluetooth capture plan missing');
 
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans.some(x=>x.id==='arri-skypanel-web-wifi-capture-v1'&&x.transport==='wifi'),'ARRI Wi-Fi secondary capture plan missing');
+expect(VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans.some(x=>x.id==='arri-omnibar-bluetooth-mesh-capture-v1'&&x.transport==='bluetooth'),'ARRI Omnibar Bluetooth Mesh secondary capture plan missing');
 expect(Array.isArray(VENDOR_WIRELESS_CAPTURE_PLANS['EV Light'].secondaryPlans)&&VENDOR_WIRELESS_CAPTURE_PLANS['EV Light'].secondaryPlans.some(x=>x.id==='evlight-model-scoped-wifi-capture-v1'&&x.transport==='wifi'),'EV Light Wi-Fi secondary capture plan missing');
 for(const secondary of [...(VENDOR_WIRELESS_CAPTURE_PLANS.ARRI.secondaryPlans||[]),...(VENDOR_WIRELESS_CAPTURE_PLANS['EV Light'].secondaryPlans||[])]){
   expect(String(secondary.commandSpecStatus||'').includes('not-located-in-official-docs'),'secondary Wi-Fi plan must remain command-spec-unverified: '+secondary.id);

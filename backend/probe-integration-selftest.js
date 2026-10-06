@@ -73,6 +73,7 @@ const allowed=new Set([
   'backend/nanlux-evoke-2400b-bluetooth-library.js',
   'backend/mettle-tube-x-bluetooth-library.js',
   'backend/pixapro-neon-bluetooth-library.js',
+  'backend/ape-labs-assisted-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

@@ -1598,7 +1598,8 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       'https://www.ulanzi.com/collections/continuous-lighting/products/120w-v-mount-light-l074cna1',
       'https://www.ulanzi.com/collections/continuous-lighting/products/vl-200bi-200w-video-light-l079cna1',
       'https://www.ulanzi.com/collections/continuous-lighting/products/65w-portable-bi-color-led-video-light-l184',
-      'https://www.ulanzi.com/collections/continuous-lighting/products/inflatable-led-air-tube-light-l096'
+      'https://www.ulanzi.com/collections/continuous-lighting/products/inflatable-led-air-tube-light-l096',
+      'https://www.ulanzi.com/en-sg/products/ulanzi-k6500-ulanzi-studio-magnetic-bluetooth-video-light'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Connect one supported Ulanzi fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},

@@ -120,6 +120,7 @@ const exactAllowed = new Set([
   'backend/lume-cube-bluetooth-library.js',
   'backend/chauvet-dj-bluetooth-library.js',
   'backend/fotodiox-prizmo-bluetooth-library.js',
+  'backend/broncolor-led-f160-wifi-library.js',
   'backend/fixture-structural-classification.js',
   'backend/fixture-structural-classification-selftest.js',
   'backend/fixture-library.js',

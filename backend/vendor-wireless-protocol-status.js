@@ -177,6 +177,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  SHEHDS: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'shehds-cob-zoom-par-wifi-capture-v1',
+    evidence: [
+      'https://shehds.com/products/app-control-200w-300w-cob-par-light',
+      'https://shehds.com/pages/app-control'
+    ],
+    note: 'Direct Wi-Fi SHEHDS Control app transport is verified only for the App Control 200W and 300W COB Zoom Par Warm&Cool White variants in this checkpoint. Bluetooth is not claimed for these exact variants. LightingAI proprietary network command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

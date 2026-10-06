@@ -381,6 +381,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  SHEHDS: {
+    id:'shehds-cob-zoom-par-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'SHEHDS Control',
+    commandSpecStatus:'public-network-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one SHEHDS App Control 200W or 300W COB Zoom Par Warm&Cool White fixture per first capture set and record the exact power variant.',
+      'Use only the Wireless WiFi + SHEHDS Control app path documented for this exact product family.',
+      'Disable DMX/RDM, Auto, Sound and Master-Slave control during the first Wi-Fi capture so traffic attribution stays unambiguous.',
+      'Do not infer TCP/UDP ports, discovery protocol, authentication/session flow, message framing, payload encoding or compatibility with other SHEHDS fixtures from the documented Wi-Fi capability.'
+    ],
+    officialSources:[
+      'https://shehds.com/products/app-control-200w-300w-cob-par-light',
+      'https://shehds.com/pages/app-control'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact 200W or 300W Warm&Cool White fixture with SHEHDS Control over the documented Wi-Fi path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one warm/cool CCT change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger exactly one documented app effect/strobe action per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

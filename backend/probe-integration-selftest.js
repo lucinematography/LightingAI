@@ -82,6 +82,7 @@ const allowed=new Set([
   'backend/yc-onion-bluetooth-library.js',
   'backend/kf-concept-bluetooth-library.js',
   'backend/profoto-bluetooth-library.js',
+  'backend/shehds-wifi-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

@@ -364,6 +364,10 @@ const profoto=byManufacturer.get('Profoto');
 if(!profoto || profoto.bluetooth!==4 || profoto.wifi!==0 || profoto.both!==0) {
   failures.push('Profoto wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const shehds=byManufacturer.get('SHEHDS');
+if(!shehds || shehds.bluetooth!==0 || shehds.wifi!==2 || shehds.both!==0) {
+  failures.push('SHEHDS wireless coverage expected 0 Bluetooth / 2 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

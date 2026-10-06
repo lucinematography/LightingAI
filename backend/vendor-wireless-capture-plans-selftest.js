@@ -240,6 +240,20 @@ expect(profoto?.safety?.rawCaptureCommitAllowed===false,'Profoto raw captures mu
 expect(profoto?.safety?.derivedEvidenceOnly===true,'Profoto only derived evidence may enter repo');
 expect(profoto?.safety?.resultStatus==='candidate_only_until_physical_replay','Profoto capture result must remain candidate-only');
 
+const shehds=VENDOR_WIRELESS_CAPTURE_PLANS.SHEHDS;
+expect(shehds?.id==='shehds-cob-zoom-par-wifi-capture-v1','SHEHDS Wi-Fi capture plan missing');
+expect(shehds?.transport==='wifi','SHEHDS capture plan must remain Wi-Fi only');
+expect(shehds?.commandSpecStatus==='public-network-command-spec-not-located-in-official-docs','SHEHDS network command spec status changed');
+expect(shehds?.captureSets?.connectOnly?.runs>=3,'SHEHDS connect-only requires at least 3 runs');
+expect(shehds?.captureSets?.dim?.runs>=3,'SHEHDS DIM requires at least 3 runs');
+expect(shehds?.captureSets?.cct?.runs>=3,'SHEHDS CCT requires at least 3 runs');
+expect(shehds?.prerequisites?.some(x=>/Do not infer TCP\/UDP ports/i.test(x)),'SHEHDS capture plan must forbid proprietary network inference');
+expect(shehds?.safety?.officialAppWritesOnly===true,'SHEHDS official-app-only capture safety missing');
+expect(shehds?.safety?.lightingAiWritesAllowed===false,'SHEHDS LightingAI writes must stay disabled during capture');
+expect(shehds?.safety?.rawCaptureCommitAllowed===false,'SHEHDS raw captures must never be committed');
+expect(shehds?.safety?.derivedEvidenceOnly===true,'SHEHDS only derived evidence may enter repo');
+expect(shehds?.safety?.resultStatus==='candidate_only_until_physical_replay','SHEHDS capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

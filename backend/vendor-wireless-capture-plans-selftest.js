@@ -43,6 +43,19 @@ expect(VENDOR_WIRELESS_CAPTURE_PLANS['Hive Lighting']?.id==='hive-shot-bluetooth
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Dracast?.id==='dracast-palette-v2-bluetooth-capture-v1','Dracast Bluetooth capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.SWIT?.id==='swit-console-bluetooth-capture-v1','SWIT Bluetooth capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Harlowe?.id==='harlowe-app-bluetooth-capture-v1','Harlowe Bluetooth capture plan missing');
+const broncolor=VENDOR_WIRELESS_CAPTURE_PLANS.broncolor;
+expect(broncolor?.id==='broncolor-led-f160-wifi-capture-v1','broncolor Wi-Fi capture plan missing');
+expect(broncolor?.transport==='wifi','broncolor LED F160 capture plan must remain Wi-Fi only');
+expect(broncolor?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','broncolor command spec status changed');
+expect(broncolor?.captureSets?.connectOnly?.runs>=3,'broncolor connect-only requires at least 3 runs');
+expect(broncolor?.captureSets?.dim?.runs>=3,'broncolor DIM requires at least 3 runs');
+expect(broncolor?.captureSets?.cct?.runs>=3,'broncolor CCT requires at least 3 runs');
+expect(broncolor?.safety?.officialAppWritesOnly===true,'broncolor official-app-only capture safety missing');
+expect(broncolor?.safety?.lightingAiWritesAllowed===false,'broncolor LightingAI writes must stay disabled during capture');
+expect(broncolor?.safety?.rawCaptureCommitAllowed===false,'broncolor raw captures must never be committed');
+expect(broncolor?.safety?.derivedEvidenceOnly===true,'broncolor only derived evidence may enter repo');
+expect(broncolor?.safety?.resultStatus==='candidate_only_until_physical_replay','broncolor capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

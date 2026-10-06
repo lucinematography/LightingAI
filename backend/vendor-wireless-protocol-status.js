@@ -52,6 +52,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Razer: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'razer-key-light-chroma-wifi-capture-v1',
+    evidence: [
+      'https://www.razer.com/streaming-accessories/razer-key-light-chroma',
+      'https://mysupport.razer.com/app/answers/detail/a_id/5911/~/how-to-customize-the-razer-key-light-chroma',
+      'https://mysupport.razer.com/app/answers/detail/a_id/6194/~/how-to-add-wi-fi-devices-on-razer-synapse-3',
+      'https://mysupport.razer.com/app/answers/detail/a_id/5907/kw/Synapse%2B3%2BMac%2BOS'
+    ],
+    note: '2.4 GHz Wi-Fi app transport is verified only for Razer Key Light Chroma RZ19-0412 in this checkpoint. LightingAI proprietary network command/session semantics remain locked.'
+  },
+
   Rollei: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

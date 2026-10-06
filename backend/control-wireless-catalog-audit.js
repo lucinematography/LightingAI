@@ -233,8 +233,8 @@ if(!phottix || phottix.bluetooth!==7 || phottix.wifi!==0 || phottix.both!==0) {
   failures.push('Phottix wireless coverage expected 7 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const yongnuo=byManufacturer.get('YONGNUO');
-if(!yongnuo || yongnuo.bluetooth!==4 || yongnuo.wifi!==0 || yongnuo.both!==0) {
-  failures.push('YONGNUO wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+if(!yongnuo || yongnuo.bluetooth!==12 || yongnuo.wifi!==0 || yongnuo.both!==0) {
+  failures.push('YONGNUO wireless coverage expected 12 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const pixel=byManufacturer.get('PIXEL');
 if(!pixel || pixel.bluetooth!==2 || pixel.wifi!==0 || pixel.both!==0) {

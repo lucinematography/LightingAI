@@ -196,7 +196,7 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     controllerApp:'LUXCEO documented smartphone APP',
     commandSpecStatus:'public-command-spec-not-located-in-official-docs',
     prerequisites:[
-      'Use exactly one LUXCEO P6, P200, P120 or P7RGB Pro per first capture set and record the exact model.',
+      'Use exactly one LUXCEO P6, P200, P120, P7RGB Pro or P120S per first capture set and record the exact model.',
       'Use only the smartphone app/control path documented by LUXCEO for that exact model.',
       'Disable the included handheld/IR remote where present so Bluetooth traffic attribution stays unambiguous.',
       'Do not infer GATT services, UUIDs, characteristics, packet formats or cross-model command compatibility from the documented Bluetooth capability.'
@@ -205,7 +205,9 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       'https://www.luxceo.com/en/rgb-fill-light/13',
       'https://www.luxceo.com/en/shoot/107',
       'https://www.luxceo.com/index.php/en/shoot/112',
-      'https://www.luxceo.com/en/shoot/111'
+      'https://www.luxceo.com/en/shoot/111',
+      'https://www.luxceo.com/en/products/51',
+      'https://www.luxceo.com/storage/files/1735e97eed7bd45220531d97e29720f4.pdf'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Connect only one exact LUXCEO model with the documented smartphone app, wait 15 seconds, make no lighting changes, then disconnect.'},

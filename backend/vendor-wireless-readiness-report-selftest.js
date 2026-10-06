@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===822,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===61,'wireless manufacturer coverage must remain 61');
+expect(report.fixtureCount===824,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===62,'wireless manufacturer coverage must remain 62');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -95,6 +95,8 @@ expect(by.Yidoblo?.bluetoothFixtures===4&&by.Yidoblo?.wifiFixtures===0&&by.Yidob
 expect(by.Yidoblo?.assistedBluetooth===0,'Yidoblo must remain direct Bluetooth');
 expect(by.FEELWORLD?.bluetoothFixtures===5&&by.FEELWORLD?.wifiFixtures===0&&by.FEELWORLD?.bothFixtures===0,'FEELWORLD wireless counts changed unexpectedly');
 expect(by.FEELWORLD?.assistedBluetooth===0,'FEELWORLD must remain direct Bluetooth');
+expect(by.SUTEFOTO?.bluetoothFixtures===2&&by.SUTEFOTO?.wifiFixtures===0&&by.SUTEFOTO?.bothFixtures===0,'SUTEFOTO wireless counts changed unexpectedly');
+expect(by.SUTEFOTO?.assistedBluetooth===0,'SUTEFOTO must remain direct Bluetooth');
 
 console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
 if(failures.length)process.exit(1);

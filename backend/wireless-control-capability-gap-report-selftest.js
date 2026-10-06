@@ -25,12 +25,12 @@ expect(verifiedWirelessTransport({
 }).bluetooth===true,
   'Verified Bluetooth transport evidence must enter wireless gap scope');
 
-expect(report.fixtureCount===822,'fixture total changed from verified catalog');
-expect(report.wirelessFixtures===485,'verified wireless fixture total changed unexpectedly');
+expect(report.fixtureCount===824,'fixture total changed from verified catalog');
+expect(report.wirelessFixtures===487,'verified wireless fixture total changed unexpectedly');
 expect(report.fixturesWithAnyGap>0,'capability-gap audit unexpectedly empty');
 
 const by=report.byManufacturer;
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO']){
   expect(!!by[maker],maker+' capability-gap row missing');
 }
 
@@ -40,6 +40,7 @@ expect(by.Pilotfly?.wirelessFixtures===4,'Pilotfly wireless count changed');
 expect(by.LUXCEO?.wirelessFixtures===4,'LUXCEO wireless count changed');
 expect(by.Yidoblo?.wirelessFixtures===4,'Yidoblo wireless count changed');
 expect(by.FEELWORLD?.wirelessFixtures===5,'FEELWORLD wireless count changed');
+expect(by.SUTEFOTO?.wirelessFixtures===2,'SUTEFOTO wireless count changed');
 expect(by.Godox?.missingDim===0,'Godox DIM official-app capability coverage changed');
 expect(by.Nanlite?.missingDim===0,'Nanlite DIM official-app capability coverage changed');
 expect(by.Aputure?.missingDim===0,'Aputure DIM official-app capability coverage changed');

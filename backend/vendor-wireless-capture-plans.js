@@ -276,6 +276,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  SUTEFOTO: {
+    id:'sutefoto-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'SS LED Video Light',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one SUTEFOTO P100 RGB or T18 APP per first capture set and record the exact model.',
+      'Use only the SS LED Video Light Bluetooth app path documented by SUTEFOTO for that exact model.',
+      'Disable 2.4G/optional remote control and other group-control paths during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats or cross-model command compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.sutefoto.com/en/P100-RGB-Full-Color-Video-Light-PG9481126',
+      'https://sutefoto.com/DownLoad/90452.html?a=download',
+      'https://sutefoto.com/en/T18APP-Led-Light-Panel-PG9524128',
+      'https://sutefoto.com/DownLoad/109538.html?a=download'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect only one exact SUTEFOTO model with SS LED Video Light, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture.'},
+      color:{runs:3,optional:true,rule:'Only for P100 RGB; perform exactly one HSI or RGBCW color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

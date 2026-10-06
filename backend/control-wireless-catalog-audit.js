@@ -348,6 +348,10 @@ const feelworld=byManufacturer.get('FEELWORLD');
 if(!feelworld || feelworld.bluetooth!==5 || feelworld.wifi!==0 || feelworld.both!==0) {
   failures.push('FEELWORLD wireless coverage expected 5 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const sutefoto=byManufacturer.get('SUTEFOTO');
+if(!sutefoto || sutefoto.bluetooth!==2 || sutefoto.wifi!==0 || sutefoto.both!==0) {
+  failures.push('SUTEFOTO wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

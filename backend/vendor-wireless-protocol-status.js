@@ -116,6 +116,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  SUTEFOTO: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'sutefoto-bluetooth-capture-v1',
+    evidence: [
+      'https://www.sutefoto.com/en/P100-RGB-Full-Color-Video-Light-PG9481126',
+      'https://sutefoto.com/DownLoad/90452.html?a=download',
+      'https://sutefoto.com/en/T18APP-Led-Light-Panel-PG9524128',
+      'https://sutefoto.com/DownLoad/109538.html?a=download'
+    ],
+    note: 'Direct Bluetooth SS LED Video Light app transport is verified only for P100 RGB and T18 APP in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

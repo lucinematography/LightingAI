@@ -181,6 +181,21 @@ expect(feelworld?.safety?.rawCaptureCommitAllowed===false,'FEELWORLD raw capture
 expect(feelworld?.safety?.derivedEvidenceOnly===true,'FEELWORLD only derived evidence may enter repo');
 expect(feelworld?.safety?.resultStatus==='candidate_only_until_physical_replay','FEELWORLD capture result must remain candidate-only');
 
+const sutefoto=VENDOR_WIRELESS_CAPTURE_PLANS.SUTEFOTO;
+expect(sutefoto?.id==='sutefoto-bluetooth-capture-v1','SUTEFOTO Bluetooth capture plan missing');
+expect(sutefoto?.transport==='bluetooth','SUTEFOTO capture plan must remain Bluetooth only');
+expect(sutefoto?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','SUTEFOTO command spec status changed');
+expect(sutefoto?.captureSets?.connectOnly?.runs>=3,'SUTEFOTO connect-only requires at least 3 runs');
+expect(sutefoto?.captureSets?.dim?.runs>=3,'SUTEFOTO DIM requires at least 3 runs');
+expect(sutefoto?.captureSets?.cct?.runs>=3,'SUTEFOTO CCT requires at least 3 runs');
+expect(sutefoto?.captureSets?.color?.optional===true,'SUTEFOTO COLOR capture must stay P100 RGB scoped/optional');
+expect(sutefoto?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'SUTEFOTO capture plan must forbid proprietary GATT inference');
+expect(sutefoto?.safety?.officialAppWritesOnly===true,'SUTEFOTO official-app-only capture safety missing');
+expect(sutefoto?.safety?.lightingAiWritesAllowed===false,'SUTEFOTO LightingAI writes must stay disabled during capture');
+expect(sutefoto?.safety?.rawCaptureCommitAllowed===false,'SUTEFOTO raw captures must never be committed');
+expect(sutefoto?.safety?.derivedEvidenceOnly===true,'SUTEFOTO only derived evidence may enter repo');
+expect(sutefoto?.safety?.resultStatus==='candidate_only_until_physical_replay','SUTEFOTO capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

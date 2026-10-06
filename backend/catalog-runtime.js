@@ -149,6 +149,7 @@ import { KENRO_BLUETOOTH_FIXTURES } from './kenro-bluetooth-library.js';
 import { SELENS_BLUETOOTH_FIXTURES } from './selens-bluetooth-library.js';
 import { FOMEX_FLEXCOLOR_BLUETOOTH_FIXTURES } from './fomex-flexcolor-bluetooth-library.js';
 import { BBS_CASAMBI_BLUETOOTH_FIXTURES } from './bbs-casambi-bluetooth-library.js';
+import { SUMOLIGHT_WIFI_FIXTURES } from './sumolight-wifi-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -343,6 +344,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(SELENS_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(FOMEX_FLEXCOLOR_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(BBS_CASAMBI_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(SUMOLIGHT_WIFI_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

@@ -8,6 +8,7 @@ const SRC={
   panelPro2:'https://lumecube.com/products/panel-pro',
   tubeMini:'https://lumecube.com/products/tube-light-mini',
   tubeXL:'https://lumecube.com/products/tube-light-xl',
+  tubeLarge:'https://lumecube.com/products/lume-cube-rgb-tube-light-l',
   cubeXL:'https://lumecube.com/products/lume-cube-xl-60w-rgb-mini-cob-led-light'
 };
 
@@ -74,6 +75,20 @@ export const LUME_CUBE_BLUETOOTH_FIXTURES=[
     colorMode:'RGB / HSI / CCT',
     control:bluetoothControl(SRC.tubeXL,'First-party product and support documentation explicitly confirm Bluetooth control through Lume Control for Tube Light XL.'),
     sourceUrl:SRC.tubeXL
+  },
+  {
+    id:'lume-cube-tube-light-large',
+    manufacturer:'Lume Cube',
+    model:'RGB Tube Light Large (2 ft)',
+    family:'Tube Light',
+    category:'Light',
+    sourceType:'RGB LED Tube',
+    formFactor:'Tube',
+    cctK:{min:2700,max:7500},
+    colorMode:'RGB / HSI / CCT',
+    cri:96,
+    control:bluetoothControl(SRC.tubeLarge,'First-party product documentation explicitly confirms Bluetooth app control through Lume Control for the 2 ft Tube Light Large.'),
+    sourceUrl:SRC.tubeLarge
   },
   {
     id:'lume-cube-xl',

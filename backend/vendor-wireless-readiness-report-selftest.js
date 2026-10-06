@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===1013,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===1018,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -103,7 +103,7 @@ expect(by['YC Onion']?.bluetoothFixtures===1&&by['YC Onion']?.wifiFixtures===0&&
 expect(by['YC Onion']?.assistedBluetooth===0,'YC Onion must remain direct Bluetooth');
 expect(by['K&F Concept']?.bluetoothFixtures===1&&by['K&F Concept']?.wifiFixtures===0&&by['K&F Concept']?.bothFixtures===0,'K&F Concept wireless counts changed unexpectedly');
 expect(by['K&F Concept']?.assistedBluetooth===0,'K&F Concept must remain direct Bluetooth');
-expect(by.Profoto?.bluetoothFixtures===4&&by.Profoto?.wifiFixtures===0&&by.Profoto?.bothFixtures===0,'Profoto wireless counts changed unexpectedly');
+expect(by.Profoto?.bluetoothFixtures===9&&by.Profoto?.wifiFixtures===0&&by.Profoto?.bothFixtures===0,'Profoto wireless counts changed unexpectedly');
 expect(by.Profoto?.assistedBluetooth===0,'Profoto must remain direct Bluetooth');
 expect(by.SHEHDS?.bluetoothFixtures===0&&by.SHEHDS?.wifiFixtures===2&&by.SHEHDS?.bothFixtures===0,'SHEHDS wireless counts changed unexpectedly');
 expect(by.SHEHDS?.assistedBluetooth===0,'SHEHDS must not be classified as assisted Bluetooth');

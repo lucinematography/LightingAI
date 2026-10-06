@@ -361,8 +361,8 @@ if(!kfConcept || kfConcept.bluetooth!==1 || kfConcept.wifi!==0 || kfConcept.both
   failures.push('K&F Concept wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const profoto=byManufacturer.get('Profoto');
-if(!profoto || profoto.bluetooth!==4 || profoto.wifi!==0 || profoto.both!==0) {
-  failures.push('Profoto wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+if(!profoto || profoto.bluetooth!==9 || profoto.wifi!==0 || profoto.both!==0) {
+  failures.push('Profoto wireless coverage expected 9 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const shehds=byManufacturer.get('SHEHDS');
 if(!shehds || shehds.bluetooth!==0 || shehds.wifi!==2 || shehds.both!==0) {

@@ -1295,6 +1295,8 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     ],
     officialSources:[
       'https://www.elgato.com/us/en/p/key-light',
+      'https://help.elgato.com/hc/en-us/articles/20934004416269-Elgato-Key-Light-MK-2-Technical-Specifications',
+      'https://help.elgato.com/hc/en-us/articles/20935383021965-Elgato-Key-Light-How-to-Identify-if-You-Have-a-Key-Light-or-Key-Light-MK-2',
       'https://help.elgato.com/hc/en-us/article_attachments/360081486532',
       'https://www.elgato.com/us/en/explorer/products/lighting/key-light-air-mk2-quick-start-guide/',
       'https://www.elgato.com/ww/en/s/user-manual/key-light-neo',

@@ -52,6 +52,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Jinbei: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'jinbei-studio-bluetooth-capture-v1',
+    evidence: [
+      'https://www.jinbei-deutschland.de/en/blogs/jinbeisphotobox/creative-light-management-made-easy-the-jinbei-studio-app',
+      'https://www.jinbei-deutschland.de/en/products/ef-120c-rgb-led-dauerlicht',
+      'https://www.jinbei-deutschland.de/en/products/ef-200x-led-dauerlicht',
+      'https://www.jinbei-deutschland.de/en/products/jl-600c-rgb-led-dauerlicht'
+    ],
+    note: 'Bluetooth 5.0/app transport is verified only for EF-120C, EF-200X and JL-600RGB in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   Ikan: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

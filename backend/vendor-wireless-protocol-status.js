@@ -656,6 +656,16 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://www.falconeyeshk.com/product-page/ds-300c-pro',
       'https://www.falconeyeshk.com/zh/product-page/dm2',
       'https://www.falconeyeshk.com/zh/product-page/dm4',
+      'https://www.falconeyeshk.com/product-page/m-300',
+      'https://www.falconeyeshk.com/product-page/m500',
+      'https://www.falconeyeshk.com/product-page/m1200',
+      'https://www.falconeyeshk.com/product-page/mc-180c',
+      'https://www.falconeyeshk.com/product-page/mc-400',
+      'https://www.falconeyeshk.com/product-page/irisa-1',
+      'https://www.falconeyeshk.com/product-page/irisa-2',
+      'https://www.falconeyeshk.com/product-page/irisa-4',
+      'https://www.falconeyeshk.com/product-page/d-s200pro',
+      'https://www.falconeyeshk.com/product-page/tank-80b',
       'https://www.falconeyeshk.com/app-bluetooth'
     ],
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'

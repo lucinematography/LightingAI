@@ -193,8 +193,8 @@ if(!colbor || colbor.bluetooth!==2 || colbor.wifi!==0 || colbor.both!==0) {
   failures.push('COLBOR wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const sirui=byManufacturer.get('SIRUI');
-if(!sirui || sirui.bluetooth!==10 || sirui.wifi!==0 || sirui.both!==0) {
-  failures.push('SIRUI wireless coverage expected 10 Bluetooth / 0 Wi-Fi / 0 both');
+if(!sirui || sirui.bluetooth!==11 || sirui.wifi!==0 || sirui.both!==0) {
+  failures.push('SIRUI wireless coverage expected 11 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const fiilex=byManufacturer.get('Fiilex');
 if(!fiilex || fiilex.bluetooth!==0 || fiilex.wifi!==1 || fiilex.both!==0) {

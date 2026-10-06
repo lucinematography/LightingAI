@@ -292,6 +292,10 @@ const fotodiox=byManufacturer.get('Fotodiox');
 if(!fotodiox || fotodiox.bluetooth!==1 || fotodiox.wifi!==0 || fotodiox.both!==0) {
   failures.push('Fotodiox wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const broncolor=byManufacturer.get('broncolor');
+if(!broncolor || broncolor.bluetooth!==0 || broncolor.wifi!==1 || broncolor.both!==0) {
+  failures.push('broncolor wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

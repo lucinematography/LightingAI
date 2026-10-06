@@ -809,9 +809,10 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://www.chauvetdj.com/products/btair/',
       'https://www.chauvetdj.com/products/category/ils/',
       'https://www.chauvetdj.com/products/category/ils/page/2/',
-      'https://www.chauvetdj.com/products/category/washlights/'
+      'https://www.chauvetdj.com/products/category/washlights/',
+      'https://www.chauvetdj.com/products/slimpar-t6bt/'
     ],
-    note: 'Built-in Bluetooth/BTAir transport is verified for the 21 exact CHAUVET DJ BT fixtures cataloged in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+    note: 'Built-in Bluetooth/BTAir transport is verified for the 22 exact CHAUVET DJ BT fixtures cataloged in this checkpoint, including legacy SlimPAR T6BT. LightingAI proprietary command/session semantics remain locked.'
   },
 
   'Lume Cube': {

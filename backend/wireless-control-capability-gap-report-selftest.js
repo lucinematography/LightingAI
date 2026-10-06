@@ -25,12 +25,12 @@ expect(verifiedWirelessTransport({
 }).bluetooth===true,
   'Verified Bluetooth transport evidence must enter wireless gap scope');
 
-expect(report.fixtureCount===826,'fixture total changed from verified catalog');
-expect(report.wirelessFixtures===489,'verified wireless fixture total changed unexpectedly');
+expect(report.fixtureCount===830,'fixture total changed from verified catalog');
+expect(report.wirelessFixtures===493,'verified wireless fixture total changed unexpectedly');
 expect(report.fixturesWithAnyGap>0,'capability-gap audit unexpectedly empty');
 
 const by=report.byManufacturer;
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto']){
   expect(!!by[maker],maker+' capability-gap row missing');
 }
 
@@ -43,6 +43,7 @@ expect(by.FEELWORLD?.wirelessFixtures===5,'FEELWORLD wireless count changed');
 expect(by.SUTEFOTO?.wirelessFixtures===2,'SUTEFOTO wireless count changed');
 expect(by['YC Onion']?.wirelessFixtures===1,'YC Onion wireless count changed');
 expect(by['K&F Concept']?.wirelessFixtures===1,'K&F Concept wireless count changed');
+expect(by.Profoto?.wirelessFixtures===4,'Profoto wireless count changed');
 expect(by.Godox?.missingDim===0,'Godox DIM official-app capability coverage changed');
 expect(by.Nanlite?.missingDim===0,'Nanlite DIM official-app capability coverage changed');
 expect(by.Aputure?.missingDim===0,'Aputure DIM official-app capability coverage changed');

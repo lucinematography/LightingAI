@@ -160,6 +160,23 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Profoto: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'profoto-b10-series-bluetooth-capture-v1',
+    evidence: [
+      'https://support.profoto.com/support/solutions/articles/79000071121-does-the-b10-b10-plus-have-bluetooth-and-is-the-b10-b10-plus-compatible-with-the-profoto-app-',
+      'https://profoto.com/globalassets/support/user-guides/b10-and-b10-plus/profoto-b10--b10-plus-user-guide-english.pdf',
+      'https://www.profoto.com/int/en/shop/products/lights/monolights/battery-powered/profoto-b10x-and-b10x-plus/',
+      'https://profoto.com/globalassets/support/user-guides/b10x-and-b10x-plus/profoto-b10x--b10x-plus-user-guide-english.pdf',
+      'https://support.profoto.com/support/solutions/articles/79000117433-how-do-i-activate-and-adjust-the-continuous-light-on-my-profoto-device-'
+    ],
+    note: 'Direct Bluetooth Profoto app transport is verified only for B10, B10 Plus, B10X and B10X Plus in this checkpoint. Profoto Air/AirX radio is not classified as Wi-Fi. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

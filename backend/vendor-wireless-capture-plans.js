@@ -355,6 +355,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Profoto: {
+    id:'profoto-b10-series-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Profoto Camera / Profoto Control',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Profoto B10, B10 Plus, B10X or B10X Plus per first capture set and record the exact model.',
+      'Use only the direct Bluetooth Profoto app path documented for that exact B-series model.',
+      'Disable Profoto Air/AirX remote triggering/control during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats or cross-model command compatibility from the documented Bluetooth app capability.'
+    ],
+    officialSources:[
+      'https://support.profoto.com/support/solutions/articles/79000071121-does-the-b10-b10-plus-have-bluetooth-and-is-the-b10-b10-plus-compatible-with-the-profoto-app-',
+      'https://profoto.com/globalassets/support/user-guides/b10-and-b10-plus/profoto-b10--b10-plus-user-guide-english.pdf',
+      'https://www.profoto.com/int/en/shop/products/lights/monolights/battery-powered/profoto-b10x-and-b10x-plus/',
+      'https://profoto.com/globalassets/support/user-guides/b10x-and-b10x-plus/profoto-b10x--b10x-plus-user-guide-english.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact B-series model with the Profoto app over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one continuous-light brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one continuous-light CCT change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

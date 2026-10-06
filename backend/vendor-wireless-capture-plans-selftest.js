@@ -225,6 +225,21 @@ expect(kfConcept?.safety?.rawCaptureCommitAllowed===false,'K&F Concept raw captu
 expect(kfConcept?.safety?.derivedEvidenceOnly===true,'K&F Concept only derived evidence may enter repo');
 expect(kfConcept?.safety?.resultStatus==='candidate_only_until_physical_replay','K&F Concept capture result must remain candidate-only');
 
+const profoto=VENDOR_WIRELESS_CAPTURE_PLANS.Profoto;
+expect(profoto?.id==='profoto-b10-series-bluetooth-capture-v1','Profoto Bluetooth capture plan missing');
+expect(profoto?.transport==='bluetooth','Profoto capture plan must remain Bluetooth only');
+expect(profoto?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Profoto command spec status changed');
+expect(profoto?.captureSets?.connectOnly?.runs>=3,'Profoto connect-only requires at least 3 runs');
+expect(profoto?.captureSets?.dim?.runs>=3,'Profoto DIM requires at least 3 runs');
+expect(profoto?.captureSets?.cct?.runs>=3,'Profoto CCT requires at least 3 runs');
+expect(profoto?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Profoto capture plan must forbid proprietary GATT inference');
+expect(profoto?.prerequisites?.some(x=>/Disable Profoto Air\/AirX/i.test(x)),'Profoto capture plan must isolate Bluetooth from Air/AirX');
+expect(profoto?.safety?.officialAppWritesOnly===true,'Profoto official-app-only capture safety missing');
+expect(profoto?.safety?.lightingAiWritesAllowed===false,'Profoto LightingAI writes must stay disabled during capture');
+expect(profoto?.safety?.rawCaptureCommitAllowed===false,'Profoto raw captures must never be committed');
+expect(profoto?.safety?.derivedEvidenceOnly===true,'Profoto only derived evidence may enter repo');
+expect(profoto?.safety?.resultStatus==='candidate_only_until_physical_replay','Profoto capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

@@ -541,6 +541,41 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  'Mole-Richardson': {
+    id:'mole-richardson-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Mole-Richardson/Luminaire iOS App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one listed Mole-Richardson model per first capture set and record exact model and firmware.',
+      'Use only the vendor-documented Bluetooth app-control path for that exact model.',
+      'Disable wired DMX/RDM and LumenRadio wireless-DMX during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.mole.com/vari-baby-led',
+      'https://www.mole.com/vari-junior-led',
+      'https://www.mole.com/vari-studio-junior-led',
+      'https://www.mole.com/vari-senior-led',
+      'https://www.mole.com/vari-tener-led',
+      'https://www.mole.com/big-eye-led',
+      'https://www.mole.com/vari-soft-panel',
+      'https://www.mole.com/200w-vari-space-series2',
+      'https://www.mole.com/400w-vari-space-series2',
+      'https://www.mole.com/900w-vari-space-series2',
+      'https://www.mole.com/maxi-led-3',
+      'https://www.mole.com/maxi-led-6',
+      'https://www.mole.com/maxi-led-12'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Mole-Richardson model through the vendor Bluetooth app path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'Only for exact variable-color models; perform one color-temperature change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

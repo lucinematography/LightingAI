@@ -1639,15 +1639,18 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     controllerApp:'Lishuai Light Reel',
     commandSpecStatus:'public-command-spec-not-located-in-official-docs',
     prerequisites:[
-      'Use one exact Lishuai COOLCAM P60G or P120G fixture at a time with the official Light Reel app.',
-      'Use the fixture Bluetooth reset before each clean capture session.',
+      'Use one exact Lishuai COOLCAM P60G, P120G, 200X(G) or 300X(G) fixture at a time with the official Light Reel app.',
+      'Use the documented Bluetooth reset procedure where the exact model manual provides it; otherwise start from a clean official-app connection state.',
       'Keep the separate 2.4G remote-control path out of Bluetooth captures.',
       'Do not infer compatibility to other Lishuai models without exact-model Bluetooth evidence.'
     ],
     officialSources:[
       'https://www.lishuai.com.cn/lishuai/2023/12/19/coolcamp60gp120gshuomingshu.pdf',
+      'https://www.lishuai.com.cn/lishuai/2023/12/19/coolcam120xg200dg200xgshuomingshu.pdf',
+      'https://www.lishuai.com.cn/lishuai/2023/12/19/coolcam300dg300xgshuomingshu.pdf',
       'https://www.lishuai.com.cn/service/zi-liao-xia-zai/',
-      'https://www.lishuai.com.cn/'
+      'https://www.lishuai.com.cn/product/coolcam-gu-jin-xi-lie/',
+      'https://www.lishuai.com.cn/product/light-reel-app/'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Reset Bluetooth, connect one Lishuai fixture in Light Reel, wait 15 seconds, make no lighting changes, then disconnect.'},

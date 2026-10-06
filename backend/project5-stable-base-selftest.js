@@ -130,6 +130,7 @@ const exactAllowed = new Set([
   'backend/nanlux-evoke-2400b-bluetooth-library.js',
   'backend/mettle-tube-x-bluetooth-library.js',
   'backend/pixapro-neon-bluetooth-library.js',
+  'backend/ape-labs-assisted-bluetooth-library.js',
   'backend/fixture-structural-classification.js',
   'backend/fixture-structural-classification-selftest.js',
   'backend/fixture-library.js',

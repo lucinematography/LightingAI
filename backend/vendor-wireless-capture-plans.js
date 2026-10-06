@@ -459,6 +459,29 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  SUMOLIGHT: {
+    id:'sumolight-sumospace-plus-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'Standards-based Art-Net/sACN controller over SUMOSPACE+ Wi-Fi',
+    commandSpecStatus:'standard-artnet-sacn-documented-exact-hardware-replay-pending',
+    prerequisites:[
+      'Use exactly one SUMOLIGHT SUMOSPACE+ and record the exact firmware/software environment.',
+      'Use only the vendor-documented Wi-Fi network path with Art-Net or sACN for the first capture set.',
+      'Disable wired DMX/RDM and Ethernet/LAN control during the first Wi-Fi capture so transport attribution stays unambiguous.',
+      'Do not infer undocumented vendor discovery, authentication, configuration, multicast/unicast defaults or non-standard payload semantics beyond the documented Art-Net/sACN standards.'
+    ],
+    officialSources:[
+      'https://sumolight.com/sumospace'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Join the exact SUMOSPACE+ Wi-Fi network/control path, wait 15 seconds, send no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one standards-based Art-Net or sACN brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one standards-based Art-Net or sACN CCT change per capture using only an exact verified personality/channel map.'}
+    },
+    safety:{officialAppWritesOnly:false,standardsControllerOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

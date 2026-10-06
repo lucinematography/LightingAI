@@ -5,11 +5,13 @@ const SRC={
   p6:'https://www.luxceo.com/en/rgb-fill-light/13',
   p200:'https://www.luxceo.com/en/shoot/107',
   p120:'https://www.luxceo.com/index.php/en/shoot/112',
-  p7rgbPro:'https://www.luxceo.com/en/shoot/111'
+  p7rgbPro:'https://www.luxceo.com/en/shoot/111',
+  p120s:'https://www.luxceo.com/en/products/51',
+  p120sManual:'https://www.luxceo.com/storage/files/1735e97eed7bd45220531d97e29720f4.pdf'
 };
 
 function capabilityVerification(sourceUrl){
-  const sources=[sourceUrl];
+  const sources=Array.isArray(sourceUrl)?sourceUrl:[sourceUrl];
   return {
     dim:{verified:true,scope:'official-app-capability-only',sourceUrls:sources,note:'LUXCEO documents app brightness control for this exact model. This proves operator capability only, not LightingAI Bluetooth command encoding.'},
     cct:{verified:true,scope:'official-app-capability-only',sourceUrls:sources,note:'LUXCEO documents adjustable color temperature through the official app path for this exact model. This proves operator capability only.'},
@@ -19,7 +21,7 @@ function capabilityVerification(sourceUrl){
 }
 
 function bluetoothControl(sourceUrl,model){
-  const sources=[sourceUrl];
+  const sources=Array.isArray(sourceUrl)?sourceUrl:[sourceUrl];
   return {
     wired:[],
     wireless:['Bluetooth via LUXCEO documented smartphone APP'],
@@ -99,5 +101,20 @@ export const LUXCEO_BLUETOOTH_FIXTURES=[
     cri:95,
     control:bluetoothControl(SRC.p7rgbPro,'P7RGB Pro'),
     sourceUrl:SRC.p7rgbPro
+  },
+  {
+    id:'luxceo-p120s',
+    manufacturer:'LUXCEO',
+    model:'P120S',
+    family:'RGB Full Color Video Light',
+    category:'Light',
+    sourceType:'RGB Full Color Video Light Stick',
+    formFactor:'Tube',
+    colorMode:'RGBCW / CCT / HSI / x-y / Gel / FX',
+    cctK:{min:2000,max:10000},
+    powerDrawW:30,
+    cri:95,
+    control:{...bluetoothControl([SRC.p120s,SRC.p120sManual],'P120S'),wired:['DMX512']},
+    sourceUrl:SRC.p120s
   }
 ];

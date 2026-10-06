@@ -1271,9 +1271,14 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://help.amarancreators.com/en/amaran-flexible-lights/light-configuration-settings',
       'https://help.amarancreators.com/en/amaran-tube/menu-options',
       'https://help.amarancreators.com/en/amaran-pixel-tubes/light-configuration-settings',
-      'https://help.amarancreators.com/en/sm5c-pixel-tape/control-options'
+      'https://help.amarancreators.com/en/sm5c-pixel-tape/control-options',
+      'https://amarancreators.com/pages/amaran-pano-60c',
+      'https://amarancreators.com/pages/amaran-pano-120c',
+      'https://amarancreators.com/pages/amaran-verge/',
+      'https://amarancreators.com/pages/amaran-verge-max/',
+      'https://eu.amarancreators.com/pages/amaran-go'
     ],
-    note: 'Bluetooth is verified only for the 20 explicitly listed model records. Wi-Fi is verified only for SM5c via its documented Tuya Smart path. LightingAI command semantics remain locked.'
+    note: 'Bluetooth is verified only for the 25 explicitly listed model records, including Pano 60c, Pano 120c, Verge, Verge Max and Go. Wi-Fi is verified only for SM5c via its documented Tuya Smart path. LightingAI command semantics remain locked.'
   },
   SmallRig: {
     bluetooth: 'transport_verified_model_scoped',

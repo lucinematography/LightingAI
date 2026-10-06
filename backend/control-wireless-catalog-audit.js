@@ -420,6 +420,10 @@ const rosco=byManufacturer.get('Rosco');
 if(!rosco || rosco.bluetooth!==4 || rosco.wifi!==0 || rosco.both!==0) {
   failures.push('Rosco wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const dedolight=byManufacturer.get('dedolight');
+if(!dedolight || dedolight.bluetooth!==4 || dedolight.wifi!==0 || dedolight.both!==0) {
+  failures.push('dedolight wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

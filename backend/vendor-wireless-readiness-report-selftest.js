@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===1078,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===1082,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -77,7 +77,7 @@ expect(by.Jinbei?.bluetoothFixtures===12&&by.Jinbei?.wifiFixtures===0&&by.Jinbei
 expect(by['Lume Cube']?.bluetoothFixtures===5&&by['Lume Cube']?.wifiFixtures===0&&by['Lume Cube']?.bothFixtures===0,'Lume Cube wireless counts changed unexpectedly');
 expect(by['CHAUVET DJ']?.bluetoothFixtures===22&&by['CHAUVET DJ']?.wifiFixtures===0&&by['CHAUVET DJ']?.bothFixtures===0,'CHAUVET DJ wireless counts changed unexpectedly');
 expect(by.Fotodiox?.bluetoothFixtures===1&&by.Fotodiox?.wifiFixtures===0&&by.Fotodiox?.bothFixtures===0,'Fotodiox wireless counts changed unexpectedly');
-expect(by.broncolor?.bluetoothFixtures===0&&by.broncolor?.wifiFixtures===1&&by.broncolor?.bothFixtures===0,'broncolor wireless counts changed unexpectedly');
+expect(by.broncolor?.bluetoothFixtures===0&&by.broncolor?.wifiFixtures===5&&by.broncolor?.bothFixtures===0,'broncolor wireless counts changed unexpectedly');
 expect(by.Genaray?.bluetoothFixtures===7&&by.Genaray?.wifiFixtures===0&&by.Genaray?.bothFixtures===0,'Genaray wireless counts changed unexpectedly');
 expect(by.Elgato?.bluetoothFixtures===0&&by.Elgato?.wifiFixtures===5&&by.Elgato?.bothFixtures===0,'Elgato wireless counts changed unexpectedly');
 expect(by.Westcott?.bluetoothFixtures===4&&by.Westcott?.wifiFixtures===0&&by.Westcott?.bothFixtures===0,'Westcott wireless counts changed unexpectedly');

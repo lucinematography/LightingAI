@@ -272,6 +272,31 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  'Mole-Richardson': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'mole-richardson-bluetooth-capture-v1',
+    evidence: [
+      'https://www.mole.com/vari-baby-led',
+      'https://www.mole.com/vari-junior-led',
+      'https://www.mole.com/vari-studio-junior-led',
+      'https://www.mole.com/vari-senior-led',
+      'https://www.mole.com/vari-tener-led',
+      'https://www.mole.com/big-eye-led',
+      'https://www.mole.com/vari-soft-panel',
+      'https://www.mole.com/200w-vari-space-series2',
+      'https://www.mole.com/400w-vari-space-series2',
+      'https://www.mole.com/900w-vari-space-series2',
+      'https://www.mole.com/maxi-led-3',
+      'https://www.mole.com/maxi-led-6',
+      'https://www.mole.com/maxi-led-12'
+    ],
+    note: 'Direct Bluetooth app transport is first-party verified only for the 13 exact Mole-Richardson LED models in this checkpoint. LumenRadio is a separate wireless-DMX path. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

@@ -1687,6 +1687,7 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       'https://th.hkyongnuo.com/products/yn216-ii',
       'https://www.th.hkyongnuo.com/products/yn300-iii',
       'https://www.th.hkyongnuo.com/products/yn600l-ii',
+      'https://th.hkyongnuo.com/u_file/2309/08/file/YONGNUOICELIGHT.pdf',
       'https://www.hkyongnuo.com/app'
     ],
     captureSets:{

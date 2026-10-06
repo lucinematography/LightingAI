@@ -125,8 +125,8 @@ if(!aputure || aputure.fixtures!==24 || aputure.bluetooth!==24) {
   failures.push('Aputure Sidus Bluetooth verification expected 24/24 fixtures');
 }
 const godox=byManufacturer.get('Godox');
-if(!godox || godox.bluetooth!==68) {
-  failures.push('Godox Bluetooth catalog coverage expected 68 fixtures');
+if(!godox || godox.bluetooth!==107) {
+  failures.push('Godox Bluetooth catalog coverage expected 107 fixtures');
 }
 const arri=byManufacturer.get('ARRI');
 if(!arri || arri.bluetooth!==7 || arri.wifi!==1 || arri.both!==1) {

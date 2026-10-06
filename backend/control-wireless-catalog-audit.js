@@ -436,6 +436,10 @@ const cinelight=byManufacturer.get('CineLight');
 if(!cinelight || cinelight.bluetooth!==3 || cinelight.wifi!==0 || cinelight.both!==0) {
   failures.push('CineLight wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const roxx=byManufacturer.get('ROXX');
+if(!roxx || roxx.bluetooth!==4 || roxx.wifi!==0 || roxx.both!==0) {
+  failures.push('ROXX wireless coverage expected 4 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

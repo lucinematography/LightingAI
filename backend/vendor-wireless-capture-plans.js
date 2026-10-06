@@ -139,6 +139,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  broncolor: {
+    id:'broncolor-led-f160-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'bronControl',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact broncolor LED F160 at a time with the official bronControl app.',
+      'Establish the documented LED F160 Wi-Fi/bronControl session before capture.',
+      'Start every capture from the same known lighting state and a clean Wi-Fi session.',
+      'Do not infer LED F160 control semantics to Siros, Scoro, Satos or other broncolor equipment.'
+    ],
+    officialSources:[
+      'https://broncolor.swiss/products/led-f160',
+      'https://broncolor.swiss/products/broncontrol-1?variant=1421',
+      'https://broncolor.swiss/software'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one LED F160 to bronControl over Wi-Fi, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      tint:{runs:3,optional:true,rule:'Perform exactly one green/magenta correction change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Fotodiox: {
     id:'fotodiox-prizmo-stick-512-bluetooth-capture-v1',
     transport:'bluetooth',

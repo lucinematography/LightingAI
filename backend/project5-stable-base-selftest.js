@@ -123,6 +123,7 @@ const exactAllowed = new Set([
   'backend/broncolor-led-f160-wifi-library.js',
   'backend/genaray-rgb-bluetooth-library.js',
   'backend/elgato-wifi-library.js',
+  'backend/westcott-studiolink-bluetooth-library.js',
   'backend/fixture-structural-classification.js',
   'backend/fixture-structural-classification-selftest.js',
   'backend/fixture-library.js',

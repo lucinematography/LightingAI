@@ -358,6 +358,20 @@ expect(sumolight?.safety?.rawCaptureCommitAllowed===false,'SUMOLIGHT raw capture
 expect(sumolight?.safety?.derivedEvidenceOnly===true,'SUMOLIGHT only derived evidence may enter repo');
 expect(sumolight?.safety?.resultStatus==='candidate_only_until_physical_replay','SUMOLIGHT capture result must remain candidate-only');
 
+const prolights=VENDOR_WIRELESS_CAPTURE_PLANS.PROLIGHTS;
+expect(prolights?.id==='prolights-smartcolors-wifi-capture-v1','PROLIGHTS Wi-Fi capture plan missing');
+expect(prolights?.transport==='wifi','PROLIGHTS capture plan must remain Wi-Fi only');
+expect(prolights?.commandSpecStatus==='public-network-command-spec-not-located-in-official-docs','PROLIGHTS network command spec status changed');
+expect(prolights?.captureSets?.connectOnly?.runs>=3,'PROLIGHTS connect-only requires at least 3 runs');
+expect(prolights?.captureSets?.dim?.runs>=3,'PROLIGHTS DIM requires at least 3 runs');
+expect(prolights?.captureSets?.color?.runs>=3,'PROLIGHTS COLOR requires at least 3 runs');
+expect(prolights?.prerequisites?.some(x=>/Do not infer TCP\/UDP ports/i.test(x)),'PROLIGHTS capture plan must forbid proprietary network inference');
+expect(prolights?.safety?.officialAppWritesOnly===true,'PROLIGHTS official-app-only capture safety missing');
+expect(prolights?.safety?.lightingAiWritesAllowed===false,'PROLIGHTS LightingAI writes must stay disabled during capture');
+expect(prolights?.safety?.rawCaptureCommitAllowed===false,'PROLIGHTS raw captures must never be committed');
+expect(prolights?.safety?.derivedEvidenceOnly===true,'PROLIGHTS only derived evidence may enter repo');
+expect(prolights?.safety?.resultStatus==='candidate_only_until_physical_replay','PROLIGHTS capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

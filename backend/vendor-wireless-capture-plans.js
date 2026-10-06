@@ -139,6 +139,29 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  NANLUX: {
+    id:'nanlux-evoke-2400b-nanlink-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'NANLINK App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact NANLUX Evoke 2400B with its built-in Bluetooth enabled and the official NANLINK app.',
+      'Use the documented Via Bluetooth route; do not use the NANLINK 2.4G transmitter box, CRMX, DMX/RDM, Art-Net or sACN during this direct-Bluetooth capture set.',
+      'Reset fixture Bluetooth before a clean capture session when needed and keep other NANLINK fixtures disconnected.',
+      'Do not infer Evoke 2400B Bluetooth packet semantics to other NANLUX or NANLITE models.'
+    ],
+    officialSources:[
+      'https://nanlite.jp/products/nanlux-evoke-2400b',
+      'https://www.nanlink.com/en/h-col-215.html'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'In a fresh NANLINK scene choose Via Bluetooth, connect only the Evoke 2400B, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one dimmer change per capture.'},
+      cct:{runs:3,rule:'From the same known CCT/intensity perform exactly one CCT change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Razer: {
     id:'razer-key-light-chroma-wifi-capture-v1',
     transport:'wifi',

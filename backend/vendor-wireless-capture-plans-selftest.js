@@ -576,6 +576,20 @@ expect(fotorgear?.safety?.rawCaptureCommitAllowed===false,'FotorGear raw capture
 expect(fotorgear?.safety?.derivedEvidenceOnly===true,'FotorGear only derived evidence may enter repo');
 expect(fotorgear?.safety?.resultStatus==='candidate_only_until_physical_replay','FotorGear capture result must remain candidate-only');
 
+const bresser=VENDOR_WIRELESS_CAPTURE_PLANS.BRESSER;
+expect(bresser?.id==='bresser-bluetooth-app-capture-v1','BRESSER Bluetooth capture plan missing');
+expect(bresser?.transport==='bluetooth','BRESSER capture plan must remain Bluetooth only');
+expect(bresser?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','BRESSER command spec status changed');
+expect(bresser?.captureSets?.connectOnly?.runs>=3,'BRESSER connect-only requires at least 3 runs');
+expect(bresser?.captureSets?.dim?.runs>=3,'BRESSER DIM requires at least 3 runs');
+expect(bresser?.prerequisites?.some(x=>/Smart Life app identity/i.test(x)),'BRESSER capture plan must prevent cross-model app inference');
+expect(bresser?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'BRESSER capture plan must forbid proprietary GATT inference');
+expect(bresser?.safety?.officialAppWritesOnly===true,'BRESSER official-app-only capture safety missing');
+expect(bresser?.safety?.lightingAiWritesAllowed===false,'BRESSER LightingAI writes must stay disabled during capture');
+expect(bresser?.safety?.rawCaptureCommitAllowed===false,'BRESSER raw captures must never be committed');
+expect(bresser?.safety?.derivedEvidenceOnly===true,'BRESSER only derived evidence may enter repo');
+expect(bresser?.safety?.resultStatus==='candidate_only_until_physical_replay','BRESSER capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

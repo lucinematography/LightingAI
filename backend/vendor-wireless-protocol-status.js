@@ -490,6 +490,24 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  BRESSER: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'bresser-bluetooth-app-capture-v1',
+    evidence: [
+      'https://www.bresser.com/p/bresser-br-135rgb-cob-led-light-F005105',
+      'https://www.bresser.com/p/bresser-br-180rgb-cob-led-light-F005100',
+      'https://www.bresser.com/p/bresser-br-s60rgb-led-light-F005102',
+      'https://www.bresser.com/p/bresser-br-150rgb-led-light-F005104',
+      'https://www.bresser.com/p/bresser-br-100rgb-led-light-F005103',
+      'https://www.bresser.com/media/27/f1/70/1723708994/Manual_F005102_BR-S60RGB_en-nl-de_BRESSER_v052024a.pdf?ts=1723708994'
+    ],
+    note: 'Direct Bluetooth smartphone-app transport is first-party verified only for BR-135RGB, BR-180RGB, BR-S60RGB, BR-150RGB and BR-100RGB in this checkpoint. Kit/refurbished duplicates are not separate fixtures. The BR-S60RGB manual explicitly documents Bluetooth activation and Smart Life connection; app identity is not generalized to other models without exact-model evidence. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

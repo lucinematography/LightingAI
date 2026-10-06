@@ -905,6 +905,37 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  BRESSER: {
+    id:'bresser-bluetooth-app-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'BRESSER-documented smartphone app (Smart Life explicitly documented for BR-S60RGB)',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one BR-135RGB, BR-180RGB, BR-S60RGB, BR-150RGB or BR-100RGB per first capture set and record exact model, firmware and app version.',
+      'Use only the first-party-documented Bluetooth smartphone-app path for the exact model under test.',
+      'For BR-S60RGB, use the first-party manual Bluetooth activation and Smart Life connection flow; do not assume Smart Life app identity for the other four models without exact-model confirmation.',
+      'Disable 2.4 GHz remotes and wired DMX during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.bresser.com/p/bresser-br-135rgb-cob-led-light-F005105',
+      'https://www.bresser.com/p/bresser-br-180rgb-cob-led-light-F005100',
+      'https://www.bresser.com/p/bresser-br-s60rgb-led-light-F005102',
+      'https://www.bresser.com/p/bresser-br-150rgb-led-light-F005104',
+      'https://www.bresser.com/p/bresser-br-100rgb-led-light-F005103',
+      'https://www.bresser.com/media/27/f1/70/1723708994/Manual_F005102_BR-S60RGB_en-nl-de_BRESSER_v052024a.pdf?ts=1723708994'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact BRESSER model through its documented Bluetooth app path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture using only the documented app.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one color-temperature change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB/HSI color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are attributed; trigger exactly one documented lighting effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

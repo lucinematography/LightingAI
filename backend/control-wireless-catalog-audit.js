@@ -456,6 +456,10 @@ const fotorgear=byManufacturer.get('FotorGear');
 if(!fotorgear || fotorgear.bluetooth!==1 || fotorgear.wifi!==0 || fotorgear.both!==0) {
   failures.push('FotorGear wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const bresser=byManufacturer.get('BRESSER');
+if(!bresser || bresser.bluetooth!==5 || bresser.wifi!==0 || bresser.both!==0) {
+  failures.push('BRESSER wireless coverage expected 5 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

@@ -378,6 +378,23 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Elinchrom: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'elinchrom-studio-bluetooth-capture-v1',
+    evidence: [
+      'https://dev.elinchrom.com/products/elinchrom-one/',
+      'https://www.elinchrom.com/news/press-release/elinchrom-one-pr/',
+      'https://dev.elinchrom.com/news/press-release/elinchrom-three-pr/',
+      'https://dev.elinchrom.com/news/press-release/elinchrom-five-pr/',
+      'https://elinchrom.com/enSG/Home/Shop/Software/Elinchrom_Studio_App?id=EL-0001'
+    ],
+    note: 'Direct built-in Bluetooth transport is first-party verified only for ONE, THREE and FIVE in this checkpoint. Elinchrom Skyport remains a separate proprietary radio path. LightingAI proprietary BLE/GATT and bridge/session command semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

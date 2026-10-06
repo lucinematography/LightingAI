@@ -129,6 +129,7 @@ import { ELGATO_WIFI_FIXTURES } from './elgato-wifi-library.js';
 import { WESTCOTT_BLUETOOTH_FIXTURES } from './westcott-studiolink-bluetooth-library.js';
 import { LOGITECH_G_LITRA_BLUETOOTH_FIXTURES } from './logitech-g-litra-bluetooth-library.js';
 import { ROLLEI_BLUETOOTH_FIXTURES } from './rollei-bluetooth-library.js';
+import { RAZER_KEY_LIGHT_CHROMA_WIFI_FIXTURES } from './razer-key-light-chroma-wifi-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -303,6 +304,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(WESTCOTT_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(LOGITECH_G_LITRA_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(ROLLEI_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(RAZER_KEY_LIGHT_CHROMA_WIFI_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

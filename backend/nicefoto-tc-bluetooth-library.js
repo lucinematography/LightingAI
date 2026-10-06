@@ -64,6 +64,6 @@ export const NICEFOTO_TC_BLUETOOTH_FIXTURES=[
   fixture('nicefoto-tc-158rgbw','TC-158RGB.W','Pocket Light'),
   fixture('nicefoto-tc-298rgbw','TC-298RGB.W','Tube / Handheld',SRC.tc298),
   fixture('nicefoto-tc-209rgbw','TC-209RGB.W','Tube / Handheld',SRC.tc209),
-  fixture('nicefoto-tc-313rgbw','TC-313RGB.W','Live / Multi-color Light',SRC.liveSeries),
-  fixture('nicefoto-tc-318rgbw','TC-318RGB.W','Live / Multi-color Light',SRC.liveSeries)
+  fixture('nicefoto-tc-313rgbw','TC-313RGB.W','Panel',SRC.liveSeries),
+  fixture('nicefoto-tc-318rgbw','TC-318RGB.W','Panel',SRC.liveSeries)
 ];

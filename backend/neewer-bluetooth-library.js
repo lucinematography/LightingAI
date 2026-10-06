@@ -89,12 +89,6 @@ export const NEEWER_BLUETOOTH_FIXTURES=[
     control:control(SRC.rgb660,{fullColor:true}),sourceUrl:SRC.rgb660
   },
   {
-    id:'neewer-rgb1200',manufacturer:'NEEWER',model:'RGB1200',family:'RGB Panel',category:'Light',
-    sourceType:'RGB LED Panel',formFactor:'Panel',
-    cctK:{min:2500,max:8500},colorMode:'RGB Full Color',powerDrawW:60,cri:97,tlci:98,
-    control:control(SRC.rgb1200,{fullColor:true}),sourceUrl:SRC.rgb1200
-  },
-  {
     id:'neewer-cb60b',manufacturer:'NEEWER',model:'CB60B',family:'CB COB',category:'Light',
     sourceType:'Bi-Color COB LED Spotlight',formFactor:'Spotlight / Monolight',
     cctK:{min:2700,max:6500},colorMode:'Bi-Color',powerDrawW:70,cri:97,tlci:98,

@@ -312,6 +312,10 @@ const logitechG=byManufacturer.get('Logitech G');
 if(!logitechG || logitechG.bluetooth!==2 || logitechG.wifi!==0 || logitechG.both!==0) {
   failures.push('Logitech G wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const rollei=byManufacturer.get('Rollei');
+if(!rollei || rollei.bluetooth!==12 || rollei.wifi!==0 || rollei.both!==0) {
+  failures.push('Rollei wireless coverage expected 12 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

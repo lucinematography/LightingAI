@@ -5,7 +5,7 @@ const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildOperatorControlPlanningReport();
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
 
-expect(report.fixtureCount===939,'fixture total changed from verified catalog');
+expect(report.fixtureCount===978,'fixture total changed from verified catalog');
 expect(report.wirelessManufacturers===91,'wireless manufacturer count must remain 91');
 expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
 expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
@@ -38,8 +38,8 @@ for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Li
   expect(row.fxControlVerified<=row.fxCapable,maker+' verified FX control exceeds fixture FX capability');
 }
 
-expect(report.vendors[0]?.manufacturer==='Nanlite','Nanlite should lead current wireless fixture coverage after verified WS-TB-1 assisted routes');
-expect(by.Godox?.wirelessFixtures===68,'Godox wireless fixture count changed unexpectedly');
+expect(report.vendors[0]?.manufacturer==='Godox','Godox should lead current wireless fixture coverage after verified current-model Bluetooth expansion');
+expect(by.Godox?.wirelessFixtures===107,'Godox wireless fixture count changed unexpectedly');
 expect(by.Nanlite?.wirelessFixtures===77,'Nanlite unique wireless fixture count changed unexpectedly');
 expect(by.Aputure?.wirelessFixtures===24,'Aputure wireless fixture count changed unexpectedly');
 expect(by.Astera?.wirelessFixtures===23,'Astera unique wireless fixture count changed unexpectedly');

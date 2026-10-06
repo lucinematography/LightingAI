@@ -331,6 +331,22 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Rosco: {
+    bluetooth: 'transport_verified_assisted_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'rosco-mymix-connect-assisted-bluetooth-capture-v1',
+    evidence: [
+      'https://us.rosco.com/en/product/miro-cube-2-wnc',
+      'https://us.rosco.com/en/product/miro-cube-2-4c-4ca',
+      'https://us.rosco.com/en/product/miro-cube-2-uv365',
+      'https://us.rosco.com/en/product/mymix-connect'
+    ],
+    note: 'Bluetooth is verified only as assisted transport through the external myMIX Connect RJ45 dongle for Miro Cube 2 WNC, 4C, 4CA and UV365. Direct fixture Bluetooth is not claimed. LightingAI proprietary BLE/GATT command/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

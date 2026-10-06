@@ -2206,6 +2206,17 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       color:{runs:3,optional:true,rule:'Only on RGB/full-color models; perform one HSI/RGB change per capture after DIM/CCT evidence is stable.'},
       fx:{runs:3,optional:true,rule:'Activate exactly one documented scene/effect per capture only after simpler controls are understood.'}
     },
+    secondaryPlans:[
+      {
+        id:'neewer-gl25c-direct-wifi-capture-v1',
+        transport:'wifi',
+        target:'NEEWER GL25C only',
+        controllerApp:'NEEWER Control Center',
+        commandSpecStatus:'public-wifi-command-spec-not-located-in-official-docs',
+        officialSources:['https://neewer.com/collections/three-best-selling-collections/products/neewer-gl25c-led-rgb-streaming-key-light-66606309'],
+        rule:'Capture only the first-party GL25C Wi-Fi computer-control path. Do not infer proprietary discovery, authentication, session or command semantics, and do not reuse NEEWER Bluetooth packet semantics.'
+      }
+    ],
     safety:{
       officialAppWritesOnly:true,
       lightingAiWritesAllowed:false,

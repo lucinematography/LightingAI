@@ -52,6 +52,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     note: 'Bluetooth DESAL app transport is verified only for D-S812, DS-300C Pro, DM2 and DM4 in this checkpoint. LightingAI proprietary command semantics remain locked.'
   },
 
+  Fotodiox: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'fotodiox-prizmo-stick-512-bluetooth-capture-v1',
+    evidence: [
+      'https://fotodioxpro.com/products/pzm-st512',
+      'https://fotodioxpro.com/blogs/news/the-prizmo-stick-512-our-most-compact-tube-light'
+    ],
+    note: 'Bluetooth transport is verified only for Prizmo Stick 512 in this checkpoint. LightingAI proprietary command/session semantics remain locked.'
+  },
+
   'CHAUVET DJ': {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

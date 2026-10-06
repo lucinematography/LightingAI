@@ -121,8 +121,8 @@ for (const fixture of fixtures) {
 
 const manufacturers = Object.fromEntries([...byManufacturer.entries()].sort((a,b)=>a[0].localeCompare(b[0])));
 const aputure=byManufacturer.get('Aputure');
-if(!aputure || aputure.fixtures!==19 || aputure.bluetooth!==19) {
-  failures.push('Aputure Sidus Bluetooth verification expected 19/19 fixtures');
+if(!aputure || aputure.fixtures!==24 || aputure.bluetooth!==24) {
+  failures.push('Aputure Sidus Bluetooth verification expected 24/24 fixtures');
 }
 const godox=byManufacturer.get('Godox');
 if(!godox || godox.bluetooth!==68) {

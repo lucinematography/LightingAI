@@ -98,7 +98,7 @@ expect(verifiedAppOnly.cct.supported===true,'Verified app CCT evidence must prov
 expect(verifiedAppOnly.color.supported===true,'Verified app COLOR evidence must prove verified COLOR control');
 
 const report=buildFixtureControlCapabilityReport();
-expect(report.totals.fixtures===1037,'fixture total changed from verified catalog');
+expect(report.totals.fixtures===1040,'fixture total changed from verified catalog');
 expect(report.totals.cct>0,'CCT capability audit unexpectedly empty');
 expect(report.totals.color>0,'COLOR capability audit unexpectedly empty');
 expect(report.totals.dim>0,'DIM capability audit unexpectedly empty');

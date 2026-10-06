@@ -609,6 +609,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Filmgear: {
+    id:'filmgear-fg-app-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Filmgear FG App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Filmgear Zenith 900C Plus, Zenith 2000C Plus, MEGA 1200C, Aurora A700C or Aurora A1200C per first capture set and record exact model and firmware.',
+      'Use only the vendor-documented Bluetooth/FG App path during the Bluetooth capture set.',
+      'Disable wired DMX, Ethernet and CRMX/Wireless DMX during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, pairing/session state, packet framing, command encoding or cross-model compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.filmgear.net/index.php?product_id=1137&route=product%2Fproduct',
+      'https://www.filmgear.net/index.php?product_id=1132&route=product%2Fproduct',
+      'https://www.filmgear.net/index.php?product_id=1127&route=product%2Fproduct',
+      'https://www.filmgear.net/index.php?path=521_195_555&product_id=1133&route=product%2Fproduct',
+      'https://www.filmgear.net/index.php?manufacturer_id=15&product_id=1134&route=product%2Fproduct'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Filmgear model through FG App Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one color-temperature change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB/RGBW color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
   Kenro: {
     id:'kenro-lightsystem-bluetooth-capture-v1',
     transport:'bluetooth',

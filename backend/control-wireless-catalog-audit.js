@@ -328,6 +328,10 @@ const mettle=byManufacturer.get('Mettle');
 if(!mettle || mettle.bluetooth!==3 || mettle.wifi!==0 || mettle.both!==0) {
   failures.push('Mettle wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const pixapro=byManufacturer.get('PiXAPRO');
+if(!pixapro || pixapro.bluetooth!==2 || pixapro.wifi!==0 || pixapro.both!==0) {
+  failures.push('PiXAPRO wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

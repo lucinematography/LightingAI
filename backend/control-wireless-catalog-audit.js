@@ -169,8 +169,8 @@ if(!neewer || neewer.bluetooth!==18 || neewer.wifi!==1 || neewer.both!==1) {
   failures.push('NEEWER wireless coverage expected 18 Bluetooth / 1 Wi-Fi / 1 both');
 }
 const gvm=byManufacturer.get('GVM');
-if(!gvm || gvm.bluetooth!==10 || gvm.wifi!==1 || gvm.both!==0) {
-  failures.push('GVM wireless coverage expected 10 Bluetooth / 1 Wi-Fi / 0 both');
+if(!gvm || gvm.bluetooth!==23 || gvm.wifi!==1 || gvm.both!==0) {
+  failures.push('GVM wireless coverage expected 23 Bluetooth / 1 Wi-Fi / 0 both');
 }
 const litepanels=byManufacturer.get('Litepanels');
 if(!litepanels || litepanels.bluetooth!==13 || litepanels.wifi!==3 || litepanels.both!==3) {

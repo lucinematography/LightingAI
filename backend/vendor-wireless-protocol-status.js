@@ -222,6 +222,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  SUMOLIGHT: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'standard_protocol_transport_documented_replay_pending',
+    nextStep: 'capture-plan-required-before-production-readiness',
+    capturePlanId: 'sumolight-sumospace-plus-wifi-capture-v1',
+    evidence: [
+      'https://sumolight.com/sumospace'
+    ],
+    note: 'Wi-Fi transport and Art-Net/sACN support are first-party documented for exact model SUMOSPACE+. Standard protocol availability does not by itself prove LightingAI exact-hardware discovery, configuration or physical replay. No undocumented proprietary network semantics are inferred.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

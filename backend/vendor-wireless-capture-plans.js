@@ -139,6 +139,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Jinbei: {
+    id:'jinbei-studio-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Jinbei Studio / Jinbei APP',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact cataloged Jinbei Bluetooth model at a time with the official Jinbei app.',
+      'Start every capture from the same known lighting state and a clean Bluetooth session.',
+      'Do not infer Bluetooth support to other Jinbei fixtures that only mention app control without explicit transport evidence.'
+    ],
+    officialSources:[
+      'https://www.jinbei-deutschland.de/en/blogs/jinbeisphotobox/creative-light-management-made-easy-the-jinbei-studio-app',
+      'https://www.jinbei-deutschland.de/en/products/ef-120c-rgb-led-dauerlicht',
+      'https://www.jinbei-deutschland.de/en/products/ef-200x-led-dauerlicht',
+      'https://www.jinbei-deutschland.de/en/products/jl-600c-rgb-led-dauerlicht'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one supported Jinbei fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one CCT change per capture from the same initial state.'},
+      color:{runs:3,optional:true,rule:'For RGB-capable models only, perform exactly one HSI/RGB color change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Ikan: {
     id:'ikan-idc150-bluetooth-capture-v1',
     transport:'bluetooth',

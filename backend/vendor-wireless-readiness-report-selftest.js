@@ -4,7 +4,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===925,'fixture count changed from verified catalog total');
+expect(report.fixtureCount===927,'fixture count changed from verified catalog total');
 expect(report.coveredManufacturers===91,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
@@ -34,6 +34,8 @@ expect(by.Nanlite?.bluetoothFixtures===70,'Nanlite Bluetooth count changed unexp
 expect(by.Nanlite?.wifiFixtures===8,'Nanlite Wi-Fi count changed unexpectedly');
 expect(by.Astera?.bluetoothFixtures===23&&by.Astera?.wifiFixtures===19,'Astera wireless counts changed unexpectedly');
 expect(by.Aputure?.bluetoothFixtures===19,'Aputure Bluetooth count changed unexpectedly');
+expect(by.ARRI?.bluetoothFixtures===7&&by.ARRI?.wifiFixtures===1&&by.ARRI?.bothFixtures===1,'ARRI wireless counts changed unexpectedly');
+expect(by.ARRI?.assistedBluetooth===1,'ARRI assisted Bluetooth count must remain 1 for Orbiter');
 expect(by.Creamsource?.bluetoothFixtures===8&&by.Creamsource?.wifiFixtures===0,'Creamsource Vortex wireless counts changed unexpectedly');
 expect(by.Rotolight?.bluetoothFixtures===7&&by.Rotolight?.wifiFixtures===5&&by.Rotolight?.bothFixtures===5,'Rotolight wireless counts changed unexpectedly');
 expect(by.Luxli?.bluetoothFixtures===7&&by.Luxli?.wifiFixtures===0,'Luxli wireless counts changed unexpectedly');

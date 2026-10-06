@@ -404,6 +404,10 @@ const lightstar=byManufacturer.get('Lightstar Lights');
 if(!lightstar || lightstar.bluetooth!==9 || lightstar.wifi!==0 || lightstar.both!==0) {
   failures.push('Lightstar Lights wireless coverage expected 9 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const mole=byManufacturer.get('Mole-Richardson');
+if(!mole || mole.bluetooth!==13 || mole.wifi!==0 || mole.both!==0) {
+  failures.push('Mole-Richardson wireless coverage expected 13 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

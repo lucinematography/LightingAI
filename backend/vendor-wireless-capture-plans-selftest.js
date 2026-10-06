@@ -3,7 +3,7 @@ import { VENDOR_WIRELESS_CAPTURE_PLANS } from './vendor-wireless-capture-plans.j
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 
-for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Astera','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','SOONWELL','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ']){
+for(const maker of ['Godox','Nanlite','Aputure','ARRI','Aladdin','EV Light','Astera','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','SOONWELL','Moman','Ikan','Jinbei','Lume Cube']){
   const plan=VENDOR_WIRELESS_CAPTURE_PLANS[maker];
   expect(!!plan,maker+' capture plan missing');
   if(!plan) continue;
@@ -47,6 +47,19 @@ expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.transport==='wifi','CAME-TV capture plan must remain Wi-Fi only');
+const chauvet=VENDOR_WIRELESS_CAPTURE_PLANS['CHAUVET DJ'];
+expect(chauvet?.id==='chauvet-dj-btair-bluetooth-capture-v1','CHAUVET DJ Bluetooth capture plan missing');
+expect(chauvet?.transport==='bluetooth','CHAUVET DJ capture plan must remain Bluetooth only');
+expect(chauvet?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','CHAUVET DJ command spec status changed');
+expect(chauvet?.captureSets?.connectOnly?.runs>=3,'CHAUVET DJ connect-only requires at least 3 runs');
+expect(chauvet?.captureSets?.dim?.runs>=3,'CHAUVET DJ DIM requires at least 3 runs');
+expect(chauvet?.captureSets?.color?.runs>=3,'CHAUVET DJ COLOR requires at least 3 runs');
+expect(chauvet?.safety?.officialAppWritesOnly===true,'CHAUVET DJ official-app-only capture safety missing');
+expect(chauvet?.safety?.lightingAiWritesAllowed===false,'CHAUVET DJ LightingAI writes must stay disabled during capture');
+expect(chauvet?.safety?.rawCaptureCommitAllowed===false,'CHAUVET DJ raw captures must never be committed');
+expect(chauvet?.safety?.derivedEvidenceOnly===true,'CHAUVET DJ only derived evidence may enter repo');
+expect(chauvet?.safety?.resultStatus==='candidate_only_until_physical_replay','CHAUVET DJ capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.id==='tolifo-gk2016-wifi-capture-v1','Tolifo Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.transport==='wifi','Tolifo capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Tolifo?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Tolifo command spec status changed');

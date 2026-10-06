@@ -511,6 +511,33 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
   },
 
 
+  Fomex: {
+    id:'fomex-flexcolor-timo-two-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Fomex Flexcolor / Timo Two vendor Bluetooth control path',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Fomex Flexcolor FC600 or FC1200 system per first capture set and record the exact model.',
+      'Use only the vendor-supported Timo Two Bluetooth portable-device control path documented for Flexcolor.',
+      'Disable wired DMX/RDM and CRMX wireless-DMX control during the first Bluetooth capture so traffic attribution stays unambiguous.',
+      'Do not infer GATT services, UUIDs, characteristics, packet formats, application identity or cross-model command compatibility from the documented Bluetooth capability.'
+    ],
+    officialSources:[
+      'https://www.fomex.com/product/fc600/',
+      'https://www.fomex.com/product/fc1200/',
+      'https://www.fomex.com/wp-content/uploads/kboard_thumbnails/4/manual/flexcolor%204p%20flyer_EN%28VER.202302%29.pdf'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact FC600 or FC1200 through the vendor-supported Timo Two Bluetooth path, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known state perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one color-temperature change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB/HSI color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are understood; trigger exactly one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
+
 
   PiXAPRO: {
     id:'pixapro-neon-bluetooth-capture-v1',

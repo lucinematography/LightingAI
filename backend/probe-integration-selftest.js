@@ -87,6 +87,7 @@ const allowed=new Set([
   'backend/imrelax-wifi-library.js',
   'backend/kenro-bluetooth-library.js',
   'backend/selens-bluetooth-library.js',
+  'backend/fomex-flexcolor-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

@@ -251,6 +251,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  Fomex: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'fomex-flexcolor-timo-two-bluetooth-capture-v1',
+    evidence: [
+      'https://www.fomex.com/product/fc600/',
+      'https://www.fomex.com/product/fc1200/',
+      'https://www.fomex.com/wp-content/uploads/kboard_thumbnails/4/manual/flexcolor%204p%20flyer_EN%28VER.202302%29.pdf'
+    ],
+    note: 'Direct Bluetooth transport via the Fomex Flexcolor Timo Two control path is verified only for FC600 and FC1200 in this checkpoint. CRMX remains a separate wireless-DMX route and is not Wi-Fi. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

@@ -384,6 +384,10 @@ const selens=byManufacturer.get('Selens');
 if(!selens || selens.bluetooth!==2 || selens.wifi!==0 || selens.both!==0) {
   failures.push('Selens wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const fomex=byManufacturer.get('Fomex');
+if(!fomex || fomex.bluetooth!==2 || fomex.wifi!==0 || fomex.both!==0) {
+  failures.push('Fomex wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

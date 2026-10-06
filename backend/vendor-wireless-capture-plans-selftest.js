@@ -313,6 +313,22 @@ expect(selens?.safety?.rawCaptureCommitAllowed===false,'Selens raw captures must
 expect(selens?.safety?.derivedEvidenceOnly===true,'Selens only derived evidence may enter repo');
 expect(selens?.safety?.resultStatus==='candidate_only_until_physical_replay','Selens capture result must remain candidate-only');
 
+const fomex=VENDOR_WIRELESS_CAPTURE_PLANS.Fomex;
+expect(fomex?.id==='fomex-flexcolor-timo-two-bluetooth-capture-v1','Fomex Bluetooth capture plan missing');
+expect(fomex?.transport==='bluetooth','Fomex capture plan must remain Bluetooth only');
+expect(fomex?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Fomex command spec status changed');
+expect(fomex?.captureSets?.connectOnly?.runs>=3,'Fomex connect-only requires at least 3 runs');
+expect(fomex?.captureSets?.dim?.runs>=3,'Fomex DIM requires at least 3 runs');
+expect(fomex?.captureSets?.cct?.runs>=3,'Fomex CCT requires at least 3 runs');
+expect(fomex?.captureSets?.color?.runs>=3,'Fomex COLOR requires at least 3 runs');
+expect(fomex?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Fomex capture plan must forbid proprietary GATT inference');
+expect(fomex?.prerequisites?.some(x=>/CRMX wireless-DMX/i.test(x)),'Fomex capture plan must isolate Bluetooth from CRMX');
+expect(fomex?.safety?.officialAppWritesOnly===true,'Fomex vendor-control-only capture safety missing');
+expect(fomex?.safety?.lightingAiWritesAllowed===false,'Fomex LightingAI writes must stay disabled during capture');
+expect(fomex?.safety?.rawCaptureCommitAllowed===false,'Fomex raw captures must never be committed');
+expect(fomex?.safety?.derivedEvidenceOnly===true,'Fomex only derived evidence may enter repo');
+expect(fomex?.safety?.resultStatus==='candidate_only_until_physical_replay','Fomex capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

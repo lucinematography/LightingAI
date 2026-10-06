@@ -363,8 +363,8 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     controllerApp:'Profoto Camera / Profoto Control',
     commandSpecStatus:'public-command-spec-not-located-in-official-docs',
     prerequisites:[
-      'Use exactly one Profoto B10, B10 Plus, B10X or B10X Plus per first capture set and record the exact model.',
-      'Use only the direct Bluetooth Profoto app path documented for that exact B-series model.',
+      'Use exactly one Profoto B10, B10 Plus, B10X, B10X Plus, B20, B30, L1600D, L600D or L600C per first capture set and record the exact model.',
+      'Use only the direct Bluetooth Profoto app path documented for that exact model.',
       'Disable Profoto Air/AirX remote triggering/control during the first Bluetooth capture so traffic attribution stays unambiguous.',
       'Do not infer GATT services, UUIDs, characteristics, packet formats or cross-model command compatibility from the documented Bluetooth app capability.'
     ],
@@ -372,10 +372,14 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       'https://support.profoto.com/support/solutions/articles/79000071121-does-the-b10-b10-plus-have-bluetooth-and-is-the-b10-b10-plus-compatible-with-the-profoto-app-',
       'https://profoto.com/globalassets/support/user-guides/b10-and-b10-plus/profoto-b10--b10-plus-user-guide-english.pdf',
       'https://www.profoto.com/int/en/shop/products/lights/monolights/battery-powered/profoto-b10x-and-b10x-plus/',
-      'https://profoto.com/globalassets/support/user-guides/b10x-and-b10x-plus/profoto-b10x--b10x-plus-user-guide-english.pdf'
+      'https://profoto.com/globalassets/support/user-guides/b10x-and-b10x-plus/profoto-b10x--b10x-plus-user-guide-english.pdf',
+      'https://www.profoto.com/cy/en/still-photography/experience/profoto-b20-b30',
+      'https://www.profoto.com/us/en/cinema/experience/profoto-l1600d/',
+      'https://profoto.com/int/en/shop/products/lights/monoled/profoto-l600d-int/',
+      'https://www.profoto.com/int/en/shop/products/lights/monoled/profoto-l600c/'
     ],
     captureSets:{
-      connectOnly:{runs:3,rule:'Connect one exact B-series model with the Profoto app over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      connectOnly:{runs:3,rule:'Connect one exact transport-verified Profoto model with the Profoto app over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
       dim:{runs:3,rule:'From the same known state perform exactly one continuous-light brightness change per capture.'},
       cct:{runs:3,rule:'From the same known state perform exactly one continuous-light CCT change per capture.'}
     },

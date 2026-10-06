@@ -86,6 +86,7 @@ import { DESISTI_TUNGSTEN_SOFT_BROAD_FIXTURES, DESISTI_TUNGSTEN_SOFT_BROAD_ACCES
 import { DESISTI_HMI_FIXTURES, DESISTI_HMI_ACCESSORIES } from './desisti-hmi-library.js';
 import { DESISTI_CONVENTIONAL_EXTRA_FIXTURES, DESISTI_CONVENTIONAL_EXTRA_ACCESSORIES } from './desisti-conventional-extra-library.js';
 import { GODOX_CONTINUOUS_FIXTURES, GODOX_CONTINUOUS_ACCESSORIES } from './godox-continuous-library.js';
+import { GODOX_CURRENT_WIRELESS_FIXTURES } from './godox-current-wireless-library.js';
 import { CREAMSOURCE_VORTEX_FIXTURES } from './creamsource-vortex-library.js';
 import { ROTOLIGHT_APP_WIRELESS_FIXTURES } from './rotolight-app-wireless-library.js';
 import { LUXLI_ORCHESTRA_BLUETOOTH_FIXTURES } from './luxli-orchestra-bluetooth-library.js';
@@ -298,6 +299,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(DESISTI_CONVENTIONAL_EXTRA_FIXTURES));
   normalizeDeSistiControl(fixtures);
   fixtures.push(...clone(GODOX_CONTINUOUS_FIXTURES));
+  fixtures.push(...clone(GODOX_CURRENT_WIRELESS_FIXTURES));
   normalizeGodoxControl(fixtures);
   fixtures.push(...clone(CREAMSOURCE_VORTEX_FIXTURES));
   fixtures.push(...clone(ROTOLIGHT_APP_WIRELESS_FIXTURES));

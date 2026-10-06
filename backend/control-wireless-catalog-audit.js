@@ -301,8 +301,8 @@ if(!genaray || genaray.bluetooth!==7 || genaray.wifi!==0 || genaray.both!==0) {
   failures.push('Genaray wireless coverage expected 7 Bluetooth / 0 Wi-Fi / 0 both');
 }
 const elgato=byManufacturer.get('Elgato');
-if(!elgato || elgato.bluetooth!==0 || elgato.wifi!==5 || elgato.both!==0) {
-  failures.push('Elgato wireless coverage expected 0 Bluetooth / 5 Wi-Fi / 0 both');
+if(!elgato || elgato.bluetooth!==0 || elgato.wifi!==6 || elgato.both!==0) {
+  failures.push('Elgato wireless coverage expected 0 Bluetooth / 6 Wi-Fi / 0 both');
 }
 const westcott=byManufacturer.get('Westcott');
 if(!westcott || westcott.bluetooth!==4 || westcott.wifi!==0 || westcott.both!==0) {

@@ -83,6 +83,19 @@ expect(razer?.safety?.rawCaptureCommitAllowed===false,'Razer raw captures must n
 expect(razer?.safety?.derivedEvidenceOnly===true,'Razer only derived evidence may enter repo');
 expect(razer?.safety?.resultStatus==='candidate_only_until_physical_replay','Razer capture result must remain candidate-only');
 
+const nanlux=VENDOR_WIRELESS_CAPTURE_PLANS.NANLUX;
+expect(nanlux?.id==='nanlux-evoke-2400b-nanlink-bluetooth-capture-v1','NANLUX Bluetooth capture plan missing');
+expect(nanlux?.transport==='bluetooth','NANLUX capture plan must remain Bluetooth only');
+expect(nanlux?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','NANLUX command spec status changed');
+expect(nanlux?.captureSets?.connectOnly?.runs>=3,'NANLUX connect-only requires at least 3 runs');
+expect(nanlux?.captureSets?.dim?.runs>=3,'NANLUX DIM requires at least 3 runs');
+expect(nanlux?.captureSets?.cct?.runs>=3,'NANLUX CCT requires at least 3 runs');
+expect(nanlux?.safety?.officialAppWritesOnly===true,'NANLUX official-app-only capture safety missing');
+expect(nanlux?.safety?.lightingAiWritesAllowed===false,'NANLUX LightingAI writes must stay disabled during capture');
+expect(nanlux?.safety?.rawCaptureCommitAllowed===false,'NANLUX raw captures must never be committed');
+expect(nanlux?.safety?.derivedEvidenceOnly===true,'NANLUX only derived evidence may enter repo');
+expect(nanlux?.safety?.resultStatus==='candidate_only_until_physical_replay','NANLUX capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

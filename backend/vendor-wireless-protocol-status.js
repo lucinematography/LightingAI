@@ -640,10 +640,15 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     nextStep: 'capture-plan-required-before-driver',
     capturePlanId: 'nanlux-evoke-2400b-nanlink-bluetooth-capture-v1',
     evidence: [
+      'https://nanlite.jp/products/nanlux-evoke-600c',
+      'https://nanlite.jp/products/evoke-900c',
+      'https://nanlite.jp/products/nanlux-evoke-1200b',
       'https://nanlite.jp/products/nanlux-evoke-2400b',
-      'https://www.nanlink.com/en/h-col-215.html'
+      'https://nanlite.jp/products/nanlux-dyno-650c',
+      'https://nanlite.jp/products/nanlux-dyno-1200c',
+      'https://www.nanlink.com/en/h-col-293.html'
     ],
-    note: 'Direct Bluetooth/NANLINK app transport is verified only for NANLUX Evoke 2400B in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+    note: 'Direct Bluetooth transport is exact-model verified for NANLUX Evoke 600C, Evoke 900C, Evoke 1200B, Evoke 2400B, Dyno 650C and Dyno 1200C. NANLINK first-party FAQ additionally identifies Dyno 650C/1200C as Bluetooth-app fixtures. LightingAI proprietary Bluetooth command/session semantics remain locked.'
   },
   'Falcon Eyes': {
     bluetooth: 'transport_verified_model_scoped',

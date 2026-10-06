@@ -276,6 +276,10 @@ const ikan=byManufacturer.get('Ikan');
 if(!ikan || ikan.bluetooth!==1 || ikan.wifi!==0 || ikan.both!==0) {
   failures.push('Ikan wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const jinbei=byManufacturer.get('Jinbei');
+if(!jinbei || jinbei.bluetooth!==3 || jinbei.wifi!==0 || jinbei.both!==0) {
+  failures.push('Jinbei wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

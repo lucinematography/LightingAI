@@ -13,7 +13,13 @@ const SRC={
   pro:'https://www.harlowe.com/products/pro-300w-studio-light-kit-photo-video',
   proSpectra:'https://www.harlowe.com/products/pro-300w-spectra-rgbcw-studio-light-kit',
   blade5:'https://www.harlowe.com/products/blade-5-bi-color-rgb-tube-light',
-  bladeKit:'https://www.harlowe.com/products/blade-5-10-bi-color-rgb-tube-light-kit'
+  bladeKit:'https://www.harlowe.com/products/blade-5-10-bi-color-rgb-tube-light-kit',
+  sol5Spectra:'https://www.harlowe.com/products/sol-5-spectra-rgbcw-mobile-light-for-magsafe',
+  iris5Spectra:'https://www.harlowe.com/products/iris-5w-spectra-rgbcw-continuous-led-light-kit-for-content-creation',
+  sol30:'https://www.harlowe.com/products/sol-30w-portable-led-surface-light-kit',
+  sol40:'https://www.harlowe.com/en-eu/products/sol-40w-round-led-panel-light',
+  sol100:'https://www.harlowe.com/en-eu/products/sol-100w-round-led-panel-light',
+  maxSpectra:'https://www.harlowe.com/products/max-spectra-rgbcw-led-video-photography-light-kit'
 };
 
 function bluetoothControl(sourceUrl){
@@ -67,5 +73,16 @@ export const HARLOWE_BLUETOOTH_FIXTURES=[
   fixture('harlowe-pro-300w','Pro 300W','Pro','Bi-Color LED Light','Spotlight / Monolight',SRC.pro,{min:2700,max:6500},'Bi-Color',300),
   fixture('harlowe-pro-300w-spectra','Pro 300W Spectra','Pro','RGBCW LED Light','Spotlight / Monolight',SRC.proSpectra,{min:1700,max:10000},'RGBCW Full Color',300),
   fixture('harlowe-blade-5','Blade 5','Blade','RGBCW LED Tube','Tube',SRC.blade5,{min:1700,max:10000},'RGBCW Full Color',5),
-  fixture('harlowe-blade-10','Blade 10','Blade','RGBCW LED Tube','Tube',SRC.bladeKit,{min:1700,max:10000},'RGBCW Full Color',10)
+  fixture('harlowe-blade-10','Blade 10','Blade','RGBCW LED Tube','Tube',SRC.bladeKit,{min:1700,max:10000},'RGBCW Full Color',10),
+  fixture('harlowe-sol-5-spectra','Sol 5 Spectra','Sol','RGBCW Mobile LED Light','Pocket / Handheld',SRC.sol5Spectra,{min:1700,max:10000},'RGBCW Full Color',5),
+  fixture('harlowe-iris-5-spectra','Iris 5 Spectra','Iris','RGBCW Creator LED Light','Pocket / Handheld',SRC.iris5Spectra,{min:1700,max:10000},'RGBCW Full Color',5),
+  fixture('harlowe-sol-30w','Sol 30W','Sol','Bi-Color Surface LED Light','Round Panel',SRC.sol30,{min:2700,max:6500},'Bi-Color',30),
+  fixture('harlowe-sol-30w-spectra','Sol 30W Spectra','Sol','RGBCW Surface LED Light','Round Panel',SRC.sol30,{min:1700,max:10000},'RGBCW Full Color',30),
+  fixture('harlowe-sol-40w','Sol 40W','Sol','Bi-Color Round LED Panel','Round Panel',SRC.sol40,{min:2700,max:6500},'Bi-Color',40),
+  fixture('harlowe-sol-40w-spectra','Sol 40W Spectra','Sol','RGBCW Round LED Panel','Round Panel',SRC.sol40,{min:1700,max:10000},'RGBCW Full Color',40),
+  fixture('harlowe-sol-100w','Sol 100W','Sol','Bi-Color Round LED Panel','Round Panel',SRC.sol100,{min:2700,max:6500},'Bi-Color',100),
+  fixture('harlowe-sol-100w-spectra','Sol 100W Spectra','Sol','RGBCW Round LED Panel','Round Panel',SRC.sol100,{min:1700,max:10000},'RGBCW Full Color',100),
+  fixture('harlowe-max-spectra-40w','Max Spectra 40W','Max Spectra','RGBCW LED Light','Spotlight / Monolight',SRC.maxSpectra,{min:1700,max:10000},'RGBCW Full Color',40),
+  fixture('harlowe-max-spectra-80w','Max Spectra 80W','Max Spectra','RGBCW LED Light','Spotlight / Monolight',SRC.maxSpectra,{min:1700,max:10000},'RGBCW Full Color',80),
+  fixture('harlowe-max-spectra-120w','Max Spectra 120W','Max Spectra','RGBCW LED Light','Spotlight / Monolight',SRC.maxSpectra,{min:1700,max:10000},'RGBCW Full Color',120)
 ];

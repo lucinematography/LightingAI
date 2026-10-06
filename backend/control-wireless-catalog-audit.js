@@ -428,6 +428,10 @@ const adj=byManufacturer.get('ADJ Lighting');
 if(!adj || adj.bluetooth!==3 || adj.wifi!==0 || adj.both!==0) {
   failures.push('ADJ Lighting wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const elinchrom=byManufacturer.get('Elinchrom');
+if(!elinchrom || elinchrom.bluetooth!==3 || elinchrom.wifi!==0 || elinchrom.both!==0) {
+  failures.push('Elinchrom wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

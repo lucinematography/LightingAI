@@ -196,6 +196,21 @@ expect(sutefoto?.safety?.rawCaptureCommitAllowed===false,'SUTEFOTO raw captures 
 expect(sutefoto?.safety?.derivedEvidenceOnly===true,'SUTEFOTO only derived evidence may enter repo');
 expect(sutefoto?.safety?.resultStatus==='candidate_only_until_physical_replay','SUTEFOTO capture result must remain candidate-only');
 
+const ycOnion=VENDOR_WIRELESS_CAPTURE_PLANS['YC Onion'];
+expect(ycOnion?.id==='yc-onion-pudding-v2-bluetooth-capture-v1','YC Onion Bluetooth capture plan missing');
+expect(ycOnion?.transport==='bluetooth','YC Onion capture plan must remain Bluetooth only');
+expect(ycOnion?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','YC Onion command spec status changed');
+expect(ycOnion?.captureSets?.connectOnly?.runs>=3,'YC Onion connect-only requires at least 3 runs');
+expect(ycOnion?.captureSets?.dim?.runs>=3,'YC Onion DIM requires at least 3 runs');
+expect(ycOnion?.captureSets?.cct?.runs>=3,'YC Onion CCT requires at least 3 runs');
+expect(ycOnion?.captureSets?.color?.runs>=3,'YC Onion COLOR requires at least 3 runs');
+expect(ycOnion?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'YC Onion capture plan must forbid proprietary GATT inference');
+expect(ycOnion?.safety?.officialAppWritesOnly===true,'YC Onion official-app-only capture safety missing');
+expect(ycOnion?.safety?.lightingAiWritesAllowed===false,'YC Onion LightingAI writes must stay disabled during capture');
+expect(ycOnion?.safety?.rawCaptureCommitAllowed===false,'YC Onion raw captures must never be committed');
+expect(ycOnion?.safety?.derivedEvidenceOnly===true,'YC Onion only derived evidence may enter repo');
+expect(ycOnion?.safety?.resultStatus==='candidate_only_until_physical_replay','YC Onion capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

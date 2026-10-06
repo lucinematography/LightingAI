@@ -132,6 +132,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  'YC Onion': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'yc-onion-pudding-v2-bluetooth-capture-v1',
+    evidence: [
+      'https://app.yconion.com/userManual/fillInSeries/PUDDINGV2.pdf',
+      'https://app.yconion.com/',
+      'https://www.yconion.com/pages/product-faqs'
+    ],
+    note: 'Direct Bluetooth YC Onion app transport is verified only for PUDDING V2 in this checkpoint. LightingAI proprietary Bluetooth command/session semantics remain locked.'
+  },
+
+
 
   PiXAPRO: {
     bluetooth: 'transport_verified_model_scoped',

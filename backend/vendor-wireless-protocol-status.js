@@ -1368,12 +1368,16 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     commandSpec: 'third_party_path_documented_but_exact_command_spec_not_captured',
     nextStep: 'capture-plan-required-before-driver',
     capturePlanId: 'arri-lico-direct-bluetooth-capture-v1',
-    secondaryCapturePlanIds: ['arri-skypanel-web-wifi-capture-v1'],
+    secondaryCapturePlanIds: ['arri-skypanel-web-wifi-capture-v1','arri-omnibar-bluetooth-mesh-capture-v1'],
     evidence: [
       'https://www.arri.com/en/learn-help/lighting/tools-apps/lico',
-      'https://www.arri.com/en/lighting/led-panel-lights/skypanel-pro/faq'
+      'https://www.arri.com/en/lighting/led-panel-lights/skypanel-pro/faq',
+      'https://www.arri.com/en/lighting/led-linear-lights/omnibar',
+      'https://www.arri.com/en/lighting/led-linear-lights/omnibar/omnibar-tech-data-downloads',
+      'https://www.arri.com/en/learn/lighting/tools-apps/omnibar-app',
+      'https://www.arri.com/en/lighting/led-linear-lights/omnibar/omnibar-faq'
     ],
-    note: 'LiCo Bluetooth 5.0 is documented; Orbiter requires a supported USB dongle.'
+    note: 'LiCo Bluetooth 5.0 is documented for SkyPanel Pro/X and Orbiter; Orbiter requires a supported USB dongle. Omnibar 2 and Omnibar 4 use integrated ARRI Bluetooth Mesh with the dedicated Omnibar Control App. Proprietary command/session semantics remain fail-closed.'
   },
   Astera: {
     bluetooth: 'transport_verified_model_or_variant_scoped',

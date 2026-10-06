@@ -5,7 +5,7 @@ const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildOperatorControlPlanningReport();
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
 
-expect(report.fixtureCount===1018,'fixture total changed from verified catalog');
+expect(report.fixtureCount===1019,'fixture total changed from verified catalog');
 expect(report.wirelessManufacturers===91,'wireless manufacturer count must remain 91');
 expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
 expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
@@ -48,7 +48,7 @@ expect(by['DMG Lumiere']?.wirelessFixtures===3,'DMG Lumiere wireless fixture cou
 expect(by.ZHIYUN?.wirelessFixtures===18,'ZHIYUN wireless fixture count changed unexpectedly');
 expect(by.PROLYCHT?.wirelessFixtures===2,'PROLYCHT wireless fixture count changed unexpectedly');
 expect(by.COLBOR?.wirelessFixtures===2,'COLBOR wireless fixture count changed unexpectedly');
-expect(by.SIRUI?.wirelessFixtures===10,'SIRUI wireless fixture count changed unexpectedly');
+expect(by.SIRUI?.wirelessFixtures===11,'SIRUI wireless fixture count changed unexpectedly');
 expect(by.Fiilex?.wirelessFixtures===1,'Fiilex wireless fixture count changed unexpectedly');
 expect(by.Harlowe?.wirelessFixtures===11,'Harlowe wireless fixture count changed unexpectedly');
 expect(by.SWIT?.wirelessFixtures===7,'SWIT wireless fixture count changed unexpectedly');

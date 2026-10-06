@@ -476,6 +476,21 @@ expect(adj?.safety?.rawCaptureCommitAllowed===false,'ADJ Lighting raw captures m
 expect(adj?.safety?.derivedEvidenceOnly===true,'ADJ Lighting only derived evidence may enter repo');
 expect(adj?.safety?.resultStatus==='candidate_only_until_physical_replay','ADJ Lighting capture result must remain candidate-only');
 
+const elinchrom=VENDOR_WIRELESS_CAPTURE_PLANS.Elinchrom;
+expect(elinchrom?.id==='elinchrom-studio-bluetooth-capture-v1','Elinchrom Bluetooth capture plan missing');
+expect(elinchrom?.transport==='bluetooth','Elinchrom capture plan must remain Bluetooth only');
+expect(elinchrom?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Elinchrom command spec status changed');
+expect(elinchrom?.captureSets?.connectOnly?.runs>=3,'Elinchrom connect-only requires at least 3 runs');
+expect(elinchrom?.captureSets?.dim?.runs>=3,'Elinchrom DIM requires at least 3 runs');
+expect(elinchrom?.captureSets?.cct?.runs>=3,'Elinchrom CCT requires at least 3 runs');
+expect(elinchrom?.prerequisites?.some(x=>/Do not infer GATT/i.test(x)),'Elinchrom capture plan must forbid proprietary GATT inference');
+expect(elinchrom?.prerequisites?.some(x=>/Skyport/i.test(x)),'Elinchrom capture plan must isolate Bluetooth from Skyport');
+expect(elinchrom?.safety?.officialAppWritesOnly===true,'Elinchrom official-app-only capture safety missing');
+expect(elinchrom?.safety?.lightingAiWritesAllowed===false,'Elinchrom LightingAI writes must stay disabled during capture');
+expect(elinchrom?.safety?.rawCaptureCommitAllowed===false,'Elinchrom raw captures must never be committed');
+expect(elinchrom?.safety?.derivedEvidenceOnly===true,'Elinchrom only derived evidence may enter repo');
+expect(elinchrom?.safety?.resultStatus==='candidate_only_until_physical_replay','Elinchrom capture result must remain candidate-only');
+
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.id==='fiilex-matrix-wifi-capture-v1','Fiilex Wi-Fi capture plan missing');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS.Fiilex?.transport==='wifi','Fiilex Matrix capture plan must remain Wi-Fi only');
 expect(VENDOR_WIRELESS_CAPTURE_PLANS['CAME-TV']?.id==='came-tv-boltzen-wifi-capture-v1','CAME-TV Wi-Fi capture plan missing');

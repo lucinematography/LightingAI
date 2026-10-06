@@ -1961,7 +1961,8 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       'https://store.sirui.com/products/sirui-dragon-series-curvy-rgb-panel-light-b25r',
       'https://store.sirui.com/products/sirui-c150x-150w-handheld-pocket-light',
       'https://store.sirui.com/products/sirui-c60x',
-      'https://store.sirui.com/products/sirui-t60x-telescopic-60w-rgb-pixel-tube-light-ll'
+      'https://store.sirui.com/products/sirui-t60x-telescopic-60w-rgb-pixel-tube-light-ll',
+      'https://s2.sirui.com/upload/manual/2024/0223/x4dxexzKcZ.pdf'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Connect one fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},

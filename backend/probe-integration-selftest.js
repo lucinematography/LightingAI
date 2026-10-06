@@ -64,6 +64,7 @@ const allowed=new Set([
   'backend/gel-filter-integration-selftest.js',
   'backend/gel-filter-selftest.js',
   'backend/package.json',
+  'backend/package-lock.json',
   'backend/project5-stable-base-selftest.js',
   'backend/probe-integration-selftest.js',
   'backend/nanlite-alien-current-library.js',

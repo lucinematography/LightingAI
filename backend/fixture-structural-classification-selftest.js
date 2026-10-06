@@ -18,7 +18,8 @@ const cases=[
   [{manufacturer:'Nanlite',family:'Creator Lights',sourceType:'RGBW Pocket LED Light'},'Pocket / Handheld'],
   [{manufacturer:'CHAUVET DJ',model:'COLORband Q3BT',sourceType:'RGBA Linear Wash',formFactor:'Bar'},'Linear Wash / Bar'],
   [{manufacturer:'CHAUVET DJ',model:'4BAR LT QuadBT',sourceType:'RGBA Multi-Head Wash System',formFactor:'Bar System'},'Multi-Head Wash System'],
-  [{manufacturer:'CHAUVET DJ',model:'EZLink Wedge Q3BT ILS',sourceType:'RGBA Wedge Wash',formFactor:'Wedge'},'Wedge / Uplight']
+  [{manufacturer:'CHAUVET DJ',model:'EZLink Wedge Q3BT ILS',sourceType:'RGBA Wedge Wash',formFactor:'Wedge'},'Wedge / Uplight'],
+  [{manufacturer:'Logitech G',model:'Litra Beam',sourceType:'Bi-Color LED Streaming Key Light',formFactor:'Linear Key Light'},'Linear Key Light']
 ];
 for(const [fixture,expected] of cases){
   expect(deriveFixtureStructuralClass(fixture)===expected,

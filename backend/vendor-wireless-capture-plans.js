@@ -139,6 +139,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },
 
+  Elgato: {
+    id:'elgato-control-center-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'Elgato Control Center',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use one exact cataloged Elgato light at a time with the official Control Center app.',
+      'Complete any documented setup pairing first, then capture only the established Wi-Fi control session.',
+      'Start every capture from the same known lighting state and a clean local-network session.',
+      'Do not treat Key Light Air MK.2 Bluetooth setup pairing as a production-control route.',
+      'Do not infer control semantics between Elgato models without physical or protocol evidence.'
+    ],
+    officialSources:[
+      'https://www.elgato.com/us/en/p/key-light',
+      'https://help.elgato.com/hc/en-us/article_attachments/360081486532',
+      'https://www.elgato.com/us/en/explorer/products/lighting/key-light-air-mk2-quick-start-guide/',
+      'https://www.elgato.com/ww/en/s/user-manual/key-light-neo',
+      'https://help.elgato.com/hc/en-us/article_attachments/360081559211'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one supported Elgato light in Control Center over the local network, wait 15 seconds, make no lighting changes, then disconnect/close the control session.'},
+      dim:{runs:3,rule:'Perform exactly one intensity change per capture from the same initial state.'},
+      cct:{runs:3,rule:'Perform exactly one color-temperature change per capture from the same initial state.'},
+      power:{runs:3,optional:true,rule:'Perform exactly one on/off state change per capture from the same initial state.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Genaray: {
     id:'genaray-rgb-bluetooth-capture-v1',
     transport:'bluetooth',

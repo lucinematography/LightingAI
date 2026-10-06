@@ -155,20 +155,28 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     controllerApp:'Ape Labs App + Ape Labs CONNECT',
     commandSpecStatus:'public-command-spec-not-located-in-official-docs',
     prerequisites:[
-      'Use exactly one ApeLight Mini V2 or ApeLight Maxi V2 and one Ape Labs CONNECT.',
-      'Pair/control through the official Ape Labs app and CONNECT; do not treat the fixture itself as a Bluetooth endpoint.',
+      'Use exactly one cataloged Ape Labs fixture and one Ape Labs CONNECT per first capture set.',
+      'Pair/control through the official Ape Labs app and CONNECT; do not treat the fixture itself as the Bluetooth light-control endpoint.',
       'Keep other Ape Labs lights and wireless DMX controllers inactive during the first capture set.',
-      'Record app, CONNECT and fixture firmware versions with every capture.'
+      'Record exact fixture model, app version, CONNECT firmware and fixture firmware with every capture.',
+      'Do not infer fixture-side 2.4 GHz packet semantics or direct BLE light-control semantics from the assisted route.'
     ],
     officialSources:[
-      'https://apelabs.com/en/apelight-mini',
-      'https://apelabs.com/en/apelight-maxi',
-      'https://apelabs.com/en/faq'
+      'https://apelabs.com/en/produkt/apelight-mini-tn-2/',
+      'https://apelabs.com/en/produkt/variabler-artikel/',
+      'https://apelabs.com/en/produkt/apelight-lightcan-tn/',
+      'https://apelabs.com/en/produkt/apelight-tablelight-tn/',
+      'https://apelabs.com/en/apelight-apecoin/',
+      'https://apelabs.com/en/produkt/apelight-apecoin-gu10-tn/',
+      'https://apelabs.com/en/produkt/apelight-apestick-tn/',
+      'https://apelabs.com/en/produkt/apelight-apestick-xl-tn/',
+      'https://apelabs.com/en/manual/connect/control.html'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Connect the smartphone app to CONNECT over Bluetooth with exactly one target fixture active, wait 15 seconds, make no lighting changes, then disconnect.'},
       dim:{runs:3,rule:'From the same initial fixture state perform exactly one dimmer change per capture through the official app/CONNECT path.'},
-      color:{runs:3,rule:'From the same initial state perform exactly one color change per capture through the official app/CONNECT path.'}
+      color:{runs:3,rule:'From the same initial state perform exactly one color change per capture through the official app/CONNECT path.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are isolated; select exactly one known effect/program per capture through the official app/CONNECT path.'}
     },
     safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
   },

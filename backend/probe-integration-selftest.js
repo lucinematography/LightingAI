@@ -60,6 +60,7 @@ const allowed=new Set([
   'backend/moman-pc8-bluetooth-library.js',
   'backend/ikan-idc150-bluetooth-library.js',
   'backend/jinbei-bluetooth-library.js',
+  'backend/lume-cube-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

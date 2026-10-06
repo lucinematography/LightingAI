@@ -1142,7 +1142,8 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
       'https://store.sirui.com/products/sirui-dragon-series-curvy-rgb-panel-light-b25r',
       'https://store.sirui.com/products/sirui-c150x-150w-handheld-pocket-light',
       'https://store.sirui.com/products/sirui-c60x',
-      'https://store.sirui.com/products/sirui-t60x-telescopic-60w-rgb-pixel-tube-light-ll'
+      'https://store.sirui.com/products/sirui-t60x-telescopic-60w-rgb-pixel-tube-light-ll',
+      'https://s2.sirui.com/upload/manual/2024/0223/x4dxexzKcZ.pdf'
     ],
     note: 'Bluetooth/SIRUI Light control is verified only for the explicitly cataloged SIRUI models. LightingAI proprietary command semantics remain locked.'
   },

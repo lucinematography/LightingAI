@@ -91,6 +91,7 @@ const allowed=new Set([
   'backend/bbs-casambi-bluetooth-library.js',
   'backend/sumolight-wifi-library.js',
   'backend/prolights-wifi-library.js',
+  'backend/lightstar-luxed-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

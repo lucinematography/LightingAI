@@ -1004,9 +1004,10 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     nextStep: 'capture-plan-required-before-driver',
     capturePlanId: 'viltrox-weeylite-pro-bluetooth-capture-v1',
     evidence: [
-      'https://viltrox.com/products/viltrox-ninja-30-30b'
+      'https://viltrox.com/products/viltrox-ninja-30-30b',
+      'https://viltrox.com/products/weeylite-200w-5600k-app-control-professional-cob-sudio-light'
     ],
-    note: 'Bluetooth/Weeylite Pro app control is verified only for VILTROX Ninja 30 and Ninja 30B. LightingAI proprietary command semantics remain locked.'
+    note: 'Bluetooth/Weeylite Pro app control is verified only for VILTROX Ninja 30, Ninja 30B, Ninja 20 and Ninja 20B. LightingAI proprietary command semantics remain locked.'
   },
 
   VELVET: {

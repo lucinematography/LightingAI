@@ -297,6 +297,23 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  ZOLAR: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'zolar-bluetooth-capture-v1',
+    secondaryCapturePlanIds: ['zolar-wifi-capture-v1'],
+    evidence: [
+      'https://www.z-cam.com/products/led-light-panels/zolar-blade-60c/',
+      'https://www.z-cam.com/products/led-light-panels/zolar-toliman-30c/',
+      'https://www.z-cam.com/products/led-light-panels/zolar-vega-30c/',
+      'https://www.z-cam.com/products/led-light-panels/zolar/'
+    ],
+    note: 'Bluetooth and Wi-Fi transport are first-party verified only for Blade 60C, Toliman 30C and Vega 30C in this checkpoint. Art-Net 4/sACN availability is documented, but exact-hardware configuration/replay is still required. Proprietary BLE/GATT and private app/session semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

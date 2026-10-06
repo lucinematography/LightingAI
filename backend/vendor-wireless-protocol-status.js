@@ -395,6 +395,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
   },
 
 
+  CineLight: {
+    bluetooth: 'transport_verified_mixed_direct_assisted_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'cinelight-bluetooth-capture-v1',
+    evidence: [
+      'https://cinelight.com/fr/led-spotlights/cinecob-hue-x15-rgbw',
+      'https://cinelight.com/en/module/producttopdf/view?id_product=761',
+      'https://cinelight.com/en/module/producttopdf/view?id_product=762'
+    ],
+    note: 'Bluetooth is first-party verified for CineCOB HUE X15 (direct) and CineFLEX 400/700 (assisted through required external controller). Wi-Fi is not claimed for these exact entries. LightingAI proprietary BLE/GATT and app/session command semantics remain locked.'
+  },
+
+
   Kenro: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

@@ -296,6 +296,10 @@ const broncolor=byManufacturer.get('broncolor');
 if(!broncolor || broncolor.bluetooth!==0 || broncolor.wifi!==1 || broncolor.both!==0) {
   failures.push('broncolor wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');
 }
+const genaray=byManufacturer.get('Genaray');
+if(!genaray || genaray.bluetooth!==7 || genaray.wifi!==0 || genaray.both!==0) {
+  failures.push('Genaray wireless coverage expected 7 Bluetooth / 0 Wi-Fi / 0 both');
+}
 for (const maker of ['Kino Flo','De Sisti','LiteGear']) {
   const row=byManufacturer.get(maker);
   if(!row) failures.push(maker+' wireless audit row missing');

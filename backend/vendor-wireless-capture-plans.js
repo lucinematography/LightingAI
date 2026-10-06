@@ -1871,7 +1871,12 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
       'https://www.swit.cc/index.php?c=article&id=3114',
       'https://www.swit.cc/index.php?c=article&id=3115',
       'https://swit.cc/index.php?c=article&id=2670',
-      'https://www.swit.cc/index.php?c=article&id=4440'
+      'https://www.swit.cc/index.php?c=article&id=4440',
+      'https://swit.cc/index.php?c=article&id=1887',
+      'https://www.swit.cc/index.php?c=article&id=1893',
+      'https://www.swit.cc/index.php?c=article&id=175',
+      'https://www.swit.cc/index.php?c=article&id=130',
+      'https://www.swit.cc/uploads/2019/12/230845127830.pdf'
     ],
     captureSets:{
       connectOnly:{runs:3,rule:'Connect one SWIT fixture over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},

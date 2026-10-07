@@ -1500,6 +1500,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  Twinkly: {
+    bluetooth: 'setup_only_not_production_control',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'twinkly-line-flex-wifi-capture-v1',
+    evidence: [
+      'https://twinkly.com/en-eu/products/line',
+      'https://twinkly.com/products/flex',
+      'https://help.twinkly.com/hc/en-gb/articles/18277787964573-how-do-i-connect-my-twinkly-to-my-wi-fi-network'
+    ],
+    note: 'Twinkly Line and Flex exact-model documentation confirms Wi-Fi plus Bluetooth hardware, while first-party support states Bluetooth is setup-only and Wi-Fi is required for operation/control. LightingAI local discovery, authentication/session semantics and physical replay remain locked.'
+  },
+
   LIFX: {
     bluetooth: 'not_verified_for_current_catalog',
     wifi: 'transport_verified_model_scoped',

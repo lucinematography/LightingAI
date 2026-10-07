@@ -618,6 +618,20 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const lifx=VENDOR_WIRELESS_CAPTURE_PLANS.LIFX;
+expect(lifx?.id==='lifx-direct-wifi-capture-v1','LIFX Wi-Fi capture plan missing');
+expect(lifx?.transport==='wifi','LIFX capture plan must remain Wi-Fi only');
+expect(lifx?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','LIFX command spec status changed');
+expect(lifx?.captureSets?.connectOnly?.runs>=3,'LIFX connect-only requires at least 3 runs');
+expect(lifx?.captureSets?.dim?.runs>=3,'LIFX DIM requires at least 3 runs');
+expect(lifx?.captureSets?.color?.runs>=3,'LIFX COLOR requires at least 3 runs');
+expect(lifx?.prerequisites?.some(x=>/Do not infer undocumented local discovery/i.test(x)),'LIFX capture plan must forbid private network inference');
+expect(lifx?.safety?.officialAppWritesOnly===true,'LIFX official-app-only capture safety missing');
+expect(lifx?.safety?.lightingAiWritesAllowed===false,'LIFX LightingAI writes must stay disabled during capture');
+expect(lifx?.safety?.rawCaptureCommitAllowed===false,'LIFX raw captures must never be committed');
+expect(lifx?.safety?.derivedEvidenceOnly===true,'LIFX only derived evidence may enter repo');
+expect(lifx?.safety?.resultStatus==='candidate_only_until_physical_replay','LIFX capture result must remain candidate-only');
+
 const nanoleaf=VENDOR_WIRELESS_CAPTURE_PLANS.Nanoleaf;
 expect(nanoleaf?.id==='nanoleaf-lines-wifi-capture-v1','Nanoleaf Wi-Fi capture plan missing');
 expect(nanoleaf?.transport==='wifi','Nanoleaf capture plan must remain Wi-Fi only');

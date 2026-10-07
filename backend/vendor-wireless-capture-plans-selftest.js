@@ -618,6 +618,21 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const photoolex=VENDOR_WIRELESS_CAPTURE_PLANS.Photoolex;
+expect(photoolex?.id==='photoolex-direct-bluetooth-capture-v1','Photoolex Bluetooth capture plan missing');
+expect(photoolex?.transport==='bluetooth','Photoolex capture plan must remain Bluetooth only');
+expect(photoolex?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Photoolex command spec status changed');
+expect(photoolex?.captureSets?.connectOnly?.runs>=3,'Photoolex connect-only requires at least 3 runs');
+expect(photoolex?.captureSets?.dim?.runs>=3,'Photoolex DIM requires at least 3 runs');
+expect(photoolex?.captureSets?.cct?.runs>=3,'Photoolex CCT requires at least 3 runs');
+expect(photoolex?.captureSets?.color?.runs>=3,'Photoolex COLOR requires at least 3 runs');
+expect(photoolex?.prerequisites?.some(x=>/Do not infer undocumented BLE/i.test(x)),'Photoolex capture plan must forbid proprietary BLE inference');
+expect(photoolex?.safety?.officialAppWritesOnly===true,'Photoolex official-app-only capture safety missing');
+expect(photoolex?.safety?.lightingAiWritesAllowed===false,'Photoolex LightingAI writes must stay disabled during capture');
+expect(photoolex?.safety?.rawCaptureCommitAllowed===false,'Photoolex raw captures must never be committed');
+expect(photoolex?.safety?.derivedEvidenceOnly===true,'Photoolex only derived evidence may enter repo');
+expect(photoolex?.safety?.resultStatus==='candidate_only_until_physical_replay','Photoolex capture result must remain candidate-only');
+
 const colorkey=VENDOR_WIRELESS_CAPTURE_PLANS.ColorKey;
 expect(colorkey?.id==='colorkey-mobilepar-wifi-capture-v1','ColorKey Wi-Fi capture plan missing');
 expect(colorkey?.transport==='wifi','ColorKey capture plan must remain Wi-Fi only');

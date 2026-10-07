@@ -468,6 +468,10 @@ const manfrotto=byManufacturer.get('Manfrotto');
 if(!manfrotto || manfrotto.bluetooth!==3 || manfrotto.wifi!==0 || manfrotto.both!==0) {
   failures.push('Manfrotto wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const colorkey=byManufacturer.get('ColorKey');
+if(!colorkey || colorkey.bluetooth!==0 || colorkey.wifi!==3 || colorkey.both!==0) {
+  failures.push('ColorKey wireless coverage expected 0 Bluetooth / 3 Wi-Fi / 0 both');
+}
 const blizzard=byManufacturer.get('Blizzard Lighting');
 if(!blizzard || blizzard.bluetooth!==0 || blizzard.wifi!==1 || blizzard.both!==0) {
   failures.push('Blizzard Lighting wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');

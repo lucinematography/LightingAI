@@ -618,6 +618,21 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const newell=VENDOR_WIRELESS_CAPTURE_PLANS.Newell;
+expect(newell?.id==='newell-direct-bluetooth-capture-v1','Newell Bluetooth capture plan missing');
+expect(newell?.transport==='bluetooth','Newell capture plan must remain Bluetooth only');
+expect(newell?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Newell command spec status changed');
+expect(newell?.captureSets?.connectOnly?.runs>=3,'Newell connect-only requires at least 3 runs');
+expect(newell?.captureSets?.dim?.runs>=3,'Newell DIM requires at least 3 runs');
+expect(newell?.captureSets?.cct?.runs>=3,'Newell CCT requires at least 3 runs');
+expect(newell?.captureSets?.color?.runs>=3,'Newell COLOR requires at least 3 runs');
+expect(newell?.prerequisites?.some(x=>/Do not infer undocumented BLE service/i.test(x)),'Newell capture plan must forbid proprietary BLE inference');
+expect(newell?.safety?.officialAppWritesOnly===true,'Newell official-app-only capture safety missing');
+expect(newell?.safety?.lightingAiWritesAllowed===false,'Newell LightingAI writes must stay disabled during capture');
+expect(newell?.safety?.rawCaptureCommitAllowed===false,'Newell raw captures must never be committed');
+expect(newell?.safety?.derivedEvidenceOnly===true,'Newell only derived evidence may enter repo');
+expect(newell?.safety?.resultStatus==='candidate_only_until_physical_replay','Newell capture result must remain candidate-only');
+
 const govee=VENDOR_WIRELESS_CAPTURE_PLANS.Govee;
 expect(govee?.id==='govee-direct-wireless-capture-v1','Govee Bluetooth capture plan missing');
 expect(govee?.transport==='bluetooth','Govee primary capture plan must remain Bluetooth');

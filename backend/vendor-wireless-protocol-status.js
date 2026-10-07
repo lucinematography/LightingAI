@@ -1500,6 +1500,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  Govee: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'govee-direct-wireless-capture-v1',
+    secondaryCapturePlanIds: ['govee-direct-wifi-capture-v1'],
+    evidence: [
+      'https://eu.govee.com/products/govee-rgbicww-wifi-bluetooth-flow-plus-light-bars',
+      'https://eu.govee.com/products/govee-rgbic-wi-fi-gaming-light-bars-with-smart-controller'
+    ],
+    note: 'Direct Bluetooth + Wi-Fi app transport is exact-model verified only for Govee H6056 and H6047 in this checkpoint. LightingAI BLE/GATT, local Wi-Fi discovery/session semantics and physical replay remain locked.'
+  },
+
   VISICO: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

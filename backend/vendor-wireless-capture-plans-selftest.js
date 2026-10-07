@@ -618,6 +618,21 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const twinkly=VENDOR_WIRELESS_CAPTURE_PLANS.Twinkly;
+expect(twinkly?.id==='twinkly-line-flex-wifi-capture-v1','Twinkly Wi-Fi capture plan missing');
+expect(twinkly?.transport==='wifi','Twinkly capture plan must remain Wi-Fi only');
+expect(twinkly?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Twinkly command spec status changed');
+expect(twinkly?.captureSets?.connectOnly?.runs>=3,'Twinkly connect-only requires at least 3 runs');
+expect(twinkly?.captureSets?.dim?.runs>=3,'Twinkly DIM requires at least 3 runs');
+expect(twinkly?.captureSets?.color?.runs>=3,'Twinkly COLOR requires at least 3 runs');
+expect(twinkly?.prerequisites?.some(x=>/Treat Bluetooth as setup-only/i.test(x)),'Twinkly capture plan must keep Bluetooth setup-only');
+expect(twinkly?.prerequisites?.some(x=>/Do not infer undocumented local discovery/i.test(x)),'Twinkly capture plan must forbid private network inference');
+expect(twinkly?.safety?.officialAppWritesOnly===true,'Twinkly official-app-only capture safety missing');
+expect(twinkly?.safety?.lightingAiWritesAllowed===false,'Twinkly LightingAI writes must stay disabled during capture');
+expect(twinkly?.safety?.rawCaptureCommitAllowed===false,'Twinkly raw captures must never be committed');
+expect(twinkly?.safety?.derivedEvidenceOnly===true,'Twinkly only derived evidence may enter repo');
+expect(twinkly?.safety?.resultStatus==='candidate_only_until_physical_replay','Twinkly capture result must remain candidate-only');
+
 const lifx=VENDOR_WIRELESS_CAPTURE_PLANS.LIFX;
 expect(lifx?.id==='lifx-direct-wifi-capture-v1','LIFX Wi-Fi capture plan missing');
 expect(lifx?.transport==='wifi','LIFX capture plan must remain Wi-Fi only');

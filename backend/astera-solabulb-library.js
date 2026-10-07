@@ -32,6 +32,14 @@ const common = {
       'https://update.astera-led.com/firmwares/current/release_notes.html'
     ]
   },
+  dmxProfileVerification: {
+    status: 'HOLD',
+    reason: 'Astera documents SolaBulb control from DMX consoles via CRMX/W-DMX and wireless RDM, but the public SolaBulb documentation does not publish a per-channel DMX profile for this model. Keep standards transport available while semantic channel control remains fail-closed.',
+    sourceUrls: [
+      'https://astera-led.com/solabulb/',
+      'https://update.astera-led.com/firmwares/current/release_notes.html'
+    ]
+  },
   sourceUrl: SRC
 };
 

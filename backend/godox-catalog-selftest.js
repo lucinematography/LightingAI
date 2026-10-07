@@ -17,19 +17,43 @@ const expected=[
   'godox-ldp8d','godox-ldp18d','godox-ldp8bi','godox-ldp18bi','godox-ldx50r','godox-ldx100r','godox-ldx50bi','godox-ldx100bi',
   'godox-ml100bi','godox-ml100r',
   'godox-sl60iid','godox-sl60iibi','godox-sl100d','godox-sl100bi','godox-sl150iii','godox-sl200iii','godox-sl300iii','godox-sl150iiibi','godox-sl200iiibi','godox-sl300iiibi',
-  'godox-tl30','godox-tl60','godox-tl120','godox-tl180'
+  'godox-tl30','godox-tl60','godox-tl120','godox-tl180',
+  'godox-ml40bi','godox-ml40r','godox-ml80bi','godox-ml150bi','godox-rs60bi','godox-rs60r','godox-rs100bi','godox-rs100r','godox-lp800bi','godox-fl15bi','godox-fh50bi','godox-fh50r','godox-le200bi','godox-le300bi','godox-le600bi','godox-le200r','godox-le300r','godox-le600r','godox-ml150rf','godox-sl200rf','godox-sl300rf','godox-fl100r','godox-fl200r','godox-fl200sr','godox-up150r','godox-pl600rf','godox-pl1200rf','godox-ma5r','godox-lc500r-air','godox-lr150-air','godox-am800r','godox-am1600r','godox-mg4k','godox-mg4kr','godox-mg6k','godox-p600r-hard-pro','godox-p1200r-hard-pro','godox-c30r','godox-sr20r'
 ];
 const failures=[];
+const wirelessExpansionIds=new Set(["godox-ml40bi","godox-ml40r","godox-ml80bi","godox-ml150bi","godox-rs60bi","godox-rs60r","godox-rs100bi","godox-rs100r","godox-lp800bi","godox-fl15bi","godox-fh50bi","godox-fh50r","godox-le200bi","godox-le300bi","godox-le600bi","godox-le200r","godox-le300r","godox-le600r","godox-ml150rf","godox-sl200rf","godox-sl300rf","godox-fl100r","godox-fl200r","godox-fl200sr","godox-up150r","godox-pl600rf","godox-pl1200rf","godox-ma5r","godox-lc500r-air","godox-lr150-air","godox-am800r","godox-am1600r","godox-mg4k","godox-mg4kr","godox-mg6k","godox-p600r-hard-pro","godox-p1200r-hard-pro","godox-c30r","godox-sr20r"]);
+function hasGodoxDmxTransport(control = {}) {
+  const values = [
+    ...(control.wired || []),
+    ...(control.wireless || []),
+    ...(control.directLightingAI || [])
+  ].map(value => String(value).toLowerCase());
+  return values.some(value =>
+    /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(value) ||
+    value.includes('crmx') ||
+    value.includes('art-net') ||
+    value.includes('sacn')
+  );
+}
 const duplicateFixtureIds=fixtures.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
 const duplicateAccessoryIds=accessories.map(x=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
 if(duplicateFixtureIds.length) failures.push('Duplicate Godox fixture IDs: '+[...new Set(duplicateFixtureIds)].join(', '));
 if(duplicateAccessoryIds.length) failures.push('Duplicate Godox accessory IDs: '+[...new Set(duplicateAccessoryIds)].join(', '));
 if(fixtures.length!==expected.length) failures.push(`Unexpected Godox fixture count: ${fixtures.length}; expected ${expected.length}`);
 for(const id of expected) if(!ids.has(id)) failures.push('Missing required Godox fixture: '+id);
+for(const id of wirelessExpansionIds){
+  const fixture=fixtures.find(x=>x.id===id);
+  const control=fixture?.control||{};
+  if(!control.wireless?.some(x=>/bluetooth/i.test(String(x)))) failures.push('Godox current wireless fixture Bluetooth route missing: '+id);
+  if(control.builtInBluetooth!==true) failures.push('Godox current wireless fixture built-in Bluetooth flag missing: '+id);
+  if(control.directLightingAI?.length && !control.directLightingAI.every(x=>['Art-Net','sACN'].includes(x))) failures.push('Godox current wireless fixture has unverified direct proprietary route: '+id);
+  if(!control.unavailableDirectProtocols?.some(x=>/not publicly documented/i.test(String(x)))) failures.push('Godox current wireless fixture proprietary protocol HOLD missing: '+id);
+  if(control.wirelessVerification?.bluetooth?.verified!==true) failures.push('Godox current wireless fixture first-party Bluetooth verification missing: '+id);
+}
 for(const f of fixtures){
-  if(!/^https:\/\/(?:www\.)?godox\.com\//i.test(f.sourceUrl||'')) failures.push('Non-official Godox fixture source: '+f.id);
+  if(!/^https:\/\/(?:(?:www|cn)\.)?godox\.com\//i.test(f.sourceUrl||'')) failures.push('Non-official Godox fixture source: '+f.id);
   const direct=accessories.filter(a=>(a.compatibleWith||[]).includes(f.id));
-  if(!direct.length) failures.push('No directly linked Godox accessory: '+f.id);
+  if(!wirelessExpansionIds.has(f.id)&&!direct.length) failures.push('No directly linked Godox accessory: '+f.id);
 }
 for(const a of accessories){
   if(!/^https:\/\/(?:www\.)?godox\.com\//i.test(a.sourceUrl||'')) failures.push('Non-official Godox accessory source: '+a.id);
@@ -312,7 +336,7 @@ for(const fixtureId of ['godox-sl60iid','godox-sl60iibi','godox-sl100d','godox-s
   if(!control.unavailableDirectProtocols?.some(x=>String(x).includes('not publicly documented'))) failures.push('Godox SL public-protocol limitation missing: '+fixtureId);
 }
 const godoxFixtures=fixtures.filter(x=>String(x.id||'').startsWith('godox-'));
-if(godoxFixtures.length!==74) failures.push('Godox fixture count must remain 74, got '+godoxFixtures.length);
+if(godoxFixtures.length!==113) failures.push('Godox fixture count must remain 113 after verified wireless expansion, got '+godoxFixtures.length);
 for(const fixture of godoxFixtures){
   const control=fixture?.control;
   if(!control || Array.isArray(control) || typeof control!=='object') failures.push('Godox fixture must use structured control object: '+fixture.id);
@@ -324,6 +348,26 @@ for(const fixture of godoxFixtures){
   }
 }
 if(godoxFixtures.some(x=>x.id==='godox-lc500bi')) failures.push('Obsolete Godox LC500Bi id must not return');
+const standardDmxFixtures=godoxFixtures.filter(fixture=>hasGodoxDmxTransport(fixture.control||{}));
+const verifiedDmxFixtures=standardDmxFixtures.filter(fixture=>(fixture.dmxModes||[]).some(mode=>mode?.verified===true));
+const dmxProfileHolds=standardDmxFixtures.filter(fixture=>fixture.dmxProfileVerification?.status==='HOLD');
+for(const fixture of standardDmxFixtures){
+  const verifiedModes=(fixture.dmxModes||[]).filter(mode=>mode?.verified===true);
+  const hold=fixture.dmxProfileVerification?.status==='HOLD';
+  if(!verifiedModes.length && !hold) failures.push('Godox standard control transport requires verified DMX mode or explicit HOLD: '+fixture.id);
+  if(verifiedModes.length && fixture.dmxProfileVerification) failures.push('Godox verified DMX mode must not coexist with profile verification HOLD: '+fixture.id);
+  if(hold){
+    if(!String(fixture.dmxProfileVerification?.reason||'').trim()) failures.push('Godox DMX profile HOLD reason missing: '+fixture.id);
+    const sources=fixture.dmxProfileVerification?.sourceUrls;
+    if(!Array.isArray(sources) || !sources.some(url=>/^https?:\/\//i.test(String(url||'')))) failures.push('Godox DMX profile HOLD source URL missing: '+fixture.id);
+  }
+}
+{
+  const fixture=godoxFixtures.find(x=>x.id==='godox-m600r');
+  const verified=(fixture?.dmxModes||[]).filter(mode=>mode?.verified===true);
+  if(verified.length!==2) failures.push('Godox M600R must retain its two verified DMX modes');
+  if(fixture?.dmxProfileVerification) failures.push('Godox M600R verified DMX modes must not be replaced by HOLD');
+}
 const unique=[...new Set(failures)];
-console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,failures:unique},null,2));
+console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Godox',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,standardDmxFixtures:standardDmxFixtures.length,verifiedDmxFixtures:verifiedDmxFixtures.length,dmxProfileHolds:dmxProfileHolds.length,failures:unique},null,2));
 if(unique.length)process.exit(1);

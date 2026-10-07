@@ -1,3 +1,5 @@
+import { qualifyEvLightDmxProfiles } from './evlight-control-verification.js';
+
 // EV LIGHT GEMX hard / outdoor cinema panels.
 // Sources: official EV LIGHT product/category pages.
 const HARD='https://www.evlightpro.com/hard-panel-light/';
@@ -71,6 +73,8 @@ export const EVLIGHT_GEMX_HARD_FIXTURES=[
     pwm:'24 kHz',dimming:'8-bit / 16-bit'
   })
 ];
+
+qualifyEvLightDmxProfiles(EVLIGHT_GEMX_HARD_FIXTURES);
 
 const panels=EVLIGHT_GEMX_HARD_FIXTURES.map(x=>x.id);
 

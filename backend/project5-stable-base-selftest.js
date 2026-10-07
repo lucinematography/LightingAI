@@ -12,6 +12,7 @@ const PROJECT57_MULTI_BASE = '48f497e26f882b2ff618667832dcb938e4750ba9';
 const PROJECT58_SUN_BASE = '0c13256a49160ba5c48fd3aa92c406f834f7e531';
 const PROJECT59_DMX_BASE = '3d112dd60da64fc66b42e61072ff2f012dfb6995';
 const PROJECT510_QA_BASE = '5bf13f433454c048a7e87cf515e19aa92d8199ba';
+const PROBE_CONTROL_BASE = '94f275f579399b26f8bd1c882b2a32a59bc4684a';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -33,7 +34,8 @@ for (const [label, sha] of [
   ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE],
   ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE],
   ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE],
-  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE]
+  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE],
+  ['Light AI Probe verified CONTROL base', PROBE_CONTROL_BASE]
 ]) {
   try { git(['cat-file', '-e', `${sha}^{commit}`]); }
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
@@ -65,7 +67,7 @@ for (const [label, sha] of [
 
 const changedLegacy = git(['diff', '--name-only', `${STABLE_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
-const changed = git(['diff', '--name-only', `${PROJECT510_QA_BASE}...HEAD`])
+const changed = git(['diff', '--name-only', `${PROBE_CONTROL_BASE}...HEAD`])
   .split('\n').map((x) => x.trim()).filter(Boolean);
 
 const measurePath = 'app/src/main/java/com/lightingai/app/MeasureActivity.java';
@@ -84,7 +86,53 @@ const exactAllowed = new Set([
   'app/src/main/assets/sun-native-bridge.js',
   'app/src/main/assets/planner-layout-lock.js',
   'app/src/main/assets/catalog.js',
+  'app/src/main/assets/gel-filter-catalog.js',
+  'backend/gel-filter-catalog-builder.js',
+  'backend/gel-filter-selftest.js',
+  'backend/gel-filter-integration-selftest.js',
   'backend/catalog-runtime.js',
+  'backend/dmg-mix-wireless-library.js',
+  'backend/zhiyun-bluetooth-library.js',
+  'backend/prolycht-orion-wireless-library.js',
+  'backend/colbor-bluetooth-library.js',
+  'backend/sirui-bluetooth-library.js',
+  'backend/fiilex-matrix-wifi-library.js',
+  'backend/harlowe-bluetooth-library.js',
+  'backend/swit-bluetooth-library.js',
+  'backend/dracast-bluetooth-library.js',
+  'backend/hive-bluetooth-library.js',
+  'backend/kinotehnik-practilite-bluetooth-library.js',
+  'backend/velvet-evo-wireless-library.js',
+  'backend/viltrox-bluetooth-library.js',
+  'backend/phottix-bluetooth-library.js',
+  'backend/yongnuo-bluetooth-library.js',
+  'backend/pixel-bluetooth-library.js',
+  'backend/falcon-eyes-bluetooth-library.js',
+  'backend/lishuai-lightreel-bluetooth-library.js',
+  'backend/nicefoto-tc-bluetooth-library.js',
+  'backend/ulanzi-connect-bluetooth-library.js',
+  'backend/came-tv-wifi-library.js',
+  'backend/soonwell-g900-bluetooth-library.js',
+  'backend/tolifo-gk2016-wifi-library.js',
+  'backend/moman-pc8-bluetooth-library.js',
+  'backend/ikan-idc150-bluetooth-library.js',
+  'backend/jinbei-bluetooth-library.js',
+  'backend/lume-cube-bluetooth-library.js',
+  'backend/chauvet-dj-bluetooth-library.js',
+  'backend/fotodiox-prizmo-bluetooth-library.js',
+  'backend/broncolor-led-f160-wifi-library.js',
+  'backend/genaray-rgb-bluetooth-library.js',
+  'backend/elgato-wifi-library.js',
+  'backend/westcott-studiolink-bluetooth-library.js',
+  'backend/logitech-g-litra-bluetooth-library.js',
+  'backend/rollei-bluetooth-library.js',
+  'backend/razer-key-light-chroma-wifi-library.js',
+  'backend/nanlux-evoke-2400b-bluetooth-library.js',
+  'backend/mettle-tube-x-bluetooth-library.js',
+  'backend/pixapro-neon-bluetooth-library.js',
+  'backend/ape-labs-assisted-bluetooth-library.js',
+  'backend/fixture-structural-classification.js',
+  'backend/fixture-structural-classification-selftest.js',
   'backend/fixture-library.js',
   'backend/arri-l-series-plus-library.js',
   'backend/arri-skypanel-classic-s360-library.js',
@@ -130,6 +178,42 @@ const exactAllowed = new Set([
   'backend/desisti-catalog-selftest.js',
   'backend/godox-continuous-library.js',
   'backend/godox-catalog-selftest.js',
+  'backend/nanlite-alien-current-library.js',
+  'backend/nanlite-catalog-selftest.js',
+  'backend/nanlite-compac-current-library.js',
+  'backend/nanlite-compac-daylight-legacy-library.js',
+  'backend/nanlite-creator-compact-library.js',
+  'backend/nanlite-creator-handheld-library.js',
+  'backend/nanlite-fc-720-library.js',
+  'backend/nanlite-fc-high-output-library.js',
+  'backend/nanlite-fm-current-library.js',
+  'backend/nanlite-forza-150b-legacy-library.js',
+  'backend/nanlite-forza-60-legacy-library.js',
+  'backend/nanlite-forza-720b-library.js',
+  'backend/nanlite-forza-bowens-legacy-library.js',
+  'backend/nanlite-forza-daylight-library.js',
+  'backend/nanlite-forza-ii-library.js',
+  'backend/nanlite-fs-current-library.js',
+  'backend/nanlite-fs-legacy-library.js',
+  'backend/nanlite-halo-legacy-library.js',
+  'backend/nanlite-litolite-early-legacy-library.js',
+  'backend/nanlite-litolite-legacy-library.js',
+  'backend/nanlite-lumipad-current-library.js',
+  'backend/nanlite-miro-current-library.js',
+  'backend/nanlite-mixpad-library.js',
+  'backend/nanlite-mixpanel-legacy-library.js',
+  'backend/nanlite-pavobulb-current-library.js',
+  'backend/nanlite-pavoslim-60-120-library.js',
+  'backend/nanlite-pavoslim-extended-library.js',
+  'backend/nanlite-pavotube-10-current-library.js',
+  'backend/nanlite-pavotube-ii-c-library.js',
+  'backend/nanlite-pavotube-ii-xr-library.js',
+  'backend/nanlite-pavotube-t8-7x-library.js',
+  'backend/nanlite-pavotube-x-legacy-library.js',
+  'backend/nanlite-sa-legacy-library.js',
+  'backend/nanlite-tk-legacy-library.js',
+  'backend/build-equipment-catalog-snapshot.js',
+  '.github/workflows/build-light-ai-probe.yml',
   'backend/aladdin-mosaic-library.js',
   'backend/aladdin-fabric-lite-library.js',
   'backend/aladdin-bi-flex-library.js',
@@ -164,6 +248,7 @@ const exactAllowed = new Set([
   'backend/kinoflo-image-87-47-library.js',
   'backend/kinoflo-catalog-selftest.js',
   'backend/package.json',
+  'backend/package-lock.json',
   'automation/tasks.json',
   'docs/OVERNIGHT_API_RUNNER.md',
   'scripts/overnight_runner.py',
@@ -211,22 +296,11 @@ for (const protectedPath of [
 }
 
 const manifestPath = 'app/src/main/AndroidManifest.xml';
-const stableManifest = git(['show', `${PROJECT510_QA_BASE}:${manifestPath}`]);
+const controlManifest = git(['show', `${PROBE_CONTROL_BASE}:${manifestPath}`]);
 const currentManifest = git(['show', `HEAD:${manifestPath}`]);
-const manifestWithoutBle = currentManifest
-  .split('\n')
-  .filter((line) => !line.includes('android.permission.BLUETOOTH') && !line.includes('android.hardware.bluetooth_le') && !line.includes('android.permission.RECORD_AUDIO'))
-  .join('\n');
-if (manifestWithoutBle !== stableManifest) fail('AndroidManifest changed outside the isolated BLE permission/feature additions');
-for (const marker of [
-  'android.permission.BLUETOOTH" android:maxSdkVersion="30"',
-  'android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"',
-  'android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"',
-  'android.permission.BLUETOOTH_CONNECT',
-  'android.hardware.bluetooth_le" android:required="false"'
-]) {
-  if (!currentManifest.includes(marker)) fail(`BLE manifest marker missing: ${marker}`);
-}
+if (!currentManifest.includes('android:label="@string/app_name"')) fail('Probe app label resource marker missing');
+const manifestAsControl = currentManifest.replace('android:label="@string/app_name"', 'android:label="LIGHTING AI"');
+if (manifestAsControl !== controlManifest) fail('Probe AndroidManifest differs from verified CONTROL base outside the app label');
 const allowedPermissions = new Set([
   'android.permission.INTERNET',
   'android.permission.ACCESS_COARSE_LOCATION',
@@ -699,9 +773,10 @@ console.log(JSON.stringify({
   dmxAiBase: PROJECT58_SUN_BASE,
   finalQaBase: PROJECT59_DMX_BASE,
   releasePrepBase: PROJECT510_QA_BASE,
+  probeControlBase: PROBE_CONTROL_BASE,
   stableBuilds: [510, 655, 686, 701, 713, 721, 727, 739, 746, 753, 762, 767],
   legacyChangedFiles: changedLegacy,
   changedFiles: changed,
-  protectedByDefault: 'build 767 final QA feature set remains protected; only scene voice input, release signing configuration/workflow and this guard may change',
+  protectedByDefault: 'historical Project 5 invariants remain protected; Probe diff allowlist is measured from the last verified CONTROL base',
   featureSurface: 'Project 5.2 redesign with Planner / Equipment / Control / AI / Tools, safe AI-to-Control staging, verified DMX patch mapping, and explicit confirmation before physical Art-Net/sACN output'
 }, null, 2));

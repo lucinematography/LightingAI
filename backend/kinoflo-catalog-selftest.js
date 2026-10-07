@@ -564,6 +564,73 @@ const barFly450DmxSource='https://kinoflo.com/wp-content/uploads/2022/07/3100062
   }
 }
 
+const kinoStructured=fixtures.filter(fixture=>fixture.control && !Array.isArray(fixture.control));
+const kinoVerifiedFixtures=fixtures.filter(fixture=>(fixture.dmxModes||[]).some(mode=>mode?.verified===true));
+const kinoVerifiedModes=fixtures.flatMap(fixture=>(fixture.dmxModes||[]).filter(mode=>mode?.verified===true));
+const kinoHolds=fixtures.filter(fixture=>fixture.dmxProfileVerification?.status==='HOLD');
+const expectedHoldIds=[
+  'kinoflo-celeb-ikon-6',
+  'kinoflo-celeb-ikon-12',
+  'kinoflo-diva-lux-4',
+  'kinoflo-blanket-lite-6x6',
+  'kinoflo-flathead-80'
+];
+
+if(fixtures.some(fixture=>Array.isArray(fixture.control))) failures.push('Kino Flo runtime fixture must not retain legacy control array');
+if(kinoStructured.length!==41) failures.push('Kino Flo structured control fixture count must remain 41, got '+kinoStructured.length);
+if(kinoVerifiedFixtures.length!==35) failures.push('Kino Flo verified DMX fixture count must remain 35, got '+kinoVerifiedFixtures.length);
+if(kinoVerifiedModes.length!==514) failures.push('Kino Flo verified DMX mode count must remain 514, got '+kinoVerifiedModes.length);
+if(kinoHolds.length!==5) failures.push('Kino Flo DMX profile HOLD count must remain 5, got '+kinoHolds.length);
+
+for(const id of expectedHoldIds){
+  const fixture=fixtures.find(item=>item.id===id);
+  const hold=fixture?.dmxProfileVerification;
+  if(hold?.status!=='HOLD') failures.push('Kino Flo explicit DMX profile HOLD missing: '+id);
+  if((fixture?.dmxModes||[]).some(mode=>mode?.verified===true)) failures.push('Kino Flo HOLD must not coexist with verified DMX mode: '+id);
+  if(!String(hold?.reason||'').trim()) failures.push('Kino Flo DMX profile HOLD reason missing: '+id);
+  if(!Array.isArray(hold?.sourceUrls)||!hold.sourceUrls.some(url=>/^https?:\/\//i.test(String(url||'')))) failures.push('Kino Flo DMX profile HOLD source URL missing: '+id);
+}
+
+for(const fixture of kinoStructured){
+  for(const key of ['local','wired','wireless','directLightingAI','externalInterfaceRequired','sourceUrls','legacyLabels']){
+    if(!Array.isArray(fixture.control?.[key])) failures.push('Kino Flo structured control array missing: '+fixture.id+' '+key);
+  }
+  const transport=[
+    ...(fixture.control?.wired||[]),
+    ...(fixture.control?.wireless||[]),
+    ...(fixture.control?.directLightingAI||[])
+  ].join(' ').toLowerCase();
+  const hasStandard=
+    /(^|[^a-z0-9])dmx(?:-?512a?|512)?([^a-z0-9]|$)/.test(transport) ||
+    transport.includes('crmx') ||
+    transport.includes('lumenradio') ||
+    transport.includes('art-net') ||
+    transport.includes('artnet') ||
+    transport.includes('sacn') ||
+    transport.includes('e1.31');
+  const verified=(fixture.dmxModes||[]).filter(mode=>mode?.verified===true);
+  const hold=fixture.dmxProfileVerification?.status==='HOLD';
+  if(hasStandard&&!verified.length&&!hold) failures.push('Kino Flo standard control transport requires verified DMX mode or explicit HOLD: '+fixture.id);
+  if(verified.length&&fixture.dmxProfileVerification) failures.push('Kino Flo verified DMX mode must not coexist with profile HOLD: '+fixture.id);
+}
+
+for(const id of ['kinoflo-celeb-ikon-6','kinoflo-celeb-ikon-12','kinoflo-diva-lux-4']){
+  const fixture=fixtures.find(item=>item.id===id);
+  for(const item of ['Art-Net','sACN']) if(!fixture?.control?.directLightingAI?.includes(item)) failures.push('Kino Flo current network LightingAI route missing: '+id+' '+item);
+  if(!fixture?.control?.wireless?.some(item=>/CRMX/i.test(String(item)))) failures.push('Kino Flo current CRMX route missing: '+id);
+}
+
+for(const id of ['kinoflo-blanket-lite-6x6','kinoflo-flathead-80']){
+  const fixture=fixtures.find(item=>item.id===id);
+  if(!fixture?.control?.externalInterfaceRequired?.some(item=>String(item).includes('DMX ballast'))) failures.push('Kino Flo legacy ballast routing requirement missing: '+id);
+}
+
+{
+  const fixture=fixtures.find(item=>item.id==='kinoflo-mimik-120');
+  if(fixture?.dmxProfileVerification) failures.push('Kino Flo MIMIK 120 must not claim a DMX profile HOLD without a documented DMX fixture path');
+  if(!fixture?.control?.externalInterfaceRequired?.some(item=>String(item).includes('HELIOS'))) failures.push('Kino Flo MIMIK 120 HELIOS processor requirement missing');
+}
+
 const unique=[...new Set(failures)];
-console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,finalAudit:true,failures:unique},null,2));
+console.log(JSON.stringify({ok:unique.length===0,manufacturer:'Kino Flo',fixtureCount:fixtures.length,accessoryCount:accessories.length,requiredFixtures:expected.length,structuredControlFixtures:kinoStructured.length,verifiedDmxFixtures:kinoVerifiedFixtures.length,verifiedModes:kinoVerifiedModes.length,dmxProfileHolds:kinoHolds.length,finalAudit:true,failures:unique},null,2));
 if(unique.length) process.exit(1);

@@ -1,6 +1,6 @@
 // Astera AX2 PixelBar battery-powered linear LED fixtures.
 // Canonical specifications from Astera AX2 PixelBar datasheet.
-const SRC = 'https://device.report/m/0e05d49354ab0a17b88c19119c7db803ce0c9e24c36414278e744506af83e11f';
+const SRC = 'https://astera-led.com/products/ax2-pixelbar/';
 const CHARGING_CASE_SRC = 'https://astera-led.com/products/charging-case-for-ax2/downloads/';
 
 export const ASTERA_AX2_PIXELBAR_FIXTURES = [
@@ -24,11 +24,12 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     weightKg: 4.5,
     control: {
       wired: ['DMX'],
-      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX', 'Bluetooth on AX2-50-BTB variant', 'WiFi on AX2-50-BTB variant'],
       builtInCRMX: true,
+      builtInBTBVariant: 'AX2-50-BTB',
       directLightingAI: [],
       externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX transmitter for CRMX control', 'AsteraBox for AsteraApp/UHF control'],
-      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
       sourceUrls: [
         'https://update.astera-led.com/release_notes/ax2_50/release_notes',
         'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf'
@@ -38,7 +39,7 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,
       verified: true,
-      sourceUrl: 'https://device.report/m/4bc78c9a477002bb5c297f8f11244eaa051e3d6fec9752995b3254dd82fd1fdf',
+      sourceUrl: 'https://astera-led.com/products/ax2-pixelbar/downloads/',
       controls: [
         { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
         { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
@@ -68,11 +69,12 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
     weightKg: 7.4,
     control: {
       wired: ['DMX'],
-      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'CRMX', 'Bluetooth on AX2-100-BTB variant', 'WiFi on AX2-100-BTB variant'],
       builtInCRMX: true,
+      builtInBTBVariant: 'AX2-100-BTB',
       directLightingAI: [],
       externalInterfaceRequired: ['Wired DMX interface for DMX control', 'CRMX transmitter for CRMX control', 'AsteraBox for AsteraApp/UHF control'],
-      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
       sourceUrls: [
         'https://update.astera-led.com/release_notes/ax2_50/release_notes',
         'https://astera-led.com/wp-content/uploads/ART7_AsteraBox_Datasheet_V3.pdf'
@@ -82,7 +84,7 @@ export const ASTERA_AX2_PIXELBAR_FIXTURES = [
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,
       verified: true,
-      sourceUrl: 'https://cdn.stormlighting.co.uk/content/2022/07/Astera_TitanTube_DMX.pdf',
+      sourceUrl: 'https://astera-led.com/products/ax2-pixelbar/downloads/',
       controls: [
         { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
         { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },

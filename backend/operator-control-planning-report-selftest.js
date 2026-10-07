@@ -1,0 +1,213 @@
+import { buildOperatorControlPlanningReport } from './operator-control-planning-report.js';
+
+const failures=[];
+const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
+const report=buildOperatorControlPlanningReport();
+const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
+
+expect(report.fixtureCount===1125,'fixture total changed from verified catalog');
+expect(report.wirelessManufacturers===106,'wireless manufacturer count must remain 91');
+expect(report.commandReadyManufacturers===0,'no vendor command driver may be production-ready');
+expect(report.totals.wirelessFixtures>0,'wireless planning report unexpectedly empty');
+expect(report.totals.dimControlVerified<=report.totals.dimCapable,'verified control totals must be bounded by physical DIM capability');
+expect(report.totals.cctControlVerified<=report.totals.cctCapable,'verified CCT control total exceeds physical capability');
+expect(report.totals.colorControlVerified<=report.totals.colorCapable,'verified COLOR control total exceeds physical capability');
+expect(report.totals.fxControlVerified<=report.totals.fxCapable,'verified FX control total exceeds physical capability');
+
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','SHEHDS','Weeylite','IMRELAX','Kenro','Selens','Fomex','BB&S Lighting','SUMOLIGHT','PROLIGHTS','Lightstar Lights','Mole-Richardson','ZOLAR','Filmgear','Rosco','dedolight','ADJ Lighting','Elinchrom','CineLight','ROXX','iFootage','Cineroid','Sokani','FotorGear','BRESSER','Digitek','Manfrotto','Cineo','Blizzard Lighting','ColorKey','Photoolex','RAYZR','CINEPEER','VISICO','Govee','Newell','Philips Hue','Nanoleaf','LIFX','Twinkly','Yeelight','Sengled']){
+  const row=by[maker];
+  expect(!!row,maker+' planning row missing');
+  if(!row) continue;
+  if(row.bluetoothFixtures>0) expect(!!row.bluetoothPlanId,maker+' Bluetooth plan missing from planning report');
+  if(row.wifiFixtures>0) expect(!!row.wifiPlanId,maker+' Wi-Fi plan missing from planning report');
+  expect(row.commandReady===false,maker+' commandReady must remain false');
+  expect(Array.isArray(row.requiredProductionFixtureIds)&&row.requiredProductionFixtureIds.length>=row.wirelessFixtures,maker+' required production fixture IDs must cover every planning fixture');
+  expect(new Set(row.requiredProductionFixtureIds).size===row.requiredProductionFixtureIds.length,maker+' required production fixture IDs must be unique');
+  expect(Array.isArray(row.requiredProductionTransports)&&row.requiredProductionTransports.length>0,maker+' required production transports missing');
+  expect(Array.isArray(row.requiredProductionRoutes)&&row.requiredProductionRoutes.length>=row.bluetoothFixtures+row.wifiFixtures,maker+' required production routes must cover verified planning routes');
+  const routeKeys=row.requiredProductionRoutes.map(r=>String(r?.fixtureId||'')+'::'+String(r?.transport||'').toLowerCase());
+  expect(new Set(routeKeys).size===routeKeys.length,maker+' required production routes must be unique');
+  expect(row.requiredProductionRoutes.every(r=>row.requiredProductionFixtureIds.includes(String(r?.fixtureId||''))),maker+' production route references fixture outside required scope');
+  expect(row.dimCapable<=row.wirelessFixtures,maker+' DIM capability count exceeds wireless fixtures');
+  expect(row.cctCapable<=row.wirelessFixtures,maker+' CCT capability count exceeds wireless fixtures');
+  expect(row.colorCapable<=row.wirelessFixtures,maker+' COLOR capability count exceeds wireless fixtures');
+  expect(row.fxCapable<=row.wirelessFixtures,maker+' FX capability count exceeds wireless fixtures');
+  expect(row.dimControlVerified<=row.dimCapable,maker+' verified DIM control exceeds fixture DIM capability');
+  expect(row.cctControlVerified<=row.cctCapable,maker+' verified CCT control exceeds fixture CCT capability');
+  expect(row.colorControlVerified<=row.colorCapable,maker+' verified COLOR control exceeds fixture COLOR capability');
+  expect(row.fxControlVerified<=row.fxCapable,maker+' verified FX control exceeds fixture FX capability');
+}
+
+expect(report.vendors[0]?.manufacturer==='Godox','Godox should lead current wireless fixture coverage after verified current-model Bluetooth expansion');
+expect(by.Godox?.wirelessFixtures===107,'Godox wireless fixture count changed unexpectedly');
+expect(by.Nanlite?.wirelessFixtures===77,'Nanlite unique wireless fixture count changed unexpectedly');
+expect(by.Aputure?.wirelessFixtures===24,'Aputure wireless fixture count changed unexpectedly');
+expect(by.Astera?.wirelessFixtures===23,'Astera unique wireless fixture count changed unexpectedly');
+expect(by.ARRI?.wirelessFixtures===7,'ARRI wireless fixture count changed unexpectedly');
+expect(by['DMG Lumiere']?.wirelessFixtures===3,'DMG Lumiere wireless fixture count changed unexpectedly');
+expect(by.ZHIYUN?.wirelessFixtures===18,'ZHIYUN wireless fixture count changed unexpectedly');
+expect(by.PROLYCHT?.wirelessFixtures===2,'PROLYCHT wireless fixture count changed unexpectedly');
+expect(by.COLBOR?.wirelessFixtures===2,'COLBOR wireless fixture count changed unexpectedly');
+expect(by.SIRUI?.wirelessFixtures===11,'SIRUI wireless fixture count changed unexpectedly');
+expect(by.Fiilex?.wirelessFixtures===1,'Fiilex wireless fixture count changed unexpectedly');
+expect(by.Harlowe?.wirelessFixtures===22,'Harlowe wireless fixture count changed unexpectedly');
+expect(by.SWIT?.wirelessFixtures===12,'SWIT wireless fixture count changed unexpectedly');
+expect(by.Dracast?.wirelessFixtures===2,'Dracast wireless fixture count changed unexpectedly');
+expect(by['Hive Lighting']?.wirelessFixtures===7,'Hive Lighting wireless fixture count changed unexpectedly');
+expect(by.Kinotehnik?.wirelessFixtures===2,'Kinotehnik wireless fixture count changed unexpectedly');
+expect(by.VELVET?.wirelessFixtures===6,'VELVET wireless fixture count changed unexpectedly');
+expect(by.VILTROX?.wirelessFixtures===4,'VILTROX wireless fixture count changed unexpectedly');
+expect(by.Phottix?.wirelessFixtures===7,'Phottix wireless fixture count changed unexpectedly');
+expect(by.YONGNUO?.wirelessFixtures===12,'YONGNUO wireless fixture count changed unexpectedly');
+expect(by.PIXEL?.wirelessFixtures===2,'PIXEL wireless fixture count changed unexpectedly');
+expect(by['Falcon Eyes']?.wirelessFixtures===14,'Falcon Eyes wireless fixture count changed unexpectedly');
+expect(by.Lishuai?.wirelessFixtures===4,'Lishuai wireless fixture count changed unexpectedly');
+expect(by.NiceFoto?.wirelessFixtures===12,'NiceFoto wireless fixture count changed unexpectedly');
+expect(by.Ulanzi?.wirelessFixtures===6,'Ulanzi wireless fixture count changed unexpectedly');
+expect(by['CAME-TV']?.wirelessFixtures===10,'CAME-TV wireless fixture count changed unexpectedly');
+expect(by.SOONWELL?.wirelessFixtures===1,'SOONWELL wireless fixture count changed unexpectedly');
+expect(by.Tolifo?.wirelessFixtures===2,'Tolifo wireless fixture count changed unexpectedly');
+expect(by.Moman?.wirelessFixtures===1,'Moman wireless fixture count changed unexpectedly');
+expect(by.Ikan?.wirelessFixtures===1,'Ikan wireless fixture count changed unexpectedly');
+expect(by.Jinbei?.wirelessFixtures===12,'Jinbei wireless fixture count changed unexpectedly');
+expect(by['Lume Cube']?.wirelessFixtures===5,'Lume Cube wireless fixture count changed unexpectedly');
+expect(by['CHAUVET DJ']?.wirelessFixtures===22,'CHAUVET DJ wireless fixture count changed unexpectedly');
+expect(by.Fotodiox?.wirelessFixtures===1,'Fotodiox wireless fixture count changed unexpectedly');
+expect(by.broncolor?.wirelessFixtures===5,'broncolor wireless fixture count changed unexpectedly');
+expect(by.Genaray?.wirelessFixtures===7,'Genaray wireless fixture count changed unexpectedly');
+expect(by.Elgato?.wirelessFixtures===6,'Elgato wireless fixture count changed unexpectedly');
+expect(by.Westcott?.wirelessFixtures===4,'Westcott wireless fixture count changed unexpectedly');
+expect(by['Logitech G']?.wirelessFixtures===2,'Logitech G wireless fixture count changed unexpectedly');
+expect(by.Rollei?.wirelessFixtures===12,'Rollei wireless fixture count changed unexpectedly');
+expect(by.Razer?.wirelessFixtures===1,'Razer wireless fixture count changed unexpectedly');
+expect(by.NANLUX?.wirelessFixtures===6,'NANLUX wireless fixture count changed unexpectedly');
+expect(by.Mettle?.wirelessFixtures===3,'Mettle wireless fixture count changed unexpectedly');
+expect(by.PiXAPRO?.wirelessFixtures===2,'PiXAPRO wireless fixture count changed unexpectedly');
+expect(by['Ape Labs']?.wirelessFixtures===8,'Ape Labs wireless fixture count changed unexpectedly');
+expect(by.Pilotfly?.wirelessFixtures===4,'Pilotfly wireless fixture count changed unexpectedly');
+expect(by.LUXCEO?.wirelessFixtures===5,'LUXCEO wireless fixture count changed unexpectedly');
+expect(by.Yidoblo?.wirelessFixtures===4,'Yidoblo wireless fixture count changed unexpectedly');
+expect(by.FEELWORLD?.wirelessFixtures===5,'FEELWORLD wireless fixture count changed unexpectedly');
+expect(by.SUTEFOTO?.wirelessFixtures===2,'SUTEFOTO wireless fixture count changed unexpectedly');
+expect(by['YC Onion']?.wirelessFixtures===1,'YC Onion wireless fixture count changed unexpectedly');
+expect(by['K&F Concept']?.wirelessFixtures===1,'K&F Concept wireless fixture count changed unexpectedly');
+expect(by.Profoto?.wirelessFixtures===9,'Profoto wireless fixture count changed unexpectedly');
+expect(by.SHEHDS?.wirelessFixtures===2,'SHEHDS wireless fixture count changed unexpectedly');
+expect(by.Weeylite?.wirelessFixtures===6,'Weeylite wireless fixture count changed unexpectedly');
+expect(by.IMRELAX?.wirelessFixtures===1,'IMRELAX wireless fixture count changed unexpectedly');
+expect(by.Kenro?.wirelessFixtures===3,'Kenro wireless fixture count changed unexpectedly');
+expect(by.Selens?.wirelessFixtures===2,'Selens wireless fixture count changed unexpectedly');
+expect(by.Fomex?.wirelessFixtures===2,'Fomex wireless fixture count changed unexpectedly');
+expect(by['BB&S Lighting']?.wirelessFixtures===2,'BB&S Lighting wireless fixture count changed unexpectedly');
+expect(by.SUMOLIGHT?.wirelessFixtures===1,'SUMOLIGHT wireless fixture count changed unexpectedly');
+expect(by.PROLIGHTS?.wirelessFixtures===3,'PROLIGHTS wireless fixture count changed unexpectedly');
+expect(by['Lightstar Lights']?.wirelessFixtures===9,'Lightstar Lights wireless fixture count changed unexpectedly');
+expect(by['Mole-Richardson']?.wirelessFixtures===13,'Mole-Richardson wireless fixture count changed unexpectedly');
+expect(by.ZOLAR?.wirelessFixtures===3,'ZOLAR wireless fixture count changed unexpectedly');
+expect(by.Filmgear?.wirelessFixtures===5,'Filmgear wireless fixture count changed unexpectedly');
+expect(by.Rosco?.wirelessFixtures===4,'Rosco wireless fixture count changed unexpectedly');
+expect(by.dedolight?.wirelessFixtures===4,'dedolight wireless fixture count changed unexpectedly');
+expect(by['ADJ Lighting']?.wirelessFixtures===3,'ADJ Lighting wireless fixture count changed unexpectedly');
+expect(by.Elinchrom?.wirelessFixtures===3,'Elinchrom wireless fixture count changed unexpectedly');
+expect(by.CineLight?.wirelessFixtures===3,'CineLight wireless fixture count changed unexpectedly');
+expect(by.ROXX?.wirelessFixtures===4,'ROXX wireless fixture count changed unexpectedly');
+expect(by.iFootage?.wirelessFixtures===10,'iFootage wireless fixture count changed unexpectedly');
+expect(by.Cineroid?.wirelessFixtures===1,'Cineroid wireless fixture count changed unexpectedly');
+expect(by.Sokani?.wirelessFixtures===1,'Sokani wireless fixture count changed unexpectedly');
+expect(by.FotorGear?.wirelessFixtures===1,'FotorGear wireless fixture count changed unexpectedly');
+expect(by.BRESSER?.wirelessFixtures===5,'BRESSER wireless fixture count changed unexpectedly');
+expect(by.Digitek?.wirelessFixtures===1,'Digitek wireless fixture count changed unexpectedly');
+expect(by.Manfrotto?.wirelessFixtures===3,'Manfrotto wireless fixture count changed unexpectedly');
+expect(by.Cineo?.wirelessFixtures===2,'Cineo wireless fixture count changed unexpectedly');
+expect(by['Blizzard Lighting']?.wirelessFixtures===1,'Blizzard Lighting wireless fixture count changed unexpectedly');
+expect(by.ColorKey?.wirelessFixtures===3,'ColorKey wireless fixture count changed unexpectedly');
+expect(by.Photoolex?.wirelessFixtures===2,'Photoolex wireless fixture count changed unexpectedly');
+expect(by.RAYZR?.wirelessFixtures===4,'RAYZR wireless fixture count changed unexpectedly');
+expect(by.CINEPEER?.wirelessFixtures===1,'CINEPEER wireless fixture count changed unexpectedly');
+expect(by.VISICO?.wirelessFixtures===3,'VISICO wireless fixture count changed unexpectedly');
+expect(by.Govee?.wirelessFixtures===2,'Govee wireless fixture count changed unexpectedly');
+expect(by.Newell?.wirelessFixtures===2,'Newell wireless fixture count changed unexpectedly');
+expect(by['Philips Hue']?.wirelessFixtures===2,'Philips Hue wireless fixture count changed unexpectedly');
+expect(by.Nanoleaf?.wirelessFixtures===1,'Nanoleaf wireless fixture count changed unexpectedly');
+expect(by.LIFX?.wirelessFixtures===2,'LIFX wireless fixture count changed unexpectedly');
+expect(by.Twinkly?.wirelessFixtures===2,'Twinkly wireless fixture count changed unexpectedly');
+expect(by.Yeelight?.wirelessFixtures===2,'Yeelight wireless fixture count changed unexpectedly');
+expect(by.Sengled?.wirelessFixtures===2,'Sengled wireless fixture count changed unexpectedly');
+
+for(const maker of ['Nanlite','Astera','ARRI','EV Light','Rotolight','Quasar Science','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','PROLYCHT','ZOLAR','Govee']){
+  const transports=new Set(by[maker]?.requiredProductionTransports||[]);
+  expect(transports.has('bluetooth')&&transports.has('wifi'),maker+' dual-transport production scope must require Bluetooth and Wi-Fi');
+}
+for(const maker of ['Godox','Aputure','Aladdin','Creamsource','Luxli','Kelvin','SmallRig','ZHIYUN','COLBOR','SIRUI','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','Weeylite','Kenro','Selens','Fomex','BB&S Lighting','Lightstar Lights','Mole-Richardson','Filmgear','Rosco','dedolight','ADJ Lighting','Elinchrom','CineLight','ROXX','iFootage','Cineroid','Sokani','FotorGear','BRESSER','Digitek','Manfrotto','Photoolex','CINEPEER','VISICO','Newell','Philips Hue']){
+  const transports=by[maker]?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='bluetooth',maker+' current production scope should require Bluetooth only');
+}
+
+{
+  const transports=by.Fiilex?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','Fiilex current production scope should require Wi-Fi only');
+}
+{
+  const transports=by.SHEHDS?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','SHEHDS current production scope should require Wi-Fi only');
+}
+{
+  const transports=by.IMRELAX?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','IMRELAX current production scope should require Wi-Fi only');
+}
+{
+  const transports=by.SUMOLIGHT?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','SUMOLIGHT current production scope should require Wi-Fi only');
+}
+{
+  const transports=by.PROLIGHTS?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','PROLIGHTS current production scope should require Wi-Fi only');
+}
+
+{
+  const transports=by.Cineo?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','Cineo current production scope should require Wi-Fi only');
+}
+
+{
+  const transports=by['Blizzard Lighting']?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','Blizzard Lighting current production scope should require Wi-Fi only');
+}
+
+{
+  const transports=by.ColorKey?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','ColorKey current production scope should require Wi-Fi only');
+}
+
+{
+  const transports=by.RAYZR?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','RAYZR current production scope should require Wi-Fi only');
+}
+
+{
+  const transports=by.Nanoleaf?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','Nanoleaf current production scope should require Wi-Fi only');
+}
+
+{
+  const transports=by.LIFX?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','LIFX current production scope should require Wi-Fi only');
+}
+
+{
+  const transports=by.Twinkly?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','Twinkly current production scope should require Wi-Fi only');
+}
+
+{
+  const transports=by.Yeelight?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','Yeelight current production scope should require Wi-Fi only');
+}
+
+{
+  const transports=by.Sengled?.requiredProductionTransports||[];
+  expect(transports.length===1&&transports[0]==='wifi','Sengled current production scope should require Wi-Fi only');
+}
+
+console.log(JSON.stringify({ok:failures.length===0,report,failures},null,2));
+if(failures.length)process.exit(1);

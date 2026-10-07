@@ -1,0 +1,271 @@
+name: Build Light AI Proba APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "feature/light-ai-probe" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  probe-build:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: lightingai-probe-${{ github.ref_name }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Audit backend dependencies
+        working-directory: backend
+        run: npm run audit:dependencies
+
+      - name: Build embedded equipment catalog snapshot
+        run: node backend/build-equipment-catalog-snapshot.js
+
+      - name: Embed Probe build identity
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          BUILT_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          printf 'window.LightingAIFeatureBuild={run:"%s",sha:"%s",branch:"%s",builtAt:"%s",lab:"probe",probe:"Light AI Proba"};\n' "$GITHUB_RUN_NUMBER" "$SHORT_SHA" "$GITHUB_REF_NAME" "$BUILT_AT" > app/src/main/assets/feature-build-info.js
+
+      - name: Validate complete equipment catalog
+        working-directory: backend
+        run: npm run check
+
+      - name: Validate WebView JavaScript syntax
+        run: find app/src/main/assets -maxdepth 1 -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Validate Project 5 safety invariants
+        working-directory: backend
+        run: npm run test:project5-safety
+
+      - name: Validate Probe integration against verified CONTROL base
+        working-directory: backend
+        run: node probe-integration-selftest.js
+
+      - name: Validate Project 5.2 release gate
+        working-directory: backend
+        run: npm run test:project52-release
+
+      - name: Validate Project Backup
+        run: node backend/project-backup-selftest.js
+
+      - name: Validate full-app critical regression surface
+        run: node backend/full-app-critical-selftest.js
+
+      - name: Validate production control routing
+        working-directory: backend
+        run: node control-production-selftest.js
+
+      - name: Validate operator desk safety
+        working-directory: backend
+        run: node control-operator-desk-selftest.js
+
+      - name: Validate Astera btsnoop analyzer
+        working-directory: backend
+        run: node astera-btsnoop-analyzer-selftest.js
+
+      - name: Validate Astera ATT differential analyzer
+        working-directory: backend
+        run: node astera-att-diff-selftest.js
+
+      - name: Validate Astera ATT consensus analyzer
+        working-directory: backend
+        run: node astera-att-consensus-selftest.js
+
+      - name: Validate Astera connect-only session consensus
+        working-directory: backend
+        run: node astera-att-session-consensus-selftest.js
+
+      - name: Validate Astera verified session baseline filter
+        working-directory: backend
+        run: node astera-att-session-filter-selftest.js
+
+      - name: Validate Astera physical capture-set orchestrator
+        working-directory: backend
+        run: node astera-physical-capture-set-selftest.js
+
+      - name: Validate Astera ATT setpoint sweep analyzer
+        working-directory: backend
+        run: node astera-att-sweep-selftest.js
+
+      - name: Audit full fixture control catalog
+        working-directory: backend
+        run: node control-catalog-audit.js
+
+      - name: Audit Bluetooth and Wi-Fi catalog coverage
+        working-directory: backend
+        run: node control-wireless-catalog-audit.js
+
+      - name: Audit Bluetooth and Wi-Fi fixture classes
+        working-directory: backend
+        run: node wireless-fixture-class-coverage-selftest.js
+
+      - name: Validate wireless direct and assisted route classification
+        working-directory: backend
+        run: node wireless-route-classification-selftest.js
+
+      - name: Validate structural fixture classification
+        working-directory: backend
+        run: node fixture-structural-classification-selftest.js
+
+      - name: Validate control system driver families
+        working-directory: backend
+        run: node control-system-drivers-selftest.js
+
+      - name: Validate vendor wireless protocol readiness
+        working-directory: backend
+        run: node vendor-wireless-protocol-status-selftest.js
+
+      - name: Validate vendor wireless capture plans
+        working-directory: backend
+        run: node vendor-wireless-capture-plans-selftest.js
+
+      - name: Validate vendor wireless coverage
+        working-directory: backend
+        run: node vendor-wireless-coverage-selftest.js
+
+      - name: Validate Aputure Sidus fail-closed normalization
+        working-directory: backend
+        run: node aputure-wireless-verification-selftest.js
+
+      - name: Validate Aladdin Bluetooth fail-closed normalization
+        working-directory: backend
+        run: node aladdin-wireless-verification-selftest.js
+
+
+      - name: Validate vendor wireless readiness report
+        working-directory: backend
+        run: node vendor-wireless-readiness-report-selftest.js
+
+      - name: Validate ARRI wireless capability evidence
+        working-directory: backend
+        run: node arri-wireless-verification-selftest.js
+
+
+      - name: Validate fixture control capabilities
+        working-directory: backend
+        run: node fixture-control-capabilities-selftest.js
+
+      - name: Validate operator control planning report
+        working-directory: backend
+        run: node operator-control-planning-report-selftest.js
+
+      - name: Audit wireless control capability gaps
+        working-directory: backend
+        run: node wireless-control-capability-gap-report-selftest.js
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.9'
+
+      - name: Collect Android lint report
+        continue-on-error: true
+        run: gradle lintDebug
+
+      - name: Enforce Android lint on changed app files
+        working-directory: backend
+        run: node android-lint-changed-files-gate.js
+
+      - name: Android unit tests
+        run: gradle testDebugUnitTest
+
+      - name: Prepare dedicated Probe signing key
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode .github/light-ai-probe-test-keystore.b64 > "$RUNNER_TEMP/light-ai-probe.jks"
+          keytool -list -keystore "$RUNNER_TEMP/light-ai-probe.jks" -storepass probe-test-only -alias lightai-probe >/dev/null
+
+      - name: Build signed Light AI Proba APK
+        env:
+          LIGHTINGAI_KEYSTORE_PATH: ${{ runner.temp }}/light-ai-probe.jks
+          LIGHTINGAI_KEYSTORE_PASSWORD: probe-test-only
+          LIGHTINGAI_KEY_ALIAS: lightai-probe
+          LIGHTINGAI_KEY_PASSWORD: probe-test-only
+        run: |
+          gradle assembleRelease -PreleaseVersionCode=3 -PreleaseVersionName="Proba 2" -PprobeAppLabel="Light AI Proba 2"
+
+      - name: Verify packaged Light AI Proba APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          test -s "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
+          test -x "$APKSIGNER"
+          SIGNING="$("$APKSIGNER" verify --verbose --print-certs "$APK")"
+          grep -Fq 'Verified using v2 scheme (APK Signature Scheme v2): true' <<<"$SIGNING"
+          grep -Fq '8bb97259c020b98a02a5129c5d3e4d2ace17a3fc7443e881982c9b30e103dae7' <<<"$(tr '[:upper:]' '[:lower:]' <<<"$SIGNING")"
+
+          REQUIRED=(
+            'assets/control-bootstrap.js'
+            'assets/control-routing.js'
+            'assets/control-dashboard.js'
+            'assets/control-system-drivers.js'
+            'assets/ble-control.js'
+            'assets/catalog.js'
+            'assets/equipment-catalog-snapshot.js'
+            'assets/gel-filter-catalog.js'
+            'assets/feature-build-info.js'
+          )
+          for asset in "${REQUIRED[@]}"; do
+            unzip -Z1 "$APK" | grep -Fxq "$asset" || { echo "Missing packaged asset: $asset"; exit 1; }
+          done
+
+          unzip -p "$APK" assets/equipment-catalog-snapshot.js > /tmp/probe-catalog.js
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm');
+          const c={window:{}};
+          vm.runInNewContext(fs.readFileSync('/tmp/probe-catalog.js','utf8'),c);
+          const x=c.window.LightingAIEmbeddedCatalog;
+          if(!x||!Array.isArray(x.fixtures)||!Array.isArray(x.accessories)) process.exit(1);
+          const nf=x.fixtures.filter(v=>String(v.manufacturer||'').toLowerCase()==='nanlite').length;
+          const na=x.accessories.filter(v=>String(v.manufacturer||'').toLowerCase()==='nanlite').length;
+          if(nf!==99||na!==354){console.error('Unexpected packaged Nanlite counts',nf,na);process.exit(1);}
+          console.log('Packaged Nanlite catalog verified:',nf,'fixtures /',na,'accessories');
+          NODE
+
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          INFO="$(unzip -p "$APK" assets/feature-build-info.js)"
+          grep -Fq "sha:\"$SHORT_SHA\"" <<<"$INFO"
+          grep -Fq 'lab:"probe"' <<<"$INFO"
+
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
+          test -x "$AAPT"
+          BADGING="$("$AAPT" dump badging "$APK")"
+          grep -Fq "package: name='com.lightingai.probe'" <<<"$BADGING"
+          grep -Fq "application-label:'Light AI Proba 2'" <<<"$BADGING"
+
+          cp "$APK" "app/build/outputs/apk/release/Light-AI-Proba-2.apk"
+          echo "Light AI Proba 2 signed APK verified"
+
+      - name: Upload Light AI Proba APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: Light-AI-Proba-2.apk
+          path: app/build/outputs/apk/release/Light-AI-Proba-2.apk
+          archive: false
+          retention-days: 30

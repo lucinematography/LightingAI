@@ -1,7 +1,7 @@
 // Astera HeliosTube FP2-BTB current wireless LED tube.
 // Official product documentation: Astera FP2-BTB HeliosTube user manual.
 const SRC = 'https://astera-led.com/helios';
-const MANUAL = 'https://www.mad-music.de/wp-content/uploads/2026/06/FP2_HeliosTube_Manual_EN_DE-11.pdf';
+const MANUAL = 'https://astera-led.com/products/helios-tube/downloads/';
 
 export const ASTERA_HELIOSTUBE_FIXTURES = [
   {
@@ -42,7 +42,7 @@ export const ASTERA_HELIOSTUBE_FIXTURES = [
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,
       verified: true,
-      sourceUrl: 'https://device.report/m/4bc78c9a477002bb5c297f8f11244eaa051e3d6fec9752995b3254dd82fd1fdf',
+      sourceUrl: 'https://astera-led.com/products/helios-tube/downloads/',
       controls: [
         { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
         { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },

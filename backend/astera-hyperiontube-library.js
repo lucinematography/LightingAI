@@ -1,7 +1,7 @@
 // Astera HyperionTube FP3 wireless LED tube.
 // Official product documentation: Astera FP3 HyperionTube user manual.
 const SRC = 'https://astera-led.com/hyperion';
-const MANUAL = 'https://www.innovationlighting.net/wp-content/uploads/2023/10/FP3_HyperionTube_Manual_EN_DE_IT_ES_FR_CN.pdf';
+const MANUAL = 'https://astera-led.com/products/hyperion-tube/downloads/';
 
 export const ASTERA_HYPERIONTUBE_FIXTURES = [
   {
@@ -26,12 +26,12 @@ export const ASTERA_HYPERIONTUBE_FIXTURES = [
     weightKg: 2.9,
     control: {
       wired: ['DMX via Titan Power/Data Combination Cable'],
-      wireless: ['AsteraApp via AsteraBox/UHF', 'Wireless DMX', 'CRMX'],
+      wireless: ['AsteraApp via AsteraBox/UHF', 'Wireless DMX', 'CRMX', 'Bluetooth on FP3-BTB variant', 'WiFi on FP3-BTB variant'],
       builtInWirelessDMX: true,
-      builtInBluetoothBridge: false,
+      builtInBTBVariant: 'FP3-BTB',
       directLightingAI: [],
       externalInterfaceRequired: ['Titan Power/Data Combination Cable plus wired DMX interface for DMX control', 'CRMX/Wireless DMX transmitter for wireless DMX control', 'AsteraBox for AsteraApp/UHF control'],
-      unavailableDirectProtocols: ['AsteraApp/UHF protocol is not publicly documented for third-party direct control'],
+      unavailableDirectProtocols: ['AsteraApp Bluetooth/UHF/Wi-Fi protocol is not publicly documented for third-party direct control'],
       sourceUrls: [
         'https://astera-led.com/hyperion',
         'https://update.astera-led.com/firmwares/current/release_notes.html'
@@ -41,7 +41,7 @@ export const ASTERA_HYPERIONTUBE_FIXTURES = [
       name: 'Profile 4 DIM RGB 4ch',
       channels: 4,
       verified: true,
-      sourceUrl: 'https://goknight.com/content/documentation/FP3_Hyperion_Tube_DMX_Profiles_V1.pdf',
+      sourceUrl: 'https://astera-led.com/products/hyperion-tube/downloads/',
       controls: [
         { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
         { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },

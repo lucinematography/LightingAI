@@ -1,0 +1,59 @@
+const NANLINK_APP_SOURCE='https://nanliteus.com/pages/free-nanlink-app';
+const NANLINK_BLUETOOTH_SOURCE='https://www.nanlink.com/en/h-col-242.html';
+const NANLINK_BOX_SOURCE='https://www.nanlink.com/en/h-col-231.html';
+
+function unique(values=[]){return [...new Set(values.filter(Boolean))]}
+function list(value){return Array.isArray(value)?value.filter(Boolean).map(String):[]}
+function hasBluetooth(values=[]){return values.some(v=>/(^|[^a-z0-9])(bluetooth|ble)([^a-z0-9]|$)/i.test(String(v)))}
+function hasWifi(values=[]){return values.some(v=>/(^|[^a-z0-9])wi[ -]?fi([^a-z0-9]|$)/i.test(String(v))||/(^|[^a-z0-9])wlan([^a-z0-9]|$)/i.test(String(v)))}
+
+export function normalizeNanliteWirelessVerification(fixtures=[]){
+  for(const fixture of fixtures){
+    if(fixture?.manufacturer!=='Nanlite') continue;
+    const control=fixture.control&&typeof fixture.control==='object'&&!Array.isArray(fixture.control)?fixture.control:null;
+    if(!control) continue;
+    const values=[...list(control.wireless),...list(control.directLightingAI)];
+    const external=list(control.externalInterfaceRequired);
+    const bt=hasBluetooth(values);
+    const wifi=hasWifi(values);
+    const assistedBluetooth=bt&&external.some(v=>/(WS-TB-1|NANLINK BOX)/i.test(v)&&/bluetooth/i.test(v));
+    if(!bt&&!wifi) continue;
+
+    const verification={...(control.wirelessVerification||{})};
+    if(bt){
+      verification.bluetooth={
+        verified:true,
+        family:assistedBluetooth?'NANLINK Bluetooth via WS-TB-1':'NANLINK Bluetooth',
+        scope:'transport-capability-only',
+        sourceUrls:unique([fixture.sourceUrl,NANLINK_APP_SOURCE,NANLINK_BLUETOOTH_SOURCE,assistedBluetooth?NANLINK_BOX_SOURCE:null]),
+        note:assistedBluetooth
+          ?'NANLINK documents WS-TB-1 with Bluetooth and 2.4G modules. This verifies adapter-assisted Bluetooth transport to the bridge only; the fixture remains a 2.4G endpoint and proprietary LightingAI command semantics stay locked.'
+          :'Nanlite/NANLINK documents direct Bluetooth control for compatible fixtures. This verifies transport capability only; proprietary LightingAI command semantics remain locked until separately verified.'
+      };
+    }
+    if(wifi){
+      verification.wifi={
+        verified:true,
+        family:'Nanlite Wi-Fi',
+        scope:'transport-capability-only',
+        sourceUrls:unique([fixture.sourceUrl]),
+        note:'This fixture catalog entry explicitly documents Wi-Fi control. LightingAI discovery/session and command semantics remain locked until the exact vendor implementation is verified.'
+      };
+    }
+    fixture.control={
+      ...control,
+      sourceUrls:unique([...(Array.isArray(control.sourceUrls)?control.sourceUrls:[]),fixture.sourceUrl,bt?NANLINK_APP_SOURCE:null,bt?NANLINK_BLUETOOTH_SOURCE:null,assistedBluetooth?NANLINK_BOX_SOURCE:null]),
+      wirelessVerification:verification,
+      capabilityVerification:{
+        ...(control.capabilityVerification||{}),
+        dim:{
+          verified:true,
+          scope:'official-app-capability-only',
+          sourceUrls:[NANLINK_APP_SOURCE],
+          note:'NANLINK documents app intensity control for compatible connected fixtures. This proves the operator capability, not proprietary LightingAI command encoding.'
+        }
+      }
+    };
+  }
+  return fixtures;
+}

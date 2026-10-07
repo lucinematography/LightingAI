@@ -1500,6 +1500,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  'Philips Hue': {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'philips-hue-go-bluetooth-capture-v1',
+    evidence: [
+      'https://www.philips-hue.com/en-us/p/hue-white-and-color-ambiance-hue-go-portable-table-lamp/046677576455',
+      'https://www.philips-hue.com/en-us/p/hue-white-and-color-ambiance-go-portable-table-lamp/7602031U7',
+      'https://www.philips-hue.com/en-us/explore-hue/apps'
+    ],
+    note: 'Direct Bluetooth app control is exact-model verified only for Hue Go portable table lamp and Go portable accent light. Zigbee/Hue Bridge remains a separate path. LightingAI BLE/session semantics and physical replay remain locked.'
+  },
+
   Newell: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

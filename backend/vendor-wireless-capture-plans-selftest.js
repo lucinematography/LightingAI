@@ -618,6 +618,22 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const nanoleaf=VENDOR_WIRELESS_CAPTURE_PLANS.Nanoleaf;
+expect(nanoleaf?.id==='nanoleaf-lines-wifi-capture-v1','Nanoleaf Wi-Fi capture plan missing');
+expect(nanoleaf?.transport==='wifi','Nanoleaf capture plan must remain Wi-Fi only');
+expect(nanoleaf?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Nanoleaf command spec status changed');
+expect(nanoleaf?.captureSets?.connectOnly?.runs>=3,'Nanoleaf connect-only requires at least 3 runs');
+expect(nanoleaf?.captureSets?.dim?.runs>=3,'Nanoleaf DIM requires at least 3 runs');
+expect(nanoleaf?.captureSets?.cct?.runs>=3,'Nanoleaf CCT requires at least 3 runs');
+expect(nanoleaf?.captureSets?.color?.runs>=3,'Nanoleaf COLOR requires at least 3 runs');
+expect(nanoleaf?.prerequisites?.some(x=>/Treat Bluetooth as setup-only/i.test(x)),'Nanoleaf capture plan must keep Bluetooth setup-only');
+expect(nanoleaf?.prerequisites?.some(x=>/Do not infer undocumented local API endpoints/i.test(x)),'Nanoleaf capture plan must forbid private API inference');
+expect(nanoleaf?.safety?.officialAppWritesOnly===true,'Nanoleaf official-app-only capture safety missing');
+expect(nanoleaf?.safety?.lightingAiWritesAllowed===false,'Nanoleaf LightingAI writes must stay disabled during capture');
+expect(nanoleaf?.safety?.rawCaptureCommitAllowed===false,'Nanoleaf raw captures must never be committed');
+expect(nanoleaf?.safety?.derivedEvidenceOnly===true,'Nanoleaf only derived evidence may enter repo');
+expect(nanoleaf?.safety?.resultStatus==='candidate_only_until_physical_replay','Nanoleaf capture result must remain candidate-only');
+
 const philipsHue=VENDOR_WIRELESS_CAPTURE_PLANS['Philips Hue'];
 expect(philipsHue?.id==='philips-hue-go-bluetooth-capture-v1','Philips Hue Bluetooth capture plan missing');
 expect(philipsHue?.transport==='bluetooth','Philips Hue capture plan must remain Bluetooth only');

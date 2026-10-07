@@ -1500,6 +1500,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  RAYZR: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'rayzr-mc-wifi-capture-v1',
+    evidence: [
+      'https://rayzrlight.com/mc-panel',
+      'https://rayzrlight.com/mc-specification',
+      'https://rayzrlight.com/mc-max',
+      'https://rayzrlight.com/'
+    ],
+    note: 'Built-in Wi-Fi transport is exact-model verified only for RAYZR MC 100, MC 120, MC 200 and MC 400 Max. RTctrl-1 Art-Net integration remains a separate assisted network path. LightingAI exact discovery, addressing, private session semantics and physical replay remain locked.'
+  },
+
   Photoolex: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

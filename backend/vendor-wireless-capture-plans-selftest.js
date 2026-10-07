@@ -618,6 +618,20 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const sengled=VENDOR_WIRELESS_CAPTURE_PLANS.Sengled;
+expect(sengled?.id==='sengled-wifi-classic-app-capture-v1','Sengled Wi-Fi capture plan missing');
+expect(sengled?.transport==='wifi','Sengled capture plan must remain Wi-Fi only');
+expect(sengled?.commandSpecStatus==='public-command-spec-not-verified-for-exact-model','Sengled command-spec status changed');
+expect(sengled?.captureSets?.connectOnly?.runs>=3,'Sengled connect-only requires at least 3 runs');
+expect(sengled?.captureSets?.dim?.runs>=3,'Sengled DIM requires at least 3 runs');
+expect(sengled?.prerequisites?.some(x=>/2.4 GHz Wi-Fi/i.test(x)),'Sengled plan must preserve exact Wi-Fi scope');
+expect(sengled?.prerequisites?.some(x=>/Do not infer local command semantics/i.test(x)),'Sengled plan must forbid undocumented command inference');
+expect(sengled?.safety?.officialAppWritesOnly===true,'Sengled capture must remain official-app-write-only');
+expect(sengled?.safety?.lightingAiWritesAllowed===false,'Sengled LightingAI writes must stay disabled');
+expect(sengled?.safety?.rawCaptureCommitAllowed===false,'Sengled raw captures must never be committed');
+expect(sengled?.safety?.derivedEvidenceOnly===true,'Sengled only derived evidence may enter repo');
+expect(sengled?.safety?.resultStatus==='candidate_only_until_physical_replay','Sengled must remain candidate-only');
+
 const yeelight=VENDOR_WIRELESS_CAPTURE_PLANS.Yeelight;
 expect(yeelight?.id==='yeelight-lightstrip-wifi-lan-capture-v1','Yeelight Wi-Fi/LAN capture plan missing');
 expect(yeelight?.transport==='wifi','Yeelight capture plan must remain Wi-Fi only');

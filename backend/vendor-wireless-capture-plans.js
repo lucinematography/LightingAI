@@ -2720,6 +2720,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  Sengled: {
+    id:'sengled-wifi-classic-app-capture-v1',
+    transport:'wifi',
+    controllerApp:'Sengled Home App',
+    commandSpecStatus:'public-command-spec-not-verified-for-exact-model',
+    prerequisites:[
+      'Use exactly one cataloged Sengled Wi-Fi Classic W11-U21 or W11-U31 bulb at a time.',
+      'Verify the bulb is connected directly to a 2.4 GHz Wi-Fi network with no hub, exactly as documented by Sengled.',
+      'Use only the first-party Sengled Home App for physical lighting writes during evidence capture.',
+      'Do not infer local command semantics from Alexa, Google Home, IFTTT, cloud behavior or reverse-engineered community integrations.',
+      'Do not infer Bluetooth capability for these catalog entries.'
+    ],
+    officialSources:[
+      'https://eu.sengled.com/upload/produkte/wifi-classic/datasheet-wifi-classic-en.pdf',
+      'https://eu.sengled.com/upload/produkte/wifi-classic/Wifi_Classic_A60_User_Manual.pdf',
+      'https://support.sengled.com/hc/en-us/article_attachments/360012686293'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Sengled Wi-Fi Classic bulb in the Sengled Home App, wait 15 seconds, make no lighting changes, then close the session.'},
+      dim:{runs:3,rule:'From the same known brightness perform exactly one dimmer change per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Yeelight: {
     id:'yeelight-lightstrip-wifi-lan-capture-v1',
     transport:'wifi',

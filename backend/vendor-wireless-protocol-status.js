@@ -1500,6 +1500,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  Sengled: {
+    bluetooth:'not_verified_for_current_catalog',
+    wifi:'transport_verified_model_scoped',
+    commandSpec:'public_command_spec_not_verified_for_exact_model',
+    nextStep:'capture-official-app-on-exact-models-before-driver',
+    capturePlanId:'sengled-wifi-classic-app-capture-v1',
+    evidence:[
+      'https://eu.sengled.com/upload/produkte/wifi-classic/datasheet-wifi-classic-en.pdf',
+      'https://eu.sengled.com/upload/produkte/wifi-classic/Wifi_Classic_A60_User_Manual.pdf',
+      'https://support.sengled.com/hc/en-us/article_attachments/360012686293'
+    ],
+    note:'Wi-Fi Classic W11-U21 and W11-U31 have exact-model 2.4 GHz Wi-Fi and app-control evidence. No LightingAI direct command path is enabled without exact-model replay and first-party command semantics.'
+  },
+
   Yeelight: {
     bluetooth:'not_verified_for_current_catalog',
     wifi:'transport_verified_model_scoped',

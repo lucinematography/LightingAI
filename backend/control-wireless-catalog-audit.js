@@ -468,6 +468,10 @@ const manfrotto=byManufacturer.get('Manfrotto');
 if(!manfrotto || manfrotto.bluetooth!==3 || manfrotto.wifi!==0 || manfrotto.both!==0) {
   failures.push('Manfrotto wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const sengled=byManufacturer.get('Sengled');
+if(!sengled || sengled.bluetooth!==0 || sengled.wifi!==2 || sengled.both!==0) {
+  failures.push('Sengled wireless coverage expected 0 Bluetooth / 2 Wi-Fi / 0 both');
+}
 const yeelight=byManufacturer.get('Yeelight');
 if(!yeelight || yeelight.bluetooth!==0 || yeelight.wifi!==2 || yeelight.both!==0) {
   failures.push('Yeelight wireless coverage expected 0 Bluetooth / 2 Wi-Fi / 0 both');

@@ -2720,6 +2720,31 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  Nanoleaf: {
+    id:'nanoleaf-lines-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'Nanoleaf App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Nanoleaf Lines controller/installation.',
+      'Use only the first-party Nanoleaf App over 2.4 GHz Wi-Fi for the production-control capture set.',
+      'Treat Bluetooth as setup-only; do not infer production lighting control from Bluetooth availability.',
+      'Start every capture from the same known light state and a clean app/network session.',
+      'Do not infer undocumented local API endpoints, authentication/session state or private payload semantics.'
+    ],
+    officialSources:[
+      'https://nanoleaf.me/en-us/products/nanoleaf-lines'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect/control one Nanoleaf Lines setup over Wi-Fi in the Nanoleaf App, wait 15 seconds, make no lighting changes, then close the control session.'},
+      dim:{runs:3,rule:'From the same known brightness perform exactly one dimmer change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one white/CCT change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGBW color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; trigger exactly one documented scene/effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   'Philips Hue': {
     id:'philips-hue-go-bluetooth-capture-v1',
     transport:'bluetooth',

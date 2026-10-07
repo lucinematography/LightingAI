@@ -2720,6 +2720,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  RAYZR: {
+    id:'rayzr-mc-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'RAYZR RTctrl Master / supported network control',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged RAYZR MC 100, MC 120, MC 200 or MC 400 Max at a time.',
+      'Use only the documented built-in Wi-Fi route for the direct wireless capture set.',
+      'Keep RTctrl-1 Art-Net router integration isolated from the first direct Wi-Fi capture set.',
+      'Do not infer undocumented discovery, addressing, session or private wireless payload semantics from built-in Wi-Fi availability.',
+      'Do not infer Art-Net command/session equivalence across direct Wi-Fi and RTctrl-1 assisted paths without physical evidence.'
+    ],
+    officialSources:[
+      'https://rayzrlight.com/mc-panel',
+      'https://rayzrlight.com/mc-specification',
+      'https://rayzrlight.com/mc-max',
+      'https://rayzrlight.com/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact RAYZR MC model over its documented Wi-Fi route, wait 15 seconds, make no lighting changes, then close the control session.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one dimmer change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGBWW/HSI color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; activate exactly one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Photoolex: {
     id:'photoolex-direct-bluetooth-capture-v1',
     transport:'bluetooth',

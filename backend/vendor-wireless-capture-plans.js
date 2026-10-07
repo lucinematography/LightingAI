@@ -2720,6 +2720,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  Newell: {
+    id:'newell-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Newell smartphone app',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged Newell Pravaha Max 135 RGB or Zora Mini 40 RGB at a time.',
+      'Use only the first-party documented smartphone-app Bluetooth control path.',
+      'Start every capture from the same known fixture state and a clean Bluetooth session.',
+      'Do not infer undocumented BLE service/characteristic UUIDs, pairing, session or private payload semantics.',
+      'Do not infer command equivalence between Newell models without physical evidence.'
+    ],
+    officialSources:[
+      'https://uk.newell.pro/products/newell-pravaha-max-135-rgb-led-light',
+      'https://newell.pro/product/newell-zora-mini-40-rgb-led-light/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Newell model over Bluetooth in the official smartphone app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB/HSI color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; trigger exactly one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Govee: {
     id:'govee-direct-wireless-capture-v1',
     transport:'bluetooth',

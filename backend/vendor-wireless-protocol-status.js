@@ -1500,6 +1500,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  CINEPEER: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'cinepeer-c100-bluetooth-mesh-capture-v1',
+    evidence: [
+      'https://eu.zhiyun-tech.com/products/cinepeer-c100',
+      'https://store.zhiyun-tech.com/products/cinepeer-c100'
+    ],
+    note: 'Bluetooth Mesh / ZY Vega transport is exact-model verified only for CINEPEER C100. LightingAI mesh provisioning, discovery, private session semantics and physical replay remain locked.'
+  },
+
   RAYZR: {
     bluetooth: 'not_verified_for_current_catalog',
     wifi: 'transport_verified_model_scoped',

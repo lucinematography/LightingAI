@@ -2720,6 +2720,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  CINEPEER: {
+    id:'cinepeer-c100-bluetooth-mesh-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'ZY Vega',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one CINEPEER C100.',
+      'Use only the official ZY Vega Bluetooth Mesh control path.',
+      'Start each capture from the same known lighting state and a clean app/mesh session.',
+      'Do not infer undocumented mesh provisioning, GATT/service details, session or private payload semantics.',
+      'Do not infer C100 command compatibility to CF100 or other CINEPEER models without exact-model evidence.'
+    ],
+    officialSources:[
+      'https://eu.zhiyun-tech.com/products/cinepeer-c100',
+      'https://store.zhiyun-tech.com/products/cinepeer-c100'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one CINEPEER C100 through ZY Vega Bluetooth Mesh, wait 15 seconds, make no lighting changes, then disconnect/leave the control session.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one HSI/RGB color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; trigger exactly one documented effect or music-mode action per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   RAYZR: {
     id:'rayzr-mc-wifi-capture-v1',
     transport:'wifi',

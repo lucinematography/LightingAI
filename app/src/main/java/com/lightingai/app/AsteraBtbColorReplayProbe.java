@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -15,6 +16,10 @@ import android.os.Handler;
 import android.os.Looper;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @SuppressLint("MissingPermission")
 public final class AsteraBtbColorReplayProbe {
@@ -24,15 +29,35 @@ public final class AsteraBtbColorReplayProbe {
     }
 
     private static final int MAX_ATTEMPTS = 3;
+    private static final UUID NOTIFY_UUID =
+        UUID.fromString("0a6c6c72-9ca6-ffaf-3440-b2dae8c86a67");
+    private static final UUID CCCD_UUID =
+        UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+
+    // Repeatedly observed on successful official AsteraApp sessions.
+    // Deliberately excludes the longer session/config write because it contains
+    // fields whose semantics may include device/session-specific material.
+    private static final byte[] BOOT_WAKE = decodeHex("0A");
+    private static final byte[] BOOT_S0 = "s0=0\n".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] BOOT_S1002 = "s1002\n".getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] BOOT_STATUS =
+        decodeHex("0A038D041E8312");
+    private static final byte[] BOOT_RADIO =
+        decodeHex("0A068804000000018853");
+    private static final byte[] BOOT_STAGE =
+        decodeHex("0A057F932700020A0A09");
+    private static final byte[] BOOT_POLL =
+        decodeHex("0A017FC041");
 
     private final Context context;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Object lock = new Object();
+    private final List<Runnable> scheduledWrites = new ArrayList<>();
 
     private BluetoothGatt activeGatt;
     private Runnable timeoutRunnable;
-    private Runnable fallbackSuccessRunnable;
     private Runnable retryRunnable;
+    private Runnable fallbackSuccessRunnable;
     private Callback callback;
     private JSONObject activeResult;
     private JSONArray eventTimeline;
@@ -41,6 +66,10 @@ public final class AsteraBtbColorReplayProbe {
     private long deadlineMs = 0L;
     private String activeAddress = "";
     private AsteraBtbCapturedFrames.Preset activePreset;
+    private BluetoothGattCharacteristic writeCharacteristic;
+    private BluetoothGattCharacteristic notifyCharacteristic;
+    private BluetoothGattDescriptor activeCccd;
+    private boolean finalColorWriteStarted = false;
 
     public AsteraBtbColorReplayProbe(Context context) {
         this.context = context.getApplicationContext();
@@ -72,8 +101,11 @@ public final class AsteraBtbColorReplayProbe {
             eventTimeline = new JSONArray();
             activeResult = base(target, preset.name());
             put("captureRevision", AsteraBtbCapturedFrames.CAPTURE_REVISION);
+            put("bootstrapRevision", "2026-10-07-public-safe-stage-a");
+            put("bootstrapUsesPrivateSessionFields", false);
             put("serviceUuid", AsteraBtbCapturedFrames.SERVICE_UUID.toString());
             put("characteristicUuid", AsteraBtbCapturedFrames.WRITE_UUID.toString());
+            put("notifyUuid", NOTIFY_UUID.toString());
             put("writeType", "WRITE_WITHOUT_RESPONSE");
             put("protocolGeneralized", false);
 
@@ -82,7 +114,7 @@ public final class AsteraBtbColorReplayProbe {
                 return;
             }
 
-            int boundedTimeout = Math.max(8000, Math.min(20000, timeoutMs));
+            int boundedTimeout = Math.max(12000, Math.min(24000, timeoutMs));
             deadlineMs = System.currentTimeMillis() + boundedTimeout;
             put("timeoutMs", boundedTimeout);
             appendEvent("replay_start", "timeoutMs", boundedTimeout);
@@ -118,7 +150,13 @@ public final class AsteraBtbColorReplayProbe {
             return;
         }
 
+        clearScheduledWritesLocked();
         closeGattOnlyLocked();
+        writeCharacteristic = null;
+        notifyCharacteristic = null;
+        activeCccd = null;
+        finalColorWriteStarted = false;
+
         attempt++;
         final int thisAttempt = attempt;
         put("connectAttempts", attempt);
@@ -187,10 +225,7 @@ public final class AsteraBtbColorReplayProbe {
                             }
                         }, 300L);
                     } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                        retryOrFailLocked(
-                            -1,
-                            "astera_capture_disconnected"
-                        );
+                        retryOrFailLocked(-1, "astera_capture_disconnected");
                     }
                 }
             }
@@ -222,82 +257,146 @@ public final class AsteraBtbColorReplayProbe {
                         return;
                     }
 
-                    BluetoothGattCharacteristic characteristic =
+                    writeCharacteristic =
                         service.getCharacteristic(AsteraBtbCapturedFrames.WRITE_UUID);
-                    if (characteristic == null) {
+                    notifyCharacteristic = service.getCharacteristic(NOTIFY_UUID);
+                    if (writeCharacteristic == null) {
                         finishError("astera_capture_characteristic_missing");
                         return;
                     }
+                    if (notifyCharacteristic == null) {
+                        finishError("astera_capture_notify_characteristic_missing");
+                        return;
+                    }
 
-                    int properties = characteristic.getProperties();
-                    if ((properties &
+                    int writeProperties = writeCharacteristic.getProperties();
+                    if ((writeProperties &
                         BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) == 0) {
                         finishError("astera_capture_characteristic_not_write_nr");
                         return;
                     }
-
-                    byte[] frame = AsteraBtbCapturedFrames.frameFor(activePreset);
-                    if (!AsteraBtbCapturedFrames.isValidFrame(frame)) {
-                        finishError("astera_capture_frame_crc_invalid");
+                    int notifyProperties = notifyCharacteristic.getProperties();
+                    if ((notifyProperties &
+                        BluetoothGattCharacteristic.PROPERTY_NOTIFY) == 0) {
+                        finishError("astera_capture_notify_property_missing");
                         return;
                     }
 
-                    put("preset", activePreset.name());
-                    put("frame", AsteraBtbCapturedFrames.hexFor(activePreset));
-                    int[] rgb = AsteraBtbCapturedFrames.capturedRgb(activePreset);
-                    put("capturedRed", rgb[0]);
-                    put("capturedGreen", rgb[1]);
-                    put("capturedBlue", rgb[2]);
-                    put("characteristicProperties", properties);
+                    put("characteristicProperties", writeProperties);
+                    put("notifyProperties", notifyProperties);
+                    boolean localEnabled;
+                    try {
+                        localEnabled =
+                            gatt.setCharacteristicNotification(
+                                notifyCharacteristic, true);
+                    } catch (Exception e) {
+                        localEnabled = false;
+                    }
+                    put("notificationLocalEnabled", localEnabled);
+                    if (!localEnabled) {
+                        finishError("astera_capture_notify_enable_failed");
+                        return;
+                    }
 
-                    boolean started;
-                    int startStatus = 0;
+                    activeCccd = notifyCharacteristic.getDescriptor(CCCD_UUID);
+                    if (activeCccd == null) {
+                        finishError("astera_capture_cccd_missing");
+                        return;
+                    }
+
+                    boolean descriptorStarted;
+                    int descriptorStatus = 0;
                     try {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            startStatus = gatt.writeCharacteristic(
-                                characteristic,
-                                frame,
-                                BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                            descriptorStatus = gatt.writeDescriptor(
+                                activeCccd,
+                                BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                             );
-                            started = startStatus == 0;
+                            descriptorStarted = descriptorStatus == 0;
                         } else {
-                            characteristic.setWriteType(
-                                BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
-                            characteristic.setValue(frame);
-                            started = gatt.writeCharacteristic(characteristic);
-                            startStatus = started ? 0 : -1;
+                            activeCccd.setValue(
+                                BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                            descriptorStarted = gatt.writeDescriptor(activeCccd);
+                            descriptorStatus = descriptorStarted ? 0 : -1;
                         }
                     } catch (SecurityException e) {
                         finishError("ble_permission_denied");
                         return;
                     } catch (Exception e) {
-                        finishError("astera_capture_write_exception");
+                        finishError("astera_capture_cccd_write_exception");
                         return;
                     }
-
-                    put("writeStartStatus", startStatus);
-                    put("writeStarted", started);
+                    put("cccdWriteStartStatus", descriptorStatus);
                     appendEvent(
-                        "write_start",
+                        "cccd_write_start",
                         "attempt", thisAttempt,
-                        "started", started,
-                        "status", startStatus
+                        "started", descriptorStarted,
+                        "status", descriptorStatus
                     );
-                    if (!started) {
+                    if (!descriptorStarted) {
                         finishError(
-                            "astera_capture_write_start_failed_" + startStatus);
+                            "astera_capture_cccd_write_start_failed_" +
+                            descriptorStatus);
+                    }
+                }
+            }
+
+            @Override public void onDescriptorWrite(
+                BluetoothGatt gatt,
+                BluetoothGattDescriptor descriptor,
+                int status
+            ) {
+                synchronized (lock) {
+                    if (thisEpoch != epoch ||
+                        gatt != activeGatt ||
+                        callback == null ||
+                        descriptor == null ||
+                        activeCccd == null ||
+                        !CCCD_UUID.equals(descriptor.getUuid())) return;
+
+                    put("cccdWriteStatus", status);
+                    appendEvent(
+                        "cccd_write_result",
+                        "attempt", thisAttempt,
+                        "status", status
+                    );
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        finishError("astera_capture_cccd_write_status_" + status);
                         return;
                     }
-
-                    fallbackSuccessRunnable = () -> {
-                        synchronized (lock) {
-                            if (thisEpoch != epoch || callback == null) return;
-                            put("writeCallbackObserved", false);
-                            finishSuccess();
-                        }
-                    };
-                    handler.postDelayed(fallbackSuccessRunnable, 800L);
+                    activeCccd = null;
+                    startBootstrapLocked(gatt, thisEpoch, thisAttempt);
                 }
+            }
+
+            @Override public void onCharacteristicChanged(
+                BluetoothGatt gatt,
+                BluetoothGattCharacteristic characteristic,
+                byte[] value
+            ) {
+                synchronized (lock) {
+                    if (thisEpoch != epoch ||
+                        gatt != activeGatt ||
+                        callback == null ||
+                        characteristic == null ||
+                        !NOTIFY_UUID.equals(characteristic.getUuid())) return;
+                    appendEvent(
+                        "notification",
+                        "attempt", thisAttempt,
+                        "length", value == null ? 0 : value.length
+                    );
+                }
+            }
+
+            @Override @SuppressWarnings("deprecation")
+            public void onCharacteristicChanged(
+                BluetoothGatt gatt,
+                BluetoothGattCharacteristic characteristic
+            ) {
+                byte[] value = characteristic == null
+                    ? null
+                    : characteristic.getValue();
+                onCharacteristicChanged(gatt, characteristic, value);
             }
 
             @Override public void onCharacteristicWrite(
@@ -313,21 +412,28 @@ public final class AsteraBtbColorReplayProbe {
                         !AsteraBtbCapturedFrames.WRITE_UUID.equals(
                             characteristic.getUuid())) return;
 
-                    if (fallbackSuccessRunnable != null) {
-                        handler.removeCallbacks(fallbackSuccessRunnable);
-                        fallbackSuccessRunnable = null;
-                    }
-                    put("writeCallbackObserved", true);
-                    put("writeCallbackStatus", status);
                     appendEvent(
-                        "write_callback",
+                        finalColorWriteStarted ? "color_write_callback" : "bootstrap_write_callback",
                         "attempt", thisAttempt,
                         "status", status
                     );
-                    if (status == BluetoothGatt.GATT_SUCCESS) {
-                        finishSuccess();
-                    } else {
-                        finishError("astera_capture_write_status_" + status);
+
+                    if (finalColorWriteStarted) {
+                        if (fallbackSuccessRunnable != null) {
+                            handler.removeCallbacks(fallbackSuccessRunnable);
+                            fallbackSuccessRunnable = null;
+                        }
+                        put("writeCallbackObserved", true);
+                        put("writeCallbackStatus", status);
+                        if (status == BluetoothGatt.GATT_SUCCESS) {
+                            finishSuccess();
+                        } else {
+                            finishError(
+                                "astera_capture_write_status_" + status);
+                        }
+                    } else if (status != BluetoothGatt.GATT_SUCCESS) {
+                        finishError(
+                            "astera_capture_bootstrap_write_status_" + status);
                     }
                 }
             }
@@ -341,19 +447,137 @@ public final class AsteraBtbColorReplayProbe {
                 BluetoothDevice.TRANSPORT_LE
             );
             if (activeGatt == null) {
-                retryOrFailLocked(
-                    -1,
-                    "astera_capture_connect_start_failed"
-                );
+                retryOrFailLocked(-1, "astera_capture_connect_start_failed");
             }
         } catch (SecurityException e) {
             finishError("ble_permission_denied");
         } catch (Exception e) {
-            retryOrFailLocked(
-                -1,
-                "astera_capture_connect_start_failed"
-            );
+            retryOrFailLocked(-1, "astera_capture_connect_start_failed");
         }
+    }
+
+    private void startBootstrapLocked(
+        BluetoothGatt gatt,
+        int thisEpoch,
+        int thisAttempt
+    ) {
+        scheduleWriteLocked(gatt, thisEpoch, thisAttempt, 150L, "wake", BOOT_WAKE, false);
+        scheduleWriteLocked(gatt, thisEpoch, thisAttempt, 800L, "s0", BOOT_S0, false);
+        scheduleWriteLocked(gatt, thisEpoch, thisAttempt, 950L, "s1002", BOOT_S1002, false);
+        scheduleWriteLocked(gatt, thisEpoch, thisAttempt, 1800L, "status", BOOT_STATUS, false);
+        scheduleWriteLocked(gatt, thisEpoch, thisAttempt, 2050L, "radio", BOOT_RADIO, false);
+        scheduleWriteLocked(gatt, thisEpoch, thisAttempt, 3000L, "stage", BOOT_STAGE, false);
+        scheduleWriteLocked(gatt, thisEpoch, thisAttempt, 3750L, "poll", BOOT_POLL, false);
+        byte[] color = AsteraBtbCapturedFrames.frameFor(activePreset);
+        scheduleWriteLocked(gatt, thisEpoch, thisAttempt, 4400L, "color", color, true);
+    }
+
+    private void scheduleWriteLocked(
+        BluetoothGatt gatt,
+        int thisEpoch,
+        int thisAttempt,
+        long delayMs,
+        String label,
+        byte[] value,
+        boolean finalColor
+    ) {
+        final byte[] payload = value.clone();
+        Runnable task = () -> {
+            synchronized (lock) {
+                scheduledWrites.removeIf(r -> r == null);
+                if (thisEpoch != epoch ||
+                    gatt != activeGatt ||
+                    callback == null) return;
+                if (!writeValueLocked(
+                    gatt,
+                    thisAttempt,
+                    label,
+                    payload,
+                    finalColor
+                )) return;
+                if (finalColor) {
+                    fallbackSuccessRunnable = () -> {
+                        synchronized (lock) {
+                            if (thisEpoch != epoch || callback == null) return;
+                            put("writeCallbackObserved", false);
+                            finishSuccess();
+                        }
+                    };
+                    handler.postDelayed(fallbackSuccessRunnable, 900L);
+                }
+            }
+        };
+        scheduledWrites.add(task);
+        handler.postDelayed(task, delayMs);
+    }
+
+    private boolean writeValueLocked(
+        BluetoothGatt gatt,
+        int thisAttempt,
+        String label,
+        byte[] value,
+        boolean finalColor
+    ) {
+        if (writeCharacteristic == null) {
+            finishError("astera_capture_characteristic_missing");
+            return false;
+        }
+
+        boolean started;
+        int startStatus = 0;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                startStatus = gatt.writeCharacteristic(
+                    writeCharacteristic,
+                    value,
+                    BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                );
+                started = startStatus == 0;
+            } else {
+                writeCharacteristic.setWriteType(
+                    BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                writeCharacteristic.setValue(value);
+                started = gatt.writeCharacteristic(writeCharacteristic);
+                startStatus = started ? 0 : -1;
+            }
+        } catch (SecurityException e) {
+            finishError("ble_permission_denied");
+            return false;
+        } catch (Exception e) {
+            finishError("astera_capture_write_exception");
+            return false;
+        }
+
+        appendEvent(
+            finalColor ? "color_write_start" : "bootstrap_write_start",
+            "attempt", thisAttempt,
+            "label", label,
+            "length", value.length,
+            "started", started,
+            "status", startStatus
+        );
+
+        if (!started) {
+            finishError(
+                (finalColor
+                    ? "astera_capture_write_start_failed_"
+                    : "astera_capture_bootstrap_write_start_failed_") +
+                startStatus);
+            return false;
+        }
+
+        if (finalColor) {
+            finalColorWriteStarted = true;
+            put("preset", activePreset.name());
+            put("frame", AsteraBtbCapturedFrames.hexFor(activePreset));
+            int[] rgb = AsteraBtbCapturedFrames.capturedRgb(activePreset);
+            put("capturedRed", rgb[0]);
+            put("capturedGreen", rgb[1]);
+            put("capturedBlue", rgb[2]);
+            put("writeStartStatus", startStatus);
+            put("writeStarted", true);
+        }
+        return true;
     }
 
     private void retryOrFailLocked(int status, String code) {
@@ -363,12 +587,13 @@ public final class AsteraBtbColorReplayProbe {
             "status", status,
             "code", code
         );
+        clearScheduledWritesLocked();
         closeGattOnlyLocked();
 
         long remaining = deadlineMs - System.currentTimeMillis();
         if (callback != null &&
             attempt < MAX_ATTEMPTS &&
-            remaining > 2000L) {
+            remaining > 5000L) {
             long delay;
             if (status == 19) {
                 delay = 1800L;
@@ -378,7 +603,7 @@ public final class AsteraBtbColorReplayProbe {
                 delay = attempt == 1 ? 700L : 1200L;
             }
 
-            if (remaining <= delay + 1000L) {
+            if (remaining <= delay + 5500L) {
                 finishError(code);
                 return;
             }
@@ -464,6 +689,13 @@ public final class AsteraBtbColorReplayProbe {
         cleanup();
     }
 
+    private void clearScheduledWritesLocked() {
+        for (Runnable task : scheduledWrites) {
+            try { handler.removeCallbacks(task); } catch (Exception ignored) {}
+        }
+        scheduledWrites.clear();
+    }
+
     private void closeGattOnlyLocked() {
         BluetoothGatt gatt = activeGatt;
         activeGatt = null;
@@ -478,20 +710,25 @@ public final class AsteraBtbColorReplayProbe {
             handler.removeCallbacks(timeoutRunnable);
             timeoutRunnable = null;
         }
-        if (fallbackSuccessRunnable != null) {
-            handler.removeCallbacks(fallbackSuccessRunnable);
-            fallbackSuccessRunnable = null;
-        }
         if (retryRunnable != null) {
             handler.removeCallbacks(retryRunnable);
             retryRunnable = null;
         }
+        if (fallbackSuccessRunnable != null) {
+            handler.removeCallbacks(fallbackSuccessRunnable);
+            fallbackSuccessRunnable = null;
+        }
+        clearScheduledWritesLocked();
         closeGattOnlyLocked();
         callback = null;
         activeResult = null;
         eventTimeline = null;
         activeAddress = "";
         activePreset = null;
+        writeCharacteristic = null;
+        notifyCharacteristic = null;
+        activeCccd = null;
+        finalColorWriteStarted = false;
         deadlineMs = 0L;
         attempt = 0;
     }
@@ -514,5 +751,19 @@ public final class AsteraBtbColorReplayProbe {
         } catch (Exception e) {
             return new JSONObject();
         }
+    }
+
+    private static byte[] decodeHex(String hex) {
+        if (hex == null || (hex.length() & 1) != 0) {
+            throw new IllegalArgumentException("invalid hex");
+        }
+        byte[] out = new byte[hex.length() / 2];
+        for (int i = 0; i < out.length; i++) {
+            int hi = Character.digit(hex.charAt(i * 2), 16);
+            int lo = Character.digit(hex.charAt(i * 2 + 1), 16);
+            if (hi < 0 || lo < 0) throw new IllegalArgumentException("invalid hex");
+            out[i] = (byte) ((hi << 4) | lo);
+        }
+        return out;
     }
 }

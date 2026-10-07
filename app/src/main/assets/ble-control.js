@@ -38,7 +38,7 @@ const TXT={
   meshProxy:'Bluetooth Mesh: PROXY servis detektovan',
   asteraBtbService:'ASTERA BTB privatni LE servis detektovan · transport fingerprint potvrđen; session/komande još nisu verifikovani.',
   gattError:'GATT provera nije uspela.',
-  verified:'Direktna kontrola će biti uključena samo za modele sa verifikovanim zvaničnim protokolom / SDK-om.',captureTitle:'ASTERA 4-BOJE CAPTURE REPLAY TEST',captureWarning:'Eksperimentalni fizički test: šalje samo četiri tačna frame-a uhvaćena 07.10.2026. iz zvanične AsteraApp. Ovo još nije produkcijski Astera driver.',captureSending:'Šaljem uhvaćeni Astera frame',captureSent:'Frame je poslat. Proveri stvarnu boju na Titan-u.',captureError:'Astera capture replay nije uspeo.'
+  verified:'Direktna kontrola će biti uključena samo za modele sa verifikovanim zvaničnim protokolom / SDK-om.',captureTitle:'ASTERA 4-BOJE CAPTURE REPLAY TEST',captureWarning:'Eksperimentalni fizički test: pre boje šalje samo startup korake koji su ponovljeno potvrđeni u zvaničnom AsteraApp capture-u. Privatni/session parametri nisu ugrađeni. Ovo još nije produkcijski Astera driver.',captureSending:'Šaljem uhvaćeni Astera frame',captureSent:'Frame je poslat. Proveri stvarnu boju na Titan-u.',captureError:'Astera capture replay nije uspeo.'
  },
  en:{
   title:'📶 BLUETOOTH / BLE',
@@ -75,7 +75,7 @@ const TXT={
   meshProxy:'Bluetooth Mesh: PROXY service detected',
   asteraBtbService:'ASTERA BTB private LE service detected · transport fingerprint confirmed; session/commands are not verified yet.',
   gattError:'GATT inspection failed.',
-  verified:'Direct control will only be enabled for fixtures with a verified official protocol / SDK.',captureTitle:'ASTERA 4-COLOR CAPTURE REPLAY TEST',captureWarning:'Experimental physical test: sends only four exact frames captured on 2026-10-07 from the official AsteraApp. This is not yet a production Astera driver.',captureSending:'Sending captured Astera frame',captureSent:'Frame sent. Verify the actual color on the Titan.',captureError:'Astera capture replay failed.'
+  verified:'Direct control will only be enabled for fixtures with a verified official protocol / SDK.',captureTitle:'ASTERA 4-COLOR CAPTURE REPLAY TEST',captureWarning:'Experimental physical test: before color it sends only startup steps repeatedly confirmed in the official AsteraApp capture. Private/session parameters are not embedded. This is not yet a production Astera driver.',captureSending:'Sending captured Astera frame',captureSent:'Frame sent. Verify the actual color on the Titan.',captureError:'Astera capture replay failed.'
  }
 };
 const t=()=>TXT[lang()];
@@ -689,7 +689,7 @@ window.LightingAIBleLifecycleResume=function(){
  pendingAsteraGattAfterResume='';
  if(address)setTimeout(()=>inspectGatt(address,null,true),400);
 };
-window.LightingAIBleControl={version:'0.32-astera-replay-retry',diagnosticsRevision:'astera-btb-captured-replay-v30-retry',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,asteraBtbCaptureWriteUuid:ASTERA_BTB_CAPTURE_WRITE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,replayCapturedColor:runAsteraReplay,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.33-astera-captured-bootstrap-a',diagnosticsRevision:'astera-btb-captured-bootstrap-a-v31',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,asteraBtbCaptureWriteUuid:ASTERA_BTB_CAPTURE_WRITE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,replayCapturedColor:runAsteraReplay,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

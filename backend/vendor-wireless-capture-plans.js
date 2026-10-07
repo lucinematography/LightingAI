@@ -2720,6 +2720,30 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  'Blizzard Lighting': {
+    id:'blizzard-hemisphere-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'Blizzard At Full',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one Blizzard Hemisphere and record the exact fixture/firmware revision.',
+      'Use only the first-party documented Wi-Fi / At Full path for the primary app capture set.',
+      'Keep wired DMX and any unrelated wireless-DMX transmitters inactive during the first Wi-Fi capture set.',
+      'Do not infer undocumented At Full private payload, session, discovery or pairing semantics from documented Art-Net/sACN support.'
+    ],
+    officialSources:[
+      'https://www.blizzardpro.com/products/hemisphere',
+      'https://www.blizzardpro.com/news/new-wireless-battery-par-uncovered-hemisphere-tm-with-at-full-tm-app-wireless-dmx-control'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one Hemisphere through At Full over Wi-Fi, wait 15 seconds, make no lighting changes, then close the control session.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one dimmer change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGBW color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; trigger exactly one documented strobe/chase/fade action per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Cineo: {
     id:'cineo-stagelynx-r10-wifi-capture-v1',
     transport:'wifi',

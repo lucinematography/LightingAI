@@ -1500,6 +1500,18 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  Nanoleaf: {
+    bluetooth: 'setup_only_not_production_control',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'nanoleaf-lines-wifi-capture-v1',
+    evidence: [
+      'https://nanoleaf.me/en-us/products/nanoleaf-lines'
+    ],
+    note: 'Nanoleaf Lines exact-model documentation confirms 2.4 GHz Wi-Fi app control; Bluetooth is setup-only and is not counted as a production light-control transport. LightingAI local API/auth/session semantics and physical replay remain locked.'
+  },
+
   'Philips Hue': {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

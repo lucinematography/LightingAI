@@ -618,6 +618,21 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const yeelight=VENDOR_WIRELESS_CAPTURE_PLANS.Yeelight;
+expect(yeelight?.id==='yeelight-lightstrip-wifi-lan-capture-v1','Yeelight Wi-Fi/LAN capture plan missing');
+expect(yeelight?.transport==='wifi','Yeelight capture plan must remain Wi-Fi only');
+expect(yeelight?.commandSpecStatus==='public-command-spec-available-model-scope-replay-pending','Yeelight command-spec status changed');
+expect(yeelight?.captureSets?.connectOnly?.runs>=3,'Yeelight connect-only requires at least 3 runs');
+expect(yeelight?.captureSets?.dim?.runs>=3,'Yeelight DIM requires at least 3 runs');
+expect(yeelight?.captureSets?.color?.runs>=3,'Yeelight COLOR requires at least 3 runs');
+expect(yeelight?.prerequisites?.some(x=>/vendor-published Yeelight LAN protocol/i.test(x)),'Yeelight plan must reference the vendor LAN protocol');
+expect(yeelight?.prerequisites?.some(x=>/do not invent extensions/i.test(x)),'Yeelight plan must forbid undocumented extensions');
+expect(yeelight?.safety?.officialAppWritesOnly===true,'Yeelight capture must remain official-app-write-only');
+expect(yeelight?.safety?.lightingAiWritesAllowed===false,'Yeelight LightingAI writes must stay disabled');
+expect(yeelight?.safety?.rawCaptureCommitAllowed===false,'Yeelight raw captures must never be committed');
+expect(yeelight?.safety?.derivedEvidenceOnly===true,'Yeelight only derived evidence may enter repo');
+expect(yeelight?.safety?.resultStatus==='candidate_only_until_physical_replay','Yeelight must remain candidate-only');
+
 const twinkly=VENDOR_WIRELESS_CAPTURE_PLANS.Twinkly;
 expect(twinkly?.id==='twinkly-line-flex-wifi-capture-v1','Twinkly Wi-Fi capture plan missing');
 expect(twinkly?.transport==='wifi','Twinkly capture plan must remain Wi-Fi only');

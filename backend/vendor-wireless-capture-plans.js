@@ -2720,6 +2720,33 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  Yeelight: {
+    id:'yeelight-lightstrip-wifi-lan-capture-v1',
+    transport:'wifi',
+    controllerApp:'Yeelight App',
+    commandSpecStatus:'public-command-spec-available-model-scope-replay-pending',
+    prerequisites:[
+      'Use exactly one cataloged Yeelight LED Lightstrip 1S (YLDD05YL) or LED Lightstrip Pro (YLDD005) at a time.',
+      'Verify the exact model is connected over the first-party documented 2.4 GHz Wi-Fi path before any LAN comparison.',
+      'Use only the first-party Yeelight App for physical control writes during evidence capture.',
+      'Use the vendor-published Yeelight LAN protocol only as documentary command-semantic evidence; do not invent extensions.',
+      'Do not infer model equivalence, segment behavior, authentication behavior or unsupported methods from other Yeelight products.'
+    ],
+    officialSources:[
+      'https://en.yeelight.com/product/led-light-strip-1s/',
+      'https://en.yeelight.com/product/led-light-strip-pro/',
+      'https://en.yeelight.com/wp-content/uploads/sites/4/2023/08/Yeelight-home.pdf',
+      'https://www.yeelight.com/en_US/developer'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Yeelight lightstrip over Wi-Fi in the Yeelight App, wait 15 seconds, make no lighting changes, then close the session.'},
+      dim:{runs:3,rule:'From the same known brightness perform exactly one dimmer change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simple controls are stable; trigger one documented scene/effect without inferring undocumented segment semantics.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Twinkly: {
     id:'twinkly-line-flex-wifi-capture-v1',
     transport:'wifi',

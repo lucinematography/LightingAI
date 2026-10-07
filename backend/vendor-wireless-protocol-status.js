@@ -1500,6 +1500,27 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  Yeelight: {
+    bluetooth:'not_verified_for_current_catalog',
+    wifi:'transport_verified_model_scoped',
+    commandSpec:'public_protocol_spec_model_scoped',
+    nextStep:'validate-public-protocol-on-exact-models-before-driver',
+    capturePlanId:'yeelight-lightstrip-wifi-lan-capture-v1',
+    publicProtocol:{
+      sourceUrl:'https://www.yeelight.com/en_US/developer',
+      transport:'wifi',
+      protocolScope:'Yeelight Wi-Fi lighting products; exact-model LightingAI replay still required',
+      note:'Vendor publishes LAN discovery/control semantics. This is documentary command evidence, not proof that LightingAI has production-replayed YLDD05YL/YLDD005.'
+    },
+    evidence:[
+      'https://en.yeelight.com/product/led-light-strip-1s/',
+      'https://en.yeelight.com/product/led-light-strip-pro/',
+      'https://en.yeelight.com/wp-content/uploads/sites/4/2023/08/Yeelight-home.pdf',
+      'https://www.yeelight.com/en_US/developer'
+    ],
+    note:'LED Lightstrip 1S (YLDD05YL) and LED Lightstrip Pro (YLDD005) have exact-model Wi-Fi evidence. LightingAI direct writes remain locked until exact-model physical replay.'
+  },
+
   Twinkly: {
     bluetooth: 'setup_only_not_production_control',
     wifi: 'transport_verified_model_scoped',

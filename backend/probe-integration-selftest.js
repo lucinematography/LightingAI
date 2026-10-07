@@ -115,6 +115,7 @@ const allowed=new Set([
   'backend/rayzr-mc-wifi-library.js',
   'backend/cinepeer-c100-bluetooth-library.js',
   'backend/visico-bluetooth-library.js',
+  'backend/govee-wifi-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

@@ -2720,6 +2720,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  'Philips Hue': {
+    id:'philips-hue-go-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Philips Hue App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged Hue Go portable table lamp or Go portable accent light at a time.',
+      'Use only the first-party documented direct Bluetooth path in the Philips Hue app.',
+      'Keep Hue Bridge/Zigbee control isolated from the first Bluetooth capture set.',
+      'Start every capture from the same known light state and a clean app/Bluetooth session.',
+      'Do not infer undocumented BLE service/characteristic UUIDs, pairing/session state or private payload semantics.'
+    ],
+    officialSources:[
+      'https://www.philips-hue.com/en-us/p/hue-white-and-color-ambiance-hue-go-portable-table-lamp/046677576455',
+      'https://www.philips-hue.com/en-us/p/hue-white-and-color-ambiance-go-portable-table-lamp/7602031U7',
+      'https://www.philips-hue.com/en-us/explore-hue/apps'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Hue Go model over Bluetooth in the Philips Hue app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known brightness perform exactly one dimmer change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; trigger exactly one documented Hue effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Newell: {
     id:'newell-direct-bluetooth-capture-v1',
     transport:'bluetooth',

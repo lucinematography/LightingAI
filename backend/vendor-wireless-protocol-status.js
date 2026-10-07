@@ -1500,6 +1500,19 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  'Blizzard Lighting': {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'blizzard-hemisphere-wifi-capture-v1',
+    evidence: [
+      'https://www.blizzardpro.com/products/hemisphere',
+      'https://www.blizzardpro.com/news/new-wireless-battery-par-uncovered-hemisphere-tm-with-at-full-tm-app-wireless-dmx-control'
+    ],
+    note: 'Wi-Fi / At Full / Art-Net / sACN transport is exact-model verified only for Hemisphere in this checkpoint. LightingAI exact discovery, addressing, DMX profile selection, private app/session semantics and physical replay remain locked.'
+  },
+
   Cineo: {
     bluetooth: 'not_verified_for_current_catalog',
     wifi: 'transport_verified_model_scoped',

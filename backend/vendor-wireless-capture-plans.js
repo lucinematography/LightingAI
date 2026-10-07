@@ -2720,6 +2720,34 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  Photoolex: {
+    id:'photoolex-direct-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'PHOTOOLEX / Phottix x Photoolex App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged Photoolex Q40C or Q100C at a time.',
+      'Use only the first-party documented mobile app path for direct Bluetooth control.',
+      'Start every capture from the same known fixture state and a clean Bluetooth session.',
+      'Do not infer undocumented BLE service/characteristic UUIDs, pairing, session or payload semantics from transport availability.',
+      'Do not infer command equivalence between Q40C and Q100C without physical evidence.'
+    ],
+    officialSources:[
+      'https://photoolex.com/products/photoolex-q40c-40w-rgb-led-video-light',
+      'https://photoolex.com/products/photoolex-q100c-100w-rgb-cob-light',
+      'https://photoolex.com/pages/app-download',
+      'https://www.phottix.com/phottix-x-photoolex-app-download/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Photoolex model over Bluetooth in the official app, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one HSI/RGB color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; activate exactly one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   ColorKey: {
     id:'colorkey-mobilepar-wifi-capture-v1',
     transport:'wifi',

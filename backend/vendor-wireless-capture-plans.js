@@ -2720,6 +2720,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  ColorKey: {
+    id:'colorkey-mobilepar-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'ColorKey App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged ColorKey MobilePar Wi-Fi model at a time.',
+      'Connect the official ColorKey app directly to the fixture over Wi-Fi and record the exact model/app/firmware state.',
+      'Keep 2.4 GHz W-DMX transmitters and receivers isolated from the direct app-Wi-Fi capture set.',
+      'Do not infer undocumented ColorKey app discovery, pairing, session or private payload semantics from the documented Wi-Fi control path.'
+    ],
+    officialSources:[
+      'https://www.colorkeyled.com/product/mobilepar-pro-hex-6/',
+      'https://www.colorkeyled.com/product/mobilepar-mini-hex-4-mkii/',
+      'https://www.colorkeyled.com/product/mobilepar-hex-5/',
+      'https://play.google.com/store/apps/details?id=com.colorkeyled.color_key'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact ColorKey MobilePar model through the official app over Wi-Fi, wait 15 seconds, make no lighting changes, then close the control session.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one dimmer change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGBWA-UV color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; trigger exactly one documented strobe/fade/program action per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   'Blizzard Lighting': {
     id:'blizzard-hemisphere-wifi-capture-v1',
     transport:'wifi',

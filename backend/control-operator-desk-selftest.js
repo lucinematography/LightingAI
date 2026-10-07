@@ -21,7 +21,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.33-astera-captured-bootstrap-a'"
+  "version:'0.34-astera-colored-replay-buttons'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -75,6 +75,7 @@ expect(replayProbe.includes('0A038D041E8312')&&replayProbe.includes('0A068804000
 expect(!replayProbe.includes('s63=')&&!replayProbe.includes('1879034875'),'Potential Astera session or Radio PIN material must not be committed into the public test driver');
 expect(!replayProbe.includes('frameHex')&&!replayProbe.includes('rawHex'),'Captured replay probe must not accept arbitrary raw write payloads');
 expect(ble.includes('ASTERA 4-BOJE CAPTURE REPLAY TEST')&&ble.includes('asteraBtbReplayCapturedColor')&&ble.includes('asteraReplayCompatible'),'Astera replay UI must remain gated physical-test surface');
+expect(ble.includes("RED:'background:#c62828")&&ble.includes("WHITE:'background:#fff")&&ble.includes("GREEN:'background:#178a3b")&&ble.includes("BLUE:'background:#1565c0"),'Astera capture replay buttons must visually match their commanded colors');
 expect((gatt.match(/writeDescriptor\s*\(/g)||[]).length===1,'Astera passive observer must have exactly one descriptor write path');
 expect(gatt.includes('gatt.writeDescriptor(cccd)'),'The only Astera descriptor write must be the standard CCCD subscription');
 expect(ble.includes("type=\"button\" disabled")&&ble.includes("WAITING FOR VERIFIED DRIVER"),'Quick Bluetooth controls must remain disabled until a vendor driver is physically verified');

@@ -21,7 +21,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.31-astera-captured-replay-probe'"
+  "version:'0.32-astera-replay-retry'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -68,6 +68,8 @@ expect(!mainActivity.includes('writeCharacteristic('),'MainActivity bridge must 
 expect(mainActivity.includes('asteraBtbReplayCapturedColor')&&mainActivity.includes('AsteraBtbColorReplayProbe'),'Astera captured-color replay bridge missing');
 expect(capturedFrames.includes('0A107EDF36000000007D63130D000E000CFF406A')&&capturedFrames.includes('0A107EDF36000000007D63130DD30E960CFFBE0F')&&capturedFrames.includes('0A107EDF36000000007D63130C010E030DFFC1A7')&&capturedFrames.includes('0A107EDF36000000007D63130C070D010EFFB58E'),'Exact 2026-10-07 AsteraApp captured replay frames missing');
 expect(replayProbe.includes('AsteraBtbCapturedFrames.frameFor')&&replayProbe.includes('WRITE_TYPE_NO_RESPONSE')&&replayProbe.includes('astera_capture_characteristic_missing'),'Captured replay probe must be whitelist-only and target observed WRITE-NR characteristic');
+expect(replayProbe.includes('MAX_ATTEMPTS = 3')&&replayProbe.includes('status == 133')&&replayProbe.includes('2200L')&&replayProbe.includes('status == 19')&&replayProbe.includes('1800L'),'Captured replay probe must retry transient Titan GATT 133/19 failures with controlled backoff');
+expect(replayProbe.includes('connectAttempts')&&replayProbe.includes('retry_scheduled'),'Captured replay probe must report retry diagnostics');
 expect(!replayProbe.includes('frameHex')&&!replayProbe.includes('rawHex'),'Captured replay probe must not accept arbitrary raw write payloads');
 expect(ble.includes('ASTERA 4-BOJE CAPTURE REPLAY TEST')&&ble.includes('asteraBtbReplayCapturedColor')&&ble.includes('asteraReplayCompatible'),'Astera replay UI must remain gated physical-test surface');
 expect((gatt.match(/writeDescriptor\s*\(/g)||[]).length===1,'Astera passive observer must have exactly one descriptor write path');

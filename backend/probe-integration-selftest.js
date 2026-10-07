@@ -118,6 +118,7 @@ const allowed=new Set([
   'backend/govee-wifi-bluetooth-library.js',
   'backend/newell-bluetooth-library.js',
   'backend/philips-hue-bluetooth-library.js',
+  'backend/nanoleaf-lines-wifi-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

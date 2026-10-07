@@ -618,6 +618,21 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const cinepeer=VENDOR_WIRELESS_CAPTURE_PLANS.CINEPEER;
+expect(cinepeer?.id==='cinepeer-c100-bluetooth-mesh-capture-v1','CINEPEER Bluetooth capture plan missing');
+expect(cinepeer?.transport==='bluetooth','CINEPEER capture plan must remain Bluetooth only');
+expect(cinepeer?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','CINEPEER command spec status changed');
+expect(cinepeer?.captureSets?.connectOnly?.runs>=3,'CINEPEER connect-only requires at least 3 runs');
+expect(cinepeer?.captureSets?.dim?.runs>=3,'CINEPEER DIM requires at least 3 runs');
+expect(cinepeer?.captureSets?.cct?.runs>=3,'CINEPEER CCT requires at least 3 runs');
+expect(cinepeer?.captureSets?.color?.runs>=3,'CINEPEER COLOR requires at least 3 runs');
+expect(cinepeer?.prerequisites?.some(x=>/Do not infer undocumented mesh provisioning/i.test(x)),'CINEPEER capture plan must forbid proprietary mesh inference');
+expect(cinepeer?.safety?.officialAppWritesOnly===true,'CINEPEER official-app-only capture safety missing');
+expect(cinepeer?.safety?.lightingAiWritesAllowed===false,'CINEPEER LightingAI writes must stay disabled during capture');
+expect(cinepeer?.safety?.rawCaptureCommitAllowed===false,'CINEPEER raw captures must never be committed');
+expect(cinepeer?.safety?.derivedEvidenceOnly===true,'CINEPEER only derived evidence may enter repo');
+expect(cinepeer?.safety?.resultStatus==='candidate_only_until_physical_replay','CINEPEER capture result must remain candidate-only');
+
 const rayzr=VENDOR_WIRELESS_CAPTURE_PLANS.RAYZR;
 expect(rayzr?.id==='rayzr-mc-wifi-capture-v1','RAYZR Wi-Fi capture plan missing');
 expect(rayzr?.transport==='wifi','RAYZR capture plan must remain Wi-Fi only');

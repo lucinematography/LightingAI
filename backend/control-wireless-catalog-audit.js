@@ -468,6 +468,10 @@ const manfrotto=byManufacturer.get('Manfrotto');
 if(!manfrotto || manfrotto.bluetooth!==3 || manfrotto.wifi!==0 || manfrotto.both!==0) {
   failures.push('Manfrotto wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const visico=byManufacturer.get('VISICO');
+if(!visico || visico.bluetooth!==3 || visico.wifi!==0 || visico.both!==0) {
+  failures.push('VISICO wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
+}
 const cinepeer=byManufacturer.get('CINEPEER');
 if(!cinepeer || cinepeer.bluetooth!==1 || cinepeer.wifi!==0 || cinepeer.both!==0) {
   failures.push('CINEPEER wireless coverage expected 1 Bluetooth / 0 Wi-Fi / 0 both');

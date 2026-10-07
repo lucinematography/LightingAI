@@ -1500,6 +1500,21 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  ColorKey: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'colorkey-mobilepar-wifi-capture-v1',
+    evidence: [
+      'https://www.colorkeyled.com/product/mobilepar-pro-hex-6/',
+      'https://www.colorkeyled.com/product/mobilepar-mini-hex-4-mkii/',
+      'https://www.colorkeyled.com/product/mobilepar-hex-5/',
+      'https://play.google.com/store/apps/details?id=com.colorkeyled.color_key'
+    ],
+    note: 'Direct ColorKey App Wi-Fi transport is exact-model verified only for MobilePar Pro HEX 6, MobilePar Mini HEX 4 MKII and MobilePar HEX 5. Built-in 2.4 GHz W-DMX remains a separate wireless-DMX route. LightingAI proprietary app/session semantics and physical replay remain locked.'
+  },
+
   'Blizzard Lighting': {
     bluetooth: 'not_verified_for_current_catalog',
     wifi: 'transport_verified_model_scoped',

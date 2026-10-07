@@ -4,12 +4,12 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 const report=buildWirelessReadinessReport();
 
-expect(report.fixtureCount===1110,'fixture count changed from verified catalog total');
-expect(report.coveredManufacturers===98,'wireless manufacturer coverage must remain 91');
+expect(report.fixtureCount===1112,'fixture count changed from verified catalog total');
+expect(report.coveredManufacturers===99,'wireless manufacturer coverage must remain 91');
 expect(report.commandReadyManufacturers===0,'no proprietary wireless command driver may be production-ready yet');
 
 const by=Object.fromEntries(report.vendors.map(v=>[v.manufacturer,v]));
-for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','SHEHDS','Weeylite','IMRELAX','Kenro','Selens','Fomex','BB&S Lighting','SUMOLIGHT','PROLIGHTS','Lightstar Lights','Mole-Richardson','ZOLAR','Filmgear','Rosco','dedolight','ADJ Lighting','Elinchrom','CineLight','ROXX','iFootage','Cineroid','Sokani','FotorGear','BRESSER','Digitek','Manfrotto','Cineo','Blizzard Lighting','ColorKey','Photoolex','RAYZR','CINEPEER','VISICO']){
+for(const maker of ['Godox','Nanlite','Aputure','Astera','ARRI','Aladdin','EV Light','Creamsource','Rotolight','Luxli','Quasar Science','Kelvin','SmallRig','amaran','NEEWER','GVM','Litepanels','DMG Lumiere','ZHIYUN','PROLYCHT','COLBOR','SIRUI','Fiilex','Harlowe','SWIT','Dracast','Hive Lighting','Kinotehnik','VELVET','VILTROX','Phottix','YONGNUO','PIXEL','Falcon Eyes','Lishuai','NiceFoto','Ulanzi','CAME-TV','SOONWELL','Tolifo','Moman','Ikan','Jinbei','Lume Cube','CHAUVET DJ','Fotodiox','broncolor','Genaray','Elgato','Westcott','Logitech G','Rollei','Razer','NANLUX','Mettle','PiXAPRO','Ape Labs','Pilotfly','LUXCEO','Yidoblo','FEELWORLD','SUTEFOTO','YC Onion','K&F Concept','Profoto','SHEHDS','Weeylite','IMRELAX','Kenro','Selens','Fomex','BB&S Lighting','SUMOLIGHT','PROLIGHTS','Lightstar Lights','Mole-Richardson','ZOLAR','Filmgear','Rosco','dedolight','ADJ Lighting','Elinchrom','CineLight','ROXX','iFootage','Cineroid','Sokani','FotorGear','BRESSER','Digitek','Manfrotto','Cineo','Blizzard Lighting','ColorKey','Photoolex','RAYZR','CINEPEER','VISICO','Govee']){
   const row=by[maker];
   expect(!!row,maker+' readiness row missing');
   if(!row) continue;
@@ -158,6 +158,8 @@ expect(by.Digitek?.assistedBluetooth===0,'Digitek DCL 100 WBC must remain direct
 expect(by.Manfrotto?.bluetoothFixtures===3&&by.Manfrotto?.wifiFixtures===0&&by.Manfrotto?.bothFixtures===0,'Manfrotto wireless counts changed unexpectedly');
 expect(by.Manfrotto?.assistedBluetooth===1,'Manfrotto assisted Bluetooth count must remain 1 for LYKOS Daylight MLL1500-D');
 
+expect(by.Govee?.bluetoothFixtures===2&&by.Govee?.wifiFixtures===2&&by.Govee?.bothFixtures===2,'Govee wireless counts changed unexpectedly');
+expect(by.Govee?.assistedBluetooth===0&&by.Govee?.assistedWifi===0,'Govee H6056/H6047 must remain direct Bluetooth and Wi-Fi');
 expect(by.VISICO?.bluetoothFixtures===3&&by.VISICO?.wifiFixtures===0&&by.VISICO?.bothFixtures===0,'VISICO wireless counts changed unexpectedly');
 expect(by.VISICO?.assistedBluetooth===0,'VISICO exact models must remain direct Bluetooth');
 expect(by.CINEPEER?.bluetoothFixtures===1&&by.CINEPEER?.wifiFixtures===0&&by.CINEPEER?.bothFixtures===0,'CINEPEER wireless counts changed unexpectedly');

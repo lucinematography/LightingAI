@@ -618,6 +618,20 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const visico=VENDOR_WIRELESS_CAPTURE_PLANS.VISICO;
+expect(visico?.id==='visico-light-bluetooth-capture-v1','VISICO Bluetooth capture plan missing');
+expect(visico?.transport==='bluetooth','VISICO capture plan must remain Bluetooth only');
+expect(visico?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','VISICO command spec status changed');
+expect(visico?.captureSets?.connectOnly?.runs>=3,'VISICO connect-only requires at least 3 runs');
+expect(visico?.captureSets?.dim?.runs>=3,'VISICO DIM requires at least 3 runs');
+expect(visico?.captureSets?.cct?.runs>=3,'VISICO CCT requires at least 3 runs');
+expect(visico?.prerequisites?.some(x=>/Do not infer undocumented BLE service/i.test(x)),'VISICO capture plan must forbid proprietary BLE inference');
+expect(visico?.safety?.officialAppWritesOnly===true,'VISICO official-app-only capture safety missing');
+expect(visico?.safety?.lightingAiWritesAllowed===false,'VISICO LightingAI writes must stay disabled during capture');
+expect(visico?.safety?.rawCaptureCommitAllowed===false,'VISICO raw captures must never be committed');
+expect(visico?.safety?.derivedEvidenceOnly===true,'VISICO only derived evidence may enter repo');
+expect(visico?.safety?.resultStatus==='candidate_only_until_physical_replay','VISICO capture result must remain candidate-only');
+
 const cinepeer=VENDOR_WIRELESS_CAPTURE_PLANS.CINEPEER;
 expect(cinepeer?.id==='cinepeer-c100-bluetooth-mesh-capture-v1','CINEPEER Bluetooth capture plan missing');
 expect(cinepeer?.transport==='bluetooth','CINEPEER capture plan must remain Bluetooth only');

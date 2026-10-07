@@ -1500,6 +1500,23 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  VISICO: {
+    bluetooth: 'transport_verified_model_scoped',
+    wifi: 'not_verified_for_current_catalog',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'visico-light-bluetooth-capture-v1',
+    evidence: [
+      'https://www.visico.com/255.htm',
+      'https://www.visico.com/140.htm',
+      'https://www.visico.com/474.htm',
+      'https://www.visico.com/479.htm',
+      'https://www.visico.com/250.htm',
+      'https://www.visico.com/faq_39/'
+    ],
+    note: 'Direct VISICO LIGHT Bluetooth app transport is exact-model verified only for P-70R, P60R II and KD-2RX in this checkpoint. LightingAI BLE/GATT discovery, pairing, private session semantics and physical replay remain locked.'
+  },
+
   CINEPEER: {
     bluetooth: 'transport_verified_model_scoped',
     wifi: 'not_verified_for_current_catalog',

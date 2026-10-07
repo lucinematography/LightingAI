@@ -2720,6 +2720,41 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  Govee: {
+    id:'govee-direct-wireless-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'Govee Home',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged Govee H6056 or H6047 at a time.',
+      'Use only the first-party Govee Home app and record the exact model/app/firmware state.',
+      'Start every Bluetooth capture from the same known fixture state and a clean app session.',
+      'Do not infer undocumented BLE service/characteristic UUIDs, pairing, session or private payload semantics.',
+      'Do not infer command equivalence between H6056 and H6047 without physical evidence.'
+    ],
+    officialSources:[
+      'https://eu.govee.com/products/govee-rgbicww-wifi-bluetooth-flow-plus-light-bars',
+      'https://eu.govee.com/products/govee-rgbic-wi-fi-gaming-light-bars-with-smart-controller'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact Govee model over Bluetooth in Govee Home, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known brightness perform exactly one brightness change per capture.'},
+      cct:{runs:3,optional:true,rule:'H6056 only: perform exactly one white/CCT change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGBIC/RGBICWW color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; trigger exactly one documented scene/effect per capture.'}
+    },
+    secondaryPlans:[
+      {
+        id:'govee-direct-wifi-capture-v1',
+        transport:'wifi',
+        target:'Govee H6056 or H6047',
+        commandSpecStatus:'public-wifi-command-api-not-located-in-official-docs',
+        rule:'Use the same exact fixture on an isolated Wi-Fi network with Govee Home. Capture three no-change sessions plus isolated brightness/color actions. Do not infer undocumented local endpoints, session state or payload semantics.'
+      }
+    ],
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   VISICO: {
     id:'visico-light-bluetooth-capture-v1',
     transport:'bluetooth',

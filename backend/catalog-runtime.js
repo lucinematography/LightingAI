@@ -179,6 +179,7 @@ import { RAYZR_MC_WIFI_FIXTURES } from './rayzr-mc-wifi-library.js';
 import { CINEPEER_C100_BLUETOOTH_FIXTURES } from './cinepeer-c100-bluetooth-library.js';
 import { VISICO_BLUETOOTH_FIXTURES } from './visico-bluetooth-library.js';
 import { GOVEE_WIFI_BLUETOOTH_FIXTURES } from './govee-wifi-bluetooth-library.js';
+import { NEWELL_BLUETOOTH_FIXTURES } from './newell-bluetooth-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -401,6 +402,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(CINEPEER_C100_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(VISICO_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(GOVEE_WIFI_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(NEWELL_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

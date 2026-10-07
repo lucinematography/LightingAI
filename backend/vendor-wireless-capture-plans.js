@@ -2720,6 +2720,36 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  VISICO: {
+    id:'visico-light-bluetooth-capture-v1',
+    transport:'bluetooth',
+    controllerApp:'VISICO LIGHT',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged VISICO P-70R, P60R II or KD-2RX at a time.',
+      'Use only the first-party VISICO LIGHT app path and record the exact model/app/firmware state.',
+      'Start every capture from the same known fixture state and a clean Bluetooth session.',
+      'Do not infer undocumented BLE service/characteristic UUIDs, pairing, session or private payload semantics.',
+      'Do not infer command equivalence between VISICO models without physical evidence.'
+    ],
+    officialSources:[
+      'https://www.visico.com/255.htm',
+      'https://www.visico.com/140.htm',
+      'https://www.visico.com/474.htm',
+      'https://www.visico.com/479.htm',
+      'https://www.visico.com/250.htm',
+      'https://www.visico.com/faq_39/'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect one exact VISICO model through VISICO LIGHT over Bluetooth, wait 15 seconds, make no lighting changes, then disconnect.'},
+      dim:{runs:3,rule:'From the same known intensity perform exactly one brightness change per capture.'},
+      cct:{runs:3,rule:'From the same known state perform exactly one CCT change per capture.'},
+      color:{runs:3,optional:true,rule:'For P-70R/P60R II only, perform exactly one HSI/RGB color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; activate exactly one documented effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   CINEPEER: {
     id:'cinepeer-c100-bluetooth-mesh-capture-v1',
     transport:'bluetooth',

@@ -618,6 +618,22 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const govee=VENDOR_WIRELESS_CAPTURE_PLANS.Govee;
+expect(govee?.id==='govee-direct-wireless-capture-v1','Govee Bluetooth capture plan missing');
+expect(govee?.transport==='bluetooth','Govee primary capture plan must remain Bluetooth');
+expect(govee?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Govee command spec status changed');
+expect(govee?.captureSets?.connectOnly?.runs>=3,'Govee connect-only requires at least 3 runs');
+expect(govee?.captureSets?.dim?.runs>=3,'Govee DIM requires at least 3 runs');
+expect(govee?.captureSets?.color?.runs>=3,'Govee COLOR requires at least 3 runs');
+expect(govee?.prerequisites?.some(x=>/Do not infer undocumented BLE service/i.test(x)),'Govee Bluetooth plan must forbid proprietary BLE inference');
+expect(Array.isArray(govee?.secondaryPlans)&&govee.secondaryPlans.some(x=>x.id==='govee-direct-wifi-capture-v1'&&x.transport==='wifi'),'Govee Wi-Fi secondary capture plan missing');
+expect(govee?.secondaryPlans?.some(x=>/Do not infer undocumented local endpoints/i.test(String(x.rule||''))),'Govee Wi-Fi plan must forbid private endpoint inference');
+expect(govee?.safety?.officialAppWritesOnly===true,'Govee official-app-only capture safety missing');
+expect(govee?.safety?.lightingAiWritesAllowed===false,'Govee LightingAI writes must stay disabled during capture');
+expect(govee?.safety?.rawCaptureCommitAllowed===false,'Govee raw captures must never be committed');
+expect(govee?.safety?.derivedEvidenceOnly===true,'Govee only derived evidence may enter repo');
+expect(govee?.safety?.resultStatus==='candidate_only_until_physical_replay','Govee capture result must remain candidate-only');
+
 const visico=VENDOR_WIRELESS_CAPTURE_PLANS.VISICO;
 expect(visico?.id==='visico-light-bluetooth-capture-v1','VISICO Bluetooth capture plan missing');
 expect(visico?.transport==='bluetooth','VISICO capture plan must remain Bluetooth only');

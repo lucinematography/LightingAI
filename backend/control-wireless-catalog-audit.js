@@ -468,6 +468,10 @@ const manfrotto=byManufacturer.get('Manfrotto');
 if(!manfrotto || manfrotto.bluetooth!==3 || manfrotto.wifi!==0 || manfrotto.both!==0) {
   failures.push('Manfrotto wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const philipsHue=byManufacturer.get('Philips Hue');
+if(!philipsHue || philipsHue.bluetooth!==2 || philipsHue.wifi!==0 || philipsHue.both!==0) {
+  failures.push('Philips Hue wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 const newell=byManufacturer.get('Newell');
 if(!newell || newell.bluetooth!==2 || newell.wifi!==0 || newell.both!==0) {
   failures.push('Newell wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');

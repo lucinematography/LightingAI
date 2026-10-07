@@ -137,9 +137,12 @@ jobs:
           test -s app/src/main/java/com/lightingai/app/BleGattInspector.java
           test -s app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java
           test -s app/src/main/java/com/lightingai/app/AsteraBtbClassicInspector.java
+          test -s app/src/main/java/com/lightingai/app/AsteraBtbCapturedFrames.java
+          test -s app/src/main/java/com/lightingai/app/AsteraBtbColorReplayProbe.java
           grep -Fq "LightingAIControlBootstrapReady" app/src/main/assets/control-bootstrap.js
           grep -Fq "LightingAIControlBootstrapMode='bluetooth-only'" app/src/main/assets/control-bootstrap.js
           grep -Fq "ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'" app/src/main/assets/ble-control.js
+          grep -Fq "ASTERA_BTB_CAPTURE_WRITE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a66'" app/src/main/assets/ble-control.js
           if grep -Fq "artnet-control.js" app/src/main/assets/control-bootstrap.js || grep -Fq "dmx-patch-planner.js" app/src/main/assets/control-bootstrap.js || grep -Fq "dmx-export.js" app/src/main/assets/control-bootstrap.js; then
             echo "Primary CONTROL bootstrap must remain Bluetooth-only"
             exit 1

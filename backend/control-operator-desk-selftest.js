@@ -11,6 +11,8 @@ const gatt=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/
 const mainActivity=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/MainActivity.java'),'utf8');
 const scanner=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/BleDeviceScanner.java'),'utf8');
 const bondManager=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java'),'utf8');
+const capturedFrames=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/AsteraBtbCapturedFrames.java'),'utf8');
+const replayProbe=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/AsteraBtbColorReplayProbe.java'),'utf8');
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
@@ -19,7 +21,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.30-astera-firmware-observations'"
+  "version:'0.31-astera-captured-replay-probe'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -62,7 +64,12 @@ expect(gatt.includes('passiveNotifyServiceUuid.isEmpty() ||')&&gatt.includes('pa
 expect(mainActivity.includes('bleGattInspector.inspectAstera(target'),'Astera bridge must use the passive Astera GATT observer');
 expect(!ble.includes('setTimeout(()=>inspectAsteraClassic(address),250)'),'Primary Astera connect flow must not auto-route through Classic/SDP');
 expect(!gatt.includes('writeCharacteristic('),'Astera diagnostic observer must not send proprietary characteristic writes');
-expect(!mainActivity.includes('writeCharacteristic('),'Android bridge must not expose a proprietary GATT characteristic write path before physical proof');
+expect(!mainActivity.includes('writeCharacteristic('),'MainActivity bridge must not contain arbitrary proprietary write logic');
+expect(mainActivity.includes('asteraBtbReplayCapturedColor')&&mainActivity.includes('AsteraBtbColorReplayProbe'),'Astera captured-color replay bridge missing');
+expect(capturedFrames.includes('0A107EDF36000000007D63130D000E000CFF406A')&&capturedFrames.includes('0A107EDF36000000007D63130DD30E960CFFBE0F')&&capturedFrames.includes('0A107EDF36000000007D63130C010E030DFFC1A7')&&capturedFrames.includes('0A107EDF36000000007D63130C070D010EFFB58E'),'Exact 2026-10-07 AsteraApp captured replay frames missing');
+expect(replayProbe.includes('AsteraBtbCapturedFrames.frameFor')&&replayProbe.includes('WRITE_TYPE_NO_RESPONSE')&&replayProbe.includes('astera_capture_characteristic_missing'),'Captured replay probe must be whitelist-only and target observed WRITE-NR characteristic');
+expect(!replayProbe.includes('frameHex')&&!replayProbe.includes('rawHex'),'Captured replay probe must not accept arbitrary raw write payloads');
+expect(ble.includes('ASTERA 4-BOJE CAPTURE REPLAY TEST')&&ble.includes('asteraBtbReplayCapturedColor')&&ble.includes('asteraReplayCompatible'),'Astera replay UI must remain gated physical-test surface');
 expect((gatt.match(/writeDescriptor\s*\(/g)||[]).length===1,'Astera passive observer must have exactly one descriptor write path');
 expect(gatt.includes('gatt.writeDescriptor(cccd)'),'The only Astera descriptor write must be the standard CCCD subscription');
 expect(ble.includes("type=\"button\" disabled")&&ble.includes("WAITING FOR VERIFIED DRIVER"),'Quick Bluetooth controls must remain disabled until a vendor driver is physically verified');

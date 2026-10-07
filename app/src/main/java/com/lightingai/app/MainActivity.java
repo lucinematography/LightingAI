@@ -72,6 +72,7 @@ public class MainActivity extends Activity {
     private BleGattInspector bleGattInspector;
     private AsteraBtbBondManager asteraBtbBondManager;
     private AsteraBtbClassicInspector asteraBtbClassicInspector;
+    private AsteraBtbColorReplayProbe asteraBtbColorReplayProbe;
     private String pendingBleDiscoveryRequestId = null;
     private int pendingBleDiscoveryTimeoutMs = 3000;
 
@@ -109,6 +110,7 @@ public class MainActivity extends Activity {
         bleGattInspector = new BleGattInspector(this);
         asteraBtbBondManager = new AsteraBtbBondManager(this);
         asteraBtbClassicInspector = new AsteraBtbClassicInspector(this);
+        asteraBtbColorReplayProbe = new AsteraBtbColorReplayProbe(this);
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -739,6 +741,16 @@ public class MainActivity extends Activity {
             null));
     }
 
+    private void notifyAsteraBtbColorProbe(String requestId, JSONObject result, String error) {
+        if (webView == null) return;
+        final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
+        final String resultJs = result == null ? "{}" : result.toString();
+        final String errJs = JSONObject.quote(error == null ? "" : error);
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIAsteraBtbColorProbeResult&&window.LightingAIAsteraBtbColorProbeResult(" + idJs + "," + resultJs + "," + errJs + ");",
+            null));
+    }
+
     private void notifyBleDiscovery(String requestId, JSONArray devices, String error) {
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
@@ -1035,6 +1047,18 @@ public class MainActivity extends Activity {
             });
         }
 
+        @JavascriptInterface public void asteraBtbReplayCapturedColor(String requestId, String address, String preset, int timeoutMs) {
+            runOnUiThread(() -> {
+                final String id = requestId == null ? "" : requestId;
+                if (!hasBlePermission()) { notifyAsteraBtbColorProbe(id, new JSONObject(), "ble_permission_denied"); return; }
+                if (asteraBtbColorReplayProbe == null) asteraBtbColorReplayProbe = new AsteraBtbColorReplayProbe(MainActivity.this);
+                asteraBtbColorReplayProbe.replay(address, preset, timeoutMs, new AsteraBtbColorReplayProbe.Callback() {
+                    @Override public void onComplete(JSONObject result) { notifyAsteraBtbColorProbe(id, result, ""); }
+                    @Override public void onError(JSONObject result, String code) { notifyAsteraBtbColorProbe(id, result, code); }
+                });
+            });
+        }
+
         @JavascriptInterface public void bleInspectGatt(String requestId, String address, int timeoutMs) {
             runOnUiThread(() -> {
                 final String id = requestId == null ? "" : requestId;
@@ -1116,6 +1140,7 @@ public class MainActivity extends Activity {
         }
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
         if (bleGattInspector != null) bleGattInspector.cancel();
+        if (asteraBtbColorReplayProbe != null) asteraBtbColorReplayProbe.cancel();
         // Keep an active Astera Android bond alive while the system pairing UI
         // temporarily pauses this Activity. The bond manager has its own timeout
         // and is still cancelled on onDestroy().
@@ -1197,6 +1222,7 @@ public class MainActivity extends Activity {
         if (bleGattInspector != null) bleGattInspector.cancel();
         if (asteraBtbBondManager != null) asteraBtbBondManager.cancel();
         if (asteraBtbClassicInspector != null) asteraBtbClassicInspector.cancel();
+        if (asteraBtbColorReplayProbe != null) asteraBtbColorReplayProbe.cancel();
         if (speechRecognizer != null) {
             try { speechRecognizer.destroy(); } catch (Exception ignored) {}
             speechRecognizer = null;

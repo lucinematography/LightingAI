@@ -1,0 +1,7 @@
+package com.lightingai.app;
+import static org.junit.Assert.*;import org.junit.Test;
+public class AsteraBtbCapturedFramesTest {
+ @Test public void exactFrames(){assertEquals("0A107EDF36000000007D63130D000E000CFF406A",AsteraBtbCapturedFrames.hexFor(AsteraBtbCapturedFrames.Preset.RED));assertEquals("0A107EDF36000000007D63130DD30E960CFFBE0F",AsteraBtbCapturedFrames.hexFor(AsteraBtbCapturedFrames.Preset.WHITE));assertEquals("0A107EDF36000000007D63130C010E030DFFC1A7",AsteraBtbCapturedFrames.hexFor(AsteraBtbCapturedFrames.Preset.GREEN));assertEquals("0A107EDF36000000007D63130C070D010EFFB58E",AsteraBtbCapturedFrames.hexFor(AsteraBtbCapturedFrames.Preset.BLUE));for(AsteraBtbCapturedFrames.Preset p:AsteraBtbCapturedFrames.Preset.values())assertTrue(AsteraBtbCapturedFrames.isValidFrame(AsteraBtbCapturedFrames.frameFor(p)));}
+ @Test public void rgb(){assertArrayEquals(new int[]{255,0,0},AsteraBtbCapturedFrames.capturedRgb(AsteraBtbCapturedFrames.Preset.RED));assertArrayEquals(new int[]{255,211,150},AsteraBtbCapturedFrames.capturedRgb(AsteraBtbCapturedFrames.Preset.WHITE));assertArrayEquals(new int[]{1,255,3},AsteraBtbCapturedFrames.capturedRgb(AsteraBtbCapturedFrames.Preset.GREEN));assertArrayEquals(new int[]{7,1,255},AsteraBtbCapturedFrames.capturedRgb(AsteraBtbCapturedFrames.Preset.BLUE));}
+ @Test(expected=IllegalArgumentException.class) public void failClosed(){AsteraBtbCapturedFrames.frameFor("MAGENTA");}
+}

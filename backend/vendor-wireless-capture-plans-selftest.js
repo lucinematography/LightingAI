@@ -618,6 +618,20 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const blizzard=VENDOR_WIRELESS_CAPTURE_PLANS['Blizzard Lighting'];
+expect(blizzard?.id==='blizzard-hemisphere-wifi-capture-v1','Blizzard Lighting Wi-Fi capture plan missing');
+expect(blizzard?.transport==='wifi','Blizzard Lighting capture plan must remain Wi-Fi only');
+expect(blizzard?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Blizzard Lighting command spec status changed');
+expect(blizzard?.captureSets?.connectOnly?.runs>=3,'Blizzard Lighting connect-only requires at least 3 runs');
+expect(blizzard?.captureSets?.dim?.runs>=3,'Blizzard Lighting DIM requires at least 3 runs');
+expect(blizzard?.captureSets?.color?.runs>=3,'Blizzard Lighting COLOR requires at least 3 runs');
+expect(blizzard?.prerequisites?.some(x=>/Do not infer undocumented At Full/i.test(x)),'Blizzard Lighting capture plan must forbid private At Full inference');
+expect(blizzard?.safety?.officialAppWritesOnly===true,'Blizzard Lighting official-app-only capture safety missing');
+expect(blizzard?.safety?.lightingAiWritesAllowed===false,'Blizzard Lighting LightingAI writes must stay disabled during capture');
+expect(blizzard?.safety?.rawCaptureCommitAllowed===false,'Blizzard Lighting raw captures must never be committed');
+expect(blizzard?.safety?.derivedEvidenceOnly===true,'Blizzard Lighting only derived evidence may enter repo');
+expect(blizzard?.safety?.resultStatus==='candidate_only_until_physical_replay','Blizzard Lighting capture result must remain candidate-only');
+
 const cineo=VENDOR_WIRELESS_CAPTURE_PLANS.Cineo;
 expect(cineo?.id==='cineo-stagelynx-r10-wifi-capture-v1','Cineo Wi-Fi capture plan missing');
 expect(cineo?.transport==='wifi','Cineo capture plan must remain Wi-Fi only');

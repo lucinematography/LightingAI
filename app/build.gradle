@@ -30,8 +30,8 @@ android { namespace 'com.lightingai.app'; compileSdk 35
 
     buildTypes {
         debug {
-            applicationIdSuffix '.review13'
-            versionNameSuffix '-review13'
+            applicationIdSuffix ".control${releaseVersionCode}"
+            versionNameSuffix "-control${releaseVersionCode}"
         }
         release {
             minifyEnabled false

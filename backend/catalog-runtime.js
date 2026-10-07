@@ -181,6 +181,7 @@ import { VISICO_BLUETOOTH_FIXTURES } from './visico-bluetooth-library.js';
 import { GOVEE_WIFI_BLUETOOTH_FIXTURES } from './govee-wifi-bluetooth-library.js';
 import { NEWELL_BLUETOOTH_FIXTURES } from './newell-bluetooth-library.js';
 import { PHILIPS_HUE_BLUETOOTH_FIXTURES } from './philips-hue-bluetooth-library.js';
+import { NANOLEAF_LINES_WIFI_FIXTURES } from './nanoleaf-lines-wifi-library.js';
 import { NANLITE_FM_CURRENT_FIXTURES, NANLITE_FM_CURRENT_ACCESSORIES } from './nanlite-fm-current-library.js';
 import { NANLITE_FORZA_II_FIXTURES, NANLITE_FORZA_II_ACCESSORIES } from './nanlite-forza-ii-library.js';
 import { NANLITE_FC_720_FIXTURES, NANLITE_FC_720_ACCESSORIES } from './nanlite-fc-720-library.js';
@@ -405,6 +406,7 @@ export function buildRuntimeCatalog() {
   fixtures.push(...clone(GOVEE_WIFI_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(NEWELL_BLUETOOTH_FIXTURES));
   fixtures.push(...clone(PHILIPS_HUE_BLUETOOTH_FIXTURES));
+  fixtures.push(...clone(NANOLEAF_LINES_WIFI_FIXTURES));
   fixtures.push(...clone(NANLITE_FM_CURRENT_FIXTURES));
   fixtures.push(...clone(NANLITE_FORZA_II_FIXTURES));
   fixtures.push(...clone(NANLITE_FC_720_FIXTURES));

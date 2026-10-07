@@ -111,6 +111,7 @@ const allowed=new Set([
   'backend/cineo-stagelynx-wifi-library.js',
   'backend/blizzard-hemisphere-wifi-library.js',
   'backend/colorkey-wifi-library.js',
+  'backend/photoolex-bluetooth-library.js',
   'app/src/main/assets/gel-filter-catalog.js',
   'backend/gel-filter-catalog-builder.js',
   'backend/gel-filter-integration-selftest.js',

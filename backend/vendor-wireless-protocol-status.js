@@ -1500,6 +1500,20 @@ export const VENDOR_WIRELESS_PROTOCOL_STATUS = Object.freeze({
     ],
     note: 'App/Bluetooth/WiFi-DMX capability is model-scoped; Wireless DMX is not inferred as Bluetooth.'
   },
+  LIFX: {
+    bluetooth: 'not_verified_for_current_catalog',
+    wifi: 'transport_verified_model_scoped',
+    commandSpec: 'not_captured_from_public_vendor_docs',
+    nextStep: 'capture-plan-required-before-driver',
+    capturePlanId: 'lifx-direct-wifi-capture-v1',
+    evidence: [
+      'https://www.lifx.com/products/lifx-beam-6pc-kit',
+      'https://www.lifx.com/products/lightstrip-80-kit',
+      'https://www.lifx.com/pages/app'
+    ],
+    note: 'Direct Wi-Fi app transport is exact-model verified only for SuperColor Magnetic Beam 6 Piece Kit and SuperColor 80" Lightstrip Kit. No separate hub is required. LightingAI local discovery, authentication/session semantics and physical replay remain locked.'
+  },
+
   Nanoleaf: {
     bluetooth: 'setup_only_not_production_control',
     wifi: 'transport_verified_model_scoped',

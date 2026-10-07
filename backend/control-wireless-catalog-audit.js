@@ -468,6 +468,10 @@ const manfrotto=byManufacturer.get('Manfrotto');
 if(!manfrotto || manfrotto.bluetooth!==3 || manfrotto.wifi!==0 || manfrotto.both!==0) {
   failures.push('Manfrotto wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const photoolex=byManufacturer.get('Photoolex');
+if(!photoolex || photoolex.bluetooth!==2 || photoolex.wifi!==0 || photoolex.both!==0) {
+  failures.push('Photoolex wireless coverage expected 2 Bluetooth / 0 Wi-Fi / 0 both');
+}
 const colorkey=byManufacturer.get('ColorKey');
 if(!colorkey || colorkey.bluetooth!==0 || colorkey.wifi!==3 || colorkey.both!==0) {
   failures.push('ColorKey wireless coverage expected 0 Bluetooth / 3 Wi-Fi / 0 both');

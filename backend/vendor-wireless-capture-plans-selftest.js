@@ -618,6 +618,21 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const rayzr=VENDOR_WIRELESS_CAPTURE_PLANS.RAYZR;
+expect(rayzr?.id==='rayzr-mc-wifi-capture-v1','RAYZR Wi-Fi capture plan missing');
+expect(rayzr?.transport==='wifi','RAYZR capture plan must remain Wi-Fi only');
+expect(rayzr?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','RAYZR command spec status changed');
+expect(rayzr?.captureSets?.connectOnly?.runs>=3,'RAYZR connect-only requires at least 3 runs');
+expect(rayzr?.captureSets?.dim?.runs>=3,'RAYZR DIM requires at least 3 runs');
+expect(rayzr?.captureSets?.cct?.runs>=3,'RAYZR CCT requires at least 3 runs');
+expect(rayzr?.captureSets?.color?.runs>=3,'RAYZR COLOR requires at least 3 runs');
+expect(rayzr?.prerequisites?.some(x=>/Do not infer undocumented discovery/i.test(x)),'RAYZR capture plan must forbid proprietary Wi-Fi inference');
+expect(rayzr?.safety?.officialAppWritesOnly===true,'RAYZR official-app-only capture safety missing');
+expect(rayzr?.safety?.lightingAiWritesAllowed===false,'RAYZR LightingAI writes must stay disabled during capture');
+expect(rayzr?.safety?.rawCaptureCommitAllowed===false,'RAYZR raw captures must never be committed');
+expect(rayzr?.safety?.derivedEvidenceOnly===true,'RAYZR only derived evidence may enter repo');
+expect(rayzr?.safety?.resultStatus==='candidate_only_until_physical_replay','RAYZR capture result must remain candidate-only');
+
 const photoolex=VENDOR_WIRELESS_CAPTURE_PLANS.Photoolex;
 expect(photoolex?.id==='photoolex-direct-bluetooth-capture-v1','Photoolex Bluetooth capture plan missing');
 expect(photoolex?.transport==='bluetooth','Photoolex capture plan must remain Bluetooth only');

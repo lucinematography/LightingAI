@@ -2720,6 +2720,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  LIFX: {
+    id:'lifx-direct-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'LIFX App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged LIFX SuperColor Magnetic Beam 6 Piece Kit or SuperColor 80\" Lightstrip Kit at a time.',
+      'Use only the first-party LIFX App over the documented direct Wi-Fi path.',
+      'Start every capture from the same known light state and a clean app/network session.',
+      'Do not infer undocumented local discovery, authentication/session state or private payload semantics.',
+      'Do not infer command equivalence between Beam and Lightstrip families without physical evidence.'
+    ],
+    officialSources:[
+      'https://www.lifx.com/products/lifx-beam-6pc-kit',
+      'https://www.lifx.com/products/lightstrip-80-kit',
+      'https://www.lifx.com/pages/app'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect/control one exact LIFX model over Wi-Fi in the LIFX App, wait 15 seconds, make no lighting changes, then close the control session.'},
+      dim:{runs:3,rule:'From the same known brightness perform exactly one dimmer change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one multicolor change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; trigger exactly one documented LIFX scene/effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   Nanoleaf: {
     id:'nanoleaf-lines-wifi-capture-v1',
     transport:'wifi',

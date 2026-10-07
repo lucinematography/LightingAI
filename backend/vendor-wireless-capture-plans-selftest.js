@@ -618,6 +618,20 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const colorkey=VENDOR_WIRELESS_CAPTURE_PLANS.ColorKey;
+expect(colorkey?.id==='colorkey-mobilepar-wifi-capture-v1','ColorKey Wi-Fi capture plan missing');
+expect(colorkey?.transport==='wifi','ColorKey capture plan must remain Wi-Fi only');
+expect(colorkey?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','ColorKey command spec status changed');
+expect(colorkey?.captureSets?.connectOnly?.runs>=3,'ColorKey connect-only requires at least 3 runs');
+expect(colorkey?.captureSets?.dim?.runs>=3,'ColorKey DIM requires at least 3 runs');
+expect(colorkey?.captureSets?.color?.runs>=3,'ColorKey COLOR requires at least 3 runs');
+expect(colorkey?.prerequisites?.some(x=>/Do not infer undocumented ColorKey app/i.test(x)),'ColorKey capture plan must forbid proprietary app inference');
+expect(colorkey?.safety?.officialAppWritesOnly===true,'ColorKey official-app-only capture safety missing');
+expect(colorkey?.safety?.lightingAiWritesAllowed===false,'ColorKey LightingAI writes must stay disabled during capture');
+expect(colorkey?.safety?.rawCaptureCommitAllowed===false,'ColorKey raw captures must never be committed');
+expect(colorkey?.safety?.derivedEvidenceOnly===true,'ColorKey only derived evidence may enter repo');
+expect(colorkey?.safety?.resultStatus==='candidate_only_until_physical_replay','ColorKey capture result must remain candidate-only');
+
 const blizzard=VENDOR_WIRELESS_CAPTURE_PLANS['Blizzard Lighting'];
 expect(blizzard?.id==='blizzard-hemisphere-wifi-capture-v1','Blizzard Lighting Wi-Fi capture plan missing');
 expect(blizzard?.transport==='wifi','Blizzard Lighting capture plan must remain Wi-Fi only');

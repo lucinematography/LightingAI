@@ -618,6 +618,20 @@ expect(manfrotto?.safety?.rawCaptureCommitAllowed===false,'Manfrotto raw capture
 expect(manfrotto?.safety?.derivedEvidenceOnly===true,'Manfrotto only derived evidence may enter repo');
 expect(manfrotto?.safety?.resultStatus==='candidate_only_until_physical_replay','Manfrotto capture result must remain candidate-only');
 
+const philipsHue=VENDOR_WIRELESS_CAPTURE_PLANS['Philips Hue'];
+expect(philipsHue?.id==='philips-hue-go-bluetooth-capture-v1','Philips Hue Bluetooth capture plan missing');
+expect(philipsHue?.transport==='bluetooth','Philips Hue capture plan must remain Bluetooth only');
+expect(philipsHue?.commandSpecStatus==='public-command-spec-not-located-in-official-docs','Philips Hue command spec status changed');
+expect(philipsHue?.captureSets?.connectOnly?.runs>=3,'Philips Hue connect-only requires at least 3 runs');
+expect(philipsHue?.captureSets?.dim?.runs>=3,'Philips Hue DIM requires at least 3 runs');
+expect(philipsHue?.captureSets?.color?.runs>=3,'Philips Hue COLOR requires at least 3 runs');
+expect(philipsHue?.prerequisites?.some(x=>/Do not infer undocumented BLE service/i.test(x)),'Philips Hue capture plan must forbid proprietary BLE inference');
+expect(philipsHue?.safety?.officialAppWritesOnly===true,'Philips Hue official-app-only capture safety missing');
+expect(philipsHue?.safety?.lightingAiWritesAllowed===false,'Philips Hue LightingAI writes must stay disabled during capture');
+expect(philipsHue?.safety?.rawCaptureCommitAllowed===false,'Philips Hue raw captures must never be committed');
+expect(philipsHue?.safety?.derivedEvidenceOnly===true,'Philips Hue only derived evidence may enter repo');
+expect(philipsHue?.safety?.resultStatus==='candidate_only_until_physical_replay','Philips Hue capture result must remain candidate-only');
+
 const newell=VENDOR_WIRELESS_CAPTURE_PLANS.Newell;
 expect(newell?.id==='newell-direct-bluetooth-capture-v1','Newell Bluetooth capture plan missing');
 expect(newell?.transport==='bluetooth','Newell capture plan must remain Bluetooth only');

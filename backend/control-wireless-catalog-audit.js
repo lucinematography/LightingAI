@@ -468,6 +468,10 @@ const manfrotto=byManufacturer.get('Manfrotto');
 if(!manfrotto || manfrotto.bluetooth!==3 || manfrotto.wifi!==0 || manfrotto.both!==0) {
   failures.push('Manfrotto wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const govee=byManufacturer.get('Govee');
+if(!govee || govee.bluetooth!==2 || govee.wifi!==2 || govee.both!==2) {
+  failures.push('Govee wireless coverage expected 2 Bluetooth / 2 Wi-Fi / 2 both');
+}
 const visico=byManufacturer.get('VISICO');
 if(!visico || visico.bluetooth!==3 || visico.wifi!==0 || visico.both!==0) {
   failures.push('VISICO wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');

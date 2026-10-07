@@ -468,6 +468,10 @@ const manfrotto=byManufacturer.get('Manfrotto');
 if(!manfrotto || manfrotto.bluetooth!==3 || manfrotto.wifi!==0 || manfrotto.both!==0) {
   failures.push('Manfrotto wireless coverage expected 3 Bluetooth / 0 Wi-Fi / 0 both');
 }
+const lifx=byManufacturer.get('LIFX');
+if(!lifx || lifx.bluetooth!==0 || lifx.wifi!==2 || lifx.both!==0) {
+  failures.push('LIFX wireless coverage expected 0 Bluetooth / 2 Wi-Fi / 0 both');
+}
 const nanoleaf=byManufacturer.get('Nanoleaf');
 if(!nanoleaf || nanoleaf.bluetooth!==0 || nanoleaf.wifi!==1 || nanoleaf.both!==0) {
   failures.push('Nanoleaf wireless coverage expected 0 Bluetooth / 1 Wi-Fi / 0 both');

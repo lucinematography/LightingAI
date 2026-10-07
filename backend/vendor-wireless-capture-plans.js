@@ -2720,6 +2720,32 @@ export const VENDOR_WIRELESS_CAPTURE_PLANS = Object.freeze({
     }
   },
 
+  Twinkly: {
+    id:'twinkly-line-flex-wifi-capture-v1',
+    transport:'wifi',
+    controllerApp:'Twinkly App',
+    commandSpecStatus:'public-command-spec-not-located-in-official-docs',
+    prerequisites:[
+      'Use exactly one cataloged Twinkly Line or Flex controller/installation at a time.',
+      'Use only the first-party Twinkly App over Wi-Fi for the production-control capture set.',
+      'Treat Bluetooth as setup-only; do not infer production lighting control from Bluetooth availability.',
+      'Start every capture from the same known light state and a clean app/network session.',
+      'Do not infer undocumented local discovery, authentication/session state or private payload semantics.'
+    ],
+    officialSources:[
+      'https://twinkly.com/en-eu/products/line',
+      'https://twinkly.com/products/flex',
+      'https://help.twinkly.com/hc/en-gb/articles/18277787964573-how-do-i-connect-my-twinkly-to-my-wi-fi-network'
+    ],
+    captureSets:{
+      connectOnly:{runs:3,rule:'Connect/control one exact Twinkly Line or Flex over Wi-Fi in the Twinkly App, wait 15 seconds, make no lighting changes, then close the control session.'},
+      dim:{runs:3,rule:'From the same known brightness perform exactly one dimmer change per capture.'},
+      color:{runs:3,rule:'From the same known state perform exactly one RGB color change per capture.'},
+      fx:{runs:3,optional:true,rule:'Only after simpler controls are stable; trigger exactly one documented Twinkly effect per capture.'}
+    },
+    safety:{officialAppWritesOnly:true,lightingAiWritesAllowed:false,rawCaptureCommitAllowed:false,derivedEvidenceOnly:true,resultStatus:'candidate_only_until_physical_replay'}
+  },
+
   LIFX: {
     id:'lifx-direct-wifi-capture-v1',
     transport:'wifi',

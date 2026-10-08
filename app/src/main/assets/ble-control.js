@@ -479,12 +479,13 @@ function renderGattProfile(payload){
 function exportDiagnostic(){
  if(!latestDiagnosticPayload){status(lang()==='sr'?'Nema dijagnostike za izvoz.':'No diagnostics available to export.',false);return}
  const stamp=new Date().toISOString().replace(/[:.]/g,'-');
- const filename='LightingAI-Astera-BTB-diagnostic-'+stamp+'.json';
+ const colorTest=latestDiagnosticPayload.kind==='LightingAI-Astera-BTB-captured-color-replay';
+ const filename=(colorTest?'LightingAI-Astera-BTB-color-test-':'LightingAI-Astera-BTB-diagnostic-')+stamp+'.json';
  const body=JSON.stringify(latestDiagnosticPayload,null,2);
  try{
   if(window.Android&&typeof Android.saveText==='function'){
    Android.saveText(filename,body);
-   status(lang()==='sr'?'Dijagnostika je sačuvana u Preuzimanja.':'Diagnostics saved to Downloads.',true);
+   status(lang()==='sr'?(colorTest?'Rezultat testa boje sačuvan u Preuzimanja.':'Dijagnostika je sačuvana u Preuzimanja.'):(colorTest?'Color-test result saved to Downloads.':'Diagnostics saved to Downloads.'),true);
    return;
   }
  }catch(e){}
@@ -504,7 +505,75 @@ function asteraReplayCompatible(address,payload){const d=address&&latestScanDevi
 function renderAsteraReplayProbe(address,payload){const slot=address?document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"]'):null;if(!slot)return;if(!asteraReplayCompatible(address,payload)){slot.innerHTML='';return}const labels={RED:lang()==='sr'?'CRVENA':'RED',WHITE:lang()==='sr'?'BELA':'WHITE',GREEN:lang()==='sr'?'ZELENA':'GREEN',BLUE:lang()==='sr'?'PLAVA':'BLUE'};const styles={RED:'background:#c62828;border:2px solid #ff5252;color:#fff',WHITE:'background:#fff;border:2px solid #fff;color:#111',GREEN:'background:#178a3b;border:2px solid #35d05b;color:#fff',BLUE:'background:#1565c0;border:2px solid #42a5f5;color:#fff'};slot.innerHTML='<div class="status warn" style="margin-top:10px"><b>'+esc(t().captureTitle)+'</b><div class="muted small" style="margin-top:5px">'+esc(t().captureWarning)+'</div></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">'+Object.keys(labels).map(p=>'<button class="btn ble-astera-capture-color" type="button" data-preset="'+p+'" style="'+styles[p]+';font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10)">'+esc(labels[p])+'</button>').join('')+'</div><div class="muted small ble-astera-replay-status" style="margin-top:7px"></div>';slot.querySelectorAll('.ble-astera-capture-color').forEach(btn=>btn.addEventListener('click',()=>runAsteraReplay(address,btn.dataset.preset,btn)))}
 function setAsteraReplayButtonsDisabled(v){document.querySelectorAll('.ble-astera-capture-color').forEach(btn=>btn.disabled=!!v)}
 function runAsteraReplay(address,preset,button){const tr=transport();if(!address||typeof tr.replayAsteraCapturedColor!=='function'){status(t().unavailable,false);return}if(scanActive||gattActive||bondActive||classicActive||colorProbeActive){status(t().alreadyScanning,false);return}const id='astera_replay_'+Date.now()+'_'+(++seq);activeColorProbeRequestId=id;activeColorProbeAddress=String(address||'');activeColorProbePreset=String(preset||'');colorProbeActive=true;const sb=E('bleScan');if(sb)sb.disabled=true;document.querySelectorAll('.ble-gatt-inspect').forEach(x=>x.disabled=true);setAsteraReplayButtonsDisabled(true);if(button)button.disabled=true;const m=t().captureSending+': '+activeColorProbePreset;const slot=document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"] .ble-astera-replay-status');if(slot)slot.textContent=m;status(m);try{if(!tr.replayAsteraCapturedColor({id,address,preset:activeColorProbePreset,timeoutMs:18000}))throw new Error('unavailable')}catch(e){colorProbeActive=false;activeColorProbeRequestId='';activeColorProbeAddress='';activeColorProbePreset='';if(sb)sb.disabled=false;document.querySelectorAll('.ble-gatt-inspect').forEach(x=>x.disabled=false);setAsteraReplayButtonsDisabled(false);status(t().captureError,false)}}
-window.LightingAIAsteraBtbColorProbeResult=function(id,payload,error){if(String(id||'')!==activeColorProbeRequestId)return;const address=payload&&payload.address?String(payload.address):activeColorProbeAddress;const preset=payload&&payload.preset?String(payload.preset):activeColorProbePreset;activeColorProbeRequestId='';activeColorProbeAddress='';activeColorProbePreset='';colorProbeActive=false;const sb=E('bleScan');if(sb)sb.disabled=Date.now()<scanCooldownUntil;document.querySelectorAll('.ble-gatt-inspect').forEach(x=>x.disabled=false);setAsteraReplayButtonsDisabled(false);const slot=address?document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"] .ble-astera-replay-status'):null;const m=error?(t().captureError+(error?' ('+error+')':'')):(t().captureSent+' ['+preset+']');if(slot)slot.textContent=m;status(m,!error);latestDiagnosticPayload={kind:'LightingAI-Astera-BTB-captured-color-replay',capturedAt:new Date().toISOString(),controlMode:'bluetooth-only',fixtureColorVerified:false,preset:preset,error:error||'',address:address,payload:payload||{}};if(slot){const container=slot.parentElement;if(container){let save=container.querySelector('.ble-export-color-replay');if(!save){save=document.createElement('button');save.type='button';save.className='btn secondary ble-export-color-replay';save.style.cssText='width:100%;margin-top:8px';save.textContent=lang()==='sr'?'SAČUVAJ REZULTAT TESTA BOJE':'SAVE COLOR TEST RESULT';save.addEventListener('click',exportDiagnostic);container.appendChild(save);}}}};
+window.LightingAIAsteraBtbColorProbeResult=function(id,payload,error){
+ if(String(id||'')!==activeColorProbeRequestId)return;
+ const address=payload&&payload.address?String(payload.address):activeColorProbeAddress;
+ const preset=payload&&payload.preset?String(payload.preset):activeColorProbePreset;
+ activeColorProbeRequestId='';
+ activeColorProbeAddress='';
+ activeColorProbePreset='';
+ colorProbeActive=false;
+ const scan=E('bleScan');
+ if(scan)scan.disabled=Date.now()<scanCooldownUntil;
+ document.querySelectorAll('.ble-gatt-inspect').forEach(x=>x.disabled=false);
+ setAsteraReplayButtonsDisabled(false);
+ const slot=address?document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"] .ble-astera-replay-status'):null;
+ const message=error?(t().captureError+(error?' ('+error+')':'')):(t().captureSent+' ['+preset+']');
+ if(slot)slot.textContent=message;
+ status(message,!error);
+ const testResult={
+  kind:'LightingAI-Astera-BTB-captured-color-replay',
+  capturedAt:new Date().toISOString(),
+  controlMode:'bluetooth-only',
+  fixtureColorVerified:false,
+  operatorObservation:'NOT_RECORDED',
+  preset:preset,
+  error:error||'',
+  address:address,
+  payload:payload||{}
+ };
+ latestDiagnosticPayload=testResult;
+ if(!slot)return;
+ const container=slot.parentElement;
+ if(!container)return;
+ container.querySelectorAll('.ble-astera-replay-feedback,.ble-export-color-replay').forEach(el=>el.remove());
+ const feedback=document.createElement('div');
+ feedback.className='ble-astera-replay-feedback';
+ feedback.style.cssText='margin-top:10px;padding:10px;border:1px solid #395364;border-radius:8px';
+ const title=document.createElement('div');
+ title.textContent=lang()==='sr'?'DA LI JE LAMPA ZAISTA PROMENILA BOJU?':'DID THE LIGHT ACTUALLY CHANGE COLOR?';
+ title.style.cssText='font-weight:700;margin-bottom:6px';
+ feedback.appendChild(title);
+ const options=document.createElement('div');
+ options.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px';
+ for(const option of [
+  {value:'COLOR_CHANGED',sr:'DA, PROMENILA SE',en:'YES, CHANGED'},
+  {value:'UNCHANGED',sr:'NE, NIJE',en:'NO, UNCHANGED'}
+ ]){
+  const btn=document.createElement('button');
+  btn.type='button';
+  btn.className='btn secondary';
+  btn.textContent=lang()==='sr'?option.sr:option.en;
+  btn.addEventListener('click',()=>{
+   testResult.operatorObservation=option.value;
+   testResult.operatorObservedAt=new Date().toISOString();
+   latestDiagnosticPayload=testResult;
+   options.querySelectorAll('button').forEach(b=>{b.disabled=false;b.style.outline='none'});
+   btn.style.outline='2px solid #f5c542';
+   status(lang()==='sr'?'Zabeležen odgovor. Sačuvaj rezultat testa boje.':'Answer recorded. Save the color-test result.',true);
+  });
+  options.appendChild(btn);
+ }
+ feedback.appendChild(options);
+ container.appendChild(feedback);
+ const save=document.createElement('button');
+ save.type='button';
+ save.className='btn secondary ble-export-color-replay';
+ save.style.cssText='width:100%;margin-top:8px';
+ save.textContent=lang()==='sr'?'SAČUVAJ REZULTAT TESTA BOJE':'SAVE COLOR TEST RESULT';
+ save.addEventListener('click',exportDiagnostic);
+ container.appendChild(save);
+};
 function inspectGatt(address,button,forceAstera){
  const tr=transport();
  const astera=forceAstera===true||!!(button&&button.dataset&&button.dataset.astera==='1');

@@ -73,6 +73,7 @@ public final class AsteraBtbColorReplayProbe {
     private BluetoothGattDescriptor activeCccd;
     private boolean finalColorWriteStarted = false;
     private int notificationCount = 0;
+    private int postColorNotificationCount = 0;
     private final JSONArray notificationSamples = new JSONArray();
 
     public AsteraBtbColorReplayProbe(Context context) {
@@ -116,8 +117,10 @@ public final class AsteraBtbColorReplayProbe {
             put("resultScope", "Android BLE write submission only; no fixture color acknowledgement");
             put("postWriteObservationMs", POST_WRITE_OBSERVATION_MS);
             notificationCount = 0;
+            postColorNotificationCount = 0;
             while (notificationSamples.length() > 0) notificationSamples.remove(0);
             put("notificationCount", 0);
+            put("postColorNotificationCount", 0);
             put("notificationSamples", notificationSamples);
 
             if (!BluetoothAdapter.checkBluetoothAddress(target)) {
@@ -239,7 +242,7 @@ public final class AsteraBtbColorReplayProbe {
                         if (finalColorWriteStarted) {
                             put("disconnectedDuringPostWriteObservation", true);
                             appendEvent("post_color_disconnected", "attempt", thisAttempt);
-                            finishSuccess();
+                            finishError("astera_capture_disconnected_after_write");
                         } else {
                             retryOrFailLocked(-1, "astera_capture_disconnected");
                         }
@@ -399,6 +402,10 @@ public final class AsteraBtbColorReplayProbe {
                         !NOTIFY_UUID.equals(characteristic.getUuid())) return;
                     notificationCount++;
                     put("notificationCount", notificationCount);
+                    if (finalColorWriteStarted) {
+                        postColorNotificationCount++;
+                        put("postColorNotificationCount", postColorNotificationCount);
+                    }
                     if (notificationSamples.length() < MAX_NOTIFICATION_SAMPLES) {
                         JSONObject sample = new JSONObject();
                         try {
@@ -533,6 +540,7 @@ public final class AsteraBtbColorReplayProbe {
                             if (thisEpoch != epoch || callback == null) return;
                             appendEvent("post_write_observation_complete",
                                 "notificationCount", notificationCount,
+                                "postColorNotificationCount", postColorNotificationCount,
                                 "writeCallbackObserved", activeResult != null &&
                                     activeResult.optBoolean("writeCallbackObserved", false));
                             finishSuccess();

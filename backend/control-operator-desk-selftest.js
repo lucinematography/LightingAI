@@ -60,6 +60,8 @@ expect(ble.includes('preserveBond=!!(bondActive&&activeBondRequestId)')&&ble.inc
 expect(ble.includes('blePagePaused')&&ble.includes('pendingAsteraGattAfterResume')&&ble.includes('LightingAIBleLifecycleResume=function()'),'Post-bond Astera GATT must wait for Activity resume when system pairing UI pauses the app');
 expect(gatt.includes('remote_user_terminated_connection')&&gatt.includes('android_gatt_error_0x85')&&gatt.includes('status == 19')&&gatt.includes('status == 133'),'Titan GATT 19/133 outcomes must be classified explicitly');
 expect(gatt.includes('delay = 1800L')&&gatt.includes('delay = 2200L')&&gatt.includes('retry_scheduled'),'Titan GATT 19/133 retries must use controlled backoff');
+expect(gatt.includes('boolean wasConnected = gattConnected')&&gatt.includes('if (wasConnected)')&&gatt.includes('gatt.close()'),'GATT 133 cleanup must close failed clients without redundant disconnect');
+expect(replayProbe.includes('boolean wasConnected = gattConnected')&&replayProbe.includes('if (wasConnected)')&&replayProbe.includes('gatt.close()'),'Astera color replay 133 cleanup must avoid redundant disconnect');
 expect(gatt.includes('connect_target')&&gatt.includes('bondState')&&gatt.includes('deviceName'),'Every Astera GATT attempt must record target bond state before connection');
 expect(gatt.includes('DEVICE_INFORMATION_SERVICE')&&gatt.includes('standardDeviceInformationReadEnabled'),'Astera diagnostics must read only the standard Device Information service in addition to the verified BTB service');
 expect(gatt.includes('DIS_FIRMWARE_REVISION')&&gatt.includes('DIS_HARDWARE_REVISION')&&gatt.includes('DIS_MANUFACTURER_NAME')&&gatt.includes('deviceInformation'),'Astera diagnostics must decode standard Device Information fields');

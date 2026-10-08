@@ -51,6 +51,8 @@ public final class BleGattInspector {
     private final Object lock = new Object();
 
     private BluetoothGatt activeGatt;
+    // True only after a successful CONNECTED callback; 133/error paths are already disconnected.
+    private boolean gattConnected = false;
     private Runnable timeoutRunnable;
     private Runnable retryRunnable;
     private Runnable observationFinishRunnable;
@@ -199,6 +201,8 @@ public final class BleGattInspector {
             ) {
                 synchronized (lock) {
                     if (gatt != activeGatt || callback == null) return;
+                    gattConnected = status == BluetoothGatt.GATT_SUCCESS &&
+                        newState == BluetoothProfile.STATE_CONNECTED;
                     appendEvent(
                         "connection_state",
                         "status", status,
@@ -1125,9 +1129,15 @@ public final class BleGattInspector {
     private void closeGattOnlyLocked() {
         BluetoothGatt gatt = activeGatt;
         activeGatt = null;
+        boolean wasConnected = gattConnected;
+        gattConnected = false;
         if (gatt != null) {
-            try { gatt.disconnect(); }
-            catch (Exception ignored) {}
+            // On Android a redundant disconnect() following 133/STATE_DISCONNECTED
+            // can race the next connectGatt. Close the failed client directly.
+            if (wasConnected) {
+                try { gatt.disconnect(); }
+                catch (Exception ignored) {}
+            }
             try { gatt.close(); }
             catch (Exception ignored) {}
         }

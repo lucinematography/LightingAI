@@ -29,6 +29,8 @@ public final class AsteraBtbColorReplayProbe {
     }
 
     private static final int MAX_ATTEMPTS = 3;
+    private static final long POST_WRITE_OBSERVATION_MS = 3000L;
+    private static final int MAX_NOTIFICATION_SAMPLES = 32;
     private static final UUID NOTIFY_UUID =
         UUID.fromString("0a6c6c72-9ca6-ffaf-3440-b2dae8c86a67");
     private static final UUID CCCD_UUID =
@@ -70,6 +72,8 @@ public final class AsteraBtbColorReplayProbe {
     private BluetoothGattCharacteristic notifyCharacteristic;
     private BluetoothGattDescriptor activeCccd;
     private boolean finalColorWriteStarted = false;
+    private int notificationCount = 0;
+    private final JSONArray notificationSamples = new JSONArray();
 
     public AsteraBtbColorReplayProbe(Context context) {
         this.context = context.getApplicationContext();
@@ -108,6 +112,13 @@ public final class AsteraBtbColorReplayProbe {
             put("notifyUuid", NOTIFY_UUID.toString());
             put("writeType", "WRITE_WITHOUT_RESPONSE");
             put("protocolGeneralized", false);
+            put("deviceAppliedColorVerified", false);
+            put("resultScope", "Android BLE write submission only; no fixture color acknowledgement");
+            put("postWriteObservationMs", POST_WRITE_OBSERVATION_MS);
+            notificationCount = 0;
+            while (notificationSamples.length() > 0) notificationSamples.remove(0);
+            put("notificationCount", 0);
+            put("notificationSamples", notificationSamples);
 
             if (!BluetoothAdapter.checkBluetoothAddress(target)) {
                 finishError("ble_gatt_bad_address");
@@ -225,7 +236,13 @@ public final class AsteraBtbColorReplayProbe {
                             }
                         }, 300L);
                     } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                        retryOrFailLocked(-1, "astera_capture_disconnected");
+                        if (finalColorWriteStarted) {
+                            put("disconnectedDuringPostWriteObservation", true);
+                            appendEvent("post_color_disconnected", "attempt", thisAttempt);
+                            finishSuccess();
+                        } else {
+                            retryOrFailLocked(-1, "astera_capture_disconnected");
+                        }
                     }
                 }
             }
@@ -380,10 +397,27 @@ public final class AsteraBtbColorReplayProbe {
                         callback == null ||
                         characteristic == null ||
                         !NOTIFY_UUID.equals(characteristic.getUuid())) return;
+                    notificationCount++;
+                    put("notificationCount", notificationCount);
+                    if (notificationSamples.length() < MAX_NOTIFICATION_SAMPLES) {
+                        JSONObject sample = new JSONObject();
+                        try {
+                            sample.put("atMs", System.currentTimeMillis());
+                            sample.put("attempt", thisAttempt);
+                            sample.put("afterColorWrite", finalColorWriteStarted);
+                            sample.put("length", value == null ? 0 : value.length);
+                            sample.put("hexFirst128Bytes", hexFirstBytes(value, 128));
+                            sample.put("truncated", value != null && value.length > 128);
+                            notificationSamples.put(sample);
+                        } catch (Exception ignored) {}
+                    } else {
+                        put("notificationSamplesLimitReached", true);
+                    }
                     appendEvent(
                         "notification",
                         "attempt", thisAttempt,
-                        "length", value == null ? 0 : value.length
+                        "length", value == null ? 0 : value.length,
+                        "afterColorWrite", finalColorWriteStarted
                     );
                 }
             }
@@ -419,17 +453,12 @@ public final class AsteraBtbColorReplayProbe {
                     );
 
                     if (finalColorWriteStarted) {
-                        if (fallbackSuccessRunnable != null) {
-                            handler.removeCallbacks(fallbackSuccessRunnable);
-                            fallbackSuccessRunnable = null;
-                        }
+                        // WRITE_WITHOUT_RESPONSE has no peripheral acknowledgement.
+                        // A successful Android callback does not verify a changed color.
                         put("writeCallbackObserved", true);
                         put("writeCallbackStatus", status);
-                        if (status == BluetoothGatt.GATT_SUCCESS) {
-                            finishSuccess();
-                        } else {
-                            finishError(
-                                "astera_capture_write_status_" + status);
+                        if (status != BluetoothGatt.GATT_SUCCESS) {
+                            finishError("astera_capture_write_status_" + status);
                         }
                     } else if (status != BluetoothGatt.GATT_SUCCESS) {
                         finishError(
@@ -496,14 +525,20 @@ public final class AsteraBtbColorReplayProbe {
                     finalColor
                 )) return;
                 if (finalColor) {
+                    // Keep the connection open to capture short-lived responses.
+                    // Completion still means Android accepted the write attempt,
+                    // never that the fixture visibly applied the chosen color.
                     fallbackSuccessRunnable = () -> {
                         synchronized (lock) {
                             if (thisEpoch != epoch || callback == null) return;
-                            put("writeCallbackObserved", false);
+                            appendEvent("post_write_observation_complete",
+                                "notificationCount", notificationCount,
+                                "writeCallbackObserved", activeResult != null &&
+                                    activeResult.optBoolean("writeCallbackObserved", false));
                             finishSuccess();
                         }
                     };
-                    handler.postDelayed(fallbackSuccessRunnable, 900L);
+                    handler.postDelayed(fallbackSuccessRunnable, POST_WRITE_OBSERVATION_MS);
                 }
             }
         };
@@ -576,6 +611,8 @@ public final class AsteraBtbColorReplayProbe {
             put("capturedBlue", rgb[2]);
             put("writeStartStatus", startStatus);
             put("writeStarted", true);
+            put("writeCallbackObserved", false);
+            put("deviceAppliedColorVerified", false);
         }
         return true;
     }
@@ -751,6 +788,19 @@ public final class AsteraBtbColorReplayProbe {
         } catch (Exception e) {
             return new JSONObject();
         }
+    }
+
+    private static String hexFirstBytes(byte[] bytes, int limit) {
+        if (bytes == null) return "";
+        final char[] alphabet = "0123456789ABCDEF".toCharArray();
+        int count = Math.min(bytes.length, limit);
+        char[] result = new char[count * 2];
+        for (int i = 0; i < count; i++) {
+            int value = bytes[i] & 255;
+            result[2 * i] = alphabet[value >>> 4];
+            result[2 * i + 1] = alphabet[value & 15];
+        }
+        return new String(result);
     }
 
     private static byte[] decodeHex(String hex) {

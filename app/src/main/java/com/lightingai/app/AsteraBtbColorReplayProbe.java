@@ -57,6 +57,7 @@ public final class AsteraBtbColorReplayProbe {
     private final List<Runnable> scheduledWrites = new ArrayList<>();
 
     private BluetoothGatt activeGatt;
+    private boolean gattConnected = false;
     private Runnable timeoutRunnable;
     private Runnable retryRunnable;
     private Runnable fallbackSuccessRunnable;
@@ -199,6 +200,8 @@ public final class AsteraBtbColorReplayProbe {
             ) {
                 synchronized (lock) {
                     if (thisEpoch != epoch || gatt != activeGatt || callback == null) return;
+                    gattConnected = status == BluetoothGatt.GATT_SUCCESS &&
+                        newState == BluetoothProfile.STATE_CONNECTED;
                     put("connectionStatus", status);
                     put("connectionState", newState);
                     appendEvent(
@@ -744,8 +747,13 @@ public final class AsteraBtbColorReplayProbe {
     private void closeGattOnlyLocked() {
         BluetoothGatt gatt = activeGatt;
         activeGatt = null;
+        boolean wasConnected = gattConnected;
+        gattConnected = false;
         if (gatt != null) {
-            try { gatt.disconnect(); } catch (Exception ignored) {}
+            // Android status 133 is already a failed link: avoid a redundant disconnect.
+            if (wasConnected) {
+                try { gatt.disconnect(); } catch (Exception ignored) {}
+            }
             try { gatt.close(); } catch (Exception ignored) {}
         }
     }

@@ -211,10 +211,10 @@ jobs:
       - name: Require persistent signing secrets
         shell: bash
         env:
-          KEYSTORE_B64: ${{ secrets.LIGHTINGAI_KEYSTORE_BASE64 }}
-          LIGHTINGAI_KEYSTORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
-          LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
-          LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
+          KEYSTORE_B64: ${{ secrets.LIGHTINGAI_CONTROL_KEYSTORE_BASE64 }}
+          LIGHTINGAI_KEYSTORE_PASSWORD: ${{ secrets.LIGHTINGAI_CONTROL_KEYSTORE_PASSWORD }}
+          LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_CONTROL_KEY_ALIAS }}
+          LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_CONTROL_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           for variable in KEYSTORE_B64 LIGHTINGAI_KEYSTORE_PASSWORD LIGHTINGAI_KEY_ALIAS LIGHTINGAI_KEY_PASSWORD; do
@@ -228,9 +228,9 @@ jobs:
       - name: Build signed Control candidate
         env:
           LIGHTINGAI_KEYSTORE_PATH: ${{ runner.temp }}/lightingai-control.jks
-          LIGHTINGAI_KEYSTORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
-          LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
-          LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
+          LIGHTINGAI_KEYSTORE_PASSWORD: ${{ secrets.LIGHTINGAI_CONTROL_KEYSTORE_PASSWORD }}
+          LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_CONTROL_KEY_ALIAS }}
+          LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_CONTROL_KEY_PASSWORD }}
         run: |
           gradle assembleControl -PreleaseVersionCode=${{ env.CONTROL_VERSION_CODE }} -PreleaseVersionName=2.2
           gradle lintControl testControlUnitTest -PreleaseVersionCode=${{ env.CONTROL_VERSION_CODE }} -PreleaseVersionName=2.2
@@ -253,6 +253,7 @@ jobs:
           retention-days: 30
 
       - name: Upload verification evidence
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: Control-verification-${{ github.run_number }}

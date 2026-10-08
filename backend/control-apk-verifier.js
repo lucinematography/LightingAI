@@ -34,6 +34,7 @@ export function verifyApk(apk, version, sha, run, certificate) {
   const invoke = (tool, args) => execFileSync(tool, args, { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
   // apksigner must verify the actual APK (exit status), not just a JAR certificate.
   const signatures = invoke('apksigner', ['verify', '--verbose', '--print-certs', apk]);
+  assert.equal(certificate.toLowerCase(), fs.readFileSync(path.join(root, 'CONTROL-SIGNER-SHA256.txt'), 'utf8').trim().toLowerCase(), 'Signing secret changed: certificate differs from pinned Control identity');
   verifyIdentity(invoke('aapt', ['dump', 'badging', apk]), signatures, version, certificate);
   for (const asset of ['control-bootstrap.js', 'control-routing.js', 'control-dashboard.js', 'control-system-drivers.js', 'ble-control.js', 'feature-build-info.js', 'catalog.js', 'gel-filter-catalog.js', 'gel-filter-ui.js']) {
     const packaged = execFileSync('unzip', ['-p', apk, 'assets/' + asset], { maxBuffer: 16 * 1024 * 1024 });

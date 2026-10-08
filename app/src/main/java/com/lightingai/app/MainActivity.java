@@ -1074,6 +1074,7 @@ public class MainActivity extends Activity {
                 if (bleDeviceScanner != null) bleDeviceScanner.stop();
                 if (bleGattInspector != null) bleGattInspector.cancel();
                 if (asteraBtbColorReplayProbe == null) asteraBtbColorReplayProbe = BleConnectionService.acquire(MainActivity.this);
+                if (bleDeviceScanner != null) asteraBtbColorReplayProbe.recordObservedDevice(address, bleDeviceScanner.observedNameFor(address));
                 AsteraBtbColorReplayProbe.Callback resultCallback = new AsteraBtbColorReplayProbe.Callback() {
                     @Override public void onComplete(JSONObject result) { notifyAsteraBtbColorProbe(id, result, ""); }
                     @Override public void onError(JSONObject result, String code) { notifyAsteraBtbColorProbe(id, result, code); }

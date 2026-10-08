@@ -37,6 +37,8 @@ public final class AsteraBtbColorReplayProbe {
     private int generation, attempt, notificationCount, postColorNotificationCount;
     private long deadlineMs;
     private String activeAddress = "", activeDeviceName = "", operation = "", closeReason = "";
+    private String observedAddress = "", observedName = "";
+    private long observedUntilMs;
     private AsteraBtbCapturedFrames.Preset preset;
     private Callback callback;
     private StateListener stateListener;
@@ -78,6 +80,13 @@ public final class AsteraBtbColorReplayProbe {
         });
     }
     public void setStateListener(StateListener listener) { synchronized (lock) { stateListener = listener; } }
+    public void recordObservedDevice(String address, String name) {
+        synchronized (lock) {
+            observedAddress = address == null ? "" : address;
+            observedName = name == null ? "" : name;
+            observedUntilMs = SystemClock.elapsedRealtime() + 300000L;
+        }
+    }
     public void connect(String address, int timeoutMs, Callback cb) { begin(address, null, timeoutMs, cb); }
     public void replay(String address, String value, int timeoutMs, Callback cb) {
         final AsteraBtbCapturedFrames.Preset parsed;
@@ -138,6 +147,12 @@ public final class AsteraBtbColorReplayProbe {
             if (!adapter.isEnabled()) { fail("bluetooth_disabled"); return; }
             BluetoothDevice device = adapter.getRemoteDevice(activeAddress);
             activeDeviceName = device.getName();
+            // Android's cached GAP name can be empty even when ScanRecord has a name.
+            if ((activeDeviceName == null || activeDeviceName.trim().isEmpty()) &&
+                activeAddress.equals(observedAddress) && SystemClock.elapsedRealtime() < observedUntilMs) {
+                activeDeviceName = observedName;
+                put("deviceNameSource", "native_scan_record");
+            } else put("deviceNameSource", "android_device_cache");
             put("deviceName", activeDeviceName); put("bondState", device.getBondState());
             if (!AsteraBtbCapturedFrames.supportsDeviceName(activeDeviceName)) {
                 fail("astera_capture_target_not_verified"); return;

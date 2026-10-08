@@ -115,6 +115,14 @@ public final class BleDeviceScanner {
         }
     }
 
+    /** Native advertisement evidence; do not accept a fixture name from JavaScript. */
+    public String observedNameFor(String address) {
+        synchronized (lock) {
+            JSONObject device = devices.get(address);
+            return device == null ? "" : device.optString("name", "");
+        }
+    }
+
     @SuppressLint("MissingPermission")
     private void record(ScanResult result, int callbackEpoch) {
         if (result == null || result.getDevice() == null) return;

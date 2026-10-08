@@ -13,10 +13,16 @@ export function verifyIdentity(badging, signatures, version, certificate) {
   assert.match(badging, /versionName='2\.2-control'/, 'Wrong Control version name');
   assert.match(badging, /targetSdkVersion:'35'/, 'Android 15 target required');
   assert.doesNotMatch(badging, /application-debuggable/, 'Published Control APK must not be debuggable');
-  const signers = [...signatures.matchAll(/Signer #\d+ certificate SHA-256 digest: ([0-9a-f]+)/gi)];
-  assert.equal(signers.length, 1, 'Exactly one APK signer is required');
+  // Build Tools 37 reports scheme names (V2 / V3.0 Signer), while older tools use Signer #1.
+  // The same certificate may appear once per signature scheme; never allow distinct signers.
+  const entries = [...signatures.matchAll(/^\s*(?:Signer #(\d+)|V\d+(?:\.\d+)? Signer(?: #(\d+))?:)\s+certificate SHA-256 digest:\s*([0-9a-f]{64})\s*$/gim)];
+  const certificates = [...new Set(entries.map(entry => entry[3].toLowerCase()))];
+  assert.equal(certificates.length, 1, 'Exactly one APK signer is required');
+  assert.ok(entries.every(entry => (entry[1] ?? entry[2] ?? '1') === '1'), 'More than one APK signer is not allowed');
+  const reportedCounts = [...signatures.matchAll(/^\s*Number of signers:\s*(\d+)\s*$/gim)];
+  assert.ok(reportedCounts.every(match => Number(match[1]) === 1), 'More than one APK signer is not allowed');
   assert.match(certificate, /^[0-9a-f]{64}$/i, 'Persistent certificate fingerprint is required');
-  assert.equal(signers[0][1].toLowerCase(), certificate.toLowerCase(), 'APK signer differs from persistent keystore');
+  assert.equal(certificates[0], certificate.toLowerCase(), 'APK signer differs from persistent keystore');
 }
 
 export function verifyBuildInfo(info, sha, run) {

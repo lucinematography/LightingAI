@@ -53,9 +53,52 @@ jobs:
         working-directory: backend
         run: npm run audit:dependencies
 
+      # An Android build must not depend on four live vendor sites every time.
+      # The snapshot is cached only after this job successfully validates it.
+      - name: Restore verified official FILTERI GEL snapshot
+        id: gel-cache
+        uses: actions/cache@v4
+        with:
+          path: app/src/main/assets/gel-filter-catalog.js
+          key: lightingai-control-lab-gels-v1-${{ hashFiles('backend/gel-filter-catalog-builder.js') }}
+
       - name: Build official FILTERI GEL catalog
+        if: steps.gel-cache.outputs.cache-hit != 'true'
         working-directory: backend
-        run: npm run build:gels
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npm run build:gels; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Official GEL catalog unavailable after three attempts; refusing incomplete output."
+              exit 1
+            fi
+            echo "::warning::GEL source fetch failed on attempt ${attempt}; retrying before failing the build"
+            sleep $((attempt * 8))
+          done
+
+      - name: Verify cached or freshly built GEL catalog
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          const sandbox={window:{}};
+          vm.runInNewContext(fs.readFileSync('app/src/main/assets/gel-filter-catalog.js','utf8'),sandbox);
+          const catalog=sandbox.window.LightingAIGelCatalog;
+          const expected={'lee-lighting-filters':333,'rosco-supergel':144,'rosco-ecolour-plus':312,'rosco-cinegel':188};
+          const got=Object.fromEntries((catalog?.sources||[]).map(s=>[s.key,s.count]));
+          if(catalog?.sourceMode!=='official-build'||
+             !Array.isArray(catalog?.filters)||catalog.filters.length!==977||
+             Object.keys(got).length!==4||
+             Object.entries(expected).some(([k,v])=>got[k]!==v)){
+            throw new Error('No complete, verified official GEL snapshot available');
+          }
+          console.log('Validated 977 official GEL entries; snapshot date: '+catalog.generatedAt);
+          NODE
 
       - name: Embed control-lab build identity
         run: |

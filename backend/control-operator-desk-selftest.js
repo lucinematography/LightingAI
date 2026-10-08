@@ -20,7 +20,7 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 expect(gradle.includes("applicationIdSuffix '.control13'"),'Control Lab APK package suffix must be stable between builds');
 expect(gradle.includes('LIGHTINGAI_LAB_DEBUG_KEYSTORE_PATH')&&gradle.includes('signingConfigs.labTest'),'Control Lab must support a persistent test keystore');
-expect(labWorkflow.includes('assembleControl -PreleaseVersionCode=${{ 100000 + github.run_number }}'),'Control Lab version code must increase between builds');
+expect(labWorkflow.includes('assembleControl -PreleaseVersionCode=${{ env.CONTROL_VERSION_CODE }}')&&labWorkflow.includes('$((100000 + GITHUB_RUN_NUMBER))'),'Control Lab version code must increase between builds');
 
 for(const marker of [
   'controlOpenBluetooth',

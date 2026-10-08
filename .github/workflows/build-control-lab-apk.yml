@@ -87,6 +87,7 @@ jobs:
 
       - name: Embed control-lab build identity
         run: |
+          echo "CONTROL_VERSION_CODE=$((100000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
           SHORT_SHA="${GITHUB_SHA:0:7}"
           BUILT_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           printf 'window.LightingAIFeatureBuild={run:"%s",sha:"%s",branch:"%s",builtAt:"%s",lab:"control"};\n' "$GITHUB_RUN_NUMBER" "$SHORT_SHA" "$GITHUB_REF_NAME" "$BUILT_AT" > app/src/main/assets/feature-build-info.js
@@ -202,10 +203,10 @@ jobs:
         run: node android-lint-changed-files-gate.js
 
       - name: Android unit tests
-        run: gradle testDebugUnitTest -PreleaseVersionCode=${{ 100000 + github.run_number }}
+        run: gradle testDebugUnitTest -PreleaseVersionCode=${{ env.CONTROL_VERSION_CODE }}
 
       - name: Build debug APK
-        run: gradle assembleDebug -PreleaseVersionCode=${{ 100000 + github.run_number }}
+        run: gradle assembleDebug -PreleaseVersionCode=${{ env.CONTROL_VERSION_CODE }}
 
       - name: Require persistent signing secrets
         shell: bash
@@ -231,8 +232,8 @@ jobs:
           LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
           LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
         run: |
-          gradle assembleControl -PreleaseVersionCode=${{ 100000 + github.run_number }} -PreleaseVersionName=2.2
-          gradle lintControl testControlUnitTest -PreleaseVersionCode=${{ 100000 + github.run_number }} -PreleaseVersionName=2.2
+          gradle assembleControl -PreleaseVersionCode=${{ env.CONTROL_VERSION_CODE }} -PreleaseVersionName=2.2
+          gradle lintControl testControlUnitTest -PreleaseVersionCode=${{ env.CONTROL_VERSION_CODE }} -PreleaseVersionName=2.2
 
       - name: Verify signed APK identity, signature and packaged assets
         shell: bash
@@ -240,7 +241,7 @@ jobs:
           set -euo pipefail
           BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           export PATH="$BUILD_TOOLS:$PATH"
-          node backend/control-apk-verifier.js app/build/outputs/apk/control/app-control.apk "${{ 100000 + github.run_number }}" "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$CONTROL_CERT_SHA256"
+          node backend/control-apk-verifier.js app/build/outputs/apk/control/app-control.apk "${{ env.CONTROL_VERSION_CODE }}" "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$CONTROL_CERT_SHA256"
           cp app/build/outputs/apk/control/app-control.apk "app/build/outputs/apk/control/LightingAI-Control-${GITHUB_RUN_NUMBER}.apk"
 
       - name: Upload signed test candidate (physical control unverified)

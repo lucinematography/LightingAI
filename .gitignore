@@ -1,0 +1,8 @@
+.gradle/
+**/build/
+**/node_modules
+local.properties
+*.jks
+*.keystore
+*.p12
+app/src/main/assets/feature-build-info.js

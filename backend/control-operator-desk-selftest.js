@@ -20,13 +20,13 @@ const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
 expect(gradle.includes("applicationIdSuffix '.control13'"),'Control Lab APK package suffix must be stable between builds');
 expect(gradle.includes('LIGHTINGAI_LAB_DEBUG_KEYSTORE_PATH')&&gradle.includes('signingConfigs.labTest'),'Control Lab must support a persistent test keystore');
-expect(labWorkflow.includes('assembleDebug -PreleaseVersionCode=${{ github.run_number }}'),'Control Lab version code must increase between builds');
+expect(labWorkflow.includes('assembleControl -PreleaseVersionCode=${{ 100000 + github.run_number }}'),'Control Lab version code must increase between builds');
 
 for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.35-direct-color-test-after-scan'"
+  "version:'0.36-persistent-astera-transport'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -75,8 +75,8 @@ expect(!gatt.includes('writeCharacteristic('),'Astera diagnostic observer must n
 expect(!mainActivity.includes('writeCharacteristic('),'MainActivity bridge must not contain arbitrary proprietary write logic');
 expect(mainActivity.includes('asteraBtbReplayCapturedColor')&&mainActivity.includes('AsteraBtbColorReplayProbe'),'Astera captured-color replay bridge missing');
 expect(capturedFrames.includes('0A107EDF36000000007D63130D000E000CFF406A')&&capturedFrames.includes('0A107EDF36000000007D63130DD30E960CFFBE0F')&&capturedFrames.includes('0A107EDF36000000007D63130C010E030DFFC1A7')&&capturedFrames.includes('0A107EDF36000000007D63130C070D010EFFB58E'),'Exact 2026-10-07 AsteraApp captured replay frames missing');
-expect(replayProbe.includes('AsteraBtbCapturedFrames.frameFor')&&replayProbe.includes('WRITE_TYPE_NO_RESPONSE')&&replayProbe.includes('astera_capture_characteristic_missing'),'Captured replay probe must be whitelist-only and target observed WRITE-NR characteristic');
-expect(replayProbe.includes('MAX_ATTEMPTS = 3')&&replayProbe.includes('status == 133')&&replayProbe.includes('2200L')&&replayProbe.includes('status == 19')&&replayProbe.includes('1800L'),'Captured replay probe must retry transient Titan GATT 133/19 failures with controlled backoff');
+expect(replayProbe.includes('AsteraBtbCapturedFrames.frameFor')&&replayProbe.includes('WRITE_TYPE_NO_RESPONSE')&&replayProbe.includes('astera_capture_characteristic_not_write_nr'),'Captured replay probe must be whitelist-only and target observed WRITE-NR characteristic');
+expect(replayProbe.includes('BleReconnectPolicy.canRetry')&&replayProbe.includes('proprietaryWriteSubmitted'),'Captured replay must use tested bounded retries only before proprietary writes');
 expect(replayProbe.includes('connectAttempts')&&replayProbe.includes('retry_scheduled'),'Captured replay probe must report retry diagnostics');
 expect(replayProbe.includes('NOTIFY_UUID')&&replayProbe.includes('CCCD_UUID')&&replayProbe.includes('ENABLE_NOTIFICATION_VALUE'),'Captured replay probe must establish the observed notification path before proprietary replay');
 expect(replayProbe.includes('0A038D041E8312')&&replayProbe.includes('0A068804000000018853')&&replayProbe.includes('0A057F932700020A0A09')&&replayProbe.includes('s0=0\\n')&&replayProbe.includes('s1002\\n'),'Captured replay bootstrap A must use only repeatedly observed startup writes');

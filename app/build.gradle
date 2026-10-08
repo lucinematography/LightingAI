@@ -50,6 +50,22 @@ android { namespace 'com.lightingai.app'; compileSdk 35
             minifyEnabled false
             if (hasReleaseSigning) signingConfig signingConfigs.release
         }
+        control {
+            initWith release
+            applicationIdSuffix '.control13'
+            versionNameSuffix '-control'
+            debuggable false
+            matchingFallbacks = ['release']
+        }
+    }
+}
+
+// Never produce an installable Control candidate with an ephemeral debug identity.
+tasks.configureEach { task ->
+    if (task.name == 'preControlBuild') {
+        task.doFirst {
+            if (!hasReleaseSigning) throw new GradleException('Control APK requires the persistent LIGHTINGAI_KEYSTORE_* signing secrets; no debug fallback is allowed.')
+        }
     }
 }
 

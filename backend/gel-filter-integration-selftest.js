@@ -32,9 +32,14 @@ requireText(server,'GEL/FILTER RULES: filters and gels are modifiers, never fixt
 requireText(server,'gel_recommendations','Backend schema must expose gel recommendations');
 for(const workflow of [controlWorkflow,standardWorkflow]){
   requireText(workflow,'npm run build:gels','CI must build official gel catalog');
-  requireText(workflow,"'assets/gel-filter-catalog.js'",'APK must package gel catalog');
-  requireText(workflow,"'assets/gel-filter-ui.js'",'APK must package isolated gel UI');
 }
+requireText(standardWorkflow,"'assets/gel-filter-catalog.js'",'Standard APK must package gel catalog');
+requireText(standardWorkflow,"'assets/gel-filter-ui.js'",'Standard APK must package isolated gel UI');
+requireText(controlWorkflow,'node backend/control-apk-verifier.js','Signed Control APK must execute the package verifier');
+const verifier=read('./control-apk-verifier.js');
+for(const asset of ['gel-filter-catalog.js','gel-filter-ui.js'])requireText(verifier,"'"+asset+"'",'Control APK verifier must require gel asset');
+requireText(verifier,"['-p', apk, 'assets/' + asset]",'Control APK verifier must inspect packaged assets');
+requireText(verifier,'packaged.equals(fs.readFileSync','Packaged Control gel assets must equal verified source');
 const loadGel=index.indexOf('gel-filter-catalog.js');
 const loadCatalog=index.indexOf('catalog.js');
 const loadGelUi=index.indexOf('gel-filter-ui.js');

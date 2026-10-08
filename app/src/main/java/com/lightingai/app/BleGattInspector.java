@@ -13,6 +13,7 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.nio.charset.StandardCharsets;
@@ -108,7 +109,7 @@ public final class BleGattInspector {
             final int thisInspectionEpoch = ++inspectionEpoch;
             callback = resultCallback;
             activeAddress = target;
-            inspectionStartedMs = System.currentTimeMillis();
+            inspectionStartedMs = SystemClock.elapsedRealtime();
             deadlineMs = inspectionStartedMs + boundedTimeout;
             clearJsonArray(eventTimeline);
             clearJsonArray(attemptHistory);
@@ -153,7 +154,7 @@ public final class BleGattInspector {
     @SuppressLint("MissingPermission")
     private void connectAttemptLocked() {
         if (callback == null) return;
-        if (System.currentTimeMillis() >= deadlineMs) {
+        if (SystemClock.elapsedRealtime() >= deadlineMs) {
             finishErrorLocked("ble_gatt_timeout");
             return;
         }
@@ -521,7 +522,7 @@ public final class BleGattInspector {
         closeGattOnlyLocked();
         clearAttemptState();
         long remaining =
-            deadlineMs - System.currentTimeMillis();
+            deadlineMs - SystemClock.elapsedRealtime();
         if (callback != null &&
             attempt < MAX_ATTEMPTS &&
             remaining > 1500L) {
@@ -666,7 +667,7 @@ public final class BleGattInspector {
         if (!passiveNotifyServiceUuid.isEmpty() &&
             !subscribable.isEmpty()) {
             long remaining =
-                deadlineMs - System.currentTimeMillis();
+                deadlineMs - SystemClock.elapsedRealtime();
             if (remaining <= 500L) {
                 finishSuccessLocked(activeProfile);
                 return;
@@ -753,7 +754,7 @@ public final class BleGattInspector {
                 "elapsedMs",
                 Math.max(
                     0L,
-                    System.currentTimeMillis() -
+                    SystemClock.elapsedRealtime() -
                     inspectionStartedMs));
             item.put("hex", hex(value));
             String text = printableAscii(value);
@@ -856,7 +857,7 @@ public final class BleGattInspector {
                 "elapsedMs",
                 Math.max(
                     0L,
-                    System.currentTimeMillis() -
+                    SystemClock.elapsedRealtime() -
                     inspectionStartedMs));
             if (activeProfile != null) {
                 item.put("profile", deepCopyJson(activeProfile));
@@ -916,7 +917,7 @@ public final class BleGattInspector {
                 "elapsedMs",
                 Math.max(
                     0L,
-                    System.currentTimeMillis() -
+                    SystemClock.elapsedRealtime() -
                     inspectionStartedMs));
             if (values != null) {
                 for (int i = 0; i + 1 < values.length; i += 2) {

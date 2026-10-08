@@ -110,7 +110,12 @@ public class MainActivity extends Activity {
         bleGattInspector = new BleGattInspector(this);
         asteraBtbBondManager = new AsteraBtbBondManager(this);
         asteraBtbClassicInspector = new AsteraBtbClassicInspector(this);
-        asteraBtbColorReplayProbe = new AsteraBtbColorReplayProbe(this);
+        asteraBtbColorReplayProbe = BleConnectionService.acquire(this);
+        asteraBtbColorReplayProbe.setStateListener((address, connected, reason) -> {
+            if (webView != null) webView.post(() -> webView.evaluateJavascript(
+                "window.LightingAIAsteraSessionState&&window.LightingAIAsteraSessionState(" +
+                JSONObject.quote(address) + "," + connected + "," + JSONObject.quote(reason) + ");", null));
+        });
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -641,8 +646,7 @@ public class MainActivity extends Activity {
     private boolean hasBlePermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-                checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
-                checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+                checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
         }
         return hasLocationPermission();
     }
@@ -664,7 +668,7 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || hasBlePermission()) return;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             requestPermissions(
-                new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                new String[]{Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT},
                 BLE_PERMISSION
             );
         } else {
@@ -676,6 +680,8 @@ public class MainActivity extends Activity {
     }
 
     private void startBleDiscovery(String requestId, int timeoutMs) {
+        if (asteraBtbColorReplayProbe != null) asteraBtbColorReplayProbe.cancel();
+        if (bleGattInspector != null) bleGattInspector.cancel();
         final String id = requestId == null ? "" : requestId;
         final int boundedTimeout = Math.max(1000, Math.min(10000, timeoutMs));
         if (!hasBlePermission()) {
@@ -741,7 +747,15 @@ public class MainActivity extends Activity {
             null));
     }
 
+    private void saveAsteraEvidence(String json) {
+        if (json == null || json.length() > 512000) return;
+        try (java.io.FileOutputStream out = openFileOutput("astera-latest-test.json", MODE_PRIVATE)) {
+            out.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (Exception ignored) {}
+    }
+
     private void notifyAsteraBtbColorProbe(String requestId, JSONObject result, String error) {
+        saveAsteraEvidence(result == null ? "{}" : result.toString());
         if (webView == null) return;
         final String idJs = JSONObject.quote(requestId == null ? "" : requestId);
         final String resultJs = result == null ? "{}" : result.toString();
@@ -972,6 +986,8 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void asteraBtbBond(String requestId, String address, int timeoutMs) {
             runOnUiThread(() -> {
                 final String id = requestId == null ? "" : requestId;
+                if (bleDeviceScanner != null) bleDeviceScanner.stop();
+                if (asteraBtbColorReplayProbe != null) asteraBtbColorReplayProbe.cancel();
                 if (!hasBlePermission()) {
                     notifyAsteraBtbBond(id, new JSONObject(), "ble_permission_denied");
                     return;
@@ -994,6 +1010,8 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void asteraBtbInspectClassic(String requestId, String address, int timeoutMs) {
             runOnUiThread(() -> {
                 final String id = requestId == null ? "" : requestId;
+                if (bleDeviceScanner != null) bleDeviceScanner.stop();
+                if (asteraBtbColorReplayProbe != null) asteraBtbColorReplayProbe.cancel();
                 if (!hasBlePermission()) {
                     notifyAsteraBtbClassicInspection(id, new JSONObject(), "ble_permission_denied");
                     return;
@@ -1020,6 +1038,8 @@ public class MainActivity extends Activity {
                     return;
                 }
                 final String target = address == null ? "" : address.trim();
+                if (bleDeviceScanner != null) bleDeviceScanner.stop();
+                if (asteraBtbColorReplayProbe != null) asteraBtbColorReplayProbe.cancel();
                 try {
                     BluetoothManager manager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
                     BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
@@ -1051,17 +1071,29 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 final String id = requestId == null ? "" : requestId;
                 if (!hasBlePermission()) { notifyAsteraBtbColorProbe(id, new JSONObject(), "ble_permission_denied"); return; }
-                if (asteraBtbColorReplayProbe == null) asteraBtbColorReplayProbe = new AsteraBtbColorReplayProbe(MainActivity.this);
-                asteraBtbColorReplayProbe.replay(address, preset, timeoutMs, new AsteraBtbColorReplayProbe.Callback() {
+                if (bleDeviceScanner != null) bleDeviceScanner.stop();
+                if (bleGattInspector != null) bleGattInspector.cancel();
+                if (asteraBtbColorReplayProbe == null) asteraBtbColorReplayProbe = BleConnectionService.acquire(MainActivity.this);
+                AsteraBtbColorReplayProbe.Callback resultCallback = new AsteraBtbColorReplayProbe.Callback() {
                     @Override public void onComplete(JSONObject result) { notifyAsteraBtbColorProbe(id, result, ""); }
                     @Override public void onError(JSONObject result, String code) { notifyAsteraBtbColorProbe(id, result, code); }
-                });
+                };
+                if ("CONNECT".equals(preset)) asteraBtbColorReplayProbe.connect(address, timeoutMs, resultCallback);
+                else asteraBtbColorReplayProbe.replay(address, preset, timeoutMs, resultCallback);
             });
+        }
+
+        @JavascriptInterface public void asteraBtbSaveTestSession(String json) { saveAsteraEvidence(json); }
+
+        @JavascriptInterface public void asteraBtbDisconnect() {
+            runOnUiThread(() -> { if (asteraBtbColorReplayProbe != null) asteraBtbColorReplayProbe.cancel(); });
         }
 
         @JavascriptInterface public void bleInspectGatt(String requestId, String address, int timeoutMs) {
             runOnUiThread(() -> {
                 final String id = requestId == null ? "" : requestId;
+                if (bleDeviceScanner != null) bleDeviceScanner.stop();
+                if (asteraBtbColorReplayProbe != null) asteraBtbColorReplayProbe.cancel();
                 if (!hasBlePermission()) {
                     notifyBleGattInspection(id, new JSONObject(), "ble_permission_denied");
                     return;
@@ -1140,7 +1172,6 @@ public class MainActivity extends Activity {
         }
         if (bleDeviceScanner != null) bleDeviceScanner.stop();
         if (bleGattInspector != null) bleGattInspector.cancel();
-        if (asteraBtbColorReplayProbe != null) asteraBtbColorReplayProbe.cancel();
         // Keep an active Astera Android bond alive while the system pairing UI
         // temporarily pauses this Activity. The bond manager has its own timeout
         // and is still cancelled on onDestroy().

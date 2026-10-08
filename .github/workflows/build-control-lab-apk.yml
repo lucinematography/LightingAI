@@ -2,6 +2,11 @@ name: Build Control Lab APK
 
 on:
   workflow_dispatch:
+    inputs:
+      refresh_gels:
+        description: Refresh the committed, verified official gel catalog
+        type: boolean
+        default: false
   push:
     branches: [ "feature/production-control-routing" ]
 
@@ -53,32 +58,12 @@ jobs:
         working-directory: backend
         run: npm run audit:dependencies
 
-      # An Android build must not depend on four live vendor sites every time.
-      # The snapshot is cached only after this job successfully validates it.
-      - name: Restore verified official FILTERI GEL snapshot
-        id: gel-cache
-        uses: actions/cache@v4
-        with:
-          path: app/src/main/assets/gel-filter-catalog.js
-          key: lightingai-control-lab-gels-v1-${{ hashFiles('backend/gel-filter-catalog-builder.js') }}
-
-      - name: Build official FILTERI GEL catalog
-        if: steps.gel-cache.outputs.cache-hit != 'true'
+      # The complete snapshot is committed and verified; ordinary builds do not
+      # need four live vendor sites. Explicit refresh still uses npm run build:gels.
+      - name: Refresh official FILTERI GEL catalog
+        if: github.event_name == 'workflow_dispatch' && inputs.refresh_gels
         working-directory: backend
-        shell: bash
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            if npm run build:gels; then
-              exit 0
-            fi
-            if [ "$attempt" -eq 3 ]; then
-              echo "::error::Official GEL catalog unavailable after three attempts; refusing incomplete output."
-              exit 1
-            fi
-            echo "::warning::GEL source fetch failed on attempt ${attempt}; retrying before failing the build"
-            sleep $((attempt * 8))
-          done
+        run: npm run build:gels
 
       - name: Verify cached or freshly built GEL catalog
         shell: bash
@@ -126,6 +111,12 @@ jobs:
       - name: Validate production control routing
         working-directory: backend
         run: node control-production-selftest.js
+
+      - name: Validate Astera Control UI behavior
+        run: node backend/astera-control-ui-selftest.js
+
+      - name: Validate APK verification rejection paths
+        run: node backend/control-apk-verifier-selftest.js
 
       - name: Validate operator desk safety
         working-directory: backend
@@ -203,8 +194,7 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Collect Android lint report
-        continue-on-error: true
+      - name: Android lint (all errors block publication)
         run: gradle lintDebug
 
       - name: Enforce Android lint on changed app files
@@ -212,50 +202,68 @@ jobs:
         run: node android-lint-changed-files-gate.js
 
       - name: Android unit tests
-        run: gradle testDebugUnitTest -PreleaseVersionCode=${{ github.run_number }}
+        run: gradle testDebugUnitTest -PreleaseVersionCode=${{ 100000 + github.run_number }}
 
       - name: Build debug APK
-        run: gradle assembleDebug -PreleaseVersionCode=${{ github.run_number }}
+        run: gradle assembleDebug -PreleaseVersionCode=${{ 100000 + github.run_number }}
 
-      - name: Verify packaged control APK
+      - name: Require persistent signing secrets
         shell: bash
+        env:
+          KEYSTORE_B64: ${{ secrets.LIGHTINGAI_KEYSTORE_BASE64 }}
+          LIGHTINGAI_KEYSTORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
+          LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
+          LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          APK='app/build/outputs/apk/debug/app-debug.apk'
-          SHORT_SHA="${GITHUB_SHA:0:7}"
-          REQUIRED=(
-            'assets/control-bootstrap.js'
-            'assets/control-routing.js'
-            'assets/control-dashboard.js'
-            'assets/control-system-drivers.js'
-            'assets/ble-control.js'
-            'assets/feature-build-info.js'
-            'assets/catalog.js'
-            'assets/gel-filter-catalog.js'
-            'assets/gel-filter-ui.js'
-          )
-          test -s "$APK"
-          for asset in "${REQUIRED[@]}"; do
-            unzip -Z1 "$APK" | grep -Fxq "$asset" || { echo "Missing packaged asset: $asset"; exit 1; }
-            cmp -s <(unzip -p "$APK" "$asset") "app/src/main/$asset" || { echo "Packaged asset differs from source: $asset"; exit 1; }
+          for variable in KEYSTORE_B64 LIGHTINGAI_KEYSTORE_PASSWORD LIGHTINGAI_KEY_ALIAS LIGHTINGAI_KEY_PASSWORD; do
+            test -n "${!variable}" || { echo "::error::Missing persistent signing secret: $variable. No installable APK will be published."; exit 1; }
           done
-          INFO="$(unzip -p "$APK" assets/feature-build-info.js)"
-          grep -Fq "run:\"$GITHUB_RUN_NUMBER\"" <<<"$INFO" || { echo 'Packaged build number mismatch'; exit 1; }
-          grep -Fq "sha:\"$SHORT_SHA\"" <<<"$INFO" || { echo 'Packaged SHA mismatch'; exit 1; }
-          grep -Fq 'lab:"control"' <<<"$INFO" || { echo 'Control lab marker missing'; exit 1; }
-          unzip -p "$APK" assets/gel-filter-catalog.js > /tmp/lightingai-gels.js
-          node -e "const fs=require('fs'),vm=require('vm');const c={window:{}};vm.runInNewContext(fs.readFileSync('/tmp/lightingai-gels.js','utf8'),c);const g=c.window.LightingAIGelCatalog;if(!g||!Array.isArray(g.filters)||g.filters.length!==977)process.exit(1);const x=Object.fromEntries((g.sources||[]).map(s=>[s.key,s.count]));if(x['lee-lighting-filters']!==333||x['rosco-supergel']!==144||x['rosco-ecolour-plus']!==312||x['rosco-cinegel']!==188)process.exit(1);console.log('Packaged FILTERI/GEL catalog verified: 977');"
-          echo "Control Lab APK verified"
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lightingai-control.jks"
+          CERT_SHA="$(keytool -exportcert -keystore "$RUNNER_TEMP/lightingai-control.jks" -alias "$LIGHTINGAI_KEY_ALIAS" -storepass:env LIGHTINGAI_KEYSTORE_PASSWORD | sha256sum | cut -d' ' -f1)"
+          echo "CONTROL_CERT_SHA256=$CERT_SHA" >> "$GITHUB_ENV"
 
-      - name: Prepare direct APK artifact
+      - name: Build signed Control candidate
+        env:
+          LIGHTINGAI_KEYSTORE_PATH: ${{ runner.temp }}/lightingai-control.jks
+          LIGHTINGAI_KEYSTORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
+          LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
+          LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
+        run: |
+          gradle assembleControl -PreleaseVersionCode=${{ 100000 + github.run_number }} -PreleaseVersionName=2.2
+          gradle lintControl testControlUnitTest -PreleaseVersionCode=${{ 100000 + github.run_number }} -PreleaseVersionName=2.2
+
+      - name: Verify signed APK identity, signature and packaged assets
         shell: bash
         run: |
           set -euo pipefail
-          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/LightingAI-control-lab-${GITHUB_RUN_NUMBER}.apk"
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          export PATH="$BUILD_TOOLS:$PATH"
+          node backend/control-apk-verifier.js app/build/outputs/apk/control/app-control.apk "${{ 100000 + github.run_number }}" "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$CONTROL_CERT_SHA256"
+          cp app/build/outputs/apk/control/app-control.apk "app/build/outputs/apk/control/LightingAI-Control-${GITHUB_RUN_NUMBER}.apk"
 
-      - name: Upload APK
+      - name: Upload signed test candidate (physical control unverified)
         uses: actions/upload-artifact@v7
         with:
-          path: app/build/outputs/apk/debug/LightingAI-control-lab-${{ github.run_number }}.apk
+          name: LightingAI-Control-${{ github.run_number }}.apk
+          path: app/build/outputs/apk/control/LightingAI-Control-${{ github.run_number }}.apk
           archive: false
-          retention-days: 14
+          retention-days: 30
+
+      - name: Upload verification evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: Control-verification-${{ github.run_number }}
+          path: |
+            app/build/outputs/apk/control/verification.json
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/reports/lint-results-debug.html
+            app/build/reports/lint-results-control.html
+            app/build/reports/tests/testControlUnitTest/
+          retention-days: 30
+
+      - name: Delete signing material from runner
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/lightingai-control.jks"

@@ -38,7 +38,7 @@ const TXT={
   meshProxy:'Bluetooth Mesh: PROXY servis detektovan',
   asteraBtbService:'ASTERA BTB privatni LE servis detektovan · transport fingerprint potvrđen; session/komande još nisu verifikovani.',
   gattError:'GATT provera nije uspela.',
-  verified:'Direktna kontrola će biti uključena samo za modele sa verifikovanim zvaničnim protokolom / SDK-om.',captureTitle:'ASTERA 4-BOJE CAPTURE REPLAY TEST',captureWarning:'Eksperimentalni fizički test: pre boje šalje samo startup korake koji su ponovljeno potvrđeni u zvaničnom AsteraApp capture-u. Privatni/session parametri nisu ugrađeni. Ovo još nije produkcijski Astera driver.',captureSending:'Šaljem uhvaćeni Astera frame',captureSent:'Frame je poslat. Proveri stvarnu boju na Titan-u.',captureError:'Astera capture replay nije uspeo.'
+  verified:'Direktna kontrola će biti uključena samo za modele sa verifikovanim zvaničnim protokolom / SDK-om.',captureTitle:'ASTERA 4-BOJE CAPTURE REPLAY TEST',captureWarning:'Eksperimentalni fizički test: pre boje šalje samo startup korake koji su ponovljeno potvrđeni u zvaničnom AsteraApp capture-u. Privatni/session parametri nisu ugrađeni. Ovo još nije produkcijski Astera driver.',captureSending:'Šaljem uhvaćeni Astera frame',captureSent:'Slanje završeno; odgovor lampe nije protokolski potvrđen. Proveri boju.',captureError:'Astera capture replay nije uspeo.'
  },
  en:{
   title:'📶 BLUETOOTH / BLE',
@@ -75,7 +75,7 @@ const TXT={
   meshProxy:'Bluetooth Mesh: PROXY service detected',
   asteraBtbService:'ASTERA BTB private LE service detected · transport fingerprint confirmed; session/commands are not verified yet.',
   gattError:'GATT inspection failed.',
-  verified:'Direct control will only be enabled for fixtures with a verified official protocol / SDK.',captureTitle:'ASTERA 4-COLOR CAPTURE REPLAY TEST',captureWarning:'Experimental physical test: before color it sends only startup steps repeatedly confirmed in the official AsteraApp capture. Private/session parameters are not embedded. This is not yet a production Astera driver.',captureSending:'Sending captured Astera frame',captureSent:'Frame sent. Verify the actual color on the Titan.',captureError:'Astera capture replay failed.'
+  verified:'Direct control will only be enabled for fixtures with a verified official protocol / SDK.',captureTitle:'ASTERA 4-COLOR CAPTURE REPLAY TEST',captureWarning:'Experimental physical test: before color it sends only startup steps repeatedly confirmed in the official AsteraApp capture. Private/session parameters are not embedded. This is not yet a production Astera driver.',captureSending:'Sending captured Astera frame',captureSent:'Submission completed; fixture acknowledgement unverified. Check the color.',captureError:'Astera capture replay failed.'
  }
 };
 const t=()=>TXT[lang()];
@@ -99,6 +99,9 @@ let activeColorProbePreset='';
 let scanWatchdogTimer=null;
 let gattWatchdogTimer=null;
 let latestDiagnosticPayload=null;
+const asteraTestHistory=[];
+const asteraConnectedAddresses=new Set();
+let colorWatchdogTimer=null;
 let latestScanDevicesByAddress={};
 let blePagePaused=false;
 let pendingAsteraGattAfterResume='';
@@ -509,9 +512,9 @@ function renderQuickControlShell(address,vendor,name){
   '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px">'+['DIM','CCT',lang()==='sr'?'BOJA':'COLOR','FX'].map(x=>'<button class="btn secondary" type="button" disabled style="padding:9px 4px;opacity:.55">'+esc(x)+'</button>').join('')+'</div>'+(vendor==='ASTERA'?'<div class="ble-astera-replay-slot" data-address="'+esc(address)+'"></div>':'')+'</div>';
 }
 function asteraReplayCompatible(address,payload){const d=address&&latestScanDevicesByAddress[address]?latestScanDevicesByAddress[address]:null;if(!d||!/titan/i.test(String(d.name||'')))return false;const ss=payload&&Array.isArray(payload.services)?payload.services:[];const s=ss.find(x=>normalizedUuid(x&&x.uuid)===ASTERA_BTB_PRIVATE_SERVICE);const cs=s&&Array.isArray(s.characteristics)?s.characteristics:[];return cs.some(ch=>normalizedUuid(ch&&ch.uuid)===ASTERA_BTB_CAPTURE_WRITE&&!!(ch&&ch.writeNoResponse))}
-function renderAsteraReplayProbe(address,payload,allowScanTest){const slot=address?document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"]'):null;if(!slot)return;const seen=latestScanDevicesByAddress[address];const fromScan=!!allowScanTest&&!!seen&&/^TITAN\b/i.test(String(seen.name||''))&&seen.connectable!==false;const verified=asteraReplayCompatible(address,payload);if(!verified&&!fromScan){slot.innerHTML='';return}const warning=fromScan&&!verified?(lang()==='sr'?'Eksperimentalni test. Pre slanja Android proverava Astera BTB servis i karakteristiku. Potvrdi promenu boje na lampi.':'Experimental test. Android validates the Astera BTB service and characteristic before sending. Confirm the actual lamp color.'):t().captureWarning;const labels={RED:lang()==='sr'?'CRVENA':'RED',WHITE:lang()==='sr'?'BELA':'WHITE',GREEN:lang()==='sr'?'ZELENA':'GREEN',BLUE:lang()==='sr'?'PLAVA':'BLUE'};const styles={RED:'background:#c62828;border:2px solid #ff5252;color:#fff',WHITE:'background:#fff;border:2px solid #fff;color:#111',GREEN:'background:#178a3b;border:2px solid #35d05b;color:#fff',BLUE:'background:#1565c0;border:2px solid #42a5f5;color:#fff'};slot.innerHTML='<div class="status warn" style="margin-top:10px"><b>'+esc(t().captureTitle)+'</b><div class="muted small" style="margin-top:5px">'+esc(warning)+'</div></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">'+Object.keys(labels).map(p=>'<button class="btn ble-astera-capture-color" type="button" data-preset="'+p+'" style="'+styles[p]+';font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10)">'+esc(labels[p])+'</button>').join('')+'</div><div class="muted small ble-astera-replay-status" style="margin-top:7px"></div>';slot.querySelectorAll('.ble-astera-capture-color').forEach(btn=>btn.addEventListener('click',()=>runAsteraReplay(address,btn.dataset.preset,btn)))}
+function renderAsteraReplayProbe(address,payload,allowScanTest){const slot=address?document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"]'):null;if(!slot)return;const seen=latestScanDevicesByAddress[address];const fromScan=!!allowScanTest&&!!seen&&/^TITAN\b/i.test(String(seen.name||''))&&seen.connectable!==false;const verified=asteraReplayCompatible(address,payload);if(!verified&&!fromScan){slot.innerHTML='';return}const warning=fromScan&&!verified?(lang()==='sr'?'Eksperimentalni test. Pre slanja Android proverava Astera BTB servis i karakteristiku. Potvrdi promenu boje na lampi.':'Experimental test. Android validates the Astera BTB service and characteristic before sending. Confirm the actual lamp color.'):t().captureWarning;const labels={RED:lang()==='sr'?'CRVENA':'RED',WHITE:lang()==='sr'?'BELA':'WHITE',GREEN:lang()==='sr'?'ZELENA':'GREEN',BLUE:lang()==='sr'?'PLAVA':'BLUE'};const styles={RED:'background:#c62828;border:2px solid #ff5252;color:#fff',WHITE:'background:#fff;border:2px solid #fff;color:#111',GREEN:'background:#178a3b;border:2px solid #35d05b;color:#fff',BLUE:'background:#1565c0;border:2px solid #42a5f5;color:#fff'};slot.innerHTML='<div class="status warn" style="margin-top:10px"><b>'+esc(t().captureTitle)+'</b><div class="muted small" style="margin-top:5px">'+esc(warning)+'</div></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px">'+['CONNECT'].concat(Object.keys(labels)).map(p=>'<button class="btn ble-astera-capture-color" type="button" data-preset="'+p+'" style="'+(styles[p]||'background:#263b4d;border:2px solid #8dc4e9;color:#fff')+';font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10)">'+esc(p==='CONNECT'?(lang()==='sr'?'POVEŽI':'CONNECT'):labels[p])+'</button>').join('')+'</div><button type="button" class="btn secondary ble-astera-disconnect" style="margin-top:8px">'+(lang()==='sr'?'RASKINI VEZU':'DISCONNECT')+'</button><div class="muted small ble-astera-replay-status" style="margin-top:7px"></div>';slot.querySelectorAll('.ble-astera-capture-color').forEach(btn=>btn.addEventListener('click',()=>runAsteraReplay(address,btn.dataset.preset,btn)));slot.querySelector('.ble-astera-disconnect').addEventListener('click',()=>{if(window.Android&&typeof Android.asteraBtbDisconnect==='function')Android.asteraBtbDisconnect()})}
 function setAsteraReplayButtonsDisabled(v){document.querySelectorAll('.ble-astera-capture-color').forEach(btn=>btn.disabled=!!v)}
-function runAsteraReplay(address,preset,button){const tr=transport();if(!address||typeof tr.replayAsteraCapturedColor!=='function'){status(t().unavailable,false);return}if(scanActive||gattActive||bondActive||classicActive||colorProbeActive){status(t().alreadyScanning,false);return}const id='astera_replay_'+Date.now()+'_'+(++seq);activeColorProbeRequestId=id;activeColorProbeAddress=String(address||'');activeColorProbePreset=String(preset||'');colorProbeActive=true;const sb=E('bleScan');if(sb)sb.disabled=true;document.querySelectorAll('.ble-gatt-inspect').forEach(x=>x.disabled=true);setAsteraReplayButtonsDisabled(true);if(button)button.disabled=true;const m=t().captureSending+': '+activeColorProbePreset;const slot=document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"] .ble-astera-replay-status');if(slot)slot.textContent=m;status(m);try{if(!tr.replayAsteraCapturedColor({id,address,preset:activeColorProbePreset,timeoutMs:18000}))throw new Error('unavailable')}catch(e){colorProbeActive=false;activeColorProbeRequestId='';activeColorProbeAddress='';activeColorProbePreset='';if(sb)sb.disabled=false;document.querySelectorAll('.ble-gatt-inspect').forEach(x=>x.disabled=false);setAsteraReplayButtonsDisabled(false);status(t().captureError,false)}}
+function runAsteraReplay(address,preset,button){const tr=transport();if(!address||typeof tr.replayAsteraCapturedColor!=='function'){status(t().unavailable,false);return}if(scanActive||gattActive||bondActive||classicActive||colorProbeActive){status(t().alreadyScanning,false);return}const id='astera_replay_'+Date.now()+'_'+(++seq);activeColorProbeRequestId=id;activeColorProbeAddress=String(address||'');activeColorProbePreset=String(preset||'');colorProbeActive=true;colorWatchdogTimer=setTimeout(()=>{if(activeColorProbeRequestId===id){window.LightingAIAsteraBtbColorProbeResult(id,{address,preset:activeColorProbePreset},'ble_native_callback_timeout')}},50000);const sb=E('bleScan');if(sb)sb.disabled=true;document.querySelectorAll('.ble-gatt-inspect').forEach(x=>x.disabled=true);setAsteraReplayButtonsDisabled(true);if(button)button.disabled=true;const m=t().captureSending+': '+activeColorProbePreset;const slot=document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"] .ble-astera-replay-status');if(slot)slot.textContent=m;status(m);try{if(!tr.replayAsteraCapturedColor({id,address,preset:activeColorProbePreset,timeoutMs:45000}))throw new Error('unavailable')}catch(e){if(colorWatchdogTimer)clearTimeout(colorWatchdogTimer);colorWatchdogTimer=null;colorProbeActive=false;activeColorProbeRequestId='';activeColorProbeAddress='';activeColorProbePreset='';if(sb)sb.disabled=false;document.querySelectorAll('.ble-gatt-inspect').forEach(x=>x.disabled=false);setAsteraReplayButtonsDisabled(false);status(t().captureError,false)}}
 window.LightingAIAsteraBtbColorProbeResult=function(id,payload,error){
  if(String(id||'')!==activeColorProbeRequestId)return;
  const address=payload&&payload.address?String(payload.address):activeColorProbeAddress;
@@ -525,9 +528,10 @@ window.LightingAIAsteraBtbColorProbeResult=function(id,payload,error){
  document.querySelectorAll('.ble-gatt-inspect').forEach(x=>x.disabled=false);
  setAsteraReplayButtonsDisabled(false);
  const slot=address?document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"] .ble-astera-replay-status'):null;
+ if(colorWatchdogTimer)clearTimeout(colorWatchdogTimer);colorWatchdogTimer=null;
  const message=error?(t().captureError+(error?' ('+error+')':'')):(t().captureSent+' ['+preset+']');
  if(slot)slot.textContent=message;
- status(message,!error);
+ status(message,false);
  const testResult={
   kind:'LightingAI-Astera-BTB-captured-color-replay',
   capturedAt:new Date().toISOString(),
@@ -539,7 +543,10 @@ window.LightingAIAsteraBtbColorProbeResult=function(id,payload,error){
   address:address,
   payload:payload||{}
  };
- latestDiagnosticPayload=testResult;
+ asteraTestHistory.push(testResult);if(asteraTestHistory.length>16)asteraTestHistory.shift();
+ latestDiagnosticPayload={kind:'LightingAI-Astera-control-test-session',tests:asteraTestHistory};
+ try{if(window.Android&&typeof Android.asteraBtbSaveTestSession==='function')Android.asteraBtbSaveTestSession(JSON.stringify(latestDiagnosticPayload))}catch(e){}
+ if(preset==='CONNECT'){if(slot)slot.textContent=error?message:(lang()==='sr'?'Bluetooth veza je otvorena. Astera sesija nije potvrđena. Izaberi boju.':'Bluetooth connection open. Astera session unverified. Select a color.');return}
  if(!slot)return;
  const container=slot.parentElement;
  if(!container)return;
@@ -548,13 +555,13 @@ window.LightingAIAsteraBtbColorProbeResult=function(id,payload,error){
  feedback.className='ble-astera-replay-feedback';
  feedback.style.cssText='margin-top:10px;padding:10px;border:1px solid #395364;border-radius:8px';
  const title=document.createElement('div');
- title.textContent=lang()==='sr'?'DA LI JE LAMPA ZAISTA PROMENILA BOJU?':'DID THE LIGHT ACTUALLY CHANGE COLOR?';
+ title.textContent=(lang()==='sr'?'DA LI LAMPA PRIKAZUJE IZABRANU BOJU: ':'DOES THE LIGHT SHOW THE REQUESTED COLOR: ')+preset+'?';
  title.style.cssText='font-weight:700;margin-bottom:6px';
  feedback.appendChild(title);
  const options=document.createElement('div');
  options.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px';
  for(const option of [
-  {value:'COLOR_CHANGED',sr:'DA, PROMENILA SE',en:'YES, CHANGED'},
+  {value:'COLOR_CHANGED',sr:'DA, IZABRANA BOJA',en:'YES, REQUESTED COLOR'},
   {value:'UNCHANGED',sr:'NE, NIJE',en:'NO, UNCHANGED'}
  ]){
   const btn=document.createElement('button');
@@ -564,7 +571,8 @@ window.LightingAIAsteraBtbColorProbeResult=function(id,payload,error){
   btn.addEventListener('click',()=>{
    testResult.operatorObservation=option.value;
    testResult.operatorObservedAt=new Date().toISOString();
-   latestDiagnosticPayload=testResult;
+   latestDiagnosticPayload={kind:'LightingAI-Astera-control-test-session',tests:asteraTestHistory};
+   try{if(window.Android&&typeof Android.asteraBtbSaveTestSession==='function')Android.asteraBtbSaveTestSession(JSON.stringify(latestDiagnosticPayload))}catch(e){}
    options.querySelectorAll('button').forEach(b=>{b.disabled=false;b.style.outline='none'});
    btn.style.outline='2px solid #f5c542';
    status(lang()==='sr'?'Zabeležen odgovor. Sačuvaj rezultat testa boje.':'Answer recorded. Save the color-test result.',true);
@@ -722,6 +730,7 @@ function install(){
  return true;
 }
 function resetBleUiLifecycle(){
+ const preserveColor=!!(colorProbeActive&&activeColorProbeRequestId);
  const preserveBond=!!(bondActive&&activeBondRequestId);
  const hadNonBondTransient=scanActive||gattActive||classicActive||colorProbeActive;
  clearScanWatchdog();
@@ -731,22 +740,21 @@ function resetBleUiLifecycle(){
  activeGattAddress='';
  activeClassicRequestId='';
  activeClassicAddress='';
- activeColorProbeRequestId='';
- activeColorProbeAddress='';
- activeColorProbePreset='';
+ if(!preserveColor){activeColorProbeRequestId='';activeColorProbeAddress='';activeColorProbePreset='';}
  scanActive=false;
  gattActive=false;
  classicActive=false;
- colorProbeActive=false;
+ if(!preserveColor)colorProbeActive=false;
  scanCooldownUntil=0;
  if(!preserveBond){
   activeBondRequestId='';
   activeBondAddress='';
   bondActive=false;
  }
- const button=E('bleScan');if(button)button.disabled=preserveBond;
- document.querySelectorAll('.ble-astera-bond,.ble-gatt-inspect').forEach(btn=>btn.disabled=preserveBond);
- setAsteraReplayButtonsDisabled(preserveBond);
+ const button=E('bleScan');if(button)button.disabled=preserveBond||preserveColor;
+ document.querySelectorAll('.ble-astera-bond,.ble-gatt-inspect').forEach(btn=>btn.disabled=preserveBond||preserveColor);
+ setAsteraReplayButtonsDisabled(preserveBond||preserveColor);
+ if(!preserveColor){if(colorWatchdogTimer)clearTimeout(colorWatchdogTimer);colorWatchdogTimer=null;}
  if(hadNonBondTransient){
   if(!preserveBond)status('');
   document.querySelectorAll('.ble-gatt-result').forEach(el=>{
@@ -754,6 +762,11 @@ function resetBleUiLifecycle(){
   });
  }
 }
+window.LightingAIAsteraSessionState=function(address,connected,reason){
+ if(connected)asteraConnectedAddresses.add(address);else asteraConnectedAddresses.delete(address);
+ const slot=document.querySelector('.ble-astera-replay-slot[data-address="'+CSS.escape(address)+'"] .ble-astera-replay-status');
+ if(slot&&!connected)slot.textContent=(lang()==='sr'?'Veza je zatvorena: ':'Connection closed: ')+String(reason||'');
+};
 window.LightingAIBleLifecyclePause=function(){
  blePagePaused=true;
  resetBleUiLifecycle();
@@ -765,7 +778,7 @@ window.LightingAIBleLifecycleResume=function(){
  pendingAsteraGattAfterResume='';
  if(address)setTimeout(()=>inspectGatt(address,null,true),400);
 };
-window.LightingAIBleControl={version:'0.35-direct-color-test-after-scan',diagnosticsRevision:'astera-btb-captured-bootstrap-a-v31',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,asteraBtbCaptureWriteUuid:ASTERA_BTB_CAPTURE_WRITE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,replayCapturedColor:runAsteraReplay,exportDiagnostic:exportDiagnostic};
+window.LightingAIBleControl={version:'0.36-persistent-astera-transport',diagnosticsRevision:'astera-btb-captured-bootstrap-a-v31',asteraBtbServiceUuid:ASTERA_BTB_PRIVATE_SERVICE,asteraBtbCaptureWriteUuid:ASTERA_BTB_CAPTURE_WRITE,discover:startScan,bondAstera:bondAstera,inspectGatt:inspectGatt,replayCapturedColor:runAsteraReplay,exportDiagnostic:exportDiagnostic};
 let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>160)clearInterval(timer)},100);
 const old=window.setLanguage;
 if(typeof old==='function'&&!window.__lightingAIBleLangHook){

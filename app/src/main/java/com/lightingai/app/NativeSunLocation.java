@@ -53,13 +53,15 @@ public final class NativeSunLocation implements LocationListener {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, this, Looper.getMainLooper());
                 requested = true;
             }
-        } catch (Exception ignored) {}
+        } catch (SecurityException denied) { /* Permission may be revoked while running. */ }
+        catch (Exception ignored) {}
         try {
             if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0L, 0f, this, Looper.getMainLooper());
                 requested = true;
             }
-        } catch (Exception ignored) {}
+        } catch (SecurityException denied) { /* Permission may be revoked while running. */ }
+        catch (Exception ignored) {}
 
         if (!requested) {
             if (fallbackLocation != null) finishSuccess(fallbackLocation);
@@ -89,7 +91,8 @@ public final class NativeSunLocation implements LocationListener {
                 Location candidate = locationManager.getLastKnownLocation(provider);
                 if (candidate == null) continue;
                 if (best == null || isBetter(candidate, best)) best = candidate;
-            } catch (Exception ignored) {}
+            } catch (SecurityException denied) { /* Permission may be revoked while running. */ }
+            catch (Exception ignored) {}
         }
         return best;
     }
@@ -126,7 +129,8 @@ public final class NativeSunLocation implements LocationListener {
     private void cleanup() {
         running = false;
         mainHandler.removeCallbacks(timeout);
-        try { if (locationManager != null) locationManager.removeUpdates(this); } catch (Exception ignored) {}
+        try { if (locationManager != null) locationManager.removeUpdates(this); } catch (SecurityException denied) { /* Permission may be revoked while running. */ }
+        catch (Exception ignored) {}
         callback = null;
         fallbackLocation = null;
     }

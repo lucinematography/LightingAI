@@ -11,6 +11,8 @@ public final class AsteraBtbCapturedFrames {
  private static final byte[] GREEN=decodeHex("0A107EDF36000000007D63130C010E030DFFC1A7");
  private static final byte[] BLUE=decodeHex("0A107EDF36000000007D63130C070D010EFFB58E");
  private AsteraBtbCapturedFrames(){}
+ // These frames came from one fixture/session, not a generalized Astera driver.
+ public static boolean supportsDeviceName(String name){return name!=null&&"TITAN 01021450".equals(name.trim().toUpperCase(Locale.US));}
  public static Preset parsePreset(String v){String n=v==null?"":v.trim().toUpperCase(Locale.US);for(Preset p:Preset.values())if(p.name().equals(n))return p;throw new IllegalArgumentException("unsupported captured preset");}
  public static byte[] frameFor(String v){return frameFor(parsePreset(v));}
  public static byte[] frameFor(Preset p){byte[] s;switch(p){case RED:s=RED;break;case WHITE:s=WHITE;break;case GREEN:s=GREEN;break;case BLUE:s=BLUE;break;default:throw new IllegalArgumentException();}return s.clone();}

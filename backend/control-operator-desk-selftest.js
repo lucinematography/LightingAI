@@ -13,9 +13,14 @@ const scanner=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/a
 const bondManager=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/AsteraBtbBondManager.java'),'utf8');
 const capturedFrames=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/AsteraBtbCapturedFrames.java'),'utf8');
 const replayProbe=fs.readFileSync(path.join(root,'app/src/main/java/com/lightingai/app/AsteraBtbColorReplayProbe.java'),'utf8');
+const gradle=fs.readFileSync(path.join(root,'app/build.gradle'),'utf8');
+const labWorkflow=fs.readFileSync(path.join(root,'.github/workflows/build-control-lab-apk.yml'),'utf8');
 
 const failures=[];
 const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
+expect(gradle.includes("applicationIdSuffix '.control13'"),'Control Lab APK package suffix must be stable between builds');
+expect(gradle.includes('LIGHTINGAI_LAB_DEBUG_KEYSTORE_PATH')&&gradle.includes('signingConfigs.labTest'),'Control Lab must support a persistent test keystore');
+expect(labWorkflow.includes('assembleDebug -PreleaseVersionCode=${{ github.run_number }}'),'Control Lab version code must increase between builds');
 
 for(const marker of [
   'controlOpenBluetooth',

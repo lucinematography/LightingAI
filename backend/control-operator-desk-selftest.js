@@ -21,7 +21,7 @@ for(const marker of [
   'controlOpenBluetooth',
   "version:'0.20-bluetooth-only-control'",
   "window.LightingAIControlBootstrapMode='bluetooth-only'",
-  "version:'0.34-astera-colored-replay-buttons'"
+  "version:'0.35-direct-color-test-after-scan'"
 ]) expect(dashboard.includes(marker)||bootstrap.includes(marker)||ble.includes(marker),'Bluetooth-only CONTROL marker missing: '+marker);
 
 expect(dashboard.includes('PRONAĐI I POVEŽI RASVETU')&&dashboard.includes('DISCOVER & CONNECT FIXTURES'),'Primary CONTROL CTA must be direct Bluetooth discovery');
@@ -32,7 +32,8 @@ expect(bootstrap.includes("window.LightingAIControlBootstrapMode='bluetooth-only
 expect(bootstrap.indexOf('control-system-drivers.js')<bootstrap.indexOf('ble-control.js'),'Vendor driver registry must load before Bluetooth UI');
 expect(bootstrap.indexOf('ble-control.js')<bootstrap.indexOf('control-dashboard.js'),'Bluetooth UI must load before dashboard');
 expect(ble.includes('renderQuickControlShell')&&ble.includes("'DIM'")&&ble.includes("'CCT'")&&ble.includes("'FX'"),'Fast Bluetooth control surface missing');
-expect(ble.includes('vendorForDevice')&&ble.includes('signalLabel')&&ble.includes('POVEŽI ASTERA'),'Fast Bluetooth fixture discovery UI missing');
+expect(ble.includes('vendorForDevice')&&ble.includes('signalLabel')&&ble.includes('PROVERI ASTERA VEZU'),'Fast Bluetooth fixture discovery UI missing');
+expect(ble.includes('renderAsteraReplayProbe(a,null,true)')&&ble.includes('d.connectable!==false')&&ble.includes('if(!verified&&!fromScan)'),'Direct Titan test must require a connectable advertisement and native GATT preflight');
 expect(ble.includes("ASTERA_BTB_PRIVATE_SERVICE='0a6c6c72-9ca6-ffaf-3440-b2dae8c86a65'")&&ble.includes('transport fingerprint only'),'Astera BTB private LE fingerprint must remain passive diagnostic evidence only');
 expect(ble.includes('PASIVNO ASTERA BTB PRAĆENJE')&&ble.includes('PASSIVE ASTERA BTB OBSERVATION'),'Astera passive observation UI missing');
 expect(gatt.includes('inspectAstera(')&&gatt.includes('CCCD_UUID')&&gatt.includes('proprietaryCharacteristicWrites')&&gatt.includes('notificationValues'),'Astera passive GATT observer missing');

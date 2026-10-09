@@ -4,7 +4,7 @@
   var ENTRY='lightingai-scene-planner-entry';
   var API='https://lightingai.onrender.com';
   var STORE='lighting_scene_planner_last_v1';
-  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false};
+  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null};
   function el(id){return document.getElementById(id);}
   function esc(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
@@ -654,7 +654,7 @@
       if(task.ready){
         videoStatus('AI video je spreman za MP4 preuzimanje. Sadržaj proveriti pre korišćenja na setu.');
         var out=el('sp-video-ai-output');
-        out.innerHTML='<button id="sp-ai-mp4-download" type="button" class="sp-btn sp-primary">PREUZMI AI MP4 VIDEO</button>'+
+        out.innerHTML='<button id="sp-ai-mp4-download" type="button" class="sp-btn sp-primary">PREUZMI I PREGLEDAJ AI MP4</button>'+
           '<p class="sp-note">Rezultat može sadržati promene pokreta, lica ili tekstura; proveriti kontinuitet sa originalom.</p>';
         el('sp-ai-mp4-download').onclick=downloadAIVideo;
       }else videoStatus('Status AI zadatka: '+String(task.status||'nepoznat')+'.');
@@ -669,7 +669,19 @@
       if(size>140*1024*1024)throw new Error('MP4 previše velik za WebView preuzimanje.');
       var blob=await response.blob();
       if(!blob.size||blob.size>140*1024*1024)throw new Error('Neispravna ili prevelika video datoteka.');
-      var file=new File([blob],'LightingAI_AI_Relight.mp4',{type:'video/mp4'});
+      // Playback must use the actual MP4 bytes returned by the provider, never a storyboard.
+      if(state.aiVideoPreviewUrl)URL.revokeObjectURL(state.aiVideoPreviewUrl);
+      state.aiVideoPreviewUrl=URL.createObjectURL(blob);
+      var player=el('sp-ai-video-player');
+      if(!player){
+        player=document.createElement('video');player.id='sp-ai-video-player';
+        player.controls=true;player.playsInline=true;player.preload='metadata';
+        player.style.cssText='display:block;width:100%;max-height:460px;margin:12px 0;background:#000';
+        el('sp-video-ai-output').appendChild(player);
+      }
+      player.src=state.aiVideoPreviewUrl;
+      player.load();
+            var file=new File([blob],'LightingAI_AI_Relight.mp4',{type:'video/mp4'});
       if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
         await navigator.share({title:'LightingAI AI video relight',files:[file]});
         videoStatus('Otvoren izbor za deljenje ili čuvanje MP4 datoteke.');

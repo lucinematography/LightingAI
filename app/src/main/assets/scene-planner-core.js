@@ -5,7 +5,20 @@
   else root.LightingAIScenePlannerCore = api;
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
-  var VERSION = 1;
+  var VERSION = 2;
+  function nightLook(value) { return value === 'Night' || value === 'Day for Night'; }
+  function detectedNight(value) { return /noc|noć|noćna|noći|night|moonlight|mesečin|mese[cč]in|mesec|pono[cć]/i.test(String(value || '')); }
+  function chooseLook(value, description, capture) {
+    var look = str(value || 'Cinematic', 80);
+    if (look === 'Cinematic' && detectedNight(description)) return capture === 'day' ? 'Day for Night' : 'Night';
+    return look;
+  }
+  function confidence(value) { return ['low','medium','high'].indexOf(value)>=0 ? value : 'unknown'; }
+  function coverage(value) {
+    if (!Array.isArray(value)) return [];
+    return value.slice(0,16).map(Number).filter(function(n){return Number.isInteger(n)&&n>=0&&n<=15;})
+      .filter(function(n,i,arr){return arr.indexOf(n)===i;});
+  }
   var ROLES = ['key', 'fill', 'backlight', 'ambient'];
   function str(value, limit) { return String(value == null ? '' : value).trim().slice(0, limit || 400); }
   function num(value, min, max, fallback) {
@@ -44,18 +57,20 @@
     return {
       mode: mode(input.mode),
       description: str(input.description, 3000),
-      look: str(input.look || 'Cinematic', 80),
+      look: chooseLook(input.look,input.description,input.captureLighting),
+      captureLighting: ['day','night','unknown'].indexOf(input.captureLighting)>=0 ? input.captureLighting : 'unknown',
       roomWidthM: num(input.roomWidthM, 0.5, 100, null),
       roomDepthM: num(input.roomDepthM, 0.5, 100, null),
       equipment: equipment(input.equipment),
       modifiers: Array.isArray(input.modifiers) ? input.modifiers.map(function(x){return str(x,180);}).filter(Boolean) : modifiers(input.equipment),
       scenePhoto: str(input.scenePhoto, 12000000),
-      videoFrames: (Array.isArray(input.videoFrames) ? input.videoFrames : []).slice(0, 4).filter(function(f){
+      videoFrames: (Array.isArray(input.videoFrames) ? input.videoFrames : []).slice(0, 6).filter(function(f){
         return f && typeof f === 'object';
       }).map(function(f){
         return {timeSec:num(f.timeSec,0,3600,0),image:str(f.image,3500000)};
       }).filter(function(f){return !!f.image;}),
       dimensionsMeasured: input.dimensionsMeasured === true,
+      shotCamera: str(input.shotCamera || '', 400),
       language: input.language === 'en' ? 'en' : 'sr'
     };
   }
@@ -99,6 +114,10 @@
       kelvin: cct,
       color: str(raw.color, 80),
       modifier: mod,
+      verticalTiltDeg: num(raw.verticalTiltDeg,-90,90,null),
+      beamAngleDeg: num(raw.beamAngleDeg,5,180,null),
+      coverageStages: coverage(raw.coverageStages),
+      positionNote: str(raw.positionNote,350),
       powerDrawW: own && matched ? matched.powerDrawW : null,
       power: 'Proveriti izvor napajanja na setu',
       why: str(raw.why || raw.notes, 500),
@@ -139,21 +158,40 @@
     }
     warnings.push('Položaji, visine, uglovi i intenziteti su procene, ne fotometrijska merenja.');
     if (!req.dimensionsMeasured) warnings.push('Dimenzije nisu označene kao stvarno izmerene.');
+    var analysis=raw.sceneAnalysis && typeof raw.sceneAnalysis==='object' ? raw.sceneAnalysis : {};
     var rawActors = Array.isArray(raw.actors) ? raw.actors.slice(0, 6) : [];
     var actors = rawActors.map(function(a, i) {
       if (!a || typeof a !== 'object') return null;
-      var path = (Array.isArray(a.path) ? a.path : []).slice(0, 14).map(function(pt) {
-        return {x:num(pt && pt.x,5,95,50),y:num(pt && pt.y,5,95,50)};
+      var path=(Array.isArray(a.path)?a.path:[]).slice(0,16).map(function(pt,j){
+        var t=req.videoFrames[j] ? req.videoFrames[j].timeSec : null;
+        return {x:num(pt&&pt.x,5,95,50),y:num(pt&&pt.y,5,95,50),
+          timeSec:num(pt&&pt.timeSec,0,3600,t)};
       });
-      return {id:'A'+(i+1),label:str(a.label || 'Glumac',80),x:num(a.x,5,95,50),
-        y:num(a.y,5,95,51),path:path,estimated:true};
+      return {id:'A'+(i+1),label:str(a.label || 'Glumac',80),
+        x:num(a.x,5,95,path.length?path[0].x:50),
+        y:num(a.y,5,95,path.length?path[0].y:51),
+        path:path,confidence:confidence(a.confidence),estimated:true};
     }).filter(Boolean);
     if (!actors.length) {
-      actors = [{id:'A1',label:'Glumac',x:50,y:51,
-        path:[{x:50,y:65},{x:50,y:40}],estimated:true}];
-      warnings.push('Putanja glumca je konceptualna dok AI ili korisnik ne odrede kretanje.');
+      actors=[{id:'A1',label:'Glumac',x:50,y:51,path:[],confidence:'unknown',estimated:true}];
+      warnings.push('Kretanje nije rekonstruisano; ne prikazujemo izmišljenu putanju.');
     }
     if (!own) warnings.push('Predložene lampe nisu potvrđene kao deo korisnikovog inventara.');
+    var stages=actors.length ? actors[0].path.length : 0, unlit=[];
+    if(stages && emitted.length) {
+      for(var i=0;i<stages;i++) {
+        if(!emitted.some(function(l){return (l.role==='key'||l.role==='ambient')&&l.coverageStages.indexOf(i)>=0;})) unlit.push(i+1);
+      }
+      if(unlit.length) warnings.push('Nije potvrđeno osvetljenje duž cele putanje, tačke: '+unlit.join(', ')+'.');
+    }
+    if(nightLook(req.look) && req.captureLighting==='day')
+      warnings.push('Dan za noć zahteva kontrolu dnevnog ambijenta, neba i odsjaja; digitalni preview nije zamena za fizičku rasvetu.');
+    if(req.videoFrames.length && (analysis.cameraMotion==='moving'||analysis.cameraMotion==='unknown'))
+      warnings.push('Kamera se kreće ili njen pokret nije poznat: raspored iz videa nije metrička 3D rekonstrukcija.');
+    var nightNotes=uniqueStrings(raw.dayForNightNotes,12);
+    if(nightLook(req.look)&&req.captureLighting==='day'&&!nightNotes.length)
+      nightNotes.push('Fizički kontrolisati direktno dnevno svetlo, ne dozvoliti preeksponirano nebo i uskladiti kadrove.');
+
     return {
       version: VERSION,
       mode: req.mode,
@@ -166,6 +204,17 @@
       ]),
       look: req.look,
       description: req.description,
+      captureLighting: req.captureLighting,
+      sceneAnalysis:{
+        cameraMotion:['static','moving','unknown'].indexOf(analysis.cameraMotion)>=0?analysis.cameraMotion:'unknown',
+        blockingConfidence:confidence(analysis.blockingConfidence),
+        observedLighting:['day','night','mixed','unknown'].indexOf(analysis.observedLighting)>=0?analysis.observedLighting:'unknown',
+        evidence:str(analysis.evidence,500),
+        referencePoints:(Array.isArray(analysis.referencePoints)?analysis.referencePoints:[]).slice(0,10)
+          .map(function(a){return {label:str(a&&a.label,80),x:num(a&&a.x,5,95,50),y:num(a&&a.y,5,95,50),estimated:true};})
+      },
+      dayForNightNotes:nightNotes,
+      unknownCoverageStages:unlit,
       geometry: {widthM: req.roomWidthM, depthM: req.roomDepthM,
         measured: !!(req.roomWidthM && req.roomDepthM && req.dimensionsMeasured),
         userProvided: !!(req.roomWidthM && req.roomDepthM)},
@@ -201,6 +250,8 @@
         intensityPct: i === 0 ? 60 : (i === 1 ? 40 : 20),
         kelvin: req.look.toLowerCase().indexOf('night') >= 0 ? 5600 : 4300,
         modifier: own ? '' : item.modifier || '',
+        coverageStages:[],
+        positionNote:'Orijentaciono, proveriti prepreke i bezbedno postavljanje izvora.',
         why: ['Modelovanje lica i usmeravanje pažnje.',
           'Odvajanje subjekta od pozadine i kontrola siluete.',
           'Kontrola kontrasta senke bez gubitka atmosfere.'][i]
@@ -209,11 +260,16 @@
     var limits = ['Ovo je lokalni početni predlog po pravilima, nije rezultat AI analize fotografije.'];
     if (own && choices.length < 3) limits.push('Nedovoljno raspoloživih izvora za potpuno nezavisne key, fill i backlight pozicije.');
     return sanitizePlan({
+      sceneAnalysis:{cameraMotion:'unknown',blockingConfidence:'unknown',observedLighting:'unknown'},
+      dayForNightNotes:nightLook(req.look)&&req.captureLighting==='day'?[
+        'Kontrolisati dnevni ambijent i sjajne površine; noćna ekspozicija se proverava kamerom.',
+        'Bočna ili pozadinska hladna svetlost može predstavljati mesečinu samo kao kreativni predlog.'
+      ]:[],
       summary: own ? 'Početni light plot iz dostupnog inventara.' : 'Konceptualna filmska rasveta: key, kontra i kontrolisan fill.',
       rationale: 'Položaji su konceptualni. Stvarnu ekspoziciju i senke proveriti probom kamere.',
       limitations: limits, lights: lights
     }, req, 'local');
   }
   return {VERSION:VERSION, request:request, equipment:equipment, modifiers:modifiers,
-    sanitizePlan:sanitizePlan, localPlan:localPlan};
+    sanitizePlan:sanitizePlan, localPlan:localPlan, chooseLook:chooseLook, nightLook:nightLook};
 });

@@ -48,8 +48,14 @@
       roomWidthM: num(input.roomWidthM, 0.5, 100, null),
       roomDepthM: num(input.roomDepthM, 0.5, 100, null),
       equipment: equipment(input.equipment),
-      modifiers: modifiers(input.equipment),
+      modifiers: Array.isArray(input.modifiers) ? input.modifiers.map(function(x){return str(x,180);}).filter(Boolean) : modifiers(input.equipment),
       scenePhoto: str(input.scenePhoto, 12000000),
+      videoFrames: (Array.isArray(input.videoFrames) ? input.videoFrames : []).slice(0, 4).filter(function(f){
+        return f && typeof f === 'object';
+      }).map(function(f){
+        return {timeSec:num(f.timeSec,0,3600,0),image:str(f.image,3500000)};
+      }).filter(function(f){return !!f.image;}),
+      dimensionsMeasured: input.dimensionsMeasured === true,
       language: input.language === 'en' ? 'en' : 'sr'
     };
   }
@@ -110,7 +116,7 @@
       if (own) {
         match = req.equipment.find(function (eq) {
           return (item.fixtureId && (eq.fixtureId === item.fixtureId || eq.id === item.fixtureId)) ||
-            (item.fixtureName && key(eq.name) === key(item.fixtureName));
+            (item.fixtureName && key(item.fixtureName) && key(eq.name) === key(item.fixtureName));
         });
         if (!match) {
           warnings.push('Iz plana je uklonjena lampa koja nije u inventaru: ' +
@@ -129,9 +135,24 @@
     if (own && !req.equipment.length) warnings.push('Nema rasvetnih tela u izabranom inventaru.');
     if (own && req.equipment.length && !emitted.length) warnings.push('Nijedan predloženi izvor nije potvrđen u inventaru.');
     if (!req.roomWidthM || !req.roomDepthM) {
-      warnings.push('Dimenzije prostorije nisu izmerene: 2D raspored je samo orijentacioni.');
+      warnings.push('Dimenzije prostorije nisu navedene: 2D raspored je samo orijentacioni.');
     }
     warnings.push('Položaji, visine, uglovi i intenziteti su procene, ne fotometrijska merenja.');
+    if (!req.dimensionsMeasured) warnings.push('Dimenzije nisu označene kao stvarno izmerene.');
+    var rawActors = Array.isArray(raw.actors) ? raw.actors.slice(0, 6) : [];
+    var actors = rawActors.map(function(a, i) {
+      if (!a || typeof a !== 'object') return null;
+      var path = (Array.isArray(a.path) ? a.path : []).slice(0, 14).map(function(pt) {
+        return {x:num(pt && pt.x,5,95,50),y:num(pt && pt.y,5,95,50)};
+      });
+      return {id:'A'+(i+1),label:str(a.label || 'Glumac',80),x:num(a.x,5,95,50),
+        y:num(a.y,5,95,51),path:path,estimated:true};
+    }).filter(Boolean);
+    if (!actors.length) {
+      actors = [{id:'A1',label:'Glumac',x:50,y:51,
+        path:[{x:50,y:65},{x:50,y:40}],estimated:true}];
+      warnings.push('Putanja glumca je konceptualna dok AI ili korisnik ne odrede kretanje.');
+    }
     if (!own) warnings.push('Predložene lampe nisu potvrđene kao deo korisnikovog inventara.');
     return {
       version: VERSION,
@@ -145,9 +166,11 @@
       ]),
       look: req.look,
       description: req.description,
-      geometry: {widthM: req.roomWidthM, depthM: req.roomDepthM, measured: !!(req.roomWidthM && req.roomDepthM)},
+      geometry: {widthM: req.roomWidthM, depthM: req.roomDepthM,
+        measured: !!(req.roomWidthM && req.roomDepthM && req.dimensionsMeasured),
+        userProvided: !!(req.roomWidthM && req.roomDepthM)},
       camera: {x: 50, y: 89, label: 'Kamera', estimated: true},
-      actors: [{id: 'A1', label: 'Glumac', x: 50, y: 51, path: [{x: 50, y: 65}, {x: 50, y: 40}], estimated: true}],
+      actors: actors,
       lights: emitted
     };
   }

@@ -3,10 +3,10 @@ import fs from "node:fs";
 import { paidAiConfigured, guardPaidAIRequests } from "./staging-safety.js";
 import { videoCapabilities } from "./scene-planner-video.js";
 
-const staging = { LIGHTINGAI_DISABLE_PAID_AI: "true", OPENAI_API_KEY: "secret-that-must-not-be-used" };
+const staging = { LIGHTINGAI_DISABLE_PAID_AI: "true", OPENAI_API_KEY: "fake" };
 assert.equal(paidAiConfigured({}), false, "missing OpenAI credentials must not crash server");
 assert.equal(paidAiConfigured(staging), false, "staging kill switch overrides any supplied key");
-assert.equal(paidAiConfigured({ OPENAI_API_KEY: "configured" }), true);
+assert.equal(paidAiConfigured({ OPENAI_API_KEY: "fake" }), true);
 const endpoints = [
   "/api/analyze-scene", "/api/lighting-plan", "/api/scene-planner/plan",
   "/api/scene-planner/storyboard", "/api/visual-preview"
@@ -25,7 +25,7 @@ let allowed = false;
 guardPaidAIRequests(staging)({ method: "GET", path: "/health" }, {}, () => { allowed = true; });
 assert.equal(allowed, true, "health routes must remain available in staging");
 allowed = false;
-guardPaidAIRequests({ OPENAI_API_KEY: "configured" })(
+guardPaidAIRequests({ OPENAI_API_KEY: "fake" })(
   { method: "POST", path: "/api/scene-planner/plan" }, {}, () => { allowed = true; });
 assert.equal(allowed, true, "configured production AI calls remain unaffected");
 

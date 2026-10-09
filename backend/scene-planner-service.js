@@ -56,6 +56,13 @@ export function buildScenePlannerPrompt(req) {
     "Design a creative but executable light plan for the actual scene and actor blocking.",
     "The photograph and video keyframes are visual references, NOT calibrated depth measurements.",
     "Scene description: " + req.description,
+    "Scene location (user-editable, not a geodetic measurement): " + (req.sceneLocation||"unspecified"),
+    "Scene GPS latitude/longitude, approximate unless verified: " +
+      JSON.stringify([req.sceneLatitude,req.sceneLongitude]),
+    "Coordinates independently verified on set: " + req.sceneCoordsVerified,
+    "Scene local date/time (empty means unknown): " + (req.sceneLocalDateTime||"unknown"),
+    "Scene timezone (user-supplied): " + (req.sceneTimeZone||"unspecified"),
+    "Do not invent solar azimuth/elevation, real shadow lengths or Sun positions. Require a verified SUN calculation and an exact shooting location/time before giving them.",
     "Look: " + req.look,
     "Mode: " + (onlyOwn ? "ONLY MY EQUIPMENT" : "PROPOSE BEST LIGHTING"),
     onlyOwn ? "MUST use only the following physically selected fixtures, each up to its qty: " + JSON.stringify(req.equipment)

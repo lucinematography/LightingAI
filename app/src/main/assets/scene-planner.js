@@ -129,6 +129,14 @@
       '<input id="sp-width" class="sp-field" type="number" min="0.5" max="100" step="0.1" placeholder="Nepoznato"></div>'+
       '<div><label>DUBINA PROSTORA (m, opciono)</label>'+
       '<input id="sp-depth" class="sp-field" type="number" min="0.5" max="100" step="0.1" placeholder="Nepoznato"></div></div>'+
+      '<div class="sp-two"><div><label>LOKACIJA SNIMANJA (PROMENLJIVA)</label>'+ 
+      '<input id="sp-location" class="sp-field" value="Beograd, Srbija"></div>'+ 
+      '<div><label>VREME SNIMANJA (OPCIONO)</label><input id="sp-scene-datetime" class="sp-field" type="datetime-local"></div></div>'+
+      '<div class="sp-two"><div><label>GPS LATITUDE (PRIBLIŽNO)</label><input id="sp-scene-lat" class="sp-field" type="number" min="-90" max="90" step="0.000001" value="44.7866"></div>'+
+      '<div><label>GPS LONGITUDE (PRIBLIŽNO)</label><input id="sp-scene-lon" class="sp-field" type="number" min="-180" max="180" step="0.000001" value="20.4489"></div></div>'+
+      '<label>VREMENSKA ZONA</label><input id="sp-scene-tz" class="sp-field" value="Europe/Belgrade">'+
+      '<label style="display:flex;align-items:center;gap:9px"><input id="sp-scene-coords-verified" type="checkbox"> Koordinate su proverene na lokaciji snimanja</label>'+
+      '<p class="sp-note">Beograd je početna lokacija. Koordinate su približni centar grada, ne precizna lokacija seta. SUN položaj zahteva tačan datum, vreme i proverenu lokaciju.</p>'+
       '<label style="display:flex;align-items:center;gap:9px"><input id="sp-measured" type="checkbox"> Dimenzije su zaista izmerene</label>'+
       '<div id="sp-inventory" class="sp-note"></div></div>'+
       '<div class="sp-card"><h2 class="sp-h">DIREKTOR FOTOGRAFIJE / KAMERA</h2>'+
@@ -191,6 +199,13 @@
       el(id).onchange=function(e){var file=e.target.files&&e.target.files[0];if(file)videoPicked(file);e.target.value='';};
     });
     el('sp-mode').onchange=updateInventory;
+    el('sp-location').onchange=function(){
+      // A renamed city must not silently retain Belgrade centre coordinates.
+      if(!/^(beograd|belgrade)(,|$)/i.test(el('sp-location').value.trim())){
+        el('sp-scene-lat').value='';el('sp-scene-lon').value='';
+        el('sp-scene-coords-verified').checked=false;
+      }
+    };
     el('sp-stage').oninput=function(){renderBlocking();};
     el('sp-voice').onclick=function(){
       if(window.Android && typeof window.Android.startSpeechInput==='function') {
@@ -323,6 +338,10 @@
     return core().request({
       mode:el('sp-mode').value,description:el('sp-description').value,
       look:el('sp-look').value,captureLighting:el('sp-capture').value,
+      sceneLocation:el('sp-location').value,sceneLatitude:el('sp-scene-lat').value,
+      sceneLongitude:el('sp-scene-lon').value,sceneTimeZone:el('sp-scene-tz').value,
+      sceneLocalDateTime:el('sp-scene-datetime').value,
+      sceneCoordsVerified:el('sp-scene-coords-verified').checked,
       shotCamera:el('sp-shot-camera').value,roomWidthM:el('sp-width').value,
       roomDepthM:el('sp-depth').value,dimensionsMeasured:el('sp-measured').checked,
       equipment:inventory(),scenePhoto:state.photo,videoFrames:state.frames,language:locale(),

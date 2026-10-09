@@ -107,6 +107,13 @@
       description: str(input.description, 3000),
       look: chooseLook(input.look,input.description,input.captureLighting),
       captureLighting: ['day','night','unknown'].indexOf(input.captureLighting)>=0 ? input.captureLighting : 'unknown',
+      sceneLocation: str(input.sceneLocation, 160),
+      sceneLatitude: num(input.sceneLatitude, -90, 90, null),
+      sceneLongitude: num(input.sceneLongitude, -180, 180, null),
+      sceneTimeZone: str(input.sceneTimeZone, 80),
+      sceneLocalDateTime: /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$/.test(String(input.sceneLocalDateTime||'')) ?
+        str(input.sceneLocalDateTime, 20) : '',
+      sceneCoordsVerified: input.sceneCoordsVerified === true,
       roomWidthM: num(input.roomWidthM, 0.5, 100, null),
       roomDepthM: num(input.roomDepthM, 0.5, 100, null),
       equipment: equipment(input.equipment),
@@ -270,6 +277,15 @@
         'Izmena ISO ili blende ne menja automatski stvarnu svetlost na setu.'
       ]),
       captureLighting: req.captureLighting,
+      location: {
+        name: req.sceneLocation,
+        latitude: req.sceneLatitude,
+        longitude: req.sceneLongitude,
+        timeZone: req.sceneTimeZone,
+        localDateTime: req.sceneLocalDateTime,
+        coordinatesVerified: req.sceneCoordsVerified,
+        locationIsApproximate: !req.sceneCoordsVerified
+      },
       sceneAnalysis:{
         cameraMotion:['static','moving','unknown'].indexOf(analysis.cameraMotion)>=0?analysis.cameraMotion:'unknown',
         blockingConfidence:confidence(analysis.blockingConfidence),

@@ -13,6 +13,18 @@ const own={mode:"own",description:"Zena ide od ograde do drveta, noc",look:"Nigh
     {id:"generator",name:"Generator",sapa:true,qty:1}
   ]};
 assert.equal(core.request(own).equipment.length,1);
+const belgrade=core.request({...own,sceneLocation:"Beograd, Srbija",
+  sceneLatitude:44.7866,sceneLongitude:20.4489,
+  sceneTimeZone:"Europe/Belgrade",sceneLocalDateTime:"2026-10-09T17:00"});
+assert.equal(belgrade.sceneLocation,"Beograd, Srbija");
+assert.equal(belgrade.sceneLatitude,44.7866);
+assert.equal(belgrade.sceneLongitude,20.4489);
+assert.equal(belgrade.sceneLocalDateTime,"2026-10-09T17:00");
+assert.equal(belgrade.sceneCoordsVerified,false,"city centre is approximate, not GPS verified");
+assert.equal(core.sanitizePlan({lights:[]},belgrade,"local").location.locationIsApproximate,true);
+assert.equal(core.request({...own,sceneLatitude:350}).sceneLatitude,90);
+assert.equal(core.request({...own,sceneLocalDateTime:"invalid"}).sceneLocalDateTime,"");
+assert.match(buildScenePlannerPrompt(belgrade),/verified SUN calculation/);
 assert.deepEqual(core.request(own).modifiers,["Softbox"]);
 assert.throws(()=>validateScenePlannerRequest({...own,scenePhoto:"data:text/plain;base64,SGVsbG8="}),/Invalid/);
 assert.throws(()=>validateScenePlannerRequest({...own,scenePhoto:"",videoFrames:[]}),/photo or video frames/);
@@ -81,6 +93,10 @@ assert.ok(frontend.includes('accept="video/*"'),"video file inputs needed");
 assert.ok(frontend.includes('capture="environment"'),"camera/video capture requested");
 assert.ok(frontend.includes("Android.startSpeechInput"),"native voice input wired");
 assert.ok(frontend.includes("sp-description"),"voice destination exists");
+assert.ok(frontend.includes('id="sp-location"'),"Scene Planner must support editable location");
+assert.ok(frontend.includes('value="Beograd, Srbija"'),"Belgrade is the initial user location");
+assert.ok(frontend.includes('id="sp-scene-datetime"'),"shooting time is optional");
+assert.ok(frontend.includes("el('sp-scene-lat').value=''"),"changing cities must clear stale GPS coordinates");
 assert.ok(frontend.includes("videoFrames(state.videoUrl)"),"must sample video before AI request");
 assert.ok(frontend.includes("Originalni video ostaje na telefonu"),"raw video stays on device");
 assert.ok(frontend.includes("sp-mode"),"mode selection required");

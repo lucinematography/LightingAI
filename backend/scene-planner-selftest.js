@@ -92,7 +92,7 @@ assert.ok(server.includes('app.post("/api/scene-planner/plan"'),"AI endpoint mis
 assert.doesNotMatch(frontend,/DMX|ArtNet|Bluetooth|CRMX|ART7/,"Scene Planner must stay control-free");
 console.log("Scene Planner wiring tests passed: Android capture, voice, UI and backend endpoint.");
 
-const nightInput={...own,mode:"best",captureLighting:"day",look:"Cinematic",description:"Zena ide ka drvetu, noc i mesecina"};
+const nightInput={...own,mode:"best",captureLighting:"day",look:"Cinematic",description:"Zena ide ka drvetu, noc i mesecina",videoFrames:[{timeSec:0,image:PHOTO},{timeSec:3,image:PHOTO},{timeSec:6,image:PHOTO}]};
 assert.equal(core.request(nightInput).look,"Day for Night");
 const movement=core.sanitizePlan({
   sceneAnalysis:{cameraMotion:"moving",blockingConfidence:"medium",observedLighting:"day",evidence:"fence and tree visible"},

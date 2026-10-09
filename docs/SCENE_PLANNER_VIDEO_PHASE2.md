@@ -1,5 +1,39 @@
 # Scene Planner video phase 2 — local candidate
 
+## PostgreSQL CI correction after commit 7291c312
+
+PR run `37983989543` failed the unchanged three-request/two-slot test: two mocked
+provider calls occurred, but only one HTTP 200 receipt returned. PostgreSQL logged
+a serialization failure at commit. The reservation was explicitly READ COMMITTED,
+but `submitted`, `unknown`, `updateTask` and upload inserts used pool autocommit
+queries, inheriting the fixture's deliberately SERIALIZABLE default. Concurrent
+receipt writes could therefore abort after provider acceptance. The CI log does
+not record the complete SSI dependency graph or the exact statement canceled.
+
+All adapter mutations now use short READ COMMITTED transactions, synchronous
+commits and the existing singleton gate. The original atomic reservation, two-slot
+limit and protected terminal-state predicates remain. Provider network operations
+stay entirely outside transactions and retry loops. `submitted` first reads the
+durable receipt: an identical task is idempotent; a different task or incompatible
+state is rejected without overwriting it.
+
+Only PostgreSQL SQLSTATE `40001` with a successful rollback permits a DB-only
+transaction retry: at most three attempts, with 25/50 ms delays after releasing
+the client. Each attempt rereads current data. Connection loss, ambiguous COMMIT,
+failed rollback, unique violations and other errors are not retried. Exhausted
+receipt writes retain the reservation/review state, never repeat a provider POST.
+
+Eight additional local regression checks cover SQL-engine-generated 40001,
+bounded persistent failure, restart/reconciliation, lost COMMIT acknowledgement,
+reservation retries, conditional status/unknown updates, duplicate task identity,
+failed rollback and explicit mutation isolation. Existing 39 tests remain.
+The real-server suite retains its original HTTP 200/200/429 expectations and
+SERIALIZABLE defaults. It adds a deterministic genuine SSI conflict with overlapping
+read sets, plus server-generated 40001 recovery/exhaustion scenarios. These new
+real-server cases still require an approved GitHub Actions run; local PostgreSQL
+and Docker are unavailable. No additional allowlist paths or workflow changes are
+required. No commit, push or paid provider call is performed for this correction.
+
 No production service/database is provisioned or enabled by this change. All
 provider tests are offline mocks. PR #414 must remain draft until explicitly approved.
 

@@ -33,13 +33,26 @@ async function worker(){
   // Prove the adapter forces READ COMMITTED even with a stronger server default.
   options.options+=" -c search_path="+schema+" -c default_transaction_isolation=serializable";
   const pool=new pg.Pool({...options,application_name:name});pool.on("error",()=>{});
-  let mode="ok",status="RUNNING",paid=0,heldProviders=[],heldReservation=null;
+  let mode="ok",status="RUNNING",paid=0,heldProviders=[],heldReservation=null,dbFaults=0;
   const connect=pool.connect.bind(pool);
-  const storePool={query:(...args)=>pool.query(...args),end:()=>pool.end()};
+  const storePool={query:(...args)=>{
+    if(/^(INSERT|UPDATE|DELETE) /.test(args[0]))throw new Error("Video writes must use explicit transactions.");
+    return pool.query(...args);
+  },end:()=>pool.end()};
   storePool.connect=async()=>{
     const client=await connect(),query=client.query.bind(client);
     const connectionError=()=>{};client.on("error",connectionError);
     client.query=async(sql,params)=>{
+      if(/^(INSERT|UPDATE|DELETE) /.test(sql)){
+        const isolation=(await query("SHOW transaction_isolation")).rows[0].transaction_isolation;
+        if(isolation!=="read committed")throw new Error("Video mutation isolation is not explicit READ COMMITTED.");
+      }
+      if(sql.startsWith("UPDATE scene_video_request SET task_id=")&&
+        (mode==="submitted-conflict-always"||(mode==="submitted-conflict"&&dbFaults===0))){
+        dbFaults++;
+        // Actual server SQLSTATE and aborted transaction, deterministic fault injection only.
+        await query("DO $$ BEGIN RAISE EXCEPTION 'offline serialization fixture' USING ERRCODE='40001'; END $$");
+      }
       const result=await query(sql,params);
       if(sql.startsWith("SELECT count(*)::int AS count FROM scene_video_request")){
         // Widen the count/insert race without replacing SQL or database locking.
@@ -84,9 +97,9 @@ async function worker(){
   process.on("message",async message=>{
     try{
       if(message.command==="config"){
-        if(!["ok","timeout","invalid","hold-provider","hold-reservation","status-error"].includes(message.mode)||
+        if(!["ok","timeout","invalid","hold-provider","hold-reservation","status-error","submitted-conflict","submitted-conflict-always"].includes(message.mode)||
           !["RUNNING","SUCCEEDED","FAILED","CANCELED","UNRECOGNIZED"].includes(message.status))throw new Error();
-        mode=message.mode;status=message.status;
+        mode=message.mode;status=message.status;dbFaults=0;
       }else if(message.command==="release-reservation"){heldReservation?.();heldReservation=null;}
       else if(message.command==="release-provider"){for(const resolve of heldProviders)resolve();heldProviders=[];}
       else if(message.command==="stale-status"){
@@ -100,7 +113,7 @@ async function worker(){
         if(!poolClosed)await pool.end();
         process.send({reply:message.id,ok:true,paid});process.disconnect();return;
       }else throw new Error();
-      process.send({reply:message.id,ok:true,paid});
+      process.send({reply:message.id,ok:true,paid,dbFaults});
     }catch{process.send({reply:message.id,ok:false});}
   });
   process.send({event:"ready",port:server.address().port});

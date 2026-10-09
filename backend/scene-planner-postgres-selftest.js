@@ -132,6 +132,31 @@ async function integration(){
       assert.notEqual(a.child.pid,b.child.pid);
       const connections=await sql("SELECT DISTINCT application_name FROM pg_stat_activity WHERE application_name=ANY($1::text[]) AND datname='lightingai_ci_test'",[[a.name,b.name]]);
       assert.equal(connections.rows.length,2,"Both processes must have independent real PostgreSQL connections");
+      await t.test("real SSI conflict reproduces the old receipt-write isolation failure",async()=>{
+        await reset();const ids=[uuid(),uuid()],tasks=[uuid(),uuid()];
+        for(const id of ids)await sql(`INSERT INTO ${schema}.scene_video_request(id,upload_id,status,expires_at) VALUES($1,$2,'SUBMITTING',now()+interval '7 days')`,[id,uuid()]);
+        const clients=[];
+        try{
+          for(let i=0;i<2;i++){
+            const c=await admin.connect();clients.push(c);
+            await c.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
+            await c.query(`SET LOCAL search_path=${schema}`);
+            // Deterministic overlapping read sets, not a fabricated SQLSTATE.
+            await c.query("SELECT id,task_id,status FROM scene_video_request");
+          }
+          const outcomes=await Promise.all(clients.map(async(c,i)=>{
+            try{
+              await c.query("UPDATE scene_video_request SET task_id=$2,status='PENDING' WHERE id=$1 AND status='SUBMITTING'",[ids[i],tasks[i]]);
+              await c.query("COMMIT");return "committed";
+            }catch(error){await c.query("ROLLBACK");return error.code;}
+          }));
+          assert.equal(outcomes.filter(x=>x==="40001").length,1);
+          assert.equal(outcomes.filter(x=>x==="committed").length,1);
+        }finally{
+          for(const c of clients){await c.query("ROLLBACK").catch(()=>{});c.release();}
+        }
+        assert.equal((await sql(`SELECT count(*)::int AS count FROM ${schema}.scene_video_request WHERE task_id IS NOT NULL`)).rows[0].count,1);
+      });
       await t.test("concurrent same request is charged once and reconciles identically",async()=>{
         await reset();const input=body(await a.upload());
         const results=await Promise.all(Array.from({length:8},(_,i)=>(i%2?a:b).call("/start",input)));
@@ -166,6 +191,22 @@ async function integration(){
         assert.equal((await a.call("/request/"+input.requestId)).data.taskId,result.data.taskId);
         assert.equal((await a.call("/status/"+result.data.taskId)).data.status,"RUNNING");
         assert.equal((await a.call("/start",input)).data.reused,true);assert.equal(await paidCount(),1);
+      });
+      await t.test("server 40001 after provider acceptance retries only DB and recovers after restart",async()=>{
+        await reset();const input=body(await a.upload());await a.config("submitted-conflict");
+        const result=await a.call("/start",input);assert.equal(result.code,200);
+        assert.equal((await a.command("stats")).dbFaults,1);assert.equal(await paidCount(),1);
+        await a.stop();a=await instance();
+        assert.equal((await a.call("/request/"+input.requestId)).data.taskId,result.data.taskId);
+        assert.equal((await b.call("/start",input)).data.reused,true);assert.equal(await paidCount(),1);
+      });
+      await t.test("persistent server 40001 is bounded and cannot recharge after restart",async()=>{
+        await reset();const input=body(await a.upload());await a.config("submitted-conflict-always");
+        assert.equal((await a.call("/start",input)).code,409);assert.equal((await a.command("stats")).dbFaults,3);
+        assert.equal((await request(input.requestId)).status,"UNKNOWN");
+        await a.stop();a=await instance();
+        assert.equal((await b.call("/request/"+input.requestId)).data.requiresReview,true);
+        assert.equal((await a.call("/start",input)).code,409);assert.equal(await paidCount(),1);
       });
       await t.test("terminated database connection rolls back a reservation before a provider call",async()=>{
         await reset();const input=body(await a.upload());await a.config("hold-reservation");

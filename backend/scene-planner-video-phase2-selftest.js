@@ -133,6 +133,104 @@ await test("durable PostgreSQL statements and mocked HTTP provider",async t=>{
       try{assert.equal((await api.call("/start",body)).code,409);}finally{store.submitted=submitted;}
       assert.equal((await api.call("/start",body)).code,409);assert.equal(provider.state.paid,1);
     });
+    async function withDbFault(match,fail,run){
+      const connect=store.pool.connect;let hits=0;
+      store.pool.connect=async()=>{
+        const client=await connect(),query=client.query;
+        client.query=async(sql,params)=>{
+          if(match(sql))return fail(++hits,()=>query(sql,params),query);
+          return query(sql,params);
+        };
+        return client;
+      };
+      try{await run(()=>hits);}finally{store.pool.connect=connect;}
+    }
+    const serialization=()=>Object.assign(new Error("offline serialization failure"),{code:"40001"});
+    const receiptWrite=sql=>sql.startsWith("UPDATE scene_video_request SET task_id=");
+    await t.test("40001 after provider acceptance retries DB only and survives restart",async()=>{
+      await reset();const body=start((await api.upload()).data.uploadId);let result;
+      await withDbFault(receiptWrite,(hit,query,raw)=>{
+        if(hit===1)return raw("DO $$ BEGIN RAISE EXCEPTION 'offline serialization fixture' USING ERRCODE='40001'; END $$");
+        return query();
+      },async hits=>{
+        result=await api.call("/start",body);assert.equal(result.code,200);assert.equal(hits(),2);assert.equal(provider.state.paid,1);
+      });
+      await api.close();await store.close();store=await testStore(path.join(folder,"database"));api=await listen(store,provider.fetch);
+      assert.equal((await api.call("/request/"+body.requestId)).data.taskId,result.data.taskId);
+      assert.equal((await api.call("/start",body)).data.reused,true);assert.equal(provider.state.paid,1);
+    });
+    await t.test("persistent 40001 stops after three DB attempts; restart never charges again",async()=>{
+      await reset();const body=start((await api.upload()).data.uploadId);
+      await withDbFault(receiptWrite,()=>{throw serialization();},async hits=>{
+        assert.equal((await api.call("/start",body)).code,409);assert.equal(hits(),3);
+      });
+      assert.equal((await store.request(body.requestId)).status,"UNKNOWN");
+      await api.close();await store.close();store=await testStore(path.join(folder,"database"));api=await listen(store,provider.fetch);
+      assert.equal((await api.call("/start",body)).code,409);assert.equal(provider.state.paid,1);
+    });
+    await t.test("lost COMMIT acknowledgement is not retried; durable receipt reconciles",async()=>{
+      await reset();const body=start((await api.upload()).data.uploadId),connect=store.pool.connect;let attempts=0;
+      store.pool.connect=async()=>{
+        const client=await connect(),query=client.query;let submitted=false;
+        client.query=async(sql,params)=>{
+          if(receiptWrite(sql)){submitted=true;attempts++;}
+          const result=await query(sql,params);
+          if(submitted&&sql==="COMMIT")throw Object.assign(new Error("offline lost acknowledgment"),{code:"08006"});
+          return result;
+        };return client;
+      };
+      try{assert.equal((await api.call("/start",body)).code,409);assert.equal(attempts,1);}finally{store.pool.connect=connect;}
+      const receipt=await store.request(body.requestId);assert.ok(receipt.task_id);assert.equal(receipt.status,"PENDING");
+      await api.close();await store.close();store=await testStore(path.join(folder,"database"));api=await listen(store,provider.fetch);
+      assert.equal((await api.call("/start",body)).data.taskId,receipt.task_id);assert.equal(provider.state.paid,1);
+    });
+    await t.test("40001 in reservation cannot replay provider or exceed capacity",async()=>{
+      await reset();const body=start((await api.upload()).data.uploadId);
+      await withDbFault(sql=>sql.startsWith("INSERT INTO scene_video_request"),(hit,query)=>{if(hit===1)throw serialization();return query();},async hits=>{
+        assert.equal((await api.call("/start",body)).code,200);assert.equal(hits(),2);assert.equal(provider.state.paid,1);
+      });
+    });
+    await t.test("unknown and status retries preserve terminal and task identity guards",async()=>{
+      await reset();const body=start((await api.upload()).data.uploadId),result=await api.call("/start",body);
+      await withDbFault(sql=>sql.startsWith("UPDATE scene_video_request SET status="),(hit,query)=>{if(hit===1)throw serialization();return query();},async hits=>{
+        await store.updateTask(result.data.taskId,"FAILED");assert.equal(hits(),2);
+      });
+      await store.submitted(body.requestId,result.data.taskId);await store.unknown(body.requestId);
+      assert.equal((await store.request(body.requestId)).status,"FAILED");
+      await assert.rejects(store.submitted(body.requestId,uuid()),/not persisted/);
+      await reset();provider.state.mode="timeout";const ambiguous=start((await api.upload()).data.uploadId);
+      await withDbFault(sql=>sql.startsWith("UPDATE scene_video_request SET status='UNKNOWN'"),(hit,query)=>{if(hit===1)throw serialization();return query();},async hits=>{
+        assert.equal((await api.call("/start",ambiguous)).code,409);assert.equal(hits(),2);
+      });
+      assert.equal((await store.request(ambiguous.requestId)).status,"UNKNOWN");assert.equal(provider.state.paid,1);
+    });
+    await t.test("40001 at COMMIT rechecks the saved receipt in a fresh transaction",async()=>{
+      await reset();const body=start((await api.upload()).data.uploadId);
+      await store.reserve(body.requestId,body.uploadId);const taskId=uuid();
+      await withDbFault(sql=>sql==="COMMIT",(hit,query)=>{if(hit===1)throw serialization();return query();},async hits=>{
+        await store.submitted(body.requestId,taskId);assert.equal(hits(),2);
+      });
+      await store.submitted(body.requestId,taskId);assert.equal((await store.request(body.requestId)).task_id,taskId);
+      assert.equal(provider.state.paid,0);
+    });
+    await t.test("failed rollback prevents retry even for 40001",async()=>{
+      let attempts=0,released=0;
+      const broken=new PostgresVideoJobStore({connect:async()=>{
+        attempts++;return {query:async sql=>{if(sql==="ROLLBACK")throw new Error("offline connection lost");throw serialization();},release(){released++;}};
+      }});
+      await assert.rejects(broken.submitted(uuid(),uuid()),e=>e.code==="40001");assert.equal(attempts,1);assert.equal(released,1);
+    });
+    await t.test("all adapter mutations use explicit READ COMMITTED transactions",async()=>{
+      await reset();
+      await withDbFault(sql=>/^(INSERT|UPDATE|DELETE) /.test(sql),async(hit,query,raw)=>{
+        assert.equal((await raw("SHOW transaction_isolation")).rows[0].transaction_isolation,"read committed");
+        return query();
+      },async hits=>{
+        const body=start((await api.upload()).data.uploadId),result=await api.call("/start",body);
+        assert.equal(result.code,200);await store.updateTask(result.data.taskId,"FAILED");await store.unknown(body.requestId);
+        assert.ok(hits()>5);assert.equal(provider.state.paid,1);
+      });
+    });
     await t.test("active limit is atomic across three concurrent starts",async()=>{
       await reset();const uploads=await Promise.all([api.upload(),api.upload(),api.upload()]);
       const results=await Promise.all(uploads.map(u=>api.call("/start",start(u.data.uploadId))));

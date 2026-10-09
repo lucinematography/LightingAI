@@ -43,18 +43,26 @@ export class PostgresVideoJobStore {
     await this.pool.query("SELECT id,upload_id,task_id,status,expires_at,output_url FROM scene_video_request LIMIT 0");
   }
   async transaction(action){
-    const client=await this.pool.connect();
-    try{
-      // A fresh snapshot after acquiring the gate is essential for cross-replica limits.
-      await client.query("BEGIN ISOLATION LEVEL READ COMMITTED");
-      await client.query("SET LOCAL synchronous_commit=on");
-      const gate=await client.query("SELECT id FROM scene_video_gate WHERE id=1 FOR UPDATE");
-      if(gate.rows.length!==1)throw failure("Video storage is not ready.");
-      const result=await action(client);
-      await client.query("COMMIT");
-      return result;
-    }catch(error){await client.query("ROLLBACK").catch(()=>{});throw error;}
-    finally{client.release();}
+    // DB-only callbacks: never place provider calls inside this retry boundary.
+    // 40001 proves the transaction aborted; transport/COMMIT ambiguity does not.
+    for(let attempt=0;attempt<3;attempt++){
+      const client=await this.pool.connect();
+      try{
+        // A fresh snapshot after acquiring the gate is essential for cross-replica limits.
+        await client.query("BEGIN ISOLATION LEVEL READ COMMITTED");
+        await client.query("SET LOCAL synchronous_commit=on");
+        const gate=await client.query("SELECT id FROM scene_video_gate WHERE id=1 FOR UPDATE");
+        if(gate.rows.length!==1)throw failure("Video storage is not ready.");
+        const result=await action(client);
+        await client.query("COMMIT");
+        return result;
+      }catch(error){
+        const rolledBack=await client.query("ROLLBACK").then(()=>true,()=>false);
+        if(error.code!=="40001"||!rolledBack||attempt===2)throw error;
+      }
+      finally{client.release();}
+      await new Promise(resolve=>setTimeout(resolve,25*(attempt+1)));
+    }
   }
   async prune(){
     await this.transaction(async c=>{
@@ -66,8 +74,10 @@ export class PostgresVideoJobStore {
     });
   }
   async addUpload(id,uri,seconds){
-    const r=await this.pool.query("INSERT INTO scene_video_upload(id,uri,seconds,expires_at) VALUES($1,$2,$3,now()+interval '1 hour') RETURNING expires_at",[id,uri,seconds]);
-    return r.rows[0];
+    return this.transaction(async c=>{
+      const r=await c.query("INSERT INTO scene_video_upload(id,uri,seconds,expires_at) VALUES($1,$2,$3,now()+interval '1 hour') RETURNING expires_at",[id,uri,seconds]);
+      return r.rows[0];
+    });
   }
   async request(id){return (await this.pool.query("SELECT * FROM scene_video_request WHERE id=$1",[id])).rows[0];}
   async upload(id){return (await this.pool.query("SELECT * FROM scene_video_upload WHERE id=$1 AND expires_at>now()",[id])).rows[0];}
@@ -90,13 +100,19 @@ export class PostgresVideoJobStore {
     });
   }
   async submitted(id,taskId){
-    const result=await this.pool.query("UPDATE scene_video_request SET task_id=$2,status='PENDING' WHERE id=$1 AND status='SUBMITTING'",[id,taskId]);
-    if(result.rowCount!==1&&result.affectedRows!==1)throw failure("Video task receipt was not persisted.");
+    return this.transaction(async c=>{
+      const prior=(await c.query("SELECT * FROM scene_video_request WHERE id=$1",[id])).rows[0];
+      // Reconcile identical durable receipts; never overwrite a different task or a terminal state.
+      if(prior?.task_id===taskId)return;
+      if(!prior||prior.task_id||prior.status!=="SUBMITTING")throw failure("Video task receipt was not persisted.");
+      const result=await c.query("UPDATE scene_video_request SET task_id=$2,status='PENDING' WHERE id=$1 AND status='SUBMITTING' AND task_id IS NULL",[id,taskId]);
+      if(result.rowCount!==1&&result.affectedRows!==1)throw failure("Video task receipt was not persisted.");
+    });
   }
-  async unknown(id){await this.pool.query("UPDATE scene_video_request SET status='UNKNOWN' WHERE id=$1 AND task_id IS NULL AND status='SUBMITTING'",[id]);}
+  async unknown(id){return this.transaction(c=>c.query("UPDATE scene_video_request SET status='UNKNOWN' WHERE id=$1 AND task_id IS NULL AND status='SUBMITTING'",[id]));}
   async updateTask(id,status,outputURL){
     // Concurrent stale polls cannot turn a terminal task back into an active one.
-    await this.pool.query("UPDATE scene_video_request SET status=$2,output_url=$3 WHERE task_id=$1 AND status NOT IN ('SUCCEEDED','FAILED','CANCELED','EXPIRED')",[id,status,outputURL||null]);
+    return this.transaction(c=>c.query("UPDATE scene_video_request SET status=$2,output_url=$3 WHERE task_id=$1 AND status NOT IN ('SUCCEEDED','FAILED','CANCELED','EXPIRED')",[id,status,outputURL||null]));
   }
   async close(){await this.pool.end();}
 }

@@ -4,7 +4,7 @@
   var ENTRY='lightingai-scene-planner-entry';
   var API='https://lightingai.onrender.com';
   var STORE='lighting_scene_planner_last_v1';
-  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[]};
+  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false};
   function el(id){return document.getElementById(id);}
   function esc(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
@@ -160,6 +160,17 @@
       '<div class="sp-actions" style="margin-top:10px"><button type="button" id="sp-video-export" class="sp-btn">IZVEZI KONCEPTUALNI VIDEO</button>'+
       '<button type="button" id="sp-video-share" class="sp-btn" disabled>PODELI IZVEZENI VIDEO</button></div>'+
       '<div id="sp-video-export-status" class="sp-note">Video izvoz koristi lokalnu obradu snimka; nije AI relight i ne menja fizičko osvetljenje.</div></div>'+
+      '<div class="sp-card"><h2 class="sp-h">AI VIDEO RELIGHT / VIDEO-TO-VIDEO (EKSPERIMENTALNO)</h2>'+
+      '<p class="sp-note">Za originalni video sa novom rasvetom koristi se spoljni plaćeni AI video servis. Ova funkcija ostaje zaključana dok administrator ne omogući servis; nema automatskog trošenja.</p>'+
+      '<button type="button" id="sp-video-capabilities" class="sp-btn">PROVERI DOSTUPNOST AI VIDEA</button>'+
+      '<div id="sp-video-provider-status" class="sp-note" role="status"></div>'+
+      '<label>PRISTUPNI TOKEN DOBIJEN OD ADMINISTRATORA (NE PROVIDER API KLJUČ)</label>'+
+      '<input id="sp-video-auth" type="password" autocomplete="off" class="sp-field" placeholder="Pristupni token" />'+
+      '<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="sp-video-cost-confirm"> Svestan sam da video-to-video generisanje koristi plaćeni AI servis.</label>'+
+      '<div class="sp-actions"><button id="sp-video-ai-start" class="sp-btn sp-primary" type="button">POKRENI AI VIDEO OBRADU</button>'+
+      '<button id="sp-video-ai-check" class="sp-btn" type="button" disabled>PROVERI STATUS</button></div>'+
+      '<div id="sp-video-ai-status" class="sp-note"></div>'+
+      '<div id="sp-video-ai-output" style="margin-top:10px"></div></div>'+
       '<label>POLOŽAJ GLUMCA / TRENUTAK SCENE</label><input type="range" id="sp-stage" min="0" max="0" value="0" step="1" class="sp-field" style="padding:4px">'+
       '<div id="sp-stage-info" class="sp-note"></div>'+
       '<p class="sp-note">2D položaji i pokrivenost su AI procene, ne stvarna fotometrijska merenja.</p></div>'+
@@ -193,6 +204,9 @@
     el('sp-storyboard-btn').onclick=generateAIStoryboard;
     el('sp-video-export').onclick=exportConceptVideo;
     el('sp-video-share').onclick=shareConceptVideo;
+    el('sp-video-capabilities').onclick=checkAIProvider;
+    el('sp-video-ai-start').onclick=startAIVideo;
+    el('sp-video-ai-check').onclick=checkAIVideo;
     el('sp-save').onclick=save;
     el('sp-share').onclick=share;
     updateInventory();
@@ -283,7 +297,7 @@
     if(state.videoBusy)return;
     if(!/^video\//.test(file.type)&&file.type) {status('Potreban je video snimak.',true);return;}
     if(file.size>180*1024*1024){status('Video prelazi 180 MB. Skrati snimak i pokušaj ponovo.',true);return;}
-    state.videoBusy=true;state.frames=[];state.aiPreview='';state.aiStoryboard=[];state.videoFile=file;state.exportedVideo=null;
+    state.videoBusy=true;state.frames=[];state.aiPreview='';state.aiStoryboard=[];state.videoFile=file;state.exportedVideo=null;state.aiVideoTaskId=null;
     if(state.videoUrl){URL.revokeObjectURL(state.videoUrl);state.videoUrl='';}
     state.videoUrl=URL.createObjectURL(file);
     var player=el('sp-video');if(player){player.src=state.videoUrl;player.hidden=false;player.load();}
@@ -558,6 +572,114 @@
       status('AI ključni kadrovi su spremni. Za pravi AI video potrebna je vremenski usklađena obrada svih kadrova.');
     }catch(error){status('AI storyboard nije dostupan: '+(error.name==='AbortError'?'timeout':error.message),true);}
     finally{clearTimeout(timer);state.abort=null;if(button)button.disabled=false;}
+  }
+  function videoStatus(message,problem){
+    var elStatus=el('sp-video-ai-status');
+    if(elStatus){elStatus.textContent=message;elStatus.style.color=problem?'#ffb4a6':'#b2e9c5';}
+  }
+  async function checkAIProvider(){
+    try{
+      var res=await fetch(API+'/api/scene-planner/video/capabilities',{cache:'no-store'});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      var data=await res.json();
+      state.aiVideoAvailable=data.available===true;
+      el('sp-video-provider-status').textContent=state.aiVideoAvailable?
+        'AI servis je aktiviran. Zahteva pristupni token, odobrenje plaćenog poziva i snimak od 2 do 30 sekundi.':
+        'AI video servis još nije aktiviran; ova funkcija se ne može pokrenuti.';
+    }catch(e){
+      state.aiVideoAvailable=false;
+      el('sp-video-provider-status').textContent='Video servis nije dostupan ('+e.message+').';
+    }
+  }
+  function videoAccess(){
+    var token=el('sp-video-auth').value.trim();
+    if(token.length<24)throw new Error('Pristupni token administratora nije unet.');
+    return {'Authorization':'Bearer '+token};
+  }
+  async function videoRequest(path,options){
+    var headers=Object.assign({},videoAccess(),options&&options.headers||{});
+    var response=await fetch(API+'/api/scene-planner/video'+path,
+      Object.assign({cache:'no-store'},options||{},{headers:headers}));
+    if(!response.ok){
+      var data=await response.json().catch(function(){return {};});
+      throw new Error(data.error||'Video servis HTTP '+response.status);
+    }
+    return response;
+  }
+  async function startAIVideo(){
+    if(!state.aiVideoAvailable){videoStatus('AI video servis nije omogućen.',true);return;}
+    if(!state.plan||!state.videoFile){videoStatus('Izaberi video i generiši plan.',true);return;}
+    if(!el('sp-video-cost-confirm').checked){
+      videoStatus('Potrebna je izričita potvrda plaćene AI obrade.',true);return;
+    }
+    if(state.videoFile.size>40*1024*1024){videoStatus('Video prelazi dozvoljenih 40 MiB.',true);return;}
+    var mime=state.videoFile.type;
+    if(['video/mp4','video/quicktime','video/webm'].indexOf(mime)<0){
+      videoStatus('Potreban je MP4, MOV ili WebM. Drugi video format nije prihvaćen.',true);return;
+    }
+    var duration=state.frames.length?state.frames[state.frames.length-1].timeSec:0;
+    if(duration<2||duration>30){
+      videoStatus('Potreban je snimak trajanja od 2 do 30 sekundi.',true);return;
+    }
+    var button=el('sp-video-ai-start');button.disabled=true;
+    try{
+      videoStatus('Otpremam izabrani video na zaštićeni servis…');
+      var uploaded=await videoRequest('/upload',{
+        method:'POST',headers:{'Content-Type':mime,'X-Scene-Duration':String(duration)},
+        body:state.videoFile
+      });
+      var info=await uploaded.json();
+      videoStatus('Video je otpremljen. Pokrećem plaćeni AI relight zadatak…');
+      var started=await videoRequest('/start',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({uploadId:info.uploadId,requestId:cryptoRandomRequestId(),
+          plan:state.plan,confirmPaidGeneration:true})
+      });
+      var task=await started.json();
+      state.aiVideoTaskId=task.taskId;
+      el('sp-video-ai-check').disabled=false;
+      videoStatus('AI zadatak '+task.taskId+' je prihvaćen. Procena: '+task.estimatedCredits+' kredita. Proveri status dugmetom.');
+    }catch(error){videoStatus('Video generisanje nije pokrenuto: '+error.message,true);}
+    finally{button.disabled=false;}
+  }
+  function cryptoRandomRequestId(){
+    if(window.crypto&&window.crypto.randomUUID)return window.crypto.randomUUID();
+    throw new Error('Za sigurno plaćeno pokretanje potreban je podržan generator jedinstvenog zahteva.');
+  }
+  async function checkAIVideo(){
+    if(!state.aiVideoTaskId)return;
+    try{
+      var response=await videoRequest('/status/'+state.aiVideoTaskId,{method:'GET'});
+      var task=await response.json();
+      if(task.ready){
+        videoStatus('AI video je spreman za MP4 preuzimanje. Sadržaj proveriti pre korišćenja na setu.');
+        var out=el('sp-video-ai-output');
+        out.innerHTML='<button id="sp-ai-mp4-download" type="button" class="sp-btn sp-primary">PREUZMI AI MP4 VIDEO</button>'+
+          '<p class="sp-note">Rezultat može sadržati promene pokreta, lica ili tekstura; proveriti kontinuitet sa originalom.</p>';
+        el('sp-ai-mp4-download').onclick=downloadAIVideo;
+      }else videoStatus('Status AI zadatka: '+String(task.status||'nepoznat')+'.');
+    }catch(error){videoStatus(error.message,true);}
+  }
+  async function downloadAIVideo(){
+    if(!state.aiVideoTaskId)return;
+    videoStatus('Preuzimam AI MP4. Za duže klipove preuzimanje može zauzeti memoriju uređaja.');
+    try{
+      var response=await videoRequest('/download/'+state.aiVideoTaskId,{method:'GET'});
+      var size=Number(response.headers.get('Content-Length'))||0;
+      if(size>140*1024*1024)throw new Error('MP4 previše velik za WebView preuzimanje.');
+      var blob=await response.blob();
+      if(!blob.size||blob.size>140*1024*1024)throw new Error('Neispravna ili prevelika video datoteka.');
+      var file=new File([blob],'LightingAI_AI_Relight.mp4',{type:'video/mp4'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+        await navigator.share({title:'LightingAI AI video relight',files:[file]});
+        videoStatus('Otvoren izbor za deljenje ili čuvanje MP4 datoteke.');
+      }else{
+        var url=URL.createObjectURL(blob),a=document.createElement('a');
+        a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+        setTimeout(function(){URL.revokeObjectURL(url);},30000);
+        videoStatus('Pokrenuto MP4 preuzimanje. Android WebView izvoz se mora proveriti na uređaju.');
+      }
+    }catch(error){videoStatus('MP4 preuzimanje nije uspelo: '+error.message,true);}
   }
   function exportMessage(message,error){
     var box=el('sp-video-export-status');

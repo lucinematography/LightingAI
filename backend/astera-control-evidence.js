@@ -3,6 +3,35 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+export function summarizeReplyFragments(samples, expectedFragments = samples.length) {
+  // Notification boundaries are not application-message boundaries. Preserve order.
+  // Recognize only the observed ASCII wrapper, never assign proprietary ACK meaning.
+  const valid = samples.every((s, i) => s && Number.isFinite(s.atMs) &&
+    /^(?:[0-9a-f]{2})+$/i.test(String(s.hex || '')) &&
+    (i === 0 || s.atMs >= samples[i - 1].atMs));
+  if (!valid || expectedFragments !== samples.length) return {
+    available: false, reason: 'missing_invalid_or_unordered_fragments', ackVerified: false
+  };
+  const byteCount = samples.reduce((n, s) => n + s.hex.length / 2, 0);
+  if (byteCount > 256000) return { available: false, reason: 'stream_size_limit', ackVerified: false };
+  const bytes = Buffer.concat(samples.map(s => Buffer.from(s.hex, 'hex')));
+  if ([...bytes].some(b => b > 126 || (b < 32 && ![9, 10, 13].includes(b)))) return {
+    available: false, reason: 'not_observed_ascii_reply_format', ackVerified: false
+  };
+  const text = bytes.toString('ascii');
+  const replies = [...text.matchAll(/<reply>([\s\S]*?)<\/reply>/g)];
+  const remainder = text.replace(/<reply>[\s\S]*?<\/reply>/g, '')
+    .replace(/<\?xml[^<>]*\?>/g, '').trim();
+  return {
+    available: true, fragmentCount: samples.length, byteCount,
+    completeReplyCount: replies.length,
+    emptyReplyCount: replies.filter(r => !r[1].trim()).length,
+    nonemptyReplyCount: replies.filter(r => r[1].trim()).length,
+    unassembledTextPresent: remainder.length > 0,
+    ackVerified: false
+  };
+}
+
 export function inspectCapturedEnvelope(hex) {
   if (typeof hex !== 'string' || !/^(?:[0-9a-f]{2})+$/i.test(hex)) return { valid: false, reason: 'invalid_hex' };
   const bytes = Buffer.from(hex, 'hex');
@@ -60,6 +89,7 @@ export function analyzeControlEvidence(input) {
         envelope: frame ? inspectCapturedEnvelope(frame) : null,
         colorWritesInTimeline: writes.length,
         postWriteNotificationCount: count, retainedPostWriteSamples: postSamples.length,
+        postWriteResponses: summarizeReplyFragments(postSamples, count),
         missingEvidence: [...new Set(missing)],
         sessionVerificationReason: 'no_confirmed_astera_session_response_decoder',
         fixtureVerificationReason: 'no_confirmed_command_response_decoder',

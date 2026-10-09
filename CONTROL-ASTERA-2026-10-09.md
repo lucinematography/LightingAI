@@ -1,5 +1,33 @@
 # Titan failed WHITE test — 2026-10-09
 
+## Update after receiving the owner's complete CONNECT/WHITE JSON
+
+The owner subsequently supplied both complete result objects in chat. The nine retained post-WHITE fragments reconstruct exactly 40 ASCII bytes:
+
+```xml
+<?xml version="1.0" ?>
+<reply>
+</reply>
+```
+
+Thus nine BLE notifications are **one complete empty XML reply**, not nine application acknowledgements. The first/last fragments arrived 72/78 ms after the WHITE submission at monotonic time `1530493`. There is no color value, explicit success/error or authentication state in this reply. Its emptiness does not prove rejection either. Without a verified protocol specification or successful official reference session, it must not be treated as an execution ACK.
+
+The WHITE bootstrap also reconstructs a response field `<sh1002>   V5.12.96.U</sh1002>`. This is an observed version string from the connected BTB endpoint; the evidence does not establish that it identifies the tube's complete firmware rather than a bridge component. Most other complete WHITE-bootstrap replies are empty. The CONNECT samples contain incomplete XML fragments, so they cannot be reconstructed into complete messages with the same certainty.
+
+The initial CONNECT attempt failed with status 133; the 2200 ms retry succeeded with bond state 12 (Android BONDED), successful discovery and CCCD status 0. Initial bootstrap completion was at `1472185`; the later disconnect was at `1482920`, 10735 ms later, status 19 (`0x13`, remote-user-terminated reason in standard Bluetooth terminology). This does not prove a human pressed disconnect or why the peripheral terminated. WHITE started 42282 ms after that disconnect with `reuseConnection:false`, a fresh successful GATT connection and repeated bootstrap.
+
+WHITE local callback arrived 2 ms after submission. All nine reply fragments arrived early in its 5000 ms observation interval; completion at `1535495` retained the connection and no disconnect occurred within that recorded interval. Therefore premature GATT closure **during this WHITE test** does not explain the failure. The earlier idle disconnect remains a separate unresolved session/keepalive issue; no heartbeat will be invented.
+
+Both JSON entries have `operatorObservation:NOT_RECORDED`; the physical failure is established by the owner's separate statement that the tube remained red, not by feedback recorded in JSON. Do not silently change the supplied export to UNCHANGED. The exact installed build identity remains absent. One fragment differs by 1 ms between the samples and timeline; it does not affect ordering or reconstruction.
+
+The offline analyzer now assembles the observed ASCII reply wrappers across arbitrary BLE boundaries, counts complete versus empty replies, checks sample completeness and monotonic ordering, and retains `ackVerified:false`. Tests cover the exact nine supplied non-secret fragments, 1/5/20-byte boundaries, incomplete/unordered/binary streams and the separation between chat observation and exported operator feedback. No proprietary write bytes or runtime settings were changed, and no new installation is justified by an empty reply alone.
+
+**Next minimum evidence is now the successful official AsteraApp fresh-session HCI capture**, not another LightingAI export. The supplied export resolves the notification-content gap. Capture startup and one visually successful RED → WHITE transition, ideally repeat within a second fresh connection, without resetting or changing Radio PIN/bonding. Enable full Android HCI logging before the official connection, export a single system bug-report ZIP afterward and share it privately. I can extract/compare the session and color traffic; phone-only capture/export may be restricted by HyperOS. Until this reference or a verifiable vendor specification is available, the meaning of omitted session fields and empty replies remains unknown.
+
+## Initial assessment before receiving the full JSON (historical)
+
+The update above supersedes the missing-export and next-export recommendations below.
+
 Reviewed branch HEAD `94164259902b3ffa072c6f4c31ebd565e7fd46c6`, including the previous repair, captured-frame/bootstrap introduction commits, native scanner/inspector/bonding/foreground transport, WebView export path and backend evidence analyzers. PR #408 stays draft; main and PR #413 are unchanged. Filters remain Equipment → FILTERI/GEL. No runtime command bytes or user settings were changed in this investigation.
 
 ## Physical evidence supplied by the owner

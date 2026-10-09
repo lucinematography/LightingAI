@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { analyzeControlEvidence, inspectCapturedEnvelope } from './astera-control-evidence.js';
+import { analyzeControlEvidence, inspectCapturedEnvelope, summarizeReplyFragments } from './astera-control-evidence.js';
 
 const white = '0A107EDF36000000007D63130DD30E960CFFBE0F';
 assert.equal(inspectCapturedEnvelope(white).valid, true);
@@ -43,4 +43,37 @@ assert.equal(analyzeControlEvidence({ preset: 'WHITE', payload: { eventTimeline:
 assert.equal(analyzeControlEvidence({ kind: 'LightingAI-Astera-control-test-session', tests: [reportedFailure, synthetic] }).tests.length, 2);
 assert.throws(() => analyzeControlEvidence(null), /control_export_required/);
 assert.throws(() => analyzeControlEvidence({ kind: 'LightingAI-Astera-control-test-session', tests: [] }), /control_tests_required/);
+// Exact nine benign fragments supplied in the 2026-10-09 failed WHITE export.
+// No private session/config capture is embedded in this test.
+const observedFragments = ['3C3F786D6C','2076657273','696F6E3D22','312E302220','3F3E0A3C72','65706C793E','0A','3C2F726570','6C793E0A']
+  .map((hex, i) => ({ hex, atMs: 1530565 + i, afterColorWrite: true }));
+const reply = summarizeReplyFragments(observedFragments, 9);
+assert.equal(reply.fragmentCount, 9);
+assert.equal(reply.byteCount, 40);
+assert.equal(reply.completeReplyCount, 1);
+assert.equal(reply.emptyReplyCount, 1);
+assert.equal(reply.unassembledTextPresent, false);
+assert.equal(reply.ackVerified, false);
+assert.equal(summarizeReplyFragments(observedFragments.slice(1), 9).available, false);
+assert.equal(summarizeReplyFragments([{ hex: 'FF', atMs: 1 }]).available, false);
+assert.equal(summarizeReplyFragments([{ hex: '3C', atMs: 2 }, { hex: '3E', atMs: 1 }]).available, false);
+assert.equal(summarizeReplyFragments([{ hex: Buffer.from('</reply>\n').toString('hex'), atMs: 1 }]).unassembledTextPresent, true);
+const text = '<?xml version="1.0" ?>\n<reply>\n</reply>\n<reply><sh1002>   V5.12.96.U</sh1002></reply>';
+for (const size of [1, 5, 20, 100]) {
+  const bytes = Buffer.from(text);
+  const parts = [];
+  for (let i = 0; i < bytes.length; i += size) parts.push({ hex: bytes.subarray(i, i + size).toString('hex'), atMs: i });
+  const assembled = summarizeReplyFragments(parts);
+  assert.equal(assembled.completeReplyCount, 2);
+  assert.equal(assembled.emptyReplyCount, 1);
+  assert.equal(assembled.nonemptyReplyCount, 1);
+  assert.equal(assembled.ackVerified, false);
+}
+const physicalExport = structuredClone(reportedFailure);
+physicalExport.operatorObservation = 'NOT_RECORDED'; // Actual JSON omitted operator feedback; owner's chat reports red unchanged.
+physicalExport.payload.notificationSamples = observedFragments;
+result = analyzeControlEvidence(physicalExport).tests[0];
+assert.equal(result.postWriteResponses.completeReplyCount, 1);
+assert.equal(result.physicalOutcome, 'physical_result_missing');
+assert.deepEqual(result.missingEvidence, ['operator_observation']);
 console.log('Astera evidence triage passed: reported WHITE failure, missing notifications, CRC, unknown escaping, callback attribution, no inferred session/ACK, aggregate exports');

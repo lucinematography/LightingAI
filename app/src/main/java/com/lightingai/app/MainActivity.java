@@ -58,6 +58,8 @@ public class MainActivity extends Activity {
     private FrameLayout rootView;
     private View startupSplash;
     private String pendingText = null;
+    private String pendingAiMp4TaskId = null;
+    private String pendingAiMp4AccessToken = null;
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private Uri pendingCameraUri = null;
     private boolean pendingCameraCapture = false;
@@ -96,6 +98,8 @@ public class MainActivity extends Activity {
     private static final int SPEECH_INPUT = 506;
     private static final int BLE_PERMISSION = 507;
     private static final int AUDIO_PERMISSION = 508;
+    private static final int SAVE_AI_SCENE_MP4 = 509;
+    private static final long MAX_AI_MP4_BYTES = 140L * 1024L * 1024L;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -918,7 +922,104 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    // Android Storage Access Framework: compatible with API 26+ without storage permissions.
+    // Paid Runway credentials never enter the app; this accepts only the user's backend token.
+    private void requestScenePlannerMp4Save(String taskId, String accessToken) {
+        if (pendingAiMp4TaskId != null) {
+            notifyScenePlannerMp4Save(false);
+            return;
+        }
+        if (taskId == null || !taskId.matches("[a-fA-F0-9-]{36}") ||
+            accessToken == null || !accessToken.matches("[A-Za-z0-9._~+/=-]{24,512}")) {
+            notifyScenePlannerMp4Save(false);
+            return;
+        }
+        pendingAiMp4TaskId = taskId;
+        pendingAiMp4AccessToken = accessToken;
+        try {
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("video/mp4");
+            intent.putExtra(Intent.EXTRA_TITLE, "LightingAI_AI_Relight.mp4");
+            startActivityForResult(intent, SAVE_AI_SCENE_MP4);
+        } catch (Exception error) {
+            pendingAiMp4TaskId = null;
+            pendingAiMp4AccessToken = null;
+            notifyScenePlannerMp4Save(false);
+        }
+    }
+
+    private void notifyScenePlannerMp4Save(boolean success) {
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIScenePlanner&&window.LightingAIScenePlanner.onNativeVideoSaved(" +
+            (success ? "true" : "false") + ");", null));
+    }
+
+    private void downloadScenePlannerMp4ToUri(String taskId, String accessToken, Uri destination) {
+        new Thread(() -> {
+            java.net.HttpURLConnection connection = null;
+            boolean success = false;
+            try {
+                // Fixed HTTPS origin prevents arbitrary downloads or access-token exfiltration.
+                java.net.URL url = new java.net.URL(
+                    "https://lightingai.onrender.com/api/scene-planner/video/download/" + taskId);
+                connection = (java.net.HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(false);
+                connection.setConnectTimeout(20000);
+                connection.setReadTimeout(120000);
+                connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                connection.setRequestProperty("Accept", "video/mp4");
+                if (connection.getResponseCode() != 200) throw new java.io.IOException("Video unavailable");
+                String type = connection.getContentType();
+                if (type == null || !type.toLowerCase(java.util.Locale.US).startsWith("video/mp4"))
+                    throw new java.io.IOException("Unexpected video MIME type");
+                long declared = connection.getContentLengthLong();
+                if (declared > MAX_AI_MP4_BYTES) throw new java.io.IOException("Video exceeds limit");
+                try (InputStream input = connection.getInputStream()) {
+                    byte[] header = new byte[12];
+                    int filled = 0;
+                    while (filled < header.length) {
+                        int read = input.read(header, filled, header.length - filled);
+                        if (read < 0) throw new java.io.IOException("Truncated MP4");
+                        filled += read;
+                    }
+                    if (header[4] != 'f' || header[5] != 't' || header[6] != 'y' || header[7] != 'p')
+                        throw new java.io.IOException("Not an MP4 container");
+                    try (OutputStream output = getContentResolver().openOutputStream(destination, "w")) {
+                        if (output == null) throw new java.io.IOException("Document destination unavailable");
+                        output.write(header);
+                        byte[] buffer = new byte[65536];
+                        long total = header.length;
+                        int bytes;
+                        while ((bytes = input.read(buffer)) != -1) {
+                            total += bytes;
+                            if (total > MAX_AI_MP4_BYTES) throw new java.io.IOException("Video exceeds limit");
+                            output.write(buffer, 0, bytes);
+                        }
+                        output.flush();
+                    }
+                }
+                success = true;
+            } catch (Exception ignored) {
+                // No credentials, server responses, or media content are logged.
+            } finally {
+                if (connection != null) connection.disconnect();
+                if (!success) {
+                    try { getContentResolver().delete(destination, null, null); }
+                    catch (Exception ignored) {}
+                }
+                notifyScenePlannerMp4Save(success);
+            }
+        }, "LightingAI-scene-planner-mp4-save").start();
+    }
+
     public class AndroidBridge {
+        @JavascriptInterface public void saveAiVideo(String taskId, String backendAccessToken) {
+            runOnUiThread(() -> requestScenePlannerMp4Save(taskId, backendAccessToken));
+        }
+
         @JavascriptInterface public void saveText(String filename, String text) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 new Thread(() -> {
@@ -1240,6 +1341,20 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SAVE_AI_SCENE_MP4) {
+            String taskId = pendingAiMp4TaskId;
+            String backendToken = pendingAiMp4AccessToken;
+            pendingAiMp4TaskId = null;
+            pendingAiMp4AccessToken = null;
+            Uri destination = resultCode == RESULT_OK && data != null ? data.getData() : null;
+            if (destination == null || taskId == null || backendToken == null) {
+                notifyScenePlannerMp4Save(false);
+            } else {
+                downloadScenePlannerMp4ToUri(taskId, backendToken, destination);
+            }
+            return;
+        }
 
         if (requestCode == SPEECH_INPUT) {
             String target = pendingVoiceTarget;

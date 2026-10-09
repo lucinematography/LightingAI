@@ -52,6 +52,15 @@ assert.match(appUi,/var duration=Number\(state\.videoDurationSec\)/,"never bill 
 assert.match(appUi,/requestId:pending\.requestId/,"paid start reuses the same request identifier");
 assert.match(appUi,/if\(!pending\.uploadId\)/,"paid retries cannot upload a fresh video");
 assert.ok(appUi.includes("player.src=state.aiVideoPreviewUrl"),"real downloaded bytes feed the player");
+assert.ok(appUi.includes("window.Android.saveAiVideo"),"Android MP4 save must use native Storage Access Framework");
+assert.ok(appUi.includes("onNativeVideoSaved:onNativeVideoSaved"),"Android save must report completion");
+const androidActivity=fs.readFileSync(new URL("../app/src/main/java/com/lightingai/app/MainActivity.java",import.meta.url),"utf8");
+assert.ok(androidActivity.includes("Intent.ACTION_CREATE_DOCUMENT"),"native save requests user-selected destination");
+assert.ok(androidActivity.includes("@JavascriptInterface public void saveAiVideo"),"native Android save bridge exists");
+assert.ok(androidActivity.includes("MAX_AI_MP4_BYTES"),"streamed save enforces bounded MP4");
+assert.ok(androidActivity.includes("setInstanceFollowRedirects(false)"),"native downloads cannot redirect tokens");
+assert.ok(androidActivity.includes("https://lightingai.onrender.com/api/scene-planner/video/download/"),"native save uses fixed backend only");
+
 assert.ok(appUi.includes("URL.createObjectURL(blob)"),"MP4 preview uses actual downloaded bytes");
 assert.ok(appUi.includes("URL.revokeObjectURL(state.aiVideoPreviewUrl)"),"old previews release their blob URLs");
 assert.ok(!appUi.includes("RUNWAYML_API_SECRET"),"provider secret must stay backend-only");

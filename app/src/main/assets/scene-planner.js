@@ -708,8 +708,12 @@
       }
       player.src=state.aiVideoPreviewUrl;
       player.load();
-            var file=new File([blob],'LightingAI_AI_Relight.mp4',{type:'video/mp4'});
-      if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+      var file=new File([blob],'LightingAI_AI_Relight.mp4',{type:'video/mp4'});
+      if(window.Android&&typeof window.Android.saveAiVideo==='function'){
+        // Native SAF save streams directly to user-selected storage on Android 8+.
+        window.Android.saveAiVideo(state.aiVideoTaskId,el('sp-video-auth').value.trim());
+        videoStatus('Izaberi gde želiš da sačuvaš MP4. Android će potvrditi završetak prenosa.');
+      }else if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
         await navigator.share({title:'LightingAI AI video relight',files:[file]});
         videoStatus('Otvoren izbor za deljenje ili čuvanje MP4 datoteke.');
       }else{
@@ -719,6 +723,10 @@
         videoStatus('Pokrenuto MP4 preuzimanje. Android WebView izvoz se mora proveriti na uređaju.');
       }
     }catch(error){videoStatus('MP4 preuzimanje nije uspelo: '+error.message,true);}
+  }
+  function onNativeVideoSaved(success){
+    videoStatus(success?'AI MP4 je uspešno sačuvan na izabranoj lokaciji.':
+      'Čuvanje AI MP4 nije uspelo ili je otkazano.',!success);
   }
   function exportMessage(message,error){
     var box=el('sp-video-export-status');
@@ -849,10 +857,12 @@
   function close(){
     if(state.abort){state.abort.abort();state.abort=null;}
     if(state.videoUrl){URL.revokeObjectURL(state.videoUrl);state.videoUrl='';}
+    if(state.aiVideoPreviewUrl){URL.revokeObjectURL(state.aiVideoPreviewUrl);state.aiVideoPreviewUrl=null;}
     var wrap=el(MODULE);if(wrap)wrap.remove();
   }
   function closeIfOpen(){if(!el(MODULE))return false;close();return true;}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});
   else load();
-  window.LightingAIScenePlanner={open:open,close:close,closeIfOpen:closeIfOpen,version:'0.2-video-continuity-day-for-night'};
+  window.LightingAIScenePlanner={open:open,close:close,closeIfOpen:closeIfOpen,
+    onNativeVideoSaved:onNativeVideoSaved,version:'0.3-native-mp4-saf-save'};
 })();

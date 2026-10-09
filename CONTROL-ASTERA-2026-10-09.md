@@ -1,5 +1,37 @@
 # Titan failed WHITE test — 2026-10-09
 
+## Existing 2026-10-07 HCI capture takes priority
+
+The owner identifies an already collected private report:
+`bugreport-topaz_eea-AQ3A.240829.003-2026-10-07-16-03-52.zip`.
+The reported reanalysis found multiple connections to TITAN 01021450, 75-byte and 19-byte initialization packets absent from LightingAI, 36 color packets in one session, RED at 15:59:34 and WHITE at 16:00:10. These are owner-supplied findings; the original archive, raw HCI and that derived analysis are **not currently available to this executor**, so the payloads, counts and timestamps have not been independently revalidated here. Do not request a new physical capture before obtaining/using this existing evidence.
+
+Search completed: local workspace and scratch file names, accessible repository history/docs, PR #408 discussion, both production-control-routing and light-ai-probe branch contents, and the accessible ChatGPT Pages listing. No matching archive or payload-bearing derived report was found. The connected tools do not provide a way to retrieve attachments from arbitrary earlier conversations by filename. No access to the archive is implied by knowing its name.
+
+The current seven initialization writes are:
+
+| Write label | Actual wire bytes |
+| --- | ---: |
+| wake | 1 |
+| s0 | 5 |
+| s1002 | 6 |
+| status | 7 |
+| radio | 10 |
+| stage | 10 |
+| poll | 5 |
+
+Thus the reported 75/19-byte initialization writes are not implemented. The bootstrap-introduction commit explicitly acknowledges excluding a longer potentially session-specific config write, but contains neither that complete write nor an independently verifiable 75/19-byte interpretation. Length alone cannot establish whether a packet is application payload, ATT PDU or HCI packet, whether it is a complete logical write or a fragment, or which authentication/routing/config function it serves. The packet bytes, ATT opcode, endpoint mapping, connection identity and ordering must be recovered from the existing capture before changing runtime.
+
+### Fixed versus changing fields: what can actually be established now
+
+Offsets here are zero-based. In the **four stored color examples only**, offsets 0–11 are identical (`0A107EDF36000000007D6313`), offset 17 is also identical (`FF`), offsets 12–16 differ between presets, and offsets 18–19 are the changing CRC trailer. The current code interprets bytes 12–17 as the captured component tag/value pairs. Matching bytes across these examples do **not** prove a constant across fresh sessions; byte 17 being FF is consistent with the selected saturated presets rather than a proven global session field. Header offsets 2–11 are not decoded as reusable routing/PIN/sequence fields. No fixed/variable classification of the absent 75/19-byte writes can be supplied without their bytes from separate connection sessions.
+
+Once the existing ZIP or payload-bearing derived Astera JSON is available, analysis must split by connection ID **and connection lifetime**, map ATT endpoints for that connection, reconstruct any confirmed Prepare/Execute Write transactions, preserve original byte stuffing, and distinguish logical application writes from wire fragments. Compare corresponding startup writes across those existing fresh connections while fixture settings are unchanged. Record stable observed bytes, changing observed offsets, checksums and unresolved fields separately; stable does not mean safe to replay, changing does not automatically mean authentication. The 36 color writes and the supplied RED/WHITE times should then be correlated within their own session against the full preceding initialization and device replies, accounting for the capture's timezone. Never assign meaning or copy private config values based only on length or timing.
+
+The existing consensus analyzer requires three capture inputs and does not itself turn one multi-connection report into three isolated startup baselines. Do not pass an entire multi-session trace as a single connect-only baseline or mix color changes into initialization consensus. Multiple independent sessions already inside the October 7 report may provide the required comparison; no additional recording is justified until that is checked.
+
+**Current evidence blocker:** attach the existing original ZIP privately, or supply the existing derived Astera-only JSON retaining `connections`, `candidateAsteraSessionWrites`, `attEvents`, `attributes`, `services`, `analysisCoverage`, complete `valueHex` and timing/connection fields. An exact private file reference accessible to this session also suffices. A prose summary containing only lengths, counts and times does not. Keep raw reports and session/config bytes out of the public repository. No replacement APK, new PIN, speculative session write or new physical capture is authorized by these incomplete bytes.
+
 ## Update after receiving the owner's complete CONNECT/WHITE JSON
 
 The owner subsequently supplied both complete result objects in chat. The nine retained post-WHITE fragments reconstruct exactly 40 ASCII bytes:
@@ -22,7 +54,7 @@ Both JSON entries have `operatorObservation:NOT_RECORDED`; the physical failure 
 
 The offline analyzer now assembles the observed ASCII reply wrappers across arbitrary BLE boundaries, counts complete versus empty replies, checks sample completeness and monotonic ordering, and retains `ackVerified:false`. Tests cover the exact nine supplied non-secret fragments, 1/5/20-byte boundaries, incomplete/unordered/binary streams and the separation between chat observation and exported operator feedback. No proprietary write bytes or runtime settings were changed, and no new installation is justified by an empty reply alone.
 
-**Next minimum evidence is now the successful official AsteraApp fresh-session HCI capture**, not another LightingAI export. The supplied export resolves the notification-content gap. Capture startup and one visually successful RED → WHITE transition, ideally repeat within a second fresh connection, without resetting or changing Radio PIN/bonding. Enable full Android HCI logging before the official connection, export a single system bug-report ZIP afterward and share it privately. I can extract/compare the session and color traffic; phone-only capture/export may be restricted by HyperOS. Until this reference or a verifiable vendor specification is available, the meaning of omitted session fields and empty replies remains unknown.
+The supplied LightingAI export resolves the notification-content gap. The earlier recommendation to collect a fresh official AsteraApp HCI session is superseded by the existing October 7 report described above. Recover and analyze that report first. Until its complete reference session or a verifiable vendor specification is available, the meaning of omitted session fields and empty replies remains unknown.
 
 ## Initial assessment before receiving the full JSON (historical)
 

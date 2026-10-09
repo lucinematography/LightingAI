@@ -4,6 +4,7 @@ const SRC = 'https://astera-led.com/products/lunabulb/';
 const PREPINLAY_SRC = 'https://www.bbplight.nl/contents/en-us/p93845_astera-fp7-prpinl-kit-fp7-lunabulb-prepinlay-kit---fp7-prpinl-kit.html';
 const PREPCASE_SRC = 'https://www.bbplight.nl/contents/en-us/p93843_astera-fp7-prpcse-kit-fp7-lunabulb-prepcase-kit---fp7-prpcse-kit.html';
 const ACCESSORY_KIT_SRC = 'https://www.bhphotovideo.com/c/product/1860475-REG/astera_fp7_acccse_kit_lunabulb_accessory_kit_4x.html';
+const DMX_PROFILE_SRC = 'https://goknight.com/content/documentation/FP7_LunaBulb_DMX_Profiles_V3.pdf';
 
 const common = {
   manufacturer: 'Astera',
@@ -33,6 +34,18 @@ const common = {
       'https://update.astera-led.com/firmwares/current/release_notes.html'
     ]
   },
+  dmxModes: [{
+    name: 'Profile 4 DIM RGB 4ch',
+    channels: 4,
+    verified: true,
+    sourceUrl: DMX_PROFILE_SRC,
+    controls: [
+      { key: 'dimmer', label: 'Dimmer', channel: 1, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+      { key: 'red', label: 'Red', channel: 2, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+      { key: 'green', label: 'Green', channel: 3, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 },
+      { key: 'blue', label: 'Blue', channel: 4, type: 'percent', min: 0, max: 100, dmxMin: 0, dmxMax: 255 }
+    ]
+  }],
   sourceUrl: SRC
 };
 

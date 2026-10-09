@@ -7,6 +7,9 @@ def releaseStorePassword = System.getenv('LIGHTINGAI_KEYSTORE_PASSWORD')
 def releaseKeyAlias = System.getenv('LIGHTINGAI_KEY_ALIAS')
 def releaseKeyPassword = System.getenv('LIGHTINGAI_KEY_PASSWORD')
 def hasReleaseSigning = [releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword].every { it != null && !it.trim().isEmpty() }
+// CI supplies this dedicated TEST-ONLY keystore. Never ship this signing identity as a release.
+def labTestKeystore = System.getenv('LIGHTINGAI_LAB_DEBUG_KEYSTORE_PATH')
+def hasLabTestSigning = labTestKeystore != null && !labTestKeystore.trim().isEmpty()
 
 android { namespace 'com.lightingai.app'; compileSdk 35
     defaultConfig {
@@ -18,6 +21,14 @@ android { namespace 'com.lightingai.app'; compileSdk 35
     }
 
     signingConfigs {
+        if (hasLabTestSigning) {
+            labTest {
+                storeFile file(labTestKeystore)
+                storePassword 'android'
+                keyAlias 'lightingai-control-lab'
+                keyPassword 'android'
+            }
+        }
         if (hasReleaseSigning) {
             release {
                 storeFile file(releaseStoreFile)
@@ -30,12 +41,30 @@ android { namespace 'com.lightingai.app'; compileSdk 35
 
     buildTypes {
         debug {
-            applicationIdSuffix '.review13'
-            versionNameSuffix '-review13'
+            // Keep the LAB package identity fixed across monotonically increasing versionCodes.
+            applicationIdSuffix '.control13'
+            versionNameSuffix '-control-lab'
+            if (hasLabTestSigning) signingConfig signingConfigs.labTest
         }
         release {
             minifyEnabled false
             if (hasReleaseSigning) signingConfig signingConfigs.release
+        }
+        control {
+            initWith release
+            applicationIdSuffix '.control13'
+            versionNameSuffix '-control'
+            debuggable false
+            matchingFallbacks = ['release']
+        }
+    }
+}
+
+// Never produce an installable Control candidate with an ephemeral debug identity.
+tasks.configureEach { task ->
+    if (task.name == 'preControlBuild') {
+        task.doFirst {
+            if (!hasReleaseSigning) throw new GradleException('Control APK requires the persistent LIGHTINGAI_KEYSTORE_* signing secrets; no debug fallback is allowed.')
         }
     }
 }

@@ -9,6 +9,9 @@ on:
 
 jobs:
   validate-and-build:
+    # Experimental production-control work is validated by build-control-lab-apk.yml.
+    # Keep the stable Project 5 release gate unchanged instead of weakening it for this lab branch.
+    if: ${{ github.head_ref != 'feature/production-control-routing' && github.ref_name != 'feature/production-control-routing' }}
     runs-on: ubuntu-latest
     concurrency:
       group: lightingai-android-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
@@ -33,6 +36,10 @@ jobs:
       - name: Audit backend dependencies for high/critical vulnerabilities
         working-directory: backend
         run: npm run audit:dependencies
+
+      - name: Build official FILTERI GEL catalog
+        working-directory: backend
+        run: npm run build:gels
 
       - name: Embed Project 5 build identity
         run: |
@@ -118,6 +125,8 @@ jobs:
             'assets/ai-visual-phone-test.js'
             'assets/feature-build-info.js'
             'assets/catalog.js'
+            'assets/gel-filter-catalog.js'
+            'assets/gel-filter-ui.js'
           )
 
           test -s "$APK"
@@ -129,6 +138,8 @@ jobs:
           INFO="$(unzip -p "$APK" assets/feature-build-info.js)"
           grep -Fq "run:\"$GITHUB_RUN_NUMBER\"" <<<"$INFO" || { echo 'Packaged build number mismatch'; exit 1; }
           grep -Fq "sha:\"$SHORT_SHA\"" <<<"$INFO" || { echo 'Packaged commit SHA mismatch'; exit 1; }
+          unzip -p "$APK" assets/gel-filter-catalog.js > /tmp/lightingai-gels.js
+          node -e "const fs=require('fs'),vm=require('vm');const c={window:{}};vm.runInNewContext(fs.readFileSync('/tmp/lightingai-gels.js','utf8'),c);const g=c.window.LightingAIGelCatalog;if(!g||!Array.isArray(g.filters)||g.filters.length!==977)process.exit(1);const x=Object.fromEntries((g.sources||[]).map(s=>[s.key,s.count]));if(x['lee-lighting-filters']!==333||x['rosco-supergel']!==144||x['rosco-ecolour-plus']!==312||x['rosco-cinegel']!==188)process.exit(1);console.log('Packaged FILTERI/GEL catalog verified: 977');"
 
           CATALOG="$(unzip -p "$APK" assets/catalog.js)"
           test "$(grep -oF 'file:///android_asset/ai-visual-scene-launcher.js' <<<"$CATALOG" | wc -l)" -eq 1 || { echo 'Packaged catalog launcher count is not exactly one'; exit 1; }

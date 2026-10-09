@@ -1,0 +1,27 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const failures=[];
+const expect=(ok,msg)=>{if(!ok)failures.push(msg)};
+const src=read('app/src/main/assets/control-system-drivers.js');
+const routingSrc=read('app/src/main/assets/control-routing.js');
+for(const forbidden of ['standards-native-network','standards-dmx-gateway','Art-Net/sACN → DMX/CRMX'])expect(!src.includes(forbidden),'network driver remains: '+forbidden);
+expect(src.includes("version:'2.0-bluetooth-only'"),'Bluetooth-only driver revision missing');
+const sandbox={window:{}};vm.createContext(sandbox);vm.runInContext(src,sandbox);
+const api=sandbox.window.LightingAIControlSystemDrivers;
+expect(!!api,'Bluetooth driver API missing');
+const astera=api?.resolve({manufacturer:'Astera',control:{wireless:['AsteraApp via Bluetooth']}});
+expect(astera?.vendorDrivers?.some(x=>x.id==='vendor-astera-wireless'),'Astera Bluetooth driver missing');
+expect(astera?.productionReady===false&&astera?.vendorDirectReady===false,'Astera output must remain locked without physical verification');
+const dmxOnly=api?.resolve({manufacturer:'Astera',control:{wired:['DMX512']},dmxModes:[{verified:true,channels:4}]});
+expect(dmxOnly?.vendorDrivers?.length===0&&dmxOnly?.productionReady===false,'DMX metadata must never create a CONTROL route');
+const routeSandbox={window:{LightingAIControlSystemDrivers:api}};vm.createContext(routeSandbox);vm.runInContext(routingSrc,routeSandbox);
+const route=routeSandbox.window.LightingAIControlRouting.classify({manufacturer:'Aputure',control:{wireless:['Sidus Mesh Bluetooth']}});
+expect(route?.route==='vendor-bluetooth'&&route?.semanticReady===false,'Aputure must be Bluetooth candidate only');
+expect(!routingSrc.includes('native-network')&&!routingSrc.includes('gateway'),'network routes remain in CONTROL router');
+console.log(JSON.stringify({ok:failures.length===0,controlPrimary:'bluetooth-only',failures},null,2));
+if(failures.length)process.exit(1);

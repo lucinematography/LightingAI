@@ -1,3 +1,5 @@
+import { qualifyEvLightDmxProfiles } from './evlight-control-verification.js';
+
 // EV LIGHT GEM / GEMX film and studio panel catalog.
 // Sources: official EV LIGHT product pages and accessories catalog.
 const GEM1X1BI='https://www.evlightprofessional.com/quality-led-soft-light-panel-68277576.html';
@@ -110,6 +112,8 @@ export const EVLIGHT_GEM_GEMX_FIXTURES=[
     ipRating:'IP65',dimmingFrequency:'20 kHz',alternateBeamAngleDeg:120
   })
 ];
+
+qualifyEvLightDmxProfiles(EVLIGHT_GEM_GEMX_FIXTURES);
 
 const twoByOne=['evlight-gem2x1bi','evlight-gem2x1st','evlight-gemx21-hard'];
 

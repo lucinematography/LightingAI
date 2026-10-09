@@ -4,7 +4,7 @@
   var ENTRY='lightingai-scene-planner-entry';
   var API='https://lightingai.onrender.com';
   var STORE='lighting_scene_planner_last_v1';
-  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null};
+  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[]};
   function el(id){return document.getElementById(id);}
   function esc(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
@@ -155,6 +155,8 @@
       '<div id="sp-motion-preview" class="sp-card" style="margin-top:12px"><b style="color:#f5c542">VIDEO PREVIZ / POKRETNI KONCEPT</b>'+
       '<p class="sp-note">Vremenski sinhronizovan pregled izvornog snimka i procenjenog rasporeda rasvete. Ovo nije AI generisan video.</p>'+
       '<div id="sp-motion-stage"></div>'+
+      '<button type="button" id="sp-storyboard-btn" class="sp-btn" style="width:100%;margin:10px 0">AI OBRADI 3 KLJUČNA VIDEO KADRA</button>'+
+      '<div id="sp-ai-storyboard" class="sp-two"></div>'+
       '<div class="sp-actions" style="margin-top:10px"><button type="button" id="sp-video-export" class="sp-btn">IZVEZI KONCEPTUALNI VIDEO</button>'+
       '<button type="button" id="sp-video-share" class="sp-btn" disabled>PODELI IZVEZENI VIDEO</button></div>'+
       '<div id="sp-video-export-status" class="sp-note">Video izvoz koristi lokalnu obradu snimka; nije AI relight i ne menja fizičko osvetljenje.</div></div>'+
@@ -188,6 +190,7 @@
     el('sp-revise').onclick=function(){generate(true);};
     el('sp-local').onclick=function(){generate(false);};
     el('sp-ai-preview').onclick=generatePhotoPreview;
+    el('sp-storyboard-btn').onclick=generateAIStoryboard;
     el('sp-video-export').onclick=exportConceptVideo;
     el('sp-video-share').onclick=shareConceptVideo;
     el('sp-save').onclick=save;
@@ -280,7 +283,7 @@
     if(state.videoBusy)return;
     if(!/^video\//.test(file.type)&&file.type) {status('Potreban je video snimak.',true);return;}
     if(file.size>180*1024*1024){status('Video prelazi 180 MB. Skrati snimak i pokušaj ponovo.',true);return;}
-    state.videoBusy=true;state.frames=[];state.aiPreview='';state.videoFile=file;state.exportedVideo=null;
+    state.videoBusy=true;state.frames=[];state.aiPreview='';state.aiStoryboard=[];state.videoFile=file;state.exportedVideo=null;
     if(state.videoUrl){URL.revokeObjectURL(state.videoUrl);state.videoUrl='';}
     state.videoUrl=URL.createObjectURL(file);
     var player=el('sp-video');if(player){player.src=state.videoUrl;player.hidden=false;player.load();}
@@ -320,7 +323,7 @@
     if(!req.scenePhoto&&!req.videoFrames.length){status('Dodaj fotografiju ili video sa izdvojenim kadrovima.',true);return;}
     if(req.mode==='own'&&!req.equipment.length){status('U režimu MOJA OPREMA izaberi lampu u inventaru.',true);return;}
     setBusy(true);
-    state.aiPreview='';
+    state.aiPreview='';state.aiStoryboard=[];
     if(useAI){
       status('AI analizira prostor, opis i kretanje iz videa…');
       var controller=new AbortController();state.abort=controller;
@@ -526,6 +529,35 @@
       status('AI foto-preview spreman.');
     }catch(e){status('AI foto-preview trenutno nije dostupan: '+(e.name==='AbortError'?'timeout':e.message),true);}
     finally{clearTimeout(timeout);state.abort=null;setBusy(false);}
+  }
+  async function generateAIStoryboard(){
+    if(state.busy||!state.plan||!state.frames.length){status('Najpre dodaj video i napravi plan rasvete.',true);return;}
+    var button=el('sp-storyboard-btn');if(button)button.disabled=true;
+    var indices=[0,Math.floor((state.frames.length-1)/2),state.frames.length-1];
+    var frames=indices.filter(function(i,k){return indices.indexOf(i)===k;}).map(function(i){return state.frames[i];});
+    var controller=new AbortController();state.abort=controller;
+    var timer=setTimeout(function(){controller.abort();},150000);
+    status('AI obrađuje izabrane ključne kadrove. Svaki kadar se generiše posebno.');
+    try{
+      var r=await fetch(API+'/api/scene-planner/storyboard',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({frames:frames,plan:state.plan,description:el('sp-description').value,language:locale()}),
+        signal:controller.signal
+      });
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      var obj=await r.json();
+      if(!obj.ok||!Array.isArray(obj.frames)||obj.frames.length!==frames.length||
+        obj.frames.some(function(f){return !/^data:image\/png;base64,/.test(f.image);}))
+        throw new Error('AI servis nije vratio validne kadrove.');
+      state.aiStoryboard=obj.frames;
+      var box=el('sp-ai-storyboard');
+      if(box)box.innerHTML=obj.frames.map(function(frame,i){
+        return '<div><img src="'+frame.image+'" alt="AI obrada kadra '+(i+1)+
+          '" style="width:100%;border-radius:8px"><div class="sp-note">AI kadar '+(i+1)+' · '+frame.timeSec+' s</div></div>';
+      }).join('')+'<p class="sp-note">AI su obrađene samo statične slike. Ovo još nije kompletan vremenski stabilan AI video, niti njegov video-izvoz.</p>';
+      status('AI ključni kadrovi su spremni. Za pravi AI video potrebna je vremenski usklađena obrada svih kadrova.');
+    }catch(error){status('AI storyboard nije dostupan: '+(error.name==='AbortError'?'timeout':error.message),true);}
+    finally{clearTimeout(timer);state.abort=null;if(button)button.disabled=false;}
   }
   function exportMessage(message,error){
     var box=el('sp-video-export-status');

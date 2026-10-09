@@ -190,6 +190,8 @@ const exactAllowed = new Set([
   'backend/scene-planner-selftest.js',
   'backend/scene-planner-video.js',
   'backend/scene-planner-video-selftest.js',
+  'backend/staging-safety.js',
+  'backend/staging-safety-selftest.js',
   'backend/project5-feature-selftest.js',
   'backend/project52-release-gate-selftest.js',
   'app/src/main/assets/ai-visual-scene-launcher.js',

@@ -35,7 +35,7 @@ for(const value of [undefined,null,false,0,1,"true","false",{},[]]){
 assert.ok(videoSource.includes('res.setHeader("Content-Type","video/mp4")'));
 assert.ok(videoSource.includes('redirect:"error"'));
 assert.match(videoSource,/uploaded\.requestId=jobKey/,"reserve the upload for one paid request");
-assert.match(videoSource,/uploaded\.requestId!==body\.requestId/,"deny reuse of the uploaded file by another paid request");
+assert.match(videoSource,/uploaded\.requestId!==jobKey/,"deny reuse of the uploaded file by another paid request");
 assert.doesNotMatch(videoSource,/requestSessions\.delete\(jobKey\)/,"ambiguous provider failures must not clear idempotency protection");
 assert.equal(VIDEO_CREDITS_PER_SECOND,28);
 console.log("Video AI integration guard tests passed.");

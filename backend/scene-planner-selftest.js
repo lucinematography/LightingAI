@@ -138,3 +138,10 @@ assert.ok(frontend.includes('video/webm'),"export MIME missing");
 assert.ok(frontend.includes('navigator.share'),"video sharing missing");
 assert.ok(frontend.includes('NIJE AI RELIGHT'),"local conceptual video must not be mislabeled");
 console.log("Scene Planner DoP and video tests passed.");
+
+assert.ok(server.includes('app.post("/api/scene-planner/storyboard"'),"AI storyboard endpoint missing");
+assert.ok(server.includes("independent-ai-keyframes"),"keyframes must not claim video generation");
+assert.ok(frontend.includes("generateAIStoryboard"),"AI storyboard UI action missing");
+assert.ok(frontend.includes("sp-ai-storyboard"),"AI storyboard visual output missing");
+assert.ok(frontend.includes("Ovo još nije kompletan vremenski stabilan AI video"),"not a completed video relight");
+console.log("Scene Planner storyboard contract checks passed.");

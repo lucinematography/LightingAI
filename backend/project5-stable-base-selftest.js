@@ -165,6 +165,7 @@ const exactAllowed = new Set([
   'backend/kinoflo-catalog-selftest.js',
   'backend/package.json',
   'backend/package-lock.json',
+  'backend/server.js',
   'automation/tasks.json',
   'docs/OVERNIGHT_API_RUNNER.md',
   'scripts/overnight_runner.py',

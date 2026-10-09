@@ -4,7 +4,7 @@
   var ENTRY='lightingai-scene-planner-entry';
   var API='https://lightingai.onrender.com';
   var STORE='lighting_scene_planner_last_v1';
-  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null};
+  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null};
   function el(id){return document.getElementById(id);}
   function esc(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
@@ -154,7 +154,10 @@
       '<div id="sp-plot"></div><div id="sp-blocking" class="sp-note"></div>'+
       '<div id="sp-motion-preview" class="sp-card" style="margin-top:12px"><b style="color:#f5c542">VIDEO PREVIZ / POKRETNI KONCEPT</b>'+
       '<p class="sp-note">Vremenski sinhronizovan pregled izvornog snimka i procenjenog rasporeda rasvete. Ovo nije AI generisan video.</p>'+
-      '<div id="sp-motion-stage"></div></div>'+
+      '<div id="sp-motion-stage"></div>'+
+      '<div class="sp-actions" style="margin-top:10px"><button type="button" id="sp-video-export" class="sp-btn">IZVEZI KONCEPTUALNI VIDEO</button>'+
+      '<button type="button" id="sp-video-share" class="sp-btn" disabled>PODELI IZVEZENI VIDEO</button></div>'+
+      '<div id="sp-video-export-status" class="sp-note">Video izvoz koristi lokalnu obradu snimka; nije AI relight i ne menja fizičko osvetljenje.</div></div>'+
       '<label>POLOŽAJ GLUMCA / TRENUTAK SCENE</label><input type="range" id="sp-stage" min="0" max="0" value="0" step="1" class="sp-field" style="padding:4px">'+
       '<div id="sp-stage-info" class="sp-note"></div>'+
       '<p class="sp-note">2D položaji i pokrivenost su AI procene, ne stvarna fotometrijska merenja.</p></div>'+
@@ -185,6 +188,8 @@
     el('sp-revise').onclick=function(){generate(true);};
     el('sp-local').onclick=function(){generate(false);};
     el('sp-ai-preview').onclick=generatePhotoPreview;
+    el('sp-video-export').onclick=exportConceptVideo;
+    el('sp-video-share').onclick=shareConceptVideo;
     el('sp-save').onclick=save;
     el('sp-share').onclick=share;
     updateInventory();
@@ -275,7 +280,7 @@
     if(state.videoBusy)return;
     if(!/^video\//.test(file.type)&&file.type) {status('Potreban je video snimak.',true);return;}
     if(file.size>180*1024*1024){status('Video prelazi 180 MB. Skrati snimak i pokušaj ponovo.',true);return;}
-    state.videoBusy=true;state.frames=[];state.aiPreview='';
+    state.videoBusy=true;state.frames=[];state.aiPreview='';state.videoFile=file;state.exportedVideo=null;
     if(state.videoUrl){URL.revokeObjectURL(state.videoUrl);state.videoUrl='';}
     state.videoUrl=URL.createObjectURL(file);
     var player=el('sp-video');if(player){player.src=state.videoUrl;player.hidden=false;player.load();}
@@ -521,6 +526,99 @@
       status('AI foto-preview spreman.');
     }catch(e){status('AI foto-preview trenutno nije dostupan: '+(e.name==='AbortError'?'timeout':e.message),true);}
     finally{clearTimeout(timeout);state.abort=null;setBusy(false);}
+  }
+  function exportMessage(message,error){
+    var box=el('sp-video-export-status');
+    if(box){box.textContent=message;box.style.color=error?'#ffc2ae':'#b0edc7';}
+  }
+  async function exportConceptVideo(){
+    if(state.busy||state.videoBusy||!state.videoFile||!state.plan){
+      exportMessage('Dodaj video i generiši plan pre izvoza.',true);return;
+    }
+    if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){
+      exportMessage('Ovaj Android WebView ne podržava lokalni WebM izvoz. Ne pravim lažni video.',true);return;
+    }
+    var formats=['video/webm;codecs=vp8','video/webm'];
+    var mime=formats.find(function(m){return MediaRecorder.isTypeSupported(m);});
+    if(!mime){exportMessage('WebM kodiranje nije dostupno na ovom telefonu.',true);return;}
+    var source=state.videoUrl;
+    if(!source){exportMessage('Video datoteka više nije dostupna.',true);return;}
+    var video=document.createElement('video');
+    video.src=source;video.muted=true;video.playsInline=true;video.preload='auto';
+    var canvas=document.createElement('canvas');
+    var ctx=canvas.getContext('2d');
+    var recorder=null,raf=0,chunks=[],stream=null;
+    var onMetadata=function(){return new Promise(function(resolve,reject){
+      if(video.readyState>=1){resolve();return;}
+      video.addEventListener('loadedmetadata',resolve,{once:true});
+      video.addEventListener('error',function(){reject(new Error('Nije moguće otvoriti video za izvoz.'));},{once:true});
+    });};
+    try{
+      exportMessage('Pripremam lokalni video izvoz…');
+      await onMetadata();
+      if(video.duration>30)throw new Error('Lokalni WebM izvoz je trenutno ograničen na 30 sekundi.');
+      var scale=Math.min(1,720/Math.max(video.videoWidth||720,video.videoHeight||720));
+      canvas.width=Math.max(1,Math.round(video.videoWidth*scale));
+      canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
+      stream=canvas.captureStream(24);
+      recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1600000});
+      recorder.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
+      var done=new Promise(function(resolve,reject){
+        recorder.onstop=resolve;
+        recorder.onerror=function(){reject(new Error('Video kodiranje je prekinuto.'));};
+      });
+      var plan=state.plan;
+      function frame(){
+        if(video.paused||video.ended)return;
+        ctx.save();ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        if(plan.look==='Night'||plan.look==='Day for Night'){
+          ctx.fillStyle='rgba(10,26,58,0.43)';ctx.fillRect(0,0,canvas.width,canvas.height);
+        }else if(plan.look==='Moody'){
+          ctx.fillStyle='rgba(4,6,10,0.21)';ctx.fillRect(0,0,canvas.width,canvas.height);
+        }
+        ctx.fillStyle='rgba(0,0,0,0.62)';ctx.fillRect(0,canvas.height-28,canvas.width,28);
+        ctx.fillStyle='#fff';ctx.font='12px sans-serif';
+        ctx.fillText('LIGHTINGAI • KONCEPTUALNI VIDEO (NIJE AI RELIGHT)',8,canvas.height-10);
+        ctx.restore();raf=requestAnimationFrame(frame);
+      }
+      recorder.start(1000);
+      await video.play();frame();exportMessage('Izvoz u toku — originalni video se obrađuje lokalno (bez zvuka).');
+      await new Promise(function(resolve,reject){
+        video.onended=resolve;video.onerror=function(){reject(new Error('Video reprodukcija nije uspela.'));};
+      });
+      cancelAnimationFrame(raf);
+      if(recorder.state!=='inactive')recorder.stop();
+      await done;
+      var output=new Blob(chunks,{type:'video/webm'});
+      if(!output.size)throw new Error('Kodirani video je prazan.');
+      state.exportedVideo=output;
+      if(el('sp-video-share'))el('sp-video-share').disabled=false;
+      var filename='LightingAI_ScenePlanner_Concept.webm';
+      if(navigator.canShare&&navigator.canShare({files:[new File([output],filename,{type:'video/webm'})]})){
+        exportMessage('Konceptualni WebM je spreman. Pritisni PODELI IZVEZENI VIDEO.');
+      } else {
+        var url=URL.createObjectURL(output),anchor=document.createElement('a');
+        anchor.href=url;anchor.download=filename;document.body.appendChild(anchor);anchor.click();anchor.remove();
+        setTimeout(function(){URL.revokeObjectURL(url);},20000);
+        exportMessage('Pokrenuto preuzimanje WebM snimka. Proveri preuzimanja, naročito na Android WebView-u.');
+      }
+    }catch(error){exportMessage('Izvoz nije uspeo: '+error.message,true);}
+    finally{
+      cancelAnimationFrame(raf);video.pause();video.removeAttribute('src');video.load();
+      if(recorder&&recorder.state!=='inactive')recorder.stop();
+      if(stream)stream.getTracks().forEach(function(track){track.stop();});
+    }
+  }
+  async function shareConceptVideo(){
+    if(!state.exportedVideo){exportMessage('Najpre izvezi konceptualni video.',true);return;}
+    var filename='LightingAI_ScenePlanner_Concept.webm';
+    var file=new File([state.exportedVideo],filename,{type:'video/webm'});
+    if(!navigator.share||!navigator.canShare||!navigator.canShare({files:[file]})){
+      exportMessage('Deljenje WebM fajla nije podržano u ovom Android WebView-u.',true);return;
+    }
+    try{await navigator.share({files:[file],title:'LightingAI Scene Planner konceptualni previz'});}
+    catch(error){if(error.name!=='AbortError')exportMessage('Deljenje nije uspelo.',true);}
   }
   function exportObject(){
     return {format:'LightingAI.ScenePlanner.v1',savedAt:new Date().toISOString(),

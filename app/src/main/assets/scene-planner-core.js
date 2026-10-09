@@ -111,7 +111,7 @@
       sceneLatitude: num(input.sceneLatitude, -90, 90, null),
       sceneLongitude: num(input.sceneLongitude, -180, 180, null),
       sceneTimeZone: str(input.sceneTimeZone, 80),
-      sceneLocalDateTime: /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$/.test(String(input.sceneLocalDateTime||'')) ?
+      sceneLocalDateTime: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(String(input.sceneLocalDateTime||'')) ?
         str(input.sceneLocalDateTime, 20) : '',
       sceneCoordsVerified: input.sceneCoordsVerified === true,
       roomWidthM: num(input.roomWidthM, 0.5, 100, null),

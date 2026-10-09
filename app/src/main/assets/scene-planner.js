@@ -110,11 +110,14 @@
       '<input type="file" id="sp-video-input" accept="video/*" hidden>'+
       '<input type="file" id="sp-record-input" accept="video/*" capture="environment" hidden>'+
       '<video id="sp-video" class="sp-media" playsinline controls preload="metadata" hidden></video>'+
-      '<div id="sp-video-note" class="sp-note">Do 120 sekundi. AI dobija najviše 4 izdvojena kadra, ne ceo video.</div></div></div></div>'+
+      '<div id="sp-video-note" class="sp-note">Do 120 sekundi. AI dobija do 6 vremenski označenih kadrova, ne ceo video.</div></div></div></div>'+
       '<div class="sp-card"><h2 class="sp-h">2 / OPIŠI SCENU I ODABERI REŽIM</h2>'+
       '<label>TEKST ILI GLASOVNI OPIS SCENE</label>'+
       '<textarea class="sp-field" id="sp-description" rows="4" placeholder="Primer: Žena ide od ograde do drveta, noć, hladna mesečina, sekirom udara drvo. Kamera prati sa leve strane."></textarea>'+
       '<div class="sp-actions" style="margin-top:8px"><button type="button" class="sp-btn" id="sp-voice">🎤 GOVORI OPIS SCENE</button></div>'+
+      '<div class="sp-two"><div><label>SNIMLJENO OSVETLJENJE</label>'+
+      '<select id="sp-capture" class="sp-field"><option value="day">Snimljeno po danu</option><option value="night">Snimljeno po noći</option><option value="unknown">Nije poznato</option></select></div>'+
+      '<div><label>KAMERA I KRETANJE KADRA</label><input id="sp-shot-camera" class="sp-field" placeholder="Statična kamera / kamera prati glumicu"></div></div>'+
       '<div class="sp-two"><div><label>REŽIM PLANIRANJA</label>'+
       '<select id="sp-mode" class="sp-field"><option value="best">PREDLOŽI NAJBOLJU RASVETU</option>'+
       '<option value="own">RADI SAMO SA MOJOM OPREMOM</option></select></div>'+
@@ -137,7 +140,10 @@
       '<div class="sp-actions" style="margin-top:12px"><button type="button" class="sp-btn" id="sp-ai-preview">NAPRAVI AI FOTO-PREVIEW</button></div>'+
       '<p class="sp-note">Lokalna simulacija je ilustrativna i nije fotometrijsko merenje. AI foto-preview zahteva mrežu i dostupan servis.</p></div>'+
       '<div class="sp-card"><h2 class="sp-h">2D LIGHT PLOT — PROCENJENI POLOŽAJI</h2>'+
-      '<div id="sp-plot"></div><p class="sp-note">Kamera, glumci, putanje i svetla su orijentacioni dok se ne potvrde merenja.</p></div>'+
+      '<div id="sp-plot"></div><div id="sp-blocking" class="sp-note"></div>'+
+      '<label>POLOŽAJ GLUMCA / TRENUTAK SCENE</label><input type="range" id="sp-stage" min="0" max="0" value="0" step="1" class="sp-field" style="padding:4px">'+
+      '<div id="sp-stage-info" class="sp-note"></div>'+
+      '<p class="sp-note">2D položaji i pokrivenost su AI procene, ne stvarna fotometrijska merenja.</p></div>'+
       '<div class="sp-card"><h2 class="sp-h">PREDLOG RASVETE</h2>'+
       '<div id="sp-summary"></div><div id="sp-lights"></div><div id="sp-warnings"></div>'+
       '<div class="sp-actions" style="margin-top:12px"><button type="button" class="sp-btn" id="sp-save">SAČUVAJ PLAN (JSON)</button>'+
@@ -155,6 +161,7 @@
       el(id).onchange=function(e){var file=e.target.files&&e.target.files[0];if(file)videoPicked(file);e.target.value='';};
     });
     el('sp-mode').onchange=updateInventory;
+    el('sp-stage').oninput=function(){renderBlocking();};
     el('sp-voice').onclick=function(){
       if(window.Android && typeof window.Android.startSpeechInput==='function') {
         status('Otvaram glasovni unos…');window.Android.startSpeechInput(locale(),'sp-description');
@@ -229,14 +236,16 @@
     await metadata;
     if(!Number.isFinite(video.duration)||video.duration<=0)throw new Error('Trajanje video snimka nije prepoznato.');
     if(video.duration>120)throw new Error('Za sada koristi video kraći od 120 sekundi.');
-    var duration=video.duration,frames=[],times=[.2,.3,.65,.95].map(function(k,i){
-      return i===0?Math.min(.15,duration*.1):Math.min(Math.max(0,duration-.05),duration*k);
+    var duration=video.duration,frames=[],times=[0.04,.20,.40,.60,.80,.96].map(function(f){
+      return Math.min(Math.max(0,duration-.08),Math.max(.02,duration*f));
     });
     for(var i=0;i<times.length;i++){
       var t=times[i];
-      var seeked=waitFor(video,'seeked',14000);
-      video.currentTime=t;
-      await seeked;
+      if(Math.abs(video.currentTime-t)>.025){
+        var seeked=waitFor(video,'seeked',14000);
+        video.currentTime=t;
+        await seeked;
+      }
       var canvas=document.createElement('canvas');
       var scale=Math.min(1,800/Math.max(video.videoWidth,video.videoHeight));
       canvas.width=Math.max(1,Math.round(video.videoWidth*scale));
@@ -269,7 +278,8 @@
   function payload(){
     return core().request({
       mode:el('sp-mode').value,description:el('sp-description').value,
-      look:el('sp-look').value,roomWidthM:el('sp-width').value,
+      look:el('sp-look').value,captureLighting:el('sp-capture').value,
+      shotCamera:el('sp-shot-camera').value,roomWidthM:el('sp-width').value,
       roomDepthM:el('sp-depth').value,dimensionsMeasured:el('sp-measured').checked,
       equipment:inventory(),scenePhoto:state.photo,videoFrames:state.frames,language:locale()
     });
@@ -279,7 +289,7 @@
     ['sp-generate','sp-local','sp-ai-preview'].forEach(function(id){if(el(id))el(id).disabled=busy;});
   }
   async function generate(useAI){
-    if(state.busy||!core())return;
+    if(state.busy||state.videoBusy||!core())return;
     var req=payload();
     if(!req.description){status('Opiši scenu tekstom ili glasom.',true);return;}
     if(!req.scenePhoto&&!req.videoFrames.length){status('Dodaj fotografiju ili video sa izdvojenim kadrovima.',true);return;}
@@ -344,6 +354,24 @@
       '<text x="6" y="102" font-size="3.2" fill="#95a6b9">POGLED OD GORE • PROCENA</text></svg>';
     return base;
   }
+  function renderBlocking(){
+    var p=state.plan,box=el('sp-blocking'),info=el('sp-stage-info'),slider=el('sp-stage');
+    if(!p||!box||!slider)return;
+    var actor=(p.actors||[])[0],path=actor&&actor.path||[];
+    slider.max=String(Math.max(0,path.length-1));
+    var index=Math.max(0,Math.min(path.length-1,Number(slider.value)||0));
+    if(!path.length){slider.disabled=true;box.textContent='Putanja nije potvrđena: AI nije uspeo da rekonstruiše kretanje. Ne prikazujemo izmišljene korake.';info.textContent='Nema pouzdane putanje.';return;}
+    slider.disabled=false;
+    var pt=path[index],covered=(p.lights||[]).filter(function(l){return l.coverageStages.indexOf(index)>=0;});
+    var known=covered.filter(function(l){return l.role==='key'||l.role==='ambient';});
+    var camera=p.sceneAnalysis||{};
+    box.textContent='Kretanje: '+path.length+' kontrolnih tačaka • pouzdanost '+(actor.confidence||'nepoznata')+
+      ' • Kamera '+(camera.cameraMotion||'nepoznato')+'. Ovo nisu metričke koordinate.';
+    info.textContent='Tačka '+(index+1)+'/'+path.length+
+      (pt.timeSec==null?'':' • video '+pt.timeSec.toFixed(1)+' s')+
+      ' • očekivani izvori: '+(covered.length?covered.map(function(l){return l.id;}).join(', '):'nisu potvrđeni')+
+      (!known.length?' • UPOZORENJE: nije potvrđen key/ambient na ovom delu putanje.':'');
+  }
   function conceptPhoto(plan){
     var image=state.photo||(state.frames[0]&&state.frames[0].image)||'';
     if(!image)return '<p class="sp-note">Fotografija nije dostupna.</p>';
@@ -378,6 +406,7 @@
       '<div class="sp-pill" style="display:inline-block">'+(plan.source==='ai'?'AI PREDLOG':'LOKALNI KONCEPT')+
       ' • '+(plan.mode==='own'?'SAMO MOJA OPREMA':'NAJBOLJA RASVETA')+'</div>';
     el('sp-plot').innerHTML=plotSvg(plan);
+    renderBlocking();
     el('sp-preview').innerHTML=conceptPhoto(plan);
     el('sp-lights').innerHTML=plan.lights.length?plan.lights.map(function(l){
       return '<div class="sp-lamp"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
@@ -390,11 +419,17 @@
         ' • Boja '+esc(l.color||'nije određena')+'</div>'+
         '<div>Modifikator: '+esc(l.modifier||'nije naveden')+
         ' • Potrošnja: '+fmt(l.powerDrawW,' W')+'</div>'+
-        '<div>Napajanje: '+esc(l.power)+'</div></div>'+
+        '<div>Napajanje: '+esc(l.power)+'</div>'+
+        '<div>Verticalni nagib ~'+fmt(l.verticalTiltDeg,'°')+
+        ' • Ugao snopa ~'+fmt(l.beamAngleDeg,'°')+'</div>'+
+        '<div>Pokret/glumac: '+(l.coverageStages.length?l.coverageStages.map(function(i){return i+1;}).join(', '):'pokrivenost nepotvrđena')+'</div>'+
+        '<div>'+esc(l.positionNote||'Potrebna provera položaja')+'</div></div>'+
         '<p style="font-size:13px;line-height:1.4;margin:9px 0 0">'+esc(l.why)+'</p></div>';
     }).join(''):'<p class="sp-note">Nije moguće napraviti pouzdan izbor lampi iz dostupnog inventara.</p>';
     el('sp-warnings').innerHTML='<div class="sp-note" style="margin-top:10px"><b style="color:#f5c542">PROCENE I KOMPROMISI</b><ul>'+
       plan.limitations.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+
+      '</ul><b style="color:#f5c542">DAN ZA NOĆ / KONTROLA DNEVNOG SVETLA</b><ul>'+
+      (plan.dayForNightNotes||[]).map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+
       '</ul><b style="color:#f5c542">BEZBEDNOST</b><ul>'+
       plan.safetyNotes.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+'</ul></div>';
     el('sp-result').scrollIntoView({behavior:'smooth',block:'start'});
@@ -475,5 +510,5 @@
   function closeIfOpen(){if(!el(MODULE))return false;close();return true;}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});
   else load();
-  window.LightingAIScenePlanner={open:open,close:close,closeIfOpen:closeIfOpen,version:'0.1-video-photo-voice-mvp'};
+  window.LightingAIScenePlanner={open:open,close:close,closeIfOpen:closeIfOpen,version:'0.2-video-continuity-day-for-night'};
 })();

@@ -1,36 +1,24 @@
 # Titan failed WHITE test — 2026-10-09
 
-## Existing 2026-10-07 HCI capture takes priority
+## Transport diagnostics update — 2026-10-09
 
-The owner identifies an already collected private report:
-`bugreport-topaz_eea-AQ3A.240829.003-2026-10-07-16-03-52.zip`.
-The reported reanalysis found multiple connections to TITAN 01021450, 75-byte and 19-byte initialization packets absent from LightingAI, 36 color packets in one session, RED at 15:59:34 and WHITE at 16:00:10. These are owner-supplied findings; the original archive, raw HCI and that derived analysis are **not currently available to this executor**, so the payloads, counts and timestamps have not been independently revalidated here. Do not request a new physical capture before obtaining/using this existing evidence.
+The owner has supplied further private extracts from the existing HCI capture. The original archive remains unavailable to this executor. Raw initialization values, session identifiers and newly supplied reply bytes are deliberately excluded from this public report and from runtime constants.
 
-Search completed: local workspace and scratch file names, accessible repository history/docs, PR #408 discussion, both production-control-routing and light-ai-probe branch contents, and the accessible ChatGPT Pages listing. No matching archive or payload-bearing derived report was found. The connected tools do not provide a way to retrieve attachments from arbitrary earlier conversations by filename. No access to the archive is implied by knowing its name.
+The failed Control operation produced an empty XML reply; the owner reports CRC-valid binary replies in the recorded AsteraApp control flow. This distinguishes observed protocol state, not physical execution. A local write callback is not a device application acknowledgement.
 
-The current seven initialization writes are:
+LightingAI's bootstrap remains a captured subset. The recorded application performs additional configuration before the existing status/radio/stage/poll sequence. Its initial `s0` assignment and later configured `s0` assignment differ, whereas Control keeps the initial assignment. Several settings change together: neither the meaning of `s0` nor the session establishment requirement can be isolated. Recorded sessions use different configuration sequences, so an omitted session write cannot yet be declared universally required or dispensable.
 
-| Write label | Actual wire bytes |
-| --- | ---: |
-| wake | 1 |
-| s0 | 5 |
-| s1002 | 6 |
-| status | 7 |
-| radio | 10 |
-| stage | 10 |
-| poll | 5 |
+Transport and diagnostics changes:
 
-Thus the reported 75/19-byte initialization writes are not implemented. The bootstrap-introduction commit explicitly acknowledges excluding a longer potentially session-specific config write, but contains neither that complete write nor an independently verifiable 75/19-byte interpretation. Length alone cannot establish whether a packet is application payload, ATT PDU or HCI packet, whether it is a complete logical write or a fragment, or which authentication/routing/config function it serves. The packet bytes, ATT opcode, endpoint mapping, connection identity and ordering must be recovered from the existing capture before changing runtime.
+- Negotiate ATT MTU before notification subscription and bootstrap. Use the actual callback MTU, with bounded timeout and existing pre-write retry protection. Reject writes larger than MTU minus three; never split an unknown command automatically.
+- Incrementally reconstruct candidate binary envelopes, including the observed doubled line-feed escape across notification boundaries, and check length and CRC. This is a receive-only candidate framing interpretation, not a general protocol specification.
+- Count complete XML replies separately from CRC-valid binary envelopes. An empty envelope has unknown meaning and never verifies session, authentication or color.
+- Preserve originating operation and receive timing across fragments, reset framing on connection changes, bound receive buffers and retain the most recent raw diagnostic samples with a dropped-sample count.
+- Preserve partial framing evidence when an operation fails. Keep all session/color verification flags false.
 
-### Fixed versus changing fields: what can actually be established now
+Validation: Android debug build; debug and Control lint; 34 Java unit tests passed in each variant, including MTU payload limits, split/coalesced replies, escaping, CRC rejection, cross-operation attribution, disconnect reset and bounded buffers. JavaScript control, routing, evidence, backup, application, APK-verifier, Astera analyzer, catalog and Project 5 safety checks passed. Control lint/tests use the existing original signing configuration without publishing an APK or disclosing signing credentials. No physical lamp validation is implied. No new installation is prescribed for these diagnostic changes.
 
-Offsets here are zero-based. In the **four stored color examples only**, offsets 0–11 are identical (`0A107EDF36000000007D6313`), offset 17 is also identical (`FF`), offsets 12–16 differ between presets, and offsets 18–19 are the changing CRC trailer. The current code interprets bytes 12–17 as the captured component tag/value pairs. Matching bytes across these examples do **not** prove a constant across fresh sessions; byte 17 being FF is consistent with the selected saturated presets rather than a proven global session field. Header offsets 2–11 are not decoded as reusable routing/PIN/sequence fields. No fixed/variable classification of the absent 75/19-byte writes can be supplied without their bytes from separate connection sessions.
-
-Once the existing ZIP or payload-bearing derived Astera JSON is available, analysis must split by connection ID **and connection lifetime**, map ATT endpoints for that connection, reconstruct any confirmed Prepare/Execute Write transactions, preserve original byte stuffing, and distinguish logical application writes from wire fragments. Compare corresponding startup writes across those existing fresh connections while fixture settings are unchanged. Record stable observed bytes, changing observed offsets, checksums and unresolved fields separately; stable does not mean safe to replay, changing does not automatically mean authentication. The 36 color writes and the supplied RED/WHITE times should then be correlated within their own session against the full preceding initialization and device replies, accounting for the capture's timezone. Never assign meaning or copy private config values based only on length or timing.
-
-The existing consensus analyzer requires three capture inputs and does not itself turn one multi-connection report into three isolated startup baselines. Do not pass an entire multi-session trace as a single connect-only baseline or mix color changes into initialization consensus. Multiple independent sessions already inside the October 7 report may provide the required comparison; no additional recording is justified until that is checked.
-
-**Current evidence blocker:** attach the existing original ZIP privately, or supply the existing derived Astera-only JSON retaining `connections`, `candidateAsteraSessionWrites`, `attEvents`, `attributes`, `services`, `analysisCoverage`, complete `valueHex` and timing/connection fields. An exact private file reference accessible to this session also suffices. A prose summary containing only lengths, counts and times does not. Keep raw reports and session/config bytes out of the public repository. No replacement APK, new PIN, speculative session write or new physical capture is authorized by these incomplete bytes.
+Still needed from the existing recording: complete ordered initialization and notification streams for comparable connection lifetimes, including alternative configuration sequences; a justified interpretation of configuration/routing fields and any changing session fields; and the relationship between protocol replies and actual light output. Use relative timing within a recording: the export's absolute timezone remains unverified. Do not request a replacement capture merely because the archive is not currently accessible here. Neither old private configuration nor a candidate timestamp is safe to turn into runtime constants or generated commands.
 
 ## Update after receiving the owner's complete CONNECT/WHITE JSON
 

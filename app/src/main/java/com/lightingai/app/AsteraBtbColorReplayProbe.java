@@ -29,11 +29,17 @@ public final class AsteraBtbColorReplayProbe {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Object lock = new Object();
     private final BleOperationQueue writes;
+    private final AsteraBtbReplyDecoder replies = new AsteraBtbReplyDecoder();
     private BluetoothGatt activeGatt;
     private BluetoothGattCharacteristic writeCharacteristic, notifyCharacteristic;
     private BluetoothGattDescriptor activeCccd;
     private boolean gattConnected, transportReady, proprietaryWriteSubmitted;
     private boolean finalColorWriteStarted;
+    private boolean mtuPending, mtuVerified;
+    private int effectiveMtu = 23;
+    private int operationId, binaryReplyCount, emptyBinaryReplyCount, xmlReplyCount, emptyXmlReplyCount;
+    private int postColorBinaryReplyCount, postColorXmlReplyCount, droppedNotificationSamples;
+    private JSONArray assembledReplySamples = new JSONArray();
     private int generation, attempt, notificationCount, postColorNotificationCount;
     private long deadlineMs;
     private String activeAddress = "", activeDeviceName = "", operation = "", closeReason = "";
@@ -107,6 +113,10 @@ public final class AsteraBtbColorReplayProbe {
             closeReason = "";
             operation = requested == null ? "CONNECT" : requested.name();
             activeResult = new JSONObject();
+            operationId++;
+            binaryReplyCount = 0; emptyBinaryReplyCount = 0; xmlReplyCount = 0; emptyXmlReplyCount = 0;
+            postColorBinaryReplyCount = 0; postColorXmlReplyCount = 0; droppedNotificationSamples = 0;
+            assembledReplySamples = new JSONArray();
             notificationSamples = new JSONArray(); notificationCount = 0; postColorNotificationCount = 0;
             finalColorWriteStarted = false;
             put("kind", "LightingAI-Astera-BTB-captured-color-replay"); put("address", target); put("preset", operation);
@@ -116,6 +126,10 @@ public final class AsteraBtbColorReplayProbe {
             put("characteristicUuid", AsteraBtbCapturedFrames.WRITE_UUID.toString());
             put("notifyUuid", NOTIFY_UUID.toString()); put("writeType", "WRITE_WITHOUT_RESPONSE");
             put("protocolGeneralized", false); put("bootstrapUsesPrivateSessionFields", false);
+            put("bootstrapScope", "captured_subset_session_configuration_omitted");
+            put("sessionVerificationReason", "no_confirmed_astera_session_response_decoder");
+            put("binaryReplyMeaningVerified", false);
+            put("negotiatedMtu", effectiveMtu); put("mtuVerified", mtuVerified);
             put("deviceAppliedColorVerified", false); put("sessionVerified", false);
             put("transportReady", transportReady); put("writeCallbackObserved", false);
             put("deviceName", activeDeviceName);
@@ -201,17 +215,25 @@ public final class AsteraBtbColorReplayProbe {
                         if (notifyCharacteristic == null || (notifyCharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == 0) {
                             fail("astera_capture_notify_property_missing"); return;
                         }
-                        if (!g.setCharacteristicNotification(notifyCharacteristic, true)) { fail("astera_capture_notify_enable_failed"); return; }
-                        activeCccd = notifyCharacteristic.getDescriptor(CCCD_UUID);
-                        if (activeCccd == null) { fail("astera_capture_cccd_missing"); return; }
-                        boolean ok;
-                        if (Build.VERSION.SDK_INT >= 33) ok = g.writeDescriptor(activeCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE) == BluetoothStatusCodes.SUCCESS;
-                        else { activeCccd.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE); ok = g.writeDescriptor(activeCccd); }
-                        schedulePhaseTimeoutLocked(token, 4000L, "ble_gatt_cccd_timeout");
-                        event("cccd_write_start", "started", ok);
-                        if (!ok) fail("astera_capture_cccd_write_start_failed");
+                        mtuPending = true;
+                        schedulePhaseTimeoutLocked(token, 4000L, "ble_gatt_mtu_timeout");
+                        boolean ok = g.requestMtu(BleMtuPolicy.REQUESTED_MTU);
+                        event("mtu_request", "requested", BleMtuPolicy.REQUESTED_MTU, "started", ok);
+                        if (!ok) retryOrFailLocked(-1, "ble_gatt_mtu_start_failed");
                         } catch (SecurityException e) { fail("ble_permission_denied"); }
-                        catch (Exception e) { fail("astera_capture_subscription_exception"); }
+                        catch (Exception e) { fail("astera_capture_mtu_exception"); }
+                    }
+                }
+                @Override public void onMtuChanged(BluetoothGatt g, int mtu, int status) {
+                    synchronized (lock) {
+                        if (!current(g) || callback == null || !mtuPending) return;
+                        mtuPending = false;
+                        event("mtu_result", "mtu", mtu, "status", status);
+                        if (status != 0) { retryOrFailLocked(status, "ble_gatt_mtu_status_" + status); return; }
+                        if (!BleMtuPolicy.valid(mtu)) { fail("ble_gatt_mtu_invalid"); return; }
+                        effectiveMtu = mtu; mtuVerified = true;
+                        put("negotiatedMtu", mtu); put("mtuVerified", true);
+                        subscribeLocked(token);
                     }
                 }
                 @Override public void onDescriptorWrite(BluetoothGatt g, BluetoothGattDescriptor d, int status) {
@@ -231,10 +253,17 @@ public final class AsteraBtbColorReplayProbe {
                     synchronized (lock) {
                         if (!current(g) || ch == null || !NOTIFY_UUID.equals(ch.getUuid())) return;
                         notificationCount++; if (finalColorWriteStarted) postColorNotificationCount++;
+                        long receivedAt = SystemClock.elapsedRealtime();
                         event("notification", "hex", hex(value), "afterColorWrite", finalColorWriteStarted);
-                        if (notificationSamples.length() < MAX_NOTIFICATION_SAMPLES) {
+                        for (AsteraBtbReplyDecoder.Packet packet : replies.feed(value, receivedAt, operationId, finalColorWriteStarted)) {
+                            recordReplyLocked(packet);
+                        }
+                        if (notificationSamples.length() >= MAX_NOTIFICATION_SAMPLES) {
+                            notificationSamples.remove(0); droppedNotificationSamples++;
+                        }
+                        {
                             JSONObject sample = new JSONObject();
-                            try { sample.put("atMs", SystemClock.elapsedRealtime()); sample.put("hex", hex(value));
+                            try { sample.put("atMs", receivedAt); sample.put("hex", hex(value));
                                 sample.put("afterColorWrite", finalColorWriteStarted); notificationSamples.put(sample); }
                             catch (Exception ignored) {}
                         }
@@ -249,6 +278,44 @@ public final class AsteraBtbColorReplayProbe {
             else schedulePhaseTimeoutLocked(token, 8000L, "ble_gatt_connect_timeout");
         } catch (SecurityException e) { fail("ble_permission_denied"); }
         catch (Exception e) { retryOrFailLocked(-1, "ble_gatt_connect_start_failed"); }
+    }
+    private void subscribeLocked(int token) {
+        try {
+            if (!activeGatt.setCharacteristicNotification(notifyCharacteristic, true)) { fail("astera_capture_notify_enable_failed"); return; }
+            activeCccd = notifyCharacteristic.getDescriptor(CCCD_UUID);
+            if (activeCccd == null) { fail("astera_capture_cccd_missing"); return; }
+            schedulePhaseTimeoutLocked(token, 4000L, "ble_gatt_cccd_timeout");
+            boolean ok;
+            if (Build.VERSION.SDK_INT >= 33) ok = activeGatt.writeDescriptor(activeCccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE) == BluetoothStatusCodes.SUCCESS;
+            else { activeCccd.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE); ok = activeGatt.writeDescriptor(activeCccd); }
+            event("cccd_write_start", "started", ok);
+            if (!ok) fail("astera_capture_cccd_write_start_failed");
+        } catch (SecurityException e) { fail("ble_permission_denied"); }
+        catch (Exception e) { fail("astera_capture_subscription_exception"); }
+    }
+    private void recordReplyLocked(AsteraBtbReplyDecoder.Packet packet) {
+        boolean binary = "binary_crc_valid_semantics_unknown".equals(packet.kind);
+        boolean thisOperation = packet.operationId == operationId;
+        if (thisOperation) {
+            if (binary) { binaryReplyCount++; if (packet.empty) emptyBinaryReplyCount++; }
+            else { xmlReplyCount++; if (packet.empty) emptyXmlReplyCount++; }
+            if (packet.afterColorWrite) {
+                if (binary) postColorBinaryReplyCount++; else postColorXmlReplyCount++;
+            }
+        }
+        event("assembled_reply", "kind", packet.kind, "payloadLength", packet.payloadLength,
+            "firstAtMs", packet.firstAtMs, "lastAtMs", packet.lastAtMs,
+            "originOperationId", packet.operationId, "thisOperation", thisOperation,
+            "afterColorWrite", packet.afterColorWrite, "meaningVerified", false);
+        if (thisOperation && assembledReplySamples.length() < 128) {
+            JSONObject sample = new JSONObject();
+            try {
+                sample.put("kind", packet.kind); sample.put("payloadLength", packet.payloadLength);
+                sample.put("firstAtMs", packet.firstAtMs); sample.put("lastAtMs", packet.lastAtMs);
+                sample.put("afterColorWrite", packet.afterColorWrite); sample.put("empty", packet.empty);
+                sample.put("meaningVerified", false); assembledReplySamples.put(sample);
+            } catch (Exception ignored) {}
+        }
     }
     private void startBootstrapLocked() {
         writes.cancel();
@@ -269,6 +336,9 @@ public final class AsteraBtbColorReplayProbe {
     }
     private boolean writeValueLocked(String label, byte[] value) {
         if (activeGatt == null || !gattConnected || writeCharacteristic == null) return false;
+        if (!mtuVerified || !BleMtuPolicy.fitsWrite(effectiveMtu, value.length)) {
+            fail("ble_gatt_payload_exceeds_verified_mtu"); return false;
+        }
         try {
             int status;
             if (Build.VERSION.SDK_INT >= 33) status = activeGatt.writeCharacteristic(writeCharacteristic, value, BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
@@ -325,7 +395,14 @@ public final class AsteraBtbColorReplayProbe {
         put("notificationCount", notificationCount); put("postColorNotificationCount", postColorNotificationCount);
         event("operation_error", "code", code);
         Callback cb = callback; callback = null;
-        closeLocked(code); JSONObject result = snapshot(); activeResult = null; preset = null;
+        JSONObject result = snapshot();
+        closeLocked(code);
+        try {
+            result.put("transportReady", false); result.put("closeReason", code);
+            result.put("eventTimeline", new JSONArray(eventTimeline.toString()));
+        }
+        catch (Exception ignored) {}
+        activeResult = null; preset = null;
         if (cb != null) cb.onError(result, code);
     }
     public void cancel() {
@@ -343,6 +420,7 @@ public final class AsteraBtbColorReplayProbe {
         BluetoothGatt gatt = activeGatt; activeGatt = null;
         boolean wasConnected = gattConnected; gattConnected = false; transportReady = false;
         proprietaryWriteSubmitted = false; writeCharacteristic = null; notifyCharacteristic = null; activeCccd = null;
+        mtuPending = false; mtuVerified = false; effectiveMtu = 23; replies.reset();
         if (gatt != null) {
             if (wasConnected) { try { gatt.disconnect(); } catch (Exception ignored) {} }
             try { gatt.close(); } catch (Exception ignored) {}
@@ -375,6 +453,15 @@ public final class AsteraBtbColorReplayProbe {
     private void put(String key, Object value) { try { if (activeResult != null) activeResult.put(key, value); } catch (Exception ignored) {} }
     private JSONObject snapshot() {
         put("eventTimeline", eventTimeline); put("closeReason", closeReason);
+        put("binaryReplyCount", binaryReplyCount); put("emptyBinaryReplyCount", emptyBinaryReplyCount);
+        put("xmlReplyCount", xmlReplyCount); put("emptyXmlReplyCount", emptyXmlReplyCount);
+        put("postColorBinaryReplyCount", postColorBinaryReplyCount); put("postColorXmlReplyCount", postColorXmlReplyCount);
+        put("assembledReplies", assembledReplySamples); put("droppedNotificationSamples", droppedNotificationSamples);
+        put("replyFramingInterpretation", "observed_candidate_no_session_or_color_ack");
+        put("bufferedBinaryBytes", replies.bufferedBinaryBytes());
+        put("bufferedXmlCharacters", replies.bufferedXmlCharacters());
+        put("invalidBinaryCandidates", replies.invalidBinaryCandidates());
+        put("discardedXmlPrefixes", replies.discardedXmlPrefixes());
         try { return activeResult == null ? new JSONObject() : new JSONObject(activeResult.toString()); }
         catch (Exception e) { return new JSONObject(); }
     }

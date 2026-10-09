@@ -9,6 +9,7 @@ import { accessoryRecord, buildAccessoryTree } from "./accessory-graph.js";
 import { aputureReviewCatalog, aputureReviewHtml } from "./aputure-review.js";
 import { generateVisualPreview, VISUAL_PREVIEW_MODEL, VISUAL_PREVIEW_QUALITY } from "./visual-preview.js";
 import { generateScenePlannerPlan } from "./scene-planner-service.js";
+import { createVideoRouter } from "./scene-planner-video.js";
 
 const FIXTURE_LIBRARY = RUNTIME_CATALOG.fixtures;
 const ACCESSORY_LIBRARY = RUNTIME_CATALOG.accessories;
@@ -20,6 +21,7 @@ if (catalogHealth.warnings.length) console.warn("LIGHTING AI catalog validation 
 dotenv.config();
 const app = express();
 app.use(cors());
+app.use("/api/scene-planner/video",createVideoRouter(express));
 app.use(express.json({ limit: "15mb" }));
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

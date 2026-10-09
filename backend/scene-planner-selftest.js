@@ -113,3 +113,28 @@ assert.ok(frontend.includes('id="sp-capture"'),"capture time-of-day must be sele
 assert.ok(frontend.includes("Math.abs(video.currentTime-t)>"),"avoid seeking to same timestamp");
 assert.ok(frontend.includes("0.04,.20,.40,.60,.80,.96"),"sample six chronological keyframes");
 console.log("Scene Planner continuity tests passed: no fabricated blocking, coverage gaps and day-for-night intent.");
+
+const cameraDefault=core.cameraPlan({fps:24,shutterAngle:180,aperture:2.8,iso:800,whiteBalanceK:4300,ndStops:0},{});
+assert.equal(cameraDefault.aperture,2.8);
+assert.ok(Math.abs(cameraDefault.shutterSeconds-1/48)<0.00001);
+const newCamera=core.cameraPlan({fps:24,shutterAngle:180,aperture:2.8,iso:800,ndStops:0},
+  {cameraOverrides:{fps:24,shutterAngle:180,aperture:4,iso:1600,ndStops:0}});
+assert.equal(newCamera.aperture,4);
+assert.equal(newCamera.iso,1600);
+assert.ok(Math.abs(newCamera.exposureDeltaStops)<0.04,"f/4 ISO1600 should have exposure close to f/2.8 ISO800");
+const revised=core.sanitizePlan({cameraSettings:{aperture:2.8,iso:800,shutterAngle:180,fps:24},lights:[]},
+  {...nightInput,cameraOverrides:{aperture:5.6,iso:400,fps:25,shutterAngle:180}},'ai');
+assert.equal(revised.cameraSettings.aperture,5.6);
+assert.equal(revised.cameraSettings.iso,400);
+assert.equal(revised.cameraSettings.fps,25);
+assert.equal(revised.cameraSettings.apertureSource,'dop-override');
+assert.ok(revised.exposureNotes.some(x=>x.includes('nisu potvrđene')));
+assert.ok(frontend.includes('sp-dop-request'),"director of photography brief input missing");
+assert.ok(frontend.includes('sp-revise'),"DoP regenerate action missing");
+assert.ok(frontend.includes('sp-camera-result'),"exposure view missing");
+assert.ok(frontend.includes('MediaRecorder'),"video encoder capability check missing");
+assert.ok(frontend.includes('captureStream'),"real video recording stream missing");
+assert.ok(frontend.includes('video/webm'),"export MIME missing");
+assert.ok(frontend.includes('navigator.share'),"video sharing missing");
+assert.ok(frontend.includes('NIJE AI RELIGHT'),"local conceptual video must not be mislabeled");
+console.log("Scene Planner DoP and video tests passed.");

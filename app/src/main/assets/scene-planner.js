@@ -141,6 +141,9 @@
       '<p class="sp-note">Lokalna simulacija je ilustrativna i nije fotometrijsko merenje. AI foto-preview zahteva mrežu i dostupan servis.</p></div>'+
       '<div class="sp-card"><h2 class="sp-h">2D LIGHT PLOT — PROCENJENI POLOŽAJI</h2>'+
       '<div id="sp-plot"></div><div id="sp-blocking" class="sp-note"></div>'+
+      '<div id="sp-motion-preview" class="sp-card" style="margin-top:12px"><b style="color:#f5c542">VIDEO PREVIZ / POKRETNI KONCEPT</b>'+
+      '<p class="sp-note">Vremenski sinhronizovan pregled izvornog snimka i procenjenog rasporeda rasvete. Ovo nije AI generisan video.</p>'+
+      '<div id="sp-motion-stage"></div></div>'+
       '<label>POLOŽAJ GLUMCA / TRENUTAK SCENE</label><input type="range" id="sp-stage" min="0" max="0" value="0" step="1" class="sp-field" style="padding:4px">'+
       '<div id="sp-stage-info" class="sp-note"></div>'+
       '<p class="sp-note">2D položaji i pokrivenost su AI procene, ne stvarna fotometrijska merenja.</p></div>'+
@@ -360,17 +363,40 @@
     var actor=(p.actors||[])[0],path=actor&&actor.path||[];
     slider.max=String(Math.max(0,path.length-1));
     var index=Math.max(0,Math.min(path.length-1,Number(slider.value)||0));
-    if(!path.length){slider.disabled=true;box.textContent='Putanja nije potvrđena: AI nije uspeo da rekonstruiše kretanje. Ne prikazujemo izmišljene korake.';info.textContent='Nema pouzdane putanje.';return;}
+    if(!path.length){slider.disabled=true;box.textContent='Putanja nije potvrđena: AI nije uspeo da rekonstruiše kretanje. Не приказујемо измишљене кораке.';info.textContent='Nema pouzdane putanje.';renderMotionStage(0);return;}
     slider.disabled=false;
     var pt=path[index],covered=(p.lights||[]).filter(function(l){return l.coverageStages.indexOf(index)>=0;});
     var known=covered.filter(function(l){return l.role==='key'||l.role==='ambient';});
     var camera=p.sceneAnalysis||{};
     box.textContent='Kretanje: '+path.length+' kontrolnih tačaka • pouzdanost '+(actor.confidence||'nepoznata')+
       ' • Kamera '+(camera.cameraMotion||'nepoznato')+'. Ovo nisu metričke koordinate.';
+    renderMotionStage(index);
     info.textContent='Tačka '+(index+1)+'/'+path.length+
       (pt.timeSec==null?'':' • video '+pt.timeSec.toFixed(1)+' s')+
       ' • očekivani izvori: '+(covered.length?covered.map(function(l){return l.id;}).join(', '):'nisu potvrđeni')+
       (!known.length?' • UPOZORENJE: nije potvrđen key/ambient na ovom delu putanje.':'');
+  }
+  function renderMotionStage(index){
+    var region=el('sp-motion-stage'),p=state.plan;
+    if(!region||!p)return;
+    if(!state.frames.length){
+      region.innerHTML='<p class="sp-note">Dodaj video da bi pregledao kretanje kroz snimljene kadrove.</p>';
+      return;
+    }
+    var actor=(p.actors||[])[0],path=actor&&actor.path||[];
+    var current=path[index]||null;
+    var targetTime=current&&current.timeSec!=null?current.timeSec:state.frames[Math.min(index,state.frames.length-1)].timeSec;
+    var frame=state.frames.reduce(function(best,f){return Math.abs(f.timeSec-targetTime)<Math.abs(best.timeSec-targetTime)?f:best;},state.frames[0]);
+    var selected=state.frames.indexOf(frame);
+    var shade=p.look==='Night'||p.look==='Day for Night';
+    var filter=shade?'brightness(.53) contrast(1.18) saturate(.70) hue-rotate(12deg)':'contrast(1.06)';
+    var labels=(p.lights||[]).filter(function(l){return l.coverageStages.includes(index);}).map(function(l){return l.id;}).join(', ');
+    region.innerHTML='<div style="position:relative;background:#070d15;border-radius:10px;overflow:hidden">'+
+      '<img alt="Referentni kadar '+(selected+1)+'" src="'+frame.image+'" style="width:100%;max-height:350px;object-fit:contain;display:block;filter:'+filter+'">'+
+      '<div style="position:absolute;bottom:8px;left:8px;background:#050b11da;border-radius:8px;color:#f5c542;font-size:12px;padding:7px">'+
+      'Kadar '+(selected+1)+' / '+state.frames.length+' · '+frame.timeSec.toFixed(1)+' s · osvetljenje: '+esc(labels||'nepotvrđeno')+
+      '</div></div>'+
+      '<p class="sp-note">Procena izgledа iz izabranog kadra. Svetlosni filter je kreativni prikaz, a ne simulacija stvarnih izvora.</p>';
   }
   function conceptPhoto(plan){
     var image=state.photo||(state.frames[0]&&state.frames[0].image)||'';

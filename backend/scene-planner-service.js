@@ -65,6 +65,17 @@ export function buildScenePlannerPrompt(req) {
     "Room width/depth in metres, null means unknown: " + JSON.stringify([req.roomWidthM,req.roomDepthM]),
     "Dimensions explicitly verified by the user: " + req.dimensionsMeasured,
     "Video keyframes, ordered in time: " + req.videoFrames.map((frame,i) => ({frame:i+1,timeSec:frame.timeSec})).map(JSON.stringify).join("; "),
+    "Distinguish moving camera from actor blocking; do not infer metric 3D geometry from video.",
+    "Track actor across chronological video keyframes and assign timeSec to observed path positions.",
+    "If no reliable actor trajectory is visible, return an empty path and blockingConfidence low/unknown.",
+    "State which actions and landmarks are observable and which are inferred.",
+    "Every fixture needs coverageStages: indices of actor path points potentially illuminated by key/fill/rim light.",
+    "Propose key light continuity at start, middle and end of the actor path; call out gaps.",
+    "Include verticalTiltDeg, beamAngleDeg and positionNote when useful; all positions and levels are estimates.",
+    "For captured daylight requested as night: explain blocking direct sun, sky, specular surfaces, negative fill, controlled key and moonlight rim, continuity and safety.",
+    "Do not imply color grading alone creates physically correct night lighting.",
+    "Capture lighting: " + req.captureLighting,
+    "Camera framing/movement: " + req.shotCamera,
     "Observe actor progression between video keyframes. Occluded motion is uncertain.",
     "Show approximate top-down actor path with chronological x/y percentage coordinates.",
     "Top-down percent coordinates 5..95; camera near x50 y89.",
@@ -77,9 +88,11 @@ export function buildScenePlannerPrompt(req) {
     "ONLY return a JSON object with this shape:",
     JSON.stringify({
       summary:"",rationale:"",limitations:[],safetyNotes:[],
-      actors:[{label:"Glumac",x:50,y:50,path:[{x:20,y:60},{x:50,y:50},{x:80,y:30}]}],
+      sceneAnalysis:{cameraMotion:"unknown",blockingConfidence:"medium",observedLighting:"day",evidence:"visible observations",referencePoints:[{label:"fence",x:20,y:60},{label:"tree",x:75,y:30}]},
+      dayForNightNotes:["Protect highlights and control actual sunlight"],
+      actors:[{label:"Glumac",x:50,y:50,confidence:"medium",path:[{x:20,y:60,timeSec:0},{x:50,y:50,timeSec:3},{x:80,y:30,timeSec:6}]}],
       lights:[{role:"key",fixtureId:"",fixtureName:"",x:25,y:30,heightM:2.4,
-        distanceM:2.5,angleDeg:45,intensityPct:60,kelvin:4300,color:"",modifier:"",why:""}]
+        distanceM:2.5,angleDeg:45,verticalTiltDeg:-25,beamAngleDeg:60,coverageStages:[0,1,2],positionNote:"Off camera, verify actual clearance",intensityPct:60,kelvin:4300,color:"",modifier:"",why:""}]
     }),
     "Maximum eight lights. One entry per physical fixture. Do not include device control."
   ].join("\n");

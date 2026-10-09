@@ -202,19 +202,21 @@ export function createVideoRouter(express,env=process.env,fetcher=fetch){
       const body=req.body||{};
       requirePaidVideoConfirmation(body.confirmPaidGeneration);
       const uploadId=safeId(body.uploadId);
-      const uploaded=uploadSessions.get(uploadId);
-      if(!uploaded)throw err("Uploaded video has expired. Upload again.",410);
-      // An upload must never fund two independent paid generation requests.
-      if(uploaded.requestId&&uploaded.requestId!==body.requestId)
-        throw err("This upload is already reserved for another generation request.",409);
-      if(!body.plan||!Array.isArray(body.plan.lights))throw err("Missing video relighting plan.",422);
       const jobKey=safeId(body.requestId);
+      // Reconcile BEFORE looking for upload, because successful starts consume it.
       const prior=requestSessions.get(jobKey);
       if(prior){
+        if(prior.uploadId!==uploadId)throw err("Request identifier belongs to another upload.",409);
         return res.status(prior.taskId?200:409).json(prior.taskId?
           {ok:true,taskId:prior.taskId,reused:true,status:"PENDING"}:
           {ok:false,error:"The generation request is already being processed. Do not retry automatically."});
       }
+      const uploaded=uploadSessions.get(uploadId);
+      if(!uploaded)throw err("Uploaded video has expired. Upload again.",410);
+      // An upload must never fund two independent paid generation requests.
+      if(uploaded.requestId&&uploaded.requestId!==jobKey)
+        throw err("This upload is already reserved for another generation request.",409);
+      if(!body.plan||!Array.isArray(body.plan.lights))throw err("Missing video relighting plan.",422);
       const active=[...jobSessions.values()].filter(job=>job.status==="PENDING"||
         job.status==="RUNNING"||job.status==="THROTTLED").length;
       if(active>=2)throw err("Two AI video jobs are already in progress; wait before starting another.",429);
@@ -225,12 +227,12 @@ export function createVideoRouter(express,env=process.env,fetcher=fetch){
       // Reserve before calling the provider. A timeout is ambiguous: the paid task
       // may already exist, so keep the reservation and require operator review.
       uploaded.requestId=jobKey;
-      requestSessions.set(jobKey,{taskId:null,expiresAt:Date.now()+18*60*60*1000});
+      requestSessions.set(jobKey,{taskId:null,uploadId,expiresAt:Date.now()+18*60*60*1000});
       const task=await runwayRequest("/video_to_video","POST",fields,env,fetcher);
       const id=safeId(task.id);
       const newJob={status:"PENDING",seconds:uploaded.seconds,expiresAt:Date.now()+18*60*60*1000};
       jobSessions.set(id,newJob);
-      requestSessions.set(jobKey,{taskId:id,expiresAt:newJob.expiresAt});
+      requestSessions.set(jobKey,{taskId:id,uploadId,expiresAt:newJob.expiresAt});
       uploadSessions.delete(uploadId);
       res.json({ok:true,taskId:id,status:"PENDING",model:VIDEO_MODEL,
         estimatedCredits:Math.ceil(uploaded.seconds*VIDEO_CREDITS_PER_SECOND)});

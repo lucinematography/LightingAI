@@ -23,8 +23,9 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(guardPaidAIRequests());
-app.use("/api/scene-planner/video",createVideoRouter(express));
+// JSON must be parsed before /video/start. express.json() leaves raw video/* uploads untouched.
 app.use(express.json({ limit: "15mb" }));
+app.use("/api/scene-planner/video",createVideoRouter(express));
 const openai = paidAiConfigured() ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 function normalizeEquipmentName(value = "") { return String(value).toLowerCase().replace(/aputure/g, "").replace(/[^a-z0-9]+/g, "").trim(); }

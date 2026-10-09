@@ -4,7 +4,7 @@
   var ENTRY='lightingai-scene-planner-entry';
   var API='https://lightingai.onrender.com';
   var STORE='lighting_scene_planner_last_v1';
-  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null};
+  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null,videoDurationSec:null,aiVideoPending:null,aiVideoCompletedPlan:null};
   function el(id){return document.getElementById(id);}
   function esc(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
@@ -291,19 +291,26 @@
       frames.push({timeSec:Number(t.toFixed(2)),image:canvas.toDataURL('image/jpeg',.72)});
     }
     video.removeAttribute('src');video.load();
-    return frames;
+    return {frames:frames,durationSec:duration};
   }
   async function videoPicked(file){
+    if(state.aiVideoPending&&state.aiVideoPending.started){
+      status('Prethodni plaćeni AI zahtev još nije razjašnjen. Ne menjaj snimak i ne pokreći novi zahtev.',true);
+      return;
+    }
     if(state.videoBusy)return;
     if(!/^video\//.test(file.type)&&file.type) {status('Potreban je video snimak.',true);return;}
     if(file.size>180*1024*1024){status('Video prelazi 180 MB. Skrati snimak i pokušaj ponovo.',true);return;}
     state.videoBusy=true;state.frames=[];state.aiPreview='';state.aiStoryboard=[];state.videoFile=file;state.exportedVideo=null;state.aiVideoTaskId=null;
+    state.videoDurationSec=null;state.aiVideoPending=null;state.aiVideoCompletedPlan=null;
     if(state.videoUrl){URL.revokeObjectURL(state.videoUrl);state.videoUrl='';}
     state.videoUrl=URL.createObjectURL(file);
     var player=el('sp-video');if(player){player.src=state.videoUrl;player.hidden=false;player.load();}
     status('Izdvajam ključne kadrove videa na telefonu…');
     try{
-      state.frames=await videoFrames(state.videoUrl);
+      var extracted=await videoFrames(state.videoUrl);
+      state.frames=extracted.frames;
+      state.videoDurationSec=extracted.durationSec;
       var note=el('sp-video-note');
       if(note)note.textContent='Izdvojena '+state.frames.length+' kadra za analizu kretanja. Originalni video ostaje na telefonu.';
       status('Video je spreman: '+state.frames.length+' kadra za planiranje putanje.');
@@ -609,6 +616,9 @@
   async function startAIVideo(){
     if(!state.aiVideoAvailable){videoStatus('AI video servis nije omogućen.',true);return;}
     if(!state.plan||!state.videoFile){videoStatus('Izaberi video i generiši plan.',true);return;}
+    if(state.aiVideoCompletedPlan===state.plan){
+      videoStatus('AI video za ovaj plan je već pokrenut. Za novu obradu prvo potvrdi novi DoP plan.',true);return;
+    }
     if(!el('sp-video-cost-confirm').checked){
       videoStatus('Potrebna je izričita potvrda plaćene AI obrade.',true);return;
     }
@@ -617,29 +627,46 @@
     if(['video/mp4','video/quicktime','video/webm'].indexOf(mime)<0){
       videoStatus('Potreban je MP4, MOV ili WebM. Drugi video format nije prihvaćen.',true);return;
     }
-    var duration=state.frames.length?state.frames[state.frames.length-1].timeSec:0;
-    if(duration<2||duration>30){
+    // Use the original media metadata, never the last (~96%) sampled keyframe.
+    var duration=Number(state.videoDurationSec);
+    if(!Number.isFinite(duration)||duration<2||duration>30){
       videoStatus('Potreban je snimak trajanja od 2 do 30 sekundi.',true);return;
     }
     var button=el('sp-video-ai-start');button.disabled=true;
     try{
-      videoStatus('Otpremam izabrani video na zaštićeni servis…');
-      var uploaded=await videoRequest('/upload',{
-        method:'POST',headers:{'Content-Type':mime,'X-Scene-Duration':String(duration)},
-        body:state.videoFile
-      });
-      var info=await uploaded.json();
-      videoStatus('Video je otpremljen. Pokrećem plaćeni AI relight zadatak…');
+      var pending=state.aiVideoPending;
+      if(!pending){
+        pending={requestId:cryptoRandomRequestId(),uploadId:null,plan:state.plan,started:false};
+        state.aiVideoPending=pending;
+      }
+      if(!pending.uploadId){
+        videoStatus('Otpremam izabrani video na zaštićeni servis…');
+        var uploaded=await videoRequest('/upload',{
+          method:'POST',headers:{'Content-Type':mime,'X-Scene-Duration':String(duration)},
+          body:state.videoFile
+        });
+        var info=await uploaded.json();
+        if(!info.uploadId)throw new Error('Servis nije vratio oznaku otpremljenog snimka.');
+        pending.uploadId=info.uploadId;
+      }
+      videoStatus('Proveravam isti identifikator plaćenog zadatka; nema novog uploada pri ponavljanju.');
+      // The same requestId and uploadId MUST be retained on ambiguous failures.
+      pending.started=true;
       var started=await videoRequest('/start',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({uploadId:info.uploadId,requestId:cryptoRandomRequestId(),
-          plan:state.plan,confirmPaidGeneration:true})
+        body:JSON.stringify({uploadId:pending.uploadId,requestId:pending.requestId,
+          plan:pending.plan,confirmPaidGeneration:true})
       });
       var task=await started.json();
       state.aiVideoTaskId=task.taskId;
+      state.aiVideoCompletedPlan=pending.plan;
+      state.aiVideoPending=null;
       el('sp-video-ai-check').disabled=false;
-      videoStatus('AI zadatak '+task.taskId+' je prihvaćen. Procena: '+task.estimatedCredits+' kredita. Proveri status dugmetom.');
-    }catch(error){videoStatus('Video generisanje nije pokrenuto: '+error.message,true);}
+      videoStatus('AI zadatak '+task.taskId+' je prihvaćen. Procena: '+(task.estimatedCredits==null?'nije potvrđena':task.estimatedCredits)+' kredita. Proveri status dugmetom.');
+    }catch(error){
+      videoStatus('AI zahtev nije potvrđen: '+error.message+
+        (state.aiVideoPending&&state.aiVideoPending.started?' Moguće je da je naplaćen; ne šalji novi zahtev. Sledeća provera koristi isti ID.':''),true);
+    }
     finally{button.disabled=false;}
   }
   function cryptoRandomRequestId(){

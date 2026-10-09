@@ -30,3 +30,12 @@ assert.ok(videoSource.includes('res.setHeader("Content-Type","video/mp4")'));
 assert.ok(videoSource.includes('redirect:"error"'));
 assert.equal(VIDEO_CREDITS_PER_SECOND,28);
 console.log("Video AI integration guard tests passed.");
+
+const appUi=fs.readFileSync(new URL("../app/src/main/assets/scene-planner.js",import.meta.url),"utf8");
+assert.ok(appUi.includes("sp-video-capabilities"));
+assert.ok(appUi.includes("sp-video-cost-confirm"));
+assert.ok(appUi.includes("confirmPaidGeneration:true"));
+assert.ok(appUi.includes("sp-ai-mp4-download"));
+assert.ok(appUi.includes("LightingAI_AI_Relight.mp4"));
+assert.ok(!appUi.includes("RUNWAYML_API_SECRET"),"provider secret must stay backend-only");
+console.log("Scene Planner paid video screen and export wiring checks passed.");

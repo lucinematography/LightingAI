@@ -23,7 +23,7 @@ export function videoCapabilities(env=process.env){
   const key=String(env.RUNWAYML_API_SECRET||"");
   const password=String(env.SCENE_PLANNER_VIDEO_ACCESS_TOKEN||"");
   return {
-    available:env.SCENE_PLANNER_VIDEO_ENABLED==="true"&&key.length>=20&&password.length>=24,
+    available:env.LIGHTINGAI_DISABLE_PAID_AI!=="true"&&env.SCENE_PLANNER_VIDEO_ENABLED==="true"&&key.length>=20&&password.length>=24,
     provider:"runway",model:VIDEO_MODEL,
     inputMinSeconds:2,inputMaxSeconds:MAX_VIDEO_SECONDS,inputMaxBytes:MAX_VIDEO_BYTES,
     outputFormat:"mp4",creditsPerSecond:VIDEO_CREDITS_PER_SECOND,

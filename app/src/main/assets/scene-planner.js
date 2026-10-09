@@ -131,6 +131,17 @@
       '<input id="sp-depth" class="sp-field" type="number" min="0.5" max="100" step="0.1" placeholder="Nepoznato"></div></div>'+
       '<label style="display:flex;align-items:center;gap:9px"><input id="sp-measured" type="checkbox"> Dimenzije su zaista izmerene</label>'+
       '<div id="sp-inventory" class="sp-note"></div></div>'+
+      '<div class="sp-card"><h2 class="sp-h">DIREKTOR FOTOGRAFIJE / KAMERA</h2>'+
+      '<label>IZMENA / ZAHTEV DoP-a</label>'+
+      '<textarea id="sp-dop-request" rows="3" class="sp-field" placeholder="Tamnije za 1 stop, topliji key, hladnija kontra, zadrži samo moje lampe..."></textarea>'+
+      '<div class="sp-two"><div><label>BLENDA</label><input id="sp-aperture" class="sp-field" type="number" min="0.7" max="32" step="0.1" placeholder="AI predlog"></div>'+
+      '<div><label>ISO</label><input id="sp-iso" class="sp-field" type="number" min="50" max="25600" step="50" placeholder="AI predlog"></div>'+
+      '<div><label>FPS</label><input id="sp-fps" class="sp-field" type="number" min="1" max="120" step="1" placeholder="24"></div>'+
+      '<div><label>SHUTTER ANGLE</label><input id="sp-shutter" class="sp-field" type="number" min="11.25" max="360" step="1" placeholder="180"></div>'+
+      '<div><label>WHITE BALANCE (K)</label><input id="sp-wb" class="sp-field" type="number" min="1700" max="20000" step="100" placeholder="AI predlog"></div>'+
+      '<div><label>ND (STOP)</label><input id="sp-nd" class="sp-field" type="number" min="0" max="12" step="0.5" placeholder="0"></div></div>'+
+      '<button id="sp-revise" class="sp-btn sp-primary" type="button" style="width:100%;margin-top:10px">PRIMENI ZAHTEV DoP-a I PONOVO GENERIŠI PLAN</button>'+
+      '<p class="sp-note">Blenda, ISO i shutter su tehnički predlozi. Stvarnu ekspoziciju potvrđuje test kamere ili svetlomer.</p></div>'+
       '<div class="sp-card"><h2 class="sp-h">3 / IZGRADI PLAN I VIZUELNI PRIKAZ</h2>'+
       '<div class="sp-actions"><button type="button" class="sp-btn sp-primary" id="sp-generate">GENERISI AI PLAN</button>'+
       '<button type="button" class="sp-btn" id="sp-local">LOKALNI KONCEPT (BEZ INTERNETA)</button></div>'+
@@ -148,7 +159,7 @@
       '<div id="sp-stage-info" class="sp-note"></div>'+
       '<p class="sp-note">2D položaji i pokrivenost su AI procene, ne stvarna fotometrijska merenja.</p></div>'+
       '<div class="sp-card"><h2 class="sp-h">PREDLOG RASVETE</h2>'+
-      '<div id="sp-summary"></div><div id="sp-lights"></div><div id="sp-warnings"></div>'+
+      '<div id="sp-summary"></div><div id="sp-camera-result" class="sp-lamp"></div><div id="sp-lights"></div><div id="sp-warnings"></div>'+
       '<div class="sp-actions" style="margin-top:12px"><button type="button" class="sp-btn" id="sp-save">SAČUVAJ PLAN (JSON)</button>'+
       '<button type="button" class="sp-btn" id="sp-share">PODELI PLAN</button></div></div></div></div>';
     document.body.appendChild(wrap);
@@ -171,6 +182,7 @@
       } else status('Glasovni unos zahteva Android verziju aplikacije.',true);
     };
     el('sp-generate').onclick=function(){generate(true);};
+    el('sp-revise').onclick=function(){generate(true);};
     el('sp-local').onclick=function(){generate(false);};
     el('sp-ai-preview').onclick=generatePhotoPreview;
     el('sp-save').onclick=save;
@@ -284,12 +296,17 @@
       look:el('sp-look').value,captureLighting:el('sp-capture').value,
       shotCamera:el('sp-shot-camera').value,roomWidthM:el('sp-width').value,
       roomDepthM:el('sp-depth').value,dimensionsMeasured:el('sp-measured').checked,
-      equipment:inventory(),scenePhoto:state.photo,videoFrames:state.frames,language:locale()
+      equipment:inventory(),scenePhoto:state.photo,videoFrames:state.frames,language:locale(),
+      dopRequest:el('sp-dop-request').value,
+      previousPlan:state.plan&&state.plan.source==='ai'?state.plan:null,
+      cameraOverrides:{aperture:el('sp-aperture').value,iso:el('sp-iso').value,
+        fps:el('sp-fps').value,shutterAngle:el('sp-shutter').value,
+        whiteBalanceK:el('sp-wb').value,ndStops:el('sp-nd').value}
     });
   }
   function setBusy(busy){
     state.busy=busy;
-    ['sp-generate','sp-local','sp-ai-preview'].forEach(function(id){if(el(id))el(id).disabled=busy;});
+    ['sp-generate','sp-local','sp-ai-preview','sp-revise'].forEach(function(id){if(el(id))el(id).disabled=busy;});
   }
   async function generate(useAI){
     if(state.busy||state.videoBusy||!core())return;
@@ -431,6 +448,16 @@
       '<p class="sp-note">'+esc(plan.rationale)+'</p>'+
       '<div class="sp-pill" style="display:inline-block">'+(plan.source==='ai'?'AI PREDLOG':'LOKALNI KONCEPT')+
       ' • '+(plan.mode==='own'?'SAMO MOJA OPREMA':'NAJBOLJA RASVETA')+'</div>';
+    var camera=plan.cameraSettings||{};
+    var cameraBox=el('sp-camera-result');
+    if(cameraBox)cameraBox.innerHTML='<b style="color:#f5c542">KAMERA / PREPORUKA, NIJE MERENJE</b>'+
+      '<p>f/'+fmt(camera.aperture)+' • ISO '+fmt(camera.iso)+' • '+fmt(camera.fps,' fps')+
+      ' • Shutter '+fmt(camera.shutterAngle,'°')+' • WB '+fmt(camera.whiteBalanceK,' K')+
+      ' • ND '+fmt(camera.ndStops,' stop')+'</p>'+
+      '<p class="sp-note">Shutter ~'+fmt(camera.shutterSeconds,' s')+
+      ' • promena u odnosu na osnovni predlog: '+fmt(camera.exposureDeltaStops,' stop')+
+      '<div>'+esc(camera.provenance||'Neproverena procena')+'</div>'+
+      (plan.exposureNotes||[]).map(function(n){return '<div>• '+esc(n)+'</div>';}).join('')+'</p>';
     el('sp-plot').innerHTML=plotSvg(plan);
     renderBlocking();
     el('sp-preview').innerHTML=conceptPhoto(plan);

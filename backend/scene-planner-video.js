@@ -1,6 +1,8 @@
 import crypto from "node:crypto";
 import { Readable } from "node:stream";
 import { parseDataImage } from "./visual-preview.js";
+import { createVideoJobStore } from "./scene-planner-job-store.js";
+import { analyzeIsoVideo } from "./scene-planner-media.js";
 
 export const VIDEO_MODEL="aleph2";
 export const VIDEO_CREDITS_PER_SECOND=28;
@@ -15,15 +17,12 @@ const mediaTypes={
   "video/quicktime":{ext:"mov",container:"iso"},
   "video/webm":{ext:"webm",container:"webm"}
 };
-const uploadSessions=new Map();
-const jobSessions=new Map();
-const requestSessions=new Map();
 
 export function videoCapabilities(env=process.env){
   const key=String(env.RUNWAYML_API_SECRET||"");
   const password=String(env.SCENE_PLANNER_VIDEO_ACCESS_TOKEN||"");
   return {
-    available:env.LIGHTINGAI_DISABLE_PAID_AI!=="true"&&env.SCENE_PLANNER_VIDEO_ENABLED==="true"&&key.length>=20&&password.length>=24,
+    available:env.LIGHTINGAI_DISABLE_PAID_AI!=="true"&&env.SCENE_PLANNER_VIDEO_ENABLED==="true"&&key.length>=20&&password.length>=24&&!!env.SCENE_PLANNER_VIDEO_DATABASE_URL,
     provider:"runway",model:VIDEO_MODEL,
     inputMinSeconds:2,inputMaxSeconds:MAX_VIDEO_SECONDS,inputMaxBytes:MAX_VIDEO_BYTES,
     outputFormat:"mp4",creditsPerSecond:VIDEO_CREDITS_PER_SECOND,
@@ -36,20 +35,9 @@ function err(message,status){
   return Object.assign(new Error(message),{status});
 }
 function safeId(value){
-  const v=String(value||"");
-  if(!/^[a-f0-9-]{36}$/i.test(v))throw err("Invalid video job identifier.",400);
+  const v=String(value||"").toLowerCase();
+  if(!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(v))throw err("Invalid video job identifier.",400);
   return v;
-}
-function prune(now=Date.now()){
-  for(const [id,entry] of uploadSessions){
-    if(entry.expiresAt<=now)uploadSessions.delete(id);
-  }
-  for(const [id,entry] of jobSessions){
-    if(entry.expiresAt<=now)jobSessions.delete(id);
-  }
-  for(const [id,entry] of requestSessions){
-    if(entry.expiresAt<=now)requestSessions.delete(id);
-  }
 }
 function secureEqual(a,b){
   const aBytes=Buffer.from(String(a||""));
@@ -61,7 +49,7 @@ export function authorizeVideoRequest(headers,env=process.env){
   const bearer=String(headers?.authorization||"").match(/^Bearer ([^\s]+)$/);
   if(!bearer||!secureEqual(bearer[1],env.SCENE_PLANNER_VIDEO_ACCESS_TOKEN))throw err("AI video authorization required.",401);
 }
-export function validateVideoBinary(buffer,mime,duration){
+export function validateVideoBinary(buffer,mime){
   const type=String(mime||"").split(";")[0].trim().toLowerCase();
   const config=mediaTypes[type];
   if(!config)throw err("Only MP4, MOV and WebM video are supported.",415);
@@ -71,7 +59,9 @@ export function validateVideoBinary(buffer,mime,duration){
   const webm=buffer.length>=4&&buffer.subarray(0,4).equals(Buffer.from([0x1a,0x45,0xdf,0xa3]));
   if(config.container==="iso"&&!iso||config.container==="webm"&&!webm)
     throw err("Video container does not match declared MIME type.",415);
-  const seconds=Number(duration);
+  // MIME/signature alone and X-Scene-Duration are never evidence of duration.
+  if(config.container!=="iso")throw err("WebM timing cannot be verified by this backend. Export MP4/MOV.",422);
+  const seconds=analyzeIsoVideo(buffer);
   if(!Number.isFinite(seconds)||seconds<2||seconds>MAX_VIDEO_SECONDS)
     throw err("AI video relight accepts clips from 2 to 30 seconds.",422);
   return {mime:type,filename:"lightingai-input."+config.ext,seconds};
@@ -136,12 +126,12 @@ export async function runwayRequest(path,method,data,env=process.env,fetcher=fet
   const res=await fetcher(url,{
     method,headers:jsonHeaders(env),
     ...(data===undefined?{}:{body:JSON.stringify(data)}),
-    signal:AbortSignal.timeout(90000),redirect:"error"
+    signal:AbortSignal.timeout(method==="GET"?10000:90000),redirect:"error"
   });
   return responseJson(res);
 }
 export async function uploadVideoToRunway(buffer,mime,duration,env=process.env,fetcher=fetch){
-  const meta=validateVideoBinary(buffer,mime,duration);
+  const meta=validateVideoBinary(buffer,mime);
   const response=await runwayRequest("/uploads","POST",{type:"ephemeral",filename:meta.filename},env,fetcher);
   const uploadURL=trustedUrl(response.uploadUrl,"upload");
   if(!response.runwayUri||!/^runway:\/\/[a-z0-9/_-]+$/i.test(response.runwayUri))
@@ -181,88 +171,114 @@ export function requirePaidVideoConfirmation(value){
 export function videoErrorStatus(error){
   return Number.isInteger(error?.status)&&error.status>=400&&error.status<=599?error.status:500;
 }
-export function createVideoRouter(express,env=process.env,fetcher=fetch){
+export function createVideoRouter(express,env=process.env,fetcher=fetch,options={}){
   const router=express.Router();
-  const auth=(req,res,next)=>{
-    try{authorizeVideoRequest(req.headers,env);prune();next();}
-    catch(error){res.status(videoErrorStatus(error)).json({ok:false,error:error.message});}
+  let store;
+  try{store=options.store||createVideoJobStore(env);}catch{store=null;}
+  const sendError=(res,error)=>res.status(videoErrorStatus(error)).json({ok:false,
+    error:error?.status?error.message:"Video service is temporarily unavailable. Do not submit another paid request."});
+  const auth=async(req,res,next)=>{
+    try{
+      authorizeVideoRequest(req.headers,env);
+      if(!store?.durable)throw err("Durable video storage is required.",503);
+      await store.ready();await store.prune();next();
+    }catch(error){sendError(res,error);}
   };
-  router.get("/capabilities",(req,res)=>res.json(videoCapabilities(env)));
+  router.get("/capabilities",async(req,res)=>{
+    const caps=videoCapabilities(env);
+    try{if(!store?.durable)throw new Error();await store.ready();}
+    catch{caps.available=false;}
+    res.setHeader("Cache-Control","no-store");res.json(caps);
+  });
+  router.use((req,res,next)=>{res.setHeader("Cache-Control","no-store");next();});
   router.post("/upload",auth,express.raw({type:["video/mp4","video/quicktime","video/webm"],limit:"40mb"}),async(req,res)=>{
     try{
-      const meta=validateVideoBinary(req.body,req.get("Content-Type"),req.get("X-Scene-Duration"));
+      const meta=validateVideoBinary(req.body,req.get("Content-Type"));
       const uploaded=await uploadVideoToRunway(req.body,meta.mime,meta.seconds,env,fetcher);
-      const uploadId=crypto.randomUUID(),expiresAt=Date.now()+60*60*1000;
-      uploadSessions.set(uploadId,{...uploaded,expiresAt});
-      res.json({ok:true,uploadId,seconds:uploaded.seconds,expiresAt:new Date(expiresAt).toISOString()});
-    }catch(error){res.status(videoErrorStatus(error)).json({ok:false,error:error.message});}
+      const uploadId=crypto.randomUUID();
+      const record=await store.addUpload(uploadId,uploaded.uri,uploaded.seconds);
+      res.json({ok:true,uploadId,seconds:uploaded.seconds,expiresAt:record.expires_at});
+    }catch(error){sendError(res,error);}
+  });
+  function previousResponse(res,prior,uploadId){
+    if(uploadId&&prior.upload_id!==uploadId)throw err("Request identifier belongs to another upload.",409);
+    if(prior.status==="EXPIRED")throw err("Video receipt has expired. This request remains reserved.",410);
+    return res.status(prior.task_id?200:409).json(prior.task_id?
+      {ok:true,taskId:prior.task_id,reused:true,status:prior.status}:
+      {ok:false,requiresReview:true,error:"The paid request is reserved but its outcome is unconfirmed. Do not start another request; operator review is required."});
+  }
+  router.get("/request/:id",auth,async(req,res)=>{
+    try{
+      const prior=await store.request(safeId(req.params.id));
+      if(!prior)throw err("Video request not found. No generation was retried.",404);
+      if(prior.status==="EXPIRED")return res.json({ok:true,taskId:prior.task_id,status:"EXPIRED",expired:true});
+      return previousResponse(res,prior);
+    }catch(error){sendError(res,error);}
   });
   router.post("/start",auth,async(req,res)=>{
+    let reserved=null;
     try{
       const body=req.body||{};
       requirePaidVideoConfirmation(body.confirmPaidGeneration);
       const uploadId=safeId(body.uploadId);
       const jobKey=safeId(body.requestId);
       // Reconcile BEFORE looking for upload, because successful starts consume it.
-      const prior=requestSessions.get(jobKey);
-      if(prior){
-        if(prior.uploadId!==uploadId)throw err("Request identifier belongs to another upload.",409);
-        return res.status(prior.taskId?200:409).json(prior.taskId?
-          {ok:true,taskId:prior.taskId,reused:true,status:"PENDING"}:
-          {ok:false,error:"The generation request is already being processed. Do not retry automatically."});
-      }
-      const uploaded=uploadSessions.get(uploadId);
+      const prior=await store.request(jobKey);
+      if(prior)return previousResponse(res,prior,uploadId);
+      const uploaded=await store.upload(uploadId);
       if(!uploaded)throw err("Uploaded video has expired. Upload again.",410);
-      // An upload must never fund two independent paid generation requests.
-      if(uploaded.requestId&&uploaded.requestId!==jobKey)
+      if(uploaded.request_id&&uploaded.request_id!==jobKey)
         throw err("This upload is already reserved for another generation request.",409);
       if(!body.plan||!Array.isArray(body.plan.lights))throw err("Missing video relighting plan.",422);
-      const active=[...jobSessions.values()].filter(job=>job.status==="PENDING"||
-        job.status==="RUNNING"||job.status==="THROTTLED").length;
-      if(active>=2)throw err("Two AI video jobs are already in progress; wait before starting another.",429);
       const promptText=buildVideoRelightPrompt(body.plan);
       const keyframes=validateKeyframes(body.keyframes,uploaded.seconds);
       const fields={model:VIDEO_MODEL,videoUri:uploaded.uri,promptText,outputFormat:"mp4"};
       if(keyframes.length)fields.keyframes=keyframes;
-      // Reserve before calling the provider. A timeout is ambiguous: the paid task
-      // may already exist, so keep the reservation and require operator review.
-      uploaded.requestId=jobKey;
-      requestSessions.set(jobKey,{taskId:null,uploadId,expiresAt:Date.now()+18*60*60*1000});
+      // Refresh real statuses before the shared database applies its atomic limit.
+      // Unknown outcomes retain slots. A failed status query blocks a new paid start.
+      for(const active of await store.active())if(active.task_id)await refreshJob(active.task_id);
+      const reservation=await store.reserve(jobKey,uploadId);
+      if(reservation.prior)return previousResponse(res,reservation.prior,uploadId);
+      reserved=jobKey; // durable COMMIT has completed before the only provider POST.
       const task=await runwayRequest("/video_to_video","POST",fields,env,fetcher);
       const id=safeId(task.id);
-      const newJob={status:"PENDING",seconds:uploaded.seconds,expiresAt:Date.now()+18*60*60*1000};
-      jobSessions.set(id,newJob);
-      requestSessions.set(jobKey,{taskId:id,uploadId,expiresAt:newJob.expiresAt});
-      uploadSessions.delete(uploadId);
+      await store.submitted(jobKey,id);
       res.json({ok:true,taskId:id,status:"PENDING",model:VIDEO_MODEL,
         estimatedCredits:Math.ceil(uploaded.seconds*VIDEO_CREDITS_PER_SECOND)});
-    }catch(error){res.status(videoErrorStatus(error)).json({ok:false,error:error.message});}
+    }catch(error){
+      if(reserved){await store.unknown(reserved).catch(()=>{});
+        return sendError(res,err("Paid request outcome is unconfirmed. The request remains reserved; operator review is required.",409));}
+      sendError(res,error);
+    }
   });
-  async function readJob(req){
-    const id=safeId(req.params.id),session=jobSessions.get(id);
+  async function refreshJob(id){
+    const session=await store.task(id);
     if(!session)throw err("Video job not found or expired.",404);
+    if(["SUCCEEDED","FAILED","CANCELED","EXPIRED"].includes(session.status))return {id,session};
     const result=await runwayRequest("/tasks/"+encodeURIComponent(id),"GET",undefined,env,fetcher);
     const status=String(result.status||"");
     if(!VIDEO_STATUSES.includes(status))throw err("External video service has unknown task status.",502);
-    session.status=status;
+    let outputURL=null;
     if(status==="SUCCEEDED"){
-      if(!Array.isArray(result.output)||!result.output.length)throw err("AI video task completed without video content.",502);
-      trustedUrl(result.output[0],"output");
-      session.outputURL=result.output[0];
+      if(Array.isArray(result.output)&&result.output.length){
+        try{trustedUrl(result.output[0],"output");outputURL=result.output[0];}catch{/* Terminal work still releases its slot; unusable output is never downloaded. */}
+      }
     }
-    return {id,session};
+    await store.updateTask(id,status,outputURL);
+    return {id,session:await store.task(id)};
   }
   router.get("/status/:id",auth,async(req,res)=>{
-    try{const {id,session}=await readJob(req);
-      res.json({ok:true,taskId:id,status:session.status,ready:session.status==="SUCCEEDED",
+    try{const {id,session}=await refreshJob(safeId(req.params.id));
+      res.json({ok:true,taskId:id,status:session.status,ready:session.status==="SUCCEEDED"&&!!session.output_url,
         outputFormat:"mp4",model:VIDEO_MODEL});
-    }catch(error){res.status(videoErrorStatus(error)).json({ok:false,error:error.message});}
+    }catch(error){sendError(res,error);}
   });
   router.get("/download/:id",auth,async(req,res)=>{
     try{
-      const {session}=await readJob(req);
-      if(session.status!=="SUCCEEDED"||!session.outputURL)throw err("AI video is not ready.",409);
-      const url=trustedUrl(session.outputURL,"output");
+      const {session}=await refreshJob(safeId(req.params.id));
+      if(session.status==="EXPIRED")throw err("Video job has expired.",410);
+      if(session.status!=="SUCCEEDED"||!session.output_url)throw err("AI video is not ready.",409);
+      const url=trustedUrl(session.output_url,"output");
       const upstream=await fetcher(url,{method:"GET",redirect:"error",signal:AbortSignal.timeout(120000)});
       if(!upstream.ok||!upstream.body)throw err("AI video storage could not be read.",502);
       const length=Number(upstream.headers.get("content-length"));
@@ -275,7 +291,7 @@ export function createVideoRouter(express,env=process.env,fetcher=fetch){
       stream.on("data",chunk=>{bytes+=chunk.length;if(bytes>MAX_DOWNLOAD_BYTES)stream.destroy(err("Video exceeds download limit.",413));});
       stream.on("error",()=>{if(!res.destroyed)res.destroy();});
       stream.pipe(res);
-    }catch(error){if(!res.headersSent)res.status(videoErrorStatus(error)).json({ok:false,error:error.message});}
+    }catch(error){if(!res.headersSent)sendError(res,error);}
   });
   return router;
 }

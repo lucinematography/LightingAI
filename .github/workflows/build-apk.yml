@@ -10,6 +10,20 @@ on:
 jobs:
   validate-and-build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: lightingai_ci
+          POSTGRES_PASSWORD: ci-only-ephemeral-password
+          POSTGRES_DB: lightingai_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lightingai_ci -d lightingai_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     concurrency:
       group: lightingai-android-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
       cancel-in-progress: true
@@ -32,6 +46,14 @@ jobs:
 
       - name: CI autofix regression tests
         run: node scripts/run-ci-check.mjs ci-autofix
+
+      - name: Scene Planner real PostgreSQL integration
+        working-directory: backend
+        timeout-minutes: 5
+        env:
+          # Disposable CI-only credentials; never a production URL or repository secret.
+          SCENE_PLANNER_POSTGRES_TEST_URL: postgres://lightingai_ci:ci-only-ephemeral-password@127.0.0.1:5432/lightingai_ci_test
+        run: npm run test:scene-planner-postgres
 
       - name: Audit backend dependencies for high/critical vulnerabilities
         working-directory: backend

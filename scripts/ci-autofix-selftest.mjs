@@ -177,13 +177,23 @@ test('stable-base guard validates future committed content and blocks regression
     git('checkout', '--quiet', '--detach', before.head);
     const files = ['.github/workflows/build-apk.yml', '.github/workflows/release-apk.yml', '.gitignore',
       'docs/CI_AUTOFIX_PHASE1.md', 'scripts/ci-autofix.mjs', 'scripts/ci-autofix-selftest.mjs',
-      'scripts/ci-report-summary.mjs', 'scripts/run-ci-check.mjs', 'backend/project5-stable-base-selftest.js'];
+      'scripts/ci-report-summary.mjs', 'scripts/run-ci-check.mjs', 'backend/project5-stable-base-selftest.js',
+      // Include the complete phase-2 candidate in the isolated future-commit check.
+      'backend/scene-planner-video.js', 'backend/scene-planner-video-selftest.js',
+      'backend/scene-planner-job-store.js', 'backend/scene-planner-media.js',
+      'backend/scene-planner-video-test-support.js', 'backend/scene-planner-video-phase2-selftest.js',
+      'backend/scene-planner-postgres-selftest.js', 'backend/scene-planner-postgres-worker.js',
+      'backend/staging-safety-selftest.js', 'backend/package.json', 'backend/package-lock.json',
+      'app/src/main/assets/scene-planner.js', 'app/src/main/java/com/lightingai/app/MainActivity.java',
+      'app/src/main/java/com/lightingai/app/ScenePlannerCaptureCleanup.java',
+      'app/src/test/java/com/lightingai/app/ScenePlannerCaptureCleanupTest.java',
+      'docs/SCENE_PLANNER_VIDEO_PHASE2.md'];
     for (const file of files) {
       fs.mkdirSync(path.dirname(path.join(snapshot, file)), {recursive: true});
       fs.copyFileSync(path.join(root, file), path.join(snapshot, file));
     }
     git('add', '--', ...files);
-    if (git('diff', '--cached', '--name-only')) commit('Isolated phase-1 candidate');
+    if (git('diff', '--cached', '--name-only')) commit('Isolated Scene Planner phase-2 candidate');
     const candidate = git('rev-parse', 'HEAD');
     await t.test('complete future committed candidate passes unchanged historical protections', () => {
       const result = guard();

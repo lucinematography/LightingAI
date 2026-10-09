@@ -198,6 +198,17 @@ const exactAllowed = new Set([
   'backend/scene-planner-selftest.js',
   'backend/scene-planner-video.js',
   'backend/scene-planner-video-selftest.js',
+  // PR #414 Scene Planner phase 2: durable adapter, bounded media analysis and their offline tests.
+  'backend/scene-planner-job-store.js',
+  'backend/scene-planner-media.js',
+  'backend/scene-planner-video-test-support.js',
+  'backend/scene-planner-video-phase2-selftest.js',
+  // Real PostgreSQL CI fixture and its two offline child-process instances only.
+  'backend/scene-planner-postgres-selftest.js',
+  'backend/scene-planner-postgres-worker.js',
+  'docs/SCENE_PLANNER_VIDEO_PHASE2.md',
+  'app/src/main/java/com/lightingai/app/ScenePlannerCaptureCleanup.java',
+  'app/src/test/java/com/lightingai/app/ScenePlannerCaptureCleanupTest.java',
   'backend/staging-safety.js',
   'backend/staging-safety-selftest.js',
   'backend/project5-feature-selftest.js',

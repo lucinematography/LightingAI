@@ -32,7 +32,8 @@ assert.equal(allowed, true, "configured production AI calls remain unaffected");
 const videoEnv = {
   ...staging, SCENE_PLANNER_VIDEO_ENABLED: "true",
   RUNWAYML_API_SECRET: "long-video-provider-secret-for-test",
-  SCENE_PLANNER_VIDEO_ACCESS_TOKEN: "long-access-token-for-authorization"
+  SCENE_PLANNER_VIDEO_ACCESS_TOKEN: "long-access-token-for-authorization",
+  SCENE_PLANNER_VIDEO_DATABASE_URL: "postgres://unused.invalid/test"
 };
 assert.equal(videoCapabilities(videoEnv).available, false,
   "staging kill switch must also disable paid Runway requests");

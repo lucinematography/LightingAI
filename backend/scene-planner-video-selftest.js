@@ -2,17 +2,18 @@ import assert from "node:assert/strict";
 import {videoCapabilities,validateVideoBinary,validateKeyframes,buildVideoRelightPrompt,
   authorizeVideoRequest,requirePaidVideoConfirmation,createVideoRouter,VIDEO_CREDITS_PER_SECOND} from "./scene-planner-video.js";
 import fs from "node:fs";
-const mp4=Buffer.alloc(1024);mp4.write("ftyp",4,"ascii");
+import {testMp4,testStore} from "./scene-planner-video-test-support.js";
+const mp4=testMp4(12);
 const cfg=validateVideoBinary(mp4,"video/mp4",12);
 assert.equal(cfg.seconds,12);
-assert.throws(()=>validateVideoBinary(mp4,"video/mp4",31),/2 to 30/);
+assert.throws(()=>validateVideoBinary(testMp4(31),"video/mp4",12),/timing/);
 assert.throws(()=>validateVideoBinary(mp4,"image/jpeg",8),/Only MP4/);
 assert.throws(()=>validateVideoBinary(Buffer.alloc(1024),"video/mp4",8),/container/);
 assert.equal(videoCapabilities({}).available,false,"must default disabled");
-assert.equal(videoCapabilities({SCENE_PLANNER_VIDEO_ENABLED:"true",RUNWAYML_API_SECRET:"valid-secret-longer-than-twenty",SCENE_PLANNER_VIDEO_ACCESS_TOKEN:"a-very-long-video-access-token"}).available,true);
+assert.equal(videoCapabilities({SCENE_PLANNER_VIDEO_ENABLED:"true",RUNWAYML_API_SECRET:"valid-secret-longer-than-twenty",SCENE_PLANNER_VIDEO_ACCESS_TOKEN:"a-very-long-video-access-token"}).available,false,"paid calls require durable storage configuration");
 assert.throws(()=>authorizeVideoRequest({authorization:"Bearer wrong"},{
   SCENE_PLANNER_VIDEO_ENABLED:"true",RUNWAYML_API_SECRET:"valid-secret-longer-than-twenty",
-  SCENE_PLANNER_VIDEO_ACCESS_TOKEN:"a-very-long-video-access-token"
+  SCENE_PLANNER_VIDEO_ACCESS_TOKEN:"a-very-long-video-access-token",SCENE_PLANNER_VIDEO_DATABASE_URL:"postgres://unused.invalid/test"
 }),/authorization/);
 const plan={look:"Day for Night",description:"Actor walks from fence to tree",dopRequest:"Keep faces one stop darker",
   lights:[{id:"L1",role:"key",fixtureName:"LED",kelvin:5600,intensityPct:50,why:"Moon key"}]};
@@ -34,8 +35,8 @@ for(const value of [undefined,null,false,0,1,"true","false",{},[]]){
 }
 assert.ok(videoSource.includes('res.setHeader("Content-Type","video/mp4")'));
 assert.ok(videoSource.includes('redirect:"error"'));
-assert.match(videoSource,/uploaded\.requestId=jobKey/,"reserve the upload for one paid request");
-assert.match(videoSource,/uploaded\.requestId!==jobKey/,"deny reuse of the uploaded file by another paid request");
+assert.match(videoSource,/await store\.reserve\(jobKey,uploadId\)/,"reserve durably before a paid request");
+assert.match(videoSource,/uploaded\.request_id!==jobKey/,"deny reuse of the uploaded file by another paid request");
 assert.doesNotMatch(videoSource,/requestSessions\.delete\(jobKey\)/,"ambiguous provider failures must not clear idempotency protection");
 assert.equal(VIDEO_CREDITS_PER_SECOND,28);
 console.log("Video AI integration guard tests passed.");
@@ -79,7 +80,8 @@ import express from "express";
 const mockEnv={
   SCENE_PLANNER_VIDEO_ENABLED:"true",
   RUNWAYML_API_SECRET:"fake-provider-secret-longer-than-twenty",
-  SCENE_PLANNER_VIDEO_ACCESS_TOKEN:"fake-user-token-longer-than-twenty-four"
+  SCENE_PLANNER_VIDEO_ACCESS_TOKEN:"fake-user-token-longer-than-twenty-four",
+  SCENE_PLANNER_VIDEO_DATABASE_URL:"postgres://unused.invalid/test"
 };
 const fakeTask="11111111-1111-4111-8111-111111111111";
 const fakeRequest="22222222-2222-4222-8222-222222222222";
@@ -107,8 +109,9 @@ const mockFetcher=async(url,options={})=>{
   throw new Error("Unexpected mocked Runway fetch: "+uri);
 };
 const testApp=express();
+const jobStore=await testStore();
 testApp.use(express.json({limit:"15mb"}));
-testApp.use("/api/scene-planner/video",createVideoRouter(express,mockEnv,mockFetcher));
+testApp.use("/api/scene-planner/video",createVideoRouter(express,mockEnv,mockFetcher,{store:jobStore}));
 const httpServer=await new Promise(resolve=>{
   const instance=testApp.listen(0,"127.0.0.1",()=>resolve(instance));
 });
@@ -137,7 +140,7 @@ try{
   assert.equal(replay.status,200,"lost response must be reconcilable using original requestId");
   assert.equal((await replay.json()).reused,true);
   assert.equal(paidCalls,1,"replay must never launch a second paid task");
-  assert.equal((await sendStart({...startBody,requestId:fakeOtherRequest})).status,410,
+  assert.equal((await sendStart({...startBody,requestId:fakeOtherRequest})).status,409,
     "consumed upload cannot pay for another generation");
   const status=await fetch(base+"/status/"+fakeTask,{headers});
   assert.equal((await status.json()).ready,true);
@@ -149,4 +152,5 @@ try{
 }finally{
   httpServer.closeAllConnections();
   await new Promise(resolve=>httpServer.close(resolve));
+  await jobStore.close();
 }

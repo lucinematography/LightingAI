@@ -62,6 +62,7 @@ public class MainActivity extends Activity {
     private String pendingAiMp4AccessToken = null;
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private Uri pendingCameraUri = null;
+    private final ArrayList<Uri> scenePlannerCaptureUris = new ArrayList<>();
     private boolean pendingCameraCapture = false;
     private boolean pendingVideoCapture = false;
     private boolean pendingPhotoCapturePermission = false;
@@ -104,6 +105,7 @@ public class MainActivity extends Activity {
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        cleanupExpiredScenePlannerCaptures();
         getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
         rootView = new FrameLayout(this);
@@ -617,6 +619,22 @@ public class MainActivity extends Activity {
         pendingCameraUri = null;
     }
 
+    private void releaseScenePlannerCaptures(boolean keepLatest) {
+        int keep = keepLatest && !scenePlannerCaptureUris.isEmpty() ? 1 : 0;
+        while (scenePlannerCaptureUris.size() > keep) {
+            Uri uri = scenePlannerCaptureUris.remove(0);
+            try { getContentResolver().delete(uri, null, null); } catch (Exception ignored) {}
+        }
+    }
+
+    private void cleanupExpiredScenePlannerCaptures() {
+        // Only our legacy app-owned captures; never gallery selections or MediaStore exports.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return;
+        try {
+            ScenePlannerCaptureCleanup.prune(AIVisualImageProvider.captureDirectory(this), System.currentTimeMillis());
+        } catch (java.io.IOException ignored) {}
+    }
+
     private void applyNavigationInset() {
         if (webView == null) return;
         webView.post(() -> webView.evaluateJavascript(
@@ -1028,6 +1046,9 @@ public class MainActivity extends Activity {
     }
 
     public class AndroidBridge {
+        @JavascriptInterface public void releaseScenePlannerCaptures(boolean keepLatest) {
+            runOnUiThread(() -> MainActivity.this.releaseScenePlannerCaptures(keepLatest));
+        }
         @JavascriptInterface public void saveAiVideo(String taskId, String backendAccessToken) {
             runOnUiThread(() -> requestScenePlannerMp4Save(taskId, backendAccessToken));
         }
@@ -1411,6 +1432,11 @@ public class MainActivity extends Activity {
                             uri = returned;
                         }
                     }
+                    if (pendingVideoCapture && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+                        pendingCameraUri != null && pendingCameraUri.equals(uri) &&
+                        (getPackageName() + ".ai.preview").equals(uri.getAuthority())) {
+                        scenePlannerCaptureUris.add(uri);
+                    }
                     pendingCameraUri = null;
                     finishFileChooser(new Uri[]{uri});
                 } else {
@@ -1438,6 +1464,10 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        releaseScenePlannerCaptures(false);
+        if (isFinishing() && pendingVideoCapture && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+            deletePendingCameraUri();
+        pendingAiMp4AccessToken = null;
         artNetLiveEngine.stopAll();
         if (pendingFileChooser != null) finishFileChooser(null);
         if (nativeSunCompass != null) nativeSunCompass.stop();

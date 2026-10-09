@@ -4,6 +4,8 @@
   var ENTRY='lightingai-scene-planner-entry';
   var API='https://lightingai.onrender.com';
   var STORE='lighting_scene_planner_last_v1';
+  var VIDEO_RECEIPT='lighting_scene_planner_video_receipt_v1';
+  var videoReceipt=null,videoReceiptBlocked=false;
   var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null,videoDurationSec:null,aiVideoPending:null,aiVideoCompletedPlan:null};
   function el(id){return document.getElementById(id);}
   function esc(value){
@@ -196,7 +198,7 @@
       el(id).onchange=function(e){var file=e.target.files&&e.target.files[0];if(file)photoPicked(file);e.target.value='';};
     });
     ['sp-video-input','sp-record-input'].forEach(function(id){
-      el(id).onchange=function(e){var file=e.target.files&&e.target.files[0];if(file)videoPicked(file);e.target.value='';};
+      el(id).onchange=function(e){var file=e.target.files&&e.target.files[0];if(file)videoPicked(file,id==='sp-record-input');e.target.value='';};
     });
     el('sp-mode').onchange=updateInventory;
     el('sp-location').onchange=function(){
@@ -226,6 +228,7 @@
     el('sp-share').onclick=share;
     updateInventory();
     loadCore(function(){status('Spremno. Dodaj fotografiju ili video i opiši kadar.');});
+    restoreVideoReceipt();
   }
   function updateInventory(){
     var box=el('sp-inventory');if(!box)return;
@@ -308,7 +311,7 @@
     video.removeAttribute('src');video.load();
     return {frames:frames,durationSec:duration};
   }
-  async function videoPicked(file){
+  async function videoPicked(file,fromCapture){
     if(state.aiVideoPending&&state.aiVideoPending.started){
       status('Prethodni plaćeni AI zahtev još nije razjašnjen. Ne menjaj snimak i ne pokreći novi zahtev.',true);
       return;
@@ -332,7 +335,7 @@
     }catch(e){
       state.frames=[];
       status((e&&e.message||'Video nije podržan.')+' Možeš dodati fotografiju kao alternativu.',true);
-    }finally{state.videoBusy=false;}
+    }finally{state.videoBusy=false;releaseCaptures(!!fromCapture);}
   }
   function payload(){
     return core().request({
@@ -624,15 +627,45 @@
   }
   async function videoRequest(path,options){
     var headers=Object.assign({},videoAccess(),options&&options.headers||{});
-    var response=await fetch(API+'/api/scene-planner/video'+path,
-      Object.assign({cache:'no-store'},options||{},{headers:headers}));
+    if(typeof AbortController!=='function')throw new Error('Potrebna je podrška za bezbedan mrežni timeout.');
+    var controller=new AbortController();
+    var timer=setTimeout(function(){controller.abort();},path==='/start'?100000:path==='/upload'?130000:15000);
+    var response;
+    try{
+      response=await fetch(API+'/api/scene-planner/video'+path,
+        Object.assign({cache:'no-store'},options||{},{headers:headers,redirect:'error',signal:controller.signal}));
+    }finally{clearTimeout(timer);}
     if(!response.ok){
       var data=await response.json().catch(function(){return {};});
       throw new Error(data.error||'Video servis HTTP '+response.status);
     }
     return response;
   }
+  function persistVideoReceipt(value){
+    // Opaque identifiers/status only. Never serialize state, plans, media or the access field.
+    var receipt={requestId:value.requestId,uploadId:value.uploadId||null,taskId:value.taskId||null,
+      status:value.status||'SUBMITTING'};
+    localStorage.setItem(VIDEO_RECEIPT,JSON.stringify(receipt));
+    videoReceipt=receipt;
+  }
+  function restoreVideoReceipt(){
+    try{
+      var raw=localStorage.getItem(VIDEO_RECEIPT);
+      if(!raw)return;
+      var value=JSON.parse(raw),id=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+      if(!value||!id.test(value.requestId)||!id.test(value.uploadId)||
+        (value.taskId&&!id.test(value.taskId))||
+        ['SUBMITTING','UNKNOWN','PENDING','RUNNING','THROTTLED','SUCCEEDED','FAILED','CANCELED','EXPIRED'].indexOf(value.status)<0)
+        throw new Error('Neispravna potvrda zadatka.');
+      videoReceipt=value;
+      videoReceiptBlocked=['SUCCEEDED','FAILED','CANCELED','EXPIRED'].indexOf(value.status)<0;
+      state.aiVideoTaskId=value.taskId;
+      el('sp-video-ai-check').disabled=false;
+      videoStatus('Sačuvan je prethodni AI zahtev. Unesi pristupni token i proveri status. Nastavak ne pokreće novu obradu.');
+    }catch(e){videoReceiptBlocked=true;videoStatus('Potvrdu prethodnog zadatka nije moguće proveriti. Nova plaćena obrada je blokirana.',true);}
+  }
   async function startAIVideo(){
+    if(videoReceiptBlocked){videoStatus('Prvo razjasni prethodni plaćeni zahtev dugmetom za status.',true);return;}
     if(!state.aiVideoAvailable){videoStatus('AI video servis nije omogućen.',true);return;}
     if(!state.plan||!state.videoFile){videoStatus('Izaberi video i generiši plan.',true);return;}
     if(state.aiVideoCompletedPlan===state.plan){
@@ -670,6 +703,8 @@
       }
       videoStatus('Proveravam isti identifikator plaćenog zadatka; nema novog uploada pri ponavljanju.');
       // The same requestId and uploadId MUST be retained on ambiguous failures.
+      persistVideoReceipt({requestId:pending.requestId,uploadId:pending.uploadId,status:'SUBMITTING'});
+      videoReceiptBlocked=true;
       pending.started=true;
       var started=await videoRequest('/start',{
         method:'POST',headers:{'Content-Type':'application/json'},
@@ -678,11 +713,17 @@
       });
       var task=await started.json();
       state.aiVideoTaskId=task.taskId;
+      persistVideoReceipt({requestId:pending.requestId,uploadId:pending.uploadId,taskId:task.taskId,status:'PENDING'});
       state.aiVideoCompletedPlan=pending.plan;
       state.aiVideoPending=null;
-      el('sp-video-ai-check').disabled=false;
+      if(el('sp-video-ai-check'))el('sp-video-ai-check').disabled=false;
+      if(el('sp-video-cost-confirm'))el('sp-video-cost-confirm').checked=false;
       videoStatus('AI zadatak '+task.taskId+' je prihvaćen. Procena: '+(task.estimatedCredits==null?'nije potvrđena':task.estimatedCredits)+' kredita. Proveri status dugmetom.');
     }catch(error){
+      if(pending&&pending.started){
+        if(el('sp-video-ai-check'))el('sp-video-ai-check').disabled=false;
+        if(el('sp-video-cost-confirm'))el('sp-video-cost-confirm').checked=false;
+      }
       videoStatus('AI zahtev nije potvrđen: '+error.message+
         (state.aiVideoPending&&state.aiVideoPending.started?' Moguće je da je naplaćen; ne šalji novi zahtev. Sledeća provera koristi isti ID.':''),true);
     }
@@ -693,23 +734,41 @@
     throw new Error('Za sigurno plaćeno pokretanje potreban je podržan generator jedinstvenog zahteva.');
   }
   async function checkAIVideo(){
-    if(!state.aiVideoTaskId)return;
     try{
+      if(!state.aiVideoTaskId&&videoReceipt){
+        var reconciled=await videoRequest('/request/'+videoReceipt.requestId,{method:'GET'});
+        var known=await reconciled.json();state.aiVideoTaskId=known.taskId;
+      }
+      if(!state.aiVideoTaskId)return;
       var response=await videoRequest('/status/'+state.aiVideoTaskId,{method:'GET'});
       var task=await response.json();
+      if(videoReceipt){
+        persistVideoReceipt({requestId:videoReceipt.requestId,uploadId:videoReceipt.uploadId,taskId:state.aiVideoTaskId,status:task.status});
+        videoReceiptBlocked=['SUCCEEDED','FAILED','CANCELED','EXPIRED'].indexOf(task.status)<0;
+        if(!videoReceiptBlocked)state.aiVideoPending=null;
+      }
       if(task.ready){
         videoStatus('AI video je spreman za MP4 preuzimanje. Sadržaj proveriti pre korišćenja na setu.');
         var out=el('sp-video-ai-output');
-        out.innerHTML='<button id="sp-ai-mp4-download" type="button" class="sp-btn sp-primary">PREUZMI I PREGLEDAJ AI MP4</button>'+
+        if(!out)return;
+        out.innerHTML='<button id="sp-ai-mp4-download" type="button" class="sp-btn sp-primary">SAČUVAJ AI MP4</button>'+
+          '<button id="sp-ai-mp4-preview" type="button" class="sp-btn">PREGLEDAJ AI MP4</button>'+
           '<p class="sp-note">Rezultat može sadržati promene pokreta, lica ili tekstura; proveriti kontinuitet sa originalom.</p>';
         el('sp-ai-mp4-download').onclick=downloadAIVideo;
+        el('sp-ai-mp4-preview').onclick=function(){downloadAIVideo(true);};
       }else videoStatus('Status AI zadatka: '+String(task.status||'nepoznat')+'.');
     }catch(error){videoStatus(error.message,true);}
   }
-  async function downloadAIVideo(){
+  async function downloadAIVideo(previewOnly){
     if(!state.aiVideoTaskId)return;
     videoStatus('Preuzimam AI MP4. Za duže klipove preuzimanje može zauzeti memoriju uređaja.');
     try{
+      if(previewOnly!==true&&window.Android&&typeof window.Android.saveAiVideo==='function'){
+        videoAccess();
+        window.Android.saveAiVideo(state.aiVideoTaskId,el('sp-video-auth').value.trim());
+        videoStatus('Izaberi lokaciju za MP4. Android prenosi direktno u izabranu datoteku.');
+        return;
+      }
       var response=await videoRequest('/download/'+state.aiVideoTaskId,{method:'GET'});
       var size=Number(response.headers.get('Content-Length'))||0;
       if(size>140*1024*1024)throw new Error('MP4 previše velik za WebView preuzimanje.');
@@ -727,12 +786,9 @@
       }
       player.src=state.aiVideoPreviewUrl;
       player.load();
+      if(previewOnly===true){videoStatus('MP4 pregled je spreman.');return;}
       var file=new File([blob],'LightingAI_AI_Relight.mp4',{type:'video/mp4'});
-      if(window.Android&&typeof window.Android.saveAiVideo==='function'){
-        // Native SAF save streams directly to user-selected storage on Android 8+.
-        window.Android.saveAiVideo(state.aiVideoTaskId,el('sp-video-auth').value.trim());
-        videoStatus('Izaberi gde želiš da sačuvaš MP4. Android će potvrditi završetak prenosa.');
-      }else if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+      if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
         await navigator.share({title:'LightingAI AI video relight',files:[file]});
         videoStatus('Otvoren izbor za deljenje ili čuvanje MP4 datoteke.');
       }else{
@@ -874,10 +930,17 @@
     }
   }
   function close(){
+    releaseCaptures(false);
+    state.videoFile=null;state.videoDurationSec=null;
+    if(el('sp-video-auth'))el('sp-video-auth').value='';
     if(state.abort){state.abort.abort();state.abort=null;}
     if(state.videoUrl){URL.revokeObjectURL(state.videoUrl);state.videoUrl='';}
     if(state.aiVideoPreviewUrl){URL.revokeObjectURL(state.aiVideoPreviewUrl);state.aiVideoPreviewUrl=null;}
     var wrap=el(MODULE);if(wrap)wrap.remove();
+  }
+  function releaseCaptures(keepLatest){
+    if(window.Android&&typeof window.Android.releaseScenePlannerCaptures==='function')
+      window.Android.releaseScenePlannerCaptures(keepLatest===true);
   }
   function closeIfOpen(){if(!el(MODULE))return false;close();return true;}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});

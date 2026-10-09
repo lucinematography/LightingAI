@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import {createRequire} from "node:module";
 import {validateScenePlannerRequest,canonicalInventory,buildScenePlannerPrompt,generateScenePlannerPlan}
   from "./scene-planner-service.js";
@@ -71,3 +72,22 @@ assert.equal(produced.plan.inputSummary.videoKeyframes,2);
 assert.equal(produced.plan.inputSummary.recordedFootageNotUploaded,true);
 assert.equal(sent.input[0].content.filter(x=>x.type==="input_image").length,2);
 console.log("Scene Planner self-test passed: modes, video keyframes, inventory, modifiers, CCT, blocking and model contract.");
+
+const frontend=fs.readFileSync(new URL("../app/src/main/assets/scene-planner.js",import.meta.url),"utf8");
+const catalogUi=fs.readFileSync(new URL("../app/src/main/assets/catalog.js",import.meta.url),"utf8");
+const native=fs.readFileSync(new URL("../app/src/main/java/com/lightingai/app/MainActivity.java",import.meta.url),"utf8");
+const server=fs.readFileSync(new URL("./server.js",import.meta.url),"utf8");
+assert.match(frontend,/accept="video\\/\\*"/,"video file inputs needed");
+assert.match(frontend,/capture="environment"/,"camera/video capture requested");
+assert.match(frontend,/Android.startSpeechInput/,"native voice input wired");
+assert.match(frontend,/sp-description/,"voice destination exists");
+assert.match(frontend,/videoFrames\\(state.videoUrl\\)/,"must extract frames before AI request");
+assert.match(frontend,/recordedFootageNotUploaded|Originalni video ostaje na telefonu/);
+assert.match(frontend,/sp-mode/,"mode selection required");
+assert.match(frontend,/sp-plot/,"2D light plot required");
+assert.match(catalogUi,/lightingai-scene-planner-script/,"entry must load from catalog");
+assert.match(native,/MediaStore.ACTION_VIDEO_CAPTURE/,"record video in Android native camera");
+assert.match(native,/openVideoForWebView/,"Android native chooser must support video");
+assert.match(server,/app.post\\("\/api\/scene-planner\/plan"/,"new API endpoint required");
+assert.doesNotMatch(frontend,/DMX|ArtNet|Bluetooth|CRMX|ART7/,"Scene Planner must stay control-free");
+console.log("Scene Planner wiring tests passed: Android capture, voice, navigation, UI and backend endpoint.");

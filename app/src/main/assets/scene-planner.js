@@ -88,6 +88,7 @@
       '#'+MODULE+' .sp-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}'+
       '#'+MODULE+' .sp-meters{display:grid;grid-template-columns:1fr 1fr;gap:10px}'+
       '#'+MODULE+' .sp-media{max-width:100%;max-height:300px;object-fit:contain;display:block;margin:10px auto;border-radius:10px}'+
+      '#'+MODULE+' [hidden]{display:none!important}'+
       '#'+MODULE+' .sp-lamp{background:#10151d;border:1px solid #353f4e;border-radius:11px;padding:12px;margin-top:9px}'+
       '#'+MODULE+' .sp-pill{font-size:11px;color:#f2c75e;border:1px solid #65562d;border-radius:99px;padding:3px 8px}'+
       '</style>'+

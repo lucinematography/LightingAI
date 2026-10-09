@@ -1,0 +1,5 @@
+/backend/node_modules/
+/app/build/
+/.gradle/
+/.ci-check-results/
+/.ci-safe-reports/

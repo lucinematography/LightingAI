@@ -61,6 +61,7 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private Uri pendingCameraUri = null;
     private boolean pendingCameraCapture = false;
+    private boolean pendingVideoCapture = false;
     private boolean pendingPhotoCapturePermission = false;
     private boolean pendingGalleryPersistable = false;
     private NativeSunLocation nativeSunLocation;
@@ -181,6 +182,15 @@ public class MainActivity extends Activity {
                 if (pendingFileChooser != null) pendingFileChooser.onReceiveValue(null);
                 pendingFileChooser = filePathCallback;
                 pendingCameraCapture = fileChooserParams != null && fileChooserParams.isCaptureEnabled();
+                pendingVideoCapture = false;
+                if (fileChooserParams != null && fileChooserParams.getAcceptTypes() != null) {
+                    for (String mime : fileChooserParams.getAcceptTypes()) {
+                        if (mime != null && mime.toLowerCase(java.util.Locale.US).contains("video")) {
+                            pendingVideoCapture = true;
+                            break;
+                        }
+                    }
+                }
                 pendingGalleryPersistable = false;
 
                 if (pendingCameraCapture) {
@@ -189,7 +199,7 @@ public class MainActivity extends Activity {
                         requestCameraPermission();
                         return true;
                     }
-                    return openCameraForWebView();
+                    return pendingVideoCapture ? openVideoForWebView() : openCameraForWebView();
                 }
                 return openGalleryForWebView(fileChooserParams);
             }
@@ -363,6 +373,7 @@ public class MainActivity extends Activity {
     private void openAIImagePicker(boolean cameraCapture) {
         if (pendingFileChooser != null) finishFileChooser(null);
         pendingCameraCapture = cameraCapture;
+        pendingVideoCapture = false;
         pendingGalleryPersistable = false;
         pendingFileChooser = uris -> {
             Uri uri = uris != null && uris.length > 0 ? uris[0] : null;
@@ -464,13 +475,16 @@ public class MainActivity extends Activity {
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
         pendingGalleryPersistable = false;
+        boolean video = pendingVideoCapture;
+        String mime = video ? "video/*" : "image/*";
         Intent intent;
         if (Build.VERSION.SDK_INT >= 33) {
             intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-            intent.setType("image/*");
+            intent.setType(mime);
         } else {
-            intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            intent.setType("image/*");
+            intent = new Intent(Intent.ACTION_PICK,
+                video ? MediaStore.Video.Media.EXTERNAL_CONTENT_URI : MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType(mime);
         }
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
@@ -479,7 +493,7 @@ public class MainActivity extends Activity {
         } catch (ActivityNotFoundException primaryError) {
             try {
                 Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
-                fallback.setType("image/*");
+                fallback.setType(mime);
                 fallback.addCategory(Intent.CATEGORY_OPENABLE);
                 fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 startActivityForResult(fallback, CHOOSE_IMAGE);
@@ -527,6 +541,40 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    private boolean openVideoForWebView() {
+        pendingPhotoCapturePermission = false;
+        pendingGalleryPersistable = false;
+        deletePendingCameraUri();
+        Intent record = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+        try {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Video.Media.DISPLAY_NAME, "LightingAI_scene_" + System.currentTimeMillis() + ".mp4");
+            values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                values.put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/LightingAI");
+            }
+            pendingCameraUri = getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+            if (pendingCameraUri == null) throw new IllegalStateException("Could not prepare video URI");
+            record.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
+            record.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 120);
+            record.setClipData(ClipData.newRawUri("LightingAI scene video", pendingCameraUri));
+            record.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            for (ResolveInfo info : getPackageManager().queryIntentActivities(record, PackageManager.MATCH_DEFAULT_ONLY)) {
+                if (info != null && info.activityInfo != null && info.activityInfo.packageName != null) {
+                    grantUriPermission(info.activityInfo.packageName, pendingCameraUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                }
+            }
+            startActivityForResult(record, CHOOSE_IMAGE);
+            return true;
+        } catch (Exception e) {
+            deletePendingCameraUri();
+            finishFileChooser(null);
+            return false;
+        }
+    }
+
     private void persistGalleryAccess(Intent data, Uri[] result) {
         if (!pendingGalleryPersistable || data == null || result == null) return;
         int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
@@ -541,6 +589,7 @@ public class MainActivity extends Activity {
         ValueCallback<Uri[]> callback = pendingFileChooser;
         pendingFileChooser = null;
         pendingCameraCapture = false;
+        pendingVideoCapture = false;
         pendingPhotoCapturePermission = false;
         pendingGalleryPersistable = false;
         if (callback != null) callback.onReceiveValue(result);
@@ -1144,7 +1193,10 @@ public class MainActivity extends Activity {
             notifySceneMeasureCameraPermission(granted);
             if (pendingPhotoCapturePermission) {
                 pendingPhotoCapturePermission = false;
-                if (granted && pendingFileChooser != null) openCameraForWebView();
+                if (granted && pendingFileChooser != null) {
+                    if (pendingVideoCapture) openVideoForWebView();
+                    else openCameraForWebView();
+                }
                 else finishFileChooser(null);
             }
         } else if (requestCode == LOCATION_PERMISSION) {
@@ -1225,6 +1277,13 @@ public class MainActivity extends Activity {
             if (resultCode == RESULT_OK) {
                 if (pendingCameraCapture && pendingCameraUri != null) {
                     Uri uri = pendingCameraUri;
+                    if (pendingVideoCapture && data != null && data.getData() != null) {
+                        Uri returned = data.getData();
+                        if (!returned.equals(pendingCameraUri)) {
+                            deletePendingCameraUri();
+                            uri = returned;
+                        }
+                    }
                     pendingCameraUri = null;
                     finishFileChooser(new Uri[]{uri});
                 } else {

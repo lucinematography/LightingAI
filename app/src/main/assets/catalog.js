@@ -105,3 +105,4 @@ Promise.all([
 });
 if(!document.getElementById('lightingai-ai-visual-launcher-script')){var av=document.createElement('script');av.id='lightingai-ai-visual-launcher-script';av.src='file:///android_asset/ai-visual-scene-launcher.js';document.body.appendChild(av);}
 })();
+if(!document.getElementById('lightingai-scene-planner-script')){var sp=document.createElement('script');sp.id='lightingai-scene-planner-script';sp.src='file:///android_asset/scene-planner.js';document.body.appendChild(sp);}

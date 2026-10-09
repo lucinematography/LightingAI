@@ -8,6 +8,7 @@ import { catalogStatus } from "./catalog-status.js";
 import { accessoryRecord, buildAccessoryTree } from "./accessory-graph.js";
 import { aputureReviewCatalog, aputureReviewHtml } from "./aputure-review.js";
 import { generateVisualPreview, VISUAL_PREVIEW_MODEL, VISUAL_PREVIEW_QUALITY } from "./visual-preview.js";
+import { generateScenePlannerPlan } from "./scene-planner-service.js";
 
 const FIXTURE_LIBRARY = RUNTIME_CATALOG.fixtures;
 const ACCESSORY_LIBRARY = RUNTIME_CATALOG.accessories;
@@ -103,6 +104,16 @@ app.post("/api/lighting-plan",async(req,res)=>{try{
  }
  res.json(plan);
 }catch(error){console.error(error);res.status(500).json({error:"Lighting plan generation failed."});}});
+app.post("/api/scene-planner/plan",async(req,res)=>{
+  try {
+    const result=await generateScenePlannerPlan(openai,req.body||{},FIXTURE_LIBRARY);
+    res.json(result);
+  } catch(error) {
+    const status=error?.status||500;
+    if(status>=500)console.error("Scene Planner failure:",error);
+    res.status(status).json({ok:false,error:status>=500?"Scene Planner generation failed.":error.message});
+  }
+});
 app.get("/api/visual-preview",(req,res)=>res.json({ok:true,model:VISUAL_PREVIEW_MODEL,quality:VISUAL_PREVIEW_QUALITY}));
 app.post("/api/visual-preview",async(req,res)=>{try{
  const{scenePhoto="",plan={},description="",equipment=[],language="sr"}=req.body||{};

@@ -175,6 +175,9 @@ export function validateKeyframes(keyframes,duration){
   }
   return result;
 }
+export function requirePaidVideoConfirmation(value){
+  if(value!==true)throw err("Confirm the paid AI video generation before starting.",422);
+}
 export function videoErrorStatus(error){
   return Number.isInteger(error?.status)&&error.status>=400&&error.status<=599?error.status:500;
 }
@@ -197,7 +200,7 @@ export function createVideoRouter(express,env=process.env,fetcher=fetch){
   router.post("/start",auth,async(req,res)=>{
     try{
       const body=req.body||{};
-      if(body.confirmPaidGeneration!==true)throw err("Confirm the paid AI video generation before starting.",422);
+      requirePaidVideoConfirmation(body.confirmPaidGeneration);
       const uploadId=safeId(body.uploadId);
       const uploaded=uploadSessions.get(uploadId);
       if(!uploaded)throw err("Uploaded video has expired. Upload again.",410);

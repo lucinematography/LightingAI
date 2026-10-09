@@ -5,7 +5,55 @@
   else root.LightingAIScenePlannerCore = api;
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
-  var VERSION = 2;
+  var VERSION = 3;
+  function cameraInput(data) {
+    data=data&&typeof data==='object'?data:{};
+    return {
+      fps:num(data.fps,1,120,null),
+      shutterAngle:num(data.shutterAngle,11.25,360,null),
+      aperture:num(data.aperture,0.7,32,null),
+      iso:num(data.iso,50,25600,null),
+      whiteBalanceK:num(data.whiteBalanceK,1700,20000,null),
+      ndStops:num(data.ndStops,0,12,null),
+      focalLengthMm:num(data.focalLengthMm,8,300,null)
+    };
+  }
+  function shutterSeconds(settings){
+    return settings.shutterAngle / (360 * settings.fps);
+  }
+  function exposureDeltaStops(settings,base){
+    if(!settings||!base)return null;
+    var a=shutterSeconds(settings),b=shutterSeconds(base);
+    if(!a||!b||!settings.iso||!base.iso||!settings.aperture||!base.aperture)return null;
+    var multiplier=(settings.iso/base.iso)*(a/b)*Math.pow(base.aperture/settings.aperture,2)*
+      Math.pow(2,base.ndStops-settings.ndStops);
+    return Number(Math.log2(multiplier).toFixed(2));
+  }
+  function cameraPlan(raw,input) {
+    var baseIn=raw&&typeof raw==='object'?raw:{};
+    var baseUser=cameraInput(baseIn);
+    var base={
+      fps:baseUser.fps||24,
+      shutterAngle:baseUser.shutterAngle||180,
+      aperture:baseUser.aperture||2.8,
+      iso:baseUser.iso||800,
+      whiteBalanceK:baseUser.whiteBalanceK||4300,
+      ndStops:baseUser.ndStops==null?0:baseUser.ndStops,
+      focalLengthMm:baseUser.focalLengthMm
+    };
+    var override=input&&input.cameraOverrides?input.cameraOverrides:{};
+    var settings={};
+    Object.keys(base).forEach(function(k) {
+      settings[k]=override[k]==null?base[k]:override[k];
+    });
+    settings.shutterSeconds=Number(shutterSeconds(settings).toFixed(6));
+    settings.exposureDeltaStops=exposureDeltaStops(settings,base);
+    settings.apertureSource=override.aperture==null?'ai-estimate':'dop-override';
+    settings.isoSource=override.iso==null?'ai-estimate':'dop-override';
+    settings.provenance='NEIZMERENA PREPORUKA: bez pouzdanog svetlomera ekspozicija i osvetljenost nisu potvrđene';
+    settings.referenceCamera=base;
+    return settings;
+  }
   function nightLook(value) { return value === 'Night' || value === 'Day for Night'; }
   function detectedNight(value) { return /noc|noć|noćna|noći|night|moonlight|mesečin|mese[cč]in|mesec|pono[cć]/i.test(String(value || '')); }
   function chooseLook(value, description, capture) {
@@ -71,6 +119,17 @@
       }).filter(function(f){return !!f.image;}),
       dimensionsMeasured: input.dimensionsMeasured === true,
       shotCamera: str(input.shotCamera || '', 400),
+      dopRequest: str(input.dopRequest || '', 1500),
+      cameraOverrides: cameraInput(input.cameraOverrides),
+      previousPlan: input.previousPlan && typeof input.previousPlan==='object' ?
+        {summary:str(input.previousPlan.summary,800),
+          rationale:str(input.previousPlan.rationale,1000),
+          lights:(Array.isArray(input.previousPlan.lights)?input.previousPlan.lights:[]).slice(0,12)
+            .map(function(l){return {
+              id:str(l.id,12),fixtureId:str(l.fixtureId,120),fixtureName:str(l.fixtureName,150),
+              role:str(l.role,30),x:num(l.x,5,95,50),y:num(l.y,5,95,50),
+              intensityPct:num(l.intensityPct,0,100,null),kelvin:num(l.kelvin,1000,20000,null)
+            };})} : null,
       language: input.language === 'en' ? 'en' : 'sr'
     };
   }
@@ -204,6 +263,12 @@
       ]),
       look: req.look,
       description: req.description,
+      dopRequest:req.dopRequest,
+      cameraSettings:cameraPlan(raw.cameraSettings,req),
+      exposureNotes:uniqueStrings(raw.exposureNotes,8).concat([
+        'Blenda, ISO, ND i jačina lampi su preporuke bez svetlomerne potvrde; test kadrom i merenjem proveriti ekspoziciju.',
+        'Izmena ISO ili blende ne menja automatski stvarnu svetlost na setu.'
+      ]),
       captureLighting: req.captureLighting,
       sceneAnalysis:{
         cameraMotion:['static','moving','unknown'].indexOf(analysis.cameraMotion)>=0?analysis.cameraMotion:'unknown',
@@ -271,5 +336,6 @@
     }, req, 'local');
   }
   return {VERSION:VERSION, request:request, equipment:equipment, modifiers:modifiers,
-    sanitizePlan:sanitizePlan, localPlan:localPlan, chooseLook:chooseLook, nightLook:nightLook};
+    sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
+    cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};
 });

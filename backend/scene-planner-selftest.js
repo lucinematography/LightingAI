@@ -91,3 +91,25 @@ assert.ok(native.includes("openVideoForWebView"),"native video chooser required"
 assert.ok(server.includes('app.post("/api/scene-planner/plan"'),"AI endpoint missing");
 assert.doesNotMatch(frontend,/DMX|ArtNet|Bluetooth|CRMX|ART7/,"Scene Planner must stay control-free");
 console.log("Scene Planner wiring tests passed: Android capture, voice, UI and backend endpoint.");
+
+const nightInput={...own,mode:"best",captureLighting:"day",look:"Cinematic",description:"Zena ide ka drvetu, noc i mesecina"};
+assert.equal(core.request(nightInput).look,"Day for Night");
+const movement=core.sanitizePlan({
+  sceneAnalysis:{cameraMotion:"moving",blockingConfidence:"medium",observedLighting:"day",evidence:"fence and tree visible"},
+  actors:[{label:"Zena",confidence:"medium",path:[{x:20,y:60,timeSec:0},{x:50,y:45,timeSec:2},{x:80,y:25,timeSec:4}]}],
+  lights:[{role:"key",fixtureName:"Rental LED",coverageStages:[0,2],verticalTiltDeg:-24,beamAngleDeg:65}]
+},nightInput,"ai");
+assert.equal(movement.actors[0].path[1].timeSec,2);
+assert.equal(movement.sceneAnalysis.cameraMotion,"moving");
+assert.equal(movement.lights[0].coverageStages.length,2);
+assert.deepEqual(movement.unknownCoverageStages,[2]);
+assert.equal(movement.captureLighting,"day");
+assert.ok(movement.dayForNightNotes.length>0);
+assert.ok(movement.limitations.some(x=>x.includes("Kamera se kreće")));
+const unknownMotion=core.sanitizePlan({lights:[]},nightInput,"local");
+assert.deepEqual(unknownMotion.actors[0].path,[],"never invent an observed trajectory");
+assert.ok(frontend.includes('id="sp-stage"'),"blocking scrubber must render");
+assert.ok(frontend.includes('id="sp-capture"'),"capture time-of-day must be selectable");
+assert.ok(frontend.includes("Math.abs(video.currentTime-t)>"),"avoid seeking to same timestamp");
+assert.ok(frontend.includes("0.04,.20,.40,.60,.80,.96"),"sample six chronological keyframes");
+console.log("Scene Planner continuity tests passed: no fabricated blocking, coverage gaps and day-for-night intent.");

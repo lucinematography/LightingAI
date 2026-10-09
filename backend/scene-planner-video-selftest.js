@@ -59,6 +59,12 @@ assert.ok(androidActivity.includes("Intent.ACTION_CREATE_DOCUMENT"),"native save
 assert.ok(androidActivity.includes("@JavascriptInterface public void saveAiVideo"),"native Android save bridge exists");
 assert.ok(androidActivity.includes("MAX_AI_MP4_BYTES"),"streamed save enforces bounded MP4");
 assert.ok(androidActivity.includes("setInstanceFollowRedirects(false)"),"native downloads cannot redirect tokens");
+assert.ok(androidActivity.includes("Build.VERSION.SDK_INT < Build.VERSION_CODES.Q"),"Android 8/9 recording uses app-owned provider");
+assert.ok(androidActivity.includes("AIVisualImageProvider.captureDirectory(this)"),"legacy capture uses app-owned storage");
+const captureProvider=fs.readFileSync(new URL("../app/src/main/java/com/lightingai/app/AIVisualImageProvider.java",import.meta.url),"utf8");
+assert.ok(captureProvider.includes('if (lower.endsWith(".mp4")) return "video/mp4"'));
+assert.ok(captureProvider.includes('isCaptureName(file.getName())'),"provider writes only dedicated capture files");
+assert.ok(captureProvider.includes("ParcelFileDescriptor.MODE_TRUNCATE"),"capture provider supports camera writes");
 assert.ok(androidActivity.includes("https://lightingai.onrender.com/api/scene-planner/video/download/"),"native save uses fixed backend only");
 
 assert.ok(appUi.includes("URL.createObjectURL(blob)"),"MP4 preview uses actual downloaded bytes");

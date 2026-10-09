@@ -552,14 +552,26 @@ public class MainActivity extends Activity {
         deletePendingCameraUri();
         Intent record = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         try {
-            ContentValues values = new ContentValues();
-            values.put(MediaStore.Video.Media.DISPLAY_NAME, "LightingAI_scene_" + System.currentTimeMillis() + ".mp4");
-            values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                // No WRITE_EXTERNAL_STORAGE permission is required for app-owned storage.
+                // Grant the camera write access to the specific private provider URI only.
+                java.io.File folder = AIVisualImageProvider.captureDirectory(this);
+                if (!folder.isDirectory() && !folder.mkdirs())
+                    throw new IllegalStateException("Scene video folder unavailable");
+                java.io.File output = new java.io.File(folder,
+                    "scene_capture_" + System.currentTimeMillis() + ".mp4");
+                if (!output.createNewFile()) throw new IllegalStateException("Cannot prepare scene clip");
+                pendingCameraUri = Uri.parse("content://" + getPackageName() +
+                    ".ai.preview/" + Uri.encode(output.getName()));
+            } else {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Video.Media.DISPLAY_NAME, "LightingAI_scene_" +
+                    System.currentTimeMillis() + ".mp4");
+                values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
                 values.put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/LightingAI");
+                pendingCameraUri = getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+                if (pendingCameraUri == null) throw new IllegalStateException("Could not prepare video URI");
             }
-            pendingCameraUri = getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
-            if (pendingCameraUri == null) throw new IllegalStateException("Could not prepare video URI");
             record.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
             record.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 120);
             record.setClipData(ClipData.newRawUri("LightingAI scene video", pendingCameraUri));

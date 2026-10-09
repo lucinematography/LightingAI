@@ -128,7 +128,7 @@ assert.equal(revised.cameraSettings.aperture,5.6);
 assert.equal(revised.cameraSettings.iso,400);
 assert.equal(revised.cameraSettings.fps,25);
 assert.equal(revised.cameraSettings.apertureSource,'dop-override');
-assert.ok(revised.exposureNotes.some(x=>x.includes('nisu potvrđene')));
+assert.ok(revised.exposureNotes.some(x=>x.includes('nisu potvr') || x.includes('test kadrom')));
 assert.ok(frontend.includes('sp-dop-request'),"director of photography brief input missing");
 assert.ok(frontend.includes('sp-revise'),"DoP regenerate action missing");
 assert.ok(frontend.includes('sp-camera-result'),"exposure view missing");

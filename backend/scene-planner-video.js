@@ -204,6 +204,9 @@ export function createVideoRouter(express,env=process.env,fetcher=fetch){
       const uploadId=safeId(body.uploadId);
       const uploaded=uploadSessions.get(uploadId);
       if(!uploaded)throw err("Uploaded video has expired. Upload again.",410);
+      // An upload must never fund two independent paid generation requests.
+      if(uploaded.requestId&&uploaded.requestId!==body.requestId)
+        throw err("This upload is already reserved for another generation request.",409);
       if(!body.plan||!Array.isArray(body.plan.lights))throw err("Missing video relighting plan.",422);
       const jobKey=safeId(body.requestId);
       const prior=requestSessions.get(jobKey);
@@ -219,10 +222,11 @@ export function createVideoRouter(express,env=process.env,fetcher=fetch){
       const keyframes=validateKeyframes(body.keyframes,uploaded.seconds);
       const fields={model:VIDEO_MODEL,videoUri:uploaded.uri,promptText,outputFormat:"mp4"};
       if(keyframes.length)fields.keyframes=keyframes;
-      requestSessions.set(jobKey,{taskId:null,expiresAt:Date.now()+60*60*1000});
-      let task;
-      try{task=await runwayRequest("/video_to_video","POST",fields,env,fetcher);}
-      catch(error){requestSessions.delete(jobKey);throw error;}
+      // Reserve before calling the provider. A timeout is ambiguous: the paid task
+      // may already exist, so keep the reservation and require operator review.
+      uploaded.requestId=jobKey;
+      requestSessions.set(jobKey,{taskId:null,expiresAt:Date.now()+18*60*60*1000});
+      const task=await runwayRequest("/video_to_video","POST",fields,env,fetcher);
       const id=safeId(task.id);
       const newJob={status:"PENDING",seconds:uploaded.seconds,expiresAt:Date.now()+18*60*60*1000};
       jobSessions.set(id,newJob);

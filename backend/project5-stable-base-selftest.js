@@ -202,6 +202,9 @@ const exactAllowed = new Set([
   // Phase 3B.1: isolated offline temporal model, regressions and architecture only.
   'backend/scene-planner-temporal.js',
   'backend/scene-planner-temporal-selftest.js',
+  // Phase 3B.2: isolated local ingestion and offline regression paths only.
+  'backend/scene-planner-video-ingestion.js',
+  'backend/scene-planner-video-ingestion-selftest.js',
   'docs/SCENE_PLANNER_PHASE3B.md',
   'backend/scene-planner-video.js',
   'backend/scene-planner-video-selftest.js',

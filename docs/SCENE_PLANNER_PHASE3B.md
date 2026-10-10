@@ -193,3 +193,199 @@ Android SDK/Java/Gradle/adb, a configured PostgreSQL test server and actual
 decoded-video fixtures are unavailable locally. Real PostgreSQL integration,
 Android checks, dependency registry audit and visual temporal evaluation were
 not executed. Prior CI #7446 validates Phase 3A, not this uncommitted candidate.
+
+## Phase 3B.2: local original-video ingestion
+
+Local development based on `d7cbc3b081a0a057f18ee4e05ecd01f28c9e8332`.
+The preceding sections describe the historical 3B.1 candidate. Phase 3B.1 was
+subsequently committed and passed CI #7448. This 3B.2 work has no commit/push
+authorization and does not trigger new CI, provision infrastructure or enable
+paid video processing. The temporal v1 module, UI, paid routes, production
+PostgreSQL schema and physical lighting controls are unchanged.
+
+### Existing decoder and actual proof
+
+FFmpeg is not on PATH and ffprobe was not found in PATH, normal FFmpeg/WinGet
+locations, Program Files or the local Temp directory. A bundled executable was
+found at `C:\Program Files\BlueStacks_nxt\ffmpeg.exe`, version
+`n4.4.4-6-gd5fa6e3a91`, with libavcodec 58.134.100 and libavformat 58.76.100.
+Its `-decoders` output includes H.264/HEVC/VP8/VP9/AV1/MPEG-4 and PCM s16le;
+its demuxers include ISO-BMFF and Matroska/WebM. The version/configuration string
+alone is misleading about disabled decoders; actual capabilities and real
+decoding were checked. This is an existing application-bundled tool, not a
+downloaded/installed project dependency. No system setting was changed.
+Only H.264 in the conservative ISO subset below is enabled by this adapter.
+Other listed codecs are capabilities, not verified project support.
+
+`backend/scene-planner-video-ingestion.js` exposes isolated local APIs:
+
+- `inspectOriginalVideo`: read-only bytes, SHA-256 identity, bounded container
+  validation, declared container/codec tags, dimensions and sample timing.
+  The sample count is not a decoded frame count.
+- `decoderCapabilities`: checks a trusted local executable's version, H.264
+  decoder and ISO demuxer before processing. Its path is trusted operator
+  configuration, never an HTTP/client parameter. No server route exposes it.
+- `ingestOriginalVideo`: optionally runs the selected existing FFmpeg on a
+  private byte-identical temporary input snapshot, validates every decoded
+  frame hash/count/PTS against the original sample timeline, rehashes the
+  original and returns a deeply frozen revision-bound receipt.
+- `validateSuppliedTimeline`: verifies only an untrusted metadata contract,
+  returning `unverified-metadata` and `not-executed`. It cannot grant decoder
+  provenance and does not feed an untrusted timeline into the live decoder API.
+  When original sample timing is available, rational PTS/durations/DTS must
+  match it exactly; an otherwise valid but different timeline is rejected.
+- `verifyVideoIngestion`: checks ingestion/temporal/plan hashes, source identity
+  and exact revision binding. A decoded receipt additionally needs a private
+  in-process capability issued by the controlled decoder boundary. A JSON copy
+  supplied by a client is rejected even after rehashing it. Durable authenticated
+  receipt restoration is future work; imported decoded receipts need re-decoding.
+
+The ingestion receipt contains `sceneId`, `revisionId`, `lightPlotRevisionId`,
+`planHash`, `sourceIdentity`, the full frozen temporal model with `temporalHash`,
+decoder/method version, source timing and decoded pixel hashes. It contains no
+source filename/path, raw media, pixel buffer, URL or secret. Per-frame hashes
+describe FFmpeg's explicitly selected `yuv420p` pixel representation, not
+original bit-depth/color fidelity, photometry or image-quality measurements.
+Hashes may enable content correlation and should remain access-controlled.
+
+### Formats, timing and audio
+
+This adapter reuses the unchanged existing `analyzeIsoVideo` fail-closed parser;
+it does not broaden the paid parser. Initial support is non-fragmented MP4/MOV
+ISO-BMFF, one `avc1` H.264 video stream, at most one optional `mp4a`/`sowt` audio
+stream, no edit lists, external references or compressed metadata, and no
+nonzero composition offsets. `mp4a` is identified as AAC-declared and `sowt` as
+PCM s16le-declared. Audio bytes are not decoded or independently authenticated
+as that codec. WebM, HEVC, additional streams, nonzero composition offsets,
+edited/rebased timelines and B-frame presentation reordering are unsupported
+in real ingestion, even if the installed FFmpeg can read them. The paid parser
+may support other video tags; the local adapter deliberately narrows its subset.
+
+The original sample-table timebase is preserved as the exact rational `1/N`.
+`stts` durations preserve VFR; no average FPS or browser seek time creates PTS.
+For the accepted subset, DTS and PTS are explicitly equal and start at zero.
+The decoder output is forced to that exact timebase with `copyts`, no frame
+duplication and no FPS conversion. Each decoded PTS must match the source.
+Rawvideo encoder packet duration is retained separately; original display
+duration comes from the validated container sample table. Counts must match;
+gaps, missing frames, dimension changes and timestamp mismatch reject the result.
+No cut boundary is invented from the decode list.
+
+The separate supplied-timeline contract can preserve reordered packet PTS with
+strictly ordered DTS (including negative DTS) and ordered presentation frames.
+That contract is tested synthetically and is not real B-frame support. Negative
+or nonzero video start PTS is rejected, never silently normalized. General
+rational `numerator/denominator` input retains its original values and an
+explicit version-1 integer-tick scaling transform with zero offset. All scaled
+integer values must remain safe integers. Live decoding currently uses `1/N`
+and needs no transform. Existing temporal model v1 is unchanged.
+
+Audio has its own codec declaration, rational timebase, start tick and duration.
+The accepted no-edit-list container subset has zero-based track timing; audio
+duration must satisfy the existing parser's 50 ms track/movie consistency limit.
+Actual audio decoding, waveform synchronization and nonzero-origin container
+alignment are NOT EXECUTED. The metadata-only contract preserves an explicit
+audio offset up to +/-5 seconds and supports unknown audio (`null`); tests do
+not promote those supplied offsets into verified media alignment.
+
+### Resource, privacy and cleanup boundary
+
+Limits: 512 bytes–40 MiB compressed input, 2–30 seconds, visible resolution at
+most 1920x1080, at most 1800 frames, and a conservative 512 MiB total decoded
+budget based on three bytes per visible pixel per frame. Every actual frame
+size is checked again. FFmpeg has one thread per decoder/encoder/filter stage,
+software decode only, a bounded pixel allocation with documented H.264
+stride/edge padding, and a 64 MiB maximum individual allocation. Child stdout
+and stderr share a 2 MiB cap; no raw stderr is returned or logged. Each process
+has a maximum 15-second wall time, then is killed and awaited. Capability probes
+run sequentially before decoding, each with that limit. Only one child process
+and one full ingestion can run at a time in this module; concurrent starts fail
+closed. Standalone inspection calls are intended for a trusted local caller,
+not an unbounded public request endpoint.
+
+Node input buffers are bounded to two compressed copies during final integrity
+verification (up to 80 MiB), plus bounded metadata/output. These are engineering
+budgets, not an OS-enforced total RSS quota. FFmpeg's `max_alloc` caps one
+allocation, not aggregate native memory. The bundled older decoder is not a
+production sandbox; broader hostile-media support requires a separately
+approved sandbox/toolchain review. No new tool or OS policy is installed here.
+
+Only regular local files inside an explicitly selected local input root are
+accepted; URLs, UNC paths, source symlinks and resolved external paths fail.
+The original is opened read-only and never written. `spawn` uses fixed argument
+arrays, `shell:false`, `windowsHide:true`, ignored stdin and `file,pipe` protocol
+allowlisting. A private temporary directory holds only a compressed input
+snapshot; decoded pixel frames are never saved. Normal completion, decoder
+failure, timeout, cancellation and source-integrity failure all await child
+completion and remove that exact checked directory. Source bytes are rehashed
+after decoding; concurrent edits reject the receipt. This does not lock other
+applications or promise immunity to an adversary editing and restoring bytes
+between checks. Abrupt host termination cannot guarantee `finally` cleanup;
+there is no broad startup deletion or scan of unrelated private files.
+
+No private video is uploaded, committed, copied into CI artifacts or printed.
+Temporary files use the current user's Temp directory and OS permissions; this
+phase does not change Windows ACLs. The optional real test creates procedural
+video entirely locally, removes it afterward and never reads private footage.
+
+### Analysis status and validation
+
+Real frame boundaries, presentation order, decoded frame count, source timing,
+pixel hashes and original-byte integrity are operational for the supported
+subset. Automatic cut detection, exposure/color/WB statistics, camera motion,
+actor tracking, occlusions, light visibility, optical flow/depth and shadow
+continuity remain explicitly UNKNOWN. No Day-for-Night relighting is produced.
+The temporal plan has no invented shots/observations. Without a selected
+compatible decoder it contains source binding only, unknown timing and
+`not-executed` decode status, even when container timing is available separately.
+
+The new `test:scene-planner-ingestion` is part of backend `check`. Twelve
+synthetic contract groups cover source bytes/hash, PTS versus DTS, VFR/exact
+rational scaling, nonzero/negative origins, missing/duplicate timestamps,
+audio offset, corruption/truncation, format/resource limits, locality/abort,
+immutability, revision/hash/source mismatch and untrusted provenance rejection.
+Those tests make no claim of codec decoding. An optional, separate real-process
+section runs only when `SCENE_PLANNER_TEST_FFMPEG` explicitly selects an existing
+executable. It creates local 32x32, two-second procedural H.264 fixtures: 50 CFR
+frames and 49 VFR frames with original 80/40 ms intervals. It checks actual
+decoding, exact PTS/count, original bytes, frozen binding, failed decoding,
+timeout/abort after the snapshot boundary, source edits and temp cleanup.
+No FFmpeg is discovered/downloaded automatically by CI; absent configuration
+prints REAL LOCAL DECODE: NOT EXECUTED. Visual scene-quality evaluation remains
+NOT EXECUTED even when that real-process test passes.
+
+Only the two exact new ingestion paths are added to stable-base protection;
+the CI Autofix disposable candidate includes them without weakening historical
+content guards. No source-branch commit or remote CI is part of this work.
+
+The next separately approved phase should add approved real-scene fixtures,
+authenticated durable receipts, explicit edited/B-frame/offset timing support
+where needed, and measured pixel/shot/motion analysis with confidence and
+failure criteria. Day-for-Night rendering and physical shadow evaluation remain
+future work and require separate authorization; Phase 3B.3 is not started.
+
+Final 3B.2 local results (2026-10-10, existing Node 22.23.3): all 12 ingestion
+contract groups passed, plus four separate real-process checks (CFR decoding,
+VFR decoding, failure/timeout/cancellation cleanup, and source-change rejection).
+Full backend `check` passed with the selected existing FFmpeg, including all
+13 Phase 3B.1 groups, 18 Phase 3A groups and 47 Phase 2 tests. All 23 CI Autofix
+tests, Project 5 safety/stable-base/release, backup and three PostgreSQL preflight
+checks passed. Syntax checks passed for 60 JS/MJS files and tracked/new-file
+whitespace checks passed. Final real-process checks also passed after tightening
+the exact cleanup target guard. No remaining local test failure.
+
+During development, a test initially expected the wrong rejection code for a
+non-FFmpeg executable; the assertion was corrected to accept safe start failure.
+A too-tight visible-pixel allocation cap blocked valid H.264 stride padding;
+the bounded padded-allocation cap fixed it without relaxing visible dimensions.
+One duplicate-PTS test was corrected after its baseline packet order changed.
+The initial exploratory PowerShell cleanup failed on the user's short Temp path;
+that exact probe directory was removed using its checked full path. Production
+and regression cleanup use Node real paths and pass. No source media or frame
+files remain in the repository.
+
+Android SDK/Java/Gradle/adb and a configured disposable PostgreSQL server remain
+unavailable locally. Android/device checks, real PostgreSQL-server integration,
+registry dependency audit, decoded audio and approved real-scene visual analysis
+were NOT EXECUTED for this candidate. No remote CI is started. No source-branch
+commit, staging or push is performed; HEAD stays at the confirmed 3B.1 commit.

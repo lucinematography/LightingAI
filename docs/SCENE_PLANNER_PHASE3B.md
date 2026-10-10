@@ -524,3 +524,166 @@ integration, registry dependency audit and remote CI were NOT EXECUTED for
 this candidate. Real-scene validation, audio decoding and calibrated color or
 physical-light measurements were NOT EXECUTED. Source HEAD remains the confirmed
 3B.2 commit; no source-branch staging, commit or push was performed.
+
+## Phase 3B.2C: offline event evaluation and calibration infrastructure
+
+This candidate starts from `1eacb12ef5772b589e7a08ab55966688922ffe7d` (3B.2V,
+successful CI #7452). Local development and offline tests only are authorized.
+No staging, commit, push, new tool, provider call or workflow edit is performed.
+Existing visual, ingestion, temporal and lighting-revision modules are unchanged.
+
+`scene-planner-video-calibration.js` adds a fixed, deeply frozen profile
+`offline-event-baseline-v1`, a pure feature/event evaluator, per-kind event
+scoring, source-bound calibration reports and a split-safe dataset aggregator.
+It consumes the existing YUV code-value measurements. It does not alter earlier
+visual candidates, calibrate photometry/colorimetry or train an AI model.
+Profile fitting is NOT EXECUTED; the two tuning scenarios are reserved development
+data, not evidence of an optimized profile. No caller input changes thresholds.
+
+### Fixed method, estimations and labels
+
+Version 1 retains the preceding heuristic jump thresholds: absolute mean-Y
+change >51 codes, histogram distance >0.45, normalized U/V distance >0.12,
+spatial residual >0.12. Uniform means residual <0.035 and chroma distance <0.06.
+Uniform Y jumps yield illumination-change candidates; significant chroma shifts
+yield color-change; spatial residual yields image-change. Nonuniform histogram,
+spatial, or combined chroma/luma jumps yield cut-candidate. The preceding
+visual module's one-frame-return estimate yields one flash-like candidate,
+not both edges as separate flashes. These labels remain low-confidence estimates
+with confirmed:false. A monotonic run of at least three Y steps, each 2..24
+codes inclusive, yields gradual-change at its first changed frame. It does not
+distinguish lighting fades from editorial dissolves. Color changes are YUV
+proxies, not measured color temperature or white balance.
+
+No camera or actor tracker is added. The existing 4x4 luma grid residual after
+global shift removal is only spatial image-change evidence. Camera pan, object
+motion, editing and other changes can produce the same evidence. Camera-versus-
+object motion, actor identity, optical flow, depth, scene geometry, physical
+shadow directions, exposure stops and Kelvin remain UNKNOWN.
+
+The regression file defines 13 independently labelled procedural scenarios:
+static camera/constant light and rising-light ramp are tuning only; decreasing
+light, single flash, lighting step, editorial cut, similar-statistics cut,
+cross-dissolve between flat and striped images, camera-pan-like pattern change,
+object-position change, chroma/color-temperature proxy, dark high-contrast image
+and VFR cut are validation only. Labels and timestamps are explicitly written
+in the scenario definitions before evaluation, never copied from predictions.
+They are procedural-script assertions, not independently annotated film footage.
+The motion scenarios are simple abrupt pattern/object translations, not proof
+of general camera/actor motion estimation. Thresholds are not searched or
+adjusted after observing these cases. The suite intentionally retains failures.
+
+### Quality scoring and independent splits
+
+Reference and predicted events have kind and original PTS tick. Matching is
+one-to-one within kind and within video; class disagreements create FP and FN.
+Tolerance is explicit and inclusive. Procedural tests use 100 ticks at 1/1000
+second, i.e. +/-100 ms (not a frame-index tolerance). VFR uses the original
+presentation timestamps. Dynamic programming maximizes true positives, then
+minimizes total absolute timing error with deterministic ties. It cannot assign
+multiple predictions to one truth event. Signed localization errors and mean
+absolute error are reported only for matched events; misses are counted as FN.
+Precision=TP/(TP+FP), recall=TP/(TP+FN); absent denominators are null. F1 is null
+if either component is undefined, otherwise the harmonic mean (zero when both
+defined components are zero). Micro metrics sum counts across scenarios, not
+the mean of scenario percentages. Negative or absent-class metrics are not
+silently converted into perfect scores.
+
+Reports carry method/profile version and profileHash, sourceIdentity, sceneId,
+revisionId, lightPlotRevisionId, planHash, temporalHash, ingestionHash, visualHash,
+timebase and every decoded frame's index/PTS/duration/pixel hash. Reference labels
+have their own hash and declared procedural origin. Source/timebase mismatch
+rejects a report. `createCalibrationReport` verifies a genuine in-process visual
+receipt; arbitrary external JSON cannot obtain decoded trust. The deeply frozen
+report has calibrationHash; imported copies require trusted re-analysis rather
+than being authenticated by a plain SHA. Existing analyses and revisions are
+not mutated. The pure scoring/feature helpers never assert decoded provenance.
+
+`evaluateCalibrationSet` accepts only genuine reports, rejects duplicate scenario
+IDs or identical source bytes even across different splits, and refuses mixed
+timebases. It scores videos separately and aggregates tuning and validation
+separately, with a deterministic datasetHash. No threshold-fitting feedback path
+exists. References must come from a trusted test author; the adapter cannot
+independently prove that an author's labels correctly describe a scene.
+
+### Observed procedural results and limitations
+
+Synthetic source-pixel evaluation and actual H.264-decoded procedural evaluation
+both gave the following results with the fixed profile:
+
+| Split | Scenarios | TP | FP | FN | Precision | Recall | F1 | Matched MAE |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Tuning | 2 | 1 | 0 | 0 | 1.000 | 1.000 | 1.000 | 0 ms |
+| Validation | 11 | 11 | 2 | 1 | 0.846 | 0.917 | 0.880 | 0 ms |
+
+The similar-statistics editorial cut is missed (one cut FN). Fast-pan-like image
+translation and moving-object translation each create a false cut candidate
+(two cut FP), while their image-change labels are detected. Across validation
+cut labels alone: TP=2, FP=2, FN=1, precision=0.5, recall=2/3, F1=4/7.
+Perfect timing for the matched procedural events is not a claim of film timing
+accuracy. Aggregate multi-label F1 hides the worse cut-only result, so both are
+documented. No candidate becomes a confirmed editorial cut.
+
+REAL FILM CALIBRATION: NOT EXECUTED. There are no approved real films with
+independent reference annotations. Actual procedural decoding is a separate
+proof of execution, not evidence of representative cinema accuracy. This small
+holdout shares the procedural generator family with tuning data; it does not
+establish cross-camera, codec, scene or production-domain generalization.
+
+### Safety, tests and future CI plan
+
+The calibration module performs no decoding or I/O itself. Actual tests use
+the already-approved local decoder via SCENE_PLANNER_TEST_FFMPEG and generate
+only 32x32 two-second local H.264 clips. All 3B.2/3B.2V read-only source, bounded
+format/duration/resolution/input bytes, frame count, streaming memory, process
+timeout and concurrency restrictions remain unchanged. No private source video
+or frame pixels appear in Git/logs. Source hashes and scalar quality reports
+may permit correlation and should remain access-controlled. Child failure,
+timeout, abort and cleanup remain verified. Pure scorer budgets are at most
+256 predicted/reference events and 257x257 DP cells per class; a dataset has
+at most 128 scenarios. Event-dense clips above that scorer budget fail closed
+and require separately approved segmentation. There is still no OS RSS sandbox.
+
+`test:scene-planner-calibration` joins backend check. Mandatory synthetic contract
+groups cover exact metrics, undefined denominators, optimal matching/tolerance,
+malformed/duplicate/oversized input, timestamps, frozen profile and expected
+misclassifications. The separate actual section covers all 13 scenarios, original
+CFR/VFR timestamps, unchanged sources/revisions/analyses, deterministic hashes,
+wrong source/timebase/revision, forged JSON, split leakage, timeout/abort and
+temporary cleanup. No selected decoder prints REAL PROCEDURAL CALIBRATION:
+NOT EXECUTED. Stable-base and CI Autofix gain only the two precise new paths.
+
+The GitHub Actions workflow remains unchanged. For a future separately approved
+CI change: select a reviewed pre-existing FFmpeg binary on the runner, validate
+its version, H.264 decoder, ISO demuxer and procedural encoder/filter capabilities,
+then set SCENE_PLANNER_TEST_FFMPEG for a separate explicitly required real-process
+job with existing resource/time limits. No automatic download/fallback should
+occur; absent capabilities must be reported or fail the required real job,
+never substituted by synthetic success. Pin the approved runner/toolchain,
+retain only scalar sanitized reports, and continue mandatory backend/PostgreSQL/
+Android/security gates. This candidate neither modifies CI nor claims its real
+decoder tests ran remotely.
+
+Next: obtain separately approved film fixtures with independent human annotations,
+freeze disjoint tuning/holdout identities and scoring tolerance before evaluation,
+record colorimetry and scene/camera strata, and test motion/flash/dissolve failures.
+Only then consider a new explicitly versioned profile and confidence calibration.
+Day-for-Night rendering remains future work; Phase 3B.3 is not started.
+
+Final local 3B.2C validation (2026-10-10, existing Node 22.23.3): six mandatory
+calibration contract groups passed, covering all 13 synthetic scenarios; all
+13 actual decoded procedural scenarios passed execution/integrity checks,
+plus failure/abort cleanup and split-safe dataset aggregation checks. Expected
+classification FP/FN above remain present; passing regressions do not mean
+perfect event detection. No-decoder execution correctly prints NOT EXECUTED
+for actual processing while retaining mandatory contract checks.
+
+The complete backend check passed with the existing operator-selected FFmpeg,
+including 7 synthetic/8 actual visual groups, 12 ingestion groups/4 actual
+ingestion checks, 13 temporal groups, 18 revision groups and 47 Phase 2 tests.
+All 23 CI Autofix tests, Project 5 safety/stable-base/release, backup and three
+PostgreSQL preflight tests passed. Syntax/whitespace checks passed for the
+64 relevant JS/MJS files and both new-file/tracked diffs. Android SDK/Java/
+Gradle/adb and a configured disposable PostgreSQL server remain unavailable
+locally; real PostgreSQL-server integration, Android execution, registry audit
+and new GitHub CI were NOT EXECUTED. No media files or secrets were added.

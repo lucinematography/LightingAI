@@ -389,3 +389,138 @@ unavailable locally. Android/device checks, real PostgreSQL-server integration,
 registry dependency audit, decoded audio and approved real-scene visual analysis
 were NOT EXECUTED for this candidate. No remote CI is started. No source-branch
 commit, staging or push is performed; HEAD stays at the confirmed 3B.1 commit.
+
+## Phase 3B.2V: measured offline decoded pixels
+
+This section supersedes the historical development-state statements above.
+3B.2 was committed as `dd2dd41ff8e2b6a44a46374cf2390f60629b09d8` and CI #7450
+completed successfully. Its real decoder test was NOT EXECUTED on CI because
+no existing FFmpeg was explicitly selected. The 3B.2V candidate is local only:
+no commit, push, installation, remote CI, provider call or renderer is authorized.
+
+### Data and trust boundary
+
+`scene-planner-video-visual.js` adds `analyzeOriginalVideo` and
+`verifyVisualAnalysis`. It first obtains a genuine 3B.2 decoded ingestion receipt,
+then calls `streamVerifiedVideoPixels` for a controlled second decode pass.
+The second pass decodes the same byte-identical private source snapshot into
+`yuv420p` rawvideo on a pipe. Each complete frame is hashed and compared with
+the first pass's decoded pixel hash before measurement. Frame order, count and
+original PTS/durations therefore come from the verified first pass; rawvideo
+does not independently carry timestamps. No timing is invented from FPS.
+The original source is rehashed before and after the pixel pass. Corruption,
+changed source, different decoder version, missing/extra/truncated frames or
+pixel hash disagreement reject the whole result. Partial measurements are
+never returned as a successful analysis.
+
+Analysis preserves sceneId, revisionId, lightPlotRevisionId, planHash,
+sourceIdentity, ingestionHash, temporalHash, rational timebase, each frame's
+original PTS/duration/index and decodedPixelHash. It has a deterministic SHA-256
+visualHash and is deeply frozen. Old ingestion/temporal/lighting revisions remain
+unchanged. Verification also needs private in-process authority: external JSON,
+even with a recalculated hash, cannot claim verified pixels. Durable authenticated
+restoration remains future work. There is no new HTTP endpoint or UI workflow.
+
+### Measurements and event estimates
+
+Method `yuv420p-code-statistics-v1` computes every frame's Y/U/V mean, extrema
+and population standard deviation from actual decoded bytes. Y additionally
+has a 16-bin normalized histogram, dark fraction (codes below 64), bright
+fraction (codes at least 192) and a 4x4 spatial mean grid. Fractions describe
+pixel distributions, not semantic regions. Contrast means code-value standard
+deviation, not physical dynamic range. Numerical confidence is
+HIGH_FOR_DECODED_CODE_VALUES; physical interpretation confidence is UNKNOWN.
+
+Adjacent-frame records carry the latter frame's original PTS, both frame indices
+and pixel hashes, signed Y mean change, normalized U/V mean distance, histogram
+distance and spatial residual after subtracting the global Y shift. Candidate
+thresholds are heuristic and versioned: absolute mean Y change >20% of 255,
+histogram distance >0.45, chroma mean distance >0.12 or spatial residual >0.12.
+Residual <0.035 and chroma distance <0.06 marks a large uniform shift as
+ILLUMINATION_CHANGE_OR_FLASH. A one-frame change followed by return to the
+preceding statistics is TRANSIENT_FLASH_OR_OTHER_CHANGE. Other candidates are
+CUT_OR_MOTION_OR_LIGHTING. Every candidate has LOW_UNCALIBRATED_HEURISTIC
+confidence and REQUIRES_HUMAN_CONFIRMATION; confirmedCut is always false.
+No large change gives UNKNOWN for cut status, not proof that no cut occurred.
+VFR lookahead is one frame, not an assumed fixed time interval.
+
+These features can miss cuts between statistically similar scenes and can flag
+camera movement, lighting changes and object movement. Neither flash filtering
+nor editorial-cut detection is calibrated on real film scenes. The tests use
+procedural known changes and do not establish real-scene precision/recall.
+
+Matrix coefficients, signal range, transfer function and primaries deliberately
+remain UNKNOWN: this version does not parse or verify source colorimetry.
+Statistics describe the decoder's selected 8-bit YUV representation, not original
+bit depth or calibrated physical color. Y values are not exposure in stops;
+U/V values are not white balance. ExposureStops, whiteBalanceK and physicalScene
+remain UNKNOWN. Actor identification/tracking, optical flow, depth, geometry,
+shadow directions and Day-for-Night rendering are NOT IMPLEMENTED. DoP creative
+requests remain in the separate immutable lighting revision, never presented
+as measured pixel facts.
+
+### Process, privacy and memory limits
+
+The operator selects an existing trusted local decoder through options;
+SCENE_PLANNER_TEST_FFMPEG selects it only for tests. No executable path is
+hardcoded, searched automatically on CI, downloaded or installed. All existing
+3B.2 format/timing/input/resource restrictions remain. Both passes use controlled
+argument arrays, shell:false, ignored stdin, software decode, one thread per
+stage, file/pipe-only protocols, bounded dimensions/allocation and 15-second
+maximum per child. The raw stdout budget is 512 MiB total across frames;
+stderr remains capped at 2 MiB. Metadata stdout remains capped at 2 MiB.
+
+Raw pixels are processed synchronously with one reusable frame buffer capped
+at 8 MiB (supported 1920x1080 YUV420p requires about 3 MiB), plus bounded pipe
+chunks. No full decoded video is accumulated in memory. Only frame statistics
+and hashes are retained (at most 1800 frames). Consumers of the internal trusted
+stream interface must not retain its reusable buffer or perform asynchronous
+work. Compressed source buffers remain bounded as in 3B.2. These are engineering
+limits, not an OS-enforced RSS sandbox; the existing older bundled FFmpeg is
+not approved here as an internet-facing hostile-media decoder.
+
+No decoded frame files are written. The private compressed snapshot is removed
+after success, child failure, rejected measurements, abort or timeout, after
+child completion and exact directory containment checks. Host termination can
+still prevent finally cleanup. Originals are read-only; test-induced source
+edits are confined to generated temporary fixtures and restored. No private
+footage, paths, raw pixels or raw decoder stderr are emitted in reports, Git or
+CI artifacts. No paid route, PostgreSQL schema, job safety or lamp control changed.
+
+### Tests and next step
+
+`test:scene-planner-visual` is included in backend check. Synthetic pixel tests
+have no trusted decoded provenance. Separate actual process tests generate
+32x32 two-second H.264 procedural clips locally and check decoded dark/bright
+values, contrast, gradual Y/chroma changes, flash-like changes, editorial cuts,
+camera-like spatial changes, CFR/VFR timestamps, wrong source/revision,
+untrusted JSON, freezing, timeout/abort/consumer failure, corrupt inputs,
+original preservation, concurrent source changes and temporary cleanup.
+Absent an explicitly selected existing decoder, actual visual tests print
+REAL VISUAL PIXEL ANALYSIS: NOT EXECUTED. Mandatory synthetic tests still run.
+No private film material is used. Stable-base adds only the two exact visual
+module/test paths; CI Autofix validates a complete candidate without weakening
+historical protected content.
+
+Next separately approved work should establish an approved real-scene validation
+set, colorimetry-aware measurement, calibrated cut confidence and authenticated
+durable receipts. Only after that should motion/geometry/shadow continuity and
+the Day-for-Night renderer be designed and evaluated. Phase 3B.3 is not started.
+
+Local validation on 2026-10-10 with existing Node 22.23.3 and the previously
+operator-approved FFmpeg version succeeded: seven synthetic pixel groups and
+eight actual procedural visual decode groups, including repeated deterministic
+visual hashing. The full backend check passed with real decoding selected:
+12 ingestion contract groups plus four actual ingestion checks, 13 temporal
+groups, 18 revision groups and 47 Phase 2 video tests. CI Autofix passed all
+23 tests; Project 5 safety/stable-base/release, backup and three PostgreSQL
+preflight tests passed. Syntax checks cover 62 JS/MJS files; tracked and new-file
+whitespace checks passed. A separate no-decoder invocation correctly printed
+NOT EXECUTED while running all seven mandatory synthetic visual groups.
+
+Android SDK/Java/Gradle/adb, a configured disposable PostgreSQL server and
+ffprobe remain unavailable locally. Android tests, actual PostgreSQL-server
+integration, registry dependency audit and remote CI were NOT EXECUTED for
+this candidate. Real-scene validation, audio decoding and calibrated color or
+physical-light measurements were NOT EXECUTED. Source HEAD remains the confirmed
+3B.2 commit; no source-branch staging, commit or push was performed.

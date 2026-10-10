@@ -145,18 +145,22 @@ export function validateSuppliedTimeline(raw,source){
 // shell:false, no stdin, bounded stdout/stderr, bounded wall time and one child
 // at a time. Tool errors never expose input paths or raw media metadata in logs.
 let activeProcess=false;
-async function runLocal(executable,args,{signal,timeoutMs=INGESTION_LIMITS.timeoutMs}={}){
+async function runLocal(executable,args,{signal,timeoutMs=INGESTION_LIMITS.timeoutMs}={},sink=null){
   aborted(signal);assert(!activeProcess,'DECODER_BUSY');integer(timeoutMs,1,INGESTION_LIMITS.timeoutMs);
   activeProcess=true;
   try{return await new Promise((resolve,reject)=>{
-    let child,reason=null,total=0;const chunks=[];
+    let child,reason=null,total=0,stderrBytes=0;const chunks=[];
     try{child=spawn(executable,args,{shell:false,windowsHide:true,stdio:['ignore','pipe','pipe']});}
     catch{reject(error('DECODER_START_FAILED'));return;}
     function stop(code){if(!reason){reason=code;child.kill('SIGKILL');}}
     const timer=setTimeout(()=>stop('DECODER_TIMEOUT'),timeoutMs);
     const cancel=()=>stop('ABORTED');signal?.addEventListener('abort',cancel,{once:true});
-    child.stdout.on('data',chunk=>{total+=chunk.length;if(total>INGESTION_LIMITS.maxProcessOutputBytes)stop('DECODER_OUTPUT_LIMIT');else chunks.push(chunk);});
-    child.stderr.on('data',chunk=>{total+=chunk.length;if(total>INGESTION_LIMITS.maxProcessOutputBytes)stop('DECODER_OUTPUT_LIMIT');});
+    child.stdout.on('data',chunk=>{
+      total+=chunk.length;
+      if(sink?total>INGESTION_LIMITS.maxDecodedBytes:total+stderrBytes>INGESTION_LIMITS.maxProcessOutputBytes)stop('DECODER_OUTPUT_LIMIT');
+      else if(!reason){try{if(sink)sink(chunk);else chunks.push(chunk);}catch{stop('PIXEL_STREAM_REJECTED');}}
+    });
+    child.stderr.on('data',chunk=>{stderrBytes+=chunk.length;if(sink?stderrBytes>INGESTION_LIMITS.maxProcessOutputBytes:total+stderrBytes>INGESTION_LIMITS.maxProcessOutputBytes)stop('DECODER_OUTPUT_LIMIT');});
     child.on('error',()=>{reason='DECODER_START_FAILED';});
     child.on('close',code=>{clearTimeout(timer);signal?.removeEventListener('abort',cancel);if(reason||code!==0)reject(error(reason||'DECODER_FAILED'));else resolve(Buffer.concat(chunks).toString('utf8'));});
     if(signal?.aborted)cancel();
@@ -252,4 +256,56 @@ export function verifyVideoIngestion(record,revision){
   }else assert(record.frames.length===0&&record.decoder===null&&record.decodedFrameCount===null&&
     record.temporal.frames.length===0&&record.temporal.timing===null,'UNTRUSTED_DECODE_RECEIPT');
   return true; // imported decoded receipts require trusted re-decoding
+}
+
+// Trusted local second pass only: every raw frame must match the first pass's
+// pixel hash before its synchronous consumer can measure it. No frame files.
+// The reusable buffer belongs to this function; consumers must not retain it.
+export async function streamVerifiedVideoPixels(options,revision,receipt,consume){
+  verifyVideoIngestion(receipt,revision);
+  assert(receipt.decodeStatus==='decoded-video'&&typeof consume==='function','VERIFIED_DECODE_REQUIRED');
+  assert(Object.keys(options).every(k=>['filePath','root','mime','decoderPath','signal','timeoutMs'].includes(k)),'UNTRUSTED_OPTIONS');
+  assert(!activeIngestion,'INGESTION_BUSY');activeIngestion=true;
+  let directory=null;
+  try{
+    const {bytes,sourceIdentity}=await readOriginal(options);
+    assert(sourceIdentity===receipt.sourceIdentity,'SOURCE_IDENTITY_MISMATCH');
+    const video=receipt.metadata.video;
+    const size=video.width*video.height+2*Math.ceil(video.width/2)*Math.ceil(video.height/2);
+    assert(size<=8*1024*1024&&size*receipt.frames.length<=INGESTION_LIMITS.maxDecodedBytes,'PIXEL_MEMORY_LIMIT');
+    const decoder=await decoderCapabilities(options.decoderPath,{signal:options.signal});
+    assert(decoder.version===receipt.decoder.version,'DECODER_MISMATCH');
+    directory=await fs.mkdtemp(path.join(await fs.realpath(os.tmpdir()),'lightingai-ingestion-'));
+    const snapshot=path.join(directory,'input.mp4');await fs.writeFile(snapshot,bytes,{flag:'wx',mode:0o400});
+    const buffer=Buffer.alloc(size);let offset=0,index=0;
+    await runLocal(await fs.realpath(options.decoderPath),['-hide_banner','-loglevel','error','-nostdin',
+      '-max_alloc',String(INGESTION_LIMITS.maxAllocationBytes),'-protocol_whitelist','file,pipe',
+      '-filter_threads','1','-filter_complex_threads','1','-threads','1','-hwaccel','none',
+      '-max_pixels',String((Math.ceil(video.width/64)+1)*64*(Math.ceil(video.height/64)+1)*64),
+      '-f','mov','-i',snapshot,'-map','0:v:0','-an','-sn','-dn','-copyts','-vsync','0',
+      '-c:v','rawvideo','-pix_fmt','yuv420p','-threads','1','-enc_time_base','1:'+video.timeBase.denominator,
+      '-frames:v',String(INGESTION_LIMITS.maxFrames),'-f','rawvideo','pipe:1'],options,chunk=>{
+      let pos=0;
+      while(pos<chunk.length){
+        const n=Math.min(size-offset,chunk.length-pos);chunk.copy(buffer,offset,pos,pos+n);offset+=n;pos+=n;
+        if(offset===size){
+          const frame=receipt.frames[index];
+          assert(frame&&createHash('sha256').update(buffer).digest('hex')===frame.decodedPixelHash,'PIXEL_HASH_MISMATCH');
+          assert(consume(buffer,frame,video)!==false,'PIXEL_CONSUMER_REJECTED');
+          index++;offset=0;
+        }
+      }
+    });
+    assert(offset===0&&index===receipt.frames.length,'PIXEL_FRAME_COUNT_MISMATCH');
+    assert((await readOriginal(options)).sourceIdentity===sourceIdentity,'SOURCE_CHANGED');
+    return index;
+  }catch(e){
+    throw e.message?.startsWith('Video ingestion:')?e:error('PIXEL_INGESTION_FAILED');
+  }finally{
+    try{if(directory){
+      const tempRoot=await fs.realpath(os.tmpdir()),resolved=await fs.realpath(directory);
+      assert(resolved===path.resolve(directory)&&inside(tempRoot,resolved)&&/^lightingai-ingestion-/.test(path.basename(resolved)),'CLEANUP_PATH_REJECTED');
+      await fs.rm(resolved,{recursive:true,force:true});
+    }}finally{activeIngestion=false;}
+  }
 }

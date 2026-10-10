@@ -205,6 +205,9 @@ const exactAllowed = new Set([
   // Phase 3B.2: isolated local ingestion and offline regression paths only.
   'backend/scene-planner-video-ingestion.js',
   'backend/scene-planner-video-ingestion-selftest.js',
+  // Phase 3B.2V: isolated offline pixel analysis and exact regression paths.
+  'backend/scene-planner-video-visual.js',
+  'backend/scene-planner-video-visual-selftest.js',
   'docs/SCENE_PLANNER_PHASE3B.md',
   'backend/scene-planner-video.js',
   'backend/scene-planner-video-selftest.js',

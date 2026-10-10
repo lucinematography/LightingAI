@@ -10,6 +10,20 @@ on:
 jobs:
   validate-and-build:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: lightingai_ci
+          POSTGRES_PASSWORD: ci-only-ephemeral-password
+          POSTGRES_DB: lightingai_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lightingai_ci -d lightingai_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     concurrency:
       group: lightingai-android-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
       cancel-in-progress: true
@@ -30,6 +44,17 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: CI autofix regression tests
+        run: node scripts/run-ci-check.mjs ci-autofix
+
+      - name: Scene Planner real PostgreSQL integration
+        working-directory: backend
+        timeout-minutes: 5
+        env:
+          # Disposable CI-only credentials; never a production URL or repository secret.
+          SCENE_PLANNER_POSTGRES_TEST_URL: postgres://lightingai_ci:ci-only-ephemeral-password@127.0.0.1:5432/lightingai_ci_test
+        run: npm run test:scene-planner-postgres
+
       - name: Audit backend dependencies for high/critical vulnerabilities
         working-directory: backend
         run: npm run audit:dependencies
@@ -42,7 +67,7 @@ jobs:
 
       - name: Validate complete LightingAI equipment catalog
         working-directory: backend
-        run: npm run check
+        run: node ../scripts/run-ci-check.mjs backend-check -- npm run check
 
       - name: Validate Android WebView JavaScript syntax
         run: find app/src/main/assets -maxdepth 1 -name '*.js' -print0 | xargs -0 -n1 node --check
@@ -63,18 +88,18 @@ jobs:
 
       - name: Validate Project 5 feature safety invariants
         working-directory: backend
-        run: npm run test:project5-safety
+        run: node ../scripts/run-ci-check.mjs project5-safety -- npm run test:project5-safety
 
       - name: Validate Project 5 stable build 510 base
         working-directory: backend
-        run: npm run test:project5-base
+        run: node ../scripts/run-ci-check.mjs project5-base -- npm run test:project5-base
 
       - name: Validate Project 5.2 release gate
         working-directory: backend
-        run: npm run test:project52-release
+        run: node ../scripts/run-ci-check.mjs project52-release -- npm run test:project52-release
 
       - name: Validate Project Backup data and exclusions
-        run: node backend/project-backup-selftest.js
+        run: node scripts/run-ci-check.mjs backup
 
       - name: Set up Java 17
         uses: actions/setup-java@v6
@@ -153,4 +178,19 @@ jobs:
         with:
           path: app/build/outputs/apk/debug/LightingAI-build-${{ github.run_number }}.apk
           archive: false
+          retention-days: 14
+
+      - name: Collect available sanitized CI reports
+        if: ${{ always() }}
+        env:
+          CI_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/ci-report-summary.mjs
+
+      - name: Upload sanitized CI reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .ci-safe-reports/summary.json
+          if-no-files-found: warn
           retention-days: 14

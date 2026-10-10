@@ -58,9 +58,13 @@ public class MainActivity extends Activity {
     private FrameLayout rootView;
     private View startupSplash;
     private String pendingText = null;
+    private String pendingAiMp4TaskId = null;
+    private String pendingAiMp4AccessToken = null;
     private ValueCallback<Uri[]> pendingFileChooser = null;
     private Uri pendingCameraUri = null;
+    private final ArrayList<Uri> scenePlannerCaptureUris = new ArrayList<>();
     private boolean pendingCameraCapture = false;
+    private boolean pendingVideoCapture = false;
     private boolean pendingPhotoCapturePermission = false;
     private boolean pendingGalleryPersistable = false;
     private NativeSunLocation nativeSunLocation;
@@ -95,10 +99,13 @@ public class MainActivity extends Activity {
     private static final int SPEECH_INPUT = 506;
     private static final int BLE_PERMISSION = 507;
     private static final int AUDIO_PERMISSION = 508;
+    private static final int SAVE_AI_SCENE_MP4 = 509;
+    private static final long MAX_AI_MP4_BYTES = 140L * 1024L * 1024L;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        cleanupExpiredScenePlannerCaptures();
         getWindow().setStatusBarColor(Color.rgb(13, 15, 18));
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
         rootView = new FrameLayout(this);
@@ -181,6 +188,15 @@ public class MainActivity extends Activity {
                 if (pendingFileChooser != null) pendingFileChooser.onReceiveValue(null);
                 pendingFileChooser = filePathCallback;
                 pendingCameraCapture = fileChooserParams != null && fileChooserParams.isCaptureEnabled();
+                pendingVideoCapture = false;
+                if (fileChooserParams != null && fileChooserParams.getAcceptTypes() != null) {
+                    for (String mime : fileChooserParams.getAcceptTypes()) {
+                        if (mime != null && mime.toLowerCase(java.util.Locale.US).contains("video")) {
+                            pendingVideoCapture = true;
+                            break;
+                        }
+                    }
+                }
                 pendingGalleryPersistable = false;
 
                 if (pendingCameraCapture) {
@@ -189,7 +205,7 @@ public class MainActivity extends Activity {
                         requestCameraPermission();
                         return true;
                     }
-                    return openCameraForWebView();
+                    return pendingVideoCapture ? openVideoForWebView() : openCameraForWebView();
                 }
                 return openGalleryForWebView(fileChooserParams);
             }
@@ -363,6 +379,7 @@ public class MainActivity extends Activity {
     private void openAIImagePicker(boolean cameraCapture) {
         if (pendingFileChooser != null) finishFileChooser(null);
         pendingCameraCapture = cameraCapture;
+        pendingVideoCapture = false;
         pendingGalleryPersistable = false;
         pendingFileChooser = uris -> {
             Uri uri = uris != null && uris.length > 0 ? uris[0] : null;
@@ -464,13 +481,16 @@ public class MainActivity extends Activity {
 
     private boolean openGalleryForWebView(WebChromeClient.FileChooserParams params) {
         pendingGalleryPersistable = false;
+        boolean video = pendingVideoCapture;
+        String mime = video ? "video/*" : "image/*";
         Intent intent;
         if (Build.VERSION.SDK_INT >= 33) {
             intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
-            intent.setType("image/*");
+            intent.setType(mime);
         } else {
-            intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            intent.setType("image/*");
+            intent = new Intent(Intent.ACTION_PICK,
+                video ? MediaStore.Video.Media.EXTERNAL_CONTENT_URI : MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType(mime);
         }
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
@@ -479,7 +499,7 @@ public class MainActivity extends Activity {
         } catch (ActivityNotFoundException primaryError) {
             try {
                 Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
-                fallback.setType("image/*");
+                fallback.setType(mime);
                 fallback.addCategory(Intent.CATEGORY_OPENABLE);
                 fallback.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 startActivityForResult(fallback, CHOOSE_IMAGE);
@@ -527,6 +547,52 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    private boolean openVideoForWebView() {
+        pendingPhotoCapturePermission = false;
+        pendingGalleryPersistable = false;
+        deletePendingCameraUri();
+        Intent record = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+        try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                // No WRITE_EXTERNAL_STORAGE permission is required for app-owned storage.
+                // Grant the camera write access to the specific private provider URI only.
+                java.io.File folder = AIVisualImageProvider.captureDirectory(this);
+                if (!folder.isDirectory() && !folder.mkdirs())
+                    throw new IllegalStateException("Scene video folder unavailable");
+                java.io.File output = new java.io.File(folder,
+                    "scene_capture_" + System.currentTimeMillis() + ".mp4");
+                if (!output.createNewFile()) throw new IllegalStateException("Cannot prepare scene clip");
+                pendingCameraUri = Uri.parse("content://" + getPackageName() +
+                    ".ai.preview/" + Uri.encode(output.getName()));
+            } else {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Video.Media.DISPLAY_NAME, "LightingAI_scene_" +
+                    System.currentTimeMillis() + ".mp4");
+                values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
+                values.put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/LightingAI");
+                pendingCameraUri = getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+                if (pendingCameraUri == null) throw new IllegalStateException("Could not prepare video URI");
+            }
+            record.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
+            record.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 120);
+            record.setClipData(ClipData.newRawUri("LightingAI scene video", pendingCameraUri));
+            record.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            for (ResolveInfo info : getPackageManager().queryIntentActivities(record, PackageManager.MATCH_DEFAULT_ONLY)) {
+                if (info != null && info.activityInfo != null && info.activityInfo.packageName != null) {
+                    grantUriPermission(info.activityInfo.packageName, pendingCameraUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                }
+            }
+            startActivityForResult(record, CHOOSE_IMAGE);
+            return true;
+        } catch (Exception e) {
+            deletePendingCameraUri();
+            finishFileChooser(null);
+            return false;
+        }
+    }
+
     private void persistGalleryAccess(Intent data, Uri[] result) {
         if (!pendingGalleryPersistable || data == null || result == null) return;
         int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
@@ -541,6 +607,7 @@ public class MainActivity extends Activity {
         ValueCallback<Uri[]> callback = pendingFileChooser;
         pendingFileChooser = null;
         pendingCameraCapture = false;
+        pendingVideoCapture = false;
         pendingPhotoCapturePermission = false;
         pendingGalleryPersistable = false;
         if (callback != null) callback.onReceiveValue(result);
@@ -550,6 +617,22 @@ public class MainActivity extends Activity {
         if (pendingCameraUri == null) return;
         try { getContentResolver().delete(pendingCameraUri, null, null); } catch (Exception ignored) {}
         pendingCameraUri = null;
+    }
+
+    private void releaseScenePlannerCaptures(boolean keepLatest) {
+        int keep = keepLatest && !scenePlannerCaptureUris.isEmpty() ? 1 : 0;
+        while (scenePlannerCaptureUris.size() > keep) {
+            Uri uri = scenePlannerCaptureUris.remove(0);
+            try { getContentResolver().delete(uri, null, null); } catch (Exception ignored) {}
+        }
+    }
+
+    private void cleanupExpiredScenePlannerCaptures() {
+        // Only our legacy app-owned captures; never gallery selections or MediaStore exports.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return;
+        try {
+            ScenePlannerCaptureCleanup.prune(AIVisualImageProvider.captureDirectory(this), System.currentTimeMillis());
+        } catch (java.io.IOException ignored) {}
     }
 
     private void applyNavigationInset() {
@@ -869,7 +952,107 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    // Android Storage Access Framework: compatible with API 26+ without storage permissions.
+    // Paid Runway credentials never enter the app; this accepts only the user's backend token.
+    private void requestScenePlannerMp4Save(String taskId, String accessToken) {
+        if (pendingAiMp4TaskId != null) {
+            notifyScenePlannerMp4Save(false);
+            return;
+        }
+        if (taskId == null || !taskId.matches("[a-fA-F0-9-]{36}") ||
+            accessToken == null || !accessToken.matches("[A-Za-z0-9._~+/=-]{24,512}")) {
+            notifyScenePlannerMp4Save(false);
+            return;
+        }
+        pendingAiMp4TaskId = taskId;
+        pendingAiMp4AccessToken = accessToken;
+        try {
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("video/mp4");
+            intent.putExtra(Intent.EXTRA_TITLE, "LightingAI_AI_Relight.mp4");
+            startActivityForResult(intent, SAVE_AI_SCENE_MP4);
+        } catch (Exception error) {
+            pendingAiMp4TaskId = null;
+            pendingAiMp4AccessToken = null;
+            notifyScenePlannerMp4Save(false);
+        }
+    }
+
+    private void notifyScenePlannerMp4Save(boolean success) {
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(
+            "window.LightingAIScenePlanner&&window.LightingAIScenePlanner.onNativeVideoSaved(" +
+            (success ? "true" : "false") + ");", null));
+    }
+
+    private void downloadScenePlannerMp4ToUri(String taskId, String accessToken, Uri destination) {
+        new Thread(() -> {
+            java.net.HttpURLConnection connection = null;
+            boolean success = false;
+            try {
+                // Fixed HTTPS origin prevents arbitrary downloads or access-token exfiltration.
+                java.net.URL url = new java.net.URL(
+                    "https://lightingai.onrender.com/api/scene-planner/video/download/" + taskId);
+                connection = (java.net.HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(false);
+                connection.setConnectTimeout(20000);
+                connection.setReadTimeout(120000);
+                connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+                connection.setRequestProperty("Accept", "video/mp4");
+                if (connection.getResponseCode() != 200) throw new java.io.IOException("Video unavailable");
+                String type = connection.getContentType();
+                if (type == null || !type.toLowerCase(java.util.Locale.US).startsWith("video/mp4"))
+                    throw new java.io.IOException("Unexpected video MIME type");
+                long declared = connection.getContentLengthLong();
+                if (declared > MAX_AI_MP4_BYTES) throw new java.io.IOException("Video exceeds limit");
+                try (InputStream input = connection.getInputStream()) {
+                    byte[] header = new byte[12];
+                    int filled = 0;
+                    while (filled < header.length) {
+                        int read = input.read(header, filled, header.length - filled);
+                        if (read < 0) throw new java.io.IOException("Truncated MP4");
+                        filled += read;
+                    }
+                    if (header[4] != 'f' || header[5] != 't' || header[6] != 'y' || header[7] != 'p')
+                        throw new java.io.IOException("Not an MP4 container");
+                    try (OutputStream output = getContentResolver().openOutputStream(destination, "w")) {
+                        if (output == null) throw new java.io.IOException("Document destination unavailable");
+                        output.write(header);
+                        byte[] buffer = new byte[65536];
+                        long total = header.length;
+                        int bytes;
+                        while ((bytes = input.read(buffer)) != -1) {
+                            total += bytes;
+                            if (total > MAX_AI_MP4_BYTES) throw new java.io.IOException("Video exceeds limit");
+                            output.write(buffer, 0, bytes);
+                        }
+                        output.flush();
+                    }
+                }
+                success = true;
+            } catch (Exception ignored) {
+                // No credentials, server responses, or media content are logged.
+            } finally {
+                if (connection != null) connection.disconnect();
+                if (!success) {
+                    try { getContentResolver().delete(destination, null, null); }
+                    catch (Exception ignored) {}
+                }
+                notifyScenePlannerMp4Save(success);
+            }
+        }, "LightingAI-scene-planner-mp4-save").start();
+    }
+
     public class AndroidBridge {
+        @JavascriptInterface public void releaseScenePlannerCaptures(boolean keepLatest) {
+            runOnUiThread(() -> MainActivity.this.releaseScenePlannerCaptures(keepLatest));
+        }
+        @JavascriptInterface public void saveAiVideo(String taskId, String backendAccessToken) {
+            runOnUiThread(() -> requestScenePlannerMp4Save(taskId, backendAccessToken));
+        }
+
         @JavascriptInterface public void saveText(String filename, String text) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 new Thread(() -> {
@@ -1144,7 +1327,10 @@ public class MainActivity extends Activity {
             notifySceneMeasureCameraPermission(granted);
             if (pendingPhotoCapturePermission) {
                 pendingPhotoCapturePermission = false;
-                if (granted && pendingFileChooser != null) openCameraForWebView();
+                if (granted && pendingFileChooser != null) {
+                    if (pendingVideoCapture) openVideoForWebView();
+                    else openCameraForWebView();
+                }
                 else finishFileChooser(null);
             }
         } else if (requestCode == LOCATION_PERMISSION) {
@@ -1189,6 +1375,20 @@ public class MainActivity extends Activity {
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        if (requestCode == SAVE_AI_SCENE_MP4) {
+            String taskId = pendingAiMp4TaskId;
+            String backendToken = pendingAiMp4AccessToken;
+            pendingAiMp4TaskId = null;
+            pendingAiMp4AccessToken = null;
+            Uri destination = resultCode == RESULT_OK && data != null ? data.getData() : null;
+            if (destination == null || taskId == null || backendToken == null) {
+                notifyScenePlannerMp4Save(false);
+            } else {
+                downloadScenePlannerMp4ToUri(taskId, backendToken, destination);
+            }
+            return;
+        }
+
         if (requestCode == SPEECH_INPUT) {
             String target = pendingVoiceTarget;
             pendingVoiceTarget = null;
@@ -1225,6 +1425,18 @@ public class MainActivity extends Activity {
             if (resultCode == RESULT_OK) {
                 if (pendingCameraCapture && pendingCameraUri != null) {
                     Uri uri = pendingCameraUri;
+                    if (pendingVideoCapture && data != null && data.getData() != null) {
+                        Uri returned = data.getData();
+                        if (!returned.equals(pendingCameraUri)) {
+                            deletePendingCameraUri();
+                            uri = returned;
+                        }
+                    }
+                    if (pendingVideoCapture && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+                        pendingCameraUri != null && pendingCameraUri.equals(uri) &&
+                        (getPackageName() + ".ai.preview").equals(uri.getAuthority())) {
+                        scenePlannerCaptureUris.add(uri);
+                    }
                     pendingCameraUri = null;
                     finishFileChooser(new Uri[]{uri});
                 } else {
@@ -1252,6 +1464,10 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        releaseScenePlannerCaptures(false);
+        if (isFinishing() && pendingVideoCapture && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+            deletePendingCameraUri();
+        pendingAiMp4AccessToken = null;
         artNetLiveEngine.stopAll();
         if (pendingFileChooser != null) finishFileChooser(null);
         if (nativeSunCompass != null) nativeSunCompass.stop();

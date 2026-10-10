@@ -8,6 +8,9 @@ import { catalogStatus } from "./catalog-status.js";
 import { accessoryRecord, buildAccessoryTree } from "./accessory-graph.js";
 import { aputureReviewCatalog, aputureReviewHtml } from "./aputure-review.js";
 import { generateVisualPreview, VISUAL_PREVIEW_MODEL, VISUAL_PREVIEW_QUALITY } from "./visual-preview.js";
+import { generateScenePlannerPlan } from "./scene-planner-service.js";
+import { createVideoRouter } from "./scene-planner-video.js";
+import { paidAiConfigured, guardPaidAIRequests } from "./staging-safety.js";
 
 const FIXTURE_LIBRARY = RUNTIME_CATALOG.fixtures;
 const ACCESSORY_LIBRARY = RUNTIME_CATALOG.accessories;
@@ -19,8 +22,11 @@ if (catalogHealth.warnings.length) console.warn("LIGHTING AI catalog validation 
 dotenv.config();
 const app = express();
 app.use(cors());
+app.use(guardPaidAIRequests());
+// JSON must be parsed before /video/start. express.json() leaves raw video/* uploads untouched.
 app.use(express.json({ limit: "15mb" }));
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+app.use("/api/scene-planner/video",createVideoRouter(express));
+const openai = paidAiConfigured() ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 
 function normalizeEquipmentName(value = "") { return String(value).toLowerCase().replace(/aputure/g, "").replace(/[^a-z0-9]+/g, "").trim(); }
 const FIXTURE_ALIASES = new Map();
@@ -103,6 +109,52 @@ app.post("/api/lighting-plan",async(req,res)=>{try{
  }
  res.json(plan);
 }catch(error){console.error(error);res.status(500).json({error:"Lighting plan generation failed."});}});
+app.post("/api/scene-planner/plan",async(req,res)=>{
+  try {
+    const result=await generateScenePlannerPlan(openai,req.body||{},FIXTURE_LIBRARY);
+    res.json(result);
+  } catch(error) {
+    const status=error?.status||500;
+    if(status>=500)console.error("Scene Planner failure:",error);
+    res.status(status).json({ok:false,error:status>=500?"Scene Planner generation failed.":error.message});
+  }
+});
+app.post("/api/scene-planner/storyboard",async(req,res)=>{
+  try {
+    const body=req.body||{};
+    const images=Array.isArray(body.frames)?body.frames.slice(0,3):[];
+    if(!images.length||images.some(f=>!f||typeof f.image!=="string"))
+      return res.status(400).json({ok:false,error:"Provide 1-3 time-stamped video keyframes."});
+    const plan=body.plan;
+    if(!plan||typeof plan!=="object"||!Array.isArray(plan.lights))
+      return res.status(400).json({ok:false,error:"A valid lighting plan is required."});
+    const result=[];
+    for(const frame of images) {
+      const preview=await generateVisualPreview(openai,{
+        scenePhoto:frame.image,
+        plan:{
+          summary:String(plan.summary||"").slice(0,900),
+          key:plan.lights.filter(l=>l.role==="key").map(l=>l.fixtureName+": "+l.why).join("; "),
+          fill:plan.lights.filter(l=>l.role==="fill").map(l=>l.fixtureName+": "+l.why).join("; "),
+          backlight:plan.lights.filter(l=>l.role==="backlight").map(l=>l.fixtureName+": "+l.why).join("; "),
+          color_notes:"Desired look: "+String(plan.look||"").slice(0,80)+
+            ". Keep the same apparent light placement, color and direction across all images."
+        },
+        description:String(body.description||"").slice(0,1800)+
+          ". This is video keyframe "+String(frame.timeSec||0)+" seconds; preserve subject position and identity exactly.",
+        equipment:plan.mode==="own"?plan.lights.filter(l=>l.available).map(l=>({name:l.fixtureName,qty:1})):[],
+        language:body.language==="en"?"en":"sr"
+      });
+      result.push({timeSec:Math.max(0,Math.min(120,Number(frame.timeSec)||0)),image:preview.image});
+    }
+    res.json({ok:true,frames:result,renderType:"independent-ai-keyframes",
+      limitations:["AI edits are independent still frames, not temporally stable full-video relighting.",
+      "Before/after keyframes may have flicker or continuity changes. No frame interpolation is claimed."]});
+  }catch(error){
+    console.error("Scene Planner storyboard generation failed:",error);
+    res.status(500).json({ok:false,error:"AI storyboard could not be generated."});
+  }
+});
 app.get("/api/visual-preview",(req,res)=>res.json({ok:true,model:VISUAL_PREVIEW_MODEL,quality:VISUAL_PREVIEW_QUALITY}));
 app.post("/api/visual-preview",async(req,res)=>{try{
  const{scenePhoto="",plan={},description="",equipment=[],language="sr"}=req.body||{};

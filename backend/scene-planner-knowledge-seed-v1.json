@@ -1,0 +1,2354 @@
+{
+  "schema_version": "lightingai-knowledge-seed/1.0.0",
+  "coverage_status": "PILOT_CURATED_CARDS_NOT_FULL_BOOK_INGESTION",
+  "generated_date": "2026-10-10",
+  "license_policy": {
+    "raw_books_included": false,
+    "book_figures_included": false,
+    "long_book_quotes_included": false,
+    "allowed_content": "original Serbian paraphrases of professional concepts and book/page citations; subject to legal review for commercial packaging",
+    "note": "PDF ownership or reader subscription is not proof of redistribution or commercial ingestion rights"
+  },
+  "sources": [
+    {
+      "source_id": "landau-2014",
+      "title": "Lighting for Cinematography: A Practical Guide to the Art and Craft of Lighting for the Moving Image",
+      "author": "David Landau",
+      "year": 2014,
+      "edition": "2014 electronic edition",
+      "publisher": "Bloomsbury Academic",
+      "printed_offset": 10,
+      "physical_pdf_pages": 286,
+      "original_sha256": "7b5005a63525dc17dba2886849661738a7a7d392e222203cf3a8caeb0d554d52",
+      "original_in_repository": false,
+      "rights_status": "NO_DISTRIBUTION_LICENSE_PROVIDED",
+      "usage": "Private user-supplied reference; ship only independently authored short knowledge cards and citations, not PDF pages/figures/text"
+    },
+    {
+      "source_id": "brown-2019",
+      "title": "Motion Picture and Video Lighting: For Cinematographers, Gaffers & Lighting Technicians",
+      "author": "Blain Brown",
+      "year": 2019,
+      "edition": "3rd edition",
+      "publisher": "Routledge / Focal Press",
+      "printed_offset": 1,
+      "physical_pdf_pages": 369,
+      "original_sha256": "4778d397a78c87b733f20c2fbe041f5ad8e5e31be7a9d356b0739aa3f540fb96",
+      "original_in_repository": false,
+      "rights_status": "NO_DISTRIBUTION_LICENSE_PROVIDED",
+      "usage": "Private user-supplied reference; ship only independently authored short knowledge cards and citations, not PDF pages/figures/text"
+    },
+    {
+      "source_id": "popovic-tv",
+      "title": "Svjetlo u TV studiju / Primijenjena rasvjeta",
+      "author": "Boris Popovic (priredio)",
+      "year": null,
+      "edition": null,
+      "publisher": null,
+      "printed_offset": 0,
+      "physical_pdf_pages": 151,
+      "original_sha256": "a0afabb630af7e9ec361635157f270065f8ced8470ea71d1d850afa7a8e96994",
+      "original_in_repository": false,
+      "rights_status": "NO_DISTRIBUTION_LICENSE_PROVIDED",
+      "usage": "Private user-supplied reference; ship only independently authored short knowledge cards and citations, not PDF pages/figures/text"
+    }
+  ],
+  "chapter_index": [
+    {
+      "source_id": "landau-2014",
+      "heading": "Introduction",
+      "printed_page_start": 1,
+      "printed_page_end": 2,
+      "pdf_page_start": 11,
+      "pdf_page_end": 12,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "The Magic of Light",
+      "printed_page_start": 3,
+      "printed_page_end": 16,
+      "pdf_page_start": 13,
+      "pdf_page_end": 26,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Who and What Makes Light?",
+      "printed_page_start": 17,
+      "printed_page_end": 38,
+      "pdf_page_start": 27,
+      "pdf_page_end": 48,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Lighting the Subject",
+      "printed_page_start": 39,
+      "printed_page_end": 54,
+      "pdf_page_start": 49,
+      "pdf_page_end": 64,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Lighting the Shot, Not Just the Subject",
+      "printed_page_start": 55,
+      "printed_page_end": 70,
+      "pdf_page_start": 65,
+      "pdf_page_end": 80,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Common Practical Lighting Setups",
+      "printed_page_start": 71,
+      "printed_page_end": 86,
+      "pdf_page_start": 81,
+      "pdf_page_end": 96,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Lighting for Movement",
+      "printed_page_start": 87,
+      "printed_page_end": 108,
+      "pdf_page_start": 97,
+      "pdf_page_end": 118,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Dealing with Daylight 1",
+      "printed_page_start": 109,
+      "printed_page_end": 124,
+      "pdf_page_start": 119,
+      "pdf_page_end": 134,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Dealing with Daylight 2",
+      "printed_page_start": 125,
+      "printed_page_end": 146,
+      "pdf_page_start": 135,
+      "pdf_page_end": 156,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Night Light",
+      "printed_page_start": 147,
+      "printed_page_end": 166,
+      "pdf_page_start": 157,
+      "pdf_page_end": 176,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Working with Color",
+      "printed_page_start": 167,
+      "printed_page_end": 180,
+      "pdf_page_start": 177,
+      "pdf_page_end": 190,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Light the Scene, Not Just the Shot",
+      "printed_page_start": 181,
+      "printed_page_end": 196,
+      "pdf_page_start": 191,
+      "pdf_page_end": 206,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Special Lighting Considerations and Effects",
+      "printed_page_start": 197,
+      "printed_page_end": 214,
+      "pdf_page_start": 207,
+      "pdf_page_end": 224,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Nonfiction Lighting",
+      "printed_page_start": 215,
+      "printed_page_end": 232,
+      "pdf_page_start": 225,
+      "pdf_page_end": 242,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Inspiration and Lighting Looks",
+      "printed_page_start": 233,
+      "printed_page_end": 248,
+      "pdf_page_start": 243,
+      "pdf_page_end": 258,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "landau-2014",
+      "heading": "Advice From the Field",
+      "printed_page_start": 249,
+      "printed_page_end": 260,
+      "pdf_page_start": 259,
+      "pdf_page_end": 270,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "History of Lighting",
+      "printed_page_start": 13,
+      "printed_page_end": 24,
+      "pdf_page_start": 14,
+      "pdf_page_end": 25,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Lighting Sources",
+      "printed_page_start": 25,
+      "printed_page_end": 56,
+      "pdf_page_start": 26,
+      "pdf_page_end": 57,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Lighting Basics",
+      "printed_page_start": 57,
+      "printed_page_end": 90,
+      "pdf_page_start": 58,
+      "pdf_page_end": 91,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Controlling Light",
+      "printed_page_start": 91,
+      "printed_page_end": 110,
+      "pdf_page_start": 92,
+      "pdf_page_end": 111,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Scene Lighting",
+      "printed_page_start": 111,
+      "printed_page_end": 142,
+      "pdf_page_start": 112,
+      "pdf_page_end": 143,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Light as Story",
+      "printed_page_start": 143,
+      "printed_page_end": 172,
+      "pdf_page_start": 144,
+      "pdf_page_end": 173,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Color",
+      "printed_page_start": 173,
+      "printed_page_end": 194,
+      "pdf_page_start": 174,
+      "pdf_page_end": 195,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Exposure",
+      "printed_page_start": 195,
+      "printed_page_end": 220,
+      "pdf_page_start": 196,
+      "pdf_page_end": 221,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Electricity & Distro",
+      "printed_page_start": 221,
+      "printed_page_end": 252,
+      "pdf_page_start": 222,
+      "pdf_page_end": 253,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Gripology",
+      "printed_page_start": 253,
+      "printed_page_end": 278,
+      "pdf_page_start": 254,
+      "pdf_page_end": 279,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Set Operations",
+      "printed_page_start": 279,
+      "printed_page_end": 298,
+      "pdf_page_start": 280,
+      "pdf_page_end": 299,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Technical Issues",
+      "printed_page_start": 299,
+      "printed_page_end": 324,
+      "pdf_page_start": 300,
+      "pdf_page_end": 325,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "brown-2019",
+      "heading": "Appendix: equipment orders, diffusion and lamps",
+      "printed_page_start": 325,
+      "printed_page_end": 349,
+      "pdf_page_start": 326,
+      "pdf_page_end": 350,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "popovic-tv",
+      "heading": "Televizijska rasvjeta",
+      "printed_page_start": 5,
+      "printed_page_end": 10,
+      "pdf_page_start": 5,
+      "pdf_page_end": 10,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "popovic-tv",
+      "heading": "Osnovni pojmovi scenske rasvjete",
+      "printed_page_start": 11,
+      "printed_page_end": 38,
+      "pdf_page_start": 11,
+      "pdf_page_end": 38,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "popovic-tv",
+      "heading": "Tehnika TV rasvjete",
+      "printed_page_start": 39,
+      "printed_page_end": 90,
+      "pdf_page_start": 39,
+      "pdf_page_end": 90,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "popovic-tv",
+      "heading": "Dramske emisije",
+      "printed_page_start": 91,
+      "printed_page_end": 110,
+      "pdf_page_start": 91,
+      "pdf_page_end": 110,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "popovic-tv",
+      "heading": "Studijske emisije",
+      "printed_page_start": 111,
+      "printed_page_end": 126,
+      "pdf_page_start": 111,
+      "pdf_page_end": 126,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    },
+    {
+      "source_id": "popovic-tv",
+      "heading": "Glazbene emisije",
+      "printed_page_start": 127,
+      "printed_page_end": 148,
+      "pdf_page_start": 127,
+      "pdf_page_end": 148,
+      "status": "TOC_INDEX_ONLY_NOT_FULLY_CURATED"
+    }
+  ],
+  "cards": [
+    {
+      "id": "NAR-001",
+      "title": "Prvo prica i emocija, zatim reflektori",
+      "domain": "story",
+      "scene_types": [
+        "narrative",
+        "documentary",
+        "studio"
+      ],
+      "principle": "Svetlo je deo vizuelnog pripovedanja, a ne samo tehnicka ekspozicija.",
+      "application": "Pre predloga zabelezi emociju, gledaocevu paznju, zeljen stepen realizma i vizuelni stil; tek zatim poredjaj svetlosne funkcije.",
+      "validation": "Proveri sa direktorom fotografije da li prikaz podrzava nameru scene.",
+      "limitations": "Nema univerzalno ispravnog izgleda; kreativna ocena je ljudska.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 16,
+          "printed_page": 6
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 145,
+          "printed_page": 144
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 97,
+          "printed_page": 97
+        }
+      ],
+      "keywords": "emocija atmosfera prica dramaturgija vizuelni stil",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "NAR-002",
+      "title": "Motivisano svetlo verovatnog izvora",
+      "domain": "story",
+      "scene_types": [
+        "narrative",
+        "interior",
+        "night",
+        "day"
+      ],
+      "principle": "Uverljiv izgled povezuje smer i kvalitet osvetljenja sa prozorom, lampom, vatrom ili drugim logicnim izvorom.",
+      "application": "Popisi vidljive i pretpostavljene izvore; oceni da li key i senke prate njihovu poziciju, boju i karakter.",
+      "validation": "Uporedi svetlosne pravce sa kadrom i rasporedom izvora; pitaj DoP kada je stilizacija namerna.",
+      "limitations": "U reklamama, koncertima i izrazito stilizovanoj drami motivacija moze biti namerno slobodnija.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 15,
+          "printed_page": 5
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 51,
+          "printed_page": 41
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 94,
+          "printed_page": 94
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 77,
+          "printed_page": 76
+        }
+      ],
+      "keywords": "motivisano prozor lampa practicals prirodno realisticno",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "NAR-003",
+      "title": "Upravljanje paznjom gledalaca",
+      "domain": "composition",
+      "scene_types": [
+        "narrative",
+        "product",
+        "interview"
+      ],
+      "principle": "Odnosi svetlih i tamnih oblasti mogu privuci pogled na bitan lik ili predmet.",
+      "application": "Identifikuj glavni predmet paznje, pozadinske distrakcije i potrebnu hijerarhiju svetline.",
+      "validation": "U preglednoj slici proveri da li nepotrebno svetla pozadina preotima paznju.",
+      "limitations": "Jace osvetljenje nije jedini nacina usmeravanja paznje; kadar i boje su takodje bitni.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 14,
+          "printed_page": 4
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 15,
+          "printed_page": 5
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 145,
+          "printed_page": 144
+        }
+      ],
+      "keywords": "paznja gledalac najsvetlije istaknuti subjekat",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "NAR-004",
+      "title": "Vizuelna dubina kroz svetlo i senku",
+      "domain": "composition",
+      "scene_types": [
+        "narrative",
+        "studio",
+        "portrait"
+      ],
+      "principle": "Svetlo pomaze da dvodimenzionalni kadar dobije osecaj volumena i odvojenih planova.",
+      "application": "Razmotri senke, gradaciju pozadine, konturu lica i razdvajanje subjekta od okoline.",
+      "validation": "Proveri da rezultat nije ravna slika osim ako je takav stil zahtevan.",
+      "limitations": "Iluzija dubine zavisi i od geometrije kadra, objektiva, dekora i pokreta.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 15,
+          "printed_page": 5
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 13,
+          "printed_page": 13
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 61,
+          "printed_page": 60
+        }
+      ],
+      "keywords": "dubina modeliranje volumen planovi",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "PHY-001",
+      "title": "Cetiri osnovna parametra filmskog svetla",
+      "domain": "light_quality",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Svetlosni izgled se kontrolise preko intenziteta, smera, teksture i boje.",
+      "application": "Za svako predlozeno svetlo specificiraj cetiri parametra odvojeno, uz svrhu izvora.",
+      "validation": "Zahtevaj ljudsku proveru sa stvarnim reflektorima i kamerom.",
+      "limitations": "Iz piksel vrednosti se ne moze direktno izracunati fizicka jacina izvora.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 19,
+          "printed_page": 9
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 11,
+          "printed_page": 11
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 59,
+          "printed_page": 58
+        }
+      ],
+      "keywords": "intenzitet boja smer ugao tekstura snaga",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "PHY-002",
+      "title": "Ugao izvora u odnosu na kameru",
+      "domain": "light_quality",
+      "scene_types": [
+        "portrait",
+        "narrative",
+        "interview"
+      ],
+      "principle": "Vidljiv oblik senki menja se sa horizontalnim i vertikalnim uglom svetla prema kameri.",
+      "application": "Plan smera prikazi prema osi kamera-subjekat, ne samo prema koordinatama sobe.",
+      "validation": "Pogledaj test-kadar sa planiranog polozaja kamere.",
+      "limitations": "Broj stepeni nije univerzalni recept za svako lice.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 13,
+          "printed_page": 13
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 14,
+          "printed_page": 14
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 20,
+          "printed_page": 10
+        }
+      ],
+      "keywords": "ugao horizontalni vertikalni senka lice kamera",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "PHY-003",
+      "title": "Velicina izvora i meko svetlo",
+      "domain": "light_quality",
+      "scene_types": [
+        "portrait",
+        "interior",
+        "studio"
+      ],
+      "principle": "Prividna velicina svetle povrsine iz perspektive subjekta oblikuje prelaz u polusenku.",
+      "application": "Za mekse senke predlozi vecu povrsinu difuzije ili bounce blize subjektu, uz proveru dometa i rasipanja.",
+      "validation": "Uporedi ivicu senke i svetlosni spill na probi.",
+      "limitations": "Meko svetlo nije sinonim za mali kontrast: negativ fill moze ocuvati visok odnos.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 19,
+          "printed_page": 19
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 20,
+          "printed_page": 20
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 93,
+          "printed_page": 92
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 20,
+          "printed_page": 10
+        }
+      ],
+      "keywords": "soft hard difuzija penumbra meko tvrdo source size",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "PHY-004",
+      "title": "Usmereno meko svetlo - flamanski prozor",
+      "domain": "light_quality",
+      "scene_types": [
+        "interior",
+        "portrait",
+        "narrative"
+      ],
+      "principle": "Velika difuzna povrsina moze biti meka a ipak zadrzati uverljiv smer i bogate senke.",
+      "application": "Postavi ogranicenu difuznu povrsinu u smeru motivisanog prozora i kontrolisi povratno svetlo.",
+      "validation": "Proveri smer nosa i senke, odsjaje, spill i realizam izvora.",
+      "limitations": "Naziv opisuje izgled, ne preciznu fotometrijsku specifikaciju.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 22,
+          "printed_page": 22
+        }
+      ],
+      "keywords": "flamansko usmereno meko prozor vermeer",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "PHY-005",
+      "title": "Pad osvetljenosti sa rastojanjem",
+      "domain": "photometry",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Priblizno tackasti izvor u slobodnom prostoru ima pad osvetljenosti sa kvadratom udaljenosti.",
+      "application": "Prilikom pomeranja reflektora proceni posledice po intenzitet i ujednacenost osvetljenja glumaca.",
+      "validation": "Stvarne vrednosti racunaj iz fotometrijskih podataka, ugla snopa i udaljenosti.",
+      "limitations": "Za velike prostorne izvore, bounce, sociva i refleksije jednostavna tackasta aproksimacija moze biti netacna.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 16,
+          "printed_page": 6
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 17,
+          "printed_page": 7
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 49,
+          "printed_page": 49
+        }
+      ],
+      "keywords": "udaljenost falloff inverse square lux ravnomernost",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "PHY-006",
+      "title": "Odbijanje i nekontrolisani spill",
+      "domain": "light_quality",
+      "scene_types": [
+        "interior",
+        "day",
+        "night"
+      ],
+      "principle": "Svetlo se odbija od poda, zida, plafona i scenografije i moze izmeniti boju, kontrast i smer.",
+      "application": "Racunaj sa refleksijama i po potrebi koristi bounce povrsine ili tamne zastave.",
+      "validation": "Proveri u setu da li boja okoline utice na kozu i rekvizitu.",
+      "limitations": "Fizicki transport svetla kroz prostor nije poznat iz same fotografije bez dodatnih podataka.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 18,
+          "printed_page": 8
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 98,
+          "printed_page": 97
+        }
+      ],
+      "keywords": "odbijanje bounce spill pod plafon zeleni zid",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "PHY-007",
+      "title": "Negative fill i kontrola odsjaja",
+      "domain": "light_control",
+      "scene_types": [
+        "portrait",
+        "interior",
+        "exterior"
+      ],
+      "principle": "Tamni zastori smanjuju nezeljene refleksije i daju vecu kontrolu nad dubinom senke.",
+      "application": "U scenama sa mnogo okolnog fill-a razmotri crne zastave, floppy ili solid umesto dodatnog izvora.",
+      "validation": "Pogledaj da li kontrast ostaje unutar planiranog opsega kamere.",
+      "limitations": "Stativ, opterecenje, vetar i bezbednost grip postavke mora potvrditi profesionalac.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 18,
+          "printed_page": 8
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 98,
+          "printed_page": 97
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 21,
+          "printed_page": 21
+        }
+      ],
+      "keywords": "negative fill crna zastava senka kontrast",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "PHY-008",
+      "title": "Cut, flag i eggcrate nisu zamenljivi",
+      "domain": "light_control",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Tvrdo svetlo lakse se precizno sece, dok veliko mekano svetlo zahteva dodatnu kontrolu rasipanja.",
+      "application": "Biraj barn doors, solid, net, grid ili eggcrate prema zeljenom obliku snopa i spill-u.",
+      "validation": "Proveri trag svetla na pozadini i opasnost ulaska opreme u kadar.",
+      "limitations": "Izbor nosaca mora ostati vezan za specifikaciju i odobren rigging.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 20,
+          "printed_page": 20
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 21,
+          "printed_page": 21
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 97,
+          "printed_page": 96
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 98,
+          "printed_page": 97
+        }
+      ],
+      "keywords": "flag net barndoor grid eggcrate c-stand rasipanje",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SET-001",
+      "title": "Odvojeni slojevi osvetljenja kadra",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "narrative",
+        "night",
+        "interior",
+        "exterior"
+      ],
+      "principle": "Pored glumca moraju se osmisliti prednji, srednji i zadnji plan da bi kadar imao zeljenu citljivost.",
+      "application": "Planiraj svetlo subjekta, background akcenat i dubinu nezavisno, zatim povezi u jednu svetlosnu logiku.",
+      "validation": "Proveri pozadinu u wide shot-u, ne samo close-up.",
+      "limitations": "Ne dodavati svetla mehanicki ako tamna pozadina ima svesnu narativnu svrhu.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 65,
+          "printed_page": 55
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 159,
+          "printed_page": 149
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 61,
+          "printed_page": 60
+        }
+      ],
+      "keywords": "three planes foreground midground background pozadina kadar",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SET-002",
+      "title": "Three-point je alat, ne obavezna formula",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "portrait",
+        "narrative",
+        "studio"
+      ],
+      "principle": "Key, fill i backlight objasnjavaju funkcije, ali stvarne filmske postavke mogu koristiti manje ili vise izvora.",
+      "application": "Razmotri koji od izvora zaista doprinosi prici, a koji bi izgledao neubedljivo.",
+      "validation": "Proveri da osnovna shema ne izgleda studijski kada se trazi naturalizam.",
+      "limitations": "Sema nije univerzalno optimum za sve scene.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 51,
+          "printed_page": 41
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 52,
+          "printed_page": 42
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 31,
+          "printed_page": 31
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 34,
+          "printed_page": 34
+        }
+      ],
+      "keywords": "three point key fill backlight trojka",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SET-003",
+      "title": "Cross-key za razgovor dvoje ljudi",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "dialogue",
+        "interior",
+        "studio",
+        "narrative"
+      ],
+      "principle": "Ukrseni glavni izvori mogu efikasno osvetliti suprotno okrenute ljude uz prihvatljiv kontinuitet.",
+      "application": "Predvidi da izvor koji je key jednog lika moze dati kontra ili rim drugom; dodatni fill po potrebi.",
+      "validation": "Proveri blocking, medjusobno zaklanjanje izvora i dva smera kamere.",
+      "limitations": "Svaki dijalog ne zahteva ovu postavku; odluku uskladiti sa stilom i lokacijom.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 82,
+          "printed_page": 72
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 83,
+          "printed_page": 73
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 38,
+          "printed_page": 38
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 106,
+          "printed_page": 106
+        }
+      ],
+      "keywords": "ukrsteno svetlo cross key razgovor dvoje glumaca",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SET-004",
+      "title": "Chicken-coop svetlo za stolom",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "group",
+        "interior",
+        "dining"
+      ],
+      "principle": "Siroko mekano plafonsko svetlo moze pokriti vise ljudi oko stola i ostaviti prostor kamerama.",
+      "application": "Polozaj overhead difuzije i dodatni bounce prilagodi visinama lica, rekvizitima i mestu kamere.",
+      "validation": "Pregledaj oci, senke ispod brade i eventualno zaklanjanje pri ustajanju.",
+      "limitations": "Overhead rasveta trazi profesionalno odobreno osiguranje i nosivost konstrukcije.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 87,
+          "printed_page": 77
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 88,
+          "printed_page": 78
+        }
+      ],
+      "keywords": "chicken coop overhead trpezarija sto grupa",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SET-005",
+      "title": "Dopunsko svetlo kontrolise kontrast",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "portrait",
+        "studio",
+        "interview"
+      ],
+      "principle": "Fill sluzi prvenstveno za podesavanje dubine senke; previse izrazen drugi smer moze proizvesti novu vidljivu senku.",
+      "application": "Kada je cilj cisto lice koristi mekano fill svetlo odgovarajuce slabijeg intenziteta, blizu ose kamere po potrebi.",
+      "validation": "Proveri vise senki ispod nosa i brade.",
+      "limitations": "U dramaticnim kadrovima izostanak fill-a moze biti nameran.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 32,
+          "printed_page": 32
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 38,
+          "printed_page": 38
+        }
+      ],
+      "keywords": "fill dopunsko svetlo senke portret kontrast",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SET-006",
+      "title": "Kontura i odvajanje od pozadine",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "portrait",
+        "narrative",
+        "night",
+        "studio"
+      ],
+      "principle": "Backlight, rim ili kicker pomazu da se subjekt izdvoji od pozadine, ali mogu i izgledati artificijelno.",
+      "application": "Oceni da li postoje motivisani razlozi za konturu; uporedi sa odvajanjima koja daje pozadinsko svetlo.",
+      "validation": "Proveri preeksponirane ivice i konzistentnost izvora.",
+      "limitations": "Kontra nije obavezna; naturalisticki stil moze je izbeci.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 16,
+          "printed_page": 16
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 32,
+          "printed_page": 32
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 34,
+          "printed_page": 34
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 71,
+          "printed_page": 70
+        }
+      ],
+      "keywords": "rim kicker edge kontra obris subjekta",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SET-007",
+      "title": "Razlicit kadar zahteva razlicitu proveru",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "narrative",
+        "multicam"
+      ],
+      "principle": "Svetlo koje dobro izgleda u totalu nije automatski ispravno u close-up-u ni iz drugog ugla.",
+      "application": "Pri promeni plana proveri senke, background, key/fill odnos i kontinuitet narativnog izvora.",
+      "validation": "Uporedi sve zadrzane kadrove iste scene.",
+      "limitations": "Kontinuitet je esteticka i urednicka odluka, ne samo jednaka luma.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 191,
+          "printed_page": 181
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 35,
+          "printed_page": 35
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 36,
+          "printed_page": 36
+        }
+      ],
+      "keywords": "total krupan plan promena ugla kontinuitet",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "MOV-001",
+      "title": "Osvetli putanju, ne jednu tacku",
+      "domain": "movement",
+      "scene_types": [
+        "narrative",
+        "tracking",
+        "interior"
+      ],
+      "principle": "Pokret glumca zahteva proveru osvetljenja na pocetnoj, prelaznim i zavrsnoj poziciji.",
+      "application": "Za svaki blocking segment opisi motivisane svetlosne zone i promene key/fill odnosa.",
+      "validation": "Pregledaj prolaske kroz vrata i senke koje se ukrstaju.",
+      "limitations": "Pozicija glumca iz YUV merenja sama po sebi je UNKNOWN.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 97,
+          "printed_page": 87
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 98,
+          "printed_page": 88
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 105,
+          "printed_page": 95
+        }
+      ],
+      "keywords": "pokret glumac hoda hodnik blocking putanja",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "MOV-002",
+      "title": "Ravnopravnost pokreta kamere i rasvete",
+      "domain": "movement",
+      "scene_types": [
+        "tracking",
+        "multicam",
+        "narrative"
+      ],
+      "principle": "Kamera i osvetljenje moraju se planirati zajedno kada se menjaju uglovi snimanja.",
+      "application": "U scenarijima sa kamerom u pokretu proveri ulazak stativa i reflektora u kadar i menjanje vidljivih senki.",
+      "validation": "Pripremi plan po kamernim pozicijama i prolazima.",
+      "limitations": "Ne pretpostavljaj kalibrisani tracking ili 3D geometriju iz prostih metrika piksela.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 97,
+          "printed_page": 87
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 119,
+          "printed_page": 119
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 117,
+          "printed_page": 116
+        }
+      ],
+      "keywords": "camera move kran slider pan tracking",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "DAY-001",
+      "title": "Obilazak lokacije sa prozorima",
+      "domain": "planning",
+      "scene_types": [
+        "day",
+        "interior"
+      ],
+      "principle": "Smer prozora, vreme upada direktnog sunca, dimenzije i pogled napolje kljucni su pre rasvete.",
+      "application": "Belezi orijentaciju prozora, doba snimanja, dostupne pozicije i eventualne promene svetla tokom dana.",
+      "validation": "Uporedi plan sa stvarnim stanjem lokacije pre snimanja.",
+      "limitations": "Proracun sunca bez lokacije i vremena nije pouzdan.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 138,
+          "printed_page": 128
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 114,
+          "printed_page": 113
+        }
+      ],
+      "keywords": "window scout prozor sunce lokacija doba dana",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "DAY-002",
+      "title": "Kontrola jacine prozora",
+      "domain": "planning",
+      "scene_types": [
+        "day",
+        "interior"
+      ],
+      "principle": "Presvetao pogled napolje moze zahtevati ND na staklu, vise svetla unutra ili promenu ekspozicije.",
+      "application": "Izaberi kompromis koji cuva trazenu hijerarhiju izmedju unutrasnjosti i eksterijera.",
+      "validation": "Meri razliku eksterijera i enterijera, proveri clipping i refleksije.",
+      "limitations": "Ne postavljati ND vrednosti kao tacne bez poznatog filtera i merenja.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 141,
+          "printed_page": 131
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 100,
+          "printed_page": 99
+        }
+      ],
+      "keywords": "ND prozor ekspozicija enterijer panorama clipping",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "DAY-003",
+      "title": "Sunce kao motivisani rim ili kontra",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "day",
+        "exterior"
+      ],
+      "principle": "Sunce moze dati prirodnu konturu, dok senku dopunjuje bounce ili dodatno svetlo.",
+      "application": "Kadar i blocking uskladi sa trenutnim polozajem sunca; planiraj promenu tokom dana.",
+      "validation": "Proveri pomeranje senki i konzistentnost izmedju kadrova.",
+      "limitations": "Vremenska prognoza, oblak i precizan azimut nisu potvrdeni iz same knjige.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 119,
+          "printed_page": 109
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 121,
+          "printed_page": 111
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 86,
+          "printed_page": 85
+        }
+      ],
+      "keywords": "dnevni eksterijer sunce kontra fill reflektor",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "NIGHT-001",
+      "title": "Nocni kadar ne mora biti necitljiv",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "night",
+        "exterior",
+        "interior"
+      ],
+      "principle": "Uverljiva noc cesto cuva selektivne informacije o subjektu i pozadini umesto potpunog crnila.",
+      "application": "Oceni sta publika treba da procita, sta da ostane u mraku i koje izvore svetla scena opravdava.",
+      "validation": "Uporedi postojanje detalja u tamnim oblastima na monitoru i waveform-u.",
+      "limitations": "Izrazito tamna slika moze biti svesna odluka, ali ne treba automatski gubiti kljucnu radnju.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 157,
+          "printed_page": 147
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 159,
+          "printed_page": 149
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 146,
+          "printed_page": 145
+        }
+      ],
+      "keywords": "noc mrak night exposure mesecina",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "NIGHT-002",
+      "title": "Mesecina je filmska konvencija",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "night",
+        "exterior"
+      ],
+      "principle": "Mesecevo svetlo u igranom filmu je stilizovana interpretacija, ne fizicka tvrdnja o jacini i boji.",
+      "application": "Predlozi 1-2 opravdane varijante konture ili sirokog hladnijeg svetla uz jasno izlozen kreativni izbor.",
+      "validation": "Pitaj DoP koliko plavog tona zeli; proveri zadrzavanje tonova koze.",
+      "limitations": "Jedan univerzalan Kelvin ili gel za sve noci ne postoji.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 159,
+          "printed_page": 149
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 324,
+          "printed_page": 323
+        }
+      ],
+      "keywords": "moonlight mesecina plavo hladno nocni eksterijer",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "NIGHT-003",
+      "title": "Practical kao motivacija nocnog enterijera",
+      "domain": "lighting_setup",
+      "scene_types": [
+        "night",
+        "interior"
+      ],
+      "principle": "Lampa, televizor, svece ili svetlo kroz vrata mogu motivisati filmske izvore i osvetljenje lica.",
+      "application": "Sadruzi practical sa skrivenim filmskim izvorom ili bounce-om, uz postovanje pravca izvora.",
+      "validation": "Proveri kontinuitet sa ukljucivanjem practical-a u kadru.",
+      "limitations": "Elektricna bezbednost practical-a zahteva proveru, ne samo vizuelnu procenu.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 51,
+          "printed_page": 41
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 162,
+          "printed_page": 152
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 128,
+          "printed_page": 127
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 98,
+          "printed_page": 98
+        }
+      ],
+      "keywords": "praktikal stona lampa nocni enterijer",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "COL-001",
+      "title": "Kontrolisana hladno-topla podela",
+      "domain": "color",
+      "scene_types": [
+        "interior",
+        "narrative",
+        "night",
+        "day"
+      ],
+      "principle": "Razlicite boje svetla mogu da odvoje prostorne planove i prenesu emocionalnu informaciju.",
+      "application": "Odredi dominantnu i pomocnu boju na osnovu price, prozora i practical-a, a ne po fiksnom filmskom preset-u.",
+      "validation": "Proveri lice, garderobu i fotografsku konzistentnost izmedju kadrova.",
+      "limitations": "Mesanje boja je kreativna tehnika, ne greska koju uvek treba automatski neutralisati.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 27,
+          "printed_page": 27
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 29,
+          "printed_page": 29
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 178,
+          "printed_page": 168
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 176,
+          "printed_page": 175
+        }
+      ],
+      "keywords": "toplo hladno mixed warm cool dual color",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "COL-002",
+      "title": "Gel menja spektar i intenzitet",
+      "domain": "color",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Filtar ne stvara dodatnu energiju: menja prolaz spektra i obicno smanjuje izlaz svetla.",
+      "application": "Prilikom predloga gela navedi da fotometrija mora biti korigovana stvarnim podacima za izabrani filter.",
+      "validation": "Izmeri svetlo nakon postavljanja filtera.",
+      "limitations": "Bez proizvođacke transmisije nemoj izmisljati lux ili stop gubitke.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 19,
+          "printed_page": 9
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 181,
+          "printed_page": 180
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 30,
+          "printed_page": 30
+        }
+      ],
+      "keywords": "gel filter CTO CTB gubitak boja",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "COL-003",
+      "title": "White balance je kamera-plus-scena odluka",
+      "domain": "color",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Kamera i izvori svetla daju kombinovani izgled; balans bele ne treba posmatrati nezavisno od osvetljenja.",
+      "application": "Zabelezi referentni WB kamere, dominantne i umetnicki razlicite izvore, kao i zeljeni kolor izgled.",
+      "validation": "Proveri kartu boja i WB metapodatke ako postoje.",
+      "limitations": "Postojeca 3B.2V YUV analiza NE meri fizicku temperaturu boje niti automatski zna WB.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 22,
+          "printed_page": 12
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 23,
+          "printed_page": 13
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 45,
+          "printed_page": 45
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 175,
+          "printed_page": 174
+        }
+      ],
+      "keywords": "kelvin white balance balans bele temperatura boje",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "COL-004",
+      "title": "Spektralni kvalitet razlicitih LED izvora",
+      "domain": "color",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Dva izvora sa istom navedenom temperaturom boje mogu razlicito reprodukovati boju koze i rekvizite.",
+      "application": "Pri izboru LED-a trazi datasheet za spektar, kvalitet boje i relevantni proizvodni rezim.",
+      "validation": "Potvrdi na test-kadru sa kozom i kartom boja.",
+      "limitations": "Opste ocene LED tehnologije iz 2014/2019 nisu dovoljna specifikacija modernih modela.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 21,
+          "printed_page": 11
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 28,
+          "printed_page": 27
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 29,
+          "printed_page": 28
+        }
+      ],
+      "keywords": "LED color spectrum CRI TLCI SSI skin tone koza",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "EXP-001",
+      "title": "Racunanje ekspozicije trazi merenje",
+      "domain": "exposure",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Blenda, ISO i zatvarac su povezani sa osvetljenjem i kamerom, ali se ne mogu pouzdano ocitati iz proizvoljnog YUV kadra.",
+      "application": "Predlozi uslovne ekspozicione opcije uz poznatu kameru, profil i incident/spot merenje.",
+      "validation": "Proveri svetlomer i waveform uz korisnikov dozvoljeni profil kamere.",
+      "limitations": "Brojevi ekspozicije bez kalibracije oznaci PROCENA, a ne MERENJE.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 23,
+          "printed_page": 13
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 24,
+          "printed_page": 14
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 204,
+          "printed_page": 203
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 216,
+          "printed_page": 215
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 44,
+          "printed_page": 44
+        }
+      ],
+      "keywords": "ISO blenda shutter zatvarac t-stop svetlomer ekspozicija",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "EXP-002",
+      "title": "Kontrolisi clipped highlights i senke",
+      "domain": "exposure",
+      "scene_types": [
+        "interior",
+        "night",
+        "day"
+      ],
+      "principle": "Odabir ekspozicije rasporedjuje vidljive detalje izmedju svetlih i tamnih oblasti, a kamera ima ograniceni opseg.",
+      "application": "Prilikom plana proceni prioritete: lice, practical, prozor, svetle kostime i senke.",
+      "validation": "Proveri odgovarajuci waveform, false-color ili zebra prikaz iz konkretnog kamera profila.",
+      "limitations": "Istorijske analogne TV norme i broj blendi iz starih materijala ne prepisuj kao univerzalna moderna HDR ogranicenja.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 212,
+          "printed_page": 211
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 213,
+          "printed_page": 212
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 25,
+          "printed_page": 25
+        }
+      ],
+      "keywords": "clip highlight shadow latitude dynamic range HDR false color",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "EXP-003",
+      "title": "Waveform/false-color pre subjektivne procene monitora",
+      "domain": "exposure",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Kontrolni instrumenti pomazu da se razdvoje monitor, svetlo i podešavanje kamere.",
+      "application": "Predvidi vizuelnu kontrolu sa video-instrumentima uz poznati signalni standard.",
+      "validation": "Proveri signalni opseg, transfer funkciju i postavke monitora.",
+      "limitations": "Ne tumaci nekalibrisanu luma statistiku kao IRE ili fizicku ekspoziciju.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 206,
+          "printed_page": 205
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 211,
+          "printed_page": 210
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 43,
+          "printed_page": 43
+        }
+      ],
+      "keywords": "waveform false color zebras osciloskop monitor",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "EQ-001",
+      "title": "Izbor izvora prema funkciji, ne nominalnim vatima",
+      "domain": "equipment",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Domet, ugao snopa, izvorna povrsina, fotometrija, boja i napajanje bitniji su od samog naziva ili snage u vatima.",
+      "application": "Sporedi konkretne fotometrijske tablice, raspolozive modifikatore, opremu korisnika i uslove scene.",
+      "validation": "Otvrdi sa gafferom stvarni output i raspodelu snopa.",
+      "limitations": "Ne izjednacavaj osvetljenje dva uredjaja samo na osnovu potrosnje u W.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 28,
+          "printed_page": 27
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 27,
+          "printed_page": 26
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 65,
+          "printed_page": 65
+        }
+      ],
+      "keywords": "LED HMI Fresnel photometric fixture lens PAR lamp snaga",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "EQ-002",
+      "title": "Spot i flood menjaju pokrivenost",
+      "domain": "equipment",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Promena sirine svetlosnog snopa menja lokalni intenzitet i povrsinu osvetljavanja.",
+      "application": "Za svaki instrument prikazi predlog spot/flood i podaci o uglu/snazi samo kada su poznati.",
+      "validation": "Proveri pokrivenost zeljenog prostora u light plot-u.",
+      "limitations": "Ne pretpostavljaj identicne karakteristike razlicitih Fresnel/PAR/LED modela.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 66,
+          "printed_page": 66
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 27,
+          "printed_page": 26
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 46,
+          "printed_page": 45
+        }
+      ],
+      "keywords": "spot flood beam angle uski siroki ugao",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "EQ-003",
+      "title": "Poznata oprema pre nove kupovine ili rente",
+      "domain": "equipment",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Dostupna sredstva, vreme, lokacija i struja uslovljavaju realizaciju rasvetnog plana.",
+      "application": "Prvo nadji izvodljiv izbor iz inventara vlasnika; zatim posebno predlozi sta nedostaje.",
+      "validation": "Gaffer potvrđuje kompatibilnost, sigurnost i dostupnost.",
+      "limitations": "Ne tvrdi da korisnik poseduje fixture bez potvrdenog inventara.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 116,
+          "printed_page": 115
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 50,
+          "printed_page": 40
+        }
+      ],
+      "keywords": "moja oprema inventory dostupni reflektori renta",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "EQ-004",
+      "title": "Grips, nosaci i kontrola svetla",
+      "domain": "equipment",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Za izvediv plan potrebno je predvideti stabilizaciju, poziciju zastava, difuzija i reflektujuce povrsine.",
+      "application": "Uz svetlosnu ideju predvidi odgovarajuce modifikatore i tip nosaca.",
+      "validation": "Rigging i teret pregledava osposobljen grip tim.",
+      "limitations": "Nikad ne automatizuj odobrenje nosivosti, elektricnih prikljucaka ili rada na visini.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 259,
+          "printed_page": 258
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 270,
+          "printed_page": 269
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 21,
+          "printed_page": 21
+        }
+      ],
+      "keywords": "grip C stand sandbag floppy diffusion safety",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SAFE-001",
+      "title": "Elektricni plan pre fizicke realizacije",
+      "domain": "safety",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Ukupan teret, grupe potrosaca i kapacitet izvora napajanja moraju biti provereni pre realizacije.",
+      "application": "Sistem prikazuje okvirni inventar opterecenja i upozorenja gafferu, ali ne izdaje dozvolu za prikljucenje.",
+      "validation": "Profesionalac proverava struju, zastitu, uzemljenje, konektore i lokalne propise.",
+      "limitations": "Istorijske vrednosti napona, provodnika i osiguraca iz knjiga nisu zamena za moderne lokalne normative.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 33,
+          "printed_page": 23
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 55,
+          "printed_page": 55
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 236,
+          "printed_page": 235
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 249,
+          "printed_page": 248
+        }
+      ],
+      "keywords": "struja watt amper bezbednost elektricna distribucija kabl",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SAFE-002",
+      "title": "HMI i mokra lokacija",
+      "domain": "safety",
+      "scene_types": [
+        "exterior",
+        "rain",
+        "night"
+      ],
+      "principle": "Vrucina, vlaga i balasti stvaraju bezbednosne rizike pri radu sa pojedinim izvorima.",
+      "application": "Prijavi upozorenje za vodu, vremenske uslove, kapacitete i plan evakuacije; bez autonomnog ukljucivanja.",
+      "validation": "Pitaj osposobljenu ekipu za konkretan procedurni i opremni check.",
+      "limitations": "AI ne sme menjati sigurnosna pravila niti izdavati uputstvo kao certifikovanu proveru.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 38,
+          "printed_page": 37
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 250,
+          "printed_page": 249
+        }
+      ],
+      "keywords": "HMI balast kisa voda bezbednost rigging",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "SAFE-003",
+      "title": "Flicker i usporeno snimanje",
+      "domain": "safety",
+      "scene_types": [
+        "highspeed",
+        "music",
+        "studio"
+      ],
+      "principle": "Vrsta izvora, napajanje, dimmer, fps i vreme ekspozicije mogu uzrokovati flicker vidljiv na kameri.",
+      "application": "Za high-speed i TV scenu trazi frekvenciju napajanja, shutter i fixture/driver specifikacije.",
+      "validation": "Proveri probnim snimanjem pre glavnog kadra.",
+      "limitations": "Nemoj obecavati flicker-free samo zato sto je izvor LED ili HMI.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 303,
+          "printed_page": 302
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 313,
+          "printed_page": 312
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 41,
+          "printed_page": 31
+        }
+      ],
+      "keywords": "treperenje flicker high speed slow motion fps shutter",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "OPS-001",
+      "title": "Izvidjanje i dogovor DoP, gaffer, rezija",
+      "domain": "workflow",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Priprema pocinje razgovorom o scenariju, blokingu, inventaru, lokaciji i resursima.",
+      "application": "Sistemska pitanja: namera reditelja, reference, kretanje, shot list, moguca oprema, vremenski i energetski budzet.",
+      "validation": "Na kraju predlozi tehnicku realizaciju za potvrdu DoP/gaffer tima.",
+      "limitations": "AI je savetnik, ne zamenjuje kreativnu odgovornost ni bezbednosna ovlascenja ekipe.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 28,
+          "printed_page": 18
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 50,
+          "printed_page": 40
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 114,
+          "printed_page": 113
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 281,
+          "printed_page": 280
+        }
+      ],
+      "keywords": "scout DoP gaffer director priprema rad na setu",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "OPS-002",
+      "title": "Blocking/rehearsal pre zavrsnog plana",
+      "domain": "workflow",
+      "scene_types": [
+        "narrative",
+        "multicam",
+        "movement"
+      ],
+      "principle": "Odmeravanje prostora i provera glumackog kretanja prethode finalizaciji rasvete za citavu scenu.",
+      "application": "Predlozi test pozicije, prolaze i korekcije izvora tek nakon poznatog blocking-a.",
+      "validation": "Proveri wide, medium i close-up postavke.",
+      "limitations": "Nepostojanje podataka o blokingu oznaci kao neizvesnost.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 117,
+          "printed_page": 116
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 295,
+          "printed_page": 294
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 97,
+          "printed_page": 87
+        }
+      ],
+      "keywords": "blocking rehearsal probe snimanje glumci",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "OPS-003",
+      "title": "Rezija fotografije ima poslednju rec",
+      "domain": "workflow",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "AI preporuka je predlog koji se menja po kreativnoj nameri direktora fotografije.",
+      "application": "Zabelezi prihvacene i odbijene ideje, reviziju plana i obrazlozenje korekcije.",
+      "validation": "Potvrdi da svaki prikaz i light plot koriste istu konkretnu verziju plana.",
+      "limitations": "Ne mesati AI preferenciju, autorovu napomenu i fizicki meren rezultat.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 28,
+          "printed_page": 18
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 113,
+          "printed_page": 112
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 97,
+          "printed_page": 97
+        }
+      ],
+      "keywords": "promeni svetlo DoP korekcija alternativa revizija",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "TV-001",
+      "title": "Tri kamere zahtevaju zajednicku rasvetu",
+      "domain": "multicam",
+      "scene_types": [
+        "studio",
+        "multicam"
+      ],
+      "principle": "U kontinuiranom multicam radu rasveta mora podrzati vise uglova istovremeno.",
+      "application": "Prikazi pozicije svih kamera i proveri da nijedna ne ostane sa neprihvatljivo dubokim senkama.",
+      "validation": "Uporedi ekspozicioni izgled svake kamere i ujednacenost montaze.",
+      "limitations": "Kompromis u odnosu na pojedinacni filmski kadar je cesto neizbezan.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 35,
+          "printed_page": 35
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 36,
+          "printed_page": 36
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 37,
+          "printed_page": 37
+        }
+      ],
+      "keywords": "vise kamera multicam kontinuitet tv studio",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "TV-002",
+      "title": "Ukrsena OSP za vise glumaca",
+      "domain": "multicam",
+      "scene_types": [
+        "dialogue",
+        "tv_drama",
+        "multicam"
+      ],
+      "principle": "Ukrsena svetla mogu istovremeno oblikovati lica i osigurati konturu vise ljudi uz zajednicku kontrolu fill-a.",
+      "application": "Planiraj sve kamere i moguce rotacije glumaca; izvedi alternativni raspored kada oprema preseca kadar.",
+      "validation": "Uporedi smer senki i prikaz obe strane razgovora.",
+      "limitations": "Ne kopirati bez prilagodjavanja ukupnom blokingu i scenografiji.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 38,
+          "printed_page": 38
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 105,
+          "printed_page": 105
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 106,
+          "printed_page": 106
+        }
+      ],
+      "keywords": "ukrstena osnovna svetlosna pozicija OSP plan kontraplan",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "TV-003",
+      "title": "TV intervju i portret su poseban zanr",
+      "domain": "studio",
+      "scene_types": [
+        "talk_show",
+        "interview",
+        "multicam"
+      ],
+      "principle": "Dugotrajno prikazivanje lica pod vise kamera zahteva kontrolisane senke i stabilan izgled bez gresaka koje se stalno ponavljaju.",
+      "application": "Svaku govorničku poziciju tretiraj kao portretnu zonu; predlozi prostorno kompatibilne izvore.",
+      "validation": "Proveri kameru levo, desno, centralno, odsjaje i podbradne senke.",
+      "limitations": "Naturalizam igranog filma i cisti studijski portret nisu identicne estetske mete.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 113,
+          "printed_page": 113
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 114,
+          "printed_page": 114
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 117,
+          "printed_page": 117
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 118,
+          "printed_page": 118
+        }
+      ],
+      "keywords": "intervju talk show razgovor voditelj studio licno svetlo",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "TV-004",
+      "title": "Glazbeni program koristi vremenski dizajn",
+      "domain": "studio",
+      "scene_types": [
+        "music",
+        "concert",
+        "studio"
+      ],
+      "principle": "Koncertna i glazbena svetlosna dramaturgija razvija se kroz unapred osmisljenje promene scena i boja.",
+      "application": "Umesto staticke sheme ponudi niz cue stanja, kreativnih prelaza i proverljivih vremenskih oznaka.",
+      "validation": "Proveri sinhronizaciju sa dramaturgijom muzike i kapacitet dostupnih izvora.",
+      "limitations": "Cue predlog nije isto sto i fizicki DMX nalog; kontrola reflektora posebno se odobrava.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 127,
+          "printed_page": 127
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 133,
+          "printed_page": 133
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 142,
+          "printed_page": 142
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 143,
+          "printed_page": 143
+        }
+      ],
+      "keywords": "muzika koncert cue svetlosna promena timeline",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "FX-001",
+      "title": "Kisa i magla zahtevaju pozadinsku kontrolu",
+      "domain": "effects",
+      "scene_types": [
+        "rain",
+        "fog",
+        "night"
+      ],
+      "principle": "Atmosferski efekti su cesto vidljiviji sa pozadinskim i bocnim osvetljenjem.",
+      "application": "Predvidi kako se kapljice i cestice izdvajaju u okviru scene i proveri spill na subjekte.",
+      "validation": "Proveri efekat na realnom test-snimku i mokre bezbednosne zone.",
+      "limitations": "Uslovi efekta i vremenske prilike mogu znatno promeniti rezultat.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 321,
+          "printed_page": 320
+        },
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 208,
+          "printed_page": 198
+        }
+      ],
+      "keywords": "kisa magla dim rain fog atmosphere",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "FX-002",
+      "title": "Vatra kao promenljivi praktikal",
+      "domain": "effects",
+      "scene_types": [
+        "fire",
+        "night",
+        "interior"
+      ],
+      "principle": "Kretanje izvora i promena intenziteta motivisana vatrom stvara poseban kontinuitet svetlosnih signala.",
+      "application": "Za testove predvidi sinhronizovane promene toplog izvora na subjektu i pozadini.",
+      "validation": "Gledaj da se promene cuvaju kroz ceo kadar.",
+      "limitations": "Svaki pravi otvoreni plamen podleze bezbednosnom planu tima; AI ne upravlja vatrom.",
+      "evidence": [
+        {
+          "source_id": "landau-2014",
+          "pdf_page": 208,
+          "printed_page": 198
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 322,
+          "printed_page": 321
+        }
+      ],
+      "keywords": "vatra plamen oganj campfire flicker",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "FX-003",
+      "title": "Green screen odvojena kontrola",
+      "domain": "effects",
+      "scene_types": [
+        "green_screen",
+        "studio"
+      ],
+      "principle": "Chroma pozadina i osvetljenje subjekta zahtevaju odvojeno planiranje radi kasnijeg izdvajanja.",
+      "application": "Predlozi ravnomernu pozadinu, kontrolisano odvajanje subjekta i test kompozitinga.",
+      "validation": "Proveri spill, refleksije i signal za konkretan kolor workflow.",
+      "limitations": "Odgovarajuce parametre diktira postprodukcioni proces, ne jedan fiksni prag iz knjige.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 301,
+          "printed_page": 300
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 302,
+          "printed_page": 301
+        }
+      ],
+      "keywords": "greenscreen green screen chroma key blue screen",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "META-001",
+      "title": "Istorijske tehnicke vrednosti nisu moderni standardi",
+      "domain": "source_quality",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Stari prirucnici sadrze korisne metode, ali i konkretne tvrdnje vezane za analogni video, staru opremu i lokalnu elektrotehniku.",
+      "application": "Uz svaku numericku normu proveri godinu izvora, konkretan model uredjaja i savremeni standard.",
+      "validation": "Za modernu kameru koristi njene specifikacije i kalibraciju, ne staru 5-stop TV normu.",
+      "limitations": "Informacija o istorijskom TV signalu nije dokaz o danasnjoj HDR kameri.",
+      "evidence": [
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 25,
+          "printed_page": 25
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 41,
+          "printed_page": 41
+        },
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 208,
+          "printed_page": 207
+        }
+      ],
+      "keywords": "old legacy video kamera analog HDR safety standard",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    },
+    {
+      "id": "META-002",
+      "title": "Nema laznog zakljucka iz piksela",
+      "domain": "source_quality",
+      "scene_types": [
+        "all"
+      ],
+      "principle": "Merenje histogramâ, YUV koda i razlika izmedju kadrova nije isto sto i merenje svetla na setu.",
+      "application": "Odvoji observed pixel metrics, estimated visual effect, verified photometry i DoP kreativnu odluku.",
+      "validation": "Obavezno prikazi UNKNOWN za nepoznate fizicke podatke.",
+      "limitations": "Ovaj metodoloski zapis je odluka arhitekture LightingAI-ja, ne citat ili direktno pravilo iz knjiga.",
+      "evidence": [
+        {
+          "source_id": "brown-2019",
+          "pdf_page": 204,
+          "printed_page": 203
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 47,
+          "printed_page": 47
+        },
+        {
+          "source_id": "popovic-tv",
+          "pdf_page": 49,
+          "printed_page": 49
+        }
+      ],
+      "keywords": "UNKNOWN piksel lux fizika odvojene tvrdnje",
+      "authority": "SOURCE_DERIVED_PARAPHRASE",
+      "implementation_status": "ADVISORY_NOT_AUTOMATED"
+    }
+  ],
+  "scene_casebooks": [
+    {
+      "id": "case-dialogue-two",
+      "scene": "Dvoje ljudi razgovara, plan-kontraplan, dve kamere",
+      "intent": "Prirodan dijalog sa citljivim licima",
+      "strategy": [
+        "Ispitaj motivisane izvore u prostoru",
+        "Uporedi cross-key sa manjim brojem mekih izvora",
+        "Proveri senke na oba lica i ulazak reflektora u suprotni kadar",
+        "Zabelezi predlog razlicito za single-camera i simultani multi-camera"
+      ],
+      "cards": [
+        "NAR-002",
+        "SET-003",
+        "SET-005",
+        "TV-001",
+        "TV-002"
+      ],
+      "unknown": [
+        "tacne pozicije glumaca",
+        "fotometrija izvora"
+      ]
+    },
+    {
+      "id": "case-window-day",
+      "scene": "Glumica prilazi prozoru tokom dnevnog enterijera",
+      "intent": "Realizam sa osecajem dubine",
+      "strategy": [
+        "Utvrdi orijentaciju prozora i doba dana",
+        "Razmotri difuzni prozorski key i smanjenje spill-a",
+        "Proveri da lice ne nestaje pri prolazu",
+        "Meri clipping prozora pre ekspozicione odluke"
+      ],
+      "cards": [
+        "NAR-002",
+        "PHY-004",
+        "MOV-001",
+        "DAY-001",
+        "DAY-002",
+        "EXP-002"
+      ],
+      "unknown": [
+        "orijentacija prozora",
+        "kamera i snimajuci profil"
+      ]
+    },
+    {
+      "id": "case-night-exterior",
+      "scene": "Nocni eksterijer sa osobom koja hoda",
+      "intent": "Noc sa citljivim glumcem, bez lazne dnevne svetline",
+      "strategy": [
+        "Definisi motivaciju izvora (grad, praktikal, eventualna filmska mesecina)",
+        "Razdvoji osvetljenje osobe i pozadine",
+        "Proveri kontinuitet duz cele putanje",
+        "Sa DoP usaglasi kolicinu mraka i boje"
+      ],
+      "cards": [
+        "NIGHT-001",
+        "NIGHT-002",
+        "MOV-001",
+        "SET-001",
+        "COL-001"
+      ],
+      "unknown": [
+        "fizicka geometrija",
+        "boja stvarnog ambijenta"
+      ]
+    },
+    {
+      "id": "case-multicam-studio",
+      "scene": "Tri kamere snimaju studijski razgovor",
+      "intent": "Ujednacene slike svih kamera i cista lica",
+      "strategy": [
+        "Planiraj sva tri polozaja kamera",
+        "Dodeli key i meka dopunska svetla za svaku zonu",
+        "Proveri kontinuitet izraza lica i pozadinske planove",
+        "Spreči vidljive dvostruke senke"
+      ],
+      "cards": [
+        "TV-001",
+        "TV-003",
+        "SET-005",
+        "OPS-002"
+      ],
+      "unknown": [
+        "tacan raspored kamera"
+      ]
+    },
+    {
+      "id": "case-music-cues",
+      "scene": "Muzicki nastup sa vise promena svetla",
+      "intent": "Svetlo prati muzicku dramaturgiju",
+      "strategy": [
+        "Definisi kreativne cue segmente i njihove ritmove",
+        "Predlozi intenzitet, boju, smer i transitions",
+        "Vezuj predloge za odobrene vremenske oznake",
+        "Ne aktiviraj DMX bez dodatnog odobrenja"
+      ],
+      "cards": [
+        "TV-004",
+        "NAR-001",
+        "COL-001",
+        "SAFE-001"
+      ],
+      "unknown": [
+        "prava DMX mapa",
+        "raspolozivi izvori"
+      ]
+    },
+    {
+      "id": "case-interview",
+      "scene": "Intervju u kancelariji sa prozorom",
+      "intent": "Prirodan, profesionalan i postojan portret",
+      "strategy": [
+        "Pronadji motivisani izvor",
+        "Kontrolisi refleksije sa prozora",
+        "Podešavaj meki fill bez dvojnih senki",
+        "Koristi light meter i WB kontrolu"
+      ],
+      "cards": [
+        "DAY-001",
+        "SET-005",
+        "TV-003",
+        "COL-003",
+        "EXP-001"
+      ],
+      "unknown": [
+        "camera WB",
+        "metering"
+      ]
+    },
+    {
+      "id": "case-rain",
+      "scene": "Kisa i magla u nocnom kadru",
+      "intent": "Atmosfera ali citljiva radnja",
+      "strategy": [
+        "Proveri bezbednost u mokroj sredini",
+        "Osvetli kapljice i atmosferske cestice sa strane/pozadi",
+        "Sacuvaj dovoljno detalja u subjektu",
+        "Oceni efekat na probnom kadru"
+      ],
+      "cards": [
+        "FX-001",
+        "NIGHT-001",
+        "SAFE-002"
+      ],
+      "unknown": [
+        "vreme i bezbednost lokacije"
+      ]
+    },
+    {
+      "id": "case-gear-inventory",
+      "scene": "Ogranicen inventar LED i Fresnel izvora",
+      "intent": "Izvodljiv plan sa postojecim uredjajima",
+      "strategy": [
+        "Proveri inventar i model svakog uredjaja",
+        "Uporedi stvarnu fotometriju i snop",
+        "Spisak opreme koja nedostaje odvoji od raspolozive",
+        "Zahtevaj gaffer proveru napajanja i rigging-a"
+      ],
+      "cards": [
+        "EQ-001",
+        "EQ-003",
+        "EQ-004",
+        "SAFE-001"
+      ],
+      "unknown": [
+        "fixture datasheet",
+        "napajanje"
+      ]
+    },
+    {
+      "id": "case-day-for-night",
+      "scene": "Dnevni snimak treba kreativno prikazati kao noc",
+      "intent": "Uverljiva nocna konvencija uz buduci renderer",
+      "strategy": [
+        "Identifikuj zamisljene nocne izvore i emisivne objekte",
+        "Predlozi raspored kontrasta i selektivnih highlight-a",
+        "Razlikuj vizuelnu previz ideju od fizicki izvedene postavke",
+        "Ne tvrdi da postoji MP4 Day-for-Night renderer"
+      ],
+      "cards": [
+        "NIGHT-001",
+        "NIGHT-002",
+        "NAR-002",
+        "EXP-002",
+        "META-002"
+      ],
+      "unknown": [
+        "stvarna dubina",
+        "originalni camera transform",
+        "renderer nije implementiran"
+      ]
+    }
+  ],
+  "engine_contract": {
+    "human_approval_required": true,
+    "physical_fixture_control": false,
+    "paid_video_calls": false,
+    "unknown_is_valid_output": true,
+    "require_page_citation": true,
+    "distinguish_measured_estimated_recommended": true,
+    "show_era_and_camera_limits": true
+  }
+}

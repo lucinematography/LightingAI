@@ -211,6 +211,13 @@ const exactAllowed = new Set([
   // Phase 3B.2C: offline calibration only, exact module/regression paths.
   'backend/scene-planner-video-calibration.js',
   'backend/scene-planner-video-calibration-selftest.js',
+  // Knowledge K0: exact offline corpus, retrieval, revision adapter and tests only.
+  'backend/scene-planner-knowledge-seed-v1.json',
+  'backend/scene-planner-knowledge.js',
+  'backend/scene-planner-knowledge-selftest.js',
+  'backend/scene-planner-knowledge-adapter.js',
+  'backend/scene-planner-knowledge-adapter-selftest.js',
+  'docs/SCENE_PLANNER_KNOWLEDGE_K0.md',
   'docs/SCENE_PLANNER_PHASE3B.md',
   'backend/scene-planner-video.js',
   'backend/scene-planner-video-selftest.js',

@@ -6,6 +6,7 @@
 })(typeof globalThis === 'object' ? globalThis : this, function () {
   'use strict';
   var VERSION = 3;
+  var MAX_LIGHTS = 16;
   function cameraInput(data) {
     data=data&&typeof data==='object'?data:{};
     return {
@@ -130,10 +131,11 @@
       cameraOverrides: cameraInput(input.cameraOverrides),
       previousPlan: input.previousPlan && typeof input.previousPlan==='object' ?
         {summary:str(input.previousPlan.summary,800),
+          nextLightId:num(input.previousPlan.nextLightId,1,1000000000,null),
           rationale:str(input.previousPlan.rationale,1000),
-          lights:(Array.isArray(input.previousPlan.lights)?input.previousPlan.lights:[]).slice(0,12)
+          lights:(Array.isArray(input.previousPlan.lights)?input.previousPlan.lights:[]).slice(0,MAX_LIGHTS)
             .map(function(l){return {
-              id:str(l.id,12),fixtureId:str(l.fixtureId,120),fixtureName:str(l.fixtureName,150),
+              id:str(l.id,12),fixtureId:str(l.fixtureId,150),fixtureName:str(l.fixtureName,180),
               role:str(l.role,30),x:num(l.x,5,95,50),y:num(l.y,5,95,50),
               intensityPct:num(l.intensityPct,0,100,null),kelvin:num(l.kelvin,1000,20000,null)
             };})} : null,
@@ -194,7 +196,7 @@
     var req = request(input), own = req.mode === 'own';
     raw = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
     var warnings = uniqueStrings(raw.limitations, 20), emitted = [], used = Object.create(null);
-    var candidates = Array.isArray(raw.lights) ? raw.lights.slice(0, 16) : [];
+    var candidates = Array.isArray(raw.lights) ? raw.lights.slice(0, MAX_LIGHTS) : [];
     candidates.forEach(function (item) {
       if (!item || typeof item !== 'object') return;
       var match = null;
@@ -215,7 +217,19 @@
         }
         used[id] = (used[id] || 0) + 1;
       }
-      emitted.push(light(item, emitted.length, match, own, req, warnings));
+      var entry=light(item, emitted.length, match, own, req, warnings);
+      var previous=req.previousPlan ? req.previousPlan.lights : [];
+      var matches=previous.filter(function(p){
+        return p.fixtureId===entry.fixtureId && (entry.fixtureId || p.fixtureName===entry.fixtureName) &&
+          (item.id ? p.id===item.id : p.role===entry.role);
+      });
+      var identity=matches.length===1 ? matches[0].id : null;
+      if(identity && emitted.some(function(l){return l.id===identity;})) identity=null;
+      var next=Math.max(req.previousPlan&&req.previousPlan.nextLightId||1,
+        previous.reduce(function(n,l){return Math.max(n,Number(l.id.slice(1))+1||1);},1));
+      while(emitted.some(function(l){return l.id==='L'+next;}))next++;
+      entry.id=identity||'L'+next;
+      emitted.push(entry);
     });
     if (own && !req.equipment.length) warnings.push('Nema rasvetnih tela u izabranom inventaru.');
     if (own && req.equipment.length && !emitted.length) warnings.push('Nijedan predloženi izvor nije potvrđen u inventaru.');
@@ -271,6 +285,7 @@
       look: req.look,
       description: req.description,
       dopRequest:req.dopRequest,
+      shotCamera:req.shotCamera,
       cameraSettings:cameraPlan(raw.cameraSettings,req),
       exposureNotes:uniqueStrings(raw.exposureNotes,8).concat([
         'Blenda, ISO, ND i jačina lampi su preporuke bez svetlomerne potvrde; test kadrom i merenjem proveriti ekspoziciju.',
@@ -351,7 +366,171 @@
       limitations: limits, lights: lights
     }, req, 'local');
   }
+  // Canonical JSON v1: sorted object keys, ordered arrays, finite JSON values only.
+  // No Web Crypto, secure context, Node imports or asynchronous platform dependency.
+  function canonicalJson(value) {
+    var stack=[];
+    function encode(v) {
+      if(v===null || typeof v==='string' || typeof v==='boolean')return JSON.stringify(v);
+      if(typeof v==='number' && Number.isFinite(v))return JSON.stringify(v);
+      if(!v || typeof v!=='object')throw new Error('Non-JSON revision data');
+      if(stack.indexOf(v)>=0)throw new Error('Cyclic revision data');
+      stack.push(v);
+      var result;
+      if(Array.isArray(v)) {
+        var entries=[];
+        for(var i=0;i<v.length;i++)entries.push(encode(v[i]));
+        result='['+entries.join(',')+']';
+      } else {
+        if(Object.prototype.toString.call(v)!=='[object Object]')throw new Error('Non-JSON object');
+        result='{'+Object.keys(v).sort().map(function(k){return JSON.stringify(k)+':'+encode(v[k]);}).join(',')+'}';
+      }
+      stack.pop();return result;
+    }
+    return encode(value);
+  }
+  function sha256(value) {
+    var bytes=[],i,c;
+    for(i=0;i<value.length;i++) {
+      c=value.charCodeAt(i);
+      if(c>=0xd800 && c<=0xdbff && i+1<value.length && value.charCodeAt(i+1)>=0xdc00 && value.charCodeAt(i+1)<=0xdfff)
+        c=0x10000+((c-0xd800)<<10)+(value.charCodeAt(++i)-0xdc00);
+      else if(c>=0xd800 && c<=0xdfff)c=0xfffd;
+      if(c<128)bytes.push(c);
+      else if(c<2048)bytes.push(192|(c>>6),128|(c&63));
+      else if(c<65536)bytes.push(224|(c>>12),128|((c>>6)&63),128|(c&63));
+      else bytes.push(240|(c>>18),128|((c>>12)&63),128|((c>>6)&63),128|(c&63));
+    }
+    var h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    var k=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+      0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+      0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+      0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+      0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+      0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+      0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+      0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    var bitLength=bytes.length*8;
+    bytes.push(128);while(bytes.length%64!==56)bytes.push(0);
+    var hi=Math.floor(bitLength/4294967296),lo=bitLength>>>0;
+    for(i=3;i>=0;i--)bytes.push((hi>>>(i*8))&255);
+    for(i=3;i>=0;i--)bytes.push((lo>>>(i*8))&255);
+    function rotate(x,n){return (x>>>n)|(x<<(32-n));}
+    for(var offset=0;offset<bytes.length;offset+=64) {
+      var w=[];
+      for(i=0;i<16;i++)w[i]=(bytes[offset+4*i]<<24)|(bytes[offset+4*i+1]<<16)|(bytes[offset+4*i+2]<<8)|bytes[offset+4*i+3];
+      for(i=16;i<64;i++) {
+        var s0=rotate(w[i-15],7)^rotate(w[i-15],18)^(w[i-15]>>>3);
+        var s1=rotate(w[i-2],17)^rotate(w[i-2],19)^(w[i-2]>>>10);
+        w[i]=(w[i-16]+s0+w[i-7]+s1)|0;
+      }
+      var a=h[0],b=h[1],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7],cc=h[2];
+      for(i=0;i<64;i++) {
+        var t1=(hh+(rotate(e,6)^rotate(e,11)^rotate(e,25))+((e&f)^(~e&g))+k[i]+w[i])|0;
+        var t2=((rotate(a,2)^rotate(a,13)^rotate(a,22))+((a&b)^(a&cc)^(b&cc)))|0;
+        hh=g;g=f;f=e;e=(d+t1)|0;d=cc;cc=b;b=a;a=(t1+t2)|0;
+      }
+      [a,b,cc,d,e,f,g,hh].forEach(function(v,j){h[j]=(h[j]+v)|0;});
+    }
+    return h.map(function(n){return ('00000000'+(n>>>0).toString(16)).slice(-8);}).join('');
+  }
+  function freezeJson(value) {
+    if(value && typeof value==='object') {
+      Object.keys(value).forEach(function(k){freezeJson(value[k]);});Object.freeze(value);
+    }
+    return value;
+  }
+  function planHash(plan){return sha256(canonicalJson(plan));}
+  function provenance(plan, req) {
+    var camera={};
+    Object.keys(req.cameraOverrides).forEach(function(k){
+      camera[k]=req.cameraOverrides[k]==null?'estimated':'dop-specified';
+    });
+    return {lightSettings:'estimated',cameraSettings:camera,
+      geometry:plan.geometry.measured?'confirmed-by-user':'estimated',
+      location:plan.location.coordinatesVerified && plan.location.latitude!==null && plan.location.longitude!==null?'confirmed-by-user':'estimated',
+      inventory:plan.mode==='own'?'user-declared':'unconfirmed',
+      exposure:'unconfirmed',blocking:'estimated'};
+  }
+  function revisionPayload(revision) {
+    return {schemaVersion:revision.schemaVersion,sceneId:revision.sceneId,
+      parentRevisionId:revision.parentRevisionId,sequence:revision.sequence,
+      nextLightId:revision.nextLightId,planHash:revision.planHash};
+  }
+  function verifyRevision(revision) {
+    if(!revision || revision.schemaVersion!==1 || !/^[A-Za-z0-9_-]{1,100}$/.test(revision.sceneId) ||
+      !Number.isInteger(revision.sequence) || revision.sequence<1 ||
+      !Number.isInteger(revision.nextLightId) || revision.nextLightId<1 ||
+      (revision.sequence===1 ? revision.parentRevisionId!==null : !/^rev-[a-f0-9]{64}$/.test(revision.parentRevisionId)))
+      throw new Error('Invalid revision metadata');
+    var plan=revision.plan;
+    if(!plan || plan.version!==VERSION || !Array.isArray(plan.lights) || !plan.cameraSettings || !plan.dataStatus)
+      throw new Error('Invalid validated plan');
+    function range(value,min,max,nullable) {
+      if(nullable && value===null)return;
+      if(typeof value!=='number' || !Number.isFinite(value) || value<min || value>max)
+        throw new Error('Invalid validated numeric data');
+    }
+    if(plan.lights.length>MAX_LIGHTS || !Array.isArray(plan.actors) || !plan.geometry || !plan.location ||
+      typeof plan.dopRequest!=='string' || ['ai','local'].indexOf(plan.source)<0 || ['own','best'].indexOf(plan.mode)<0 ||
+      plan.dataStatus.lightSettings!=='estimated' || plan.dataStatus.exposure!=='unconfirmed')
+      throw new Error('Invalid validated plan data');
+    var cameraRanges={fps:[1,120],shutterAngle:[11.25,360],aperture:[0.7,32],iso:[50,25600],
+      whiteBalanceK:[1700,20000],ndStops:[0,12],focalLengthMm:[8,300]};
+    Object.keys(cameraRanges).forEach(function(k){range(plan.cameraSettings[k],cameraRanges[k][0],cameraRanges[k][1],k==='focalLengthMm');});
+    range(plan.geometry.widthM,0.5,100,true);range(plan.geometry.depthM,0.5,100,true);
+    var ids=Object.create(null);
+    plan.lights.forEach(function(l){
+      if(!/^L[1-9]\d{0,8}$/.test(l.id) || ids[l.id] || Number(l.id.slice(1))>=revision.nextLightId)
+        throw new Error('Invalid light identity');
+      ids[l.id]=true;
+      if(ROLES.indexOf(l.role)<0 || l.estimated!==true || typeof l.fixtureId!=='string' || typeof l.fixtureName!=='string' ||
+        !Array.isArray(l.coverageStages) || l.coverageStages.some(function(n){return !Number.isInteger(n)||n<0||n>15;}))
+        throw new Error('Invalid validated light data');
+      range(l.x,5,95);range(l.y,5,95);range(l.heightM,0.1,25,true);range(l.distanceM,0.1,100,true);
+      range(l.angleDeg,0,360,true);range(l.intensityPct,0,100,true);range(l.kelvin,1000,20000,true);
+      range(l.verticalTiltDeg,-90,90,true);range(l.beamAngleDeg,5,180,true);range(l.powerDrawW,1,100000,true);
+    });
+    if(planHash(plan)!==revision.planHash || revision.revisionId!=='rev-'+sha256(canonicalJson(revisionPayload(revision))) ||
+      revision.lightPlotRevisionId!=='plot-'+revision.revisionId.slice(4))throw new Error('Revision integrity mismatch');
+    return true;
+  }
+  function createRevision(raw, input, source, parent, sceneId) {
+    if(parent)verifyRevision(parent);
+    sceneId=sceneId || (parent&&parent.sceneId);
+    if(!/^[A-Za-z0-9_-]{1,100}$/.test(sceneId||'') || (parent&&parent.sceneId!==sceneId))throw new Error('Invalid scene identity');
+    var req=request(input);
+    req.previousPlan=parent ? Object.assign({},parent.plan,{nextLightId:parent.nextLightId}) : null;
+    var plan=sanitizePlan(raw,req,source);
+    plan.dataStatus=provenance(plan,req);
+    var next=plan.lights.reduce(function(n,l){return Math.max(n,Number(l.id.slice(1))+1);},parent?parent.nextLightId:1);
+    var revision={schemaVersion:1,sceneId:sceneId,parentRevisionId:parent?parent.revisionId:null,
+      sequence:parent?parent.sequence+1:1,nextLightId:next,plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  function restoreRevisions(items) {
+    if(!Array.isArray(items) || !items.length)throw new Error('Empty revision history');
+    var revisions=JSON.parse(canonicalJson(items));
+    revisions.forEach(function(r,i){
+      verifyRevision(r);
+      if(i===0 ? r.sequence!==1 : r.sceneId!==revisions[0].sceneId ||
+        r.parentRevisionId!==revisions[i-1].revisionId || r.sequence!==i+1 || r.nextLightId<revisions[i-1].nextLightId)
+        throw new Error('Broken revision history');
+    });
+    return freezeJson(revisions);
+  }
+  // Future MP4 receipt contract only. No provider calls or paid-flow integration.
+  function videoRevisionBinding(revision) {
+    verifyRevision(revision);
+    return freezeJson({schemaVersion:1,sceneId:revision.sceneId,revisionId:revision.revisionId,
+      lightPlotRevisionId:revision.lightPlotRevisionId,planHash:revision.planHash});
+  }
   return {VERSION:VERSION, request:request, equipment:equipment, modifiers:modifiers,
+    canonicalJson:canonicalJson,sha256:sha256,planHash:planHash,createRevision:createRevision,
+    verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};
 });

@@ -4,6 +4,8 @@
   var ENTRY='lightingai-scene-planner-entry';
   var API='https://lightingai.onrender.com';
   var STORE='lighting_scene_planner_last_v1';
+  var REVISION_STORE='lighting_scene_planner_revisions_v1';
+  var revisions=[],sceneId=null,historyBlocked=false;
   var VIDEO_RECEIPT='lighting_scene_planner_video_receipt_v1';
   var videoReceipt=null,videoReceiptBlocked=false;
   var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null,videoDurationSec:null,aiVideoPending:null,aiVideoCompletedPlan:null};
@@ -227,7 +229,7 @@
     el('sp-save').onclick=save;
     el('sp-share').onclick=share;
     updateInventory();
-    loadCore(function(){status('Spremno. Dodaj fotografiju ili video i opiši kadar.');});
+    loadCore(function(){if(restorePlanHistory())status('Spremno. Dodaj fotografiju ili video i opiši kadar.');});
     restoreVideoReceipt();
   }
   function updateInventory(){
@@ -349,7 +351,7 @@
       roomDepthM:el('sp-depth').value,dimensionsMeasured:el('sp-measured').checked,
       equipment:inventory(),scenePhoto:state.photo,videoFrames:state.frames,language:locale(),
       dopRequest:el('sp-dop-request').value,
-      previousPlan:state.plan&&state.plan.source==='ai'?state.plan:null,
+      previousPlan:state.plan,
       cameraOverrides:{aperture:el('sp-aperture').value,iso:el('sp-iso').value,
         fps:el('sp-fps').value,shutterAngle:el('sp-shutter').value,
         whiteBalanceK:el('sp-wb').value,ndStops:el('sp-nd').value}
@@ -361,11 +363,13 @@
   }
   async function generate(useAI){
     if(state.busy||state.videoBusy||!core())return;
+    if(historyBlocked){status('Postojeća istorija nije proverena. Sačuvane revizije neće biti prepisane.',true);return;}
     var req=payload();
     if(!req.description){status('Opiši scenu tekstom ili glasom.',true);return;}
     if(!req.scenePhoto&&!req.videoFrames.length){status('Dodaj fotografiju ili video sa izdvojenim kadrovima.',true);return;}
     if(req.mode==='own'&&!req.equipment.length){status('U režimu MOJA OPREMA izaberi lampu u inventaru.',true);return;}
     setBusy(true);
+    var candidate=null;
     state.aiPreview='';state.aiStoryboard=[];
     if(useAI){
       status('AI analizira prostor, opis i kretanje iz videa…');
@@ -377,20 +381,24 @@
         if(!r.ok)throw new Error('HTTP '+r.status);
         var response=await r.json();
         if(!response||!response.ok||!response.plan||response.plan.source!=='ai')throw new Error('Nevažeći AI odgovor.');
-        state.plan=core().sanitizePlan(response.plan,req,'ai');
-        state.plan.inputSummary=response.plan.inputSummary||null;
+        candidate=response.plan;
         status('AI plan je generisan. Tehničke vrednosti su označene kao procene.');
       }catch(error){
-        state.plan=core().localPlan(req);
+        candidate=core().localPlan(req);
         status('AI servis nije dostupan ('+(error.name==='AbortError'?'timeout':error.message)+'). Prikazan je LOKALNI koncept, ne AI analiza.',true);
       }finally{clearTimeout(timer);state.abort=null;setBusy(false);}
     }else{
-      state.plan=core().localPlan(req);
+      candidate=core().localPlan(req);
       status('Prikazan je lokalni koncept bez AI obrade fotografije ili kretanja.');
       setBusy(false);
     }
-    renderResult();
-    remember();
+    try{
+      if(!sceneId)sceneId='scene-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+      var revision=core().createRevision(candidate,req,candidate.source,
+        revisions.length?revisions[revisions.length-1]:null,sceneId);
+      revisions=revisions.concat([revision]);state.plan=revision.plan;
+      renderResult();remember();
+    }catch(error){status('Revizija nije sačuvana: '+error.message,true);}
   }
   function fmt(value,unit){
     return value==null?'neutvrđeno':(String(value)+(unit||''));
@@ -398,10 +406,14 @@
   function line(x1,y1,x2,y2,color){
     return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+'" stroke-width="1.2" stroke-dasharray="3 2"/>';
   }
-  function plotSvg(plan){
+  function plotSvg(plan,revision){
     var x=[],colors={key:'#ffce56',fill:'#7bbcff',backlight:'#ffa17d',ambient:'#c5b3ff'};
     var actor=plan.actors[0]||{x:50,y:50,path:[]};
-    var base='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 105" role="img" aria-label="2D light plot sa kamerom, svetlima i putanjom glumca" style="display:block;width:100%;max-height:480px;background:#0b111c;border-radius:12px">'+
+    var binding=revision ? core().videoRevisionBinding(revision) : null;
+    var base='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 105"'+
+      (binding?' data-light-plot-revision-id="'+esc(binding.lightPlotRevisionId)+'" data-plan-hash="'+esc(binding.planHash)+'"':'')+
+      ' role="img" aria-label="2D light plot sa kamerom, svetlima i putanjom glumca" style="display:block;width:100%;max-height:480px;background:#0b111c;border-radius:12px">'+
+      (binding?'<metadata>'+esc(JSON.stringify(binding))+'</metadata>':'')+
       '<defs><marker id="sp-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#85e0af"/></marker></defs>'+
       '<rect x="5" y="5" width="90" height="90" rx="3" fill="#101822" stroke="#738091" stroke-width="1.1"/>';
     for(var g=20;g<=80;g+=20){base+=line(g,5,g,95,'#273444')+line(5,g,95,g,'#273444');}
@@ -418,10 +430,10 @@
           '" stroke="#85e0af" stroke-width="1.6" stroke-dasharray="3 2" marker-end="url(#sp-arrow)"/>';
       }
       base+='<circle cx="'+a.x+'" cy="'+a.y+'" r="4.3" fill="#204d43" stroke="#a7eed2" stroke-width="1.1"/>'+
-        '<text x="'+a.x+'" y="'+(a.y+1.2)+'" font-size="3.5" fill="#fff" text-anchor="middle">A1</text>';
+        '<text x="'+a.x+'" y="'+(a.y+1.2)+'" font-size="3.5" fill="#fff" text-anchor="middle">'+esc(a.id)+'</text>';
     });
-    base+='<rect x="42" y="86" width="16" height="7" rx="1.4" fill="#23364d" stroke="#c7e2ff"/>'+
-      '<text x="50" y="90.5" font-size="3" fill="#fff" text-anchor="middle">KAMERA</text>'+
+    base+='<rect x="'+(plan.camera.x-8)+'" y="'+(plan.camera.y-3)+'" width="16" height="7" rx="1.4" fill="#23364d" stroke="#c7e2ff"/>'+
+      '<text x="'+plan.camera.x+'" y="'+(plan.camera.y+1.5)+'" font-size="3" fill="#fff" text-anchor="middle">'+esc(plan.camera.label)+'</text>'+
       '<text x="6" y="102" font-size="3.2" fill="#95a6b9">POGLED OD GORE • PROCENA</text></svg>';
     return base;
   }
@@ -499,6 +511,10 @@
       '<p class="sp-note">'+esc(plan.rationale)+'</p>'+
       '<div class="sp-pill" style="display:inline-block">'+(plan.source==='ai'?'AI PREDLOG':'LOKALNI KONCEPT')+
       ' • '+(plan.mode==='own'?'SAMO MOJA OPREMA':'NAJBOLJA RASVETA')+'</div>';
+    var current=revisions[revisions.length-1];
+    if(current)el('sp-summary').innerHTML+='<p class="sp-note">Revizija '+current.sequence+
+      ' • '+esc(current.sceneId)+'<br>Light plot: '+esc(current.lightPlotRevisionId)+
+      '<br>SHA-256: '+esc(current.planHash)+'</p>';
     var camera=plan.cameraSettings||{};
     var cameraBox=el('sp-camera-result');
     if(cameraBox)cameraBox.innerHTML='<b style="color:#f5c542">KAMERA / PREPORUKA, NIJE MERENJE</b>'+
@@ -509,7 +525,7 @@
       ' • promena u odnosu na osnovni predlog: '+fmt(camera.exposureDeltaStops,' stop')+
       '<div>'+esc(camera.provenance||'Neproverena procena')+'</div>'+
       (plan.exposureNotes||[]).map(function(n){return '<div>• '+esc(n)+'</div>';}).join('')+'</p>';
-    el('sp-plot').innerHTML=plotSvg(plan);
+    el('sp-plot').innerHTML=plotSvg(plan,current);
     renderBlocking();
     el('sp-preview').innerHTML=conceptPhoto(plan);
     el('sp-lights').innerHTML=plan.lights.length?plan.lights.map(function(l){
@@ -898,11 +914,25 @@
   }
   function exportObject(){
     return {format:'LightingAI.ScenePlanner.v1',savedAt:new Date().toISOString(),
-      plan:state.plan,notes:'Originalni foto i video materijal nisu uključeni u JSON izvoz.'};
+      plan:state.plan,revisionSchemaVersion:1,revisions:revisions,
+      notes:'Originalni foto i video materijal nisu uključeni u JSON izvoz.'};
+  }
+  function restorePlanHistory(){
+    if(revisions.length)return true;
+    try{
+      var saved=localStorage.getItem(REVISION_STORE);if(!saved)return true;
+      revisions=core().restoreRevisions(JSON.parse(saved));
+      sceneId=revisions[0].sceneId;state.plan=revisions[revisions.length-1].plan;
+      renderResult();
+      return true;
+    }catch(error){historyBlocked=true;status('Istorija revizija nije učitana: '+error.message,true);return false;}
   }
   function remember(){
     if(!state.plan)return;
-    try{localStorage.setItem(STORE,JSON.stringify(exportObject()));}catch(e){}
+    try{
+      localStorage.setItem(REVISION_STORE,JSON.stringify(revisions));
+      localStorage.setItem(STORE,JSON.stringify(exportObject()));
+    }catch(e){status('Revizija je u memoriji; lokalno čuvanje nije uspelo. Sačuvaj JSON izvoz.',true);}
   }
   function save(){
     if(!state.plan)return;

@@ -196,6 +196,9 @@ const exactAllowed = new Set([
   'app/src/main/assets/scene-planner-core.js',
   'backend/scene-planner-service.js',
   'backend/scene-planner-selftest.js',
+  // Phase 3A: exact offline revision regression and architecture documentation paths.
+  'backend/scene-planner-revisions-selftest.js',
+  'docs/SCENE_PLANNER_PHASE3A.md',
   'backend/scene-planner-video.js',
   'backend/scene-planner-video-selftest.js',
   // PR #414 Scene Planner phase 2: durable adapter, bounded media analysis and their offline tests.

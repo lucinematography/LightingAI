@@ -91,6 +91,7 @@ export function buildScenePlannerPrompt(req) {
     "Aperture, ISO and source intensity cannot be physically derived accurately from uncalibrated video alone.",
     "If camera overrides conflict with feasible light output, explicitly describe the compromise.",
     "Preserve physically owned inventory and capacity constraints during DoP revision.",
+    "Preserve previous light instance ids (L1, L2, etc.) for the same fixtures, including when reordering or changing roles. Do not transfer an old id to a different fixture.",
     "Observe actor progression between video keyframes. Occluded motion is uncertain.",
     "Show approximate top-down actor path with chronological x/y percentage coordinates.",
     "Top-down percent coordinates 5..95; camera near x50 y89.",

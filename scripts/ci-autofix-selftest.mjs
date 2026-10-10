@@ -178,7 +178,9 @@ test('stable-base guard validates future committed content and blocks regression
     const files = ['.github/workflows/build-apk.yml', '.github/workflows/release-apk.yml', '.gitignore',
       'docs/CI_AUTOFIX_PHASE1.md', 'scripts/ci-autofix.mjs', 'scripts/ci-autofix-selftest.mjs',
       'scripts/ci-report-summary.mjs', 'scripts/run-ci-check.mjs', 'backend/project5-stable-base-selftest.js',
-      // Include the complete phase-2 candidate in the isolated future-commit check.
+      // Include the complete phase-2/3A candidate in the isolated future-commit check.
+      'app/src/main/assets/scene-planner-core.js', 'backend/scene-planner-service.js',
+      'backend/scene-planner-revisions-selftest.js', 'docs/SCENE_PLANNER_PHASE3A.md',
       'backend/scene-planner-video.js', 'backend/scene-planner-video-selftest.js',
       'backend/scene-planner-job-store.js', 'backend/scene-planner-media.js',
       'backend/scene-planner-video-test-support.js', 'backend/scene-planner-video-phase2-selftest.js',

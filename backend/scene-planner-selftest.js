@@ -83,6 +83,9 @@ const mock={responses:{create:async args=>{
 const produced=await generateScenePlannerPlan(mock,clip,catalog);
 assert.equal(produced.ok,true);
 assert.equal(produced.plan.source,"ai");
+assert.ok(produced.plan.knowledgeBasis.cards.length>0,"generated AI plan must carry retrieved book principles");
+assert.ok(produced.plan.knowledgeBasis.cards.some(c=>c.references.some(r=>r.source&&r.pdfPage>0)),"generated plan must carry source pages");
+assert.equal(produced.plan.knowledgeBasis.status,"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED");
 assert.equal(produced.plan.lights.length,1);
 assert.equal(produced.plan.lights[0].fixtureName,"ARRI Test LED");
 assert.equal(produced.plan.actors[0].path.length,2);

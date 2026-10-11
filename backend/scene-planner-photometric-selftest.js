@@ -1960,6 +1960,36 @@ assert.match(uiSource,/function safeExportCueSheet\(\)/,
   'duplicate WebView timecodes must not prevent saving valid plan history');
 assert.match(uiSource,/Pokrivenost nije revidirana posle DoP izmene/,
   'old light-stage coverage cannot masquerade as tested after a DoP light edit');
+// The in-app side-by-side comparison must keep the exact same sampled JPEG
+// in both panes and never be presented as physically verified video relighting.
+assert.match(uiSource,/id="sp-sample-compare"/);
+assert.match(uiSource,/function renderSampledFrameComparison\(\)/);
+assert.match(uiSource,/function renderSampledFrameComparisonSelected\(sheet\)/);
+assert.match(uiSource,/function safeSampledJpegDataUri\(frame\)/);
+assert.match(uiSource,/selectedFrameCompare=0/);
+assert.match(uiSource,/renderSampledFrameComparison\(\);\s*el\('sp-preview'\)/);
+const offlineCompareSource=uiSource.split('function safeSampledJpegDataUri(frame)')[1]
+  .split('function conceptPhoto(plan)')[0];
+assert.match(offlineCompareSource,/hasCurrentVideoPlan\(\)/,
+  'media must match the current immutable DoP revision');
+assert.match(offlineCompareSource,/currentSampledCueSheet\(\)/,
+  'comparison must reuse existing revision-verified sampled cue sheet');
+assert.match(offlineCompareSource,/cue\.approximateTimeSec!==frame\.timeSec/,
+  'do not pair an original JPEG with a different timecode');
+assert.match(offlineCompareSource,/sheet\.revisionId!==revisions\[/,
+  'a previously open slider may not display against a later creative edit');
+assert.match(offlineCompareSource,/data:image\\\/jpeg;base64|data:image\/jpeg;base64/,
+  'accept locally sampled JPEG data only');
+assert.match(offlineCompareSource,/imageBlock\('IZVORNI JPEG UZORAK','none'\)/);
+assert.match(offlineCompareSource,/imageBlock\('KREATIVNI CSS LOOK — NIJE AI RELIGHT',lookFilter\)/);
+assert.match(offlineCompareSource,/dopChangedLight/);
+assert.match(offlineCompareSource,/UKUPNI PREDLOG POSTAVKE/);
+assert.match(offlineCompareSource,/POVEZANI PRINCIPI IZ STRUČNE BAZE/);
+assert.match(offlineCompareSource,/izvorni SHA-256 video bajtovi/);
+assert.doesNotMatch(offlineCompareSource,/\bfetch\s*\(|videoRequest\s*\(|startAIVideo\s*\(|window\.Android\./,
+  'offline visual comparison cannot issue paid provider or fixture commands');
+assert.doesNotMatch(offlineCompareSource,/localStorage\.setItem|MediaRecorder|new Blob\(/,
+  'in-memory JPEG preview may not store private frame pixels or export fake video');
 const tampered=JSON.parse(JSON.stringify(revision));
 tampered.plan.photometricBasis.entries[0].samples[0].lux=99999;
 assert.throws(()=>core.restoreRevisions([tampered]),/integrity|Invalid/i);

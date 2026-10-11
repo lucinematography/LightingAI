@@ -1339,3 +1339,36 @@ Regression checks enforce source binding before paid start, upload lock,
 storyboard lock, local WebM lock, safe exports and coverage warnings. No paid
 service call was issued during implementation; control, K0/K1, `main`, merge,
 release, installation and publication remain unchanged.
+
+
+### Offline sampled-frame comparison: original / creative look (2026-10-11)
+
+The Android Scene Planner now displays a selectable visual comparison beside
+the revision-bound six-frame DoP cue sheet. A single locally extracted JPEG
+sample is shown twice: unfiltered on the left and with a deterministic CSS
+look filter on the right (Night/Day-for-Night, Moody, or neutral). The six
+reference timecodes remain approximate WebView seek positions, not source
+frame presentation timestamps. Source bytes and decoded pixels are not
+independently attested. Both images are from the same existing in-memory
+sample; no still/video is generated, written to JSON, uploaded, billed or
+exported by this comparison. Strict data:image/jpeg;base64 validation and a
+bounded URI length prevent HTML injection from an arbitrary frame string.
+
+Rendering requires the same in-memory media session and a verified immutable
+lighting-plan revision; selecting new photo/video or restoring old revisions
+blocks the view until a new plan is made. The slider rechecks current plan
+identity, cue index and approximate sample timestamp. If the actor-path
+stage is ambiguous/missing, no source is assigned to the selected frame.
+After a DoP light edit, outdated per-stage coverage is explicitly suppressed.
+The overall planned fixtures, Kelvin, output, positions, distance and camera
+settings are shown as NOT measured per-frame; CSS filter does NOT respond to
+individual light changes, camera exposure or geometry. The view also shows
+at most two already attached expert knowledge cards with validation and
+limitations; it does not invent book page references or lighting readings.
+
+Added guard/regression assertions for same-image use, revision/time matching,
+strict source data URIs, unchanged/no trusted per-frame light claims, no
+media persistence/network calls, and safe Android UI inclusion. The work is
+limited to the existing Scene Planner UI/test/document files on the draft
+branch. Phase 3B.3 real temporal Day-for-Night video relighting remains
+unimplemented and requires separately validated renderer and real footage.

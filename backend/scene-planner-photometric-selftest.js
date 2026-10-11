@@ -584,7 +584,8 @@ assert.equal(waveRev.plan.cameraGrayCardWaveformReading.waveformIre,42.5);
 const newSceneAfterWave=core.createSceneIncidentLuxRevision(waveRev,sceneInput);
 assert.equal(newSceneAfterWave.plan.cameraGrayCardWaveformReading,undefined,
   'even a new scene reading at equal nominal lux invalidates old camera waveform');
-const waveOnOptic=core.createCameraGrayCardWaveformRevision(sceneOptic,waveInput);
+const opticWaveBase=core.createSceneIncidentLuxRevision(meterRevision,sceneInput);
+const waveOnOptic=core.createCameraGrayCardWaveformRevision(opticWaveBase,waveInput);
 const opticAfterWave=core.createMountedOpticRevision(waveOnOptic,{
   lightId:'L1',opticId:'HYPER_REFLECTOR_55',confirmed:true
 });

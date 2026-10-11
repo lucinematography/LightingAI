@@ -215,10 +215,6 @@ export function verifyVisualAnalysis(analysis,ingestion,revision){
 // Bounded offline raw pixel grade, no AI requests or MP4 export.
 // Isolated, offline Day-for-Night pixel grade. No HTTP, DB, device I/O,
 // encoder or MP4 output. This is NOT photometrically accurate relighting.
-import {createHash} from 'node:crypto';
-import {createRequire} from 'node:module';
-import {streamVerifiedVideoPixels} from './scene-planner-video-ingestion.js';
-import {verifyVisualAnalysis,measureYuv420p} from './scene-planner-video-visual.js';
 
 export const GRADE_METHOD='fixed-unmanaged-yuv420p-code-grade-v1';
 const trustedRecipes=new WeakSet(),trustedReceipts=new WeakSet();

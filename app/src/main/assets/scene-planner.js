@@ -560,9 +560,11 @@
         ph.entries.map(function(e){
           return '<div class="sp-note"><b>'+esc(e.lightId)+' / '+esc(e.fixtureId)+'</b>'+
             '<div>Izvor proizvođača: '+esc(e.sourceUrl)+'</div>'+
-            '<div>Referentni uslovi: '+esc(e.cctK)+' K, '+esc(e.outputPct)+'% izlaza; spot/flood bez modifikatora.</div>'+
+            '<div>Referentni uslovi: '+esc(e.cctK)+' K, '+esc(e.outputPct)+'% izlaza; '+(e.requiresAttestedOptic?
+              'tačno navedeni optički reflektor iz tabele, čija montaža NIJE potvrđena.':
+              'spot/flood bez modifikatora.')+'</div>'+
             '<div>Objavljeno (ne na setu): '+e.samples.map(function(s){
-              return esc(s.beamAngleDeg)+'° / '+esc(s.distanceM)+' m: '+esc(s.lux)+' lx';
+              return (s.opticId?esc(s.opticId)+' / ':'')+esc(s.beamAngleDeg)+'° / '+esc(s.distanceM)+' m: '+esc(s.lux)+' lx';
             }).join(' • ')+'</div>'+
             '<div>Parametri plana: '+(e.configurationMatchesReference?
               'nominalno odgovaraju tabeli, ali distanca i stvarni izlaz nisu potvrđeni.':

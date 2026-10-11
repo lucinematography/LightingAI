@@ -14,6 +14,32 @@ const PROFILES=Object.freeze({
       {beamAngleDeg:15,distanceM:1,lux:33480},{beamAngleDeg:15,distanceM:3,lux:4241},
       {beamAngleDeg:15,distanceM:5,lux:1451},{beamAngleDeg:45,distanceM:1,lux:5803},
       {beamAngleDeg:45,distanceM:3,lux:703},{beamAngleDeg:45,distanceM:5,lux:268}
+    ]},
+  // Aputure published reference tables, 5600K / full output, explicitly identified reflectors.
+  'aputure-ls-300d-ii':{
+    manufacturer:'Aputure',model:'LS 300d II',sourceUrl:'https://aputure.com/en-US/products/ls-300d-ii',
+    cctK:5600,outputPct:100,requiresAttestedOptic:true,
+    samples:[
+      {opticId:'HYPER_REFLECTOR_55',beamAngleDeg:55,distanceM:1,lux:45000},
+      {opticId:'HYPER_REFLECTOR_55',beamAngleDeg:55,distanceM:3,lux:3500},
+      {opticId:'HYPER_REFLECTOR_55',beamAngleDeg:55,distanceM:5,lux:1200}
+    ]},
+  'aputure-ls-1200d-pro':{
+    manufacturer:'Aputure',model:'LS 1200d Pro',sourceUrl:'https://aputure.com/en-US/products/ls-1200d-pro',
+    cctK:5600,outputPct:100,requiresAttestedOptic:true,
+    samples:[
+      {opticId:'BM1215_NARROW',beamAngleDeg:15,distanceM:3,lux:83100},
+      {opticId:'BM1215_NARROW',beamAngleDeg:15,distanceM:5,lux:28340},
+      {opticId:'BM1215_NARROW',beamAngleDeg:15,distanceM:7,lux:15200},
+      {opticId:'BM1215_NARROW',beamAngleDeg:15,distanceM:9,lux:8580},
+      {opticId:'BM1230_MEDIUM',beamAngleDeg:30,distanceM:3,lux:22400},
+      {opticId:'BM1230_MEDIUM',beamAngleDeg:30,distanceM:5,lux:8200},
+      {opticId:'BM1230_MEDIUM',beamAngleDeg:30,distanceM:7,lux:4660},
+      {opticId:'BM1230_MEDIUM',beamAngleDeg:30,distanceM:9,lux:2880},
+      {opticId:'BM1245_WIDE',beamAngleDeg:45,distanceM:3,lux:13010},
+      {opticId:'BM1245_WIDE',beamAngleDeg:45,distanceM:5,lux:4800},
+      {opticId:'BM1245_WIDE',beamAngleDeg:45,distanceM:7,lux:2706},
+      {opticId:'BM1245_WIDE',beamAngleDeg:45,distanceM:9,lux:1775}
     ]}
 });
 const BOOK_LINK_IDS=new Set(['PHY-005','EQ-001','EQ-002','EXP-001','META-002']);
@@ -33,7 +59,8 @@ export function getManufacturerPhotometricReferences(req,catalog){
     seen.add(id);
     out.push({fixtureId:id,manufacturer:p.manufacturer,model:p.model,
       sourceUrl:p.sourceUrl,sourceType:'MANUFACTURER_PUBLISHED_REFERENCE',
-      cctK:p.cctK,outputPct:p.outputPct,samples:p.samples.map(s=>({...s}))});
+      cctK:p.cctK,outputPct:p.outputPct,requiresAttestedOptic:!!p.requiresAttestedOptic,
+      samples:p.samples.map(s=>({...s}))});
     if(out.length===8)break;
   }
   return out;
@@ -47,11 +74,12 @@ export function buildPhotometricBasis(req,plan,catalog,knowledgeCards=[]){
     const ref=refs.get(light.fixtureId);
     if(!light.available||!ref)continue;
     // Even matching manufacturer settings cannot establish AI-estimated distances as measured.
-    const matches=light.intensityPct===100&&light.kelvin===ref.cctK&&
+    const matches=!ref.requiresAttestedOptic&&light.intensityPct===100&&light.kelvin===ref.cctK&&
       (light.beamAngleDeg===15||light.beamAngleDeg===45)&&!light.modifier;
     entries.push({lightId:light.id,fixtureId:light.fixtureId,sourceUrl:ref.sourceUrl,
       sourceType:'MANUFACTURER_PUBLISHED_REFERENCE',cctK:ref.cctK,outputPct:ref.outputPct,
-      samples:ref.samples.map(s=>({...s})),configurationMatchesReference:matches,
+      samples:ref.samples.map(s=>({...s})),requiresAttestedOptic:ref.requiresAttestedOptic,
+      configurationMatchesReference:matches,
       estimatedXMetres:measured?Number((req.roomWidthM*light.x/100).toFixed(2)):null,
       estimatedYMetres:measured?Number((req.roomDepthM*light.y/100).toFixed(2)):null,
       bookCardIds:bookIds,measuredDistanceM:null,onSetLux:null});

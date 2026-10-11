@@ -18,6 +18,46 @@ const raw={mode:'own',description:'Nocna scena, izracunaj svetlo za glumca',
 const req=canonicalInventory(core.request(raw),fixtures);
 const refs=getManufacturerPhotometricReferences(req,fixtures);
 assert.equal(refs.length,2);
+const additionalFixtures=[
+  {id:'aputure-ls-300d-ii',manufacturer:'Aputure',model:'LS 300d II',
+    sourceUrl:'https://aputure.com/en-US/products/ls-300d-ii'},
+  {id:'aputure-ls-1200d-pro',manufacturer:'Aputure',model:'LS 1200d Pro',
+    sourceUrl:'https://aputure.com/en-US/products/ls-1200d-pro'}
+];
+const additionalReq=canonicalInventory(core.request({...raw,equipment:additionalFixtures.map(f=>({
+  fixtureId:f.id,name:f.model,qty:1
+}))}),additionalFixtures);
+const addRefs=getManufacturerPhotometricReferences(additionalReq,additionalFixtures);
+assert.equal(addRefs.length,2);
+assert.deepEqual(addRefs[0].samples.map(s=>s.lux),[45000,3500,1200]);
+assert.deepEqual(addRefs[1].samples.map(s=>s.lux),
+  [83100,28340,15200,8580,22400,8200,4660,2880,13010,4800,2706,1775]);
+assert.ok(addRefs.every(r=>r.requiresAttestedOptic===true));
+const additionalRaw={lights:additionalFixtures.map((f,i)=>({
+  fixtureId:f.id,role:i?'backlight':'key',beamAngleDeg:i?15:55,
+  intensityPct:100,kelvin:5600,x:25+50*i,y:50
+}))};
+const additionalPlan=core.sanitizePlan(additionalRaw,additionalReq,'ai');
+const additionalBasis=buildPhotometricBasis(additionalReq,additionalPlan,additionalFixtures,[]);
+assert.equal(additionalBasis.entries.length,2);
+assert.ok(additionalBasis.entries.every(e=>!e.configurationMatchesReference));
+const wrappedPlan=core.sanitizePlan({
+  ...additionalRaw,photometricBasis:additionalBasis,knowledgeBasis:{status:
+   'CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED',cards:[]}
+},additionalReq,'ai');
+assert.equal(wrappedPlan.photometricBasis.entries.length,2);
+const wrappedRevision=core.createRevision(wrappedPlan,{
+  ...raw,equipment:additionalFixtures.map(f=>({fixtureId:f.id,name:f.model,qty:1}))
+},'ai',null,'new-optic-references');
+assert.equal(wrappedRevision.plan.photometricBasis.entries.length,2);
+const newDistance=core.createDistanceMeasurementRevision(wrappedRevision,{
+  lightId:'L1',distanceM:3,confirmed:true
+});
+assert.equal(newDistance.plan.photometricBasis.entries[0].measuredDistanceM,3);
+assert.equal(newDistance.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance,null,
+  'never claim optical configuration from AI beam angle alone');
+assert.equal(newDistance.plan.photometricBasis.entries[0].onSetLux,null);
+
 assert.deepEqual(refs[0].samples.map(s=>s.lux),[54300,7602,2715,9014,1096,402]);
 assert.deepEqual(refs[1].samples.map(s=>s.lux),[33480,4241,1451,5803,703,268]);
 assert.equal(getManufacturerPhotometricReferences(core.request(raw),fixtures).length,0,

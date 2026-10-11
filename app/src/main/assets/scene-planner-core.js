@@ -216,7 +216,16 @@
       'aputure-ls-60d':{url:'https://aputure.com/EN-US/products/ls-60d',
         lux:[54300,7602,2715,9014,1096,402]},
       'aputure-ls-60x':{url:'https://aputure.com/en-US/products/ls-60x',
-        lux:[33480,4241,1451,5803,703,268]}
+        lux:[33480,4241,1451,5803,703,268]},
+      'aputure-ls-300d-ii':{url:'https://aputure.com/en-US/products/ls-300d-ii',
+        requireOptic:true,ids:['HYPER_REFLECTOR_55:55:1','HYPER_REFLECTOR_55:55:3','HYPER_REFLECTOR_55:55:5'],
+        lux:[45000,3500,1200]},
+      'aputure-ls-1200d-pro':{url:'https://aputure.com/en-US/products/ls-1200d-pro',
+        requireOptic:true,
+        ids:['BM1215_NARROW:15:3','BM1215_NARROW:15:5','BM1215_NARROW:15:7','BM1215_NARROW:15:9',
+          'BM1230_MEDIUM:30:3','BM1230_MEDIUM:30:5','BM1230_MEDIUM:30:7','BM1230_MEDIUM:30:9',
+          'BM1245_WIDE:45:3','BM1245_WIDE:45:5','BM1245_WIDE:45:7','BM1245_WIDE:45:9'],
+        lux:[83100,28340,15200,8580,22400,8200,4660,2880,13010,4800,2706,1775]}
     };
     var ids=knowledge && Array.isArray(knowledge.cards) ?
       knowledge.cards.map(function(c){return str(c&&c.id,40);}) : [];
@@ -228,23 +237,24 @@
       var light=emitted.find(function(l){return l.id===id && l.fixtureId===fixtureId && l.available;});
       var reference=Object.prototype.hasOwnProperty.call(official,fixtureId)?official[fixtureId]:null;
       if(!light||seen[id]||!reference||url!==reference.url||e.sourceType!=='MANUFACTURER_PUBLISHED_REFERENCE'||
-        e.cctK!==5600||e.outputPct!==100||!Array.isArray(e.samples)||e.samples.length!==6)return null;
+        e.cctK!==5600||e.outputPct!==100||!Array.isArray(e.samples)||e.samples.length!==reference.lux.length||
+        !!e.requiresAttestedOptic!==!!reference.requireOptic)return null;
       var samples=e.samples.map(function(s){
-        if(!s||[15,45].indexOf(s.beamAngleDeg)<0||[1,3,5].indexOf(s.distanceM)<0||
+        if(!s||![15,30,45,55].includes(s.beamAngleDeg)||![1,3,5,7,9].includes(s.distanceM)||
           !Number.isSafeInteger(s.lux)||s.lux<1||s.lux>1000000)return null;
-        return {beamAngleDeg:s.beamAngleDeg,distanceM:s.distanceM,lux:s.lux};
+        return {opticId:s.opticId==null?null:str(s.opticId,50),beamAngleDeg:s.beamAngleDeg,distanceM:s.distanceM,lux:s.lux};
       });
       if(samples.some(function(s){return s===null;}))return null;
-      var sampleIds=samples.map(function(s){return s.beamAngleDeg+':'+s.distanceM;});
+      var sampleIds=samples.map(function(s){return (s.opticId?s.opticId+':':'')+s.beamAngleDeg+':'+s.distanceM;});
       if((new Set(sampleIds)).size!==6)return null;
-      var expectedIds=['15:1','15:3','15:5','45:1','45:3','45:5'];
+      var expectedIds=reference.ids||['15:1','15:3','15:5','45:1','45:3','45:5'];
       if(sampleIds.some(function(x,i){return x!==expectedIds[i]||samples[i].lux!==reference.lux[i];}))return null;
       seen[id]=true;
       var k=5600;
       return {lightId:id,fixtureId:fixtureId,sourceUrl:url,
         sourceType:'MANUFACTURER_PUBLISHED_REFERENCE',cctK:k,outputPct:100,
-        samples:samples,
-        configurationMatchesReference:light.intensityPct===100 && light.kelvin===k &&
+        requiresAttestedOptic:!!reference.requireOptic,samples:samples,
+        configurationMatchesReference:!reference.requireOptic && light.intensityPct===100 && light.kelvin===k &&
           (light.beamAngleDeg===15||light.beamAngleDeg===45) && !light.modifier,
         estimatedXMetres:measured?Number((req.roomWidthM*light.x/100).toFixed(2)):null,
         estimatedYMetres:measured?Number((req.roomDepthM*light.y/100).toFixed(2)):null,

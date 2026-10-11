@@ -609,6 +609,129 @@ assert.equal(unidentifiedLut.plan.cameraGrayCardWaveformReading.monitoringTransf
 assert.equal(core.analyzeMeteredExposureContext(unidentifiedLut,'L1','L2')
   .cameraWaveformEvidence.referenceDifferenceIrePoints,null);
 
+// Two distinct, SHA-bound camera observations in the SAME contiguous
+// revision chain. Numbers are IRE POINTS only; no IRE -> stops or lux.
+const meterForSecondTake=core.createSceneIncidentLuxRevision(waveformV2Rev,{
+  ...sceneInput,lux:'701.5',measuredAtLocal:'2026-10-11T16:20'
+});
+const secondTake=core.createCameraGrayCardWaveformRevision(meterForSecondTake,{
+  ...waveformV2Input,waveformIre:'46.0',measuredAtLocal:'2026-10-11T16:23'
+});
+const twoTakeHistory=[ratioPlan,ratioA,ratioB,ratioC,ratioD,
+  sceneRev,waveformV2Rev,meterForSecondTake,secondTake];
+const twoTake=core.compareGrayCardWaveformRevisions(twoTakeHistory,
+  waveformV2Rev.revisionId,secondTake.revisionId);
+assert.equal(twoTake.contract,'lightingai-gray-card-waveform-revision-comparison/1');
+assert.equal(twoTake.status,'USER_REPORTED_IRE_LEVEL_DIFFERENCE_ONLY');
+assert.equal(twoTake.reason,null);
+assert.equal(twoTake.beforeRevisionId,waveformV2Rev.revisionId);
+assert.equal(twoTake.afterRevisionId,secondTake.revisionId);
+assert.deepEqual([twoTake.beforeIre,twoTake.afterIre,twoTake.deltaIrePoints],[42.5,46,3.5]);
+assert.equal(twoTake.minutesBetween,11);
+assert.equal(twoTake.signalCodeRange,'FULL_DATA');
+assert.equal(twoTake.recordingProfile,waveformV2Input.recordingProfile);
+assert.equal(twoTake.grayCardIdentifier,waveformV2Input.grayCardIdentifier);
+assert.equal(twoTake.measurementPoint,waveformV2Input.measurementPoint);
+assert.equal(twoTake.plannedSetupFingerprintMatches,true,
+  'setup plan fingerprints can match even though measured lux changed');
+assert.equal(twoTake.userReferenceComparisonUsed,false,
+  'comparison of two observations does not assume a universal target IRE');
+for(const flag of ['waveformInstrumentVerified','profileVerified','grayCardReflectanceVerified',
+  'ambientStabilityVerified','physicalRigStateVerified','cameraExposureVerified'])
+  assert.equal(twoTake[flag],false,'a matching signal chain cannot prove '+flag);
+for(const field of ['derivedExposureStops','derivedSceneEv100',
+  'recommendedAperture','recommendedIso'])
+  assert.equal(twoTake[field],null,'no measured camera exposure from '+field);
+assert.ok(twoTake.bookGuidance.every(card=>
+  secondTake.plan.knowledgeBasis.cards.some(c=>c.id===card.id&&
+    c.principle===card.principle&&c.validation===card.validation&&
+    c.limitations===card.limitations)),
+  'book explanations must be precisely attached to active after revision');
+assert.equal(Object.isFrozen(twoTake),true);
+assert.equal(Object.isFrozen(twoTake.bookGuidance),true);
+assert.equal(core.restoreRevisions(twoTakeHistory).length,9);
+assert.equal(waveformV2Rev.plan.cameraGrayCardWaveformReading.waveformIre,42.5);
+assert.equal(secondTake.plan.cameraGrayCardWaveformReading.waveformIre,46);
+
+function secondTakeCompare(overrides,sceneOverrides){
+  const metered=core.createSceneIncidentLuxRevision(waveformV2Rev,{
+    ...sceneInput,lux:'701.5',measuredAtLocal:'2026-10-11T16:20',
+    ...(sceneOverrides||{})
+  });
+  const captured=core.createCameraGrayCardWaveformRevision(metered,{
+    ...waveformV2Input,waveformIre:'46.0',measuredAtLocal:'2026-10-11T16:23',
+    ...(overrides||{})
+  });
+  return core.compareGrayCardWaveformRevisions([
+    ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev,waveformV2Rev,
+    metered,captured],waveformV2Rev.revisionId,captured.revisionId);
+}
+assert.equal(secondTakeCompare({waveformIre:37.5}).deltaIrePoints,-5,
+  'a darker second gray card must preserve negative signed IRE delta');
+assert.equal(secondTakeCompare({waveformIre:42.5}).deltaIrePoints,0);
+assert.equal(secondTakeCompare({...displayV2Input,waveformIre:46,
+  measuredAtLocal:'2026-10-11T16:23'}).reason,'DIFFERENT_WAVEFORM_SIGNAL_CONTEXT',
+  'recording and display LUT signal paths cannot be compared');
+assert.equal(secondTakeCompare({grayCardIdentifier:'New card'}).reason,
+  'DIFFERENT_GRAY_CARD_IDENTIFIERS');
+assert.equal(secondTakeCompare({recordingProfile:'Another gamma profile'}).reason,
+  'DIFFERENT_CAMERA_PROFILE');
+assert.equal(secondTakeCompare({measurementPoint:'Second subject mark'},
+  {measurementPoint:'Second subject mark'}).reason,'DIFFERENT_MEASUREMENT_POINTS');
+assert.equal(secondTakeCompare({measuredAtLocal:'2026-10-11T16:12'}).reason,
+  'MEASUREMENT_TIMES_NOT_CHRONOLOGICAL');
+assert.equal(secondTakeCompare({measuredAtLocal:'2026-10-11T16:11'}).reason,
+  'MEASUREMENT_TIMES_NOT_CHRONOLOGICAL');
+const unknownSecondMeter=core.createSceneIncidentLuxRevision(observedOnlyV2,{
+  ...sceneInput,measuredAtLocal:'2026-10-11T16:20'
+});
+const unknownSecondWave=core.createCameraGrayCardWaveformRevision(unknownSecondMeter,{
+  ...waveformV2Input,signalPath:'UNKNOWN',signalCodeRange:'UNKNOWN',
+  observedTransferLabel:'Signal chain not confirmed by operator',
+  userReferenceIre:'',referenceBasis:'',referenceContextConfirmed:false,
+  waveformIre:45,measuredAtLocal:'2026-10-11T16:23'
+});
+assert.equal(core.compareGrayCardWaveformRevisions([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev,observedOnlyV2,
+  unknownSecondMeter,unknownSecondWave],
+  observedOnlyV2.revisionId,unknownSecondWave.revisionId).reason,
+  'INCOMPLETE_WAVEFORM_SIGNAL_CONTEXT');
+const V1SecondMeter=core.createSceneIncidentLuxRevision(waveRev,{
+  ...sceneInput,measuredAtLocal:'2026-10-11T16:20'
+});
+const V1SecondWave=core.createCameraGrayCardWaveformRevision(V1SecondMeter,{
+  ...waveformV2Input,measuredAtLocal:'2026-10-11T16:23'
+});
+assert.equal(core.compareGrayCardWaveformRevisions([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev,waveRev,
+  V1SecondMeter,V1SecondWave],waveRev.revisionId,V1SecondWave.revisionId).reason,
+  'V2_SIGNAL_CONTEXT_REQUIRED','legacy V1 remains readable but cannot be paired as V2');
+assert.equal(core.compareGrayCardWaveformRevisions(twoTakeHistory,
+  secondTake.revisionId,waveformV2Rev.revisionId).reason,
+  'REVISIONS_NOT_CHRONOLOGICAL');
+assert.equal(core.compareGrayCardWaveformRevisions(twoTakeHistory,
+  'rev-'+'0'.repeat(64),secondTake.revisionId).reason,'UNKNOWN_REVISION');
+assert.equal(core.compareGrayCardWaveformRevisions(twoTakeHistory,
+  waveformV2Rev.revisionId,meterForSecondTake.revisionId).reason,
+  'MISSING_GRAY_CARD_WAVEFORM');
+const refusedSignal=secondTakeCompare({recordingProfile:'Different gamma'});
+assert.equal(refusedSignal.status,'NOT_COMPARABLE');
+assert.equal(refusedSignal.beforeIre,null);
+assert.equal(refusedSignal.afterIre,null);
+assert.equal(refusedSignal.deltaIrePoints,null);
+assert.equal(refusedSignal.minutesBetween,null);
+assert.equal(refusedSignal.cameraExposureVerified,false);
+const incompleteTakeHistory=twoTakeHistory.filter(r=>r.revisionId!==meterForSecondTake.revisionId);
+assert.throws(()=>core.compareGrayCardWaveformRevisions(incompleteTakeHistory,
+  waveformV2Rev.revisionId,secondTake.revisionId),
+  /Broken revision history/i,'missing history link must never create a comparison');
+const tamperedTake=JSON.parse(JSON.stringify(secondTake));
+tamperedTake.plan.cameraGrayCardWaveformReading.waveformIre=99;
+assert.throws(()=>core.compareGrayCardWaveformRevisions([
+  ...twoTakeHistory.slice(0,-1),tamperedTake],
+  waveformV2Rev.revisionId,tamperedTake.revisionId),/integrity|Invalid|mismatch/i,
+  'tampered final reading cannot be used for a revision comparison');
+
 for(const badContext of [
   {signalCodeRange:'UNKNOWN'},
   {signalCodeRange:'STUDIO_UNSPECIFIED'},
@@ -1120,6 +1243,12 @@ assert.match(uiSource,/monitoringTransformId:el\(/);
 assert.match(uiSource,/cameraWaveformEvidence/);
 assert.match(uiSource,/referenceDifferenceIrePoints/);
 assert.match(uiSource,/Korisnički zadat referentni nivo/);
+assert.match(uiSource,/compareGrayCardWaveformRevisions\(/,
+  'user-visible history comparison must use revision-validated core');
+assert.match(uiSource,/POREĐENJE DVA WAVEFORM OČITAVANJA/);
+assert.match(uiSource,/deltaIrePoints/);
+assert.match(uiSource,/plannedSetupFingerprintMatches/);
+assert.match(uiSource,/Praktična provera: /);
 assert.match(uiSource,/METAPODACI TRI MERENJA/,'specific in-app alignment explanation is required');
 assert.match(uiSource,/aditivno|sabirati/i,'cannot imply addition of different lighting states');
 assert.match(uiSource,/sceneIncidentEvidence\.userReportedLux/);

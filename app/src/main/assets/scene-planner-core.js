@@ -1531,6 +1531,93 @@
     });
     return freezeJson(revisions);
   }
+  // Compare two independently entered camera-gray-card waveform OBSERVATIONS,
+  // never different signal encodings and never a claimed exposure change.
+  // Verify the entire history chain, not just its endpoints, so sibling or
+  // tampered revisions cannot be passed off as a before/after sequence.
+  function compareGrayCardWaveformRevisions(history,earlierRevisionId,laterRevisionId) {
+    var revisions=restoreRevisions(history);
+    var after=revisions.find(function(r){return r.revisionId===laterRevisionId;});
+    var before=revisions.find(function(r){return r.revisionId===earlierRevisionId;});
+    var attached=after&&after.plan.knowledgeBasis&&Array.isArray(after.plan.knowledgeBasis.cards)?
+      after.plan.knowledgeBasis.cards:[];
+    var guidance=attached.filter(function(card){
+      return card&&['EXP-002','EXP-003','SET-007'].indexOf(card.id)>=0;
+    }).map(function(card){
+      return {id:card.id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
+    var result={
+      contract:'lightingai-gray-card-waveform-revision-comparison/1',
+      status:'NOT_COMPARABLE',reason:null,
+      sceneId:revisions[0].sceneId,
+      beforeRevisionId:earlierRevisionId,afterRevisionId:laterRevisionId,
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      kind:'GRAY_CARD_WAVEFORM_IRE_POINTS_ONLY',
+      beforeIre:null,afterIre:null,deltaIrePoints:null,minutesBetween:null,
+      cameraModel:null,recordingProfile:null,signalPath:null,signalCodeRange:null,
+      observedTransferLabel:null,monitoringTransformId:null,
+      grayCardIdentifier:null,measurementPoint:null,
+      plannedSetupFingerprintMatches:null,
+      userReferenceComparisonUsed:false,
+      waveformInstrumentVerified:false,profileVerified:false,
+      grayCardReflectanceVerified:false,ambientStabilityVerified:false,
+      physicalRigStateVerified:false,cameraExposureVerified:false,
+      derivedExposureStops:null,derivedSceneEv100:null,
+      recommendedAperture:null,recommendedIso:null,
+      bookGuidance:guidance
+    };
+    function blocked(reason){return freezeJson(Object.assign({},result,{reason:reason}));}
+    if(!after||!before)return blocked('UNKNOWN_REVISION');
+    if(before.sequence>=after.sequence)return blocked('REVISIONS_NOT_CHRONOLOGICAL');
+    var a=before.plan.cameraGrayCardWaveformReading;
+    var b=after.plan.cameraGrayCardWaveformReading;
+    if(!a||!b)return blocked('MISSING_GRAY_CARD_WAVEFORM');
+    // V1 does not contain the transfer/range fingerprint needed to compare
+    // two cameras' output signals, even if its reported IRE is otherwise valid.
+    if(a.protocolVersion!==2||b.protocolVersion!==2)
+      return blocked('V2_SIGNAL_CONTEXT_REQUIRED');
+    if(a.cameraModel!==b.cameraModel||a.recordingProfile!==b.recordingProfile)
+      return blocked('DIFFERENT_CAMERA_PROFILE');
+    if(a.cameraSettingsHash!==b.cameraSettingsHash)
+      return blocked('DIFFERENT_CAMERA_SETTINGS');
+    if(a.waveformSource!==b.waveformSource||a.signalPath!==b.signalPath||
+      a.signalCodeRange!==b.signalCodeRange||
+      a.observedTransferLabel!==b.observedTransferLabel||
+      a.monitoringTransformId!==b.monitoringTransformId||
+      a.signalContextHash!==b.signalContextHash)
+      return blocked('DIFFERENT_WAVEFORM_SIGNAL_CONTEXT');
+    if(a.signalPath==='UNKNOWN'||a.signalCodeRange==='UNKNOWN'||
+      (a.signalPath==='DISPLAY_LUT_SIGNAL'&&!a.monitoringTransformId))
+      return blocked('INCOMPLETE_WAVEFORM_SIGNAL_CONTEXT');
+    if(a.grayCardIdentifier!==b.grayCardIdentifier)
+      return blocked('DIFFERENT_GRAY_CARD_IDENTIFIERS');
+    if(a.measurementPoint!==b.measurementPoint)
+      return blocked('DIFFERENT_MEASUREMENT_POINTS');
+    var earlierTime=meterUtcMinute(a.measuredAtLocal,a.utcOffsetMinutes);
+    var laterTime=meterUtcMinute(b.measuredAtLocal,b.utcOffsetMinutes);
+    if(!Number.isFinite(earlierTime)||!Number.isFinite(laterTime)||
+      laterTime<=earlierTime)
+      return blocked('MEASUREMENT_TIMES_NOT_CHRONOLOGICAL');
+    // Time is informative only: never infer constant ambient or actual lamp
+    // output between different physical lighting states and meter sessions.
+    var difference=Number((b.waveformIre-a.waveformIre).toFixed(1));
+    if(difference===0)difference=0;
+    return freezeJson(Object.assign({},result,{
+      status:'USER_REPORTED_IRE_LEVEL_DIFFERENCE_ONLY',reason:null,
+      beforeIre:a.waveformIre,afterIre:b.waveformIre,
+      deltaIrePoints:difference,minutesBetween:laterTime-earlierTime,
+      cameraModel:b.cameraModel,recordingProfile:b.recordingProfile,
+      signalPath:b.signalPath,signalCodeRange:b.signalCodeRange,
+      observedTransferLabel:b.observedTransferLabel,
+      monitoringTransformId:b.monitoringTransformId,
+      grayCardIdentifier:b.grayCardIdentifier,
+      measurementPoint:b.measurementPoint,
+      plannedSetupFingerprintMatches:
+        before.plan.sceneIncidentLuxReading.setupFingerprint===
+          after.plan.sceneIncidentLuxReading.setupFingerprint
+    }));
+  }
   // Future MP4 receipt contract only. No provider calls or paid-flow integration.
   function videoRevisionBinding(revision) {
     verifyRevision(revision);
@@ -1547,6 +1634,7 @@
     compareKeyFillMeasurements:compareKeyFillMeasurements,
     assessSceneMeterAlignment:assessSceneMeterAlignment,
     analyzeMeteredExposureContext:analyzeMeteredExposureContext,
+    compareGrayCardWaveformRevisions:compareGrayCardWaveformRevisions,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};

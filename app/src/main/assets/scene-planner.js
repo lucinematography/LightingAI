@@ -635,6 +635,38 @@
           'Nema izvedenog ISO, blende, T-stop-a, scene EV ili ukupne ekspozicije.');
       }
     }
+    // The two most recent camera observations are compared only when the
+    // currently exported revision is the second observed waveform.
+    if(revisions.length&&core().compareGrayCardWaveformRevisions&&
+      revisions[revisions.length-1].plan.cameraGrayCardWaveformReading){
+      var recordedHistory=revisions.filter(function(r){
+        return r.plan&&r.plan.cameraGrayCardWaveformReading;
+      });
+      if(recordedHistory.length>=2){
+        var beforeRecorded=recordedHistory[recordedHistory.length-2];
+        var laterRecorded=recordedHistory[recordedHistory.length-1];
+        var comparison=core().compareGrayCardWaveformRevisions(
+          revisions,beforeRecorded.revisionId,laterRecorded.revisionId);
+        lines.push('','POREĐENJE DVA STVARNO PRIJAVLJENA WAVEFORM OČITAVANJA',
+          'Pre: '+comparison.beforeRevisionId+'; posle: '+comparison.afterRevisionId);
+        if(comparison.status==='USER_REPORTED_IRE_LEVEL_DIFFERENCE_ONLY'){
+          lines.push('Pre '+comparison.beforeIre+' IRE; posle '+comparison.afterIre+
+            ' IRE; razlika '+comparison.deltaIrePoints+' IRE poena za sivu kartu '+
+            comparison.grayCardIdentifier+' na tački '+comparison.measurementPoint+
+            '. Razmak očitavanja '+comparison.minutesBetween+' min.',
+            'Da li se PLANIRANA postavka promenila: '+
+            (comparison.plannedSetupFingerprintMatches?'ne prema otisku plana':'da prema otisku plana')+
+            '. Fizička postavka, ambijentalna stabilnost, signal i kalibracija nisu nezavisno potvrđeni.');
+        }else lines.push('Poređenje odbijeno: '+comparison.reason+
+          '. IRE brojevi nisu sabirani ili pogrešno pretvarani u ekspozicione stope.');
+        (comparison.bookGuidance||[]).forEach(function(card){
+          lines.push('Princip '+card.id+': '+card.principle,
+            'Praktična provera: '+card.validation,
+            'Ograničenje: '+card.limitations);
+        });
+        lines.push('Nema izvedenog ISO, blende, log-EV, kontrasta kadra ili automatskog saveta za lampu.');
+      }
+    }
     lines.push('','OGRANIČENJA',...plan.limitations,'','BEZBEDNOST',...plan.safetyNotes);
     return lines.join('\n');
   }
@@ -966,6 +998,50 @@
           status('Prijavljeno očitavanje sive karte je sačuvano u novoj reviziji. Ekspozicija nije kalibrisana.');
         }catch(error){status('Waveform očitavanje nije sačuvano: '+error.message,true);}
       };
+    }
+    // Compare the last two *archived* gray-card observations with an intact
+    // revision chain. Always label the captured revisions and never claim
+    // physical lamp causality from a change in signal percentage points.
+    if(cameraBox&&current&&current.plan.cameraGrayCardWaveformReading&&
+      core().compareGrayCardWaveformRevisions){
+      var cameraObservations=revisions.filter(function(r){
+        return r.plan&&r.plan.cameraGrayCardWaveformReading;
+      });
+      if(cameraObservations.length>=2){
+        var beforeObservation=cameraObservations[cameraObservations.length-2];
+        var afterObservation=cameraObservations[cameraObservations.length-1];
+        var beforeAfter=core().compareGrayCardWaveformRevisions(
+          revisions,beforeObservation.revisionId,afterObservation.revisionId);
+        cameraBox.innerHTML+='<details class="sp-lamp"><summary><b>POREĐENJE DVA WAVEFORM OČITAVANJA — DoP</b></summary>'+
+          '<p class="sp-note">Ranije: '+esc(beforeAfter.beforeRevisionId)+
+          '; kasnije: '+esc(beforeAfter.afterRevisionId)+'</p>'+
+          (beforeAfter.status==='USER_REPORTED_IRE_LEVEL_DIFFERENCE_ONLY'?
+            '<p>Ranije '+esc(beforeAfter.beforeIre)+' IRE; kasnije '+
+            esc(beforeAfter.afterIre)+' IRE; promena '+
+            esc(beforeAfter.deltaIrePoints)+' IRE poena. '+
+            'Ista korisnički prijavljena kamera, profil, signalni opseg, transfer, LUT, '+
+            'identifikator sive karte i merna tačka; razmak '+
+            esc(beforeAfter.minutesBetween)+' min.</p>'+
+            '<p>Otisak PLANIRANE postavke: '+
+            (beforeAfter.plannedSetupFingerprintMatches?
+              'isti.':'različit.')+
+            ' To nije dokaz stvarne postavke, stabilnog ambijenta ili pravilne ekspozicije.</p>':
+            '<p>Poređenje nije dozvoljeno: <b>'+esc(beforeAfter.reason)+
+            '</b>. Zahteva se ista prijavljena signalna putanja i V2 zapis oba očitavanja.</p>')+
+          '<p class="sp-note">Razlika u IRE poenima nije razlika u ekspozicionim stopama. '+
+          'Ne menjamo ISO, blendu ili reflektore; ne pripisujemo razliku isključivo osvetljenju. '+
+          'Proveri ambijent, blokiranje, senke i kamerin waveform za sve kadrove.</p>'+
+          (beforeAfter.bookGuidance||[]).map(function(card){
+            return '<div class="sp-note"><b>'+esc(card.id)+' — '+esc(card.title)+'</b>'+
+              '<div>Princip: '+esc(card.principle)+'</div>'+
+              '<div>Praktična provera: '+esc(card.validation)+'</div>'+
+              '<div>Ograničenje: '+esc(card.limitations)+'</div></div>';
+          }).join('')+'</details>';
+      }else{
+        cameraBox.innerHTML+='<p class="sp-note">Za poređenje sa ranijom postavkom '+
+          'potrebna su dva zasebna V2 waveform očitavanja u ovoj istoriji revizija. '+
+          'Sačuvaj sledeće očitavanje posle dokumentovanog merenja scene.</p>';
+      }
     }
     el('sp-plot').innerHTML=plotSvg(plan,current);
     renderBlocking();

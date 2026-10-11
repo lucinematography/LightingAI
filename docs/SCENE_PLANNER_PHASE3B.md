@@ -975,3 +975,60 @@ text, absent attestation, forged/different SHA bindings, no-reference
 observation, revision restoration/invalidation and no fabricated calibrated
 exposure or universal IRE target. No `main`, K0, K1, merging, release,
 installation, paid AI, physical fixture control or safety relaxation.
+
+
+### DoP before-and-after gray-card waveform revision comparison (2026-10-11)
+
+LightingAI now supports a **pure, offline comparison of two separately
+documented on-set gray-card waveform observations** captured in one immutable
+Scene Planner revision chain. The comparison is exposed both in the camera
+panel and the text export, using the **two most recent waveform-bearing
+revisions, only when the active revision has a waveform observation**.
+The comparison identifies both SHA-256-bound revision IDs, so the DoP can
+trace which observations were compared without resetting or overwriting the
+previous take. Historical V1 readings remain readable but are **not eligible**
+for a V2-vs-V2 comparison.
+
+`compareGrayCardWaveformRevisions(history, earlierId, laterId)` first
+verifies the **entire contiguous revision history** with `restoreRevisions`,
+rejects unknown IDs or reversed sequences, and requires camera waveform V2
+in both revisions. It compares only if the user-declared camera model and
+recording profile match, camera-settings fingerprints match, and the declared
+waveform source, recording-vs-display signal path, full/legal code range,
+observed transfer description, monitoring LUT identity (where applicable)
+and exact SHA-256 signal-context binding all match. Unknown code range or
+signal path is **not** comparable. The **same physical gray-card identifier**
+and **same named measurement point** are mandatory, as are distinct
+chronologically ordered timestamps calculated using each UTC offset.
+Elapsed minutes are shown for context, but the window is deliberately
+not used to **assert stable daylight or steady fixture output** between
+separate physical setups.
+
+If all metadata checks pass, the function returns only:
+`beforeIre`, `afterIre` and signed
+`deltaIrePoints = round(afterIre-beforeIre, 1)`.
+The result is explicitly `USER_REPORTED_IRE_LEVEL_DIFFERENCE_ONLY`.
+A second field indicates whether the **planned** rig fingerprint matches,
+but this cannot independently verify actual lamp locations, optical
+attachments, user dimmer levels, ambient consistency, card calibration,
+monitor/camera profile, color workflow or whether any difference is actually
+caused by the lighting change. A reference IRE is **not required nor used**
+for this before/after comparison, and no universal reference is supplied.
+
+Mismatches are `NOT_COMPARABLE` with an explicit machine-readable blocker
+and null before/after IRE and delta. No waveform IRE is converted to lux,
+camera EV, exposure stops, scene contrast, suggested aperture or ISO.
+No paid AI, auto-rig, direct fixture control or preview rendering is
+triggered. The user-visible result advises comparing shadows, waveform,
+lighting motivation and camera angles with the cinematographer. It shows
+practical checks and limitations solely from **EXP-002, EXP-003, SET-007**
+cards *actually attached to the current revision*; the library has not
+independently verified every page of the original source books.
+
+Regressions exercise same-context increased, decreased, and equal
+observations; monitoring LUT changes; unknown signal chain; different
+camera profile, physical card and measuring mark; V1 history; reversed or
+missing revision IDs; non-monotonic time; missing intermediate history;
+tampered SHA-256 records; immutable original observations and absence
+of automatic exposure calculations. K0, K1 and `main` stay unchanged;
+PR #415 remains Draft and no merge/release/publish/APK installation occurs.

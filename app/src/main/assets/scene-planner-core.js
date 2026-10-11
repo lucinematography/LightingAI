@@ -105,6 +105,18 @@
     var n=Number(value);
     return Number.isFinite(n)&&n>=0&&n<=109&&Math.round(n*10)/10===n?n:null;
   }
+  // This digest is only a revision-local binding to user-declared signal
+  // context, never proof of the waveform chain, LUT or camera calibration.
+  function cameraWaveformSignalContextHash(evidence) {
+    return sha256(canonicalJson({
+      cameraModel:evidence.cameraModel,recordingProfile:evidence.recordingProfile,
+      waveformSource:evidence.waveformSource,signalPath:evidence.signalPath,
+      signalCodeRange:evidence.signalCodeRange,
+      observedTransferLabel:evidence.observedTransferLabel,
+      monitoringTransformId:evidence.monitoringTransformId,
+      cameraSettingsHash:evidence.cameraSettingsHash
+    }));
+  }
   function meterText(value,max) {
     if(typeof value!=='string')return null;
     var result=value.trim();
@@ -748,7 +760,7 @@
     var waveform=plan.cameraGrayCardWaveformReading;
     if(waveform!==undefined){
       if(!sceneMeter||!waveform||typeof waveform!=='object'||Array.isArray(waveform)||
-        plan.mode!=='own'||waveform.protocolVersion!==1||
+        plan.mode!=='own'||![1,2].includes(waveform.protocolVersion)||
         waveform.source!=='USER_REPORTED_GRAY_CARD_WAVEFORM_NOT_INDEPENDENTLY_VERIFIED'||
         waveform.subject!=='USER_DECLARED_NEUTRAL_GRAY_CARD_AT_SCENE_MEASUREMENT_POINT'||
         waveform.unit!=='IRE'||waveform.userAttested!==true||
@@ -782,6 +794,34 @@
           waveform.signalPath==='UNKNOWN'))||
         (!waveformHasReference&&waveform.referenceBasis!==null))
         throw new Error('Invalid user-specified waveform reference');
+      // V1 is immutable historical evidence, not silently upgraded to a V2
+      // reference with verified signal levels or LUT provenance.
+      var v2OnlyFields=['signalCodeRange','observedTransferLabel',
+        'monitoringTransformId','signalContextHash','referenceContextConfirmed',
+        'referenceContextHash'];
+      if(waveform.protocolVersion===1){
+        if(v2OnlyFields.some(function(k){return waveform[k]!==undefined;}))
+          throw new Error('V1 camera waveform cannot assert V2 signal context');
+      }else{
+        if(['FULL_DATA','VIDEO_LEGAL','UNKNOWN'].indexOf(waveform.signalCodeRange)<0||
+          meterText(waveform.observedTransferLabel,120)!==waveform.observedTransferLabel||
+          (waveform.signalPath==='DISPLAY_LUT_SIGNAL'?
+            waveform.monitoringTransformId!==null&&
+              meterText(waveform.monitoringTransformId,120)!==waveform.monitoringTransformId:
+            waveform.monitoringTransformId!==null)||
+          waveform.signalContextHash!==cameraWaveformSignalContextHash(waveform))
+          throw new Error('Invalid V2 camera waveform signal context or fingerprint');
+        if(waveformHasReference){
+          if(waveform.referenceContextConfirmed!==true||
+            waveform.signalPath==='UNKNOWN'||waveform.signalCodeRange==='UNKNOWN'||
+            (waveform.signalPath==='DISPLAY_LUT_SIGNAL'&&!waveform.monitoringTransformId)||
+            waveform.referenceContextHash!==waveform.signalContextHash)
+            throw new Error('V2 waveform reference requires matching user-attested signal context');
+        }else if(waveform.referenceContextConfirmed!==false||
+          waveform.referenceContextHash!==null){
+          throw new Error('V2 waveform cannot claim a missing reference');
+        }
+      }
       var cameraMeterSpan=Math.abs(meterUtcMinute(waveform.measuredAtLocal,waveform.utcOffsetMinutes)-
         meterUtcMinute(sceneMeter.measuredAtLocal,sceneMeter.utcOffsetMinutes));
       if(!Number.isFinite(cameraMeterSpan)||cameraMeterSpan>15)
@@ -1144,8 +1184,38 @@
       !hasReference&&report.referenceBasis!==undefined&&report.referenceBasis!==null&&
         String(report.referenceBasis).trim()!=='')
       throw new Error('A waveform reference requires a manual IRE value, named basis and known signal path');
+    var v2=report.protocolVersion===2;
+    var v2Keys=['signalCodeRange','observedTransferLabel',
+      'monitoringTransformId','referenceContextConfirmed'];
+    if(report.protocolVersion!==undefined&&report.protocolVersion!==2||
+      !v2&&v2Keys.some(function(k){return report[k]!==undefined;}))
+      throw new Error('V2 signal metadata must have an explicit V2 protocol');
+    var codeRange=null,observedTransfer=null,monitoringTransformId=null;
+    if(v2){
+      codeRange=report.signalCodeRange;
+      observedTransfer=meterText(report.observedTransferLabel,120);
+      var incomingTransform=report.monitoringTransformId;
+      if(['FULL_DATA','VIDEO_LEGAL','UNKNOWN'].indexOf(codeRange)<0||
+        !observedTransfer||
+        (signalPath!=='DISPLAY_LUT_SIGNAL'&&
+          incomingTransform!==null&&incomingTransform!==undefined&&incomingTransform!==''))
+        throw new Error('Invalid V2 waveform signal range, transfer label or transform');
+      if(signalPath==='DISPLAY_LUT_SIGNAL'){
+        monitoringTransformId=incomingTransform==null||incomingTransform===''?
+          null:meterText(incomingTransform,120);
+        if(incomingTransform&&!monitoringTransformId)
+          throw new Error('Invalid V2 monitoring LUT identity');
+      }
+      if(hasReference){
+        if(report.referenceContextConfirmed!==true||
+          codeRange==='UNKNOWN'||signalPath==='UNKNOWN'||
+          signalPath==='DISPLAY_LUT_SIGNAL'&&!monitoringTransformId)
+          throw new Error('V2 reference requires a known signal chain and explicit matching-context attestation');
+      }else if(report.referenceContextConfirmed===true)
+        throw new Error('V2 cannot attest a reference that is absent');
+    }
     plan.cameraGrayCardWaveformReading={
-      protocolVersion:1,
+      protocolVersion:v2?2:1,
       source:'USER_REPORTED_GRAY_CARD_WAVEFORM_NOT_INDEPENDENTLY_VERIFIED',
       subject:'USER_DECLARED_NEUTRAL_GRAY_CARD_AT_SCENE_MEASUREMENT_POINT',
       unit:'IRE',waveformIre:level,
@@ -1161,6 +1231,15 @@
       userAttested:true,grayCardPlacedConfirmed:true,
       cameraSettingsMatchedConfirmed:true,allSourcesActiveConfirmed:true
     };
+    if(v2){
+      var wave=plan.cameraGrayCardWaveformReading;
+      wave.signalCodeRange=codeRange;
+      wave.observedTransferLabel=observedTransfer;
+      wave.monitoringTransformId=monitoringTransformId;
+      wave.signalContextHash=cameraWaveformSignalContextHash(wave);
+      wave.referenceContextConfirmed=!!hasReference;
+      wave.referenceContextHash=hasReference?wave.signalContextHash:null;
+    }
     plan.dataStatus.cameraGrayCardWaveformReading='user-reported-not-independently-verified';
     var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
       sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
@@ -1398,6 +1477,18 @@
       cameraWaveformEvidence:{
         status:gray?'USER_REPORTED_GRAY_CARD_SIGNAL_NOT_CALIBRATED':'NOT_RECORDED',
         waveformIre:gray?gray.waveformIre:null,
+        protocolVersion:gray?gray.protocolVersion:null,
+        signalCodeRange:gray&&gray.protocolVersion===2?gray.signalCodeRange:null,
+        observedTransferLabel:gray&&gray.protocolVersion===2?gray.observedTransferLabel:null,
+        monitoringTransformId:gray&&gray.protocolVersion===2?gray.monitoringTransformId:null,
+        signalContextHash:gray&&gray.protocolVersion===2?gray.signalContextHash:null,
+        referenceContextHash:gray&&gray.protocolVersion===2?gray.referenceContextHash:null,
+        referenceContextConfirmed:!!(gray&&gray.protocolVersion===2&&
+          gray.referenceContextConfirmed),
+        referenceComparisonStatus:!gray?'NOT_RECORDED':
+          gray.userReferenceIre===null?'NO_USER_REFERENCE':
+          gray.protocolVersion===2?'V2_USER_ATTESTED_SIGNAL_CONTEXT_NOT_VERIFIED':
+            'LEGACY_V1_REFERENCE_SIGNAL_CHAIN_INCOMPLETE',
         unit:'IRE',cameraModel:gray?gray.cameraModel:null,
         recordingProfile:gray?gray.recordingProfile:null,
         waveformSource:gray?gray.waveformSource:null,
@@ -1416,6 +1507,8 @@
         cameraSettingsHash:gray?gray.cameraSettingsHash:null,
         sceneReadingHash:gray?gray.sceneReadingHash:null,
         cameraSettingsVerified:false,monitorSignalPathVerified:false,
+        signalCodeRangeVerified:false,transferFunctionVerified:false,
+        monitoringTransformVerified:false,
         grayCardReflectanceVerified:false,
         referenceStandardVerified:false,exposureVerified:false,
         derivedExposureStops:null,bookGuidance:grayGuidance

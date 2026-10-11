@@ -522,6 +522,140 @@ assert.ok(evidence.bookGuidance.every(book=>
 assert.ok(evidence.bookGuidance.every(c=>['EXP-001','EXP-002','EXP-003'].includes(c.id)));
 assert.equal(Object.isFrozen(waveContext),true);
 assert.equal(Object.isFrozen(evidence),true);
+assert.equal(evidence.protocolVersion,1);
+assert.equal(evidence.referenceComparisonStatus,'LEGACY_V1_REFERENCE_SIGNAL_CHAIN_INCOMPLETE');
+assert.equal(evidence.signalCodeRange,null);
+assert.equal(evidence.observedTransferLabel,null);
+assert.equal(evidence.referenceContextHash,null);
+assert.equal(core.verifyRevision(waveRev),true,'V1 history remains readable without V2 backfill');
+
+// V2 requires an explicit and consistent description of the displayed signal.
+// No camera profile or target IRE is inferred by the system.
+const waveformV2Input={
+  ...waveInput,protocolVersion:2,signalCodeRange:'FULL_DATA',
+  observedTransferLabel:'Camera recording LogC4, user-reported',
+  monitoringTransformId:'',referenceContextConfirmed:true
+};
+const waveformV2Rev=core.createCameraGrayCardWaveformRevision(sceneRev,waveformV2Input);
+const waveformV2=waveformV2Rev.plan.cameraGrayCardWaveformReading;
+assert.equal(waveformV2.protocolVersion,2);
+assert.equal(waveformV2.signalCodeRange,'FULL_DATA');
+assert.equal(waveformV2.monitoringTransformId,null);
+assert.equal(waveformV2.observedTransferLabel,waveformV2Input.observedTransferLabel);
+assert.equal(waveformV2.referenceContextConfirmed,true);
+assert.match(waveformV2.signalContextHash,/^[a-f0-9]{64}$/);
+assert.equal(waveformV2.referenceContextHash,waveformV2.signalContextHash);
+const v2Context=core.analyzeMeteredExposureContext(waveformV2Rev,'L1','L2');
+const v2E=v2Context.cameraWaveformEvidence;
+assert.equal(v2E.protocolVersion,2);
+assert.equal(v2E.signalCodeRange,'FULL_DATA');
+assert.equal(v2E.observedTransferLabel,waveformV2Input.observedTransferLabel);
+assert.equal(v2E.monitoringTransformId,null);
+assert.equal(v2E.referenceContextHash,waveformV2.signalContextHash);
+assert.equal(v2E.signalContextHash,waveformV2.signalContextHash);
+assert.equal(v2E.referenceContextConfirmed,true);
+assert.equal(v2E.referenceComparisonStatus,'V2_USER_ATTESTED_SIGNAL_CONTEXT_NOT_VERIFIED');
+assert.equal(v2E.referenceDifferenceIrePoints,2.5);
+assert.equal(v2E.derivedExposureStops,null);
+assert.equal(v2Context.measuredSceneEv100,null);
+assert.equal(v2Context.recommendedAperture,null);
+assert.equal(v2Context.recommendedIso,null);
+for(const f of ['signalCodeRangeVerified','transferFunctionVerified','monitoringTransformVerified',
+  'cameraSettingsVerified','monitorSignalPathVerified','referenceStandardVerified',
+  'grayCardReflectanceVerified','exposureVerified']){
+  assert.equal(v2E[f],false,'a declared camera signal context cannot prove '+f);
+}
+assert.equal(Object.isFrozen(v2E),true);
+assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev,waveformV2Rev]).length,7,
+  'V2 camera waveform must preserve previous immutable history');
+assert.equal(sceneRev.plan.cameraGrayCardWaveformReading,undefined);
+
+const displayV2Input={
+  ...waveformV2Input,signalPath:'DISPLAY_LUT_SIGNAL',
+  waveformSource:'EXTERNAL_MONITOR',signalCodeRange:'VIDEO_LEGAL',
+  observedTransferLabel:'Operator monitor transform to Rec.709',
+  monitoringTransformId:'MONITOR_LUT_709_REV_A'
+};
+const displayV2=core.createCameraGrayCardWaveformRevision(sceneRev,displayV2Input);
+const displayEvidence=core.analyzeMeteredExposureContext(displayV2,'L1','L2')
+  .cameraWaveformEvidence;
+assert.equal(displayEvidence.monitoringTransformId,'MONITOR_LUT_709_REV_A');
+assert.equal(displayEvidence.signalCodeRange,'VIDEO_LEGAL');
+assert.equal(displayEvidence.referenceContextHash,displayEvidence.signalContextHash);
+assert.notEqual(displayEvidence.signalContextHash,v2E.signalContextHash,
+  'recording vs display-LUT paths are different user-declared signal contexts');
+assert.equal(displayEvidence.referenceDifferenceIrePoints,2.5);
+assert.equal(displayEvidence.referenceComparisonStatus,
+  'V2_USER_ATTESTED_SIGNAL_CONTEXT_NOT_VERIFIED');
+
+const observedOnlyV2=core.createCameraGrayCardWaveformRevision(sceneRev,{
+  ...waveformV2Input,signalPath:'UNKNOWN',signalCodeRange:'UNKNOWN',
+  observedTransferLabel:'Signal chain not confirmed by operator',
+  userReferenceIre:'',referenceBasis:'',referenceContextConfirmed:false
+});
+const onlyEvidence=core.analyzeMeteredExposureContext(observedOnlyV2,'L1','L2')
+  .cameraWaveformEvidence;
+assert.equal(onlyEvidence.waveformIre,42.5);
+assert.equal(onlyEvidence.referenceDifferenceIrePoints,null);
+assert.equal(onlyEvidence.referenceComparisonStatus,'NO_USER_REFERENCE');
+assert.equal(onlyEvidence.referenceContextConfirmed,false);
+assert.equal(onlyEvidence.referenceContextHash,null);
+assert.equal(observedOnlyV2.plan.cameraGrayCardWaveformReading.signalCodeRange,'UNKNOWN');
+const unidentifiedLut=core.createCameraGrayCardWaveformRevision(sceneRev,{
+  ...displayV2Input,monitoringTransformId:'',userReferenceIre:'',
+  referenceBasis:'',referenceContextConfirmed:false
+});
+assert.equal(unidentifiedLut.plan.cameraGrayCardWaveformReading.monitoringTransformId,null);
+assert.equal(core.analyzeMeteredExposureContext(unidentifiedLut,'L1','L2')
+  .cameraWaveformEvidence.referenceDifferenceIrePoints,null);
+
+for(const badContext of [
+  {signalCodeRange:'UNKNOWN'},
+  {signalCodeRange:'STUDIO_UNSPECIFIED'},
+  {signalCodeRange:'full_data'},
+  {signalCodeRange:''},
+  {observedTransferLabel:''},
+  {observedTransferLabel:'<fake>'},
+  {observedTransferLabel:'B'.repeat(121)},
+  {signalPath:'UNKNOWN'},
+  {signalPath:'DISPLAY_LUT_SIGNAL',monitoringTransformId:''},
+  {signalPath:'DISPLAY_LUT_SIGNAL',monitoringTransformId:'<fake>'},
+  {signalPath:'DISPLAY_LUT_SIGNAL',monitoringTransformId:'B'.repeat(121)},
+  {signalPath:'RECORDING_SIGNAL',monitoringTransformId:'Unexpected LUT'},
+  {referenceContextConfirmed:false},
+  {referenceContextConfirmed:'true'},
+  {referenceContextConfirmed:null},
+  {userReferenceIre:'',referenceContextConfirmed:true,referenceBasis:''},
+  {userReferenceIre:'',referenceContextConfirmed:false,referenceBasis:'still supplied'},
+  {userReferenceIre:50,referenceBasis:''}
+]){
+  assert.throws(()=>core.createCameraGrayCardWaveformRevision(sceneRev,{
+    ...waveformV2Input,...badContext
+  }),/V2|waveform|reference|signal/i,
+  'invalid V2 signal chain must fail closed: '+JSON.stringify(badContext));
+}
+assert.throws(()=>core.createCameraGrayCardWaveformRevision(sceneRev,{
+  ...waveInput,signalCodeRange:'FULL_DATA'
+}),/V2 signal metadata/i,'V2-only fields cannot silently become V1 records');
+const forgedV1=JSON.parse(JSON.stringify(waveRev));
+forgedV1.plan.cameraGrayCardWaveformReading.signalCodeRange='FULL_DATA';
+assert.throws(()=>core.verifyRevision(forgedV1),/V1 camera waveform cannot assert V2/i);
+const forgedRange=JSON.parse(JSON.stringify(waveformV2Rev));
+forgedRange.plan.cameraGrayCardWaveformReading.signalCodeRange='VIDEO_LEGAL';
+assert.throws(()=>core.verifyRevision(forgedRange),/Invalid V2|integrity|Invalid/i,
+  'changing camera signal range must invalidate its recorded signal context');
+const forgedDigest=JSON.parse(JSON.stringify(waveformV2Rev));
+forgedDigest.plan.cameraGrayCardWaveformReading.signalContextHash='0'.repeat(64);
+assert.throws(()=>core.verifyRevision(forgedDigest),/Invalid V2/i);
+const forgedReferenceHash=JSON.parse(JSON.stringify(displayV2));
+forgedReferenceHash.plan.cameraGrayCardWaveformReading.referenceContextHash='0'.repeat(64);
+assert.throws(()=>core.verifyRevision(forgedReferenceHash),/V2 waveform reference/i);
+const orphanV2=JSON.parse(JSON.stringify(waveformV2Rev));
+delete orphanV2.plan.cameraGrayCardWaveformReading;
+assert.throws(()=>core.verifyRevision(orphanV2),/Orphaned/i);
+const invalidatedV2=core.createSceneIncidentLuxRevision(waveformV2Rev,sceneInput);
+assert.equal(invalidatedV2.plan.cameraGrayCardWaveformReading,undefined);
+assert.equal(waveformV2Rev.plan.cameraGrayCardWaveformReading.signalCodeRange,'FULL_DATA');
 
 const lowWave=core.createCameraGrayCardWaveformRevision(waveRev,{
   ...waveInput,waveformIre:37.5
@@ -976,6 +1110,13 @@ assert.match(uiSource,/sp-waveform-card-confirmed/);
 assert.match(uiSource,/sp-waveform-camera-confirmed/);
 assert.match(uiSource,/sp-waveform-lights-confirmed/);
 assert.match(uiSource,/sp-waveform-target/);
+assert.match(uiSource,/sp-waveform-code-range/);
+assert.match(uiSource,/sp-waveform-transfer/);
+assert.match(uiSource,/sp-waveform-lut/);
+assert.match(uiSource,/sp-waveform-reference-confirmed/);
+assert.match(uiSource,/protocolVersion:2/,'new UI uses documented V2 waveform protocol');
+assert.match(uiSource,/referenceContextConfirmed:el\(/);
+assert.match(uiSource,/monitoringTransformId:el\(/);
 assert.match(uiSource,/cameraWaveformEvidence/);
 assert.match(uiSource,/referenceDifferenceIrePoints/);
 assert.match(uiSource,/Korisnički zadat referentni nivo/);

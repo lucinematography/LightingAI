@@ -613,19 +613,25 @@
           'Očitano '+camWave.waveformIre+' IRE; kamera '+camWave.cameraModel+
           '; profil '+camWave.recordingProfile+'; signal '+camWave.signalPath+
           '; instrument '+camWave.waveformSource+'; karta '+camWave.grayCardIdentifier+
+          '; protokol V'+camWave.protocolVersion+
+          (camWave.protocolVersion===2?
+            '; opseg '+camWave.signalCodeRange+'; opaženi transfer '+camWave.observedTransferLabel+
+            '; monitoring transform '+(camWave.monitoringTransformId||'nije prijavljen')+
+            '; vezani signalni kontekst '+camWave.signalContextHash:'; V1 bez detaljnog signalnog konteksta')+
           '; merna tačka '+camWave.measurementPoint+
           '; čas '+camWave.measuredAtLocal+' UTC '+formatMeterUtcOffset(camWave.utcOffsetMinutes)+
           '; razmak od svetlomera '+camWave.sceneMeterMinutesApart+' minuta.');
         if(camWave.referenceDifferenceIrePoints!==null){
           lines.push('Korisnički zadat referentni nivo: '+camWave.userReferenceIre+
             ' IRE ('+camWave.userReferenceBasis+'); razlika '+camWave.referenceDifferenceIrePoints+
-            ' IRE poena, NIJE promena ekspozicije u stopima niti potvrda pravilnog eksponiranja.');
+            ' IRE poena, status '+camWave.referenceComparisonStatus+
+            '; NIJE promena ekspozicije u stopima niti potvrda pravilnog eksponiranja.');
         }else lines.push('Nema korisnički unetog referentnog nivoa; nije predložen univerzalni IRE.');
         (camWave.bookGuidance||[]).forEach(function(card){
           lines.push('Kartica '+card.id+': '+card.principle,
             'Provera: '+card.validation,'Ograničenje: '+card.limitations);
         });
-        lines.push('Kalibracija kamere, signala, monitora i refleksije karte NIJE proverena. '+
+        lines.push('Signal, opseg, profil, LUT, kalibracija kamere, monitora i refleksija karte NIŠTA od toga nije nezavisno provereno. '+
           'Nema izvedenog ISO, blende, T-stop-a, scene EV ili ukupne ekspozicije.');
       }
     }
@@ -838,12 +844,18 @@
           '<p class="sp-note"><b>Prijavljeno: '+esc(recordedWave.waveformIre)+' IRE</b> na sivoj karti '+
             esc(recordedWave.grayCardIdentifier)+'; kamera '+esc(recordedWave.cameraModel)+
             '; profil '+esc(recordedWave.recordingProfile)+'; signal '+esc(recordedWave.signalPath)+
-            '; izvor '+esc(recordedWave.waveformSource)+'. '+
+            '; izvor '+esc(recordedWave.waveformSource)+
+            (recordedWave.protocolVersion===2?
+              '; signalni opseg '+esc(recordedWave.signalCodeRange)+
+              '; opaženi transfer '+esc(recordedWave.observedTransferLabel)+
+              '; monitoring transform '+esc(recordedWave.monitoringTransformId||'nije naveden')+'. ':
+              '. Istorijski V1 bez precizno zabeleženog signalnog opsega i monitoring konteksta. ')+
             (cameraWaveEvidence&&cameraWaveEvidence.referenceDifferenceIrePoints!==null?
               'Korisnička referenca '+esc(cameraWaveEvidence.userReferenceIre)+
               ' IRE; razlika '+esc(cameraWaveEvidence.referenceDifferenceIrePoints)+
-              ' IRE poena (nije u stopima).':'Nema zadate reference, pa nema poređenja.')+
-            ' Nije nezavisno provereno.</p>':
+              ' IRE poena (nije u stopima). Status: '+esc(cameraWaveEvidence.referenceComparisonStatus)+'. ':
+              'Nema zadate reference, pa nema poređenja. ')+
+            'Korisnički prijavljeno; nije nezavisno provereno.</p>':
           '<p class="sp-note">Nema prijavljenog waveform očitavanja sive karte. '+
           'Očitavanje će biti povezano sa svetlomerom cele postavke i podešavanjima kamere u ovoj reviziji.</p>')+
         '<p class="sp-note">Tačka: <b>'+esc(scenePoint)+'</b>. Koristi istu poziciju kao za merenje scene, '+
@@ -875,6 +887,22 @@
             '>Signal zapisa (bez monitoring LUT-a)</option>'+
           '<option value="DISPLAY_LUT_SIGNAL"'+(recordedWave&&recordedWave.signalPath==='DISPLAY_LUT_SIGNAL'?' selected':'')+
             '>Signal sa monitoring LUT-om / display transformacijom</option></select>'+
+        '<label for="sp-waveform-code-range">OPSEG SIGNALA KOJI WAVEFORM PRIKAZUJE</label>'+
+        '<select id="sp-waveform-code-range" class="sp-field">'+
+          '<option value="UNKNOWN"'+(!recordedWave||recordedWave.signalCodeRange==='UNKNOWN'||
+            recordedWave.protocolVersion===1?' selected':'')+'>Ne znam</option>'+
+          '<option value="VIDEO_LEGAL"'+(recordedWave&&recordedWave.signalCodeRange==='VIDEO_LEGAL'?' selected':'')+
+            '>Video / legal range (prijavljen)</option>'+
+          '<option value="FULL_DATA"'+(recordedWave&&recordedWave.signalCodeRange==='FULL_DATA'?' selected':'')+
+            '>Full data range (prijavljen)</option></select>'+
+        '<label for="sp-waveform-transfer">OPAŽENA TRANSFER FUNKCIJA / IZLAZNI PROFIL WAVEFORM-A</label>'+
+        '<input id="sp-waveform-transfer" class="sp-field" maxlength="120" '+
+          'placeholder="npr. monitoring Rec.709 posle LUT-a ili recording Log" value="'+
+          esc(recordedWave&&recordedWave.observedTransferLabel||'')+'">'+
+        '<label for="sp-waveform-lut">TAČNO IME MONITORING LUT-a / TRANSFORMACIJE (ako se meri display/LUT signal)</label>'+
+        '<input id="sp-waveform-lut" class="sp-field" maxlength="120" '+
+          'placeholder="Ostavi prazno ako se meri originalni recording signal" value="'+
+          esc(recordedWave&&recordedWave.monitoringTransformId||'')+'">'+
         '<label for="sp-waveform-time">LOKALNI DATUM I VREME OČITAVANJA</label>'+
         '<input id="sp-waveform-time" class="sp-field" type="datetime-local" value="'+
           esc(recordedWave&&recordedWave.measuredAtLocal||'')+'">'+
@@ -887,6 +915,9 @@
         '<label for="sp-waveform-basis">OPCIONI IZVOR TVOJE REFERENTNE VREDNOSTI</label>'+
         '<input id="sp-waveform-basis" class="sp-field" maxlength="180" placeholder="Kamera, profil, monitoring LUT i odluka DoP-a" value="'+
           esc(recordedWave&&recordedWave.referenceBasis||'')+'">'+
+        '<label style="display:flex;gap:7px"><input type="checkbox" id="sp-waveform-reference-confirmed">'+
+          ' Ako unosim IRE referencu, potvrđujem da se odnosi na baš ovu kameru, profil, opaženi transfer, '+
+          'opseg signala i navedeni monitoring LUT / putanju, na osnovu izvora koji sam upisao</label>'+
         '<label style="display:flex;gap:7px"><input type="checkbox" id="sp-waveform-card-confirmed">'+
           ' Potvrđujem da sam postavio sivu kartu u istoj tački i očitao waveform</label>'+
         '<label style="display:flex;gap:7px"><input type="checkbox" id="sp-waveform-camera-confirmed">'+
@@ -895,8 +926,12 @@
           ' Potvrđujem da je cela planirana rasveta sa ambijentom bila aktivna</label>'+
         '<button type="button" class="sp-btn" id="sp-save-waveform">SAČUVAJ WAVEFORM KAO NOVU REVIZIJU</button>'+
         '<p class="sp-note">Nivo sive karte zavisi od profila, LUT-a, monitoringa i refleksije karte. '+
-          'Reference NEMA po podrazumevanim pravilima: ako je unosiš, navedi njen konkretan izvor i signalni put. '+
-          'Razlika u IRE poenima nije promena ekspozicije u stopima. Ne računamo ISO, blendu, lux ili EV scene iz IRE-a.</p></details>';
+          'Reference NEMA po podrazumevanim pravilima: ako je unosiš, navedi njen konkretan izvor, '+
+          'odaberi poznat opseg i signalni put, a za display signal upiši tačan monitoring LUT. '+
+          'V2 zahteva i tvoju potvrdu da referenca važi za tu istu signalnu konfiguraciju. '+
+          'Ako bilo šta nije poznato, sačuvaj samo opaženo očitavanje bez reference. '+
+          'Stari V1 zapisi nisu automatski unapređeni. Razlika u IRE poenima nije promena ekspozicije u stopima. '+
+          'Ne računamo ISO, blendu, lux ili EV scene iz IRE-a.</p></details>';
       var saveWave=el('sp-save-waveform');
       if(saveWave)saveWave.onclick=function(){
         if(state.busy||historyBlocked||!revisions.length)return;
@@ -916,6 +951,11 @@
             measurementPoint:scenePoint,
             waveformSource:el('sp-waveform-source').value,
             signalPath:el('sp-waveform-path').value,
+            protocolVersion:2,
+            signalCodeRange:el('sp-waveform-code-range').value,
+            observedTransferLabel:el('sp-waveform-transfer').value,
+            monitoringTransformId:el('sp-waveform-lut').value,
+            referenceContextConfirmed:el('sp-waveform-reference-confirmed').checked,
             measuredAtLocal:el('sp-waveform-time').value,
             measuredUtcOffset:el('sp-waveform-offset').value,
             userReferenceIre:el('sp-waveform-target').value,

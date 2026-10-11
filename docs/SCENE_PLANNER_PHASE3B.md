@@ -915,3 +915,63 @@ time/offset and the inclusive 15-minute boundary; immutable revision
 history, tampered waveform/camera/meter fingerprints, setup invalidation;
 book-card provenance; and UI capture and reporting. No K0/K1/main changes,
 paid inference, physical lamp control, release, publish or APK installation.
+
+
+### Camera waveform signal-context V2 and manual IRE reference gate (2026-10-11)
+
+A user-reported gray-card waveform has a new optional **V2 evidence protocol**,
+implemented in the current Scene Planner entry form. Earlier immutable
+protocol V1 histories **remain readable unchanged**, including their
+historical arithmetic IRE comparison; their reference status is explicitly
+`LEGACY_V1_REFERENCE_SIGNAL_CHAIN_INCOMPLETE`. V1 entries never inherit V2
+provenance or gain a claimed profile verification.
+
+V2 requires the operator to document, separately from the **recording profile**,
+the **observed waveform transfer/output label**, and the **signal code range**
+as either `FULL_DATA`, `VIDEO_LEGAL` or `UNKNOWN`. The user separately
+declares whether the waveform is of `RECORDING_SIGNAL`,
+`DISPLAY_LUT_SIGNAL` or `UNKNOWN`, and whether the waveform instrument
+was inside the camera or on an external monitor. On a display-transform
+signal the user may report its exact monitoring LUT/transform identifier;
+for a recording signal the monitoring-transform field must be empty.
+These are human descriptions, NOT inferred EOTFs, a LUT lookup, a validated
+camera manufacturer profile, an automatically calibrated waveform, or an
+in-app image/video analysis.
+
+An operator may record an IRE value **even when the chain is unknown**, but
+V2 will not accept a manual *comparison reference* until all of these hold:
+the user explicitly enters the reference number and its named source, a known
+signal path, a known reported code range, an identified monitoring transform
+if a display LUT signal is being observed, and an explicit declaration that
+the reference applies to **that exact camera, recording profile, waveform
+source, observed transfer, code range, and transform**. This extra
+attestation is recorded as `referenceContextConfirmed=true`. Each V2
+reading stores a deterministic SHA-256 of the exact *declared* signal
+context, including current plan camera-setting fingerprint. A reference
+must bind to that identical hash. Neither SHA-256 nor an operator checkbox
+authenticates a camera or validates manufacturer specifications.
+
+Outputs distinguish `NO_USER_REFERENCE`,
+`V2_USER_ATTESTED_SIGNAL_CONTEXT_NOT_VERIFIED`, and
+`LEGACY_V1_REFERENCE_SIGNAL_CHAIN_INCOMPLETE`. The signed numeric
+difference is **IRE percentage points only**. It is never corrected for
+log encoding, HDR transfer, limited/full code mapping, monitoring LUT,
+camera white balance or card reflectance, and is not interchangeable with
+exposure stops, incident lux, luminance or recommended ISO/aperture.
+Profile-specific reference values are never supplied by AI from book
+paraphrases or from the product's manufacturer lux database.
+
+The live app shows recording-vs-displayed signal provenance, V2 limitations
+and a separate reference-context attestation. Text export includes the
+measured IRE, reference comparison status, user-specified signal context
+and the actionable EXP-001, EXP-002 and EXP-003 principles, practical
+checks and limits **only when attached to the active revision**.
+Independent camera settings, reference standard, monitor signal path,
+transfer curve and gray-card reflectance verification flags remain false.
+
+Regression tests cover archived V1 integrity, V2 recording and display-LUT
+contexts, missing/unknown code range, unknown monitoring transform, invalid
+text, absent attestation, forged/different SHA bindings, no-reference
+observation, revision restoration/invalidation and no fabricated calibrated
+exposure or universal IRE target. No `main`, K0, K1, merging, release,
+installation, paid AI, physical fixture control or safety relaxation.

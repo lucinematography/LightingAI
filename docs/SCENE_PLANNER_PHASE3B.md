@@ -687,3 +687,49 @@ PostgreSQL preflight tests passed. Syntax/whitespace checks passed for the
 Gradle/adb and a configured disposable PostgreSQL server remain unavailable
 locally; real PostgreSQL-server integration, Android execution, registry audit
 and new GitHub CI were NOT EXECUTED. No media files or secrets were added.
+
+## 3B key/fill measurement interpretation and guarded camera exposure (2026-10-11)
+
+The Scene Planner now compares **only** separately isolated, user-reported incident-lux
+contributions when both fixtures are owned/available with key and fill roles, have
+matching attested on-set distance, V2 metadata, positive lux, identical reported
+meter model and point, camera-axis receptor orientation and times at most 15 minutes
+apart. Meter model is not proof of a unique physical instrument; local times and
+calibration are not independently verified. Revisions remain SHA-256 integrity-checked.
+
+For comparable readings: `ratio=keyLux/fillLux` and signed
+`relativeStops=log2(keyLux/fillLux)`. For instance, 400 vs 100 lx means
+4:1 and **+2 stops in isolated contributions**, not a measured contrast of
+the image. Both zero denominators and incomplete/inconsistent records fail
+closed with `relativeStops=null`. Negative stops mean isolated fill contribution
+is greater; no ratio is presumed universally desirable.
+
+Only relevant curated cards **actually attached to the active plan** (SET-002,
+SET-005 and EXP-001, when present) supply the returned principle, suggested
+application, practical check and limitations. These are conditional, paraphrased
+book principles, not independently verified full books or photometric certificates.
+Check motivation, multiple shadows, blocking and the waveform with the DoP.
+
+`analyzeMeteredExposureContext` reports a nominal settings-only camera EV100 index:
+
+```text
+shutterSeconds = shutterAngle / (360 * fps)
+nominalSettingsEv100 = log2((fNumber^2/shutterSeconds)*(100/ISO)) + NDstops
+```
+
+It depends only on validated f-number, shutter angle, fps, ISO and reported
+ND setting. **It is NOT measured scene EV or calibrated exposure.** Neither
+manufacturer-table lux, imagery nor isolated key/fill lux are used to compute
+the camera setting. The same revision-bound record leaves
+`derivedSceneLux`, `measuredSceneEv100`, `recommendedAperture` and
+`recommendedIso` null, and all scene/camera/meter verification flags false.
+When readings are not comparable the meter results are null even though the
+settings-only index can still be computed. This is a foundation for a *future*
+calibrated workflow requiring identifiable meter and calibration, scene/ambient
+measurements, time provenance, lens transmission/camera EI and gray-card/waveform
+validation—not an automatic correct exposure recommendation.
+
+The existing `test:scene-planner-photometry` suite covers positive/negative/zero
+stop differences, book-card binding, blocked comparisons, camera-only math,
+no fabricated lux or camera settings and tampered revision rejection. No
+fixture-control, paid AI job, publish/release, K0 or K1 changes are involved.

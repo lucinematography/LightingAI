@@ -455,6 +455,161 @@ for(const key of ['derivedSceneLux','measuredSceneEv100','recommendedAperture','
   assert.equal(sceneContext[key],null,'do not derive '+key+' from scene meter reading');
 assert.equal(sceneContext.cameraExposureVerified,false);
 assert.equal(sceneContext.manufacturerPhotometricsUsed,false);
+
+// The reported camera waveform is not sampled by the app and is NEVER
+// converted to lux, camera EV, aperture, ISO, or a default gray-card IRE.
+const waveInput={
+  confirmed:true,grayCardPlacedConfirmed:true,cameraSettingsMatchedConfirmed:true,
+  allSourcesActiveConfirmed:true,waveformIre:'42.5',
+  cameraModel:'ALEXA 35 test camera',recordingProfile:'LogC4 profile test',
+  grayCardIdentifier:'Neutral gray mark A',
+  waveformSource:'CAMERA_INTERNAL',signalPath:'RECORDING_SIGNAL',
+  measurementPoint:'Face mark A',measuredAtLocal:'2026-10-11T16:12',
+  measuredUtcOffset:'+02:00',userReferenceIre:'40.0',
+  referenceBasis:'DoP-selected reference for this camera/profile and waveform path'
+};
+assert.throws(()=>core.createCameraGrayCardWaveformRevision(ratioD,waveInput),
+  /whole-scene meter/i,'isolated key/fill readings cannot create camera waveform evidence');
+const waveRev=core.createCameraGrayCardWaveformRevision(sceneRev,waveInput);
+const wave=waveRev.plan.cameraGrayCardWaveformReading;
+assert.equal(waveRev.parentRevisionId,sceneRev.revisionId);
+assert.equal(waveRev.sequence,sceneRev.sequence+1);
+assert.equal(waveRev.plan.dataStatus.cameraGrayCardWaveformReading,
+  'user-reported-not-independently-verified');
+assert.equal(wave.protocolVersion,1);
+assert.equal(wave.source,'USER_REPORTED_GRAY_CARD_WAVEFORM_NOT_INDEPENDENTLY_VERIFIED');
+assert.equal(wave.waveformIre,42.5);
+assert.equal(wave.userReferenceIre,40);
+assert.equal(wave.referenceBasis,waveInput.referenceBasis);
+assert.equal(wave.grayCardPlacedConfirmed,true);
+assert.equal(wave.cameraSettingsMatchedConfirmed,true);
+assert.equal(wave.allSourcesActiveConfirmed,true);
+assert.equal(wave.calibrationStatus,'NOT_INDEPENDENTLY_VERIFIED');
+assert.equal(wave.sceneReadingHash,core.sha256(core.canonicalJson(sceneLux)));
+assert.equal(wave.cameraSettingsHash,core.sha256(core.canonicalJson(sceneRev.plan.cameraSettings)));
+assert.equal(core.verifyRevision(waveRev),true);
+assert.equal(sceneRev.plan.cameraGrayCardWaveformReading,undefined,
+  'prior revision is immutable');
+assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev,waveRev]).length,7);
+const waveContext=core.analyzeMeteredExposureContext(waveRev,'L1','L2');
+const evidence=waveContext.cameraWaveformEvidence;
+assert.equal(evidence.status,'USER_REPORTED_GRAY_CARD_SIGNAL_NOT_CALIBRATED');
+assert.equal(evidence.waveformIre,42.5);
+assert.equal(evidence.unit,'IRE');
+assert.equal(evidence.userReferenceIre,40);
+assert.equal(evidence.referenceDifferenceIrePoints,2.5,
+  'only arithmetic IRE percentage point difference, NOT stops');
+assert.equal(evidence.sceneMeterMinutesApart,7);
+assert.equal(evidence.signalPath,'RECORDING_SIGNAL');
+assert.equal(evidence.cameraModel,waveInput.cameraModel);
+assert.equal(evidence.cameraSettingsHash,wave.cameraSettingsHash);
+assert.equal(evidence.sceneReadingHash,wave.sceneReadingHash);
+for(const flag of ['cameraSettingsVerified','monitorSignalPathVerified',
+  'grayCardReflectanceVerified','referenceStandardVerified','exposureVerified'])
+  assert.equal(evidence[flag],false,'user attestation is not independent '+flag);
+assert.equal(evidence.derivedExposureStops,null);
+for(const field of ['derivedSceneLux','measuredSceneEv100','recommendedAperture','recommendedIso'])
+  assert.equal(waveContext[field],null,'waveform must never supply '+field);
+assert.equal(waveContext.cameraExposureVerified,false);
+assert.equal(waveContext.sceneExposureVerified,false);
+assert.equal(waveContext.meterCalibrationVerified,false);
+assert.equal(waveContext.camera.nominalSettingsEv100,sceneContext.camera.nominalSettingsEv100);
+assert.ok(evidence.bookGuidance.every(book=>
+  waveRev.plan.knowledgeBasis.cards.some(c=>c.id===book.id&&
+    c.principle===book.principle&&c.validation===book.validation&&
+    c.limitations===book.limitations)),
+  'waveform must explain itself only with cards actually attached to revision');
+assert.ok(evidence.bookGuidance.every(c=>['EXP-001','EXP-002','EXP-003'].includes(c.id)));
+assert.equal(Object.isFrozen(waveContext),true);
+assert.equal(Object.isFrozen(evidence),true);
+
+const lowWave=core.createCameraGrayCardWaveformRevision(waveRev,{
+  ...waveInput,waveformIre:37.5
+});
+assert.equal(core.analyzeMeteredExposureContext(lowWave,'L1','L2')
+  .cameraWaveformEvidence.referenceDifferenceIrePoints,-2.5,
+  'preserve sign of IRE point difference; not an exposure stop');
+const noReferenceWave=core.createCameraGrayCardWaveformRevision(sceneRev,{
+  ...waveInput,signalPath:'UNKNOWN',userReferenceIre:'',referenceBasis:''
+});
+assert.equal(noReferenceWave.plan.cameraGrayCardWaveformReading.userReferenceIre,null);
+assert.equal(noReferenceWave.plan.cameraGrayCardWaveformReading.referenceBasis,null);
+assert.equal(core.analyzeMeteredExposureContext(noReferenceWave,'L1','L2')
+  .cameraWaveformEvidence.referenceDifferenceIrePoints,null);
+assert.equal(core.analyzeMeteredExposureContext(sceneRev,'L1','L2')
+  .cameraWaveformEvidence.status,'NOT_RECORDED');
+assert.equal(core.analyzeMeteredExposureContext(sceneRev,'L1','L2')
+  .cameraWaveformEvidence.waveformIre,null);
+for(const val of [0,109]){
+  const edge=core.createCameraGrayCardWaveformRevision(sceneRev,{
+    ...waveInput,waveformIre:val,userReferenceIre:'',referenceBasis:''
+  });
+  assert.equal(edge.plan.cameraGrayCardWaveformReading.waveformIre,val);
+}
+const fifteenWave=core.createCameraGrayCardWaveformRevision(sceneRev,{
+  ...waveInput,measuredAtLocal:'2026-10-11T16:20'
+});
+assert.equal(core.analyzeMeteredExposureContext(fifteenWave,'L1','L2')
+  .cameraWaveformEvidence.sceneMeterMinutesApart,15);
+assert.throws(()=>core.createCameraGrayCardWaveformRevision(sceneRev,{
+  ...waveInput,measuredAtLocal:'2026-10-11T16:21'
+}),/15 minutes/i,'do not compare readings beyond the same short metering session');
+for(const bad of [
+  {confirmed:false},{grayCardPlacedConfirmed:false},{cameraSettingsMatchedConfirmed:false},
+  {allSourcesActiveConfirmed:false},
+  {waveformIre:-1},{waveformIre:109.1},{waveformIre:'1e2'},
+  {waveformIre:'not IRE'},{waveformIre:'50.15'},
+  {cameraModel:'<'},{recordingProfile:''},{grayCardIdentifier:' '},
+  {waveformSource:'FABRICATED_CAMERA'},{signalPath:'HDR_ASSUMED'},
+  {measurementPoint:'Different mark'}, {measuredAtLocal:'2026-02-30T16:12'},
+  {measuredUtcOffset:'Z'}, {measuredUtcOffset:'+14:15'},
+  {signalPath:'UNKNOWN'}, {userReferenceIre:'',referenceBasis:'still claims a reference'},
+  {userReferenceIre:55,referenceBasis:''},
+  {userReferenceIre:'',referenceBasis:waveInput.referenceBasis},
+  {userReferenceIre:'110'},
+  {userReferenceIre:'41.234'}
+]){
+  assert.throws(()=>core.createCameraGrayCardWaveformRevision(sceneRev,{
+    ...waveInput,...bad
+  }),/camera|card|lighting|waveform|reference|15 minutes/i,
+  'invalid/missing waveform evidence must fail closed: '+JSON.stringify(bad));
+}
+const movedAfterWave=core.createDistanceMeasurementRevision(waveRev,{
+  lightId:'L1',distanceM:4,confirmed:true
+});
+assert.equal(movedAfterWave.plan.sceneIncidentLuxReading,undefined);
+assert.equal(movedAfterWave.plan.cameraGrayCardWaveformReading,undefined);
+assert.equal(movedAfterWave.plan.dataStatus.cameraGrayCardWaveformReading,undefined);
+assert.equal(waveRev.plan.cameraGrayCardWaveformReading.waveformIre,42.5);
+const newSceneAfterWave=core.createSceneIncidentLuxRevision(waveRev,sceneInput);
+assert.equal(newSceneAfterWave.plan.cameraGrayCardWaveformReading,undefined,
+  'even a new scene reading at equal nominal lux invalidates old camera waveform');
+const waveOnOptic=core.createCameraGrayCardWaveformRevision(sceneOptic,waveInput);
+const opticAfterWave=core.createMountedOpticRevision(waveOnOptic,{
+  lightId:'L1',opticId:'HYPER_REFLECTOR_55',confirmed:true
+});
+assert.equal(opticAfterWave.plan.cameraGrayCardWaveformReading,undefined);
+assert.equal(waveOnOptic.plan.cameraGrayCardWaveformReading.waveformIre,42.5);
+const rereadKeyAfterWave=core.createIncidentLuxRevision(waveRev,{
+  ...commonContext,lightId:'L1',lux:250,confirmed:true,fixtureIsolated:true
+});
+assert.equal(rereadKeyAfterWave.plan.cameraGrayCardWaveformReading.waveformIre,42.5,
+  'a new isolated reading cannot invent a change in the whole-scene camera state');
+const aiAfterWave=core.createRevision(generated.plan,raw,'ai',waveRev,'ratio-demo');
+assert.equal(aiAfterWave.plan.cameraGrayCardWaveformReading,undefined);
+const alteredWave=JSON.parse(JSON.stringify(waveRev));
+alteredWave.plan.cameraGrayCardWaveformReading.waveformIre=90;
+assert.throws(()=>core.verifyRevision(alteredWave),/integrity|Invalid|mismatch/i);
+const alteredCamera=JSON.parse(JSON.stringify(waveRev));
+alteredCamera.plan.cameraSettings.iso=800;
+assert.throws(()=>core.verifyRevision(alteredCamera),
+  /stale|integrity|Invalid/i,'waveform must bind to exact camera setting fingerprint');
+const fakeReference=JSON.parse(JSON.stringify(waveRev));
+fakeReference.plan.cameraGrayCardWaveformReading.referenceBasis='INTERNATIONAL STANDARD WITHOUT BASIS';
+assert.throws(()=>core.verifyRevision(fakeReference),/integrity|Invalid|mismatch/i);
+const orphanedWave=JSON.parse(JSON.stringify(sceneRev));
+orphanedWave.plan.dataStatus.cameraGrayCardWaveformReading='user-reported-not-independently-verified';
+assert.throws(()=>core.verifyRevision(orphanedWave),/Orphaned/i);
 assert.equal(core.analyzeMeteredExposureContext(ratioD,'L1','L2')
   .sceneIncidentEvidence.userReportedLux,null,'no meter report means no scene lux');
 
@@ -814,6 +969,15 @@ assert.match(uiSource,/sp-scene-total-lux/);
 assert.match(uiSource,/sp-scene-total-measured/);
 assert.match(uiSource,/sp-scene-total-active/);
 assert.match(uiSource,/sceneMeterAlignment/,'alignment gate must be exposed in UI');
+assert.match(uiSource,/createCameraGrayCardWaveformRevision\(revisions/);
+assert.match(uiSource,/sp-waveform-ire/);
+assert.match(uiSource,/sp-waveform-card-confirmed/);
+assert.match(uiSource,/sp-waveform-camera-confirmed/);
+assert.match(uiSource,/sp-waveform-lights-confirmed/);
+assert.match(uiSource,/sp-waveform-target/);
+assert.match(uiSource,/cameraWaveformEvidence/);
+assert.match(uiSource,/referenceDifferenceIrePoints/);
+assert.match(uiSource,/Korisnički zadat referentni nivo/);
 assert.match(uiSource,/METAPODACI TRI MERENJA/,'specific in-app alignment explanation is required');
 assert.match(uiSource,/aditivno|sabirati/i,'cannot imply addition of different lighting states');
 assert.match(uiSource,/sceneIncidentEvidence\.userReportedLux/);

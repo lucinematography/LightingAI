@@ -97,6 +97,14 @@
       Math.round(lux*1000)/1000===lux?lux:null;
   }
   // V2 records are user-declared instrument observations, not certified calibration data.
+  // A user transcribes waveform percentage IRE from a camera/monitor.
+  // This is signal level, never linear lux, scene EV or sensor exposure.
+  function waveformIre(value) {
+    if(typeof value!=='number'&&typeof value!=='string')return null;
+    if(typeof value==='string'&&!/^(?:[0-9]+(?:[.][0-9])?|[.][0-9])$/.test(value.trim()))return null;
+    var n=Number(value);
+    return Number.isFinite(n)&&n>=0&&n<=109&&Math.round(n*10)/10===n?n:null;
+  }
   function meterText(value,max) {
     if(typeof value!=='string')return null;
     var result=value.trim();
@@ -735,6 +743,52 @@
     }else if(plan.dataStatus.sceneIncidentLuxReading!==undefined){
       throw new Error('Orphaned combined-scene incident meter status');
     }
+    // Human-transcribed gray-card waveform evidence is bound to an extant
+    // whole-scene meter reading and camera settings, NOT independently calibrated.
+    var waveform=plan.cameraGrayCardWaveformReading;
+    if(waveform!==undefined){
+      if(!sceneMeter||!waveform||typeof waveform!=='object'||Array.isArray(waveform)||
+        plan.mode!=='own'||waveform.protocolVersion!==1||
+        waveform.source!=='USER_REPORTED_GRAY_CARD_WAVEFORM_NOT_INDEPENDENTLY_VERIFIED'||
+        waveform.subject!=='USER_DECLARED_NEUTRAL_GRAY_CARD_AT_SCENE_MEASUREMENT_POINT'||
+        waveform.unit!=='IRE'||waveform.userAttested!==true||
+        waveform.grayCardPlacedConfirmed!==true||
+        waveform.cameraSettingsMatchedConfirmed!==true||
+        waveform.allSourcesActiveConfirmed!==true||
+        waveform.calibrationStatus!=='NOT_INDEPENDENTLY_VERIFIED'||
+        typeof waveform.waveformIre!=='number'||
+        waveformIre(waveform.waveformIre)!==waveform.waveformIre||
+        ['CAMERA_INTERNAL','EXTERNAL_MONITOR'].indexOf(waveform.waveformSource)<0||
+        ['RECORDING_SIGNAL','DISPLAY_LUT_SIGNAL','UNKNOWN'].indexOf(waveform.signalPath)<0||
+        meterText(waveform.cameraModel,120)!==waveform.cameraModel||
+        meterText(waveform.recordingProfile,120)!==waveform.recordingProfile||
+        meterText(waveform.grayCardIdentifier,100)!==waveform.grayCardIdentifier||
+        waveform.measurementPoint!==sceneMeter.measurementPoint||
+        meterLocalTime(waveform.measuredAtLocal)!==waveform.measuredAtLocal||
+        !waveform.measuredAtLocal||
+        typeof waveform.utcOffsetMinutes!=='number'||
+        !Number.isInteger(waveform.utcOffsetMinutes)||
+        waveform.utcOffsetMinutes< -720||waveform.utcOffsetMinutes>840||
+        waveform.utcOffsetMinutes%15!==0||
+        waveform.sceneReadingHash!==sha256(canonicalJson(sceneMeter))||
+        waveform.cameraSettingsHash!==sha256(canonicalJson(plan.cameraSettings))||
+        plan.dataStatus.cameraGrayCardWaveformReading!=='user-reported-not-independently-verified')
+        throw new Error('Invalid or stale user-reported camera gray-card waveform evidence');
+      var waveformHasReference=waveform.userReferenceIre!==null;
+      if((waveformHasReference&&(
+          typeof waveform.userReferenceIre!=='number'||
+          waveformIre(waveform.userReferenceIre)!==waveform.userReferenceIre||
+          meterText(waveform.referenceBasis,180)!==waveform.referenceBasis||
+          waveform.signalPath==='UNKNOWN'))||
+        (!waveformHasReference&&waveform.referenceBasis!==null))
+        throw new Error('Invalid user-specified waveform reference');
+      var cameraMeterSpan=Math.abs(meterUtcMinute(waveform.measuredAtLocal,waveform.utcOffsetMinutes)-
+        meterUtcMinute(sceneMeter.measuredAtLocal,sceneMeter.utcOffsetMinutes));
+      if(!Number.isFinite(cameraMeterSpan)||cameraMeterSpan>15)
+        throw new Error('Waveform and whole-scene meter readings are not in the same 15-minute session');
+    }else if(plan.dataStatus.cameraGrayCardWaveformReading!==undefined){
+      throw new Error('Orphaned camera waveform evidence status');
+    }
     // Only an explicitly attested mounted optic can unlock a published reference.
     var attestations=plan.opticConfirmations===undefined?[]:plan.opticConfirmations;
     if(!Array.isArray(attestations)||attestations.length>MAX_LIGHTS)
@@ -874,9 +928,11 @@
         delete plan.dataStatus.incidentLuxReadings;
       }
     }
-    // Re-attested optics invalidate whole-scene readings on the revised setup.
+    // Re-attested optics invalidate whole-scene lux and linked camera waveform.
     delete plan.sceneIncidentLuxReading;
     delete plan.dataStatus.sceneIncidentLuxReading;
+    delete plan.cameraGrayCardWaveformReading;
+    delete plan.dataStatus.cameraGrayCardWaveformReading;
     refreshAttestedOpticReference(plan,light.id);
     var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
       sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
@@ -913,9 +969,11 @@
         delete plan.dataStatus.incidentLuxReadings;
       }
     }
-    // Re-attested distance invalidates the whole-scene physical context.
+    // Re-attested distance invalidates whole-scene lux and linked waveform.
     delete plan.sceneIncidentLuxReading;
     delete plan.dataStatus.sceneIncidentLuxReading;
+    delete plan.cameraGrayCardWaveformReading;
+    delete plan.dataStatus.cameraGrayCardWaveformReading;
     if(plan.photometricBasis && Array.isArray(plan.photometricBasis.entries)){
       plan.photometricBasis.entries.forEach(function(e){
         if(e.lightId!==light.id||e.fixtureId!==light.fixtureId)return;
@@ -1033,9 +1091,79 @@
       userAttested:true,allSourcesActiveConfirmed:true
     };
     plan.dataStatus.sceneIncidentLuxReading='user-reported-not-independently-verified';
+    // A repeated whole-scene reading is a fresh observation. Never carry over
+    // camera waveform readings from a previous moment or metering setup.
+    delete plan.cameraGrayCardWaveformReading;
+    delete plan.dataStatus.cameraGrayCardWaveformReading;
     var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
       sequence:parent.sequence+1,nextLightId:parent.nextLightId,
       plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // Camera/monitor waveform evidence of a user-positioned gray card. No
+  // camera access, AI vision inference, calibration or automatic exposure change.
+  function createCameraGrayCardWaveformRevision(parent,report) {
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||
+      report.confirmed!==true||report.grayCardPlacedConfirmed!==true||
+      report.cameraSettingsMatchedConfirmed!==true||
+      report.allSourcesActiveConfirmed!==true)
+      throw new Error('Explicit camera, gray card and lighting-state confirmation is required');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var scene=plan.sceneIncidentLuxReading;
+    if(plan.mode!=='own'||!scene)
+      throw new Error('A user-reported whole-scene meter reading is required before camera waveform evidence');
+    var level=waveformIre(report.waveformIre);
+    var cameraModel=meterText(report.cameraModel,120);
+    var recordingProfile=meterText(report.recordingProfile,120);
+    var grayCardIdentifier=meterText(report.grayCardIdentifier,100);
+    var waveformSource=report.waveformSource;
+    var signalPath=report.signalPath;
+    var when=meterLocalTime(report.measuredAtLocal);
+    var offset=measuredUtcOffset(report.measuredUtcOffset);
+    if(level===null||!cameraModel||!recordingProfile||!grayCardIdentifier||
+      ['CAMERA_INTERNAL','EXTERNAL_MONITOR'].indexOf(waveformSource)<0||
+      ['RECORDING_SIGNAL','DISPLAY_LUT_SIGNAL','UNKNOWN'].indexOf(signalPath)<0||
+      !when||offset===null||
+      report.measurementPoint!==scene.measurementPoint)
+      throw new Error('Invalid gray-card waveform, camera or matching measurement-point context');
+    var span=Math.abs(meterUtcMinute(when,offset)-
+      meterUtcMinute(scene.measuredAtLocal,scene.utcOffsetMinutes));
+    if(!Number.isFinite(span)||span>15)
+      throw new Error('Camera waveform and whole-scene meter are more than 15 minutes apart');
+    // A reference is NEVER picked by AI or from a generic 18-percent-card IRE.
+    // It must be manually provided with a meaningful profile-specific basis.
+    var userReference=report.userReferenceIre;
+    var hasReference=userReference!==null&&userReference!==undefined&&userReference!=='';
+    var referenceLevel=hasReference?waveformIre(userReference):null;
+    var referenceBasis=hasReference?meterText(report.referenceBasis,180):null;
+    if(hasReference&&(referenceLevel===null||!referenceBasis||signalPath==='UNKNOWN')||
+      !hasReference&&report.referenceBasis!==undefined&&report.referenceBasis!==null&&
+        String(report.referenceBasis).trim()!=='')
+      throw new Error('A waveform reference requires a manual IRE value, named basis and known signal path');
+    plan.cameraGrayCardWaveformReading={
+      protocolVersion:1,
+      source:'USER_REPORTED_GRAY_CARD_WAVEFORM_NOT_INDEPENDENTLY_VERIFIED',
+      subject:'USER_DECLARED_NEUTRAL_GRAY_CARD_AT_SCENE_MEASUREMENT_POINT',
+      unit:'IRE',waveformIre:level,
+      cameraModel:cameraModel,recordingProfile:recordingProfile,
+      grayCardIdentifier:grayCardIdentifier,
+      waveformSource:waveformSource,signalPath:signalPath,
+      measurementPoint:scene.measurementPoint,measuredAtLocal:when,
+      utcOffsetMinutes:offset,userReferenceIre:referenceLevel,
+      referenceBasis:referenceBasis,
+      sceneReadingHash:sha256(canonicalJson(scene)),
+      cameraSettingsHash:sha256(canonicalJson(plan.cameraSettings)),
+      calibrationStatus:'NOT_INDEPENDENTLY_VERIFIED',
+      userAttested:true,grayCardPlacedConfirmed:true,
+      cameraSettingsMatchedConfirmed:true,allSourcesActiveConfirmed:true
+    };
+    plan.dataStatus.cameraGrayCardWaveformReading='user-reported-not-independently-verified';
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
     revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
     revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
     verifyRevision(revision);
@@ -1220,6 +1348,15 @@
     var comparable=comparison.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY';
     var sceneReading=revision.plan.sceneIncidentLuxReading||null;
     var sceneMeterAlignment=assessSceneMeterAlignment(revision,keyLightId,fillLightId);
+    var gray=revision.plan.cameraGrayCardWaveformReading||null;
+    var grayCards=revision.plan.knowledgeBasis&&Array.isArray(revision.plan.knowledgeBasis.cards)?
+      revision.plan.knowledgeBasis.cards:[];
+    var grayGuidance=grayCards.filter(function(card){
+      return card&&['EXP-001','EXP-002','EXP-003'].indexOf(card.id)>=0;
+    }).map(function(card){
+      return {id:card.id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
     return freezeJson({
       contract:'lightingai-metered-exposure-context/1',
       revisionId:revision.revisionId,planHash:revision.planHash,
@@ -1258,6 +1395,31 @@
         calibrationVerified:false,cameraExposureVerified:false
       },
       sceneMeterAlignment:sceneMeterAlignment,
+      cameraWaveformEvidence:{
+        status:gray?'USER_REPORTED_GRAY_CARD_SIGNAL_NOT_CALIBRATED':'NOT_RECORDED',
+        waveformIre:gray?gray.waveformIre:null,
+        unit:'IRE',cameraModel:gray?gray.cameraModel:null,
+        recordingProfile:gray?gray.recordingProfile:null,
+        waveformSource:gray?gray.waveformSource:null,
+        signalPath:gray?gray.signalPath:null,
+        grayCardIdentifier:gray?gray.grayCardIdentifier:null,
+        measurementPoint:gray?gray.measurementPoint:null,
+        measuredAtLocal:gray?gray.measuredAtLocal:null,
+        utcOffsetMinutes:gray?gray.utcOffsetMinutes:null,
+        userReferenceIre:gray?gray.userReferenceIre:null,
+        userReferenceBasis:gray?gray.referenceBasis:null,
+        referenceDifferenceIrePoints:gray&&gray.userReferenceIre!==null?
+          Number((gray.waveformIre-gray.userReferenceIre).toFixed(1)):null,
+        sceneMeterMinutesApart:gray?Math.abs(
+          meterUtcMinute(gray.measuredAtLocal,gray.utcOffsetMinutes)-
+          meterUtcMinute(sceneReading.measuredAtLocal,sceneReading.utcOffsetMinutes)):null,
+        cameraSettingsHash:gray?gray.cameraSettingsHash:null,
+        sceneReadingHash:gray?gray.sceneReadingHash:null,
+        cameraSettingsVerified:false,monitorSignalPathVerified:false,
+        grayCardReflectanceVerified:false,
+        referenceStandardVerified:false,exposureVerified:false,
+        derivedExposureStops:null,bookGuidance:grayGuidance
+      },
       derivedSceneLux:null,measuredSceneEv100:null,
       recommendedAperture:null,recommendedIso:null,
       sceneExposureVerified:false,cameraExposureVerified:false,
@@ -1288,6 +1450,7 @@
     createMountedOpticRevision:createMountedOpticRevision,
     createIncidentLuxRevision:createIncidentLuxRevision,
     createSceneIncidentLuxRevision:createSceneIncidentLuxRevision,
+    createCameraGrayCardWaveformRevision:createCameraGrayCardWaveformRevision,
     compareKeyFillMeasurements:compareKeyFillMeasurements,
     assessSceneMeterAlignment:assessSceneMeterAlignment,
     analyzeMeteredExposureContext:analyzeMeteredExposureContext,

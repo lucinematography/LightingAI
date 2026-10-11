@@ -853,3 +853,65 @@ zero readings, invalid light roles, invalidated physical setup, tamper-evident
 history, no numeric data on a blocked comparison and no fabrication of camera
 or ambient calculations. Neither K0, K1, `main`, direct fixture control,
 paid AI, release/publish nor APK installation is changed.
+
+
+### Human-reported camera gray-card waveform evidence (2026-10-11)
+
+The Scene Planner can now capture an **actual operator-transcribed waveform level**
+from a physical neutral gray card in the same named subject mark used for the
+already stored **whole-scene incident lux** reading. Neither meter reading nor
+camera waveform is acquired by the app. This is an optional workflow available
+only when a SHA-256-bound, owned-fixture whole-scene meter reading already exists.
+It does not require key/fill V3 pair alignment; the waveform is tied to the
+*whole-scene* state, not to isolated lamp contributions.
+
+The operator must explicitly attest: (1) card placement and an observed
+camera/monitor waveform, (2) actual in-camera ISO, aperture, shutter, fps and
+ND matching the current plan, and (3) all planned available lights plus ambient
+remaining on. The record includes an operator-named camera model, shooting/gamma
+profile, actual card identifier, whether the waveform was observed internally
+or on an external monitor, and the operator-declared measurement signal path
+(recording signal, monitoring/display LUT, or unknown). It records the actual
+numeric waveform level in **0..109 IRE, at most one decimal place**, the local
+clock and explicit UTC offset. It must use the **same subject mark** and fall
+within **15 elapsed minutes** of the whole-scene incident meter timestamp.
+The camera setting fingerprint and SHA-256 of the actual whole-scene meter
+reading are bound to the record. This is evidence traceability, not calibration,
+not cryptographic authentication of a human observation, and not proof that
+the camera really matched the AI-proposed plan.
+
+A reference IRE is **never prefilled, recommended, retrieved from a generic
+gray-card table or inferred from the user image**. If the operator wants to
+compare, they must manually enter both their specific reference IRE and its
+named camera/profile/LUT basis, with the waveform signal path known. The only
+comparison is the signed arithmetic difference in **IRE percentage points**;
+it is *not* f-stops, waveform linear scene brightness, luma from image pixels,
+a neutral-card reflectance measurement, a safe target across camera gamma
+curves, confirmation of correct exposure, or a suggested ISO/aperture.
+
+On re-attesting a fixture distance, changing/reconfirming an optic or replacing
+the whole-scene meter reading, the camera gray-card observation is cleared
+**only in the child revision**. The parent measurement survives immutably
+in the revision history. A fresh AI-generated plan never inherits it. An
+isolated key/fill lux rereading does not independently change the whole-scene
+meter/camera configuration.
+
+The camera panel and exported text report label the waveform with its reported
+camera, gamma, source and signal path, any user-specified IRE reference, and
+the precise limitations. Explanations can use only expert cards actually
+attached to the active revision: EXP-001 (metering), EXP-002 (highlights and
+shadows) and EXP-003 (waveform/false-color and profile checks). The cards are
+curated, non-page-verified principles and **not camera-specific manufacturer
+specifications**. `analyzeMeteredExposureContext` returns a separate
+`cameraWaveformEvidence` object with exposure, calibration, signal path and
+gray-card reflectance verification flags still false; its derived exposure
+stops are null. Original scene EV, lens T-stop, recommended aperture/ISO and
+scene-contrast outputs remain null/unverified.
+
+Offline regression checks cover absent meter context; three mandatory
+attestations; zero/109 IRE and invalid decimal/negative/overflow values;
+invalid camera/profile/signal path; missing, spurious or forged reference;
+time/offset and the inclusive 15-minute boundary; immutable revision
+history, tampered waveform/camera/meter fingerprints, setup invalidation;
+book-card provenance; and UI capture and reporting. No K0/K1/main changes,
+paid inference, physical lamp control, release, publish or APK installation.

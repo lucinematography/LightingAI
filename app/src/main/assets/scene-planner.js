@@ -607,6 +607,27 @@
         lines.push('Kartica '+card.id+': '+card.principle,
           'Provera: '+card.validation,'Ograničenje: '+card.limitations);
       });
+      var camWave=exposure.cameraWaveformEvidence;
+      if(camWave.status==='USER_REPORTED_GRAY_CARD_SIGNAL_NOT_CALIBRATED'){
+        lines.push('','SIVA KARTA — KORISNIKOVO OČITAVANJE WAVEFORM-A, NE KALIBRISANA EKSPOZICIJA',
+          'Očitano '+camWave.waveformIre+' IRE; kamera '+camWave.cameraModel+
+          '; profil '+camWave.recordingProfile+'; signal '+camWave.signalPath+
+          '; instrument '+camWave.waveformSource+'; karta '+camWave.grayCardIdentifier+
+          '; merna tačka '+camWave.measurementPoint+
+          '; čas '+camWave.measuredAtLocal+' UTC '+formatMeterUtcOffset(camWave.utcOffsetMinutes)+
+          '; razmak od svetlomera '+camWave.sceneMeterMinutesApart+' minuta.');
+        if(camWave.referenceDifferenceIrePoints!==null){
+          lines.push('Korisnički zadat referentni nivo: '+camWave.userReferenceIre+
+            ' IRE ('+camWave.userReferenceBasis+'); razlika '+camWave.referenceDifferenceIrePoints+
+            ' IRE poena, NIJE promena ekspozicije u stopima niti potvrda pravilnog eksponiranja.');
+        }else lines.push('Nema korisnički unetog referentnog nivoa; nije predložen univerzalni IRE.');
+        (camWave.bookGuidance||[]).forEach(function(card){
+          lines.push('Kartica '+card.id+': '+card.principle,
+            'Provera: '+card.validation,'Ograničenje: '+card.limitations);
+        });
+        lines.push('Kalibracija kamere, signala, monitora i refleksije karte NIJE proverena. '+
+          'Nema izvedenog ISO, blende, T-stop-a, scene EV ili ukupne ekspozicije.');
+      }
     }
     lines.push('','OGRANIČENJA',...plan.limitations,'','BEZBEDNOST',...plan.safetyNotes);
     return lines.join('\n');
@@ -805,6 +826,105 @@
           renderResult();remember();
           status('Ukupno očitavanje jedne tačke sačuvano kao korisnički prijavljeno; ekspozicija nije kalibrisana.');
         }catch(error){status('Očitavanje scene nije sačuvano: '+error.message,true);}
+      };
+    }
+    if(cameraBox&&current&&plan.mode==='own'&&plan.sceneIncidentLuxReading&&
+      core().createCameraGrayCardWaveformRevision){
+      var recordedWave=plan.cameraGrayCardWaveformReading||null;
+      var cameraWaveEvidence=cameraEvidence&&cameraEvidence.cameraWaveformEvidence;
+      var scenePoint=plan.sceneIncidentLuxReading.measurementPoint;
+      cameraBox.innerHTML+='<details class="sp-lamp"><summary><b>KAMERA — SIVA KARTA / WAVEFORM (RUČNO OČITAVANJE)</b></summary>'+
+        (recordedWave?
+          '<p class="sp-note"><b>Prijavljeno: '+esc(recordedWave.waveformIre)+' IRE</b> na sivoj karti '+
+            esc(recordedWave.grayCardIdentifier)+'; kamera '+esc(recordedWave.cameraModel)+
+            '; profil '+esc(recordedWave.recordingProfile)+'; signal '+esc(recordedWave.signalPath)+
+            '; izvor '+esc(recordedWave.waveformSource)+'. '+
+            (cameraWaveEvidence&&cameraWaveEvidence.referenceDifferenceIrePoints!==null?
+              'Korisnička referenca '+esc(cameraWaveEvidence.userReferenceIre)+
+              ' IRE; razlika '+esc(cameraWaveEvidence.referenceDifferenceIrePoints)+
+              ' IRE poena (nije u stopima).':'Nema zadate reference, pa nema poređenja.')+
+            ' Nije nezavisno provereno.</p>':
+          '<p class="sp-note">Nema prijavljenog waveform očitavanja sive karte. '+
+          'Očitavanje će biti povezano sa svetlomerom cele postavke i podešavanjima kamere u ovoj reviziji.</p>')+
+        '<p class="sp-note">Tačka: <b>'+esc(scenePoint)+'</b>. Koristi istu poziciju kao za merenje scene, '+
+        'sa svim raspoloživim izvorima uključenim. Karta ne mora biti fabrički potvrđena 18%.</p>'+
+        '<label for="sp-waveform-ire">OČITANI WAVEFORM NIVO SIVE KARTE (0–109 IRE, 1 DECIMALA)</label>'+
+        '<input id="sp-waveform-ire" class="sp-field" type="number" min="0" max="109" step="0.1" placeholder="npr. 42.5" value="'+
+          (recordedWave?esc(recordedWave.waveformIre):'')+'">'+
+        '<label for="sp-waveform-camera-model">MODEL KAMERE (KORISNIK PRIJAVLJUJE)</label>'+
+        '<input id="sp-waveform-camera-model" class="sp-field" maxlength="120" value="'+
+          esc(recordedWave&&recordedWave.cameraModel||'')+'">'+
+        '<label for="sp-waveform-profile">STVARNI PROFIL SNIMANJA / GAMMA</label>'+
+        '<input id="sp-waveform-profile" class="sp-field" maxlength="120" placeholder="npr. LogC4, S-Log3..." value="'+
+          esc(recordedWave&&recordedWave.recordingProfile||'')+'">'+
+        '<label for="sp-waveform-card">OZNAKA FIZIČKE SIVE KARTE</label>'+
+        '<input id="sp-waveform-card" class="sp-field" maxlength="100" placeholder="npr. kartica A" value="'+
+          esc(recordedWave&&recordedWave.grayCardIdentifier||'')+'">'+
+        '<label for="sp-waveform-source">GDE JE WAVEFORM OČITAN?</label>'+
+        '<select id="sp-waveform-source" class="sp-field">'+
+          '<option value="">Izaberi instrument</option>'+
+          '<option value="CAMERA_INTERNAL"'+(recordedWave&&recordedWave.waveformSource==='CAMERA_INTERNAL'?' selected':'')+
+            '>U samoj kameri</option>'+
+          '<option value="EXTERNAL_MONITOR"'+(recordedWave&&recordedWave.waveformSource==='EXTERNAL_MONITOR'?' selected':'')+
+            '>Na spoljašnjem monitoru</option></select>'+
+        '<label for="sp-waveform-path">KAKAV SIGNAL MERI WAVEFORM?</label>'+
+        '<select id="sp-waveform-path" class="sp-field">'+
+          '<option value="UNKNOWN"'+(!recordedWave||recordedWave.signalPath==='UNKNOWN'?' selected':'')+
+            '>Nije sigurno / ne znam</option>'+
+          '<option value="RECORDING_SIGNAL"'+(recordedWave&&recordedWave.signalPath==='RECORDING_SIGNAL'?' selected':'')+
+            '>Signal zapisa (bez monitoring LUT-a)</option>'+
+          '<option value="DISPLAY_LUT_SIGNAL"'+(recordedWave&&recordedWave.signalPath==='DISPLAY_LUT_SIGNAL'?' selected':'')+
+            '>Signal sa monitoring LUT-om / display transformacijom</option></select>'+
+        '<label for="sp-waveform-time">LOKALNI DATUM I VREME OČITAVANJA</label>'+
+        '<input id="sp-waveform-time" class="sp-field" type="datetime-local" value="'+
+          esc(recordedWave&&recordedWave.measuredAtLocal||'')+'">'+
+        '<label for="sp-waveform-offset">UTC POMERAJ U TRENUTKU OČITAVANJA</label>'+
+        '<input id="sp-waveform-offset" class="sp-field" maxlength="6" placeholder="+02:00" value="'+
+          (recordedWave?esc(formatMeterUtcOffset(recordedWave.utcOffsetMinutes)):'')+'">'+
+        '<label for="sp-waveform-target">OPCIONI REFERENTNI NIVO (IRE, SAMO KORISNIK UNOSI)</label>'+
+        '<input id="sp-waveform-target" class="sp-field" type="number" min="0" max="109" step="0.1" placeholder="Ostavi prazno bez sopstvene reference" value="'+
+          (recordedWave&&recordedWave.userReferenceIre!==null?esc(recordedWave.userReferenceIre):'')+'">'+
+        '<label for="sp-waveform-basis">OPCIONI IZVOR TVOJE REFERENTNE VREDNOSTI</label>'+
+        '<input id="sp-waveform-basis" class="sp-field" maxlength="180" placeholder="Kamera, profil, monitoring LUT i odluka DoP-a" value="'+
+          esc(recordedWave&&recordedWave.referenceBasis||'')+'">'+
+        '<label style="display:flex;gap:7px"><input type="checkbox" id="sp-waveform-card-confirmed">'+
+          ' Potvrđujem da sam postavio sivu kartu u istoj tački i očitao waveform</label>'+
+        '<label style="display:flex;gap:7px"><input type="checkbox" id="sp-waveform-camera-confirmed">'+
+          ' Potvrđujem da stvarna kamera ima ISO, blendu, shutter, fps i ND iz prikazanog plana</label>'+
+        '<label style="display:flex;gap:7px"><input type="checkbox" id="sp-waveform-lights-confirmed">'+
+          ' Potvrđujem da je cela planirana rasveta sa ambijentom bila aktivna</label>'+
+        '<button type="button" class="sp-btn" id="sp-save-waveform">SAČUVAJ WAVEFORM KAO NOVU REVIZIJU</button>'+
+        '<p class="sp-note">Nivo sive karte zavisi od profila, LUT-a, monitoringa i refleksije karte. '+
+          'Reference NEMA po podrazumevanim pravilima: ako je unosiš, navedi njen konkretan izvor i signalni put. '+
+          'Razlika u IRE poenima nije promena ekspozicije u stopima. Ne računamo ISO, blendu, lux ili EV scene iz IRE-a.</p></details>';
+      var saveWave=el('sp-save-waveform');
+      if(saveWave)saveWave.onclick=function(){
+        if(state.busy||historyBlocked||!revisions.length)return;
+        if(!el('sp-waveform-card-confirmed').checked||
+          !el('sp-waveform-camera-confirmed').checked||
+          !el('sp-waveform-lights-confirmed').checked){
+          status('Potvrdi fizičku sivu kartu, ista podešavanja kamere i rasvetnu postavku.',true);return;
+        }
+        try{
+          var next=core().createCameraGrayCardWaveformRevision(revisions[revisions.length-1],{
+            confirmed:true,grayCardPlacedConfirmed:true,cameraSettingsMatchedConfirmed:true,
+            allSourcesActiveConfirmed:true,
+            waveformIre:el('sp-waveform-ire').value,
+            cameraModel:el('sp-waveform-camera-model').value,
+            recordingProfile:el('sp-waveform-profile').value,
+            grayCardIdentifier:el('sp-waveform-card').value,
+            measurementPoint:scenePoint,
+            waveformSource:el('sp-waveform-source').value,
+            signalPath:el('sp-waveform-path').value,
+            measuredAtLocal:el('sp-waveform-time').value,
+            measuredUtcOffset:el('sp-waveform-offset').value,
+            userReferenceIre:el('sp-waveform-target').value,
+            referenceBasis:el('sp-waveform-basis').value
+          });
+          revisions=revisions.concat([next]);state.plan=next.plan;
+          renderResult();remember();
+          status('Prijavljeno očitavanje sive karte je sačuvano u novoj reviziji. Ekspozicija nije kalibrisana.');
+        }catch(error){status('Waveform očitavanje nije sačuvano: '+error.message,true);}
       };
     }
     el('sp-plot').innerHTML=plotSvg(plan,current);

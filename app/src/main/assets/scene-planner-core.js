@@ -309,6 +309,21 @@
         referencePoints:(Array.isArray(analysis.referencePoints)?analysis.referencePoints:[]).slice(0,10)
           .map(function(a){return {label:str(a&&a.label,80),x:num(a&&a.x,5,95,50),y:num(a&&a.y,5,95,50),estimated:true};})
       },
+      knowledgeBasis: source === 'ai' && raw.knowledgeBasis &&
+        raw.knowledgeBasis.status === 'CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED' &&
+        Array.isArray(raw.knowledgeBasis.cards) ? {
+          status:'CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED',
+          cards:raw.knowledgeBasis.cards.slice(0,8).map(function(c){
+            return {id:str(c&&c.id,40),title:str(c&&c.title,180),
+              principle:str(c&&c.principle,1200),application:str(c&&c.application,1200),
+              limitations:str(c&&c.limitations,1200),
+              references:(Array.isArray(c&&c.references)?c.references:[]).slice(0,4).map(function(r){
+                return {source:str(r&&r.source,40),author:str(r&&r.author,120),
+                  pdfPage:num(r&&r.pdfPage,1,5000,null),printedPage:num(r&&r.printedPage,0,5000,null),
+                  verification:str(r&&r.verification,120)};
+              })};
+          })
+        } : null,
       dayForNightNotes:nightNotes,
       unknownCoverageStages:unlit,
       geometry: {widthM: req.roomWidthM, depthM: req.roomDepthM,

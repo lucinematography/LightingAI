@@ -1,5 +1,6 @@
 import { createRequire } from "node:module";
 import { parseDataImage } from "./visual-preview.js";
+import { retrieveKnowledge } from "./scene-planner-knowledge.js";
 
 const require = createRequire(import.meta.url);
 const core = require("../app/src/main/assets/scene-planner-core.js");
@@ -53,6 +54,12 @@ export function buildScenePlannerPrompt(req) {
   const onlyOwn = req.mode === "own";
   return [
     "You are a professional cinematography gaffer and lighting designer.",
+    "REFERENCE KNOWLEDGE: The following are curated, paraphrased principles derived from cinematography books, not the full texts. Treat as conditional guidance, not measured evidence or mandatory recipes.",
+    JSON.stringify(retrieveKnowledge([req.description,req.look,req.captureLighting,req.dopRequest].filter(Boolean).join(" ").slice(0,1200),{maxResults:8}).map(card=>({
+      id:card.id,principle:card.principle,application:card.application,limitations:card.limitations,
+      references:card.evidence.map(e=>({source:e.source_id,pdfPage:e.pdf_page,printedPage:e.printed_page}))
+    }))),
+    "Use applicable book principles to justify lighting choices; never fabricate a citation, measurement, or universally correct lighting ratio. Where evidence is weak, explain the on-set check.",
     "Design a creative but executable light plan for the actual scene and actor blocking.",
     "The photograph and video keyframes are visual references, NOT calibrated depth measurements.",
     "Scene description: " + req.description,

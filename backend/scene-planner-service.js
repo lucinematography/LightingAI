@@ -140,7 +140,7 @@ export async function generateScenePlannerPlan(openai, body, catalog) {
     status:"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED",
     cards:evidence.map(card=>({
       id:card.id,title:card.title,principle:card.principle,application:card.application,
-      limitations:card.limitations,references:card.evidence.map(e=>({
+      validation:card.validation,limitations:card.limitations,references:card.evidence.map(e=>({
         source:e.source_id,title:e.title,author:e.author,edition:e.edition,pdfPage:e.pdf_page,printedPage:e.printed_page,
         verification:e.recordVerification
       }))

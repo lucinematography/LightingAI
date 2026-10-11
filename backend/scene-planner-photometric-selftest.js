@@ -1931,6 +1931,32 @@ assert.match(uiSource,/sceneIncidentEvidence\.userReportedLux/);
 assert.match(uiSource,/Ne sabirati sa izolovanim|Ne sabirati/i);
 assert.match(uiSource,/data-sp-distance-light/);
 assert.match(uiSource,/Lično potvrđujem merenje na setu/);
+// Media-session and asynchronous-work gates MUST protect original-video
+// AI generation, paid start, local WebM and storyboard from stale shot samples.
+assert.match(uiSource,/function hasCurrentVideoPlan\(/);
+assert.match(uiSource,/plannedVideoFrameSession===videoFrameSession/);
+assert.match(uiSource,/if\(!hasCurrentVideoPlan\(\)\)/);
+const paidStartBody=uiSource.split('async function startAIVideo()')[1]
+  .split('function cryptoRandomRequestId()')[0];
+assert.match(paidStartBody,/hasCurrentVideoPlan\(\)/,
+  'no upload or provider start is allowed with a plan for another video');
+assert.match(paidStartBody,/state\.videoBusy=true/,
+  'the selected source cannot change while a paid upload/start is in progress');
+assert.match(paidStartBody,/finally\{state\.videoBusy=false/);
+const conceptExportBody=uiSource.split('async function exportConceptVideo()')[1]
+  .split('async function shareConceptVideo()')[0];
+assert.match(conceptExportBody,/hasCurrentVideoPlan\(\)/);
+assert.match(conceptExportBody,/state\.videoBusy=true/);
+assert.match(conceptExportBody,/state\.videoBusy=false/);
+const storyboardBody=uiSource.split('async function generateAIStoryboard()')[1]
+  .split('function videoStatus(')[0];
+assert.match(storyboardBody,/hasCurrentVideoPlan\(\)/);
+assert.match(storyboardBody,/setBusy\(true\)/);
+assert.match(storyboardBody,/setBusy\(false\)/);
+assert.match(uiSource,/function safeExportCueSheet\(\)/,
+  'duplicate WebView timecodes must not prevent saving valid plan history');
+assert.match(uiSource,/Pokrivenost nije revidirana posle DoP izmene/,
+  'old light-stage coverage cannot masquerade as tested after a DoP light edit');
 const tampered=JSON.parse(JSON.stringify(revision));
 tampered.plan.photometricBasis.entries[0].samples[0].lux=99999;
 assert.throws(()=>core.restoreRevisions([tampered]),/integrity|Invalid/i);

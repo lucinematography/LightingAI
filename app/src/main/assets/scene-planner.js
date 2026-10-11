@@ -472,8 +472,11 @@
     renderMotionStage(index);
     info.textContent='Tačka '+(index+1)+'/'+path.length+
       (pt.timeSec==null?'':' • video '+pt.timeSec.toFixed(1)+' s')+
-      ' • očekivani izvori: '+(covered.length?covered.map(function(l){return l.id;}).join(', '):'nisu potvrđeni')+
-      (!known.length?' • UPOZORENJE: nije potvrđen key/ambient na ovom delu putanje.':'');
+      ' • očekivani izvori: '+(p.dopLocalVariant&&p.dopLocalVariant.changedLights.length?
+        'procena pokrivenosti nije ažurirana nakon DoP izmene':
+        (covered.length?covered.map(function(l){return l.id;}).join(', '):'nisu potvrđeni'))+
+      (!known.length&&!(p.dopLocalVariant&&p.dopLocalVariant.changedLights.length)?
+        ' • UPOZORENJE: nije potvrđen key/ambient na ovom delu putanje.':'');
   }
   function renderMotionStage(index){
     var region=el('sp-motion-stage'),p=state.plan;
@@ -482,7 +485,7 @@
       region.innerHTML='<p class="sp-note">Dodaj video da bi pregledao kretanje kroz snimljene kadrove.</p>';
       return;
     }
-    if(plannedVideoFrameSession!==videoFrameSession){
+    if(!hasCurrentVideoPlan()){
       region.innerHTML='<p class="sp-note">Učitani video ili fotografija su promenjeni od planiranja. ' +
         'Napravi novi plan da bi se izbeglo povezivanje starog rasporeda sa drugim snimkom.</p>';
       return;
@@ -494,7 +497,9 @@
     var selected=state.frames.indexOf(frame);
     var shade=p.look==='Night'||p.look==='Day for Night';
     var filter=shade?'brightness(.53) contrast(1.18) saturate(.70) hue-rotate(12deg)':'contrast(1.06)';
-    var labels=(p.lights||[]).filter(function(l){return l.coverageStages.includes(index);}).map(function(l){return l.id;}).join(', ');
+    var changedDoPLights=!!(p.dopLocalVariant&&p.dopLocalVariant.changedLights.length);
+    var labels=changedDoPLights?'Pokrivenost nije revidirana posle DoP izmene':
+      (p.lights||[]).filter(function(l){return l.coverageStages.includes(index);}).map(function(l){return l.id;}).join(', ');
     region.innerHTML='<div style="position:relative;background:#070d15;border-radius:10px;overflow:hidden">'+
       '<img alt="Referentni kadar '+(selected+1)+'" src="'+frame.image+'" style="width:100%;max-height:350px;object-fit:contain;display:block;filter:'+filter+'">'+
       '<div style="position:absolute;bottom:8px;left:8px;background:#050b11da;border-radius:8px;color:#f5c542;font-size:12px;padding:7px">'+
@@ -502,11 +507,17 @@
       '</div></div>'+
       '<p class="sp-note">Procena izgledа iz izabranog kadra. Svetlosni filter je kreativni prikaz, a ne simulacija stvarnih izvora.</p>';
   }
+  // A selected video is usable only by the plan created from this same
+  // in-memory sample session. Restored plans cannot silently attach new media.
+  function hasCurrentVideoPlan(){
+    return !!(state.plan&&state.videoFile&&state.frames.length&&
+      plannedVideoFrameSession===videoFrameSession&&
+      revisions.length&&revisions[revisions.length-1].plan===state.plan);
+  }
   function currentSampledCueSheet(){
     if(!core()||!core().createDopSampledVideoCueSheet||historyBlocked||
        !state.plan||!revisions.length||!state.frames.length||
-       plannedVideoFrameSession!==videoFrameSession||
-       revisions[revisions.length-1].plan!==state.plan)return null;
+       !hasCurrentVideoPlan())return null;
     return core().createDopSampledVideoCueSheet(
       revisions[revisions.length-1],
       state.frames.map(function(f){return {timeSec:f.timeSec};}));
@@ -517,7 +528,7 @@
       box.innerHTML='<p class="sp-note">Dodaj video za vremenski plan po najviše šest uzorkovanih kadrova.</p>';
       return;
     }
-    if(plannedVideoFrameSession!==videoFrameSession){
+    if(!hasCurrentVideoPlan()){
       box.innerHTML='<p class="sp-note">Video ili fotografija su promenjeni. '+
         'Pre vremenskog plana regeneriši Scene Planner za nove kadrove.</p>';
       return;
@@ -571,6 +582,8 @@
     box.innerHTML=html;
   }
   function conceptPhoto(plan){
+    if(state.videoFile&&state.frames.length&&!hasCurrentVideoPlan())
+      return '<p class="sp-note">Snimak je promenjen: regeneriši plan pre konceptualnog prikaza.</p>';
     var image=state.photo||(state.frames[0]&&state.frames[0].image)||'';
     if(!image)return '<p class="sp-note">Fotografija nije dostupna.</p>';
     var night=plan.look==='Night'||plan.look==='Day for Night';
@@ -675,7 +688,10 @@
       }
     }
     if(plan===state.plan){
-      var sampledSheet=currentSampledCueSheet();
+      var sampledSheet=null;
+      try{sampledSheet=currentSampledCueSheet();}catch(invalidSampleTimes){
+        lines.push('Vremenski plan uzoraka nije potvrđen; potrebne su strogo rastuće oznake vremena.');
+      }
       if(sampledSheet){
         lines.push('','DO P — VREMENSKI PLAN (SAMO DO 6 UZORKOVANIH KADROVA)',
           'Revizija: '+sampledSheet.revisionId+' / plot: '+sampledSheet.lightPlotRevisionId,
@@ -1645,6 +1661,9 @@
   }
   async function generatePhotoPreview(){
     if(state.busy||!state.plan)return;
+    if(state.videoFile&&state.frames.length&&!hasCurrentVideoPlan()){
+      status('Novi video nema vezu sa ovim planom. Generiši plan za trenutno izabrani snimak.',true);return;
+    }
     var image=state.photo||(state.frames[0]&&state.frames[0].image)||'';
     if(!image){status('Za foto-preview je potreban kadar.',true);return;}
     setBusy(true);status('Generišem AI foto-preview sa predloženim osvetljenjem…');
@@ -1668,7 +1687,10 @@
     finally{clearTimeout(timeout);state.abort=null;setBusy(false);}
   }
   async function generateAIStoryboard(){
-    if(state.busy||!state.plan||!state.frames.length){status('Najpre dodaj video i napravi plan rasvete.',true);return;}
+    if(state.busy||state.videoBusy||!hasCurrentVideoPlan()){
+      status('Generiši novi plan za trenutno izabrani video pre AI storyboarda.',true);return;
+    }
+    setBusy(true);
     var button=el('sp-storyboard-btn');if(button)button.disabled=true;
     var indices=[0,Math.floor((state.frames.length-1)/2),state.frames.length-1];
     var frames=indices.filter(function(i,k){return indices.indexOf(i)===k;}).map(function(i){return state.frames[i];});
@@ -1694,7 +1716,7 @@
       }).join('')+'<p class="sp-note">AI su obrađene samo statične slike. Ovo još nije kompletan vremenski stabilan AI video, niti njegov video-izvoz.</p>';
       status('AI ključni kadrovi su spremni. Za pravi AI video potrebna je vremenski usklađena obrada svih kadrova.');
     }catch(error){status('AI storyboard nije dostupan: '+(error.name==='AbortError'?'timeout':error.message),true);}
-    finally{clearTimeout(timer);state.abort=null;if(button)button.disabled=false;}
+    finally{clearTimeout(timer);state.abort=null;if(button)button.disabled=false;setBusy(false);}
   }
   function videoStatus(message,problem){
     var elStatus=el('sp-video-ai-status');
@@ -1775,9 +1797,12 @@
     }catch(e){videoReceiptBlocked=true;videoStatus('Potvrdu prethodnog zadatka nije moguće proveriti. Nova plaćena obrada je blokirana.',true);}
   }
   async function startAIVideo(){
+    if(state.busy||state.videoBusy){videoStatus('Sačekaj da se prethodna obrada završi.',true);return;}
     if(videoReceiptBlocked){videoStatus('Prvo razjasni prethodni plaćeni zahtev dugmetom za status.',true);return;}
     if(!state.aiVideoAvailable){videoStatus('AI video servis nije omogućen.',true);return;}
-    if(!state.plan||!state.videoFile){videoStatus('Izaberi video i generiši plan.',true);return;}
+    if(!hasCurrentVideoPlan()){
+      videoStatus('Generiši novi plan za upravo izabrani video pre plaćene AI obrade.',true);return;
+    }
     if(state.aiVideoCompletedPlan===state.plan){
       videoStatus('AI video za ovaj plan je već pokrenut. Za novu obradu prvo potvrdi novi DoP plan.',true);return;
     }
@@ -1795,6 +1820,7 @@
       videoStatus('Potreban je snimak trajanja od 2 do 30 sekundi.',true);return;
     }
     var button=el('sp-video-ai-start');button.disabled=true;
+    state.videoBusy=true; // lock selected media/DoP edits throughout upload and provider start
     try{
       var pending=state.aiVideoPending;
       if(!pending){
@@ -1837,7 +1863,7 @@
       videoStatus('AI zahtev nije potvrđen: '+error.message+
         (state.aiVideoPending&&state.aiVideoPending.started?' Moguće je da je naplaćen; ne šalji novi zahtev. Sledeća provera koristi isti ID.':''),true);
     }
-    finally{button.disabled=false;}
+    finally{state.videoBusy=false;button.disabled=false;}
   }
   function cryptoRandomRequestId(){
     if(window.crypto&&window.crypto.randomUUID)return window.crypto.randomUUID();
@@ -1918,7 +1944,7 @@
     if(box){box.textContent=message;box.style.color=error?'#ffc2ae':'#b0edc7';}
   }
   async function exportConceptVideo(){
-    if(state.busy||state.videoBusy||!state.videoFile||!state.plan){
+    if(state.busy||state.videoBusy||!hasCurrentVideoPlan()){
       exportMessage('Dodaj video i generiši plan pre izvoza.',true);return;
     }
     if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){
@@ -1934,6 +1960,7 @@
     var canvas=document.createElement('canvas');
     var ctx=canvas.getContext('2d');
     var recorder=null,raf=0,chunks=[],stream=null;
+    state.videoBusy=true; // do not replace the source clip during asynchronous WebM export
     var onMetadata=function(){return new Promise(function(resolve,reject){
       if(video.readyState>=1){resolve();return;}
       video.addEventListener('loadedmetadata',resolve,{once:true});
@@ -1994,6 +2021,7 @@
       cancelAnimationFrame(raf);video.pause();video.removeAttribute('src');video.load();
       if(recorder&&recorder.state!=='inactive')recorder.stop();
       if(stream)stream.getTracks().forEach(function(track){track.stop();});
+      state.videoBusy=false;
     }
   }
   async function shareConceptVideo(){
@@ -2006,13 +2034,17 @@
     try{await navigator.share({files:[file],title:'LightingAI Scene Planner konceptualni previz'});}
     catch(error){if(error.name!=='AbortError')exportMessage('Deljenje nije uspelo.',true);}
   }
+  function safeExportCueSheet(){
+    try{return currentSampledCueSheet();}
+    catch(invalidSampleTimes){return null;}
+  }
   function exportObject(){
     var doPHistory=revisions.length&&core().listDopPlannedEditEvents?
       core().listDopPlannedEditEvents(revisions):null;
     return {format:'LightingAI.ScenePlanner.v1',savedAt:new Date().toISOString(),
       plan:state.plan,revisionSchemaVersion:1,revisions:revisions,
       dopPlannedEditHistory:doPHistory,
-      sampledVideoCueSheet:currentSampledCueSheet(),
+      sampledVideoCueSheet:safeExportCueSheet(),
       notes:'Originalni foto i video materijal nisu uključeni u JSON izvoz. DoP istorija je izvedena iz revizija, nije fizički izmerena.'};
   }
   function restorePlanHistory(){

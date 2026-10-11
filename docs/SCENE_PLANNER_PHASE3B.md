@@ -1319,3 +1319,23 @@ and camera proposals, forged plan hashes, and UI/export session guards.
 This work stays inside four Scene Planner files on its feature branch:
 no `main`, K0/K1, paid AI route, physical fixture control, release, or
 installation change.
+
+
+### Media/plan mismatch gates before paid video and WebM (2026-10-11)
+
+Plan-to-selected-video session binding now gates all media-dependent actions:
+offline preview, storyboard, conceptual WebM export and **paid video start**.
+A newly selected clip or photo cannot silently reuse the earlier revision.
+An in-flight storyboard holds the planning busy lock; paid start and WebM
+export hold the video busy lock through their asynchronous operations, so a
+new selected clip cannot replace source bytes between validation and output.
+Existing unresolved paid-video request receipts and status reconciliation
+remain available and are not discarded or reissued automatically. The source
+byte hash remains unverified; this is only an in-memory mismatch guard.
+Newly computed sampled timecodes that are duplicated/nonmonotonic do not
+silently gain confidence or prevent unrelated plan JSON export. After DoP
+light edits, the movement preview says earlier coverage claims are stale.
+Regression checks enforce source binding before paid start, upload lock,
+storyboard lock, local WebM lock, safe exports and coverage warnings. No paid
+service call was issued during implementation; control, K0/K1, `main`, merge,
+release, installation and publication remain unchanged.

@@ -87,6 +87,12 @@ assert.ok(produced.plan.knowledgeBasis.cards.length>0,"generated AI plan must ca
 assert.ok(produced.plan.knowledgeBasis.cards.every(c=>c.id!=="FAKE-999"),"model-invented citations must not enter trusted evidence");
 const knowledgeRevision=core.createRevision(produced.plan,clip,"ai",null,"scene-book-evidence-test");
 assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revision must preserve book evidence");
+const revisionPrompt=buildScenePlannerPrompt(canonicalInventory(validateScenePlannerRequest({
+  ...own,previousPlan:knowledgeRevision.plan
+}),catalog));
+assert.ok(revisionPrompt.includes("Previous plan to revise"),"revision context must remain available");
+assert.ok(!revisionPrompt.includes("CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED"),
+  "book evidence must not be echoed back into the model as previous-plan text");
 assert.deepEqual(core.restoreRevisions([JSON.parse(JSON.stringify(knowledgeRevision))])[0].plan.knowledgeBasis,
   knowledgeRevision.plan.knowledgeBasis,"restored revision must retain identical citations");
 const tamperedKnowledgeRevision=JSON.parse(JSON.stringify(knowledgeRevision));

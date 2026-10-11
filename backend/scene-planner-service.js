@@ -16,6 +16,9 @@ function parseModelJson(response) {
 
 export function validateScenePlannerRequest(body) {
   const req = core.request(body);
+  if (body?.dimensionsMeasured === true && !req.dimensionsMeasured) {
+    throw Object.assign(new Error("Marked measured room dimensions require valid width and depth (0.5-100m)."), {status:422});
+  }
   if (!req.description) throw Object.assign(new Error("Scene description is required."), {status:400});
   if (!req.scenePhoto && !req.videoFrames.length) {
     throw Object.assign(new Error("Scene photo or video frames are required."), {status:400});

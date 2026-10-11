@@ -74,6 +74,14 @@
     var n = Number(value);
     return value !== '' && value != null && Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
   }
+  // Measured-room input must never be clipped into a plausible measurement.
+  // This is user-declared measurement, not independent depth-camera calibration.
+  function roomDimension(value) {
+    if(typeof value!=='number' && typeof value!=='string')return null;
+    if(typeof value==='string' && !/^(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)$/.test(value.trim()))return null;
+    var n=Number(value);
+    return Number.isFinite(n) && n>=0.5 && n<=100 ? n : null;
+  }
   function key(value) { return str(value, 250).toLowerCase().replace(/[^a-z0-9]/g, ''); }
   function mode(value) { return value === 'own' ? 'own' : 'best'; }
   function equipment(items) {
@@ -103,6 +111,7 @@
   }
   function request(input) {
     input = input && typeof input === 'object' ? input : {};
+    var width=roomDimension(input.roomWidthM),depth=roomDimension(input.roomDepthM);
     return {
       mode: mode(input.mode),
       description: str(input.description, 3000),
@@ -115,8 +124,8 @@
       sceneLocalDateTime: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(String(input.sceneLocalDateTime||'')) ?
         str(input.sceneLocalDateTime, 20) : '',
       sceneCoordsVerified: input.sceneCoordsVerified === true,
-      roomWidthM: num(input.roomWidthM, 0.5, 100, null),
-      roomDepthM: num(input.roomDepthM, 0.5, 100, null),
+      roomWidthM: width,
+      roomDepthM: depth,
       equipment: equipment(input.equipment),
       modifiers: Array.isArray(input.modifiers) ? input.modifiers.map(function(x){return str(x,180);}).filter(Boolean) : modifiers(input.equipment),
       scenePhoto: str(input.scenePhoto, 12000000),
@@ -125,7 +134,7 @@
       }).map(function(f){
         return {timeSec:num(f.timeSec,0,3600,0),image:str(f.image,3500000)};
       }).filter(function(f){return !!f.image;}),
-      dimensionsMeasured: input.dimensionsMeasured === true,
+      dimensionsMeasured: input.dimensionsMeasured === true && width!==null && depth!==null,
       shotCamera: str(input.shotCamera || '', 400),
       dopRequest: str(input.dopRequest || '', 1500),
       cameraOverrides: cameraInput(input.cameraOverrides),

@@ -52,6 +52,15 @@ const unmeasured=buildPhotometricBasis(unmeasuredReq,core.sanitizePlan(rawLight,
   fixtures,[]);
 assert.equal(unmeasured.entries[0].estimatedXMetres,null);
 assert.equal(unmeasured.geometry.userMarkedMeasured,false);
+const invalidGeometry=core.request({...raw,roomWidthM:101,dimensionsMeasured:true});
+assert.equal(invalidGeometry.roomWidthM,null);
+assert.equal(invalidGeometry.dimensionsMeasured,false);
+const invalidPlan=core.sanitizePlan(rawLight,invalidGeometry,'ai');
+const invalidBasis=buildPhotometricBasis(invalidGeometry,invalidPlan,fixtures,[]);
+assert.equal(invalidBasis.geometry.userMarkedMeasured,false);
+assert.equal(invalidBasis.entries[0].estimatedXMetres,null);
+assert.equal(invalidBasis.entries[0].estimatedYMetres,null,
+  'one missing room dimension must prevent all metric-position claims');
 const missing=buildPhotometricBasis(req,plan,[{...fixtures[0],sourceUrl:'https://example.com/fake'}],[]);
 assert.equal(missing.entries.length,0,'spoofed spec must fail closed');
 const response={responses:{create:async()=>({output_text:JSON.stringify({

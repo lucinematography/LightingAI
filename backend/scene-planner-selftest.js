@@ -24,6 +24,34 @@ assert.equal(belgrade.sceneCoordsVerified,false,"city centre is approximate, not
 assert.equal(core.sanitizePlan({lights:[]},belgrade,"local").location.locationIsApproximate,true);
 assert.equal(core.request({...own,sceneLatitude:350}).sceneLatitude,90);
 assert.equal(core.request({...own,sceneLocalDateTime:"invalid"}).sceneLocalDateTime,"");
+// Geometry is user-declared; missing/invalid measurements may not be silently clipped or marked measured.
+const measuredRoom=core.request({...own,roomWidthM:"6.5",roomDepthM:4,dimensionsMeasured:true});
+assert.deepEqual([measuredRoom.roomWidthM,measuredRoom.roomDepthM,measuredRoom.dimensionsMeasured],[6.5,4,true]);
+assert.equal(core.sanitizePlan({lights:[]},measuredRoom,"local").geometry.measured,true);
+for(const room of [
+  {roomWidthM:"",roomDepthM:4},
+  {roomWidthM:"0.1",roomDepthM:4},
+  {roomWidthM:101,roomDepthM:4},
+  {roomWidthM:"NaN",roomDepthM:4},
+  {roomWidthM:"Infinity",roomDepthM:4},
+  {roomWidthM:"4abc",roomDepthM:4},
+  {roomWidthM:[5],roomDepthM:4},
+  {roomWidthM:5,roomDepthM:0},
+  {roomWidthM:5,roomDepthM:100.5}
+]){
+  const untrusted={...own,...room,dimensionsMeasured:true};
+  const normalized=core.request(untrusted);
+  assert.equal(normalized.dimensionsMeasured,false,"invalid dimensions cannot be tagged as measured");
+  assert.equal(core.sanitizePlan({lights:[]},untrusted,"local").geometry.measured,false);
+  assert.throws(()=>validateScenePlannerRequest(untrusted),error=>
+    error.status===422 && /Measured|measured/i.test(error.message),
+    "backend must refuse false measured status");
+}
+assert.equal(core.request({...own,roomWidthM:101,roomDepthM:2}).roomWidthM,null);
+assert.equal(core.request({...own,roomWidthM:0.1,roomDepthM:2}).roomWidthM,null);
+assert.equal(core.request({...own,roomWidthM:100,roomDepthM:0.5,dimensionsMeasured:true}).dimensionsMeasured,true);
+assert.ok(validateScenePlannerRequest({...own,roomWidthM:"6.5",roomDepthM:4,dimensionsMeasured:true}).dimensionsMeasured);
+
 assert.match(buildScenePlannerPrompt(belgrade),/verified SUN calculation/);
 assert.match(buildScenePlannerPrompt(belgrade),/prefer relevant retrieved book principles/,"AI must use book guidance for lighting decisions");
 assert.match(buildScenePlannerPrompt(belgrade),/creative hypothesis without book support/,"AI must disclose unsupported recommendations");
@@ -135,6 +163,8 @@ assert.ok(frontend.includes("AI predlog nema knjišku potporu"),"UI must disclos
 assert.ok(frontend.includes('id="sp-location"'),"Scene Planner must support editable location");
 assert.ok(frontend.includes('value="Beograd, Srbija"'),"Belgrade is the initial user location");
 assert.ok(frontend.includes('id="sp-scene-datetime"'),"shooting time is optional");
+assert.ok(frontend.includes("el('sp-measured').checked && !req.dimensionsMeasured"),
+  "UI must refuse a false measured-room claim before paid AI request");
 assert.ok(frontend.includes("el('sp-scene-lat').value=''"),"changing cities must clear stale GPS coordinates");
 assert.ok(frontend.includes("videoFrames(state.videoUrl)"),"must sample video before AI request");
 assert.ok(frontend.includes("Originalni video ostaje na telefonu"),"raw video stays on device");

@@ -365,6 +365,10 @@
     if(state.busy||state.videoBusy||!core())return;
     if(historyBlocked){status('Postojeća istorija nije proverena. Sačuvane revizije neće biti prepisane.',true);return;}
     var req=payload();
+    if(el('sp-measured').checked && !req.dimensionsMeasured){
+      status('Za zaista izmerene dimenzije unesi širinu i dubinu od 0,5 do 100 m. Nećemo izmišljati ili zaokruživati mere.',true);
+      return;
+    }
     if(!req.description){status('Opiši scenu tekstom ili glasom.',true);return;}
     if(!req.scenePhoto&&!req.videoFrames.length){status('Dodaj fotografiju ili video sa izdvojenim kadrovima.',true);return;}
     if(req.mode==='own'&&!req.equipment.length){status('U režimu MOJA OPREMA izaberi lampu u inventaru.',true);return;}

@@ -563,6 +563,80 @@ const extraDopStatus=JSON.parse(JSON.stringify(ratioD));
 extraDopStatus.plan.dataStatus.dopLocalVariant='user-specified-plan-only-not-measured';
 assert.throws(()=>core.verifyRevision(extraDopStatus),/Orphaned DoP/i);
 
+// A sampled-video cue sheet is revision-bound PLANNING ONLY: reference seek
+// samples cannot supply original PTS, actual photons or real actor tracking.
+const cueRaw={
+  lights:[
+    {fixtureName:'Test planned key',role:'key',x:25,y:35,kelvin:5600,
+      intensityPct:70,coverageStages:[0,2]},
+    {fixtureName:'Test planned fill',role:'fill',x:75,y:35,kelvin:4500,
+      intensityPct:35,coverageStages:[1]}
+  ],
+  actors:[{label:'Glumica',x:30,y:50,confidence:'low',path:[
+    {timeSec:1,x:30,y:50},{timeSec:3,x:50,y:50},
+    {timeSec:5,x:70,y:50}
+  ]}]
+};
+const cueInput={mode:'best',description:'Day for night planned walk',
+  look:'Day for Night',captureLighting:'day',
+  videoFrames:[1,3,5].map(timeSec=>({timeSec,image:PHOTO}))};
+const cueRevision=core.createRevision(cueRaw,cueInput,'local',null,'video-cues-demo');
+const cueTimeSamples=[1,3,5,7].map(timeSec=>({timeSec}));
+const cueSheet=core.createDopSampledVideoCueSheet(cueRevision,cueTimeSamples);
+assert.equal(cueSheet.contract,'lightingai-sampled-shot-lighting-cues/1');
+assert.equal(cueSheet.revisionId,cueRevision.revisionId);
+assert.equal(cueSheet.planHash,cueRevision.planHash);
+assert.equal(cueSheet.look,'Day for Night');
+assert.equal(cueSheet.sampleCount,4);
+assert.deepEqual(cueSheet.cues.map(c=>c.stageIndex),[0,1,2,null]);
+assert.deepEqual(cueSheet.cues.map(c=>c.coverageStatus),[
+  'PLANNED_KEY_OR_AMBIENT_ASSIGNED_NOT_PHYSICALLY_VERIFIED',
+  'PLANNED_KEY_OR_AMBIENT_GAP_NOT_ACTUAL_DARKNESS',
+  'PLANNED_KEY_OR_AMBIENT_ASSIGNED_NOT_PHYSICALLY_VERIFIED',
+  'UNKNOWN_STAGE_NO_UNAMBIGUOUS_TIMESTAMP_MATCH'
+]);
+assert.deepEqual(cueSheet.cues[0].plannedLights.map(x=>x.lightId),['L1']);
+assert.equal(cueSheet.cues[0].plannedLights[0].intensityPct,70);
+assert.equal(cueSheet.cues[1].plannedLights[0].role,'fill');
+assert.equal(cueSheet.cues[3].plannedLights.length,0);
+assert.equal(cueSheet.cameraProposal.iso,cueRevision.plan.cameraSettings.iso);
+for(const flag of ['sourceVideoIdentityVerified','originalFramePtsVerified',
+  'actorTrackingVerified','physicalLightStateVerified',
+  'cameraExposureVerified','videoRelightGenerated'])
+  assert.equal(cueSheet[flag],false);
+assert.ok(Object.isFrozen(cueSheet));
+assert.ok(Object.isFrozen(cueSheet.cues));
+assert.ok(Object.isFrozen(cueSheet.cues[0].plannedLights));
+assert.equal(JSON.stringify(cueSheet).includes('base64'),false,
+  'derived cue receipts must never export sampled JPEG pixel bytes');
+const changedCuePlan=core.createDopLightingVariantRevision(cueRevision,{
+  confirmed:true,reason:'DoP zahteva slabiji key u svim uzorkovanim kadrovima',
+  lightEdits:[{lightId:'L1',intensityPct:45}],cameraEdits:{iso:1600}
+});
+const updatedCueSheet=core.createDopSampledVideoCueSheet(changedCuePlan,cueTimeSamples);
+assert.notEqual(updatedCueSheet.revisionId,cueSheet.revisionId);
+assert.notEqual(updatedCueSheet.planHash,cueSheet.planHash);
+assert.equal(updatedCueSheet.cues[0].plannedLights[0].intensityPct,45);
+assert.equal(updatedCueSheet.cameraProposal.iso,1600);
+assert.equal(cueSheet.cues[0].plannedLights[0].intensityPct,70,
+  'prior sampled cue output stays immutable after DoP adjustment');
+for(const samples of [
+  [],Array(7).fill(1).map((t,i)=>({timeSec:t+i})),
+  [{timeSec:1},{timeSec:1}],[{timeSec:3},{timeSec:1}],
+  [{timeSec:'1'}],[{timeSec:1,image:PHOTO}],
+  [{timeSec:null}],[{timeSec:-0.1}],[{timeSec:120.01}],
+  [{timeSec:1.234}],[{timeSec:NaN}],[{timeSec:Infinity}]
+]){
+  assert.throws(()=>core.createDopSampledVideoCueSheet(cueRevision,samples),
+    /sample|timestamp|time/i,'reject untrusted/out-of-order frame samples');
+}
+const noStageCue=core.createRevision({lights:cueRaw.lights},cueInput,'local',null,'video-cue-unknown');
+assert.ok(core.createDopSampledVideoCueSheet(noStageCue,[{timeSec:1}]).cues[0].stageIndex===null);
+const tamperedCue=JSON.parse(JSON.stringify(cueRevision));
+tamperedCue.plan.lights[0].intensityPct=90;
+assert.throws(()=>core.createDopSampledVideoCueSheet(tamperedCue,[{timeSec:1}]),
+  /integrity|invalid|mismatch/i);
+
 const positive=core.compareKeyFillMeasurements(ratioD,'L1','L2');
 assert.equal(positive.status,'COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY');
 assert.equal(positive.ratio,4);
@@ -1801,6 +1875,12 @@ assert.match(uiSource,/referenceDifferenceIrePoints/);
 assert.match(uiSource,/Korisnički zadat referentni nivo/);
 assert.match(uiSource,/createDopLightingVariantRevision\(latest/);
 assert.match(uiSource,/listDopPlannedEditEvents\(revisions\)/);
+assert.match(uiSource,/createDopSampledVideoCueSheet\(/);
+assert.match(uiSource,/renderSampledVideoCues\(\)/);
+assert.match(uiSource,/sp-shot-cues/);
+assert.match(uiSource,/sampledVideoCueSheet:currentSampledCueSheet\(\)/);
+assert.match(uiSource,/plannedVideoFrameSession!==videoFrameSession/);
+assert.match(uiSource,/APPROXIMATE_WEBVIEW_SEEK_NOT_ORIGINAL_VIDEO_PTS|približni WebView seek/);
 assert.match(uiSource,/dopPlannedEditHistory:doPHistory/);
 assert.match(uiSource,/ISTORIJA DoP KREATIVNIH IZMENA/);
 assert.match(uiSource,/DoP — PRE \/ POSLE \(SAMO PLAN\)/);

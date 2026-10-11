@@ -1235,6 +1235,74 @@
       videoRelightGenerated:false
     });
   }
+  // Offline cue sheet for at most six locally seeked reference frames.
+  // Time values are APPROXIMATE browser samples, never original frame PTS,
+  // image hashes, decoded frames, verified actor tracking or rendered video.
+  function createDopSampledVideoCueSheet(revision,samples) {
+    verifyRevision(revision);
+    if(!Array.isArray(samples)||samples.length<1||samples.length>6)
+      throw new Error('Cue sheet requires one to six ordered sample timestamps');
+    var times=samples.map(function(item,i){
+      if(!item||typeof item!=='object'||Array.isArray(item)||
+         Object.keys(item).length!==1||
+         !Object.prototype.hasOwnProperty.call(item,'timeSec')||
+         typeof item.timeSec!=='number'||!Number.isFinite(item.timeSec)||
+         item.timeSec<0||item.timeSec>120||
+         Math.round(item.timeSec*100)/100!==item.timeSec||
+         (i>0&&item.timeSec<=samples[i-1].timeSec))
+        throw new Error('Invalid or nonmonotonic approximate frame timestamp');
+      return item.timeSec;
+    });
+    var plan=revision.plan;
+    var actor=plan.actors.length===1?plan.actors[0]:null;
+    var path=actor&&Array.isArray(actor.path)?actor.path:[];
+    var lightRoles=['key','fill','backlight','ambient'];
+    var cues=times.map(function(time,index){
+      var matches=[];
+      path.forEach(function(point,stage){
+        if(typeof point.timeSec==='number'&&Number.isFinite(point.timeSec)&&
+           Math.abs(point.timeSec-time)<=0.051)
+          matches.push({stage:stage,point:point});
+      });
+      if(matches.length!==1){
+        return {sampleNumber:index+1,approximateTimeSec:time,stageIndex:null,
+          estimatedActorPosition:null,plannedLights:[],
+          coverageStatus:'UNKNOWN_STAGE_NO_UNAMBIGUOUS_TIMESTAMP_MATCH'};
+      }
+      var match=matches[0];
+      var assigned=plan.lights.filter(function(l){
+        return lightRoles.indexOf(l.role)>=0&&l.coverageStages.indexOf(match.stage)>=0;
+      }).map(function(l){
+        return {lightId:l.id,fixtureName:l.fixtureName,role:l.role,
+          availableInInventory:l.available===true,x:l.x,y:l.y,
+          heightM:l.heightM,distanceM:l.distanceM,
+          intensityPct:l.intensityPct,kelvin:l.kelvin};
+      });
+      return {sampleNumber:index+1,approximateTimeSec:time,stageIndex:match.stage,
+        estimatedActorPosition:{x:match.point.x,y:match.point.y},
+        plannedLights:assigned,
+        coverageStatus:assigned.some(function(l){return l.role==='key'||l.role==='ambient';})?
+          'PLANNED_KEY_OR_AMBIENT_ASSIGNED_NOT_PHYSICALLY_VERIFIED':
+          assigned.length?'PLANNED_KEY_OR_AMBIENT_GAP_NOT_ACTUAL_DARKNESS':
+            'NO_LIGHT_ASSIGNED_IN_PLAN_NOT_ACTUAL_DARKNESS'};
+    });
+    return freezeJson({
+      contract:'lightingai-sampled-shot-lighting-cues/1',
+      sceneId:revision.sceneId,revisionId:revision.revisionId,
+      lightPlotRevisionId:revision.lightPlotRevisionId,planHash:revision.planHash,
+      look:plan.look,captureLighting:plan.captureLighting,
+      cameraProposal:{fps:plan.cameraSettings.fps,
+        shutterAngle:plan.cameraSettings.shutterAngle,
+        aperture:plan.cameraSettings.aperture,iso:plan.cameraSettings.iso,
+        whiteBalanceK:plan.cameraSettings.whiteBalanceK,
+        ndStops:plan.cameraSettings.ndStops},
+      sampleCount:cues.length,cues:cues,
+      timingProvenance:'APPROXIMATE_WEBVIEW_SEEK_NOT_ORIGINAL_VIDEO_PTS',
+      sourceVideoIdentityVerified:false,originalFramePtsVerified:false,
+      actorTrackingVerified:false,physicalLightStateVerified:false,
+      cameraExposureVerified:false,videoRelightGenerated:false
+    });
+  }
   function refreshAttestedOpticReference(plan, lightId) {
     var entry=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
       plan.photometricBasis.entries.find(function(e){return e.lightId===lightId;}):null;
@@ -2088,6 +2156,7 @@
     createDopLightingVariantRevision:createDopLightingVariantRevision,
     compareDopPlannedRevisions:compareDopPlannedRevisions,
     listDopPlannedEditEvents:listDopPlannedEditEvents,
+    createDopSampledVideoCueSheet:createDopSampledVideoCueSheet,
     createCameraGrayCardWaveformRevision:createCameraGrayCardWaveformRevision,
     compareKeyFillMeasurements:compareKeyFillMeasurements,
     assessSceneMeterAlignment:assessSceneMeterAlignment,

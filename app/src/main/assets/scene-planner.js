@@ -6,6 +6,9 @@
   var STORE='lighting_scene_planner_last_v1';
   var REVISION_STORE='lighting_scene_planner_revisions_v1';
   var revisions=[],sceneId=null,historyBlocked=false;
+  // Local video samples are not immutable PTS evidence. Bind them to the
+  // video session used for the current plan; never reuse an older light plot.
+  var videoFrameSession=0,plannedVideoFrameSession=null;
   var VIDEO_RECEIPT='lighting_scene_planner_video_receipt_v1';
   var videoReceipt=null,videoReceiptBlocked=false;
   var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null,videoDurationSec:null,aiVideoPending:null,aiVideoCompletedPlan:null};
@@ -166,7 +169,8 @@
       '<div id="sp-plot"></div><div id="sp-blocking" class="sp-note"></div>'+
       '<div id="sp-motion-preview" class="sp-card" style="margin-top:12px"><b style="color:#f5c542">VIDEO PREVIZ / POKRETNI KONCEPT</b>'+
       '<p class="sp-note">Vremenski sinhronizovan pregled izvornog snimka i procenjenog rasporeda rasvete. Ovo nije AI generisan video.</p>'+
-      '<div id="sp-motion-stage"></div>'+
+      '<div id="sp-motion-stage"></div>'+ 
+      '<div id="sp-shot-cues" class="sp-card" style="margin-top:10px"></div>'+
       '<button type="button" id="sp-storyboard-btn" class="sp-btn" style="width:100%;margin:10px 0">AI OBRADI 3 KLJUČNA VIDEO KADRA</button>'+
       '<div id="sp-ai-storyboard" class="sp-two"></div>'+
       '<div class="sp-actions" style="margin-top:10px"><button type="button" id="sp-video-export" class="sp-btn">IZVEZI KONCEPTUALNI VIDEO</button>'+
@@ -265,9 +269,13 @@
     });
   }
   async function photoPicked(file){
+    if(state.busy||state.videoBusy){status('Sačekaj završetak prethodne obrade.',true);return;}
     status('Pripremam fotografiju…');
     try{
       state.photo=await optimizePhoto(file);state.aiPreview='';
+      // A different source photograph also requires a fresh visual plan.
+      plannedVideoFrameSession=null;
+      if(state.plan){renderSampledVideoCues();renderMotionStage(0);}
       var image=el('sp-image');if(image){image.src=state.photo;image.hidden=false;}
       status('Fotografija dodata.');
     }catch(e){status(e.message||'Fotografija nije učitana.',true);}
@@ -319,9 +327,10 @@
       status('Prethodni plaćeni AI zahtev još nije razjašnjen. Ne menjaj snimak i ne pokreći novi zahtev.',true);
       return;
     }
-    if(state.videoBusy)return;
+    if(state.busy||state.videoBusy){status('Sačekaj završetak prethodne obrade.',true);return;}
     if(!/^video\//.test(file.type)&&file.type) {status('Potreban je video snimak.',true);return;}
     if(file.size>180*1024*1024){status('Video prelazi 180 MB. Skrati snimak i pokušaj ponovo.',true);return;}
+    videoFrameSession++;
     state.videoBusy=true;state.frames=[];state.aiPreview='';state.aiStoryboard=[];state.videoFile=file;state.exportedVideo=null;state.aiVideoTaskId=null;
     state.videoDurationSec=null;state.aiVideoPending=null;state.aiVideoCompletedPlan=null;
     if(state.videoUrl){URL.revokeObjectURL(state.videoUrl);state.videoUrl='';}
@@ -338,7 +347,11 @@
     }catch(e){
       state.frames=[];
       status((e&&e.message||'Video nije podržan.')+' Možeš dodati fotografiju kao alternativu.',true);
-    }finally{state.videoBusy=false;releaseCaptures(!!fromCapture);}
+    }finally{
+      state.videoBusy=false;
+      if(state.plan){renderSampledVideoCues();renderMotionStage(0);}
+      releaseCaptures(!!fromCapture);
+    }
   }
   function payload(){
     return core().request({
@@ -402,6 +415,7 @@
       var revision=core().createRevision(candidate,req,candidate.source,
         revisions.length?revisions[revisions.length-1]:null,sceneId);
       revisions=revisions.concat([revision]);state.plan=revision.plan;
+      plannedVideoFrameSession=state.frames.length?videoFrameSession:null;
       renderResult();remember();
     }catch(error){status('Revizija nije sačuvana: '+error.message,true);}
   }
@@ -468,6 +482,11 @@
       region.innerHTML='<p class="sp-note">Dodaj video da bi pregledao kretanje kroz snimljene kadrove.</p>';
       return;
     }
+    if(plannedVideoFrameSession!==videoFrameSession){
+      region.innerHTML='<p class="sp-note">Učitani video ili fotografija su promenjeni od planiranja. ' +
+        'Napravi novi plan da bi se izbeglo povezivanje starog rasporeda sa drugim snimkom.</p>';
+      return;
+    }
     var actor=(p.actors||[])[0],path=actor&&actor.path||[];
     var current=path[index]||null;
     var targetTime=current&&current.timeSec!=null?current.timeSec:state.frames[Math.min(index,state.frames.length-1)].timeSec;
@@ -482,6 +501,74 @@
       'Kadar '+(selected+1)+' / '+state.frames.length+' · '+frame.timeSec.toFixed(1)+' s · osvetljenje: '+esc(labels||'nepotvrđeno')+
       '</div></div>'+
       '<p class="sp-note">Procena izgledа iz izabranog kadra. Svetlosni filter je kreativni prikaz, a ne simulacija stvarnih izvora.</p>';
+  }
+  function currentSampledCueSheet(){
+    if(!core()||!core().createDopSampledVideoCueSheet||historyBlocked||
+       !state.plan||!revisions.length||!state.frames.length||
+       plannedVideoFrameSession!==videoFrameSession||
+       revisions[revisions.length-1].plan!==state.plan)return null;
+    return core().createDopSampledVideoCueSheet(
+      revisions[revisions.length-1],
+      state.frames.map(function(f){return {timeSec:f.timeSec};}));
+  }
+  function renderSampledVideoCues(){
+    var box=el('sp-shot-cues');if(!box)return;
+    if(!state.frames.length){
+      box.innerHTML='<p class="sp-note">Dodaj video za vremenski plan po najviše šest uzorkovanih kadrova.</p>';
+      return;
+    }
+    if(plannedVideoFrameSession!==videoFrameSession){
+      box.innerHTML='<p class="sp-note">Video ili fotografija su promenjeni. '+
+        'Pre vremenskog plana regeneriši Scene Planner za nove kadrove.</p>';
+      return;
+    }
+    var sheet;
+    try{sheet=currentSampledCueSheet();}
+    catch(error){
+      box.textContent='Vremenski plan nije potvrđen: '+error.message;
+      return;
+    }
+    if(!sheet){box.textContent='Nema potvrđene veze kadrova sa aktuelnom revizijom plana.';return;}
+    var html='<h3 class="sp-h">DoP — VREMENSKI PLAN SVETLA (UZORKOVANI KADROVI)</h3>'+
+      '<p class="sp-note">Revizija '+esc(sheet.revisionId.slice(0,16))+
+      ' • plot '+esc(sheet.lightPlotRevisionId.slice(0,16))+
+      ' • '+sheet.sampleCount+' približnih WebView kadrova. '+
+      'Ovo nisu originalni PTS, analiza svih kadrova ni AI relighting.</p>';
+    sheet.cues.forEach(function(cue){
+      html+='<details class="sp-lamp"><summary><b>Kadar '+cue.sampleNumber+
+        ' • oko '+esc(cue.approximateTimeSec)+' s</b> — '+
+        (cue.stageIndex===null?'kretanje nije vremenski potvrđeno':
+          'procenjena tačka '+(cue.stageIndex+1))+'</summary>';
+      if(cue.stageIndex===null)
+        html+='<p class="sp-note">Nema jedinstvene veze sa AI putanjom u ovom trenutku. '+
+          'Ne pretpostavljamo izvor, koordinatu glumca ni osvetljenost.</p>';
+      else{
+        html+='<p>Planirana pokrivenost: '+esc(cue.coverageStatus)+
+          ' • 2D položaj glumca: '+esc(cue.estimatedActorPosition.x)+
+          '% / '+esc(cue.estimatedActorPosition.y)+'% (AI procena).</p>'+
+          (cue.plannedLights.length?'<ul>'+
+            cue.plannedLights.map(function(l){
+              return '<li>'+esc(l.lightId)+' / '+esc(l.role)+' / '+esc(l.fixtureName)+
+                ' — položaj '+esc(l.x)+'/'+esc(l.y)+'%, '+
+                'jačina '+esc(fmt(l.intensityPct,'%'))+', '+
+                'boja '+esc(fmt(l.kelvin,' K'))+', '+
+                'visina '+esc(fmt(l.heightM,' m'))+', '+
+                'distanca '+esc(fmt(l.distanceM,' m'))+'</li>';
+            }).join('')+'</ul>':
+            '<p class="sp-note">Nijedan izvor nije označen za ovu tačku u planu.</p>');
+        if(cue.coverageStatus!=='PLANNED_KEY_OR_AMBIENT_ASSIGNED_NOT_PHYSICALLY_VERIFIED')
+          html+='<p class="sp-note">Proveriti key/ambient svetlo na ovoj tački. '+
+            'To ne dokazuje da je kadar zaista taman.</p>';
+      }
+      html+='</details>';
+    });
+    html+='<p class="sp-note">Kamera (predlog): f/'+esc(sheet.cameraProposal.aperture)+
+      ', ISO '+esc(sheet.cameraProposal.iso)+', '+esc(sheet.cameraProposal.fps)+
+      ' fps, shutter '+esc(sheet.cameraProposal.shutterAngle)+'°, WB '+
+      esc(sheet.cameraProposal.whiteBalanceK)+' K, ND '+
+      esc(sheet.cameraProposal.ndStops)+' stop. '+
+      'Postavka, originalni frame PTS, praćenje glumca, lux i ekspozicija nisu potvrđeni.</p>';
+    box.innerHTML=html;
   }
   function conceptPhoto(plan){
     var image=state.photo||(state.frames[0]&&state.frames[0].image)||'';
@@ -585,6 +672,27 @@
         });
         lines.push('Provere: istorija je izvedena iz SHA-256 povezanih revizija. '+
           'Nema komandi lampama, potvrđenog lux-a, izmerene ekspozicije ni video relight-a.');
+      }
+    }
+    if(plan===state.plan){
+      var sampledSheet=currentSampledCueSheet();
+      if(sampledSheet){
+        lines.push('','DO P — VREMENSKI PLAN (SAMO DO 6 UZORKOVANIH KADROVA)',
+          'Revizija: '+sampledSheet.revisionId+' / plot: '+sampledSheet.lightPlotRevisionId,
+          'Vremena su približni WebView seek uzorci, ne originalni PTS ili identitet izvornog videa.');
+        sampledSheet.cues.forEach(function(cue){
+          lines.push('Kadar '+cue.sampleNumber+' oko '+cue.approximateTimeSec+' s: '+
+            cue.coverageStatus+
+            (cue.stageIndex===null?' / tačka nepoznata':' / procenjena tačka '+(cue.stageIndex+1)));
+          cue.plannedLights.forEach(function(light){
+            lines.push('  '+light.lightId+' '+light.role+' '+light.fixtureName+
+              ' • X/Y '+light.x+'/'+light.y+'% • intenzitet '+
+              fmt(light.intensityPct,'%')+' • Kelvin '+fmt(light.kelvin,' K')+
+              ' • visina '+fmt(light.heightM,' m')+
+              ' • distanca '+fmt(light.distanceM,' m'));
+          });
+        });
+        lines.push('Nema potvrde fotometrije, ekspozicije, fizičkog rasporeda, praćenja glumca ni obrađenog videa.');
       }
     }
     if(plan.sceneIncidentLuxReading){
@@ -1181,6 +1289,7 @@
     }
     el('sp-plot').innerHTML=plotSvg(plan,current);
     renderBlocking();
+    renderSampledVideoCues();
     el('sp-preview').innerHTML=conceptPhoto(plan);
     el('sp-lights').innerHTML=plan.lights.length?plan.lights.map(function(l){
       var opticBasis=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
@@ -1903,6 +2012,7 @@
     return {format:'LightingAI.ScenePlanner.v1',savedAt:new Date().toISOString(),
       plan:state.plan,revisionSchemaVersion:1,revisions:revisions,
       dopPlannedEditHistory:doPHistory,
+      sampledVideoCueSheet:currentSampledCueSheet(),
       notes:'Originalni foto i video materijal nisu uključeni u JSON izvoz. DoP istorija je izvedena iz revizija, nije fizički izmerena.'};
   }
   function restorePlanHistory(){

@@ -1278,3 +1278,44 @@ results and the UI/export handoff. All outputs retain explicit false flags
 for real lamp control, lux verification, measured camera exposure and AI
 video relighting. This feature neither requests an AI generation nor
 modifies `main`, K0/K1, releases, or installed Android applications.
+
+
+### Revision-bound sampled-frame DoP lighting cue sheet (2026-10-11)
+
+The Android Scene Planner now prepares a read-only, chronological DoP lighting
+cue sheet for **one to six browser-seek JPEG reference timestamps**. It lists
+the proposed role, light ID, X/Y, fixture, planned intensity/CCT, height and
+distance at each unambiguously time-matched estimated actor-path stage, plus
+the current proposed camera settings. It identifies planned key/ambient
+coverage gaps without claiming that physical lighting is dark or adequate.
+No actor stage is invented if the model lacks a matching timestamp, or if
+more than one stage ambiguously matches a sample. Only plan-provided
+estimated coordinates are displayed. There is no pixel-level temporal
+tracking, mask, rendered preview, true video relighting or exposure solution.
+
+The offline core accepts only ascending finite numeric timestamps (0–120 s,
+at most two decimal places), exactly one `timeSec` key per sample and at most
+six samples. It verifies the revision hash before use and returns a frozen
+receipt with `revisionId`, `planHash`, `lightPlotRevisionId` and explicit false
+flags for original source identity, true frame PTS, actor identification,
+physical lamp state, camera calibration and generated AI video. WebView seeks
+are **approximate**, not the complete decoded video timeline from Phase 3B.2.
+Source images, file paths, video bytes and hashes are not copied into the
+receipt. Full temporal relight continuity is not claimed.
+
+The Scene Planner ties its transient sampled JPEG set to the video session
+used for the last successfully created plan revision. Selecting another
+video or photograph makes cue display explicitly stale until a new plan is
+generated, preventing silent pairing of the old light plot with new footage.
+Manual offline DoP child revisions of the SAME source session immediately
+update the proposed cue values and preserve the previous immutable plan.
+Only a session-matched, revision-validated cue sheet is included in the
+optional JSON export and textual DoP handoff; media bytes are still omitted.
+After reopening the app there are no persisted source frames, so cues must
+be re-established from an imported video and a new plan, never inferred
+from historical JSON alone. Tests cover matched, unmatched and gap stages,
+out-of-order/invalid/oversized samples, immutable results, revised light
+and camera proposals, forged plan hashes, and UI/export session guards.
+This work stays inside four Scene Planner files on its feature branch:
+no `main`, K0/K1, paid AI route, physical fixture control, release, or
+installation change.

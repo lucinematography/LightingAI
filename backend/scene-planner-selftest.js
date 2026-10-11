@@ -84,6 +84,10 @@ const produced=await generateScenePlannerPlan(mock,clip,catalog);
 assert.equal(produced.ok,true);
 assert.equal(produced.plan.source,"ai");
 assert.ok(produced.plan.knowledgeBasis.cards.length>0,"generated AI plan must carry retrieved book principles");
+const knowledgeRevision=core.createRevision(produced.plan,clip,"ai",null,"scene-book-evidence-test");
+assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revision must preserve book evidence");
+assert.deepEqual(core.restoreRevisions([JSON.parse(JSON.stringify(knowledgeRevision))])[0].plan.knowledgeBasis,
+  knowledgeRevision.plan.knowledgeBasis,"restored revision must retain identical citations");
 assert.ok(produced.plan.knowledgeBasis.cards.some(c=>c.references.some(r=>r.source&&r.pdfPage>0)),"generated plan must carry source pages");
 assert.equal(produced.plan.knowledgeBasis.status,"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED");
 assert.equal(produced.plan.lights.length,1);
@@ -102,6 +106,7 @@ assert.ok(frontend.includes('accept="video/*"'),"video file inputs needed");
 assert.ok(frontend.includes('capture="environment"'),"camera/video capture requested");
 assert.ok(frontend.includes("Android.startSpeechInput"),"native voice input wired");
 assert.ok(frontend.includes("sp-description"),"voice destination exists");
+assert.ok(frontend.includes("Stručna baza: knjige i obrazloženja"),"UI must show retrieved book principles");
 assert.ok(frontend.includes('id="sp-location"'),"Scene Planner must support editable location");
 assert.ok(frontend.includes('value="Beograd, Srbija"'),"Belgrade is the initial user location");
 assert.ok(frontend.includes('id="sp-scene-datetime"'),"shooting time is optional");

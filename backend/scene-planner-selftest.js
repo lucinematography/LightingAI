@@ -84,6 +84,7 @@ const produced=await generateScenePlannerPlan(mock,clip,catalog);
 assert.equal(produced.ok,true);
 assert.equal(produced.plan.source,"ai");
 assert.ok(produced.plan.knowledgeBasis.cards.length>0,"generated AI plan must carry retrieved book principles");
+assert.ok(produced.plan.knowledgeBasis.cards.every(c=>typeof c.validation==="string"&&c.validation.length>0),"every retrieved book principle must include a practical on-set check");
 assert.ok(produced.plan.knowledgeBasis.cards.every(c=>c.id!=="FAKE-999"),"model-invented citations must not enter trusted evidence");
 const knowledgeRevision=core.createRevision(produced.plan,clip,"ai",null,"scene-book-evidence-test");
 assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revision must preserve book evidence");
@@ -121,6 +122,7 @@ assert.ok(frontend.includes('capture="environment"'),"camera/video capture reque
 assert.ok(frontend.includes("Android.startSpeechInput"),"native voice input wired");
 assert.ok(frontend.includes("sp-description"),"voice destination exists");
 assert.ok(frontend.includes("Stručna baza: knjige i obrazloženja"),"UI must show retrieved book principles");
+assert.ok(frontend.includes("Provera na setu:"),"UI must show practical validation guidance for book principles");
 assert.ok(frontend.includes("AI predlog nema knjišku potporu"),"UI must disclose missing matching book evidence");
 assert.ok(frontend.includes('id="sp-location"'),"Scene Planner must support editable location");
 assert.ok(frontend.includes('value="Beograd, Srbija"'),"Belgrade is the initial user location");

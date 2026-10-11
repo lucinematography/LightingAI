@@ -7,7 +7,9 @@ import {spawnSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
 import {GRADE_METHOD,createDayForNightGradeRecipe,gradeDayForNightYuv420p,
-  gradeVerifiedDayForNightFrames,verifyDayForNightFrameReceipt} from './scene-planner-video-visual.js';
+  gradeVerifiedDayForNightFrames,verifyDayForNightFrameReceipt,
+  summarizeDayForNightGradeCodeConsistency,createVerifiedDayForNightGradeQc,
+  verifyDayForNightGradeQc} from './scene-planner-video-visual.js';
 import {measureYuv420p,compareVisualFrames,analyzeOriginalVideo,verifyVisualAnalysis,
   summarizeDecodedCodeContinuity,createVerifiedDecodedContinuityAudit,
   verifyDecodedContinuityAudit} from './scene-planner-video-visual.js';
@@ -173,6 +175,81 @@ test('night grade transforms actual copied YUV pixels with fixed transfer-unknow
     {analysis:{},ingestion:{}},recipe));
 });
 
+
+// Pure scalar QC must not manufacture decoder provenance. Actual calibrated
+// quality, flicker-free operation and per-light shadow geometry stay UNKNOWN.
+function syntheticGradedCodeRows(yCodes,durations){
+  let pts=0;
+  return yCodes.map((value,i)=>{
+    const input=pixels(value),output=gradeDayForNightYuv420p(input,32,32,recipe);
+    const record={
+      index:i,ptsTick:pts,durationTicks:durations[i],
+      sourceDecodedPixelHash:createHash('sha256').update(input).digest('hex'),
+      gradedPixelHash:createHash('sha256').update(output).digest('hex'),
+      sourceMeanYCode:Number(measureYuv420p(input,32,32).y.mean.toFixed(4)),
+      gradedMeanYCode:Number(measureYuv420p(output,32,32).y.mean.toFixed(4)),
+      width:32,height:32,colorimetryVerified:false,sourceExposureMeasured:false
+    };
+    pts+=durations[i];return record;
+  });
+}
+test('all-frame VFR QC requests DoP review without inventing stable relighting',()=>{
+  const rows=syntheticGradedCodeRows([16,16,235,16,16],[100,200,50,150,300]);
+  const unchanged=core.canonicalJson(rows);
+  const report=summarizeDayForNightGradeCodeConsistency(rows,recipe.darkenPct);
+  assert.equal(report.authority,'UNTRUSTED_SCALAR_METRICS_NO_PIXEL_OR_SOURCE_PROOF');
+  assert.equal(report.frameCount,5);
+  assert.equal(report.transitionCount,4);
+  assert.equal(report.gradedMeanJumpReviewCount,2);
+  assert.deepEqual(report.reviewTransitions.map(x=>x.ptsTick),[300,350]);
+  assert.deepEqual(report.reviewTransitions.map(x=>x.gradedMeanYDeltaCode),[114,-114]);
+  assert.equal(report.constantYCodeGain,0.52);
+  assert.ok(report.maxAbsPerFrameGainResidualCode<=0.5003);
+  assert.ok(report.maxAbsInterframeGainResidualCode<=1.0006);
+  assert.equal(report.constantCodeGainWithinQuantizationTolerance,true);
+  assert.equal(report.flickerFreeVerified,false);
+  assert.equal(report.visualQualityApproved,false);
+  assert.equal(report.encodedMp4Created,false);
+  assert.ok(Object.isFrozen(report)&&Object.isFrozen(report.reviewTransitions));
+  assert.equal(core.canonicalJson(rows),unchanged);
+  assert.doesNotMatch(JSON.stringify(report),/data:image|base64|filePath|decodedPixelHash/i);
+});
+test('unflagged constant Y code changes never prove flicker freedom',()=>{
+  const rows=syntheticGradedCodeRows([24,24,24],[100,100,200]);
+  const check=summarizeDayForNightGradeCodeConsistency(rows,recipe.darkenPct);
+  assert.equal(check.gradedMeanJumpReviewCount,0);
+  assert.equal(check.transitionCount,2);
+  assert.deepEqual(check.sourceMeanYCodeRange,[24,24]);
+  assert.deepEqual(check.gradedMeanYCodeRange,[12,12]);
+  assert.equal(check.flickerFreeVerified,false);
+  assert.equal(summarizeDayForNightGradeCodeConsistency(
+    syntheticGradedCodeRows([128],[100]),recipe.darkenPct).transitionCount,0);
+});
+test('fail closed on forged grade means, PTS, source hashes and private bytes',()=>{
+  const rows=syntheticGradedCodeRows([16,235,16],[100,50,200]);
+  function tamper(change){
+    const forged=clone(rows);change(forged);
+    assert.throws(()=>summarizeDayForNightGradeCodeConsistency(forged,recipe.darkenPct));
+  }
+  tamper(r=>r[1].gradedMeanYCode=5);
+  tamper(r=>r[1].gradedMeanYCode=NaN);
+  tamper(r=>r[1].gradedMeanYCode=236);
+  tamper(r=>r[1].sourceMeanYCode=20);
+  tamper(r=>r[1].ptsTick+=1);
+  tamper(r=>r[1].durationTicks=0);
+  tamper(r=>r[1].index=0);
+  tamper(r=>r[1].sourceDecodedPixelHash='not-a-sha');
+  tamper(r=>r[1].gradedPixelHash='A'.repeat(64));
+  tamper(r=>r[1].sourceExposureMeasured=true);
+  tamper(r=>r[1].rawPixels=[1,2,3]);
+  tamper(r=>r[1].width=160);
+  assert.throws(()=>summarizeDayForNightGradeCodeConsistency(rows,0));
+  assert.throws(()=>summarizeDayForNightGradeCodeConsistency(rows,100));
+  assert.throws(()=>summarizeDayForNightGradeCodeConsistency([],recipe.darkenPct));
+  assert.throws(()=>createVerifiedDayForNightGradeQc(
+    {frames:rows},nightRevision,{analysis:{},ingestion:{}},recipe));
+});
+
 console.log(`${groups} synthetic visual pixel groups passed; no decoder provenance granted.`);
 
 const decoderPath=process.env.SCENE_PLANNER_TEST_FFMPEG;
@@ -229,6 +306,18 @@ else{
       assert.equal(graded.perFrameAutoGainUsed,false);
       assert.equal(verifyDayForNightFrameReceipt(graded,nightRevision,nightBundle,recipe),true);
       assert.throws(()=>verifyDayForNightFrameReceipt(clone(graded),nightRevision,nightBundle,recipe));
+      const gradeQc=createVerifiedDayForNightGradeQc(graded,nightRevision,nightBundle,recipe);
+      assert.equal(gradeQc.frameCount,20);
+      assert.equal(gradeQc.frameTransitionCount,19);
+      assert.equal(gradeQc.sourceCandidateTransitionCount,1);
+      assert.equal(gradeQc.codeConsistency.gradedMeanJumpReviewCount,1);
+      assert.equal(gradeQc.decision,'REVIEW_ORIGINAL_OR_GRADED_CODE_CHANGE');
+      assert.match(gradeQc.sourceContinuityAuditHash,/^[a-f0-9]{64}$/);
+      assert.equal(gradeQc.flickerFreeVerified,false);
+      assert.equal(gradeQc.mp4ExportAuthorized,false);
+      assert.equal(gradeQc.encodedMp4Created,false);
+      assert.equal(verifyDayForNightGradeQc(gradeQc,graded,nightRevision,nightBundle,recipe),true);
+      assert.throws(()=>verifyDayForNightGradeQc(clone(gradeQc),graded,nightRevision,nightBundle,recipe));
       await assert.rejects(()=>gradeVerifiedDayForNightFrames(opts,revision,result,recipe,()=>true));
     });
     await run('one-frame flash candidate requires confirmation',async()=>{
@@ -268,6 +357,11 @@ else{
       assert.equal(gradedVfr.frameCount,19);
       assert.equal(gradedVfr.frames[0].durationTicks,200);
       assert.equal(gradedVfr.frames[1].ptsTick,200);
+      const vfrQc=createVerifiedDayForNightGradeQc(gradedVfr,nightRevision,nightVfr,recipe);
+      assert.equal(vfrQc.frameCount,19);
+      assert.equal(vfrQc.lastEndPtsTickExclusive,
+        nightVfr.analysis.frames.at(-1).ptsTick+nightVfr.analysis.frames.at(-1).durationTicks);
+      assert.equal(vfrQc.frameTransitionCount,18);
       assert.equal(qc.reviewIntervals.at(-1).endPtsTickExclusive,
         r.analysis.frames.at(-1).ptsTick+r.analysis.frames.at(-1).durationTicks);
     });
@@ -282,6 +376,11 @@ else{
       const sourceAudit=createVerifiedDecodedContinuityAudit(result,revision);
       assert.throws(()=>verifyDecodedContinuityAudit(sourceAudit,{analysis:result.analysis,ingestion:other},revision));
       assert.throws(()=>createVerifiedDecodedContinuityAudit(result,child));
+      const nightBundle=await analyzeOriginalVideo(opts,nightRevision);
+      const graded=await gradeVerifiedDayForNightFrames(opts,nightRevision,nightBundle,recipe,()=>true);
+      const qc=createVerifiedDayForNightGradeQc(graded,nightRevision,nightBundle,recipe);
+      assert.throws(()=>verifyDayForNightGradeQc(qc,graded,nightRevision,result,recipe));
+      assert.throws(()=>verifyDayForNightGradeQc(qc,graded,revision,nightBundle,recipe));
       assert.equal(core.canonicalJson(revision),beforeRevision);
     });
     await run('consumer failure, timeout, abort, corrupt source and cleanup',async()=>{

@@ -349,3 +349,144 @@ export function verifyDayForNightFrameReceipt(receipt,revision,bundle,recipe){
      receipt.output!=='EPHEMERAL_RAW_GRADED_YUV420P_FRAMES_ONLY')reject();
   return true;
 }
+
+
+
+// This deterministic scalar checker can be called on user-crafted JSON and
+// therefore grants NO decoder, grade, physical or output-file provenance.
+// The receipt-bound function below is the only verified QC entry point.
+export function summarizeDayForNightGradeCodeConsistency(frames,darkenPct){
+  if(!Array.isArray(frames)||frames.length<1||frames.length>1800||
+     !Number.isInteger(darkenPct)||darkenPct<1||darkenPct>80)reject();
+  const allowed=['index','ptsTick','durationTicks','sourceDecodedPixelHash',
+    'gradedPixelHash','sourceMeanYCode','gradedMeanYCode','width','height',
+    'colorimetryVerified','sourceExposureMeasured'];
+  const gain=1-0.8*darkenPct/100;
+  const reviewTransitions=[];
+  let maxGainError=0,maxAdjacentError=0,srcMin=255,srcMax=0,outMin=255,outMax=0;
+  for(let i=0;i<frames.length;i++){
+    const row=frames[i],previous=frames[i-1];
+    if(!row||Object.getPrototypeOf(row)!==Object.prototype||
+       Object.keys(row).length!==allowed.length||
+       Object.keys(row).some(k=>!allowed.includes(k))||
+       row.index!==i||
+       !Number.isSafeInteger(row.ptsTick)||row.ptsTick<0||
+       !Number.isSafeInteger(row.durationTicks)||row.durationTicks<1||
+       !Number.isSafeInteger(row.ptsTick+row.durationTicks)||
+       (i===0&&row.ptsTick!==0)||
+       (i>0&&row.ptsTick!==previous.ptsTick+previous.durationTicks)||
+       !/^[a-f0-9]{64}$/.test(row.sourceDecodedPixelHash)||
+       !/^[a-f0-9]{64}$/.test(row.gradedPixelHash)||
+       !Number.isSafeInteger(row.width)||!Number.isSafeInteger(row.height)||
+       row.width<2||row.height<2||row.width>1920||row.height>1080||
+       (i>0&&(row.width!==previous.width||row.height!==previous.height))||
+       row.colorimetryVerified!==false||row.sourceExposureMeasured!==false)reject();
+    for(const k of ['sourceMeanYCode','gradedMeanYCode']){
+      const v=row[k];
+      if(typeof v!=='number'||!Number.isFinite(v)||v<0||v>255||
+         Number(v.toFixed(4))!==v)reject();
+    }
+    if(row.gradedMeanYCode>row.sourceMeanYCode+0.0002)reject();
+    const error=Math.abs(row.gradedMeanYCode-row.sourceMeanYCode*gain);
+    // Each 8-bit Y pixel is rounded independently; mean error is <=0.5
+    // code units, plus two decimal-storage rounding errors.
+    if(error>0.5003)reject();
+    maxGainError=Math.max(maxGainError,error);
+    srcMin=Math.min(srcMin,row.sourceMeanYCode);
+    srcMax=Math.max(srcMax,row.sourceMeanYCode);
+    outMin=Math.min(outMin,row.gradedMeanYCode);
+    outMax=Math.max(outMax,row.gradedMeanYCode);
+    if(i>0){
+      const sourceDelta=row.sourceMeanYCode-previous.sourceMeanYCode;
+      const gradedDelta=row.gradedMeanYCode-previous.gradedMeanYCode;
+      const deltaError=Math.abs(gradedDelta-gain*sourceDelta);
+      if(deltaError>1.0006)reject();
+      maxAdjacentError=Math.max(maxAdjacentError,deltaError);
+      // Fixed threshold for a REQUEST TO REVIEW, not a flicker/cut detector.
+      if(Math.abs(gradedDelta)>=24){
+        reviewTransitions.push({
+          fromIndex:i-1,toIndex:i,ptsTick:row.ptsTick,
+          sourceMeanYDeltaCode:Number(sourceDelta.toFixed(4)),
+          gradedMeanYDeltaCode:Number(gradedDelta.toFixed(4)),
+          reason:'LARGE_GRADED_MEAN_CODE_CHANGE_UNCLASSIFIED',
+          confirmedCut:false,confirmedFlicker:false
+        });
+      }
+    }
+  }
+  return freezeGrade({
+    contract:'lightingai-untrusted-day-for-night-code-qc/1',
+    authority:'UNTRUSTED_SCALAR_METRICS_NO_PIXEL_OR_SOURCE_PROOF',
+    frameCount:frames.length,transitionCount:frames.length-1,
+    constantYCodeGain:Number(gain.toFixed(5)),
+    maxAbsPerFrameGainResidualCode:Number(maxGainError.toFixed(4)),
+    maxAbsInterframeGainResidualCode:Number(maxAdjacentError.toFixed(4)),
+    sourceMeanYCodeRange:[srcMin,srcMax],
+    gradedMeanYCodeRange:[outMin,outMax],
+    gradedMeanJumpReviewThresholdCode:24,
+    gradedMeanJumpReviewCount:reviewTransitions.length,
+    reviewTransitions,
+    constantCodeGainWithinQuantizationTolerance:true,
+    sourceColorimetryVerified:false,
+    flickerFreeVerified:false,sceneLightingVerified:false,
+    visualQualityApproved:false,encodedMp4Created:false
+  });
+}
+
+// A QC certificate requires the exact trusted in-process decoded bundle,
+// immutable renderer receipt and matching DoP revision/creative recipe. It is
+// a code-metric audit, not an approval to encode, publish or control fixtures.
+const trustedGradeQc=new WeakSet();
+export function createVerifiedDayForNightGradeQc(receipt,revision,bundle,recipe){
+  verifyDayForNightFrameReceipt(receipt,revision,bundle,recipe);
+  const scalar=summarizeDayForNightGradeCodeConsistency(receipt.frames,recipe.darkenPct);
+  const sourceChanges=bundle.analysis.changes.filter(c=>c.candidate===true).length;
+  const sourceAudit=receipt.frameCount>=2?
+    createVerifiedDecodedContinuityAudit(bundle,revision):null;
+  // The grade never erases the original source review candidates.
+  const reviewRequired=sourceChanges>0||scalar.gradedMeanJumpReviewCount>0;
+  const record={
+    contract:'lightingai-verified-day-for-night-grade-qc/1',
+    ...core.videoRevisionBinding(revision),
+    recipeHash:recipe.recipeHash,gradeReceiptHash:receipt.receiptHash,
+    sourceIdentity:receipt.sourceIdentity,
+    ingestionHash:receipt.ingestionHash,visualHash:receipt.visualHash,
+    temporalHash:receipt.temporalHash,
+    sourceContinuityAuditHash:sourceAudit?sourceAudit.continuityHash:null,
+    frameCount:receipt.frameCount,
+    frameTransitionCount:scalar.transitionCount,
+    timeBase:receipt.timeBase,
+    firstPtsTick:receipt.frames[0].ptsTick,
+    lastEndPtsTickExclusive:receipt.frames.at(-1).ptsTick+
+      receipt.frames.at(-1).durationTicks,
+    sourceCandidateTransitionCount:sourceChanges,
+    codeConsistency:scalar,
+    decision:reviewRequired?
+      'REVIEW_ORIGINAL_OR_GRADED_CODE_CHANGE':
+      'NO_HEURISTIC_FLAGS_NOT_EVIDENCE_OF_FLICKER_FREEDOM',
+    colorimetryVerified:false,physicalRelightingVerified:false,
+    visualQualityApproved:false,flickerFreeVerified:false,
+    mp4ExportAuthorized:false,encodedMp4Created:false,
+    fixtureCommandsPerformed:false,paidAiProviderUsed:false
+  };
+  const qc=freezeGrade({...record,qcHash:core.planHash(record)});
+  trustedGradeQc.add(qc);
+  return qc;
+}
+export function verifyDayForNightGradeQc(qc,receipt,revision,bundle,recipe){
+  verifyDayForNightFrameReceipt(receipt,revision,bundle,recipe);
+  if(!trustedGradeQc.has(qc)||!matchesRevision(qc,revision))reject();
+  const {qcHash,...record}=qc;
+  if(qcHash!==core.planHash(record)||
+     qc.recipeHash!==recipe.recipeHash||
+     qc.gradeReceiptHash!==receipt.receiptHash||
+     qc.sourceIdentity!==receipt.sourceIdentity||
+     qc.ingestionHash!==receipt.ingestionHash||
+     qc.visualHash!==receipt.visualHash||
+     qc.temporalHash!==receipt.temporalHash||
+     qc.frameCount!==receipt.frameCount||
+     qc.firstPtsTick!==receipt.frames[0].ptsTick||
+     qc.lastEndPtsTickExclusive!==receipt.frames.at(-1).ptsTick+
+        receipt.frames.at(-1).durationTicks)reject();
+  return true;
+}

@@ -1456,7 +1456,7 @@ not validate performance on real footage or verify practical visual quality.
 
 ### Offline Day-for-Night pixel-grade pilot (2026-10-11)
 
-The isolated `backend/scene-planner-video-look.js` now implements a genuine
+The existing `backend/scene-planner-video-visual.js` now implements a genuine
 bounded transformation of decoded YUV420p pixels rather than merely a CSS
 filter. A source/plan-hash-bound immutable recipe requires a user-specified
 Day for Night look with daytime capture and two strictly validated creative
@@ -1490,3 +1490,41 @@ Day-for-Night export or suggesting photometric accuracy.
 The offline YUV pixel-grade pilot is hosted inside the already-tracked
 `backend/scene-planner-video-visual.js`, without modifying the pre-existing
 Project 5 stable-base protection rules or adding a separate backend module.
+
+
+### Day-for-Night all-frame code-consistency quality gate (2026-10-11)
+
+`summarizeDayForNightGradeCodeConsistency` is a pure, explicitly UNTRUSTED
+offline scalar checker for up to 1,800 frames. It validates exact source and
+graded code statistic field schemas (no private pixel arrays or JPEG data),
+contiguous original integer PTS and VFR durations, matching dimensions,
+immutable SHA-256-formatted source/graded pixel hashes and a single requested
+global darkening coefficient. A fixed 8-bit round-to-nearest Y-code LUT must
+produce each output mean within 0.5003 code value of that coefficient times
+the source mean; adjacent changes must agree within 1.0006 code values.
+Violations block the QC report. This is strictly a proof of deterministic
+scalar code consistency, **not** a colorimetry/exposure/scene-light proof.
+
+Absolute graded-frame mean Y changes of 24/255 code units or more are marked
+for DoP review with original PTS ticks; the threshold is an engineering
+review heuristic, not a validated motion, cut or flicker detector. The code
+never calls a flat timeline flicker-free, even when no jumps are flagged.
+`createVerifiedDayForNightGradeQc` requires the in-process original-source
+decoder/visual receipt and the matching trusted grade frame receipt, recipe,
+plan revision and hashes; it references the original continuity audit and
+retains source-side candidate transitions. Reports are immutable, SHA-256
+content-bound, contain no media URLs, raw pixel data, paths or secrets, and
+explicitly deny MP4 export authorization, visual approval and real relighting.
+The paired verifier rejects cloned JSON, wrong original/revision/receipt and
+forged provenance. Only existing Scene Planner video, test and documentation
+files are changed; the Project 5 protective allowlist is untouched.
+
+Mandatory regression tests cover code-gain rounding tolerance, variable-frame
+timing, multiple exposure-like jumps, quiet timelines, mutated scalar and
+PTS fields, fake SHA strings, privacy/pixel-field rejection, immutability and
+untrusted receipt denial. Optional configured-FFmpeg procedural decode tests
+cover real in-process YUV frame grade, fixed-gain QA, source candidate links,
+VFR end time and live receipt verification. The latter remain NOT EXECUTED
+when a suitable explicitly selected decoder is unavailable in CI. The grade
+pilot remains backend-only, with no MP4 file, provider call, on-device action,
+fixture command, merge, APK installation or release.

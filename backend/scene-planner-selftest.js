@@ -75,7 +75,7 @@ assert.equal(validateScenePlannerRequest(clip).videoFrames.length,2);
 let sent=null;
 const mock={responses:{create:async args=>{
   sent=args;
-  return {output_text:JSON.stringify({summary:"Video scene",
+  return {output_text:JSON.stringify({summary:"Video scene",knowledgeBasis:{status:"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED",cards:[{id:"FAKE-999",title:"Invented citation",references:[{source:"fake",pdfPage:1}]}]},
     actors:[{label:"Zena",x:50,y:50,path:[{x:25,y:65},{x:70,y:35}]}],
     lights:[{fixtureId:"fixture-1",fixtureName:"ARRI Test LED",role:"key",kelvin:4500,modifier:"Softbox"}]
   })};
@@ -84,6 +84,7 @@ const produced=await generateScenePlannerPlan(mock,clip,catalog);
 assert.equal(produced.ok,true);
 assert.equal(produced.plan.source,"ai");
 assert.ok(produced.plan.knowledgeBasis.cards.length>0,"generated AI plan must carry retrieved book principles");
+assert.ok(produced.plan.knowledgeBasis.cards.every(c=>c.id!=="FAKE-999"),"model-invented citations must not enter trusted evidence");
 const knowledgeRevision=core.createRevision(produced.plan,clip,"ai",null,"scene-book-evidence-test");
 assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revision must preserve book evidence");
 assert.deepEqual(core.restoreRevisions([JSON.parse(JSON.stringify(knowledgeRevision))])[0].plan.knowledgeBasis,

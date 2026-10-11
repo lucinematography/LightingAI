@@ -68,6 +68,24 @@ assert.equal(revision.plan.photometricBasis.entries[0].onSetLux,null);
 assert.deepEqual(revision.plan.photometricBasis.entries[0].bookCardIds,
   generated.plan.photometricBasis.entries[0].bookCardIds);
 assert.equal(core.restoreRevisions([JSON.parse(JSON.stringify(revision))])[0].plan.photometricBasis.entries.length,2);
+// The persisted UI must fail closed if reference data are invented or assigned to another product.
+const forged=JSON.parse(JSON.stringify(generated.plan));
+forged.photometricBasis.entries[0].samples[0].lux=54301;
+const forgedRev=core.createRevision(forged,raw,'ai',null,'fake-photometry');
+assert.equal(forgedRev.plan.photometricBasis.entries.length,1,'untrusted lux must be dropped instead of relabeled');
+const swappedSource=JSON.parse(JSON.stringify(generated.plan));
+swappedSource.photometricBasis.entries[0].sourceUrl=fixtures[1].sourceUrl;
+const swappedRev=core.createRevision(swappedSource,raw,'ai',null,'swapped-photometry');
+assert.equal(swappedRev.plan.photometricBasis.entries.length,1,'wrong fixture-source match must be rejected');
+const madeUpBook=JSON.parse(JSON.stringify(generated.plan));
+madeUpBook.photometricBasis.entries[0].bookCardIds=['NOT-A-BOOK','PHY-005'];
+const bookRev=core.createRevision(madeUpBook,raw,'ai',null,'book-links');
+assert.deepEqual(bookRev.plan.photometricBasis.entries[0].bookCardIds,['PHY-005']);
+const noBook=JSON.parse(JSON.stringify(generated.plan));
+noBook.knowledgeBasis.cards=[];
+const noBookRev=core.createRevision(noBook,raw,'ai',null,'no-book-links');
+assert.deepEqual(noBookRev.plan.photometricBasis.entries[0].bookCardIds,[],
+  'photometry must not cite book cards absent from current validated plan');
 const tampered=JSON.parse(JSON.stringify(revision));
 tampered.plan.photometricBasis.entries[0].samples[0].lux=99999;
 assert.throws(()=>core.restoreRevisions([tampered]),/integrity|Invalid/i);

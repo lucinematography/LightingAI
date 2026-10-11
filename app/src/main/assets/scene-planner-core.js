@@ -192,20 +192,28 @@
       estimated: true
     };
   }
-  function sanitizePhotometricBasis(raw, req, emitted) {
+  function sanitizePhotometricBasis(raw, req, emitted, knowledge) {
     if(!raw || raw.status!=='MANUFACTURER_REFERENCE_NOT_SCENE_MEASUREMENT' ||
       !Array.isArray(raw.entries))return null;
     var measured=!!(req.roomWidthM && req.roomDepthM && req.dimensionsMeasured);
-    var validUrls=['https://aputure.com/EN-US/products/ls-60d','https://aputure.com/en-US/products/ls-60x'];
-    var ids=raw.knowledgeBasis && Array.isArray(raw.knowledgeBasis.cards) ?
-      raw.knowledgeBasis.cards.map(function(c){return str(c&&c.id,40);}) : [];
+    // Independently fixed published values: reject plausible but fabricated manufacturer lux.
+    var official={
+      'aputure-ls-60d':{url:'https://aputure.com/EN-US/products/ls-60d',
+        lux:[54300,7602,2715,9014,1096,402]},
+      'aputure-ls-60x':{url:'https://aputure.com/en-US/products/ls-60x',
+        lux:[33480,4241,1451,5803,703,268]}
+    };
+    var ids=knowledge && Array.isArray(knowledge.cards) ?
+      knowledge.cards.map(function(c){return str(c&&c.id,40);}) : [];
+    var supportedBookIds=['PHY-005','EQ-001','EQ-002','EXP-001','META-002'];
     var seen=Object.create(null);
     var entries=raw.entries.slice(0,8).map(function(e){
       if(!e||typeof e!=='object')return null;
       var id=str(e.lightId,12),fixtureId=str(e.fixtureId,150),url=str(e.sourceUrl,240);
       var light=emitted.find(function(l){return l.id===id && l.fixtureId===fixtureId && l.available;});
-      if(!light||seen[id]||validUrls.indexOf(url)<0||e.sourceType!=='MANUFACTURER_PUBLISHED_REFERENCE'||
-        !Array.isArray(e.samples)||e.samples.length!==6)return null;
+      var reference=Object.prototype.hasOwnProperty.call(official,fixtureId)?official[fixtureId]:null;
+      if(!light||seen[id]||!reference||url!==reference.url||e.sourceType!=='MANUFACTURER_PUBLISHED_REFERENCE'||
+        e.cctK!==5600||e.outputPct!==100||!Array.isArray(e.samples)||e.samples.length!==6)return null;
       var samples=e.samples.map(function(s){
         if(!s||[15,45].indexOf(s.beamAngleDeg)<0||[1,3,5].indexOf(s.distanceM)<0||
           !Number.isSafeInteger(s.lux)||s.lux<1||s.lux>1000000)return null;
@@ -214,8 +222,10 @@
       if(samples.some(function(s){return s===null;}))return null;
       var sampleIds=samples.map(function(s){return s.beamAngleDeg+':'+s.distanceM;});
       if((new Set(sampleIds)).size!==6)return null;
+      var expectedIds=['15:1','15:3','15:5','45:1','45:3','45:5'];
+      if(sampleIds.some(function(x,i){return x!==expectedIds[i]||samples[i].lux!==reference.lux[i];}))return null;
       seen[id]=true;
-      var k=num(e.cctK,1000,20000,null);
+      var k=5600;
       return {lightId:id,fixtureId:fixtureId,sourceUrl:url,
         sourceType:'MANUFACTURER_PUBLISHED_REFERENCE',cctK:k,outputPct:100,
         samples:samples,
@@ -224,7 +234,7 @@
         estimatedXMetres:measured?Number((req.roomWidthM*light.x/100).toFixed(2)):null,
         estimatedYMetres:measured?Number((req.roomDepthM*light.y/100).toFixed(2)):null,
         bookCardIds:(Array.isArray(e.bookCardIds)?e.bookCardIds:[]).slice(0,5).map(function(x){return str(x,40);})
-          .filter(function(x){return ids.indexOf(x)>=0;}),
+          .filter(function(x){return ids.indexOf(x)>=0 && supportedBookIds.indexOf(x)>=0;}),
         measuredDistanceM:null,onSetLux:null};
     }).filter(Boolean);
     return {status:'MANUFACTURER_REFERENCE_NOT_SCENE_MEASUREMENT',
@@ -363,7 +373,7 @@
               })};
           })
         } : null,
-      photometricBasis:source==='ai'?sanitizePhotometricBasis(raw.photometricBasis,req,emitted):null,
+      photometricBasis:source==='ai'?sanitizePhotometricBasis(raw.photometricBasis,req,emitted,raw.knowledgeBasis):null,
       dayForNightNotes:nightNotes,
       unknownCoverageStages:unlit,
       geometry: {widthM: req.roomWidthM, depthM: req.roomDepthM,

@@ -90,6 +90,7 @@ assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revisi
 assert.deepEqual(core.restoreRevisions([JSON.parse(JSON.stringify(knowledgeRevision))])[0].plan.knowledgeBasis,
   knowledgeRevision.plan.knowledgeBasis,"restored revision must retain identical citations");
 assert.ok(produced.plan.knowledgeBasis.cards.some(c=>c.references.some(r=>r.source&&r.pdfPage>0)),"generated plan must carry source pages");
+assert.ok(produced.plan.knowledgeBasis.cards.some(c=>c.references.some(r=>r.title&&r.author&&r.edition&&r.pdfPage>0)),"book citations must identify title, edition and page");
 assert.equal(produced.plan.knowledgeBasis.status,"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED");
 assert.equal(produced.plan.lights.length,1);
 assert.equal(produced.plan.lights[0].fixtureName,"ARRI Test LED");

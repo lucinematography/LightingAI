@@ -1382,6 +1382,42 @@
             '<div>Ograničenje: '+esc(card.limitations)+'</div></div>';
         }).join('')+'</details>';
     }
+    // Read-only before/after history: skip physical reading revisions carrying
+    // the old DoP plan label instead of treating them as creative edits.
+    var plannedComparison=null;
+    if(plan.dopLocalVariant&&core().compareDopPlannedRevisions){
+      for(var index=revisions.length-1;index>0;index--){
+        if(!revisions[index].plan.dopLocalVariant)continue;
+        try{
+          plannedComparison=core().compareDopPlannedRevisions(
+            revisions[index-1],revisions[index]);
+          break;
+        }catch(irrelevantRevision){
+          // Measurement and optic revisions can retain the prior DoP label.
+        }
+      }
+    }
+    if(plannedComparison){
+      function plannedRow(change,labels){
+        var field=labels.find(function(f){return f.k===change.field;});
+        return '<li>'+(change.lightId?'<b>'+esc(change.lightId)+'</b> / ':'')+
+          esc(field?field.name:change.field)+': <b>'+esc(String(change.before))+
+          '</b> → <b>'+esc(String(change.after))+'</b></li>';
+      }
+      html+='<details class="sp-lamp" open><summary><b>DoP — PRE / POSLE (SAMO PLAN)</b></summary>'+
+        '<p class="sp-note">Poslednja potvrđena kreativna izmena između revizija '+
+        esc(plannedComparison.beforeRevisionId.slice(0,16))+' i '+
+        esc(plannedComparison.afterRevisionId.slice(0,16))+'.</p>'+
+        '<p>Instrukcija: '+esc(plannedComparison.reason)+'</p>'+
+        '<p><b>RASVETA — PREDLOŽENE VREDNOSTI</b></p><ul>'+
+        (plannedComparison.lightChanges.map(function(c){return plannedRow(c,lightFields);}).join('')||
+          '<li>Bez promene predloga za rasvetu.</li>')+'</ul>'+
+        '<p><b>KAMERA — PREDLOŽENE VREDNOSTI</b></p><ul>'+
+        (plannedComparison.cameraChanges.map(function(c){return plannedRow(c,cameraFields);}).join('')||
+          '<li>Bez promene predloga za kameru.</li>')+'</ul>'+
+        '<p class="sp-note">Poređenje dva sačuvana plana: stvarni lux, mogućnosti lampe, '+
+        'ekspozicija kamere, fizička postavka i video relighting nisu potvrđeni.</p></details>';
+    }
     plan.lights.forEach(function(l){
       html+='<details class="sp-lamp"><summary><b>'+esc(l.id)+' / '+
         esc(l.role.toUpperCase())+' — '+esc(l.fixtureName)+'</b></summary>'+

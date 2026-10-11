@@ -408,11 +408,46 @@ assert.equal(dopFollowup.plan.dopLocalVariant.reason,dopRequestText,
 assert.equal(core.restoreRevisions([
   ratioPlan,ratioA,ratioB,ratioC,ratioD,dopVariant,dopFollowup]).length,7);
 
+// Read-only before/after from exactly linked, hash-verified DoP revisions.
+const plannedDiff=core.compareDopPlannedRevisions(ratioD,dopVariant);
+assert.equal(plannedDiff.contract,'lightingai-dop-planned-comparison/1');
+assert.equal(plannedDiff.status,'CREATIVE_PLAN_VALUES_ONLY_NOT_PHYSICALLY_VERIFIED');
+assert.equal(plannedDiff.beforeRevisionId,ratioD.revisionId);
+assert.equal(plannedDiff.afterRevisionId,dopVariant.revisionId);
+assert.equal(plannedDiff.reason,dopRequestText);
+assert.deepEqual(plannedDiff.lightChanges.map(c=>[c.lightId,c.field]),[
+  ['L1','x'],['L1','y'],['L1','heightM'],['L1','distanceM'],
+  ['L1','intensityPct'],['L2','kelvin']
+]);
+assert.deepEqual(plannedDiff.cameraChanges.map(c=>c.field),
+  ['aperture','iso','ndStops']);
+assert.equal(plannedDiff.lightChanges.find(c=>c.field==='intensityPct').before,
+  ratioD.plan.lights[0].intensityPct);
+assert.equal(plannedDiff.lightChanges.find(c=>c.field==='intensityPct').after,45);
+assert.equal(plannedDiff.cameraChanges.find(c=>c.field==='iso').before,
+  ratioD.plan.cameraSettings.iso);
+assert.equal(plannedDiff.cameraChanges.find(c=>c.field==='iso').after,1600);
+for(const flag of ['physicalFixtureCommandsPerformed','meterEvidenceVerified',
+  'cameraExposureVerified','videoRelightGenerated'])
+  assert.equal(plannedDiff[flag],false);
+assert.equal(Object.isFrozen(plannedDiff),true);
+assert.equal(Object.isFrozen(plannedDiff.lightChanges),true);
+assert.throws(()=>core.compareDopPlannedRevisions(dopVariant,ratioD),/direct creative/i);
+assert.throws(()=>core.compareDopPlannedRevisions(dopVariant,dopFollowup),
+  /genuine planned edits|unsubstantiated/i,
+  'new physical meter readings must not be interpreted as another DoP change');
+assert.throws(()=>core.compareDopPlannedRevisions(ratioD,dopFollowup),
+  /direct creative/i,'skipping the actual edit event is forbidden');
+
 const cameraOnlyEdit=core.createDopLightingVariantRevision(ratioD,{
   confirmed:true,reason:'DoP menja samo shutter za plan',lightEdits:[],
   cameraEdits:{shutterAngle:'90'}
 });
 assert.equal(cameraOnlyEdit.plan.cameraSettings.shutterAngle,90);
+const cameraOnlyDiff=core.compareDopPlannedRevisions(ratioD,cameraOnlyEdit);
+assert.equal(cameraOnlyDiff.lightChanges.length,0);
+assert.deepEqual(cameraOnlyDiff.cameraChanges,[{field:'shutterAngle',
+  before:ratioD.plan.cameraSettings.shutterAngle,after:90}]);
 assert.deepEqual(cameraOnlyEdit.plan.incidentLuxReadings,ratioD.plan.incidentLuxReadings,
   'camera-only creative edit leaves actual scene illuminance untouched');
 assert.deepEqual(cameraOnlyEdit.plan.distanceMeasurements,ratioD.plan.distanceMeasurements);
@@ -1701,6 +1736,9 @@ assert.match(uiSource,/cameraWaveformEvidence/);
 assert.match(uiSource,/referenceDifferenceIrePoints/);
 assert.match(uiSource,/Korisnički zadat referentni nivo/);
 assert.match(uiSource,/createDopLightingVariantRevision\(latest/);
+assert.match(uiSource,/compareDopPlannedRevisions\(/);
+assert.match(uiSource,/DoP — PRE \/ POSLE \(SAMO PLAN\)/);
+assert.match(uiSource,/Poslednja potvrđena kreativna izmena/);
 assert.match(uiSource,/sp-dop-local-save/);
 assert.match(uiSource,/sp-dop-local-confirmed/);
 assert.match(uiSource,/sp-dop-local-reason/);

@@ -1132,6 +1132,69 @@
     verifyRevision(revision);
     return freezeJson(revision);
   }
+  // Read-only comparison of two directly linked DoP creative plan revisions.
+  // Neither reported readings nor actual camera/lighting output can be inferred.
+  function compareDopPlannedRevisions(before,after) {
+    verifyRevision(before);
+    verifyRevision(after);
+    var record=after.plan.dopLocalVariant;
+    if(before.sceneId!==after.sceneId||after.parentRevisionId!==before.revisionId||
+       after.sequence!==before.sequence+1||!record||
+       after.plan.mode!==before.plan.mode||after.plan.source!==before.plan.source||
+       before.plan.lights.length!==after.plan.lights.length)
+      throw new Error('DoP comparison requires a direct creative child revision');
+    var lightKeys=['x','y','heightM','distanceM','intensityPct','kelvin'];
+    var cameraKeys=['fps','shutterAngle','aperture','iso','whiteBalanceK','ndStops'];
+    var lightChanges=[],cameraChanges=[];
+    record.changedLights.forEach(function(entry){
+      var oldLight=before.plan.lights.find(function(l){return l.id===entry.lightId;});
+      var newLight=after.plan.lights.find(function(l){return l.id===entry.lightId;});
+      if(!oldLight||!newLight||oldLight.fixtureId!==newLight.fixtureId||
+         oldLight.role!==newLight.role)
+        throw new Error('DoP comparison fixture identity mismatch');
+      entry.fields.forEach(function(k){
+        if(lightKeys.indexOf(k)<0||oldLight[k]===newLight[k]||
+           !Number.isFinite(oldLight[k])||!Number.isFinite(newLight[k]))
+          throw new Error('DoP comparison has an unsubstantiated changed-light field');
+        lightChanges.push({lightId:entry.lightId,fixtureName:newLight.fixtureName,
+          field:k,before:oldLight[k],after:newLight[k]});
+      });
+    });
+    before.plan.lights.forEach(function(oldLight){
+      var newLight=after.plan.lights.find(function(l){return l.id===oldLight.id;});
+      if(!newLight||oldLight.fixtureId!==newLight.fixtureId||
+         oldLight.role!==newLight.role)
+        throw new Error('DoP comparison cannot add, remove, or replace fixtures');
+      lightKeys.forEach(function(k){
+        if(oldLight[k]!==newLight[k]&&!lightChanges.some(function(c){
+          return c.lightId===oldLight.id&&c.field===k;
+        }))throw new Error('DoP comparison has an unreported planned-light change');
+      });
+    });
+    record.changedCameraFields.forEach(function(k){
+      if(cameraKeys.indexOf(k)<0||
+         before.plan.cameraSettings[k]===after.plan.cameraSettings[k])
+        throw new Error('DoP comparison has an unsubstantiated camera field');
+      cameraChanges.push({field:k,before:before.plan.cameraSettings[k],
+        after:after.plan.cameraSettings[k]});
+    });
+    cameraKeys.forEach(function(k){
+      if(before.plan.cameraSettings[k]!==after.plan.cameraSettings[k]&&
+         !cameraChanges.some(function(c){return c.field===k;}))
+        throw new Error('DoP comparison has an unreported camera change');
+    });
+    if(!lightChanges.length&&!cameraChanges.length)
+      throw new Error('DoP comparison has no genuine planned edits');
+    return freezeJson({
+      contract:'lightingai-dop-planned-comparison/1',
+      status:'CREATIVE_PLAN_VALUES_ONLY_NOT_PHYSICALLY_VERIFIED',
+      sceneId:after.sceneId,beforeRevisionId:before.revisionId,
+      afterRevisionId:after.revisionId,reason:record.reason,
+      lightChanges:lightChanges,cameraChanges:cameraChanges,
+      physicalFixtureCommandsPerformed:false,meterEvidenceVerified:false,
+      cameraExposureVerified:false,videoRelightGenerated:false
+    });
+  }
   function refreshAttestedOpticReference(plan, lightId) {
     var entry=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
       plan.photometricBasis.entries.find(function(e){return e.lightId===lightId;}):null;
@@ -1983,6 +2046,7 @@
     createIncidentLuxRevision:createIncidentLuxRevision,
     createSceneIncidentLuxRevision:createSceneIncidentLuxRevision,
     createDopLightingVariantRevision:createDopLightingVariantRevision,
+    compareDopPlannedRevisions:compareDopPlannedRevisions,
     createCameraGrayCardWaveformRevision:createCameraGrayCardWaveformRevision,
     compareKeyFillMeasurements:compareKeyFillMeasurements,
     assessSceneMeterAlignment:assessSceneMeterAlignment,

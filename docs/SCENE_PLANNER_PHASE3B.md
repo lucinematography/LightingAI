@@ -1221,3 +1221,26 @@ contract without network calls, video payment or physical-light commands.
 The changes are restricted to the Scene Planner feature branch; K0/K1,
 `main`, Draft PR #415, release, APK installation and publication remain
 untouched.
+
+
+### DoP before/after: verified planned-value comparison (2026-10-11)
+
+The offline DoP editor displays the last actual direct parent/child creative
+revision as a numeric before/after list. Existing light IDs, fixture identity
+and their source remain unchanged. Each changed proposed X/Y, height,
+distance, output percentage or Kelvin appears alongside its prior value;
+camera FPS, shutter angle, f-number, ISO, WB and ND appear as planned values.
+The SHA-256-verified core function compareDopPlannedRevisions(before, after)
+requires direct lineage and exact numeric correspondence with the saved
+changed-field ledger. Later physical-meter revisions inheriting a prior DoP
+label cannot masquerade as new creative edits. Reversed, skipped, tampered,
+and unchanged pairs are rejected rather than fabricating a plan comparison.
+
+All four provenance flags for actual fixture commands, measured light,
+calibrated camera exposure and video relighting are false. No measured lux,
+camera scene EV, equipment capability, rendered frame or clip is claimed.
+Regression coverage checks combined and camera-only edits, immutable
+comparison results, lineage rejection, inherited measurement revisions,
+and the visible UI contract. Only four approved Scene Planner files on
+feature/scene-planner-first-release change. Draft PR #415 remains open;
+main, K0, K1, release, publishing and APK installation are not touched.

@@ -84,6 +84,8 @@ public class MainActivity extends Activity {
     private final AtomicLong sacnDirectLastAtMs = new AtomicLong(0);
     private volatile String artNetDirectLastError = "";
     private volatile String sacnDirectLastError = "";
+    // First release: retain transport implementations, but reject every JS control entry point.
+    private boolean isDirectLightingControlEnabled() { return false; }
     private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine();
     private byte[] sacnCid;
     private SacnLiveEngine sacnLiveEngine;
@@ -1127,10 +1129,12 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public boolean hasBlePermission() {
+            if (!isDirectLightingControlEnabled()) return false;
             return MainActivity.this.hasBlePermission();
         }
 
         @JavascriptInterface public void bleDiscover(String requestId, int timeoutMs) {
+            if (!isDirectLightingControlEnabled()) return;
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
         }
 
@@ -1173,6 +1177,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void sacnSetPriority(int priority) {
+            if (!isDirectLightingControlEnabled()) return;
             int value = SacnSender.normalizePriority(priority);
             sacnPriority.set(value);
             if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
@@ -1180,6 +1185,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void sacnSendDmx(String requestId, int universe, String channelsJson) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
             final String raw = channelsJson == null ? "[]" : channelsJson;
@@ -1207,6 +1213,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void sacnSetLiveDmx(String requestId, int universe, String channelsJson) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
             final String raw = channelsJson == null ? "[]" : channelsJson;
@@ -1230,16 +1237,19 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void sacnStopLive(String requestId) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
             notifyArtNetResult(id, true, "");
         }
 
         @JavascriptInterface public int sacnLiveFrameCount() {
+            if (!isDirectLightingControlEnabled()) return 0;
             return sacnLiveEngine == null ? 0 : sacnLiveEngine.activeFrameCount();
         }
 
         @JavascriptInterface public void artNetDiscover(String requestId, int timeoutMs) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             new Thread(() -> {
                 JSONArray result = new JSONArray();
@@ -1260,6 +1270,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void artNetSendDmx(String requestId, String targetIp, int universe, String channelsJson) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             final String ip = targetIp == null ? "" : targetIp;
             final int u = Math.max(1, universe);
@@ -1288,6 +1299,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void artNetSetLiveDmx(String requestId, String targetIp, int universe, String channelsJson) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             final String ip = targetIp == null ? "" : targetIp;
             final int u = Math.max(1, universe);
@@ -1310,12 +1322,14 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void artNetStopLive(String requestId) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             artNetLiveEngine.stopAll();
             notifyArtNetResult(id, true, "");
         }
 
         @JavascriptInterface public int artNetLiveFrameCount() {
+            if (!isDirectLightingControlEnabled()) return 0;
             return artNetLiveEngine.activeFrameCount();
         }
     }

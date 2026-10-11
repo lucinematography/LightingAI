@@ -85,6 +85,7 @@ assert.equal(produced.ok,true);
 assert.equal(produced.plan.source,"ai");
 assert.ok(produced.plan.knowledgeBasis.cards.length>0,"generated AI plan must carry retrieved book principles");
 assert.ok(produced.plan.knowledgeBasis.cards.every(c=>typeof c.validation==="string"&&c.validation.length>0),"every retrieved book principle must include a practical on-set check");
+assert.ok(buildScenePlannerPrompt(canonicalInventory(validateScenePlannerRequest(clip),catalog)).includes(produced.plan.knowledgeBasis.cards[0].validation),"AI prompt must receive the source-derived on-set check, not only the final UI");
 assert.ok(produced.plan.knowledgeBasis.cards.every(c=>c.id!=="FAKE-999"),"model-invented citations must not enter trusted evidence");
 const knowledgeRevision=core.createRevision(produced.plan,clip,"ai",null,"scene-book-evidence-test");
 assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revision must preserve book evidence");

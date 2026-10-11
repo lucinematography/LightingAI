@@ -621,7 +621,8 @@
           '<div>Izmerena je samo udaljenost koju korisnik prijavljuje, ne i lux, smer snopa ili ekspozicija.</div></div>':'')+
         '</div>';
     }).join(''):'<p class="sp-note">Nije moguće napraviti pouzdan izbor lampi iz dostupnog inventara.</p>';
-    el('sp-lights').querySelectorAll('button[data-sp-distance-light]').forEach(function(btn){
+    if(typeof el('sp-lights').querySelectorAll==='function')
+      el('sp-lights').querySelectorAll('button[data-sp-distance-light]').forEach(function(btn){
       btn.onclick=function(){
         if(state.busy||historyBlocked||!revisions.length)return;
         var id=btn.getAttribute('data-sp-distance-light');

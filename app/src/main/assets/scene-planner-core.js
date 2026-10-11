@@ -929,14 +929,22 @@
     var bookCardIds=bookCards.filter(function(c){
       return c&&['SET-005','SET-002','EXP-001'].indexOf(c.id)>=0;
     }).map(function(c){return c.id;}).filter(function(id,i,a){return a.indexOf(id)===i;});
+    // Guidance is taken only from the cards actually attached to this revision;
+    // a card id alone is never an exposure calibration or a universal ratio.
+    var bookGuidance=bookCardIds.map(function(id){
+      var card=bookCards.find(function(c){return c&&c.id===id;});
+      return {id:id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
     var shared={kind:'ISOLATED_INCIDENT_LUX_CONTRIBUTION_RATIO',
       provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
       keyLightId:keyLightId,fillLightId:fillLightId,bookCardIds:bookCardIds,
+      bookGuidance:bookGuidance,
       sceneContrastVerified:false,cameraExposureVerified:false,
       manufacturerPhotometricsUsed:false};
     function blocked(why){return freezeJson(Object.assign({},shared,{
-      status:'NOT_COMPARABLE',reason:why,ratio:null,keyLux:null,fillLux:null,
-      minutesApart:null
+      status:'NOT_COMPARABLE',reason:why,ratio:null,relativeStops:null,
+      keyLux:null,fillLux:null,minutesApart:null
     }));}
     if(plan.mode!=='own'||!keyLight||!fillLight||keyLight.id===fillLight.id||
       !keyLight.available||!fillLight.available||keyLight.role!=='key'||fillLight.role!=='fill')
@@ -960,14 +968,64 @@
     if(minutesApart>15)return blocked('MEASUREMENT_TIMES_TOO_FAR_APART');
     // Both zero and denominator zero are meaningful meter readings, not finite ratios.
     if(key.lux<=0||fill.lux<=0)return blocked('ZERO_READING_NO_FINITE_RATIO');
-    var ratio=Number((key.lux/fill.lux).toPrecision(6));
+    var rawRatio=key.lux/fill.lux;
+    var ratio=Number(rawRatio.toPrecision(6));
     if(!Number.isFinite(ratio)||ratio<=0)return blocked('NON_FINITE_RATIO');
+    // A stop is a log2 difference between two isolated incident contributions,
+    // not a shadow-to-highlight contrast or a camera exposure recommendation.
+    var relativeStops=Number(Math.log2(rawRatio).toFixed(3));
+    if(!Number.isFinite(relativeStops))return blocked('NON_FINITE_STOPS');
+    if(relativeStops===0)relativeStops=0; // avoid negative zero in UI/export
     return freezeJson(Object.assign({},shared,{
       status:'COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY',
-      reason:null,ratio:ratio,keyLux:key.lux,fillLux:fill.lux,
+      reason:null,ratio:ratio,relativeStops:relativeStops,
+      relativeMeaning:'KEY_MINUS_FILL_ISOLATED_CONTRIBUTION_STOPS',
+      keyLux:key.lux,fillLux:fill.lux,
       meterModel:key.meterModel,measurementPoint:key.measurementPoint,
       receptorOrientation:'RECEPTOR_TOWARD_CAMERA',minutesApart:minutesApart
     }));
+  }
+  // Mathematical camera-settings context plus *separate* user-reported meter evidence.
+  // Even a comparable key/fill pair does not calibrate lux to the camera response,
+  // and cannot determine a new f-stop, ISO, combined scene lux or captured contrast.
+  function analyzeMeteredExposureContext(revision,keyLightId,fillLightId) {
+    verifyRevision(revision);
+    var camera=revision.plan.cameraSettings;
+    var seconds=shutterSeconds(camera);
+    // Nominal settings-only EV100 index including declared ND attenuation:
+    // log2((f-number^2 / seconds) * (100 / ISO)) + ND stops.
+    // NOT metered scene EV, not lens T-stop, not calibrated sensor exposure.
+    var settingsEv100=Math.log2((camera.aperture*camera.aperture/seconds)*
+      (100/camera.iso))+camera.ndStops;
+    var comparison=compareKeyFillMeasurements(revision,keyLightId,fillLightId);
+    var comparable=comparison.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY';
+    return freezeJson({
+      contract:'lightingai-metered-exposure-context/1',
+      revisionId:revision.revisionId,planHash:revision.planHash,
+      status:comparable?'RELATIVE_LIGHT_CONTRIBUTIONS_ONLY':'CAMERA_SETTINGS_ONLY',
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      camera:{
+        aperture:camera.aperture,iso:camera.iso,fps:camera.fps,
+        shutterAngle:camera.shutterAngle,shutterSeconds:Number(seconds.toPrecision(9)),
+        ndStops:camera.ndStops,nominalSettingsEv100:Number(settingsEv100.toFixed(3)),
+        calibrationStatus:'CAMERA_PROFILE_AND_LENS_TRANSMISSION_UNVERIFIED'
+      },
+      incidentEvidence:{
+        comparisonStatus:comparison.status,blocker:comparison.reason,
+        keyLux:comparable?comparison.keyLux:null,
+        fillLux:comparable?comparison.fillLux:null,
+        ratio:comparable?comparison.ratio:null,
+        relativeStops:comparable?comparison.relativeStops:null,
+        meterModel:comparable?comparison.meterModel:null,
+        measurementPoint:comparable?comparison.measurementPoint:null,
+        minutesApart:comparable?comparison.minutesApart:null
+      },
+      derivedSceneLux:null,measuredSceneEv100:null,
+      recommendedAperture:null,recommendedIso:null,
+      sceneExposureVerified:false,cameraExposureVerified:false,
+      meterCalibrationVerified:false,manufacturerPhotometricsUsed:false,
+      bookGuidance:comparison.bookGuidance
+    });
   }
   function restoreRevisions(items) {
     if(!Array.isArray(items) || !items.length)throw new Error('Empty revision history');
@@ -992,6 +1050,7 @@
     createMountedOpticRevision:createMountedOpticRevision,
     createIncidentLuxRevision:createIncidentLuxRevision,
     compareKeyFillMeasurements:compareKeyFillMeasurements,
+    analyzeMeteredExposureContext:analyzeMeteredExposureContext,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};

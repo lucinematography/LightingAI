@@ -317,6 +317,63 @@ assert.deepEqual([positive.keyLux,positive.fillLux],[400,100]);
 assert.equal(positive.sceneContrastVerified,false);
 assert.equal(positive.cameraExposureVerified,false);
 assert.equal(positive.manufacturerPhotometricsUsed,false);
+assert.equal(positive.relativeStops,2,'a four-to-one isolated contribution is +2 relative stops');
+assert.equal(positive.relativeMeaning,'KEY_MINUS_FILL_ISOLATED_CONTRIBUTION_STOPS');
+assert.deepEqual(positive.bookGuidance.map(c=>c.id),positive.bookCardIds);
+for(const card of positive.bookGuidance){
+  const validated=ratioD.plan.knowledgeBasis.cards.find(c=>c.id===card.id);
+  assert.ok(validated,'never invent unattached book guidance');
+  assert.equal(card.principle,validated.principle);
+  assert.equal(card.validation,validated.validation);
+  assert.equal(card.limitations,validated.limitations);
+}
+const exposureContext=core.analyzeMeteredExposureContext(ratioD,'L1','L2');
+const savedCamera=ratioD.plan.cameraSettings;
+const exactShutterSeconds=savedCamera.shutterAngle/(360*savedCamera.fps);
+const expectedSettingsEv100=Number((Math.log2((savedCamera.aperture**2/exactShutterSeconds)*
+  (100/savedCamera.iso))+savedCamera.ndStops).toFixed(3));
+assert.equal(exposureContext.contract,'lightingai-metered-exposure-context/1');
+assert.equal(exposureContext.revisionId,ratioD.revisionId);
+assert.equal(exposureContext.planHash,ratioD.planHash);
+assert.equal(exposureContext.status,'RELATIVE_LIGHT_CONTRIBUTIONS_ONLY');
+assert.equal(exposureContext.camera.nominalSettingsEv100,expectedSettingsEv100);
+assert.equal(exposureContext.camera.aperture,savedCamera.aperture);
+assert.equal(exposureContext.camera.iso,savedCamera.iso);
+assert.equal(exposureContext.camera.shutterSeconds,Number(exactShutterSeconds.toPrecision(9)));
+assert.deepEqual([exposureContext.incidentEvidence.keyLux,
+  exposureContext.incidentEvidence.fillLux,exposureContext.incidentEvidence.relativeStops],[400,100,2]);
+assert.equal(exposureContext.incidentEvidence.ratio,4);
+assert.deepEqual(exposureContext.bookGuidance.map(x=>x.id),positive.bookCardIds);
+for(const field of ['derivedSceneLux','measuredSceneEv100','recommendedAperture','recommendedIso']){
+  assert.equal(exposureContext[field],null,'never fabricate '+field+' from isolated lux');
+}
+for(const flag of ['sceneExposureVerified','cameraExposureVerified','meterCalibrationVerified',
+  'manufacturerPhotometricsUsed']){
+  assert.equal(exposureContext[flag],false,'comparison cannot imply '+flag);
+}
+assert.equal(Object.isFrozen(exposureContext),true);
+const inverseKey=core.createIncidentLuxRevision(ratioD,{
+  ...commonContext,lightId:'L1',lux:25,confirmed:true,fixtureIsolated:true
+});
+assert.equal(core.compareKeyFillMeasurements(inverseKey,'L1','L2').relativeStops,-2,
+  'fill brighter than key must have negative relative stops, not a clipped zero');
+const equalKey=core.createIncidentLuxRevision(ratioD,{
+  ...commonContext,lightId:'L1',lux:100,confirmed:true,fixtureIsolated:true
+});
+assert.equal(core.compareKeyFillMeasurements(equalKey,'L1','L2').relativeStops,0);
+assert.equal(core.analyzeMeteredExposureContext(ratioC,'L1','L2').status,
+  'CAMERA_SETTINGS_ONLY','a missing reading cannot be used to infer camera exposure');
+assert.equal(core.analyzeMeteredExposureContext(ratioC,'L1','L2').incidentEvidence.relativeStops,null);
+assert.equal(core.analyzeMeteredExposureContext(ratioD,null,null).incidentEvidence.blocker,
+  'INVALID_KEY_FILL_PAIR','missing light roles fail closed');
+const tamperedExposure=JSON.parse(JSON.stringify(ratioD));
+tamperedExposure.plan.incidentLuxReadings[0].lux=800;
+assert.throws(()=>core.analyzeMeteredExposureContext(tamperedExposure,'L1','L2'),
+  /integrity|Invalid|mismatch/i,'tampered meter inputs may not generate exposure context');
+const tamperedCamera=JSON.parse(JSON.stringify(ratioD));
+tamperedCamera.plan.cameraSettings.aperture=32;
+assert.throws(()=>core.analyzeMeteredExposureContext(tamperedCamera,'L1','L2'),
+  /integrity|Invalid|mismatch/i,'tampered camera inputs may not generate exposure context');
 assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,ratioC,ratioD]).length,5);
 const differentPoint=core.createIncidentLuxRevision(ratioC,{
   ...commonContext,measurementPoint:'Different face mark',lightId:'L2',
@@ -430,6 +487,10 @@ assert.throws(()=>core.createDistanceMeasurementRevision(bestRev,{
 }),/owned/i,'suggested or rented lights cannot be flagged as physically measured by this workflow');
 const uiSource=fs.readFileSync(new URL('../app/src/main/assets/scene-planner.js',import.meta.url),'utf8');
 assert.match(uiSource,/createDistanceMeasurementRevision\(previous/);
+assert.match(uiSource,/analyzeMeteredExposureContext\(current/);
+assert.match(uiSource,/nominalSettingsEv100/);
+assert.match(uiSource,/pair\.relativeStops/);
+assert.match(uiSource,/card\.validation/,'validated book checks must reach the user');
 assert.match(uiSource,/data-sp-distance-light/);
 assert.match(uiSource,/Lično potvrđujem merenje na setu/);
 const tampered=JSON.parse(JSON.stringify(revision));

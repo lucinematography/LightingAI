@@ -549,7 +549,27 @@
           ' lx); instrument i metapodaci prijavljeni od korisnika, nezavisno nepotvrđeni.':
           'Nije uporedivo: '+comparison.reason);
         lines.push('Knjiški principi prisutni u planu: '+(comparison.bookCardIds.join(', ')||'nema'));
+        if(comparison.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY'){
+          lines.push('Razlika izolovanih doprinosa: '+comparison.relativeStops+
+            ' stop (key minus fill); ovo nije kontrast slike niti izmerena ekspozicija.');
+        }
+        (comparison.bookGuidance||[]).forEach(function(card){
+          lines.push('Kartica '+card.id+': '+card.principle,
+            'Primena: '+card.application,'Provera: '+card.validation,
+            'Ograničenje: '+card.limitations);
+        });
       }
+    }
+    if(revisions.length&&core().analyzeMeteredExposureContext){
+      var keyForExposure=plan.lights.filter(function(l){return l.role==='key'&&l.available;});
+      var fillForExposure=plan.lights.filter(function(l){return l.role==='fill'&&l.available;});
+      var exposure=core().analyzeMeteredExposureContext(revisions[revisions.length-1],
+        keyForExposure.length===1?keyForExposure[0].id:null,
+        fillForExposure.length===1?fillForExposure[0].id:null);
+      lines.push('','KAMERA — MATEMATIČKA OSNOVA, NE MERENJE EKSPOZICIJE',
+        'Nominalni EV100 postavke: '+exposure.camera.nominalSettingsEv100+
+        ' (f-broj, shutter, ISO i ND; NIJE mereni EV scene).',
+        'Iz lux očitavanja nisu računati blenda, ISO, ukupni lux scene ni ekspozicija kamere.');
     }
     lines.push('','OGRANIČENJA',...plan.limitations,'','BEZBEDNOST',...plan.safetyNotes);
     return lines.join('\n');
@@ -626,13 +646,20 @@
       var fillLights=plan.lights.filter(function(l){return l.role==='fill'&&l.available;});
       if(keyLights.length===1&&fillLights.length===1){
         var pair=core().compareKeyFillMeasurements(current,keyLights[0].id,fillLights[0].id);
+        var bookDetails=(pair.bookGuidance||[]).map(function(card){
+          return '<div><b>'+esc(card.id)+' — '+esc(card.title)+'</b>: '+esc(card.principle)+
+            '<div>Primena: '+esc(card.application)+'</div>'+
+            '<div>Praktična provera: '+esc(card.validation)+'</div>'+
+            '<div>Ograničenje: '+esc(card.limitations)+'</div></div>';
+        }).join('');
         el('sp-summary').innerHTML+='<details class="sp-lamp"><summary><b>KEY / FILL — PROVERA UPOREDIVOSTI</b></summary>'+
           (pair.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY'?
             '<p>'+esc(pair.ratio)+':1, key '+esc(pair.keyLux)+' lx / fill '+esc(pair.fillLux)+
-            ' lx. Samo izolovani doprinosi, podaci korisnika, ne kontrast kadra.</p>':
-            '<p>Odnos nije pouzdano uporediv: '+esc(pair.reason)+'.</p>')+
-          '<p>Stručni principi iz plana: '+esc(pair.bookCardIds.join(', ')||'nema relevantne kartice')+
-          '. Bez univerzalnog idealnog odnosa; proveriti senke i izgled kamerom. Očitavanja i kalibracija nisu nezavisno potvrđeni.</p></details>';
+            ' lx; razlika '+esc(pair.relativeStops)+' stop (key minus fill). To su samo izolovani doprinosi, ne kontrast kadra ili ekspozicija.</p>':
+            '<p>Odnos nije pouzdano uporediv: '+esc(pair.reason)+'. Razlika u stopama se ne računa.</p>')+
+          '<p>Kurirani stručni principi iz ovog plana: '+esc(pair.bookCardIds.join(', ')||'nema relevantne kartice')+
+          '. Bez univerzalnog idealnog odnosa; proveriti senke i izgled kamerom. Očitavanja, identitet i kalibracija instrumenta nisu nezavisno potvrđeni.</p>'+
+          bookDetails+'</details>';
       }
     }
     var camera=plan.cameraSettings||{};
@@ -645,6 +672,21 @@
       ' • promena u odnosu na osnovni predlog: '+fmt(camera.exposureDeltaStops,' stop')+
       '<div>'+esc(camera.provenance||'Neproverena procena')+'</div>'+
       (plan.exposureNotes||[]).map(function(n){return '<div>• '+esc(n)+'</div>';}).join('')+'</p>';
+    if(cameraBox&&current&&core().analyzeMeteredExposureContext){
+      var meterKeys=plan.lights.filter(function(l){return l.role==='key'&&l.available;});
+      var meterFills=plan.lights.filter(function(l){return l.role==='fill'&&l.available;});
+      var cameraEvidence=core().analyzeMeteredExposureContext(current,
+        meterKeys.length===1?meterKeys[0].id:null,
+        meterFills.length===1?meterFills[0].id:null);
+      cameraBox.innerHTML+='<p class="sp-note"><b>EV100 PODEŠAVANJA (MATEMATIČKI, NIJE MERENJE): </b>'+
+        esc(cameraEvidence.camera.nominalSettingsEv100)+
+        '. Računato samo iz f-broja, zatvarača, ISO i prijavljenog ND-a. '+
+        (cameraEvidence.status==='RELATIVE_LIGHT_CONTRIBUTIONS_ONLY'?
+          'Postoji uporediv par izolovanih očitavanja; pokazuje samo relativnu razliku svetla. ':
+          'Nema uporedivog key/fill para ('+esc(cameraEvidence.incidentEvidence.blocker)+'). ')+
+        'EV scene, stvarna ekspozicija, ukupni lux scene i preporučena blenda/ISO nisu izračunati. '+
+        'Za validaciju: potvrditi kalibraciju instrumenta, profil kamere, gray card i waveform.</p>';
+    }
     el('sp-plot').innerHTML=plotSvg(plan,current);
     renderBlocking();
     el('sp-preview').innerHTML=conceptPhoto(plan);

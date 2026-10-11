@@ -657,10 +657,22 @@
     }
     return response;
   }
+  function currentVideoBinding(){
+    var revision=revisions[revisions.length-1];
+    if(!revision||!state.plan||revision.plan!==state.plan)throw new Error('Nema potvrđene revizije plana za AI video.');
+    return core().videoRevisionBinding(revision);
+  }
+  function videoBindingLabel(){
+    if(!videoReceipt||!videoReceipt.binding)return 'Revizija AI videa nije potvrđena.';
+    return 'Revizija: '+videoReceipt.binding.revisionId+' | Plan: '+videoReceipt.binding.planHash.slice(0,12);
+  }
   function persistVideoReceipt(value){
     // Opaque identifiers/status only. Never serialize state, plans, media or the access field.
+    var binding=value.binding||videoReceipt&&videoReceipt.binding;
+    if(!binding||!binding.revisionId||!binding.planHash||!binding.lightPlotRevisionId)
+      throw new Error('AI video nema potvrđenu vezu sa revizijom plana.');
     var receipt={requestId:value.requestId,uploadId:value.uploadId||null,taskId:value.taskId||null,
-      status:value.status||'SUBMITTING'};
+      status:value.status||'SUBMITTING',binding:binding};
     localStorage.setItem(VIDEO_RECEIPT,JSON.stringify(receipt));
     videoReceipt=receipt;
   }
@@ -673,11 +685,15 @@
         (value.taskId&&!id.test(value.taskId))||
         ['SUBMITTING','UNKNOWN','PENDING','RUNNING','THROTTLED','SUCCEEDED','FAILED','CANCELED','EXPIRED'].indexOf(value.status)<0)
         throw new Error('Neispravna potvrda zadatka.');
+      if(!value.binding||typeof value.binding.revisionId!=='string'||
+        !/^[a-f0-9]{64}$/i.test(value.binding.planHash)||
+        typeof value.binding.lightPlotRevisionId!=='string')
+        throw new Error('Prethodni AI video nema pouzdanu vezu sa planom.');
       videoReceipt=value;
       videoReceiptBlocked=['SUCCEEDED','FAILED','CANCELED','EXPIRED'].indexOf(value.status)<0;
       state.aiVideoTaskId=value.taskId;
       el('sp-video-ai-check').disabled=false;
-      videoStatus('Sačuvan je prethodni AI zahtev. Unesi pristupni token i proveri status. Nastavak ne pokreće novu obradu.');
+      videoStatus('Sačuvan je prethodni AI zahtev. '+videoBindingLabel()+' Unesi token i proveri status.');
     }catch(e){videoReceiptBlocked=true;videoStatus('Potvrdu prethodnog zadatka nije moguće proveriti. Nova plaćena obrada je blokirana.',true);}
   }
   async function startAIVideo(){
@@ -704,7 +720,7 @@
     try{
       var pending=state.aiVideoPending;
       if(!pending){
-        pending={requestId:cryptoRandomRequestId(),uploadId:null,plan:state.plan,started:false};
+        pending={requestId:cryptoRandomRequestId(),uploadId:null,plan:state.plan,binding:currentVideoBinding(),started:false};
         state.aiVideoPending=pending;
       }
       if(!pending.uploadId){
@@ -719,7 +735,7 @@
       }
       videoStatus('Proveravam isti identifikator plaćenog zadatka; nema novog uploada pri ponavljanju.');
       // The same requestId and uploadId MUST be retained on ambiguous failures.
-      persistVideoReceipt({requestId:pending.requestId,uploadId:pending.uploadId,status:'SUBMITTING'});
+      persistVideoReceipt({requestId:pending.requestId,uploadId:pending.uploadId,status:'SUBMITTING',binding:pending.binding});
       videoReceiptBlocked=true;
       pending.started=true;
       var started=await videoRequest('/start',{
@@ -734,7 +750,7 @@
       state.aiVideoPending=null;
       if(el('sp-video-ai-check'))el('sp-video-ai-check').disabled=false;
       if(el('sp-video-cost-confirm'))el('sp-video-cost-confirm').checked=false;
-      videoStatus('AI zadatak '+task.taskId+' je prihvaćen. Procena: '+(task.estimatedCredits==null?'nije potvrđena':task.estimatedCredits)+' kredita. Proveri status dugmetom.');
+      videoStatus('AI zadatak '+task.taskId+' je prihvaćen. '+videoBindingLabel()+' Procena: '+(task.estimatedCredits==null?'nije potvrđena':task.estimatedCredits)+' kredita. Proveri status dugmetom.');
     }catch(error){
       if(pending&&pending.started){
         if(el('sp-video-ai-check'))el('sp-video-ai-check').disabled=false;
@@ -764,7 +780,7 @@
         if(!videoReceiptBlocked)state.aiVideoPending=null;
       }
       if(task.ready){
-        videoStatus('AI video je spreman za MP4 preuzimanje. Sadržaj proveriti pre korišćenja na setu.');
+        videoStatus('AI video je spreman za MP4 preuzimanje. '+videoBindingLabel()+' Sadržaj proveriti pre korišćenja na setu.');
         var out=el('sp-video-ai-output');
         if(!out)return;
         out.innerHTML='<button id="sp-ai-mp4-download" type="button" class="sp-btn sp-primary">SAČUVAJ AI MP4</button>'+
@@ -772,7 +788,7 @@
           '<p class="sp-note">Rezultat može sadržati promene pokreta, lica ili tekstura; proveriti kontinuitet sa originalom.</p>';
         el('sp-ai-mp4-download').onclick=downloadAIVideo;
         el('sp-ai-mp4-preview').onclick=function(){downloadAIVideo(true);};
-      }else videoStatus('Status AI zadatka: '+String(task.status||'nepoznat')+'.');
+      }else videoStatus('Status AI zadatka: '+String(task.status||'nepoznat')+'. '+videoBindingLabel());
     }catch(error){videoStatus(error.message,true);}
   }
   async function downloadAIVideo(previewOnly){
@@ -802,7 +818,7 @@
       }
       player.src=state.aiVideoPreviewUrl;
       player.load();
-      if(previewOnly===true){videoStatus('MP4 pregled je spreman.');return;}
+      if(previewOnly===true){videoStatus('MP4 pregled je spreman. '+videoBindingLabel());return;}
       var file=new File([blob],'LightingAI_AI_Relight.mp4',{type:'video/mp4'});
       if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
         await navigator.share({title:'LightingAI AI video relight',files:[file]});

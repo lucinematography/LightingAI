@@ -1303,6 +1303,100 @@
       cameraExposureVerified:false,videoRelightGenerated:false
     });
   }
+  // A bounded, 32x32 browser-decoded video-frame sample. These are gamma/
+  // transfer-UNKNOWN 8-bit RGB code values, never lux or scene-linear light.
+  function summarizeWebViewFrameCodeValues(imageData) {
+    if(!imageData||imageData.width!==32||imageData.height!==32||
+       !imageData.data||imageData.data.length!==4096)
+      throw new Error('Code-value sample requires an opaque 32x32 RGBA frame');
+    var data=imageData.data,histogram=new Array(256).fill(0),sum=0,black=0,white=0;
+    for(var i=0;i<4096;i+=4){
+      var r=data[i],g=data[i+1],b=data[i+2],alpha=data[i+3];
+      if(!Number.isInteger(r)||r<0||r>255||
+         !Number.isInteger(g)||g<0||g>255||
+         !Number.isInteger(b)||b<0||b>255||alpha!==255)
+        throw new Error('Invalid opaque frame code values');
+      var y=Math.round(0.2126*r+0.7152*g+0.0722*b);
+      histogram[y]++;sum+=y;
+      if(y<=16)black++;
+      if(y>=235)white++;
+    }
+    function percentile(q){
+      var target=Math.ceil(1024*q),seen=0;
+      for(var value=0;value<256;value++){
+        seen+=histogram[value];if(seen>=target)return value;
+      }
+      return 255;
+    }
+    return freezeJson({
+      contract:'lightingai-webview-rgb-code-statistics/1',
+      sampledPixels:1024,
+      meanLumaCode:Number((sum/1024).toFixed(2)),
+      p10LumaCode:percentile(0.10),p90LumaCode:percentile(0.90),
+      nearBlackFraction:Number((black/1024).toFixed(4)),
+      nearWhiteFraction:Number((white/1024).toFixed(4)),
+      colorimetryVerified:false,physicalExposureVerified:false
+    });
+  }
+  function createOfflineCodeValueAudit(revision,frameSamples) {
+    verifyRevision(revision);
+    if(!Array.isArray(frameSamples)||frameSamples.length<1||frameSamples.length>6)
+      throw new Error('Sampled code-value audit requires one to six video frames');
+    // Reuse the strict sequence checks of the existing verified DoP cue sheet.
+    var cue=createDopSampledVideoCueSheet(revision,frameSamples.map(function(s){
+      if(!s||typeof s!=='object'||Array.isArray(s))
+        throw new Error('Invalid video frame code-value sample');
+      return {timeSec:s.timeSec};
+    }));
+    var allowed=['contract','sampledPixels','meanLumaCode','p10LumaCode',
+      'p90LumaCode','nearBlackFraction','nearWhiteFraction',
+      'colorimetryVerified','physicalExposureVerified'];
+    function validStats(s){
+      return s&&typeof s==='object'&&!Array.isArray(s)&&
+        Object.keys(s).length===allowed.length&&
+        Object.keys(s).every(function(k){return allowed.indexOf(k)>=0;})&&
+        s.contract==='lightingai-webview-rgb-code-statistics/1'&&
+        s.sampledPixels===1024&&
+        typeof s.meanLumaCode==='number'&&Number.isFinite(s.meanLumaCode)&&
+        s.meanLumaCode>=0&&s.meanLumaCode<=255&&
+        Number(s.meanLumaCode.toFixed(2))===s.meanLumaCode&&
+        Number.isInteger(s.p10LumaCode)&&s.p10LumaCode>=0&&s.p10LumaCode<=255&&
+        Number.isInteger(s.p90LumaCode)&&s.p90LumaCode>=s.p10LumaCode&&s.p90LumaCode<=255&&
+        ['nearBlackFraction','nearWhiteFraction'].every(function(k){
+          return typeof s[k]==='number'&&Number.isFinite(s[k])&&
+            s[k]>=0&&s[k]<=1&&Number(s[k].toFixed(4))===s[k];
+        })&&s.colorimetryVerified===false&&s.physicalExposureVerified===false;
+    }
+    var previous=null,known=0;
+    var samples=frameSamples.map(function(item,i){
+      if(Object.keys(item).some(function(k){return k!=='timeSec'&&k!=='codeValues';}))
+        throw new Error('Video audit cannot include private JPEG or pixel buffers');
+      if(item.codeValues!==null&&!validStats(item.codeValues))
+        throw new Error('Invalid sampled frame code-value statistics');
+      var metric=item.codeValues;
+      var delta=metric&&previous?Number(
+        (metric.meanLumaCode-previous.meanLumaCode).toFixed(2)):null;
+      previous=metric;
+      if(metric)known++;
+      return {sampleNumber:i+1,approximateTimeSec:cue.cues[i].approximateTimeSec,
+        codeValues:metric,deltaMeanLumaCodeFromPreviousSample:delta,
+        isConsecutiveSourceFrame:false};
+    });
+    return freezeJson({
+      contract:'lightingai-offline-sampled-code-value-audit/1',
+      status:known===samples.length?
+        'WEBVIEW_DECODED_CODE_VALUES_ALL_SAMPLES_UNATTESTED':
+        'SOME_WEBVIEW_CODE_VALUES_MISSING',
+      binding:videoRevisionBinding(revision),
+      sampleCount:samples.length,measuredSampleCount:known,samples:samples,
+      timingProvenance:'APPROXIMATE_WEBVIEW_SEEK_NOT_ORIGINAL_VIDEO_PTS',
+      measurementBasis:'32X32_BROWSER_DECODED_RGB_CODE_VALUES_UNKNOWN_TRANSFER',
+      originalVideoBytesVerified:false,originalFramePtsVerified:false,
+      sourceColorimetryVerified:false,perFrameTemporalContinuityVerified:false,
+      flickerVerified:false,sceneLuxMeasured:false,cameraExposureVerified:false,
+      physicalFixtureCommandsPerformed:false,videoRelightGenerated:false
+    });
+  }
   function refreshAttestedOpticReference(plan, lightId) {
     var entry=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
       plan.photometricBasis.entries.find(function(e){return e.lightId===lightId;}):null;
@@ -2157,6 +2251,8 @@
     compareDopPlannedRevisions:compareDopPlannedRevisions,
     listDopPlannedEditEvents:listDopPlannedEditEvents,
     createDopSampledVideoCueSheet:createDopSampledVideoCueSheet,
+    summarizeWebViewFrameCodeValues:summarizeWebViewFrameCodeValues,
+    createOfflineCodeValueAudit:createOfflineCodeValueAudit,
     createCameraGrayCardWaveformRevision:createCameraGrayCardWaveformRevision,
     compareKeyFillMeasurements:compareKeyFillMeasurements,
     assessSceneMeterAlignment:assessSceneMeterAlignment,

@@ -637,6 +637,92 @@ tamperedCue.plan.lights[0].intensityPct=90;
 assert.throws(()=>core.createDopSampledVideoCueSheet(tamperedCue,[{timeSec:1}]),
   /integrity|invalid|mismatch/i);
 
+// Actual decoded browser RGB code statistics are numerical observations, not
+// physical lighting measurements, continuous frame tracking or relighting.
+function solidCodePixelFrame(r,g,b,alpha=255){
+  const data=new Uint8ClampedArray(32*32*4);
+  for(let i=0;i<data.length;i+=4){
+    data[i]=r;data[i+1]=g;data[i+2]=b;data[i+3]=alpha;
+  }
+  return {width:32,height:32,data};
+}
+const blackCode=core.summarizeWebViewFrameCodeValues(solidCodePixelFrame(0,0,0));
+const whiteCode=core.summarizeWebViewFrameCodeValues(solidCodePixelFrame(255,255,255));
+const grayCode=core.summarizeWebViewFrameCodeValues(solidCodePixelFrame(128,128,128));
+assert.equal(blackCode.contract,'lightingai-webview-rgb-code-statistics/1');
+assert.equal(blackCode.sampledPixels,1024);
+assert.deepEqual([blackCode.meanLumaCode,blackCode.p10LumaCode,blackCode.p90LumaCode,
+  blackCode.nearBlackFraction,blackCode.nearWhiteFraction],[0,0,0,1,0]);
+assert.deepEqual([whiteCode.meanLumaCode,whiteCode.p10LumaCode,whiteCode.p90LumaCode,
+  whiteCode.nearBlackFraction,whiteCode.nearWhiteFraction],[255,255,255,0,1]);
+assert.deepEqual([grayCode.meanLumaCode,grayCode.p10LumaCode,grayCode.p90LumaCode],[128,128,128]);
+assert.equal(blackCode.colorimetryVerified,false);
+assert.equal(blackCode.physicalExposureVerified,false);
+assert.ok(Object.isFrozen(grayCode));
+const halves=solidCodePixelFrame(0,0,0);
+for(let i=2048;i<4096;i+=4){halves.data[i]=255;halves.data[i+1]=255;halves.data[i+2]=255;}
+const mixedCode=core.summarizeWebViewFrameCodeValues(halves);
+assert.equal(mixedCode.meanLumaCode,127.5);
+assert.equal(mixedCode.p10LumaCode,0);
+assert.equal(mixedCode.p90LumaCode,255);
+assert.equal(mixedCode.nearBlackFraction,0.5);
+assert.equal(mixedCode.nearWhiteFraction,0.5);
+assert.throws(()=>core.summarizeWebViewFrameCodeValues({width:16,height:32,data:halves.data}),
+  /32x32/i);
+assert.throws(()=>core.summarizeWebViewFrameCodeValues({...halves,data:halves.data.subarray(0,4000)}),
+  /32x32/i);
+assert.throws(()=>core.summarizeWebViewFrameCodeValues(solidCodePixelFrame(12,13,14,100)),
+  /opaque|Invalid/i);
+const actualSampleCodes=[
+  {timeSec:1,codeValues:blackCode},{timeSec:3,codeValues:grayCode},
+  {timeSec:5,codeValues:null},{timeSec:7,codeValues:whiteCode}
+];
+const codeAudit=core.createOfflineCodeValueAudit(cueRevision,actualSampleCodes);
+assert.equal(codeAudit.contract,'lightingai-offline-sampled-code-value-audit/1');
+assert.equal(codeAudit.sampleCount,4);
+assert.equal(codeAudit.measuredSampleCount,3);
+assert.equal(codeAudit.status,'SOME_WEBVIEW_CODE_VALUES_MISSING');
+assert.equal(codeAudit.binding.revisionId,cueRevision.revisionId);
+assert.equal(codeAudit.binding.lightPlotRevisionId,cueRevision.lightPlotRevisionId);
+assert.equal(codeAudit.samples[1].deltaMeanLumaCodeFromPreviousSample,128);
+assert.equal(codeAudit.samples[2].deltaMeanLumaCodeFromPreviousSample,null);
+assert.equal(codeAudit.samples[3].deltaMeanLumaCodeFromPreviousSample,null,
+  'missing frame breaks continuity of any numerical delta');
+for(const flag of ['originalVideoBytesVerified','originalFramePtsVerified',
+  'sourceColorimetryVerified','perFrameTemporalContinuityVerified','flickerVerified',
+  'sceneLuxMeasured','cameraExposureVerified','physicalFixtureCommandsPerformed',
+  'videoRelightGenerated'])
+  assert.equal(codeAudit[flag],false);
+assert.ok(Object.isFrozen(codeAudit));
+assert.ok(Object.isFrozen(codeAudit.samples));
+assert.ok(Object.isFrozen(codeAudit.samples[0].codeValues));
+assert.ok(!/base64|data:image|\"data\"/.test(JSON.stringify(codeAudit)),
+  'only bounded numerical scalar statistics may leave in-memory code audit');
+const newCodeAudit=core.createOfflineCodeValueAudit(changedCuePlan,actualSampleCodes);
+assert.notEqual(newCodeAudit.binding.planHash,codeAudit.binding.planHash);
+assert.equal(newCodeAudit.samples[1].codeValues.meanLumaCode,codeAudit.samples[1].codeValues.meanLumaCode,
+  'DoP plan edits must never change original source pixel measurements');
+assert.equal(core.createOfflineCodeValueAudit(cueRevision,[
+  {timeSec:1,codeValues:grayCode}
+]).status,'WEBVIEW_DECODED_CODE_VALUES_ALL_SAMPLES_UNATTESTED');
+assert.equal(core.createOfflineCodeValueAudit(cueRevision,[
+  {timeSec:1,codeValues:null}
+]).measuredSampleCount,0);
+for(const bad of [
+  [{timeSec:1,codeValues:{...grayCode,meanLumaCode:NaN}}],
+  [{timeSec:1,codeValues:{...grayCode,p90LumaCode:8,p10LumaCode:200}}],
+  [{timeSec:1,codeValues:{...grayCode,physicalExposureVerified:true}}],
+  [{timeSec:1,codeValues:{...grayCode,extra:'private'}}],
+  [{timeSec:1,codeValues:grayCode,image:'data:image/jpeg;base64,secret'}],
+  [{timeSec:1,codeValues:grayCode},{timeSec:1,codeValues:grayCode}],
+  [{timeSec:4,codeValues:grayCode},{timeSec:2,codeValues:grayCode}]
+])assert.throws(()=>core.createOfflineCodeValueAudit(cueRevision,bad),
+  /sample|timestamp|time|code|audit/i);
+const tamperedCodeRevision=JSON.parse(JSON.stringify(cueRevision));
+tamperedCodeRevision.plan.cameraSettings.iso=999;
+assert.throws(()=>core.createOfflineCodeValueAudit(tamperedCodeRevision,actualSampleCodes),
+  /integrity|Invalid|mismatch/i);
+
 const positive=core.compareKeyFillMeasurements(ratioD,'L1','L2');
 assert.equal(positive.status,'COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY');
 assert.equal(positive.ratio,4);
@@ -1990,6 +2076,19 @@ assert.doesNotMatch(offlineCompareSource,/\bfetch\s*\(|videoRequest\s*\(|startAI
   'offline visual comparison cannot issue paid provider or fixture commands');
 assert.doesNotMatch(offlineCompareSource,/localStorage\.setItem|MediaRecorder|new Blob\(/,
   'in-memory JPEG preview may not store private frame pixels or export fake video');
+assert.match(uiSource,/summarizeWebViewFrameCodeValues\(probeCtx\.getImageData\(0,0,32,32\)\)/);
+assert.match(uiSource,/createOfflineCodeValueAudit\(revisions\[revisions\.length-1\]/);
+assert.match(uiSource,/function safeCodeValueAudit\(\)/);
+assert.match(uiSource,/webViewCodeValueAudit:codeAudit/);
+assert.match(uiSource,/32×32/);
+assert.match(uiSource,/IZVORNI KADAR — RGB KODNE VREDNOSTI/);
+assert.match(uiSource,/Razlika prosečnog Y/);
+assert.match(uiSource,/ne dokazuje flicker/);
+assert.match(uiSource,/ne izmišljamo svetlinu/);
+assert.match(uiSource,/RGB KODNE VREDNOSTI IZ 32×32 WEBVIEW UZORAKA/);
+const pixelSampleSection=uiSource.split('var codes=null;')[1].split('frames.push({timeSec:')[0];
+assert.doesNotMatch(pixelSampleSection,/\bfetch\s*\(|videoRequest\s*\(|localStorage\.setItem/,
+  'sampling decoded video does not upload or store raw pixel arrays');
 const tampered=JSON.parse(JSON.stringify(revision));
 tampered.plan.photometricBasis.entries[0].samples[0].lux=99999;
 assert.throws(()=>core.restoreRevisions([tampered]),/integrity|Invalid/i);

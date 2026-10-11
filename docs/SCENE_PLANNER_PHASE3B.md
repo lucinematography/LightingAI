@@ -1372,3 +1372,38 @@ media persistence/network calls, and safe Android UI inclusion. The work is
 limited to the existing Scene Planner UI/test/document files on the draft
 branch. Phase 3B.3 real temporal Day-for-Night video relighting remains
 unimplemented and requires separately validated renderer and real footage.
+
+
+### WebView original-frame code-value audit (2026-10-11)
+
+Each of the existing at-most-six original video seek samples can now collect
+one tiny 32x32 canvas observation locally before any creative CSS look. The
+pure offline `summarizeWebViewFrameCodeValues` computes a BT.709-*weighted
+8-bit code* proxy (NOT photometric luma): mean, P10/P90, and fractions of
+pixels in near-black <=16 or near-white >=235 code bins. This is not linear
+scene luminance: source transfer, colorimetry, codec rounding, camera sensor,
+scene lux and real exposure are unverified. If readback is unavailable, its
+sample remains unknown, never filled with invented numbers.
+
+`createOfflineCodeValueAudit` checks a SHA-256-verified immutable plan revision,
+strictly increasing WebView sample times through the existing DoP cue-sheet
+contract, exact bounded scalar schemas and explicit unknown sample states.
+Only the six bounded scalar records and their plan/plot binding can be added
+to the optional `webViewCodeValueAudit` JSON export and textual DoP handoff;
+never export raw canvas RGB buffers, local JPEG bytes, private paths or URLs.
+A delta between two *sampled mean code values* is descriptive only: spaced
+seek frames are not consecutive original PTS samples, so this is NOT evidence
+of flicker, temporally stable lighting or shot continuity. DoP plan changes
+must not mutate the original image statistics. Original full video remains
+on the device; readback uses the already selected local source.
+
+The in-app original/illustrative CSS look comparison now shows source-only
+code values (or an explicit unavailable reason). Missing samples break
+numerical delta continuity. Existing expert book cards, camera/lighting plan,
+paid video locks, and physical on-set measurement provenance are preserved.
+Pure regressions exercise black/white/mid/half-frame results, invalid alpha,
+bad dimensions, missing/forged statistics, timestamp order, immutable output,
+revision tampering and preservation of source measurements across DoP edits.
+Feature is **not** full-frame video analysis, Day-for-Night relighting, motion
+tracking, a color-managed preview, or a verified continuity metric. No AI
+provider, fixture command, app publication, K0/K1 or `main` mutation occurs.

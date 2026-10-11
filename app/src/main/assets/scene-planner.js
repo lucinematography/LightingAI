@@ -319,7 +319,21 @@
       canvas.width=Math.max(1,Math.round(video.videoWidth*scale));
       canvas.height=Math.max(1,Math.round(video.videoHeight*scale));
       canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
-      frames.push({timeSec:Number(t.toFixed(2)),image:canvas.toDataURL('image/jpeg',.72)});
+      // Read only a tiny decoded RGB thumbnail; never persist full pixel arrays.
+      // Video colorimetry and camera transfer are unknown, so these are not lux.
+      var codes=null;
+      try{
+        if(core()&&core().summarizeWebViewFrameCodeValues){
+          var probe=document.createElement('canvas');probe.width=32;probe.height=32;
+          var probeCtx=probe.getContext('2d',{willReadFrequently:true});
+          if(probeCtx){
+            probeCtx.drawImage(video,0,0,32,32);
+            codes=core().summarizeWebViewFrameCodeValues(probeCtx.getImageData(0,0,32,32));
+          }
+        }
+      }catch(unavailablePixels){codes=null;}
+      frames.push({timeSec:Number(t.toFixed(2)),image:canvas.toDataURL('image/jpeg',.72),
+        codeValues:codes});
     }
     video.removeAttribute('src');video.load();
     return {frames:frames,durationSec:duration};
@@ -586,6 +600,20 @@
   }
   // Both views use the exact same in-memory WebView JPEG sample. Only the
   // second display applies an illustrative CSS look. No media is rewritten.
+  // Derived from the same in-memory samples as the DoP cue sheet. A missing
+  // or malformed sample never receives fabricated code statistics.
+  function currentCodeValueAudit(){
+    if(!hasCurrentVideoPlan()||!core()||!core().createOfflineCodeValueAudit)
+      return null;
+    return core().createOfflineCodeValueAudit(revisions[revisions.length-1],
+      state.frames.map(function(f){
+        return {timeSec:f.timeSec,codeValues:f.codeValues||null};
+      }));
+  }
+  function safeCodeValueAudit(){
+    try{return currentCodeValueAudit();}
+    catch(invalidWebViewSample){return null;}
+  }
   function safeSampledJpegDataUri(frame){
     if(!frame||typeof frame.image!=='string'||frame.image.length>3500000||
        frame.image.length<40||!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(frame.image))
@@ -658,6 +686,10 @@
         'style="width:100%;max-height:300px;object-fit:contain;display:block;'+
         'border-radius:9px;filter:'+filter+'"></div>';
     };
+    var codeAudit=safeCodeValueAudit();
+    var sampleCode=codeAudit&&codeAudit.binding.revisionId===sheet.revisionId&&
+      codeAudit.samples[i]&&codeAudit.samples[i].approximateTimeSec===frame.timeSec?
+      codeAudit.samples[i]:null;
     var dopChangedLight=!!(state.plan.dopLocalVariant&&
       state.plan.dopLocalVariant.changedLights.length);
     var stageText=cue.stageIndex===null?
@@ -673,7 +705,23 @@
       ' • približno '+esc(cue.approximateTimeSec.toFixed(2))+' s. '+esc(stageText)+'</p>'+
       '<div class="sp-two">'+
       imageBlock('IZVORNI JPEG UZORAK','none')+
-      imageBlock('KREATIVNI CSS LOOK — NIJE AI RELIGHT',lookFilter)+'</div>'+
+      imageBlock('KREATIVNI CSS LOOK — NIJE AI RELIGHT',lookFilter)+'</div>'+ 
+      (sampleCode&&sampleCode.codeValues?
+        '<p class="sp-note"><b>IZVORNI KADAR — RGB KODNE VREDNOSTI (32×32)</b>: '+
+        'prosečna Y\u2032 kodna vrednost '+esc(sampleCode.codeValues.meanLumaCode)+'/255; '+
+        'P10/P90 '+esc(sampleCode.codeValues.p10LumaCode)+'/'+
+        esc(sampleCode.codeValues.p90LumaCode)+'; tamni kodovi (≤16) '+
+        esc((sampleCode.codeValues.nearBlackFraction*100).toFixed(1))+'%; '+
+        'svetli kodovi (≥235) '+esc((sampleCode.codeValues.nearWhiteFraction*100).toFixed(1))+'%. '+
+        (sampleCode.deltaMeanLumaCodeFromPreviousSample===null?'':
+          'Razlika prosečnog Y\u2032 koda od prethodnog uzorka: '+
+          esc(sampleCode.deltaMeanLumaCodeFromPreviousSample)+' (ne dokazuje flicker).')+
+        '</p>':
+        '<p class="sp-note">Statistika piksela nije dostupna za ovaj kadar; '+
+        'ne izmišljamo svetlinu.</p>')+
+      '<p class="sp-note">Očitane su samo 8-bitne RGB vrednosti malog uzorka '+
+      'pre kreativnog CSS filtera. Nepoznati su transfer, kolorimetrija, '+
+      'stvarna ekspozicija, scene-linear svetlo i kontinuitet između svih kadrova.</p>'+
       '<p class="sp-note">Filter ne računa pojedinačne izvore svetla, '+
       'jačinu, Kelvin, geometriju senke niti parametre ekspozicije.</p>'+
       '<details class="sp-lamp"><summary><b>POSTAVKA DoP PLANA U OVOM PREGLEDU</b></summary>'+
@@ -842,6 +890,22 @@
           });
         });
         lines.push('Nema potvrde fotometrije, ekspozicije, fizičkog rasporeda, praćenja glumca ni obrađenog videa.');
+      }
+    }
+    if(plan===state.plan){
+      var codeAudit=safeCodeValueAudit();
+      if(codeAudit){
+        lines.push('','VIDEO — RGB KODNE VREDNOSTI IZ 32×32 WEBVIEW UZORAKA',
+          'Prijavljene vrednosti malih uzoraka, bez potvrde izvornog PTS-a, kolorimetrije, ekspozicije ili flicker-a.');
+        codeAudit.samples.forEach(function(entry){
+          var c=entry.codeValues;
+          lines.push('Uzorak '+entry.sampleNumber+' oko '+entry.approximateTimeSec+
+            ' s: '+(c?'Y-prime prosečni kod '+c.meanLumaCode+'/255; P10/P90 '+
+              c.p10LumaCode+'/'+c.p90LumaCode+'; tamni kodovi '+
+              (c.nearBlackFraction*100).toFixed(1)+'%; svetli kodovi '+
+              (c.nearWhiteFraction*100).toFixed(1)+'%':'nema dostupnih kodnih vrednosti'));
+        });
+        lines.push('Razlike između ovih vremenski razmaknutih uzoraka ne potvrđuju treperenje niti stabilan relighting.');
       }
     }
     if(plan.sceneIncidentLuxReading){
@@ -2173,12 +2237,14 @@
     catch(invalidSampleTimes){return null;}
   }
   function exportObject(){
+    var codeAudit=safeCodeValueAudit();
     var doPHistory=revisions.length&&core().listDopPlannedEditEvents?
       core().listDopPlannedEditEvents(revisions):null;
     return {format:'LightingAI.ScenePlanner.v1',savedAt:new Date().toISOString(),
       plan:state.plan,revisionSchemaVersion:1,revisions:revisions,
       dopPlannedEditHistory:doPHistory,
       sampledVideoCueSheet:safeExportCueSheet(),
+      webViewCodeValueAudit:codeAudit,
       notes:'Originalni foto i video materijal nisu uključeni u JSON izvoz. DoP istorija je izvedena iz revizija, nije fizički izmerena.'};
   }
   function restorePlanHistory(){

@@ -56,7 +56,7 @@ export function buildScenePlannerPrompt(req) {
     "You are a professional cinematography gaffer and lighting designer.",
     "REFERENCE KNOWLEDGE: The following are curated, paraphrased principles derived from cinematography books, not the full texts. Treat as conditional guidance, not measured evidence or mandatory recipes.",
     JSON.stringify(retrieveKnowledge([req.description,req.look,req.captureLighting,req.dopRequest].filter(Boolean).join(" ").slice(0,1200),{maxResults:8}).map(card=>({
-      id:card.id,principle:card.principle,application:card.application,limitations:card.limitations,
+      id:card.id,principle:card.principle,application:card.application,validation:card.validation,limitations:card.limitations,
       references:card.evidence.map(e=>({source:e.source_id,pdfPage:e.pdf_page,printedPage:e.printed_page}))
     }))),
     "Use applicable book principles to justify lighting choices; never fabricate a citation, measurement, or universally correct lighting ratio. Where evidence is weak, explain the on-set check.",

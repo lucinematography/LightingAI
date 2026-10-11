@@ -25,6 +25,9 @@ assert.equal(core.sanitizePlan({lights:[]},belgrade,"local").location.locationIs
 assert.equal(core.request({...own,sceneLatitude:350}).sceneLatitude,90);
 assert.equal(core.request({...own,sceneLocalDateTime:"invalid"}).sceneLocalDateTime,"");
 assert.match(buildScenePlannerPrompt(belgrade),/verified SUN calculation/);
+assert.match(buildScenePlannerPrompt(belgrade),/prefer relevant retrieved book principles/,"AI must use book guidance for lighting decisions");
+assert.match(buildScenePlannerPrompt(belgrade),/creative hypothesis without book support/,"AI must disclose unsupported recommendations");
+assert.match(buildScenePlannerPrompt(belgrade),/do not assert exact lux/,"AI must not invent photometric precision from books");
 assert.deepEqual(core.request(own).modifiers,["Softbox"]);
 assert.throws(()=>validateScenePlannerRequest({...own,scenePhoto:"data:text/plain;base64,SGVsbG8="}),/Invalid/);
 assert.throws(()=>validateScenePlannerRequest({...own,scenePhoto:"",videoFrames:[]}),/photo or video frames/);

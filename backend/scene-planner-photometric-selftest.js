@@ -494,7 +494,11 @@ assert.equal(core.listDopPlannedEditEvents([
 assert.throws(()=>core.listDopPlannedEditEvents([
   ratioPlan,ratioA,ratioB,ratioC,ratioD,dopFollowup
 ]),/Broken revision history/i);
-assert.throws(()=>core.listDopPlannedEditEvents([tamperedDop]),/Invalid|integrity|mismatch/i);
+const corruptedDopHistoryRevision=JSON.parse(JSON.stringify(dopVariant));
+corruptedDopHistoryRevision.plan.lights[0].intensityPct=99;
+assert.throws(()=>core.listDopPlannedEditEvents([corruptedDopHistoryRevision]),
+  /Invalid|integrity|mismatch/i,
+  'history rejects a revision whose planned intensity has been tampered with');
 
 const cameraOnlyEdit=core.createDopLightingVariantRevision(ratioD,{
   confirmed:true,reason:'DoP menja samo shutter za plan',lightEdits:[],

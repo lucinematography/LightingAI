@@ -1032,3 +1032,53 @@ missing revision IDs; non-monotonic time; missing intermediate history;
 tampered SHA-256 records; immutable original observations and absence
 of automatic exposure calculations. K0, K1 and `main` stay unchanged;
 PR #415 remains Draft and no merge/release/publish/APK installation occurs.
+
+
+### Capture provenance: inherited waveform revisions are not new measurements (2026-10-11)
+
+A material safety fix now distinguishes a **new camera/gray-card observation**
+from a later immutable Scene Planner revision that merely carries forward the
+**same existing waveform record**. An isolated key/fill lux update can create
+a child revision with an unchanged gray-card reading, but that new revision
+**does not mean the camera was measured again**. The previous camera-panel
+selection counted every waveform-bearing revision, potentially choosing two
+snapshots of one observation instead of two independent measurements.
+
+The deterministic helper `listGrayCardWaveformCaptures(history)` first
+checks the **full contiguous SHA-256 revision chain**, including each plan's
+meter/waveform evidence validation. It indexes only the revisions where a
+gray-card waveform record appears for the first time or differs from the
+**immediately previous** revision's record. Records carried forward verbatim,
+including a re-entry with exactly the same observation metadata and timestamp,
+are not new observations. The helper returns the IDs of the actual capture
+revisions and the source revision for a currently inherited waveform. It
+does **not** independently prove that an operator really measured a camera,
+and preserves compatibility with archived V1 and V2 evidence.
+
+The previous two-reading comparison remains available for genuine, distinct
+V2 observations, even when subsequent revisions copied forward the last
+waveform unchanged. Its standalone API now explicitly rejects attempts to
+compare either an inherited earlier endpoint or inherited later endpoint:
+`NOT_COMPARABLE / INHERITED_WAVEFORM_NOT_A_NEW_OBSERVATION` with null
+numeric output. Independent differences in camera signal path, profile,
+code range, monitoring LUT, physical card, named mark and chronological
+timestamps continue to fail closed exactly as before.
+
+The DoP camera panel and exported report use the **last two genuine capture
+revision IDs**, not the last two revisions that happen to contain waveform
+data. When the active revision contains an inherited reading, the app
+explicitly identifies the older source revision and warns the operator
+that no new camera observation was recorded. If fewer than two distinct
+waveform observations exist, no before/after comparison is presented.
+This makes a +0 IRE result meaningful only when it corresponds to two
+documented measurements with distinct timestamps and compatible signal
+context, not an unchanged archived record.
+
+The change is an **evidence-provenance safeguard**, not camera metrology or
+an exposure calibration. A record hash means its contents match; it cannot
+authenticate the meter, monitor, original camera signal, card or lighting.
+No IRE-to-stop, lux, camera ISO/aperture or color-transform conversion is
+introduced. Regression tests cover inherited snapshots, identical re-entry,
+true two-capture sequences with intervening and later revisions, empty active
+waveform state, missing history, tampering and the UI selector contract.
+No K0/K1, `main`, paid AI, fixture control, merge, release or APK install.

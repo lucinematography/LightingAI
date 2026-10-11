@@ -635,18 +635,22 @@
           'Nema izvedenog ISO, blende, T-stop-a, scene EV ili ukupne ekspozicije.');
       }
     }
-    // The two most recent camera observations are compared only when the
-    // currently exported revision is the second observed waveform.
+    // Compare true new measurements, not copied records on child revisions.
     if(revisions.length&&core().compareGrayCardWaveformRevisions&&
+      core().listGrayCardWaveformCaptures&&
       revisions[revisions.length-1].plan.cameraGrayCardWaveformReading){
-      var recordedHistory=revisions.filter(function(r){
-        return r.plan&&r.plan.cameraGrayCardWaveformReading;
-      });
-      if(recordedHistory.length>=2){
-        var beforeRecorded=recordedHistory[recordedHistory.length-2];
-        var laterRecorded=recordedHistory[recordedHistory.length-1];
+      var captureIndex=core().listGrayCardWaveformCaptures(revisions);
+      if(captureIndex.currentWaveformInherited){
+        lines.push('','PORЕKLO WAVEFORM OČITAVANJA',
+          'Aktuelna revizija '+captureIndex.currentRevisionId+
+          ' samo čuva ranije očitavanje iz '+captureIndex.activeCaptureRevisionId+
+          '; nije novo merenje.');
+      }
+      if(captureIndex.captureRevisionIds.length>=2){
+        var previousCaptureId=captureIndex.captureRevisionIds[captureIndex.captureRevisionIds.length-2];
+        var newestCaptureId=captureIndex.captureRevisionIds[captureIndex.captureRevisionIds.length-1];
         var comparison=core().compareGrayCardWaveformRevisions(
-          revisions,beforeRecorded.revisionId,laterRecorded.revisionId);
+          revisions,previousCaptureId,newestCaptureId);
         lines.push('','POREĐENJE DVA STVARNO PRIJAVLJENA WAVEFORM OČITAVANJA',
           'Pre: '+comparison.beforeRevisionId+'; posle: '+comparison.afterRevisionId);
         if(comparison.status==='USER_REPORTED_IRE_LEVEL_DIFFERENCE_ONLY'){
@@ -999,22 +1003,25 @@
         }catch(error){status('Waveform očitavanje nije sačuvano: '+error.message,true);}
       };
     }
-    // Compare the last two *archived* gray-card observations with an intact
-    // revision chain. Always label the captured revisions and never claim
-    // physical lamp causality from a change in signal percentage points.
+    // A revision may inherit an older waveform. Show only actual distinct
+    // capture events, verified against the intact history by the core.
     if(cameraBox&&current&&current.plan.cameraGrayCardWaveformReading&&
-      core().compareGrayCardWaveformRevisions){
-      var cameraObservations=revisions.filter(function(r){
-        return r.plan&&r.plan.cameraGrayCardWaveformReading;
-      });
-      if(cameraObservations.length>=2){
-        var beforeObservation=cameraObservations[cameraObservations.length-2];
-        var afterObservation=cameraObservations[cameraObservations.length-1];
+      core().compareGrayCardWaveformRevisions&&core().listGrayCardWaveformCaptures){
+      var capturedHistory=core().listGrayCardWaveformCaptures(revisions);
+      if(capturedHistory.currentWaveformInherited){
+        cameraBox.innerHTML+='<p class="sp-note">PAŽNJA: trenutna revizija samo prenosi '+
+          'postojeće waveform očitavanje iz revizije '+
+          esc(capturedHistory.activeCaptureRevisionId)+
+          '; nije izvršeno novo očitavanje na kameri.</p>';
+      }
+      if(capturedHistory.captureRevisionIds.length>=2){
+        var beforeCaptureId=capturedHistory.captureRevisionIds[capturedHistory.captureRevisionIds.length-2];
+        var afterCaptureId=capturedHistory.captureRevisionIds[capturedHistory.captureRevisionIds.length-1];
         var beforeAfter=core().compareGrayCardWaveformRevisions(
-          revisions,beforeObservation.revisionId,afterObservation.revisionId);
+          revisions,beforeCaptureId,afterCaptureId);
         cameraBox.innerHTML+='<details class="sp-lamp"><summary><b>POREĐENJE DVA WAVEFORM OČITAVANJA — DoP</b></summary>'+
-          '<p class="sp-note">Ranije: '+esc(beforeAfter.beforeRevisionId)+
-          '; kasnije: '+esc(beforeAfter.afterRevisionId)+'</p>'+
+          '<p class="sp-note">Stvarna evidentiranja: ranije '+esc(beforeAfter.beforeRevisionId)+
+          '; kasnije '+esc(beforeAfter.afterRevisionId)+'</p>'+
           (beforeAfter.status==='USER_REPORTED_IRE_LEVEL_DIFFERENCE_ONLY'?
             '<p>Ranije '+esc(beforeAfter.beforeIre)+' IRE; kasnije '+
             esc(beforeAfter.afterIre)+' IRE; promena '+
@@ -1039,8 +1046,9 @@
           }).join('')+'</details>';
       }else{
         cameraBox.innerHTML+='<p class="sp-note">Za poređenje sa ranijom postavkom '+
-          'potrebna su dva zasebna V2 waveform očitavanja u ovoj istoriji revizija. '+
-          'Sačuvaj sledeće očitavanje posle dokumentovanog merenja scene.</p>';
+          'potrebna su dva različita stvarno zabeležena V2 waveform očitavanja. '+
+          'Prepisivanje istog očitavanja u novu reviziju ne računa se kao novo merenje. '+
+          'Sačuvaj sledeće očitavanje sa stvarnim vremenom posle dokumentovanog merenja scene.</p>';
       }
     }
     el('sp-plot').innerHTML=plotSvg(plan,current);

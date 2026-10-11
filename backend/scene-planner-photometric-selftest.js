@@ -653,6 +653,94 @@ assert.equal(core.restoreRevisions(twoTakeHistory).length,9);
 assert.equal(waveformV2Rev.plan.cameraGrayCardWaveformReading.waveformIre,42.5);
 assert.equal(secondTake.plan.cameraGrayCardWaveformReading.waveformIre,46);
 
+// New child revisions can carry the SAME waveform record after isolated lux
+// readings. Such snapshots must not masquerade as fresh camera captures.
+const onlyFirstCapture=core.listGrayCardWaveformCaptures([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev,waveformV2Rev]);
+assert.equal(onlyFirstCapture.contract,'lightingai-gray-card-waveform-capture-index/1');
+assert.deepEqual(onlyFirstCapture.captureRevisionIds,[waveformV2Rev.revisionId]);
+assert.equal(onlyFirstCapture.currentRevisionId,waveformV2Rev.revisionId);
+assert.equal(onlyFirstCapture.activeCaptureRevisionId,waveformV2Rev.revisionId);
+assert.equal(onlyFirstCapture.currentWaveformInherited,false);
+assert.equal(onlyFirstCapture.currentWaveformPresent,true);
+assert.equal(Object.isFrozen(onlyFirstCapture),true);
+assert.equal(Object.isFrozen(onlyFirstCapture.captureRevisionIds),true);
+const carriedOldWave=core.createIncidentLuxRevision(waveformV2Rev,{
+  ...commonContext,lightId:'L1',lux:390,confirmed:true,fixtureIsolated:true
+});
+const carriedHistory=[ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev,
+  waveformV2Rev,carriedOldWave];
+const carriedIndex=core.listGrayCardWaveformCaptures(carriedHistory);
+assert.deepEqual(carriedIndex.captureRevisionIds,[waveformV2Rev.revisionId]);
+assert.equal(carriedIndex.currentWaveformInherited,true);
+assert.equal(carriedIndex.activeCaptureRevisionId,waveformV2Rev.revisionId);
+assert.equal(carriedOldWave.plan.cameraGrayCardWaveformReading.waveformIre,42.5);
+const carriedDirect=core.compareGrayCardWaveformRevisions(carriedHistory,
+  waveformV2Rev.revisionId,carriedOldWave.revisionId);
+assert.equal(carriedDirect.reason,'INHERITED_WAVEFORM_NOT_A_NEW_OBSERVATION');
+assert.equal(carriedDirect.status,'NOT_COMPARABLE');
+assert.equal(carriedDirect.beforeIre,null);
+assert.equal(carriedDirect.afterIre,null);
+assert.equal(carriedDirect.deltaIrePoints,null);
+assert.equal(carriedDirect.derivedExposureStops,null);
+const reenteredSameWave=core.createCameraGrayCardWaveformRevision(waveformV2Rev,
+  waveformV2Input);
+const exactRepeatHistory=[ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev,
+  waveformV2Rev,reenteredSameWave];
+assert.deepEqual(core.listGrayCardWaveformCaptures(exactRepeatHistory).captureRevisionIds,
+  [waveformV2Rev.revisionId],
+  'an identical observation with the same timestamp is not evidence of a second capture');
+assert.equal(core.compareGrayCardWaveformRevisions(exactRepeatHistory,
+  waveformV2Rev.revisionId,reenteredSameWave.revisionId).reason,
+  'INHERITED_WAVEFORM_NOT_A_NEW_OBSERVATION');
+const twoCaptureIndex=core.listGrayCardWaveformCaptures(twoTakeHistory);
+assert.deepEqual(twoCaptureIndex.captureRevisionIds,
+  [waveformV2Rev.revisionId,secondTake.revisionId]);
+assert.equal(twoCaptureIndex.currentWaveformInherited,false);
+const inheritedAfterSecond=core.createIncidentLuxRevision(secondTake,{
+  ...commonContext,lightId:'L1',lux:330,confirmed:true,fixtureIsolated:true
+});
+const afterSecondHistory=[...twoTakeHistory,inheritedAfterSecond];
+const afterSecondIndex=core.listGrayCardWaveformCaptures(afterSecondHistory);
+assert.deepEqual(afterSecondIndex.captureRevisionIds,
+  [waveformV2Rev.revisionId,secondTake.revisionId],
+  'UI must show the two actual measurement events, not second plus copied second');
+assert.equal(afterSecondIndex.activeCaptureRevisionId,secondTake.revisionId);
+assert.equal(afterSecondIndex.currentWaveformInherited,true);
+assert.equal(core.compareGrayCardWaveformRevisions(afterSecondHistory,
+  waveformV2Rev.revisionId,secondTake.revisionId).deltaIrePoints,3.5);
+assert.equal(core.compareGrayCardWaveformRevisions(afterSecondHistory,
+  secondTake.revisionId,inheritedAfterSecond.revisionId).reason,
+  'INHERITED_WAVEFORM_NOT_A_NEW_OBSERVATION');
+const afterFirstInheritedMeter=core.createSceneIncidentLuxRevision(carriedOldWave,{
+  ...sceneInput,lux:'701.5',measuredAtLocal:'2026-10-11T16:20'
+});
+const afterFirstInheritedWave=core.createCameraGrayCardWaveformRevision(
+  afterFirstInheritedMeter,{
+    ...waveformV2Input,waveformIre:'46.0',measuredAtLocal:'2026-10-11T16:23'
+  });
+const inheritedFirstChain=[...carriedHistory,afterFirstInheritedMeter,afterFirstInheritedWave];
+assert.deepEqual(core.listGrayCardWaveformCaptures(inheritedFirstChain).captureRevisionIds,
+  [waveformV2Rev.revisionId,afterFirstInheritedWave.revisionId]);
+assert.equal(core.compareGrayCardWaveformRevisions(inheritedFirstChain,
+  carriedOldWave.revisionId,afterFirstInheritedWave.revisionId).reason,
+  'INHERITED_WAVEFORM_NOT_A_NEW_OBSERVATION',
+  'an inherited first endpoint is not an independent earlier measurement');
+assert.equal(core.compareGrayCardWaveformRevisions(inheritedFirstChain,
+  waveformV2Rev.revisionId,afterFirstInheritedWave.revisionId).deltaIrePoints,3.5);
+const noActiveWave=core.listGrayCardWaveformCaptures(twoTakeHistory.slice(0,-1));
+assert.equal(noActiveWave.currentWaveformPresent,false);
+assert.equal(noActiveWave.activeCaptureRevisionId,null);
+assert.equal(noActiveWave.currentWaveformInherited,false);
+assert.deepEqual(noActiveWave.captureRevisionIds,[waveformV2Rev.revisionId]);
+assert.throws(()=>core.listGrayCardWaveformCaptures(twoTakeHistory.slice(1)),
+  /Broken revision history/i,'capture indexing must reject truncated history');
+const invalidCaptureRecord=JSON.parse(JSON.stringify(inheritedAfterSecond));
+invalidCaptureRecord.plan.cameraGrayCardWaveformReading.waveformIre=5;
+assert.throws(()=>core.listGrayCardWaveformCaptures([
+  ...afterSecondHistory.slice(0,-1),invalidCaptureRecord]),
+  /integrity|Invalid|mismatch/i,'an inherited snapshot cannot bypass SHA integrity');
+
 function secondTakeCompare(overrides,sceneOverrides){
   const metered=core.createSceneIncidentLuxRevision(waveformV2Rev,{
     ...sceneInput,lux:'701.5',measuredAtLocal:'2026-10-11T16:20',
@@ -1245,6 +1333,12 @@ assert.match(uiSource,/referenceDifferenceIrePoints/);
 assert.match(uiSource,/Korisnički zadat referentni nivo/);
 assert.match(uiSource,/compareGrayCardWaveformRevisions\(/,
   'user-visible history comparison must use revision-validated core');
+assert.match(uiSource,/listGrayCardWaveformCaptures\(revisions\)/,
+  'DoP panel and export must select actual capture events, not every inherited revision');
+assert.doesNotMatch(uiSource,/revisions\.filter\(function\(r\)\{\s*return r\.plan&&r\.plan\.cameraGrayCardWaveformReading;/,
+  'UI may not count carried-forward waveforms as independent readings');
+assert.match(uiSource,/currentWaveformInherited/);
+assert.match(uiSource,/activeCaptureRevisionId/);
 assert.match(uiSource,/POREĐENJE DVA WAVEFORM OČITAVANJA/);
 assert.match(uiSource,/deltaIrePoints/);
 assert.match(uiSource,/plannedSetupFingerprintMatches/);

@@ -1531,6 +1531,32 @@
     });
     return freezeJson(revisions);
   }
+  // A revision carrying forward identical camera evidence is a snapshot of a
+  // previous reading, not a second observation. Historical V1/V2 records are
+  // left untouched. A byte-identical re-entry also cannot prove a new capture.
+  function hasNewGrayCardWaveformCapture(revisions,index) {
+    var current=revisions[index]&&revisions[index].plan.cameraGrayCardWaveformReading;
+    if(!current)return false;
+    var previous=index>0?revisions[index-1].plan.cameraGrayCardWaveformReading:null;
+    return !previous||canonicalJson(current)!==canonicalJson(previous);
+  }
+  function listGrayCardWaveformCaptures(history) {
+    var revisions=restoreRevisions(history);
+    var ids=[];
+    revisions.forEach(function(r,i){
+      if(hasNewGrayCardWaveformCapture(revisions,i))ids.push(r.revisionId);
+    });
+    var latest=revisions[revisions.length-1];
+    var active=!!latest.plan.cameraGrayCardWaveformReading;
+    return freezeJson({
+      contract:'lightingai-gray-card-waveform-capture-index/1',
+      currentRevisionId:latest.revisionId,
+      currentWaveformPresent:active,
+      currentWaveformInherited:active&&!hasNewGrayCardWaveformCapture(revisions,revisions.length-1),
+      activeCaptureRevisionId:active&&ids.length?ids[ids.length-1]:null,
+      captureRevisionIds:ids
+    });
+  }
   // Compare two independently entered camera-gray-card waveform OBSERVATIONS,
   // never different signal encodings and never a claimed exposure change.
   // Verify the entire history chain, not just its endpoints, so sibling or
@@ -1573,6 +1599,11 @@
     var a=before.plan.cameraGrayCardWaveformReading;
     var b=after.plan.cameraGrayCardWaveformReading;
     if(!a||!b)return blocked('MISSING_GRAY_CARD_WAVEFORM');
+    var firstIndex=revisions.findIndex(function(r){return r.revisionId===earlierRevisionId;});
+    var secondIndex=revisions.findIndex(function(r){return r.revisionId===laterRevisionId;});
+    if(!hasNewGrayCardWaveformCapture(revisions,firstIndex)||
+       !hasNewGrayCardWaveformCapture(revisions,secondIndex))
+      return blocked('INHERITED_WAVEFORM_NOT_A_NEW_OBSERVATION');
     // V1 does not contain the transfer/range fingerprint needed to compare
     // two cameras' output signals, even if its reported IRE is otherwise valid.
     if(a.protocolVersion!==2||b.protocolVersion!==2)
@@ -1635,6 +1666,7 @@
     assessSceneMeterAlignment:assessSceneMeterAlignment,
     analyzeMeteredExposureContext:analyzeMeteredExposureContext,
     compareGrayCardWaveformRevisions:compareGrayCardWaveformRevisions,
+    listGrayCardWaveformCaptures:listGrayCardWaveformCaptures,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};

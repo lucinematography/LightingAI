@@ -490,3 +490,172 @@ export function verifyDayForNightGradeQc(qc,receipt,revision,bundle,recipe){
         receipt.frames.at(-1).durationTicks)reject();
   return true;
 }
+
+
+
+// Explicit MP4 handoff plan only; this module DOES NOT encode, mux, save or
+// authorize export. A rawvideo YUV pipe cannot carry original per-frame PTS,
+// especially VFR; a separately reviewed PTS-aware muxer is mandatory.
+// User-supplied scalar data never gains decoder authority through this helper.
+export function proposeUntrustedDayForNightMp4FrameSchedule(request){
+  if(!request||Object.getPrototypeOf(request)!==Object.prototype||
+     Object.keys(request).length!==3||
+     !Object.keys(request).every(k=>['frames','video','audioDeclared'].includes(k)))reject();
+  const {frames,video,audioDeclared}=request;
+  if(typeof audioDeclared!=='boolean'||!video||Object.getPrototypeOf(video)!==Object.prototype||
+     Object.keys(video).length!==7||
+     !Object.keys(video).every(k=>['codec','width','height','timeBase','durationTicks','samples','sampleCount'].includes(k))||
+     video.codec!=='h264'||!Number.isSafeInteger(video.width)||!Number.isSafeInteger(video.height)||
+     video.width<2||video.width>1920||video.width%2!==0||
+     video.height<2||video.height>1080||video.height%2!==0||
+     !video.timeBase||Object.getPrototypeOf(video.timeBase)!==Object.prototype||
+     Object.keys(video.timeBase).length!==2||
+     video.timeBase.numerator!==1||
+     !Number.isSafeInteger(video.timeBase.denominator)||
+     video.timeBase.denominator<1||video.timeBase.denominator>1e9||
+     !Number.isSafeInteger(video.durationTicks)||video.durationTicks<1||
+     video.durationTicks/video.timeBase.denominator<2||
+     video.durationTicks/video.timeBase.denominator>30||
+     !Array.isArray(frames)||frames.length<2||frames.length>1800||
+     video.sampleCount!==frames.length||!Array.isArray(video.samples)||
+     video.samples.length!==frames.length)reject();
+  const frameMap=[];
+  const rowKeys=['index','ptsTick','durationTicks','sourceDecodedPixelHash',
+    'gradedPixelHash','sourceMeanYCode','gradedMeanYCode','width','height',
+    'colorimetryVerified','sourceExposureMeasured'];
+  const sampleKeys=['index','ptsTick','dtsTick','durationTicks'];
+  for(let i=0;i<frames.length;i++){
+    const f=frames[i],source=video.samples[i],previous=i?frames[i-1]:null;
+    if(!f||Object.getPrototypeOf(f)!==Object.prototype||
+       Object.keys(f).length!==rowKeys.length||
+       Object.keys(f).some(k=>!rowKeys.includes(k))||
+       !source||Object.getPrototypeOf(source)!==Object.prototype||
+       Object.keys(source).length!==sampleKeys.length||
+       Object.keys(source).some(k=>!sampleKeys.includes(k))||
+       f.index!==i||source.index!==i||
+       !Number.isSafeInteger(f.ptsTick)||f.ptsTick<0||
+       !Number.isSafeInteger(f.durationTicks)||f.durationTicks<1||
+       !Number.isSafeInteger(f.ptsTick+f.durationTicks)||
+       (i===0&&f.ptsTick!==0)||
+       (i>0&&f.ptsTick!==previous.ptsTick+previous.durationTicks)||
+       source.ptsTick!==f.ptsTick||source.dtsTick!==f.ptsTick||
+       source.durationTicks!==f.durationTicks||
+       f.width!==video.width||f.height!==video.height||
+       !/^[a-f0-9]{64}$/.test(f.sourceDecodedPixelHash)||
+       !/^[a-f0-9]{64}$/.test(f.gradedPixelHash)||
+       f.colorimetryVerified!==false||f.sourceExposureMeasured!==false)reject();
+    for(const key of ['sourceMeanYCode','gradedMeanYCode']){
+      const v=f[key];
+      if(typeof v!=='number'||!Number.isFinite(v)||v<0||v>255||
+         Number(v.toFixed(4))!==v)reject();
+    }
+    frameMap.push({
+      index:i,originalPtsTick:f.ptsTick,originalDurationTicks:f.durationTicks,
+      endPtsTickExclusive:f.ptsTick+f.durationTicks,
+      originalDecodedPixelSha256:f.sourceDecodedPixelHash,
+      gradedRawPixelSha256:f.gradedPixelHash
+    });
+  }
+  if(frameMap.at(-1).endPtsTickExclusive!==video.durationTicks)reject();
+  const seconds=video.durationTicks/video.timeBase.denominator;
+  return freezeGrade({
+    contract:'lightingai-untrusted-day-for-night-mp4-timing-proposal/1',
+    status:'UNTRUSTED_UNENCODED_EXACT_ORIGINAL_PTS_PROPOSAL',
+    sourceFormat:'ISO_BMFF_H264_ZERO_ORIGIN_NO_B_FRAMES',
+    proposedOutput:'MP4_H264_VIDEO_ONLY_IF_LATER_VALIDATED',
+    rawPixelFormat:'yuv420p',
+    width:video.width,height:video.height,
+    timeBase:{numerator:1,denominator:video.timeBase.denominator},
+    sourceDurationTicks:video.durationTicks,
+    durationSeconds:seconds,
+    frameCount:frames.length,
+    originalAudioTrackDeclared:audioDeclared,
+    audioHandlingStatus:audioDeclared?
+      'BLOCKED_AUDIO_DECODING_AND_SYNC_UNVALIDATED':'NO_ORIGINAL_AUDIO_TRACK_DECLARED',
+    frameMap,
+    requiresPtsAwareEncoderAndMuxer:true,
+    outputColorimetryVerified:false,
+    sourceByteHashVerified:false,
+    noFpsResamplingAllowed:true,
+    encodedMp4Created:false,
+    videoExportAuthorized:false
+  });
+}
+
+// Trusted metadata-only handoff. No ffmpeg encoder is called, no output file
+// exists and nobody may use this object to bypass quality or audio gating.
+const trustedMp4Handoffs=new WeakSet();
+export function createVerifiedDayForNightMp4Handoff(receipt,qc,revision,bundle,recipe){
+  verifyDayForNightGradeQc(qc,receipt,revision,bundle,recipe);
+  const input=bundle.ingestion.metadata,video=input.video;
+  const proposal=proposeUntrustedDayForNightMp4FrameSchedule({
+    frames:receipt.frames,
+    video:{
+      codec:video.codec,width:video.width,height:video.height,
+      timeBase:video.timeBase,durationTicks:video.durationTicks,
+      samples:video.samples,sampleCount:video.sampleCount
+    },
+    audioDeclared:input.audio!==null
+  });
+  if(receipt.timeBase.numerator!==proposal.timeBase.numerator||
+     receipt.timeBase.denominator!==proposal.timeBase.denominator||
+     receipt.frames.length!==proposal.frameCount||
+     qc.frameCount!==proposal.frameCount||
+     qc.frameTransitionCount!==proposal.frameCount-1||
+     qc.lastEndPtsTickExclusive!==proposal.sourceDurationTicks)reject();
+  const blockers=[
+    'SOURCE_COLORIMETRY_AND_RANGE_UNVERIFIED',
+    'PTS_AWARE_ENCODER_AND_MP4_MUXER_NOT_IMPLEMENTED',
+    'MP4_REDECODE_FRAME_AND_PTS_VERIFICATION_NOT_EXECUTED',
+    'HUMAN_DOP_QUALITY_APPROVAL_MISSING'
+  ];
+  if(input.audio!==null)blockers.push('ORIGINAL_AUDIO_DECODING_SYNC_AND_PRESERVATION_NOT_VERIFIED');
+  if(qc.decision==='REVIEW_ORIGINAL_OR_GRADED_CODE_CHANGE')
+    blockers.push('SOURCE_OR_GRADE_DISCONTINUITY_REQUIRES_HUMAN_REVIEW');
+  const record={
+    contract:'lightingai-verified-day-for-night-mp4-handoff-blocked/1',
+    ...core.videoRevisionBinding(revision),
+    sourceIdentity:receipt.sourceIdentity,
+    ingestionHash:receipt.ingestionHash,visualHash:receipt.visualHash,
+    temporalHash:receipt.temporalHash,
+    gradeRecipeHash:recipe.recipeHash,gradeReceiptHash:receipt.receiptHash,
+    gradeQcHash:qc.qcHash,
+    schedule:proposal,
+    pendingBlockers:blockers,
+    exportDecision:'BLOCKED_NO_MP4_FILE_AND_UNRESOLVED_PROOFS',
+    originalSourceBytesUnchanged:true,
+    sourceColorimetryVerified:false,originalAudioSyncVerified:false,
+    ptsPreservingEncoderExecuted:false,outputMp4Hash:null,
+    encodedMp4Created:false,videoRelightGenerated:false,
+    humanDoPApprovalRecorded:false,physicalFixtureCommandsPerformed:false,
+    paidVideoProviderUsed:false
+  };
+  const result=freezeGrade({...record,handoffHash:core.planHash(record)});
+  trustedMp4Handoffs.add(result);
+  return result;
+}
+export function verifyDayForNightMp4Handoff(handoff,receipt,qc,revision,bundle,recipe){
+  verifyDayForNightGradeQc(qc,receipt,revision,bundle,recipe);
+  if(!trustedMp4Handoffs.has(handoff)||!matchesRevision(handoff,revision))reject();
+  const {handoffHash,...body}=handoff;
+  if(handoffHash!==core.planHash(body)||
+     handoff.gradeRecipeHash!==recipe.recipeHash||
+     handoff.gradeReceiptHash!==receipt.receiptHash||
+     handoff.gradeQcHash!==qc.qcHash||
+     handoff.sourceIdentity!==receipt.sourceIdentity||
+     handoff.ingestionHash!==receipt.ingestionHash||
+     handoff.visualHash!==receipt.visualHash||
+     handoff.temporalHash!==receipt.temporalHash||
+     handoff.exportDecision!=='BLOCKED_NO_MP4_FILE_AND_UNRESOLVED_PROOFS'||
+     handoff.encodedMp4Created!==false||handoff.outputMp4Hash!==null)reject();
+  const video=bundle.ingestion.metadata.video;
+  const expected=proposeUntrustedDayForNightMp4FrameSchedule({
+    frames:receipt.frames,
+    video:{codec:video.codec,width:video.width,height:video.height,
+      timeBase:video.timeBase,durationTicks:video.durationTicks,
+      samples:video.samples,sampleCount:video.sampleCount},
+    audioDeclared:bundle.ingestion.metadata.audio!==null
+  });
+  if(core.canonicalJson(handoff.schedule)!==core.canonicalJson(expected))reject();
+  return true;
+}

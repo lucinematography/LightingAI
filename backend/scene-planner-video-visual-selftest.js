@@ -9,7 +9,8 @@ import {createHash} from 'node:crypto';
 import {GRADE_METHOD,createDayForNightGradeRecipe,gradeDayForNightYuv420p,
   gradeVerifiedDayForNightFrames,verifyDayForNightFrameReceipt,
   summarizeDayForNightGradeCodeConsistency,createVerifiedDayForNightGradeQc,
-  verifyDayForNightGradeQc} from './scene-planner-video-visual.js';
+  verifyDayForNightGradeQc,proposeUntrustedDayForNightMp4FrameSchedule,
+  createVerifiedDayForNightMp4Handoff,verifyDayForNightMp4Handoff} from './scene-planner-video-visual.js';
 import {measureYuv420p,compareVisualFrames,analyzeOriginalVideo,verifyVisualAnalysis,
   summarizeDecodedCodeContinuity,createVerifiedDecodedContinuityAudit,
   verifyDecodedContinuityAudit} from './scene-planner-video-visual.js';
@@ -250,6 +251,84 @@ test('fail closed on forged grade means, PTS, source hashes and private bytes',(
     {frames:rows},nightRevision,{analysis:{},ingestion:{}},recipe));
 });
 
+
+// Strict untrusted raw-frame -> MP4 timeline proposal; does NOT claim output.
+// Existing ingress does not yet decode or validate audio/color primaries.
+function syntheticMp4Schedule(yCodes,durations,audioDeclared=false){
+  const frames=syntheticGradedCodeRows(yCodes,durations),endTick=frames.at(-1).ptsTick+frames.at(-1).durationTicks;
+  return {frames,
+    video:{codec:'h264',width:32,height:32,
+      timeBase:{numerator:1,denominator:1000},durationTicks:endTick,
+      sampleCount:frames.length,
+      samples:frames.map(f=>({index:f.index,ptsTick:f.ptsTick,
+        dtsTick:f.ptsTick,durationTicks:f.durationTicks}))},
+    audioDeclared};
+}
+test('MP4 timing handoff preserves exact VFR and source/graded identities without writing video',()=>{
+  const input=syntheticMp4Schedule([16,16,235,16,16],[500,600,400,700,300]);
+  const before=core.canonicalJson(input);
+  const proposal=proposeUntrustedDayForNightMp4FrameSchedule(input);
+  assert.equal(proposal.contract,'lightingai-untrusted-day-for-night-mp4-timing-proposal/1');
+  assert.equal(proposal.status,'UNTRUSTED_UNENCODED_EXACT_ORIGINAL_PTS_PROPOSAL');
+  assert.equal(proposal.sourceDurationTicks,2500);
+  assert.equal(proposal.durationSeconds,2.5);
+  assert.equal(proposal.frameCount,5);
+  assert.deepEqual(proposal.frameMap.map(f=>f.originalPtsTick),[0,500,1100,1500,2200]);
+  assert.deepEqual(proposal.frameMap.map(f=>f.originalDurationTicks),[500,600,400,700,300]);
+  assert.equal(proposal.frameMap.at(-1).endPtsTickExclusive,2500);
+  assert.equal(proposal.frameMap[0].gradedRawPixelSha256,input.frames[0].gradedPixelHash);
+  assert.equal(proposal.frameMap[0].originalDecodedPixelSha256,input.frames[0].sourceDecodedPixelHash);
+  assert.equal(proposal.originalAudioTrackDeclared,false);
+  assert.equal(proposal.requiresPtsAwareEncoderAndMuxer,true);
+  assert.equal(proposal.noFpsResamplingAllowed,true);
+  assert.equal(proposal.encodedMp4Created,false);
+  assert.equal(proposal.videoExportAuthorized,false);
+  assert.ok(Object.isFrozen(proposal)&&Object.isFrozen(proposal.frameMap)&&Object.isFrozen(proposal.frameMap[0]));
+  assert.equal(core.canonicalJson(input),before,'timing manifest does not mutate source pixels or metrics');
+  assert.doesNotMatch(JSON.stringify(proposal),/base64|filePath|sourceUrl|accessToken/i);
+});
+test('audio cannot be silently dropped by an MP4 export proposal',()=>{
+  const data=syntheticMp4Schedule([128,128,128],[800,700,800],true);
+  const result=proposeUntrustedDayForNightMp4FrameSchedule(data);
+  assert.equal(result.originalAudioTrackDeclared,true);
+  assert.equal(result.audioHandlingStatus,'BLOCKED_AUDIO_DECODING_AND_SYNC_UNVALIDATED');
+  assert.equal(result.encodedMp4Created,false);
+});
+test('MP4 proposal rejects forged source timeline, guessed FPS and malformed pixel attestations',()=>{
+  const input=syntheticMp4Schedule([16,128,235],[600,900,1000]);
+  function damage(change){
+    const tampered=clone(input);change(tampered);
+    assert.throws(()=>proposeUntrustedDayForNightMp4FrameSchedule(tampered));
+  }
+  damage(x=>x.frames[1].ptsTick+=1);
+  damage(x=>x.frames[1].durationTicks=0);
+  damage(x=>x.video.samples[1].dtsTick=0);
+  damage(x=>x.video.samples[2].durationTicks=5);
+  damage(x=>x.video.durationTicks+=1);
+  damage(x=>x.video.timeBase.numerator=2);
+  damage(x=>x.video.timeBase.denominator=0);
+  damage(x=>x.video.codec='hevc');
+  damage(x=>x.video.width=31);
+  damage(x=>x.video.width=1940);
+  damage(x=>x.video.sampleCount=2);
+  damage(x=>x.frames[0].gradedPixelHash='not sha256');
+  damage(x=>x.frames[0].sourceMeanYCode=NaN);
+  damage(x=>x.frames[0].colorimetryVerified=true);
+  damage(x=>x.frames[1].sourceVideoPath='/secret.mov');
+  damage(x=>x.video.samples[1].fileName='private.mp4');
+  damage(x=>x.audioDeclared=null);
+  damage(x=>x.frames.pop());
+  assert.throws(()=>proposeUntrustedDayForNightMp4FrameSchedule(
+    syntheticMp4Schedule([16,128,235],[100,100,100])),
+    'under 2s not supported');
+  assert.throws(()=>proposeUntrustedDayForNightMp4FrameSchedule({
+    ...input,video:{...input.video,durationTicks:31000}}),
+    'over 30s not supported');
+  assert.throws(()=>createVerifiedDayForNightMp4Handoff(
+    {frames:input.frames},{},nightRevision,{ingestion:{},analysis:{}},recipe),
+    'untrusted supplied metrics cannot create a verified handoff');
+});
+
 console.log(`${groups} synthetic visual pixel groups passed; no decoder provenance granted.`);
 
 const decoderPath=process.env.SCENE_PLANNER_TEST_FFMPEG;
@@ -318,6 +397,18 @@ else{
       assert.equal(gradeQc.encodedMp4Created,false);
       assert.equal(verifyDayForNightGradeQc(gradeQc,graded,nightRevision,nightBundle,recipe),true);
       assert.throws(()=>verifyDayForNightGradeQc(clone(gradeQc),graded,nightRevision,nightBundle,recipe));
+      const handoff=createVerifiedDayForNightMp4Handoff(graded,gradeQc,nightRevision,nightBundle,recipe);
+      assert.equal(handoff.schedule.frameCount,20);
+      assert.equal(handoff.schedule.sourceDurationTicks,nightBundle.ingestion.metadata.video.durationTicks);
+      assert.equal(handoff.schedule.frameMap[10].originalPtsTick,1000);
+      assert.equal(handoff.gradeReceiptHash,graded.receiptHash);
+      assert.equal(handoff.gradeQcHash,gradeQc.qcHash);
+      assert.ok(handoff.pendingBlockers.includes('PTS_AWARE_ENCODER_AND_MP4_MUXER_NOT_IMPLEMENTED'));
+      assert.ok(handoff.pendingBlockers.includes('SOURCE_COLORIMETRY_AND_RANGE_UNVERIFIED'));
+      assert.equal(handoff.encodedMp4Created,false);
+      assert.equal(verifyDayForNightMp4Handoff(handoff,graded,gradeQc,nightRevision,nightBundle,recipe),true);
+      assert.throws(()=>verifyDayForNightMp4Handoff(clone(handoff),graded,gradeQc,nightRevision,nightBundle,recipe));
+      assert.throws(()=>createVerifiedDayForNightMp4Handoff(graded,gradeQc,revision,nightBundle,recipe));
       await assert.rejects(()=>gradeVerifiedDayForNightFrames(opts,revision,result,recipe,()=>true));
     });
     await run('one-frame flash candidate requires confirmation',async()=>{
@@ -362,6 +453,13 @@ else{
       assert.equal(vfrQc.lastEndPtsTickExclusive,
         nightVfr.analysis.frames.at(-1).ptsTick+nightVfr.analysis.frames.at(-1).durationTicks);
       assert.equal(vfrQc.frameTransitionCount,18);
+      const vfrHandoff=createVerifiedDayForNightMp4Handoff(gradedVfr,vfrQc,nightRevision,nightVfr,recipe);
+      assert.equal(vfrHandoff.schedule.frameCount,19);
+      assert.equal(vfrHandoff.schedule.frameMap[0].originalDurationTicks,200);
+      assert.equal(vfrHandoff.schedule.frameMap[1].originalPtsTick,200);
+      assert.equal(vfrHandoff.schedule.frameMap.at(-1).endPtsTickExclusive,
+        nightVfr.ingestion.metadata.video.durationTicks);
+      assert.equal(vfrHandoff.exportDecision,'BLOCKED_NO_MP4_FILE_AND_UNRESOLVED_PROOFS');
       assert.equal(qc.reviewIntervals.at(-1).endPtsTickExclusive,
         r.analysis.frames.at(-1).ptsTick+r.analysis.frames.at(-1).durationTicks);
     });

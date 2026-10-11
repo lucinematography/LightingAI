@@ -1528,3 +1528,41 @@ VFR end time and live receipt verification. The latter remain NOT EXECUTED
 when a suitable explicitly selected decoder is unavailable in CI. The grade
 pilot remains backend-only, with no MP4 file, provider call, on-device action,
 fixture command, merge, APK installation or release.
+
+
+### Fail-closed MP4 frame-timing handoff for graded Day-for-Night (2026-10-11)
+
+The offline video module now provides an **untrusted, unencoded source-timeline
+proposal** and a separately trusted in-process MP4 handoff. Neither function
+runs FFmpeg encoding, creates output files, transmits media nor enables Android
+exports. The exact original zero-origin sample-table PTS and durations (CFR
+or VFR) are represented in integer ticks at the original `1/timescale` clock;
+no average FPS, guesswork, frame dropping or constant-rate approximation is
+permitted. The source and graded raw YUV420p frame SHA-256 values are included
+per frame for later correlation, without raw pixel buffers, private file paths,
+tokens or media URLs. Supported input is deliberately narrow: 2-30 seconds,
+up to 1,800 frames, zero-origin gap-free non-B-frame H.264 at up to 1920x1080,
+even dimensions, PTS=DTS and exact original sample durations. The pure
+proposal is **not** a verified source/decoder receipt.
+
+`createVerifiedDayForNightMp4Handoff` requires the live, in-process verified
+original decoding bundle, immutable DoP revision, private grade recipe, full
+graded-frame receipt and verified grade QC. It cryptographically binds source
+identity, temporal and visual hashes, planned fixture/light-plot revision,
+grade receipt and QC. The result is permanently `BLOCKED_NO_MP4_FILE_AND_
+UNRESOLVED_PROOFS`, with explicit unresolved requirements for source transfer
+and color range, a PTS-aware H.264 encoder/MP4 muxer, re-decoded MP4 frame and
+timestamp validation, and human DoP image approval. If the source has an audio
+track, it additionally blocks silent audio removal pending actual audio
+decoding, sync and preservation verification. Original or graded visual jumps
+add a separate human-review blocker. This is a production-safety prerequisite,
+**not export authorization**; no MP4, physical relighting, calibrated camera
+exposure, audio rendering or color-managed result has been produced.
+
+Tests include mandatory pure CFR/VFR frame schedule preservation, audio policy,
+invalid timebases/durations/dimensions/PTS/DTS, source and graded SHA format,
+privacy-field rejection, immutability, and rejection of forged trust. Optional
+configured-FFmpeg tests use original procedural MP4 source, trusted graded
+frame and QC receipts, exact CFR/VFR mapping and live handoff verification.
+Configured decoder tests must report NOT EXECUTED when FFmpeg is absent;
+the existing main/K0/K1 and fixture-control protections are untouched.

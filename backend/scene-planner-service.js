@@ -60,6 +60,9 @@ export function buildScenePlannerPrompt(req) {
       references:card.evidence.map(e=>({source:e.source_id,pdfPage:e.pdf_page,printedPage:e.printed_page}))
     }))),
     "Use applicable book principles to justify lighting choices; never fabricate a citation, measurement, or universally correct lighting ratio. Where evidence is weak, explain the on-set check.",
+    "For each lighting decision, prefer relevant retrieved book principles and their application, validation and limitations; adapt them to the scene, actual fixture inventory and director of photography intent, never copy a generic recipe.",
+    "If the retrieved book-principles array is empty or does not support a decision, explicitly label the recommendation as a creative hypothesis without book support. Never imply that an absent citation was verified.",
+    "Book principles are not photometric calibration: do not assert exact lux, beam distance, exposure, contrast or fixture output without scene measurements and verified fixture photometrics. Propose practical meter/camera tests and request DoP approval.",
     "Design a creative but executable light plan for the actual scene and actor blocking.",
     "The photograph and video keyframes are visual references, NOT calibrated depth measurements.",
     "Scene description: " + req.description,

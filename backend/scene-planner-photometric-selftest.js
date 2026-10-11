@@ -119,7 +119,7 @@ incorrectLux.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistan
 assert.throws(()=>core.restoreRevisions([wrappedRevision,opticOnly,incorrectLux]),/integrity|invalid|mismatch/i);
 const incorrectOptic=JSON.parse(JSON.stringify(opticAndDistance));
 incorrectOptic.plan.opticConfirmations[0].opticId='BM1230_MEDIUM';
-assert.throws(()=>core.restoreRevisions([wrappedRevision,opticOnly,incorrectOptic]),/invalid|mismatch/i);
+assert.throws(()=>core.restoreRevisions([wrappedRevision,opticOnly,incorrectOptic]),/invalid|mismatch|not a verified profile option/i);
 const newPlanAfterOptic=core.createRevision(wrappedPlan,{
   ...raw,equipment:additionalFixtures.map(f=>({fixtureId:f.id,name:f.model,qty:1}))
 },'ai',opticAndDistance,'new-optic-references');

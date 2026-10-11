@@ -78,7 +78,7 @@
   // This is user-declared measurement, not independent depth-camera calibration.
   function roomDimension(value) {
     if(typeof value!=='number' && typeof value!=='string')return null;
-    if(typeof value==='string' && !/^(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)$/.test(value.trim()))return null;
+    if(typeof value==='string' && !/^(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)$/.test(value.trim()))return null;
     var n=Number(value);
     return Number.isFinite(n) && n>=0.5 && n<=100 ? n : null;
   }

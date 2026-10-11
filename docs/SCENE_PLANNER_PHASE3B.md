@@ -760,3 +760,46 @@ Regression fixtures cover the DST fall-back hour, 15/16-minute boundary,
 partial/invalid offset records, V2/V3 mismatch, immutable history, tampering,
 and in-app entry/display of V3 provenance. This remains an optional evidence
 upgrade; no physical fixture control, paid AI, publication or K0/K1 change.
+
+
+### Whole-setup on-set incident lux, single measured point (2026-10-11)
+
+The operator can report a **separate real incident-meter observation at one subject
+mark** with the intended owned, available lights switched on **and ambient
+illumination included**. This is independent of isolated fixture key/fill readings
+and of published fixture lux data. The operator must explicitly attest both the
+physical meter observation (receptor facing camera) and the lighting state. The
+mandatory record has lux (0..1,000,000; up to 0.001 precision), meter model and
+physical-device identifier, named subject measurement point, valid local time and
+an explicit per-reading UTC offset. The reading is *user reported* and its
+instrument calibration, actual installed fixture state and correctness are not
+independently verified.
+
+The new `sceneIncidentLuxReading` record is limited to an owned-light plan,
+versioned, immutable within the SHA-256 revision history, and includes a
+deterministic fingerprint of the currently planned available lights plus
+user-attested optics and distances. This fingerprint is a **binding to the plan
+context**, *not* a proof that AI-proposed positions, dimmer percentages and color
+actually matched the set. A new/reconfirmed fixture distance or mounted optic
+invalidates the combined reading **only in the child revision**; the original
+validated revision retains the original reading. Fresh AI-generated plan
+revisions do not inherit this physical observation. Further isolated lamp
+readings do not themselves change the recorded intended all-on setup.
+
+`analyzeMeteredExposureContext` returns
+`sceneIncidentEvidence.userReportedLux` when such a reading exists, with
+its user-declared meter/time provenance and no independent validation. The
+separate `derivedSceneLux`, `measuredSceneEv100`, `recommendedAperture`,
+`recommendedIso` stay `null`; exposure/scene-calibration flags stay
+`false`. A single meter point is **not** the illuminance of the entire image,
+does not establish subject reflectance, waveform IRE, camera EI, transfer
+function, T-stop or an optimal contrast ratio. It is not summed with or
+subtracted from separately isolated fixture readings: the ambient contribution,
+repeatability, interaction, and intervening physical setup changes are unknown.
+
+The UI captures and prints the real observation distinctly from proposed
+camera/fixture values. The offline regression suite rejects forged readings,
+missing confirmation, bad timestamps/offsets, stale fingerprints, tampering
+and use in non-owned plans, while checking historical revision preservation and
+non-calibrated exposure status. No paid AI, direct device control, APK
+installation, release/publish, `main`, K0 or K1 change.

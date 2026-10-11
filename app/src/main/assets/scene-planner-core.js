@@ -127,6 +127,22 @@
   function meterUtcMinute(localTime,offsetMinutes) {
     return Date.parse(localTime+':00Z')/60000-offsetMinutes;
   }
+  // A fingerprint of the PLANNED setup, not proof of physical rig/level accuracy.
+  function sceneMeterSetupFingerprint(plan) {
+    return sha256(canonicalJson({
+      plannedLights:(plan.lights||[]).filter(function(l){return l.available;}).map(function(l){
+        return {id:l.id,fixtureId:l.fixtureId,role:l.role,x:l.x,y:l.y,
+          heightM:l.heightM,distanceM:l.distanceM,intensityPct:l.intensityPct,
+          kelvin:l.kelvin,modifier:l.modifier,beamAngleDeg:l.beamAngleDeg};
+      }),
+      attestedDistances:(plan.distanceMeasurements||[]).map(function(d){
+        return {lightId:d.lightId,fixtureId:d.fixtureId,distanceM:d.distanceM};
+      }),
+      attestedOptics:(plan.opticConfirmations||[]).map(function(o){
+        return {lightId:o.lightId,fixtureId:o.fixtureId,opticId:o.opticId};
+      })
+    }));
+  }
   function key(value) { return str(value, 250).toLowerCase().replace(/[^a-z0-9]/g, ''); }
   function mode(value) { return value === 'own' ? 'own' : 'best'; }
   function equipment(items) {
@@ -687,6 +703,38 @@
     if(incidentReports.length &&
       plan.dataStatus.incidentLuxReadings!=='user-reported-not-independently-verified')
       throw new Error('Unlabeled on-set incident meter values');
+    // A user-reported ALL-SOURCES-ON incident meter observation is neither
+    // the sum of isolated contributions nor a measured camera exposure.
+    var sceneMeter=plan.sceneIncidentLuxReading;
+    if(sceneMeter!==undefined){
+      var availableSceneLights=plan.lights.filter(function(l){return l.available;});
+      if(!sceneMeter||typeof sceneMeter!=='object'||Array.isArray(sceneMeter)||
+        plan.mode!=='own'||!availableSceneLights.length||
+        sceneMeter.protocolVersion!==1||
+        sceneMeter.source!=='USER_REPORTED_COMBINED_SCENE_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED'||
+        sceneMeter.unit!=='lx'||sceneMeter.meterType!=='INCIDENT_LUX_METER'||
+        sceneMeter.target!=='SUBJECT_AT_MEASUREMENT_POINT'||
+        sceneMeter.measurementScope!=='ALL_PLANNED_AVAILABLE_SOURCES_ACTIVE_AMBIENT_INCLUDED'||
+        sceneMeter.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA'||
+        sceneMeter.userAttested!==true||sceneMeter.allSourcesActiveConfirmed!==true||
+        sceneMeter.calibrationStatus!=='NOT_INDEPENDENTLY_VERIFIED'||
+        typeof sceneMeter.lux!=='number'||incidentLux(sceneMeter.lux)!==sceneMeter.lux||
+        meterText(sceneMeter.meterModel,120)!==sceneMeter.meterModel||
+        meterText(sceneMeter.meterIdentifier,80)!==sceneMeter.meterIdentifier||
+        meterText(sceneMeter.measurementPoint,100)!==sceneMeter.measurementPoint||
+        meterLocalTime(sceneMeter.measuredAtLocal)!==sceneMeter.measuredAtLocal||
+        !sceneMeter.measuredAtLocal||
+        typeof sceneMeter.utcOffsetMinutes!=='number'||
+        !Number.isInteger(sceneMeter.utcOffsetMinutes)||
+        sceneMeter.utcOffsetMinutes< -720||sceneMeter.utcOffsetMinutes>840||
+        sceneMeter.utcOffsetMinutes%15!==0||
+        sceneMeter.fixtureCount!==availableSceneLights.length||
+        sceneMeter.setupFingerprint!==sceneMeterSetupFingerprint(plan)||
+        plan.dataStatus.sceneIncidentLuxReading!=='user-reported-not-independently-verified')
+        throw new Error('Invalid or stale combined-scene incident meter evidence');
+    }else if(plan.dataStatus.sceneIncidentLuxReading!==undefined){
+      throw new Error('Orphaned combined-scene incident meter status');
+    }
     // Only an explicitly attested mounted optic can unlock a published reference.
     var attestations=plan.opticConfirmations===undefined?[]:plan.opticConfirmations;
     if(!Array.isArray(attestations)||attestations.length>MAX_LIGHTS)
@@ -826,6 +874,9 @@
         delete plan.dataStatus.incidentLuxReadings;
       }
     }
+    // Re-attested optics invalidate whole-scene readings on the revised setup.
+    delete plan.sceneIncidentLuxReading;
+    delete plan.dataStatus.sceneIncidentLuxReading;
     refreshAttestedOpticReference(plan,light.id);
     var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
       sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
@@ -862,6 +913,9 @@
         delete plan.dataStatus.incidentLuxReadings;
       }
     }
+    // Re-attested distance invalidates the whole-scene physical context.
+    delete plan.sceneIncidentLuxReading;
+    delete plan.dataStatus.sceneIncidentLuxReading;
     if(plan.photometricBasis && Array.isArray(plan.photometricBasis.entries)){
       plan.photometricBasis.entries.forEach(function(e){
         if(e.lightId!==light.id||e.fixtureId!==light.fixtureId)return;
@@ -942,6 +996,46 @@
     // The manufacturer-reference onSetLux slot remains null: never relabel reported lux as published output.
     var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
       sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // Actual user-entered meter lux at the subject with intended owned sources
+  // switched on, including ambient. No image/published/AI inference.
+  function createSceneIncidentLuxRevision(parent,report) {
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||
+      report.confirmed!==true||report.allSourcesActiveConfirmed!==true)
+      throw new Error('Explicit full-scene meter and lighting-state confirmation is required');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var active=plan.lights.filter(function(l){return l.available;});
+    if(plan.mode!=='own'||!active.length)
+      throw new Error('Combined scene incident measurement requires available owned lights');
+    var lux=incidentLux(report.lux);
+    var model=meterText(report.meterModel,120);
+    var identifier=meterText(report.meterIdentifier,80);
+    var point=meterText(report.measurementPoint,100);
+    var when=meterLocalTime(report.measuredAtLocal);
+    var offset=measuredUtcOffset(report.measuredUtcOffset);
+    if(lux===null||!model||!identifier||!point||!when||offset===null)
+      throw new Error('Invalid combined-scene lux or required meter identity, time and UTC offset');
+    plan.sceneIncidentLuxReading={
+      source:'USER_REPORTED_COMBINED_SCENE_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED',
+      protocolVersion:1,lux:lux,unit:'lx',
+      meterType:'INCIDENT_LUX_METER',meterModel:model,meterIdentifier:identifier,
+      measurementPoint:point,receptorOrientation:'RECEPTOR_TOWARD_CAMERA',
+      measuredAtLocal:when,utcOffsetMinutes:offset,
+      measurementScope:'ALL_PLANNED_AVAILABLE_SOURCES_ACTIVE_AMBIENT_INCLUDED',
+      target:'SUBJECT_AT_MEASUREMENT_POINT',
+      fixtureCount:active.length,setupFingerprint:sceneMeterSetupFingerprint(plan),
+      calibrationStatus:'NOT_INDEPENDENTLY_VERIFIED',
+      userAttested:true,allSourcesActiveConfirmed:true
+    };
+    plan.dataStatus.sceneIncidentLuxReading='user-reported-not-independently-verified';
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,
+      plan:plan,planHash:planHash(plan)};
     revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
     revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
     verifyRevision(revision);
@@ -1047,6 +1141,7 @@
       (100/camera.iso))+camera.ndStops;
     var comparison=compareKeyFillMeasurements(revision,keyLightId,fillLightId);
     var comparable=comparison.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY';
+    var sceneReading=revision.plan.sceneIncidentLuxReading||null;
     return freezeJson({
       contract:'lightingai-metered-exposure-context/1',
       revisionId:revision.revisionId,planHash:revision.planHash,
@@ -1071,6 +1166,18 @@
         independentInstrumentIdentityVerified:false,
         measurementPoint:comparable?comparison.measurementPoint:null,
         minutesApart:comparable?comparison.minutesApart:null
+      },
+      sceneIncidentEvidence:{
+        status:sceneReading?'USER_REPORTED_COMBINED_INCIDENT_LUX_NOT_VERIFIED':'NOT_RECORDED',
+        userReportedLux:sceneReading?sceneReading.lux:null,
+        meterModel:sceneReading?sceneReading.meterModel:null,
+        meterIdentifier:sceneReading?sceneReading.meterIdentifier:null,
+        measurementPoint:sceneReading?sceneReading.measurementPoint:null,
+        measuredAtLocal:sceneReading?sceneReading.measuredAtLocal:null,
+        utcOffsetMinutes:sceneReading?sceneReading.utcOffsetMinutes:null,
+        setupFingerprint:sceneReading?sceneReading.setupFingerprint:null,
+        allSourcesActiveConfirmed:!!sceneReading,
+        calibrationVerified:false,cameraExposureVerified:false
       },
       derivedSceneLux:null,measuredSceneEv100:null,
       recommendedAperture:null,recommendedIso:null,
@@ -1101,6 +1208,7 @@
     createDistanceMeasurementRevision:createDistanceMeasurementRevision,
     createMountedOpticRevision:createMountedOpticRevision,
     createIncidentLuxRevision:createIncidentLuxRevision,
+    createSceneIncidentLuxRevision:createSceneIncidentLuxRevision,
     compareKeyFillMeasurements:compareKeyFillMeasurements,
     analyzeMeteredExposureContext:analyzeMeteredExposureContext,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,

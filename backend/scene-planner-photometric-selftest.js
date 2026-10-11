@@ -409,6 +409,115 @@ const zeroFill=core.createIncidentLuxRevision(ratioC,{
 assert.equal(core.compareKeyFillMeasurements(zeroFill,'L1','L2').reason,'ZERO_READING_NO_FINITE_RATIO');
 const oneMeter=core.compareKeyFillMeasurements(ratioC,'L1','L2');
 assert.equal(oneMeter.reason,'MISSING_USER_REPORTED_LUX');
+
+// Full-scene incident lux is a SEPARATE user-reported observation, not
+// sum(key+fill), sensor exposure or a published fixture table result.
+const sceneInput={
+  confirmed:true,allSourcesActiveConfirmed:true,lux:'650.125',
+  meterModel:'Sekonic C-800 test fixture',meterIdentifier:'ONSET-METER-001',
+  measurementPoint:'Face mark A',measuredAtLocal:'2026-10-11T16:05',
+  measuredUtcOffset:'+02:00'
+};
+const sceneRev=core.createSceneIncidentLuxRevision(ratioD,sceneInput);
+const sceneLux=sceneRev.plan.sceneIncidentLuxReading;
+assert.equal(sceneRev.sequence,ratioD.sequence+1);
+assert.equal(sceneRev.parentRevisionId,ratioD.revisionId);
+assert.equal(sceneLux.lux,650.125);
+assert.equal(sceneLux.protocolVersion,1);
+assert.equal(sceneLux.unit,'lx');
+assert.equal(sceneLux.fixtureCount,2);
+assert.equal(sceneLux.utcOffsetMinutes,120);
+assert.equal(sceneLux.receptorOrientation,'RECEPTOR_TOWARD_CAMERA');
+assert.equal(sceneLux.measurementScope,'ALL_PLANNED_AVAILABLE_SOURCES_ACTIVE_AMBIENT_INCLUDED');
+assert.equal(sceneLux.calibrationStatus,'NOT_INDEPENDENTLY_VERIFIED');
+assert.match(sceneLux.setupFingerprint,/^[a-f0-9]{64}$/);
+assert.equal(sceneRev.plan.dataStatus.sceneIncidentLuxReading,
+  'user-reported-not-independently-verified');
+assert.equal(ratioD.plan.sceneIncidentLuxReading,undefined,
+  'historical revision remains immutable');
+assert.equal(core.compareKeyFillMeasurements(sceneRev,'L1','L2').ratio,4,
+  'the full-scene value must not alter isolated light comparison');
+assert.equal(core.verifyRevision(sceneRev),true);
+assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev]).length,6);
+const sceneContext=core.analyzeMeteredExposureContext(sceneRev,'L1','L2');
+assert.equal(sceneContext.sceneIncidentEvidence.status,
+  'USER_REPORTED_COMBINED_INCIDENT_LUX_NOT_VERIFIED');
+assert.equal(sceneContext.sceneIncidentEvidence.userReportedLux,650.125);
+assert.equal(sceneContext.sceneIncidentEvidence.meterIdentifier,'ONSET-METER-001');
+assert.equal(sceneContext.sceneIncidentEvidence.utcOffsetMinutes,120);
+assert.equal(sceneContext.sceneIncidentEvidence.setupFingerprint,sceneLux.setupFingerprint);
+assert.equal(sceneContext.incidentEvidence.ratio,4);
+assert.equal(sceneContext.camera.nominalSettingsEv100,exposureContext.camera.nominalSettingsEv100,
+  'a user-reported scene lux cannot silently recalibrate camera settings');
+assert.equal(sceneContext.sceneIncidentEvidence.cameraExposureVerified,false);
+assert.equal(sceneContext.sceneIncidentEvidence.calibrationVerified,false);
+for(const key of ['derivedSceneLux','measuredSceneEv100','recommendedAperture','recommendedIso'])
+  assert.equal(sceneContext[key],null,'do not derive '+key+' from scene meter reading');
+assert.equal(sceneContext.cameraExposureVerified,false);
+assert.equal(sceneContext.manufacturerPhotometricsUsed,false);
+assert.equal(core.analyzeMeteredExposureContext(ratioD,'L1','L2')
+  .sceneIncidentEvidence.userReportedLux,null,'no meter report means no scene lux');
+
+// Re-attestation of physical setup invalidates combined-scene evidence
+// only in the next revision, never in its validated ancestor.
+const sceneMoved=core.createDistanceMeasurementRevision(sceneRev,{
+  lightId:'L1',distanceM:4,confirmed:true
+});
+assert.equal(sceneMoved.plan.sceneIncidentLuxReading,undefined);
+assert.equal(sceneMoved.plan.dataStatus.sceneIncidentLuxReading,undefined);
+assert.equal(sceneRev.plan.sceneIncidentLuxReading.lux,650.125);
+assert.equal(core.verifyRevision(sceneMoved),true);
+const sceneOptic=core.createSceneIncidentLuxRevision(meterRevision,sceneInput);
+const opticChangedAfterScene=core.createMountedOpticRevision(sceneOptic,{
+  lightId:'L1',opticId:'HYPER_REFLECTOR_55',confirmed:true
+});
+assert.equal(opticChangedAfterScene.plan.sceneIncidentLuxReading,undefined,
+  'a reconfirmed mounted optic must invalidate total-on-set lux');
+assert.equal(sceneOptic.plan.sceneIncidentLuxReading.lux,650.125);
+const sceneWithExtraIsolated=core.createIncidentLuxRevision(sceneRev,{
+  ...commonContext,lightId:'L1',lux:390,confirmed:true,fixtureIsolated:true
+});
+assert.equal(sceneWithExtraIsolated.plan.sceneIncidentLuxReading.lux,650.125,
+  're-reading an isolated lamp is not itself a new intended all-on setup');
+const sceneReplacement=core.createSceneIncidentLuxRevision(sceneRev,{...sceneInput,lux:0});
+assert.equal(sceneReplacement.plan.sceneIncidentLuxReading.lux,0,
+  'meter zero is a valid reported observation, not a calibrated exposure');
+assert.equal(sceneRev.plan.sceneIncidentLuxReading.lux,650.125);
+assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev,sceneReplacement]).length,7);
+const refreshedAI=core.createRevision(generated.plan,raw,'ai',sceneRev,'ratio-demo');
+assert.equal(refreshedAI.plan.sceneIncidentLuxReading,undefined,
+  'an AI revision never inherits physical scene readings from a previous setup');
+const bestScene=core.createRevision(core.localPlan({mode:'best',description:'test'}),{
+  mode:'best',description:'test'},'local',null,'unowned-scene');
+assert.throws(()=>core.createSceneIncidentLuxRevision(bestScene,sceneInput),/owned/i);
+for(const invalid of [
+  {...sceneInput,confirmed:false},{...sceneInput,allSourcesActiveConfirmed:false},
+  {...sceneInput,lux:-1},{...sceneInput,lux:'700abc'},
+  {...sceneInput,lux:1000000.001},{...sceneInput,lux:'1e3'},
+  {...sceneInput,meterModel:'<fake>'},{...sceneInput,meterIdentifier:''},
+  {...sceneInput,measurementPoint:' '},{...sceneInput,measuredAtLocal:''},
+  {...sceneInput,measuredAtLocal:'2026-02-30T10:00'},
+  {...sceneInput,measuredUtcOffset:'Europe/Belgrade'},
+  {...sceneInput,measuredUtcOffset:'+15:00'},
+  {...sceneInput,measuredUtcOffset:'+02:17'}
+]){
+  assert.throws(()=>core.createSceneIncidentLuxRevision(ratioD,invalid),
+    /scene|meter|lighting|lux|owned/i,'missing/unverified scene evidence must fail closed');
+}
+const modifiedScene=JSON.parse(JSON.stringify(sceneRev));
+modifiedScene.plan.sceneIncidentLuxReading.lux=123;
+assert.throws(()=>core.verifyRevision(modifiedScene),/integrity|Invalid|mismatch/i);
+const staleScene=JSON.parse(JSON.stringify(sceneRev));
+staleScene.plan.lights[0].x=20;
+assert.throws(()=>core.verifyRevision(staleScene),/stale|integrity|Invalid/i,
+  'stale planned-setup fingerprint must be rejected');
+const orphanScene=JSON.parse(JSON.stringify(ratioD));
+orphanScene.plan.dataStatus.sceneIncidentLuxReading='user-reported-not-independently-verified';
+assert.throws(()=>core.verifyRevision(orphanScene),/Orphaned/i);
+const forgedSource=JSON.parse(JSON.stringify(sceneRev));
+forgedSource.plan.sceneIncidentLuxReading.source='MANUFACTURER_REFERENCE';
+assert.throws(()=>core.verifyRevision(forgedSource),/Invalid/i);
+
 assert.equal(positive.meterProtocolVersion,2,'previous V2 workflow must remain readable');
 assert.equal(positive.timeBasis,'LEGACY_UNVERIFIED_LOCAL_WALL_CLOCK');
 assert.equal(positive.meterIdentifier,null);
@@ -592,6 +701,12 @@ assert.match(uiSource,/sp-meter-offset-/,'UI must capture UTC offset at the mome
 assert.match(uiSource,/formatMeterUtcOffset/,'offset provenance must be printable');
 assert.match(uiSource,/meterIdentifier:el\(/,'new meter tag must reach revision creator');
 assert.match(uiSource,/measuredUtcOffset:el\(/,'offset must reach revision creator');
+assert.match(uiSource,/createSceneIncidentLuxRevision\(revisions/);
+assert.match(uiSource,/sp-scene-total-lux/);
+assert.match(uiSource,/sp-scene-total-measured/);
+assert.match(uiSource,/sp-scene-total-active/);
+assert.match(uiSource,/sceneIncidentEvidence\.userReportedLux/);
+assert.match(uiSource,/Ne sabirati sa izolovanim|Ne sabirati/i);
 assert.match(uiSource,/data-sp-distance-light/);
 assert.match(uiSource,/Lično potvrđujem merenje na setu/);
 const tampered=JSON.parse(JSON.stringify(revision));

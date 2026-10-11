@@ -548,6 +548,17 @@
         lines.push('Ovo nije fabrički lux, nije AI procena niti dokaz ekspozicije cele scene.');
       });
     }
+    if(plan.sceneIncidentLuxReading){
+      var sceneMeterText=plan.sceneIncidentLuxReading;
+      lines.push('','CELA POSTAVKA — KORISNIKOVO OČITAVANJE NA JEDNOJ TAČKI (NE EKSPОZICIJA)',
+        sceneMeterText.lux+' lx, svi prijavljeni aktivni izvori i ambijent u mernoj tački. '+
+        'Svetlomer: '+sceneMeterText.meterModel+' / '+sceneMeterText.meterIdentifier+
+        '; tačka: '+sceneMeterText.measurementPoint+
+        '; lokalno vreme: '+sceneMeterText.measuredAtLocal+
+        '; UTC: '+formatMeterUtcOffset(sceneMeterText.utcOffsetMinutes),
+        'Status: prijavio korisnik, bez nezavisne kalibracije/validacije. '+
+        'Ne sabirati sa izolovanim izvorima; ne računati blendu, ISO ni kontrast kadra.');
+    }
     if(revisions.length&&core().compareKeyFillMeasurements){
       var keys=plan.lights.filter(function(l){return l.role==='key'&&l.available;});
       var fills=plan.lights.filter(function(l){return l.role==='fill'&&l.available;});
@@ -700,8 +711,69 @@
         (cameraEvidence.status==='RELATIVE_LIGHT_CONTRIBUTIONS_ONLY'?
           'Postoji uporediv par izolovanih očitavanja; pokazuje samo relativnu razliku svetla. ':
           'Nema uporedivog key/fill para ('+esc(cameraEvidence.incidentEvidence.blocker)+'). ')+
-        'EV scene, stvarna ekspozicija, ukupni lux scene i preporučena blenda/ISO nisu izračunati. '+
+        (cameraEvidence.sceneIncidentEvidence.status==='USER_REPORTED_COMBINED_INCIDENT_LUX_NOT_VERIFIED'?
+          'Korisnik je prijavio '+esc(cameraEvidence.sceneIncidentEvidence.userReportedLux)+
+          ' lx sa celom postavkom u jednoj tački; ovo NIJE izračunato niti nezavisno provereno. ':
+          'Nema prijavljenog zasebnog incidentnog očitavanja cele postavke. ')+
+        'EV scene, stvarna ekspozicija, ukupni lux cele slike i preporučena blenda/ISO nisu izračunati. '+
         'Za validaciju: potvrditi kalibraciju instrumenta, profil kamere, gray card i waveform.</p>';
+    }
+    if(cameraBox&&current&&plan.mode==='own'&&plan.lights.some(function(l){return l.available;})){
+      var combined=plan.sceneIncidentLuxReading||null;
+      cameraBox.innerHTML+='<details class="sp-lamp"><summary><b>SCENA — SVETLOMER, SVI IZVORI + AMBIJENT</b></summary>'+
+        (combined?
+          '<p class="sp-note"><b>Korisnik prijavio: '+esc(combined.lux)+' lx</b> na '+esc(combined.measurementPoint)+
+          ' (svi predviđeni izvori i ambijent u toj tački). Instrument: '+
+          esc(combined.meterModel)+' / '+esc(combined.meterIdentifier)+
+          '; '+esc(combined.measuredAtLocal)+' UTC '+esc(formatMeterUtcOffset(combined.utcOffsetMinutes))+
+          '. Nije potvrđena kalibracija ni ekspozicija kamere.</p>':
+          '<p class="sp-note">Nema očitavanja ukupne postavke. Izolovana key/fill merenja i tabele proizvođača nisu zamena.</p>')+
+        '<label for="sp-scene-total-lux">INCIDENTNI LUX U JEDNOJ TAČKI SCENE (0–1000000)</label>'+
+        '<input id="sp-scene-total-lux" class="sp-field" type="number" min="0" max="1000000" step="0.001" value="'+
+          (combined?esc(combined.lux):'')+'">'+
+        '<label for="sp-scene-total-meter-model">MODEL SVETLOMERA</label>'+
+        '<input id="sp-scene-total-meter-model" class="sp-field" maxlength="120" value="'+
+          esc(combined&&combined.meterModel||'')+'">'+
+        '<label for="sp-scene-total-meter-id">OZNAKA KONKRETNOG UREĐAJA</label>'+
+        '<input id="sp-scene-total-meter-id" class="sp-field" maxlength="80" value="'+
+          esc(combined&&combined.meterIdentifier||'')+'">'+
+        '<label for="sp-scene-total-point">TAČKA MERENJA (SUBJEKAT)</label>'+
+        '<input id="sp-scene-total-point" class="sp-field" maxlength="100" value="'+
+          esc(combined&&combined.measurementPoint||'')+'">'+
+        '<label for="sp-scene-total-time">LOKALNI DATUM I VREME MERENJA</label>'+
+        '<input id="sp-scene-total-time" class="sp-field" type="datetime-local" value="'+
+          esc(combined&&combined.measuredAtLocal||'')+'">'+
+        '<label for="sp-scene-total-offset">UTC POMERAJ U TRENUTKU MERENJA (NPR. +02:00)</label>'+
+        '<input id="sp-scene-total-offset" class="sp-field" maxlength="6" placeholder="+02:00" value="'+
+          esc(combined?formatMeterUtcOffset(combined.utcOffsetMinutes):'')+'">'+
+        '<label style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="sp-scene-total-measured">'+
+        ' Potvrđujem da sam fizički očitao incidentni svetlomer, senzor prema kameri</label>'+
+        '<label style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="sp-scene-total-active">'+
+        ' Potvrđujem da su svi planirani dostupni izvori bili aktivni, uključujući ambijentalno svetlo</label>'+
+        '<button type="button" class="sp-btn" id="sp-save-scene-total">SAČUVAJ OČITAVANJE SCENE — NOVA REVIZIJA</button>'+
+        '<p class="sp-note">Merena je samo jedna tačka, ne cela slika. Predloženi parametri lampi i kamere nisu nezavisno provereni. '+
+        'Vrednost se ne koristi za izvođenje ISO, blende, EV scene ili kontrasta; promena rastojanja ili optike briše očitavanje samo iz nove revizije.</p></details>';
+      var sceneButton=el('sp-save-scene-total');
+      if(sceneButton)sceneButton.onclick=function(){
+        if(state.busy||historyBlocked||!revisions.length)return;
+        if(!el('sp-scene-total-measured').checked||!el('sp-scene-total-active').checked){
+          status('Potvrdi stvarno očitavanje i stanje svih izvora na setu.',true);return;
+        }
+        try{
+          var revision=core().createSceneIncidentLuxRevision(revisions[revisions.length-1],{
+            confirmed:true,allSourcesActiveConfirmed:true,
+            lux:el('sp-scene-total-lux').value,
+            meterModel:el('sp-scene-total-meter-model').value,
+            meterIdentifier:el('sp-scene-total-meter-id').value,
+            measurementPoint:el('sp-scene-total-point').value,
+            measuredAtLocal:el('sp-scene-total-time').value,
+            measuredUtcOffset:el('sp-scene-total-offset').value
+          });
+          revisions=revisions.concat([revision]);state.plan=revision.plan;
+          renderResult();remember();
+          status('Ukupno očitavanje jedne tačke sačuvano kao korisnički prijavljeno; ekspozicija nije kalibrisana.');
+        }catch(error){status('Očitavanje scene nije sačuvano: '+error.message,true);}
+      };
     }
     el('sp-plot').innerHTML=plotSvg(plan,current);
     renderBlocking();

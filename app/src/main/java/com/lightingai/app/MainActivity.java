@@ -126,10 +126,13 @@ public class MainActivity extends Activity {
         setContentView(rootView);
         nativeSunLocation = new NativeSunLocation(this);
         nativeSunCompass = new NativeSunCompass(this);
-        sacnCid = loadOrCreateSacnCid();
-        sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
-        sacnLiveEngine.setPriority(sacnPriority.get());
-        bleDeviceScanner = new BleDeviceScanner(this);
+        // Do not initialize fixture-control transports in the first release.
+        if (isDirectLightingControlEnabled()) {
+            sacnCid = loadOrCreateSacnCid();
+            sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+            sacnLiveEngine.setPriority(sacnPriority.get());
+            bleDeviceScanner = new BleDeviceScanner(this);
+        }
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());

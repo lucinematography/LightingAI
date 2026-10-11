@@ -515,6 +515,17 @@
     if(current)el('sp-summary').innerHTML+='<p class="sp-note">Revizija '+current.sequence+
       ' • '+esc(current.sceneId)+'<br>Light plot: '+esc(current.lightPlotRevisionId)+
       '<br>SHA-256: '+esc(current.planHash)+'</p>';
+    if(plan.knowledgeBasis&&plan.knowledgeBasis.cards&&plan.knowledgeBasis.cards.length){
+      el('sp-summary').innerHTML+='<details class="sp-lamp"><summary><b>Stručna baza: knjige i obrazloženja ('+
+        plan.knowledgeBasis.cards.length+')</b></summary>'+
+        '<p class="sp-note">Kurirani principi; stranice još nisu nezavisno stručno potvrđene. Nisu fotometrijska merenja.</p>'+
+        plan.knowledgeBasis.cards.map(function(c){
+          return '<div class="sp-note"><b>'+esc(c.title)+'</b><div>'+esc(c.principle)+'</div>'+
+            '<div>Primena: '+esc(c.application)+'</div><div>Ograničenja: '+esc(c.limitations)+'</div>'+
+            (c.references||[]).map(function(r){return '<div>Izvor: '+esc(r.author||r.source)+
+              ' • PDF str. '+esc(r.pdfPage)+' • štampana str. '+esc(r.printedPage)+'</div>';}).join('')+'</div>';
+        }).join('')+'</details>';
+    }
     var camera=plan.cameraSettings||{};
     var cameraBox=el('sp-camera-result');
     if(cameraBox)cameraBox.innerHTML='<b style="color:#f5c542">KAMERA / PREPORUKA, NIJE MERENJE</b>'+

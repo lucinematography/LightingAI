@@ -682,7 +682,6 @@ for (const marker of [
   'window.LightingAIBleDiscoveryResult',
   'Manifest.permission.BLUETOOTH_SCAN',
   'BLE_PERMISSION = 507',
-  "file:///android_asset/ble-control.js",
   '@JavascriptInterface public String networkDmxDiagnostics()',
   'artNet.put("livePacketsSent", artNetLiveEngine.packetsSent())',
   'sacn.put("livePacketsSent", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsSent())',
@@ -696,6 +695,17 @@ for (const marker of [
   'out.put("interfaces", NetworkInterfaceInspector.snapshot())'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
+}
+
+// First-release exception: the BLE implementation must remain committed,
+// but direct fixture-control entry points must stay disabled.
+if (mainActivity.includes('private boolean isDirectLightingControlEnabled() { return false; }')) {
+  git(['cat-file', '-e', 'HEAD:app/src/main/assets/ble-control.js']);
+  if (mainActivity.includes('file:///android_asset/ble-control.js')) {
+    fail('first-release BLE control script must not be loaded');
+  }
+} else if (!mainActivity.includes('file:///android_asset/ble-control.js')) {
+  fail('legacy BLE control script marker missing without first-release guard');
 }
 
 const imageBridge = git(['show', `HEAD:${imageBridgePath}`]);

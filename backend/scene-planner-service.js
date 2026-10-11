@@ -133,6 +133,19 @@ export async function generateScenePlannerPlan(openai, body, catalog) {
   }
   const response = await openai.responses.create({model:MODEL,input:[{role:"user",content}]});
   const plan = core.sanitizePlan(parseModelJson(response), req, "ai");
+  // Server-owned provenance: never trust model-authored citations or measured claims.
+  const evidence = retrieveKnowledge([req.description,req.look,req.captureLighting,req.dopRequest]
+    .filter(Boolean).join(" ").slice(0,1200),{maxResults:8});
+  plan.knowledgeBasis = {
+    status:"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED",
+    cards:evidence.map(card=>({
+      id:card.id,title:card.title,principle:card.principle,application:card.application,
+      limitations:card.limitations,references:card.evidence.map(e=>({
+        source:e.source_id,author:e.author,pdfPage:e.pdf_page,printedPage:e.printed_page,
+        verification:e.recordVerification
+      }))
+    }))
+  };
   if (!plan.lights.length && req.mode === "best") {
     throw new Error("AI returned no usable lights for the proposed scene.");
   }

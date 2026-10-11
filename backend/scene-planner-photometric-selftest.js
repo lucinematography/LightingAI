@@ -1880,7 +1880,9 @@ assert.match(uiSource,/renderSampledVideoCues\(\)/);
 assert.match(uiSource,/sp-shot-cues/);
 assert.match(uiSource,/sampledVideoCueSheet:safeExportCueSheet\(\)/,
   'export must tolerate invalid browser frame timestamps without losing the plan');
-assert.match(uiSource,/plannedVideoFrameSession!==videoFrameSession/);
+assert.match(uiSource,/function hasCurrentVideoPlan\(\)/);
+assert.match(uiSource,/plannedVideoFrameSession===videoFrameSession/,
+  'the exact in-memory video session must match the current plan');
 assert.match(uiSource,/APPROXIMATE_WEBVIEW_SEEK_NOT_ORIGINAL_VIDEO_PTS|približni WebView seek/);
 assert.match(uiSource,/dopPlannedEditHistory:doPHistory/);
 assert.match(uiSource,/ISTORIJA DoP KREATIVNIH IZMENA/);

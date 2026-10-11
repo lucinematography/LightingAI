@@ -92,7 +92,7 @@ export function buildScenePlannerPrompt(req) {
     "Camera framing/movement: " + req.shotCamera,
     "Director of Photography new instructions: " + (req.dopRequest||"none"),
     "Camera hard overrides to obey exactly when provided: " + JSON.stringify(req.cameraOverrides),
-    "Previous plan to revise rather than ignore: " + JSON.stringify(req.previousPlan),
+    "Previous plan to revise rather than ignore (exclude server-owned book citations from model context): " + JSON.stringify(req.previousPlan ? (({knowledgeBasis,...plan})=>plan)(req.previousPlan) : null),
     "Return suggested cameraSettings with fps, shutterAngle, aperture, iso, whiteBalanceK, ndStops, focalLengthMm.",
     "Return exposureNotes that identify assumptions and required meter/gray-card tests.",
     "Aperture, ISO and source intensity cannot be physically derived accurately from uncalibrated video alone.",

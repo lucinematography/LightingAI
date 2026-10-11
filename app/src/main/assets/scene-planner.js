@@ -527,6 +527,10 @@
               ' • PDF str. '+esc(r.pdfPage)+' • štampana str. '+esc(r.printedPage)+'</div>';}).join('')+'</div>';
         }).join('')+'</details>';
     }
+    if(plan.source==='ai'&&plan.knowledgeBasis&&Array.isArray(plan.knowledgeBasis.cards)&&
+       !plan.knowledgeBasis.cards.length){
+      el('sp-summary').innerHTML+='<p class="sp-note">Stručna baza: za ovaj opis scene nisu pronađeni odgovarajući kurirani principi iz knjiga. AI predlog nema knjišku potporu; proveriti sa direktorom fotografije.</p>';
+    }
     var camera=plan.cameraSettings||{};
     var cameraBox=el('sp-camera-result');
     if(cameraBox)cameraBox.innerHTML='<b style="color:#f5c542">KAMERA / PREPORUKA, NIJE MERENJE</b>'+

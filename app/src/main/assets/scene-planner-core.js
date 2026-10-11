@@ -96,6 +96,26 @@
     return Number.isFinite(lux)&&lux>=0&&lux<=1000000&&
       Math.round(lux*1000)/1000===lux?lux:null;
   }
+  // V2 records are user-declared instrument observations, not certified calibration data.
+  function meterText(value,max) {
+    if(typeof value!=='string')return null;
+    var result=value.trim();
+    if(result.length<2||result.length>max||/[<>\x00-\x1f\x7f]/.test(result))return null;
+    return result;
+  }
+  function meterOrientation(value) {
+    return value==='RECEPTOR_TOWARD_FIXTURE'||value==='RECEPTOR_TOWARD_CAMERA'?value:null;
+  }
+  function meterLocalTime(value) {
+    if(value===''||value===null||value===undefined)return '';
+    if(typeof value!=='string'||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$/.test(value))return null;
+    var y=Number(value.slice(0,4)),m=Number(value.slice(5,7)),d=Number(value.slice(8,10));
+    var hh=Number(value.slice(11,13)),mm=Number(value.slice(14,16));
+    if(y<1970||y>2100||m<1||m>12||d<1||d>31||hh>23||mm>59)return null;
+    var date=new Date(Date.UTC(y,m-1,d,hh,mm));
+    return date.getUTCFullYear()===y&&date.getUTCMonth()===m-1&&date.getUTCDate()===d&&
+      date.getUTCHours()===hh&&date.getUTCMinutes()===mm?value:null;
+  }
   function key(value) { return str(value, 250).toLowerCase().replace(/[^a-z0-9]/g, ''); }
   function mode(value) { return value === 'own' ? 'own' : 'best'; }
   function equipment(items) {
@@ -620,6 +640,21 @@
         m.userAttested!==true||m.fixtureIsolated!==true||
         typeof m.lux!=='number'||incidentLux(m.lux)!==m.lux)
         throw new Error('Invalid on-set incident lux evidence');
+      if(m.protocolVersion!==undefined){
+        // Archived V1 meter records remain valid, but only V2 records have enough
+        // context to consider future same-point, same-orientation comparisons.
+        if(m.protocolVersion!==2||
+          meterText(m.meterModel,120)!==m.meterModel||
+          meterText(m.measurementPoint,100)!==m.measurementPoint||
+          meterOrientation(m.receptorOrientation)!==m.receptorOrientation||
+          meterLocalTime(m.measuredAtLocal)!==m.measuredAtLocal||
+          m.calibrationStatus!=='NOT_INDEPENDENTLY_VERIFIED')
+          throw new Error('Invalid incident meter context or calibration provenance');
+      }else if(m.meterModel!==undefined||m.measurementPoint!==undefined||
+        m.receptorOrientation!==undefined||m.measuredAtLocal!==undefined||
+        m.calibrationStatus!==undefined){
+        throw new Error('Unversioned incident meter metadata');
+      }
       var light=plan.lights.find(function(l){return l.id===m.lightId;});
       var distance=readingIds[m.lightId];
       if(!light||!light.available||!light.fixtureId||m.fixtureId!==light.fixtureId||
@@ -845,6 +880,12 @@
       throw new Error('Explicit incident meter and isolated-light confirmation is required');
     var lux=incidentLux(report.lux);
     if(lux===null)throw new Error('Invalid measured incident lux (0-1000000 lx, up to 3 decimals)');
+    var meterModel=meterText(report.meterModel,120);
+    var measurementPoint=meterText(report.measurementPoint,100);
+    var receptorOrientation=meterOrientation(report.receptorOrientation);
+    var measuredAtLocal=meterLocalTime(report.measuredAtLocal);
+    if(!meterModel||!measurementPoint||!receptorOrientation||measuredAtLocal===null)
+      throw new Error('Incident meter model, measurement point, receptor orientation and valid time are required');
     var plan=JSON.parse(canonicalJson(parent.plan));
     var light=plan.lights.find(function(l){return l.id===report.lightId;});
     var distance=(plan.distanceMeasurements||[]).find(function(m){return m.lightId===report.lightId;});
@@ -857,6 +898,9 @@
       meterType:'INCIDENT_LUX_METER',target:'SUBJECT_AT_MEASUREMENT_POINT',
       measurementScope:'FIXTURE_ISOLATED_OTHER_SOURCES_CONTROLLED',
       source:'USER_REPORTED_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED',
+      protocolVersion:2,meterModel:meterModel,measurementPoint:measurementPoint,
+      receptorOrientation:receptorOrientation,measuredAtLocal:measuredAtLocal,
+      calibrationStatus:'NOT_INDEPENDENTLY_VERIFIED',
       userAttested:true,fixtureIsolated:true
     };
     plan.incidentLuxReadings=(plan.incidentLuxReadings||[])

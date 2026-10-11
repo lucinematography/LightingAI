@@ -79,12 +79,25 @@ assert.deepEqual(opticAndDistance.plan.photometricBasis.entries[0].publishedRefe
 });
 assert.equal(opticAndDistance.plan.photometricBasis.entries[0].onSetLux,null);
 
+const meterContext={meterModel:'Sekonic C-800 test fixture',measurementPoint:'Face mark A',
+  receptorOrientation:'RECEPTOR_TOWARD_FIXTURE',measuredAtLocal:'2026-10-11T14:30'};
+const incidentRevision=(parent,report)=>core.createIncidentLuxRevision(parent,{...meterContext,...report});
 // A real meter reading is never estimated from manufacturer lux or pixels and requires
 // a recorded physical distance plus a separate, user-attested isolated-light reading.
-assert.throws(()=>core.createIncidentLuxRevision(wrappedRevision,{
+assert.throws(()=>incidentRevision(wrappedRevision,{
   lightId:'L1',lux:325.125,confirmed:true,fixtureIsolated:true
 }),/distance/i,'without a physical distance the incident meter value is not tied to a setup');
-const meterRevision=core.createIncidentLuxRevision(opticAndDistance,{
+for(const badContext of [
+  {meterModel:''},{meterModel:'A'},{meterModel:'<script>'},
+  {measurementPoint:''},{measurementPoint:'<'},{receptorOrientation:'UNKNOWN'},
+  {measuredAtLocal:'2026-02-30T10:00'},{measuredAtLocal:'tomorrow'},
+  {measuredAtLocal:'2026-10-11T25:00'}
+]){
+  assert.throws(()=>incidentRevision(opticAndDistance,{
+    lightId:'L1',lux:325.125,confirmed:true,fixtureIsolated:true,...badContext
+  }),/meter|orientation|time|context/i);
+}
+const meterRevision=incidentRevision(opticAndDistance,{
   lightId:'L1',lux:'325.125',confirmed:true,fixtureIsolated:true
 });
 assert.equal(meterRevision.sequence,opticAndDistance.sequence+1);
@@ -95,6 +108,11 @@ assert.deepEqual(meterRevision.plan.incidentLuxReadings[0],{
   distanceMAtMeasurement:3,meterType:'INCIDENT_LUX_METER',
   target:'SUBJECT_AT_MEASUREMENT_POINT',measurementScope:'FIXTURE_ISOLATED_OTHER_SOURCES_CONTROLLED',
   source:'USER_REPORTED_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED',
+  protocolVersion:2,meterModel:meterContext.meterModel,
+  measurementPoint:meterContext.measurementPoint,
+  receptorOrientation:meterContext.receptorOrientation,
+  measuredAtLocal:meterContext.measuredAtLocal,
+  calibrationStatus:'NOT_INDEPENDENTLY_VERIFIED',
   userAttested:true,fixtureIsolated:true
 });
 assert.equal(meterRevision.plan.dataStatus.incidentLuxReadings,'user-reported-not-independently-verified');
@@ -102,7 +120,7 @@ assert.equal(meterRevision.plan.photometricBasis.entries[0].onSetLux,null,
   'on-set incident reading cannot overwrite manufacturer slot or appear as published lux');
 assert.equal(meterRevision.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance.lux,3500,
   'the published lux remains separate from user-reported 325.125 lx');
-const revisedMeter=core.createIncidentLuxRevision(meterRevision,{
+const revisedMeter=incidentRevision(meterRevision,{
   lightId:'L1',lux:0,confirmed:true,fixtureIsolated:true
 });
 assert.equal(revisedMeter.plan.incidentLuxReadings.length,1,'a second reading replaces only the active reading');
@@ -136,17 +154,17 @@ assert.ok(!renewedPlan.plan.incidentLuxReadings ||
   'fresh AI analysis must not inherit human-reported lux from a previous physical setup');
 for(const bad of ['',null,undefined,true,[],{},-1,-0.1,1000000.001,1.0001,'NaN',
   'Infinity','1e3','3abc','12,5',Number.POSITIVE_INFINITY,Number.NaN]){
-  assert.throws(()=>core.createIncidentLuxRevision(opticAndDistance,{
+  assert.throws(()=>incidentRevision(opticAndDistance,{
     lightId:'L1',lux:bad,confirmed:true,fixtureIsolated:true
   }),/lux/i,'invalid lux meter values must fail closed without clipping');
 }
-assert.throws(()=>core.createIncidentLuxRevision(opticAndDistance,{
+assert.throws(()=>incidentRevision(opticAndDistance,{
   lightId:'L1',lux:101,confirmed:false,fixtureIsolated:true
 }),/confirmation/i,'no UI attestation means no meter reading');
-assert.throws(()=>core.createIncidentLuxRevision(opticAndDistance,{
+assert.throws(()=>incidentRevision(opticAndDistance,{
   lightId:'L1',lux:101,confirmed:true,fixtureIsolated:false
 }),/confirmation/i,'mixed ambient/unisolated fixture cannot be reported as isolated fixture lux');
-assert.throws(()=>core.createIncidentLuxRevision(opticAndDistance,{
+assert.throws(()=>incidentRevision(opticAndDistance,{
   lightId:'L999',lux:101,confirmed:true,fixtureIsolated:true
 }),/owned|distance/i);
 const tamperedLux=JSON.parse(JSON.stringify(meterRevision));
@@ -162,6 +180,9 @@ const uiMeter=fs.readFileSync(new URL('../app/src/main/assets/scene-planner.js',
 assert.match(uiMeter,/createIncidentLuxRevision\(previous/);
 assert.match(uiMeter,/data-sp-incident-light/);
 assert.match(uiMeter,/Potvrđujem očitavanje svetlomerom/);
+assert.match(uiMeter,/sp-meter-model-/);
+assert.match(uiMeter,/sp-meter-point-/);
+assert.match(uiMeter,/sp-meter-orientation-/);
 
 const distanceFirst=core.createMountedOpticRevision(newDistance,{
   lightId:'L1',opticId:'HYPER_REFLECTOR_55',confirmed:true

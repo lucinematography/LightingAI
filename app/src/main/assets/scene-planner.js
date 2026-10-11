@@ -530,6 +530,11 @@
       plan.incidentLuxReadings.forEach(function(m){
         lines.push(m.lightId+' / '+m.fixtureId+': '+m.lux+' lx na subjektu pri '+
           m.distanceMAtMeasurement+' m; incidentni svetlomer, ovaj reflektor izdvojen, ostali izvori kontrolisani.');
+        lines.push(m.protocolVersion===2?
+          'Instrument: '+m.meterModel+'; tačka: '+m.measurementPoint+
+          '; orijentacija: '+m.receptorOrientation+'; vreme: '+(m.measuredAtLocal||'nije navedeno')+
+          '; kalibracija: nije nezavisno proverena.':
+          'Istorijski zapis bez potpunih podataka o instrumentu i tački merenja.');
         lines.push('Ovo nije fabrički lux, nije AI procena niti dokaz ekspozicije cele scene.');
       });
     }
@@ -674,7 +679,12 @@
           (meterReading?
             '<div>Korisnik prijavio: '+esc(meterReading.lux)+' lx sa incidentnog svetlomera pri '+
               esc(meterReading.distanceMAtMeasurement)+
-              ' m, samo ovaj izvor, ostali izvori kontrolisani. Nije nezavisno provereno.</div>':
+              ' m, samo ovaj izvor, ostali izvori kontrolisani. Nije nezavisno provereno.</div>'+
+            (meterReading.protocolVersion===2?
+              '<div>Instrument: '+esc(meterReading.meterModel)+'; tačka: '+
+              esc(meterReading.measurementPoint)+'; orijentacija: '+
+              esc(meterReading.receptorOrientation)+'. Kalibracija nepotvrđena.</div>':
+              '<div>Istorijski zapis: nepotpuni podaci o instrumentu i mestu merenja.</div>'):
             '<div>Nema korisnički prijavljenog lux očitavanja za ovu postavku.</div>')+
           (measuredDistance?
             '<label for="sp-incident-'+esc(l.id)+'">OČITANJE INCIDENTNOG SVETLOMERA NA SUBJEKTU (lx)</label>'+
@@ -687,7 +697,22 @@
             '<button type="button" class="sp-btn" data-sp-incident-light="'+esc(l.id)+'">'+
               'SAČUVAJ OČITAVANJE — NOVA REVIZIJA</button>':
             '<div>Prvo sačuvaj stvarno izmerenu udaljenost ovog reflektora do subjekta.</div>')+
-          '<div>Ne koristi se za automatski obračun blende/ISO niti kao provereni lux cele scene.</div></div>':'')+
+          (measuredDistance?
+            '<label for="sp-meter-model-'+esc(l.id)+'">MODEL / IDENTIFIKACIJA SVETLOMERA</label>'+
+            '<input class="sp-field" id="sp-meter-model-'+esc(l.id)+'" maxlength="120" placeholder="Npr. model instrumenta" value="'+
+            esc(meterReading&&meterReading.meterModel||'')+'">'+
+            '<label for="sp-meter-point-'+esc(l.id)+'">OZNAKA MERNE TAČKE</label>'+
+            '<input class="sp-field" id="sp-meter-point-'+esc(l.id)+'" maxlength="100" placeholder="Npr. lice glumca, pozicija A" value="'+
+            esc(meterReading&&meterReading.measurementPoint||'')+'">'+
+            '<label for="sp-meter-orientation-'+esc(l.id)+'">ORIJENTACIJA SENZORA</label>'+
+            '<select class="sp-field" id="sp-meter-orientation-'+esc(l.id)+'">'+
+            '<option value="">Izaberi orijentaciju</option>'+
+            '<option value="RECEPTOR_TOWARD_FIXTURE"'+(meterReading&&meterReading.receptorOrientation==='RECEPTOR_TOWARD_FIXTURE'?' selected':'')+'>Prema merenom izvoru</option>'+
+            '<option value="RECEPTOR_TOWARD_CAMERA"'+(meterReading&&meterReading.receptorOrientation==='RECEPTOR_TOWARD_CAMERA'?' selected':'')+'>Prema kameri</option></select>'+
+            '<label for="sp-meter-time-'+esc(l.id)+'">LOKALNO VREME MERENJA (opciono)</label>'+
+            '<input class="sp-field" type="datetime-local" id="sp-meter-time-'+esc(l.id)+'" value="'+
+            esc(meterReading&&meterReading.measuredAtLocal||'')+'">':'')+
+          '<div>Kalibracija instrumenta nije nezavisno proverena. Ne obračunava se automatski blenda/ISO.</div></div>':'')+
         '</div>';
     }).join(''):'<p class="sp-note">Nije moguće napraviti pouzdan izbor lampi iz dostupnog inventara.</p>';
     if(typeof el('sp-lights').querySelectorAll==='function')
@@ -742,7 +767,11 @@
         try{
           var previous=revisions[revisions.length-1];
           var revision=core().createIncidentLuxRevision(previous,{
-            lightId:id,lux:field&&field.value,confirmed:true,fixtureIsolated:true
+            lightId:id,lux:field&&field.value,confirmed:true,fixtureIsolated:true,
+            meterModel:el('sp-meter-model-'+id)&&el('sp-meter-model-'+id).value,
+            measurementPoint:el('sp-meter-point-'+id)&&el('sp-meter-point-'+id).value,
+            receptorOrientation:el('sp-meter-orientation-'+id)&&el('sp-meter-orientation-'+id).value,
+            measuredAtLocal:el('sp-meter-time-'+id)&&el('sp-meter-time-'+id).value
           });
           revisions=revisions.concat([revision]);state.plan=revision.plan;
           renderResult();remember();

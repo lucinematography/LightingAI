@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import {spawnSync} from 'node:child_process';
 import {createRequire} from 'node:module';
+import {createHash} from 'node:crypto';
 import {measureYuv420p,compareVisualFrames,analyzeOriginalVideo,verifyVisualAnalysis,
   summarizeDecodedCodeContinuity,createVerifiedDecodedContinuityAudit,
   verifyDecodedContinuityAudit} from './scene-planner-video-visual.js';
@@ -59,7 +60,7 @@ function syntheticContinuityInput(codeValues,durations){
   codeValues.forEach((value,index)=>{
     const framePixels=pixels(value),durationTicks=durations[index];
     frames.push({index,ptsTick:tick,durationTicks,
-      decodedPixelHash:core.sha256(framePixels),
+      decodedPixelHash:createHash('sha256').update(framePixels).digest('hex'),
       measurements:measureYuv420p(framePixels,32,32)});
     tick+=durationTicks;
   });

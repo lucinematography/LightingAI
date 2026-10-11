@@ -370,11 +370,11 @@ test('scratch MP4 experiment rejects sound and exceeds no-production budgets',()
   const highTimeBase=syntheticMp4Schedule([16,128,128],[900,800,800]);
   highTimeBase.video.timeBase.denominator=1000001;
   assert.throws(()=>proposeUntrustedDayForNightScratchEncode(highTimeBase));
-  assert.throws(()=>runExperimentalDayForNightScratchMp4(
-    {},nightRevision,{},recipe,{}, {}, {},{
-      nonProductionScratchOnly:false,encoder:'libx264'
-    }));
 });
+await assert.rejects(()=>runExperimentalDayForNightScratchMp4(
+  {},nightRevision,{},recipe,{}, {}, {},{
+    nonProductionScratchOnly:false,encoder:'libx264'
+  }),/Invalid|untrusted/i,'scratch MP4 pilot must never accept unapproved work');
 
 console.log(`${groups} synthetic visual pixel groups passed; no decoder provenance granted.`);
 

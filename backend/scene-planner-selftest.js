@@ -90,7 +90,7 @@ assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revisi
 assert.deepEqual(core.restoreRevisions([JSON.parse(JSON.stringify(knowledgeRevision))])[0].plan.knowledgeBasis,
   knowledgeRevision.plan.knowledgeBasis,"restored revision must retain identical citations");
 const tamperedKnowledgeRevision=JSON.parse(JSON.stringify(knowledgeRevision));
-tamperedKnowledgeRevision.plan.knowledgeBasis.cards[0].references[0].pdfPage=999;
+tamperedKnowledgeRevision.plan.knowledgeBasis.cards.find(c=>c.references.length).references[0].pdfPage=999;
 assert.throws(()=>core.restoreRevisions([tamperedKnowledgeRevision]),"altered source page must invalidate the revision hash");
 const tamperedKnowledgeTitle=JSON.parse(JSON.stringify(knowledgeRevision));
 tamperedKnowledgeTitle.plan.knowledgeBasis.cards[0].title="Fabricated authority";

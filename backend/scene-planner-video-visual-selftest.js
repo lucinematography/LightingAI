@@ -6,6 +6,8 @@ import os from 'node:os';
 import {spawnSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
+import {GRADE_METHOD,createDayForNightGradeRecipe,gradeDayForNightYuv420p,
+  gradeVerifiedDayForNightFrames,verifyDayForNightFrameReceipt} from './scene-planner-video-look.js';
 import {measureYuv420p,compareVisualFrames,analyzeOriginalVideo,verifyVisualAnalysis,
   summarizeDecodedCodeContinuity,createVerifiedDecodedContinuityAudit,
   verifyDecodedContinuityAudit} from './scene-planner-video-visual.js';
@@ -130,6 +132,47 @@ test('pure grouping fails closed on malformed timing and forged frame changes',(
     'untrusted handmade visual JSON must never acquire a verified receipt');
 });
 
+
+const nightRevision=core.createRevision(
+  {lights:[{fixtureName:'Offline LED',fixtureId:'offline',role:'key'}]},
+  {description:'Day for night pilot',look:'Day for Night',captureLighting:'day',cameraOverrides:{iso:400}},
+  'local',null,'night-grade-demo');
+const recipe=createDayForNightGradeRecipe(nightRevision,{darkenPct:60,coolPct:40});
+test('night grade recipe rejects invalid or wrong source plans',()=>{
+  assert.equal(recipe.method,GRADE_METHOD);
+  assert.equal(recipe.renderClass,'UNMANAGED_CREATIVE_PIXEL_GRADE_ONLY');
+  assert.equal(recipe.planHash,nightRevision.planHash);
+  assert.equal(recipe.recipeHash,core.planHash(Object.fromEntries(Object.entries(recipe).filter(([k])=>k!=='recipeHash'))));
+  assert.equal(recipe.physicallyBasedRelighting,false);
+  assert.ok(Object.isFrozen(recipe));
+  assert.throws(()=>createDayForNightGradeRecipe(revision,{darkenPct:60,coolPct:40}));
+  for(const bad of [{darkenPct:0,coolPct:40},{darkenPct:81,coolPct:40},
+    {darkenPct:60,coolPct:101},{darkenPct:'60',coolPct:40},
+    {darkenPct:60,coolPct:NaN},{darkenPct:60},{darkenPct:60,coolPct:40,fixture:'other'},null])
+    assert.throws(()=>createDayForNightGradeRecipe(nightRevision,bad));
+});
+test('night grade transforms actual copied YUV pixels with fixed transfer-unknown look',()=>{
+  const original=pixels(160,144,112),saved=Buffer.from(original);
+  const after=gradeDayForNightYuv420p(original,32,32,recipe);
+  assert.notStrictEqual(after,original);
+  assert.deepEqual(original,saved);
+  assert.equal(after.length,original.length);
+  assert.ok(after[0]<original[0]);
+  assert.ok(after[1024]>original[1024]);
+  assert.ok(after[1280]<original[1280]);
+  assert.deepEqual(after,gradeDayForNightYuv420p(original,32,32,recipe));
+  assert.equal(measureYuv420p(after,32,32).y.mean,83);
+  for(const params of [[new Uint8Array(original),32,32,recipe],[Buffer.alloc(2),32,32,recipe],
+    [original,0,32,recipe],[original,1921,32,recipe],[original,32,32,null],
+    [original,32,32,clone(recipe)]])assert.throws(()=>gradeDayForNightYuv420p(...params));
+  assert.deepEqual(gradeDayForNightYuv420p(pixels(200),32,32,recipe),
+    gradeDayForNightYuv420p(pixels(200),32,32,recipe));
+  assert.ok(gradeDayForNightYuv420p(pixels(128),32,32,recipe)[0]<
+    gradeDayForNightYuv420p(pixels(200),32,32,recipe)[0]);
+  assert.throws(()=>verifyDayForNightFrameReceipt({receiptHash:'x'},nightRevision,
+    {analysis:{},ingestion:{}},recipe));
+});
+
 console.log(`${groups} synthetic visual pixel groups passed; no decoder provenance granted.`);
 
 const decoderPath=process.env.SCENE_PLANNER_TEST_FFMPEG;
@@ -173,6 +216,20 @@ else{
       assert.throws(()=>verifyDecodedContinuityAudit(clone(qc),result,revision));
       const repeated=await analyzeOriginalVideo(opts,revision);
       assert.equal(repeated.analysis.visualHash,result.analysis.visualHash);
+      const nightBundle=await analyzeOriginalVideo(opts,nightRevision);
+      let delivered=0;
+      const graded=await gradeVerifiedDayForNightFrames(opts,nightRevision,nightBundle,recipe,(raw,frame)=>{
+        assert.ok(Buffer.isBuffer(raw));assert.equal(frame.index,delivered++);
+        assert.ok(frame.gradedMeanYCode<=frame.sourceMeanYCode);return true;
+      });
+      assert.equal(delivered,20);assert.equal(graded.frameCount,20);
+      assert.equal(graded.frames[10].ptsTick,1000);
+      assert.equal(graded.encodedMp4Created,false);
+      assert.equal(graded.videoRelightGenerated,false);
+      assert.equal(graded.perFrameAutoGainUsed,false);
+      assert.equal(verifyDayForNightFrameReceipt(graded,nightRevision,nightBundle,recipe),true);
+      assert.throws(()=>verifyDayForNightFrameReceipt(clone(graded),nightRevision,nightBundle,recipe));
+      await assert.rejects(()=>gradeVerifiedDayForNightFrames(opts,revision,result,recipe,()=>true));
     });
     await run('one-frame flash candidate requires confirmation',async()=>{
       const f=await generate('flash',Array.from({length:20},(_,i)=>pixels(i===10?235:16)));
@@ -206,6 +263,11 @@ else{
       assert.equal(r.analysis.frames[1].ptsTick,200);assert.equal(verifyVisualAnalysis(r.analysis,r.ingestion,revision),true);
       const qc=createVerifiedDecodedContinuityAudit(r,revision);
       assert.equal(qc.frameCount,19);
+      const nightVfr=await analyzeOriginalVideo(f,nightRevision);
+      const gradedVfr=await gradeVerifiedDayForNightFrames(f,nightRevision,nightVfr,recipe,()=>true);
+      assert.equal(gradedVfr.frameCount,19);
+      assert.equal(gradedVfr.frames[0].durationTicks,200);
+      assert.equal(gradedVfr.frames[1].ptsTick,200);
       assert.equal(qc.reviewIntervals.at(-1).endPtsTickExclusive,
         r.analysis.frames.at(-1).ptsTick+r.analysis.frames.at(-1).durationTicks);
     });

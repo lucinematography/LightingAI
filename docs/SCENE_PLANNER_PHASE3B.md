@@ -1452,3 +1452,36 @@ VFR full-frame coverage, original-byte preservation and wrong source/revision
 rejection. CI without an approved existing FFmpeg binary must report actual
 decoded-frame tests **NOT EXECUTED**; mandatory synthetic tests alone do
 not validate performance on real footage or verify practical visual quality.
+
+
+### Offline Day-for-Night pixel-grade pilot (2026-10-11)
+
+The isolated `backend/scene-planner-video-look.js` now implements a genuine
+bounded transformation of decoded YUV420p pixels rather than merely a CSS
+filter. A source/plan-hash-bound immutable recipe requires a user-specified
+Day for Night look with daytime capture and two strictly validated creative
+controls. One identical luma-code attenuation and chroma-code cooling operation
+is reused on every frame. Original source bytes are never modified.
+
+This is explicitly a **non-color-managed illustrative video pixel grade**,
+not light-field rendering: YUV transfer/range/primaries are unverified;
+fixture positions, physical illumination, optical flow, shadows, masks and
+camera exposure are not simulated. No automatic framewise adjustment is made.
+The isolated pilot does not encode, mux or export MP4, transmit original
+video, invoke any paid provider or enable an Android UI/release feature.
+
+`gradeVerifiedDayForNightFrames` only accepts a trusted local existing
+decoded visual-ingestion bundle and matching immutable DoP recipe. It rechecks
+the chosen local original and every original decoded pixel SHA-256 through
+the existing bounded decoder before streaming ephemeral transformed raw
+frames to a synchronous consumer. Its source/visual/revision-bound receipt
+contains original PTS and duration, original/graded frame hashes and luma-code
+statistics, with all physical and MP4 output claims explicitly false.
+Test coverage includes deterministic pixel transformations, invalid controls
+and buffer formats, unchanged input, recipe trust, and optional real procedural
+H.264 CFR/VFR video decoding, complete frame processing and forged receipt
+rejection. Without a configured existing FFmpeg binary, CI tests only the pure
+code transformations and reports actual decoded processing NOT EXECUTED.
+Next prerequisites: explicit color-managed validation, bounded PTS-preserving
+encoder/muxer and operator-reviewed actual footage, before presenting a real
+Day-for-Night export or suggesting photometric accuracy.

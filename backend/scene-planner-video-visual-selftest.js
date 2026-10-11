@@ -7,7 +7,7 @@ import {spawnSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
 import {GRADE_METHOD,createDayForNightGradeRecipe,gradeDayForNightYuv420p,
-  gradeVerifiedDayForNightFrames,verifyDayForNightFrameReceipt} from './scene-planner-video-look.js';
+  gradeVerifiedDayForNightFrames,verifyDayForNightFrameReceipt} from './scene-planner-video-visual.js';
 import {measureYuv420p,compareVisualFrames,analyzeOriginalVideo,verifyVisualAnalysis,
   summarizeDecodedCodeContinuity,createVerifiedDecodedContinuityAudit,
   verifyDecodedContinuityAudit} from './scene-planner-video-visual.js';

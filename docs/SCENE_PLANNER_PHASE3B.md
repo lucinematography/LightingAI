@@ -1485,3 +1485,8 @@ code transformations and reports actual decoded processing NOT EXECUTED.
 Next prerequisites: explicit color-managed validation, bounded PTS-preserving
 encoder/muxer and operator-reviewed actual footage, before presenting a real
 Day-for-Night export or suggesting photometric accuracy.
+
+
+The offline YUV pixel-grade pilot is hosted inside the already-tracked
+`backend/scene-planner-video-visual.js`, without modifying the pre-existing
+Project 5 stable-base protection rules or adding a separate backend module.

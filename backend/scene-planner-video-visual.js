@@ -1,7 +1,13 @@
-// Offline pixel measurements. No renderer, HTTP route, database or device I/O.
+// Isolated offline Scene Planner pixel analysis and diagnostic YUV grading. No HTTP routes or physical fixture I/O.
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
-import {ingestOriginalVideo,verifyVideoIngestion,streamVerifiedVideoPixels} from './scene-planner-video-ingestion.js';
+import scratchFs from 'node:fs/promises';
+import {openSync as scratchOpenSync,closeSync as scratchCloseSync,writeSync as scratchWriteSync} from 'node:fs';
+import scratchOs from 'node:os';
+import scratchPath from 'node:path';
+import {spawnSync as scratchSpawnSync} from 'node:child_process';
+import {ingestOriginalVideo,verifyVideoIngestion,streamVerifiedVideoPixels,
+  decoderCapabilities} from './scene-planner-video-ingestion.js';
 const core=createRequire(import.meta.url)('../app/src/main/assets/scene-planner-core.js');
 export const VISUAL_METHOD='yuv420p-code-statistics-v1';
 const fail=()=>{throw new Error('Invalid or untrusted visual analysis');};
@@ -658,4 +664,192 @@ export function verifyDayForNightMp4Handoff(handoff,receipt,qc,revision,bundle,r
   });
   if(core.canonicalJson(handoff.schedule)!==core.canonicalJson(expected))reject();
   return true;
+}
+
+
+
+// Procedural, offline, sandbox-only MP4 experiment. NEVER a production export:
+// source color transfer is unknown and the original audio track is unsupported.
+// The extra EOS sentinel ensures the true last frame has a known packet
+// duration. The sentinel is then discarded by a stream-copy remux.
+// A raw YUV pipe by itself carries no frame-by-frame VFR timestamps.
+export function proposeUntrustedDayForNightScratchEncode(request){
+  const s=proposeUntrustedDayForNightMp4FrameSchedule(request);
+  if(s.originalAudioTrackDeclared||s.frameCount>60||
+     s.width>320||s.height>180||s.durationSeconds>6||
+     s.timeBase.denominator>1000000)reject();
+  const ticks=s.frameMap.map(f=>f.originalPtsTick);
+  ticks.push(s.sourceDurationTicks);
+  let expression=String(ticks.at(-1));
+  for(let i=ticks.length-2;i>=0;i--)
+    expression='if(eq(N\\,'+i+')\\,'+ticks[i]+'\\,'+expression+')';
+  const frameByteSize=s.width*s.height*3/2;
+  if(!Number.isSafeInteger(frameByteSize)||
+     frameByteSize*(s.frameCount+1)>12*1024*1024)reject();
+  return freezeGrade({
+    contract:'lightingai-untrusted-scratch-day-for-night-mp4-pilot/1',
+    authority:'UNTRUSTED_PROCEDURAL_DIAGNOSTIC_ONLY',
+    originalFrameCount:s.frameCount,
+    intermediateFrameCountWithSentinel:s.frameCount+1,
+    finalFrameCountWithoutSentinel:s.frameCount,
+    sourceTimeBase:s.timeBase,sourceDurationTicks:s.sourceDurationTicks,
+    width:s.width,height:s.height,frameByteSize:frameByteSize,
+    ptsTicksIncludingEosSentinel:ticks,
+    setPtsFilter:'settb=expr=1/'+s.timeBase.denominator+',setpts='+expression,
+    sourceFrameMap:s.frameMap,
+    originalAudioTrackDeclared:false,
+    requiresEosSentinelThenCopyRemux:true,
+    mustDecodeAndVerifyFinalMp4:true,
+    outputColorimetryVerified:false,
+    videoExportAuthorized:false,
+    fixtureLightFieldSimulated:false,
+    paidProviderUsed:false
+  });
+}
+
+// Only an explicit non-production caller may run this real encoder experiment.
+// No path is returned. The two temporary MP4 files and raw YUV are always
+// deleted before a successful result can be returned. Never called by routes.
+export async function runExperimentalDayForNightScratchMp4(
+  options,revision,bundle,recipe,receipt,qc,handoff,pilotOptions){
+  verifyDayForNightMp4Handoff(handoff,receipt,qc,revision,bundle,recipe);
+  if(!pilotOptions||Object.getPrototypeOf(pilotOptions)!==Object.prototype||
+     Object.keys(pilotOptions).length!==2||
+     pilotOptions.nonProductionScratchOnly!==true||
+     !['libopenh264','libx264'].includes(pilotOptions.encoder)||
+     !options||typeof options.decoderPath!=='string'||
+     options.signal?.aborted)reject();
+  const metadata=bundle.ingestion.metadata,video=metadata.video;
+  const pilot=proposeUntrustedDayForNightScratchEncode({
+    frames:receipt.frames,
+    video:{codec:video.codec,width:video.width,height:video.height,
+      timeBase:video.timeBase,durationTicks:video.durationTicks,
+      samples:video.samples,sampleCount:video.sampleCount},
+    audioDeclared:metadata.audio!==null
+  });
+  if(core.canonicalJson(handoff.schedule.frameMap)!==
+     core.canonicalJson(pilot.sourceFrameMap))reject();
+  // A version/capability check precedes any scratch file write. It does not
+  // permit arbitrary executables: the standard H.264 local decoder gate runs.
+  const capabilities=await decoderCapabilities(options.decoderPath,{signal:options.signal});
+  if(capabilities.version!==bundle.ingestion.decoder.version)reject();
+  const ffmpeg=await scratchFs.realpath(options.decoderPath);
+  const scratchRoot=await scratchFs.realpath(scratchOs.tmpdir());
+  const directory=await scratchFs.mkdtemp(scratchPath.join(scratchRoot,'lightingai-mp4-pilot-'));
+  let outputEvidence=null;
+  try{
+    const rawPath=scratchPath.join(directory,'graded-frames.yuv');
+    const intermediate=scratchPath.join(directory,'sentinel-intermediate.mp4');
+    const final=scratchPath.join(directory,'diagnostic-only.mp4');
+    const fd=scratchOpenSync(rawPath,'wx',0o600);
+    let frameIndex=0,lastBuffer=null;
+    function writeFully(buffer){
+      for(let offset=0;offset<buffer.length;){
+        const count=scratchWriteSync(fd,buffer,offset,buffer.length-offset);
+        if(count<1)reject();
+        offset+=count;
+      }
+    }
+    try{
+      const measured=await gradeVerifiedDayForNightFrames(
+        options,revision,bundle,recipe,(raw,row)=>{
+          if(row.index!==frameIndex||
+             row.gradedPixelHash!==receipt.frames[frameIndex]?.gradedPixelHash||
+             raw.length!==pilot.frameByteSize)reject();
+          writeFully(raw);lastBuffer=Buffer.from(raw);
+          frameIndex++;return true;
+        });
+      if(measured.receiptHash!==receipt.receiptHash||
+         frameIndex!==pilot.originalFrameCount||!lastBuffer)reject();
+      writeFully(lastBuffer); // EOS sentinel: duplicate YUV, not a source frame
+    }finally{scratchCloseSync(fd);}
+    const rawStat=await scratchFs.stat(rawPath);
+    if(rawStat.size!==pilot.frameByteSize*pilot.intermediateFrameCountWithSentinel)reject();
+    const den=String(pilot.sourceTimeBase.denominator);
+    const command1=['-hide_banner','-loglevel','error','-nostdin',
+      '-protocol_whitelist','file,pipe','-f','rawvideo',
+      '-pixel_format','yuv420p','-video_size',pilot.width+'x'+pilot.height,
+      '-framerate','1','-i',rawPath,
+      '-vf',pilot.setPtsFilter,'-fps_mode','passthrough',
+      '-enc_time_base','1/'+den,'-c:v',pilotOptions.encoder,
+      '-threads','1','-bf','0','-pix_fmt','yuv420p',
+      '-video_track_timescale',den,'-use_editlist','0',
+      '-an','-sn','-dn','-n',intermediate];
+    const command2=['-hide_banner','-loglevel','error','-nostdin',
+      '-protocol_whitelist','file,pipe','-i',intermediate,
+      '-map','0:v:0','-c:v','copy',
+      '-frames:v',String(pilot.finalFrameCountWithoutSentinel),
+      '-video_track_timescale',den,'-use_editlist','0',
+      '-an','-sn','-dn','-n',final];
+    function process(command){
+      if(options.signal?.aborted)reject();
+      const result=scratchSpawnSync(ffmpeg,command,{
+        shell:false,windowsHide:true,stdio:['ignore','pipe','pipe'],
+        timeout:15000,maxBuffer:128*1024,signal:options.signal
+      });
+      if(result.error||result.status!==0||result.signal||
+         result.stdout.length>128*1024||result.stderr.length>128*1024)reject();
+    }
+    process(command1);process(command2);
+    const mp4Stat=await scratchFs.stat(final);
+    if(!mp4Stat.isFile()||mp4Stat.size<512||mp4Stat.size>20*1024*1024)reject();
+    const decoded=await analyzeOriginalVideo({
+      filePath:final,root:directory,mime:'video/mp4',
+      decoderPath:options.decoderPath,signal:options.signal
+    },revision);
+    const actualVideo=decoded.ingestion.metadata.video;
+    if(decoded.ingestion.metadata.audio!==null||
+       actualVideo.width!==pilot.width||actualVideo.height!==pilot.height||
+       actualVideo.sampleCount!==pilot.finalFrameCountWithoutSentinel||
+       actualVideo.durationTicks!==pilot.sourceDurationTicks||
+       actualVideo.timeBase.numerator!==pilot.sourceTimeBase.numerator||
+       actualVideo.timeBase.denominator!==pilot.sourceTimeBase.denominator||
+       decoded.analysis.frames.length!==pilot.originalFrameCount)reject();
+    let largestMeanDifference=0;
+    for(let i=0;i<pilot.originalFrameCount;i++){
+      const f=decoded.analysis.frames[i],expected=pilot.sourceFrameMap[i];
+      if(f.index!==i||f.ptsTick!==expected.originalPtsTick||
+         f.durationTicks!==expected.originalDurationTicks||
+         actualVideo.samples[i].ptsTick!==expected.originalPtsTick||
+         actualVideo.samples[i].dtsTick!==expected.originalPtsTick||
+         actualVideo.samples[i].durationTicks!==expected.originalDurationTicks)reject();
+      const delta=Math.abs(f.measurements.y.mean-receipt.frames[i].gradedMeanYCode);
+      if(!Number.isFinite(delta)||delta>24)reject();
+      largestMeanDifference=Math.max(largestMeanDifference,delta);
+    }
+    outputEvidence={
+      contract:'lightingai-ephemeral-scratch-mp4-probe/1',
+      ...core.videoRevisionBinding(revision),
+      gradeReceiptHash:receipt.receiptHash,
+      sourceIdentity:receipt.sourceIdentity,
+      encoderVersion:capabilities.version,
+      encoder:pilotOptions.encoder,
+      originalFrames:pilot.originalFrameCount,
+      intermediateFramesWithEosSentinel:pilot.intermediateFrameCountWithSentinel,
+      finalDecodedFrames:decoded.analysis.frames.length,
+      outputTimeBase:actualVideo.timeBase,
+      originalDurationTicks:pilot.sourceDurationTicks,
+      finalDurationTicks:actualVideo.durationTicks,
+      finalEphemeralMp4ByteSize:mp4Stat.size,
+      outputSha256:decoded.ingestion.sourceIdentity,
+      maxAbsDecodedVsRawGradeMeanYCode:Number(largestMeanDifference.toFixed(4)),
+      exactOriginalPtsAndLastDurationVerified:true,
+      decodedOutputFrameCountVerified:true,
+      lossyVideoReEncoding:true,
+      scratchMp4CreatedThenDeleted:true,
+      colorimetryVerified:false,
+      audioWasPresent:false,
+      mp4DeliveredToUser:false,
+      videoExportAuthorized:false,
+      physicallyAccurateRelighting:false,
+      humanDoPQualityApproved:false
+    };
+  }finally{
+    const resolved=await scratchFs.realpath(directory);
+    if(scratchPath.dirname(resolved)!==scratchRoot||
+       !scratchPath.basename(resolved).startsWith('lightingai-mp4-pilot-'))reject();
+    await scratchFs.rm(resolved,{recursive:true,force:true});
+  }
+  if(!outputEvidence)reject();
+  return freezeGrade({...outputEvidence,probeHash:core.planHash(outputEvidence)});
 }

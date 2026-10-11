@@ -10,7 +10,9 @@ import {GRADE_METHOD,createDayForNightGradeRecipe,gradeDayForNightYuv420p,
   gradeVerifiedDayForNightFrames,verifyDayForNightFrameReceipt,
   summarizeDayForNightGradeCodeConsistency,createVerifiedDayForNightGradeQc,
   verifyDayForNightGradeQc,proposeUntrustedDayForNightMp4FrameSchedule,
-  createVerifiedDayForNightMp4Handoff,verifyDayForNightMp4Handoff} from './scene-planner-video-visual.js';
+  createVerifiedDayForNightMp4Handoff,verifyDayForNightMp4Handoff,
+  proposeUntrustedDayForNightScratchEncode,
+  runExperimentalDayForNightScratchMp4} from './scene-planner-video-visual.js';
 import {measureYuv420p,compareVisualFrames,analyzeOriginalVideo,verifyVisualAnalysis,
   summarizeDecodedCodeContinuity,createVerifiedDecodedContinuityAudit,
   verifyDecodedContinuityAudit} from './scene-planner-video-visual.js';
@@ -329,6 +331,51 @@ test('MP4 proposal rejects forged source timeline, guessed FPS and malformed pix
     'untrusted supplied metrics cannot create a verified handoff');
 });
 
+
+// A test-only two-pass EOS sentinel is needed to preserve final VFR sample
+// duration; ordinary setpts FFmpeg encoding drops that final duration.
+test('MP4 scratch encoder plan exactly maps original VFR ticks plus EOS sentinel',()=>{
+  const input=syntheticMp4Schedule([16,16,235,16,16],[500,600,400,700,300]);
+  const before=core.canonicalJson(input);
+  const p=proposeUntrustedDayForNightScratchEncode(input);
+  assert.equal(p.authority,'UNTRUSTED_PROCEDURAL_DIAGNOSTIC_ONLY');
+  assert.equal(p.contract,'lightingai-untrusted-scratch-day-for-night-mp4-pilot/1');
+  assert.equal(p.originalFrameCount,5);
+  assert.equal(p.intermediateFrameCountWithSentinel,6);
+  assert.equal(p.finalFrameCountWithoutSentinel,5);
+  assert.equal(p.frameByteSize,1536);
+  assert.deepEqual(p.ptsTicksIncludingEosSentinel,[0,500,1100,1500,2200,2500]);
+  assert.equal(p.sourceDurationTicks,2500);
+  assert.ok(p.setPtsFilter.startsWith('settb=expr=1/1000,setpts=if('));
+  assert.ok(p.setPtsFilter.includes('eq(N\\,4)\\,2200'));
+  assert.ok(p.setPtsFilter.endsWith('2500)))))'));
+  assert.equal(p.requiresEosSentinelThenCopyRemux,true);
+  assert.equal(p.mustDecodeAndVerifyFinalMp4,true);
+  assert.equal(p.videoExportAuthorized,false);
+  assert.ok(Object.isFrozen(p)&&Object.isFrozen(p.ptsTicksIncludingEosSentinel));
+  assert.equal(core.canonicalJson(input),before);
+  assert.doesNotMatch(JSON.stringify(p),/filePath|data:image|privateUrl|accessToken/i);
+});
+test('scratch MP4 experiment rejects sound and exceeds no-production budgets',()=>{
+  assert.throws(()=>proposeUntrustedDayForNightScratchEncode(
+    syntheticMp4Schedule([16,128,128],[900,800,800],true)));
+  const sixtyOne=Array(61).fill(32);
+  assert.throws(()=>proposeUntrustedDayForNightScratchEncode(
+    syntheticMp4Schedule(sixtyOne,Array(61).fill(100))));
+  assert.throws(()=>proposeUntrustedDayForNightScratchEncode(
+    syntheticMp4Schedule([16,128,128],[2000,2000,3000])));
+  const changed=syntheticMp4Schedule([16,128,128],[900,800,800]);
+  changed.video.width=322;
+  assert.throws(()=>proposeUntrustedDayForNightScratchEncode(changed));
+  const highTimeBase=syntheticMp4Schedule([16,128,128],[900,800,800]);
+  highTimeBase.video.timeBase.denominator=1000001;
+  assert.throws(()=>proposeUntrustedDayForNightScratchEncode(highTimeBase));
+  assert.throws(()=>runExperimentalDayForNightScratchMp4(
+    {},nightRevision,{},recipe,{}, {}, {},{
+      nonProductionScratchOnly:false,encoder:'libx264'
+    }));
+});
+
 console.log(`${groups} synthetic visual pixel groups passed; no decoder provenance granted.`);
 
 const decoderPath=process.env.SCENE_PLANNER_TEST_FFMPEG;
@@ -347,6 +394,24 @@ else{
       '-c:v','libopenh264','-threads','1','-bf','0','-pix_fmt','yuv420p','-an','-use_editlist','0','-video_track_timescale','1000',filePath];
     const r=spawnSync(decoderPath,args,{input:Buffer.concat(frames),shell:false,windowsHide:true,timeout:15000,maxBuffer:1024*1024});
     assert.equal(r.status,0,'Procedural visual fixture generation failed');return {filePath,root,mime:'video/mp4',decoderPath};
+  }
+  async function verifyScratchEncodedPts(handoff,graded,qc,originalOpts,originalBundle){
+    const result=await runExperimentalDayForNightScratchMp4(
+      originalOpts,nightRevision,originalBundle,recipe,graded,qc,handoff,
+      {nonProductionScratchOnly:true,encoder:'libopenh264'});
+    assert.equal(result.contract,'lightingai-ephemeral-scratch-mp4-probe/1');
+    assert.equal(result.originalFrames,graded.frameCount);
+    assert.equal(result.finalDecodedFrames,graded.frameCount);
+    assert.equal(result.intermediateFramesWithEosSentinel,graded.frameCount+1);
+    assert.equal(result.finalDurationTicks,handoff.schedule.sourceDurationTicks);
+    assert.equal(result.exactOriginalPtsAndLastDurationVerified,true);
+    assert.equal(result.mp4DeliveredToUser,false);
+    assert.equal(result.videoExportAuthorized,false);
+    assert.equal(result.physicallyAccurateRelighting,false);
+    assert.equal(result.scratchMp4CreatedThenDeleted,true);
+    assert.match(result.outputSha256,/^sha256:[a-f0-9]{64}$/);
+    assert.ok(Object.isFrozen(result));
+    assert.equal((await dirs()).join(','),baseline.join(','));
   }
   try{
     const sequence=Array.from({length:20},(_,i)=>pixels(i<10?16:235));
@@ -409,6 +474,7 @@ else{
       assert.equal(verifyDayForNightMp4Handoff(handoff,graded,gradeQc,nightRevision,nightBundle,recipe),true);
       assert.throws(()=>verifyDayForNightMp4Handoff(clone(handoff),graded,gradeQc,nightRevision,nightBundle,recipe));
       assert.throws(()=>createVerifiedDayForNightMp4Handoff(graded,gradeQc,revision,nightBundle,recipe));
+      await verifyScratchEncodedPts(handoff,graded,gradeQc,opts,nightBundle);
       await assert.rejects(()=>gradeVerifiedDayForNightFrames(opts,revision,result,recipe,()=>true));
     });
     await run('one-frame flash candidate requires confirmation',async()=>{
@@ -460,6 +526,7 @@ else{
       assert.equal(vfrHandoff.schedule.frameMap.at(-1).endPtsTickExclusive,
         nightVfr.ingestion.metadata.video.durationTicks);
       assert.equal(vfrHandoff.exportDecision,'BLOCKED_NO_MP4_FILE_AND_UNRESOLVED_PROOFS');
+      await verifyScratchEncodedPts(vfrHandoff,gradedVfr,vfrQc,f,nightVfr);
       assert.equal(qc.reviewIntervals.at(-1).endPtsTickExclusive,
         r.analysis.frames.at(-1).ptsTick+r.analysis.frames.at(-1).durationTicks);
     });

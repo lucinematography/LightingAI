@@ -1566,3 +1566,53 @@ configured-FFmpeg tests use original procedural MP4 source, trusted graded
 frame and QC receipts, exact CFR/VFR mapping and live handoff verification.
 Configured decoder tests must report NOT EXECUTED when FFmpeg is absent;
 the existing main/K0/K1 and fixture-control protections are untouched.
+
+
+### Bounded offline scratch MP4 encode/redecode proof (2026-10-11)
+
+A new **opt-in, non-production-only** diagnostic under the already-approved
+`backend/scene-planner-video-visual.js` exercises an actual MP4 encoder and
+then deletes every temporary output. It never enables Android export, uploads,
+real-life lamp control, a paid provider or a published media URL. It requires
+the live trusted original H.264 ingestion/analysis, immutable DoP plan, exact
+graded-raw-frame receipt, grade QC and blocked MP4 handoff. It rejects all
+audio-bearing input rather than silently stripping the sound; audio decoding
+and AV synchronization remain unimplemented. For safety the experiment is
+limited to 2-6 seconds, at most 60 source frames, maximum 320x180 even-size
+YUV420p and a bounded sample-timebase denominator. Explicit caller opt-in and
+one of two fixed known encoder names are mandatory, with the FFmpeg executable
+revalidated through the existing offline capability check.
+
+**Important last-frame-duration finding:** a naive `setpts` transform plus
+`-fps_mode passthrough` can encode correct PTS but lose the last VFR sample's
+duration and shorten the output movie. The diagnostic therefore writes a
+temporary *one extra copy of the final graded YUV frame* at exact source
+end-PTS tick. It encodes N+1 frames with a bounded integer PTS expression,
+then remuxes using video stream-copy and `-frames:v N` to remove only the
+extra end-of-stream sentinel. Output timing is explicitly `1/original-den`,
+with no average-frame-rate interpolation or B-frame reordering. Both MP4s
+and the bounded raw YUV scratch are created in a new private temp directory,
+and all are removed before a successful probe receipt is returned.
+
+The scratch result is reopened through the existing strict ISO-BMFF parser
+and **redecoded frame by frame**. Every resulting PTS, sample duration, DTS,
+frame count, width, height, clock, and total end tick must exactly equal the
+source. A deliberately *loose diagnostic* bound checks gross Y-code deviations
+introduced by lossy H.264; it is not film quality, color space calibration or
+a reliable subjective threshold. No MP4 is delivered or approved. A private
+immutable receipt records that the encoded files were deleted and explicitly
+marks export, physical relighting, DoP approval, sound validation and actual
+colorimetry as unverified or false. No raw pixels, user file path or source
+URLs are included in that result.
+
+Mandatory pure tests cover the precise source VFR timecodes plus N+1 sentinel,
+test-size and audio rejection, immutable/no-private-path planning, and refused
+implicit use. Optional explicitly configured FFmpeg synthetic CFR/VFR tests
+exercise the real encode + copy-remux + output redetection before reporting a
+successful scratch probe. In CI without the configured FFmpeg binary these
+real encoding tests are NOT EXECUTED, despite the full Android/backend CI
+build passing. A manually validated local procedural FFmpeg sample confirmed
+that the sentinel/remux sequence retains all five frames and the final 300 ms
+sample duration, for a 2.5-second VFR file. This is **not** a user-facing
+Day-for-Night video export; color management, audio preservation and real
+filmed footage review remain prerequisites.

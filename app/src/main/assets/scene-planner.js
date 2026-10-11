@@ -525,6 +525,14 @@
           ' — lično potvrđeno na setu; AI nije identifikovao optički dodatak.');
       });
     }
+    if(Array.isArray(plan.incidentLuxReadings)&&plan.incidentLuxReadings.length){
+      lines.push('','SVETLOMER — OČITAVANJE KOJE JE PRIJAVIO KORISNIK, NIJE NEZAVISNO PROVERENO');
+      plan.incidentLuxReadings.forEach(function(m){
+        lines.push(m.lightId+' / '+m.fixtureId+': '+m.lux+' lx na subjektu pri '+
+          m.distanceMAtMeasurement+' m; incidentni svetlomer, ovaj reflektor izdvojen, ostali izvori kontrolisani.');
+        lines.push('Ovo nije fabrički lux, nije AI procena niti dokaz ekspozicije cele scene.');
+      });
+    }
     lines.push('','OGRANIČENJA',...plan.limitations,'','BEZBEDNOST',...plan.safetyNotes);
     return lines.join('\n');
   }
@@ -614,6 +622,8 @@
           return e.lightId===l.id&&e.fixtureId===l.fixtureId&&e.requiresAttestedOptic;
         }):null;
       var mounted=(plan.opticConfirmations||[]).find(function(a){return a.lightId===l.id;});
+      var measuredDistance=(plan.distanceMeasurements||[]).find(function(a){return a.lightId===l.id;});
+      var meterReading=(plan.incidentLuxReadings||[]).find(function(a){return a.lightId===l.id;});
       var availableOptics=opticBasis?(opticBasis.samples||[]).filter(function(sample,i,all){
         return sample.opticId&&all.findIndex(function(s){return s.opticId===sample.opticId;})===i;
       }):[];
@@ -658,6 +668,26 @@
           '<button type="button" class="sp-btn" data-sp-optic-light="'+esc(l.id)+'">'+
           'POTVRDI OPTIČKI DODATAK — NOVA REVIZIJA</button>'+
           '<div>Potvrda dodatka nije potvrda jačine, Kelvina ili lux vrednosti na setu.</div></div>':'')+
+        (plan.mode==='own'&&l.available?
+          '<div class="sp-note" style="margin-top:12px;padding-top:10px;border-top:1px solid #4b4b4b">'+
+          '<b>SVETLOMER NA SETU — NIJE FABRIČKI PODATAK</b>'+
+          (meterReading?
+            '<div>Korisnik prijavio: '+esc(meterReading.lux)+' lx sa incidentnog svetlomera pri '+
+              esc(meterReading.distanceMAtMeasurement)+
+              ' m, samo ovaj izvor, ostali izvori kontrolisani. Nije nezavisno provereno.</div>':
+            '<div>Nema korisnički prijavljenog lux očitavanja za ovu postavku.</div>')+
+          (measuredDistance?
+            '<label for="sp-incident-'+esc(l.id)+'">OČITANJE INCIDENTNOG SVETLOMERA NA SUBJEKTU (lx)</label>'+
+            '<input class="sp-field" type="number" id="sp-incident-'+esc(l.id)+
+              '" min="0" max="1000000" step="0.001" placeholder="0–1000000" value="'+
+              (meterReading?esc(meterReading.lux):'')+'">'+
+            '<label style="display:flex;align-items:center;gap:7px;margin:7px 0">'+
+            '<input type="checkbox" id="sp-incident-confirmed-'+esc(l.id)+'">'+
+              ' Potvrđujem očitavanje svetlomerom i da je ovaj izvor izdvojen, a ostali kontrolisani</label>'+
+            '<button type="button" class="sp-btn" data-sp-incident-light="'+esc(l.id)+'">'+
+              'SAČUVAJ OČITAVANJE — NOVA REVIZIJA</button>':
+            '<div>Prvo sačuvaj stvarno izmerenu udaljenost ovog reflektora do subjekta.</div>')+
+          '<div>Ne koristi se za automatski obračun blende/ISO niti kao provereni lux cele scene.</div></div>':'')+
         '</div>';
     }).join(''):'<p class="sp-note">Nije moguće napraviti pouzdan izbor lampi iz dostupnog inventara.</p>';
     if(typeof el('sp-lights').querySelectorAll==='function')
@@ -698,6 +728,26 @@
           renderResult();remember();
           status('Montirani dodatak je korisnički potvrđen u novoj reviziji. Lux na setu nije izmeren.');
         }catch(error){status('Optički dodatak nije potvrđen: '+error.message,true);}
+      };
+    });
+    if(typeof el('sp-lights').querySelectorAll==='function')
+      el('sp-lights').querySelectorAll('button[data-sp-incident-light]').forEach(function(btn){
+      btn.onclick=function(){
+        if(state.busy||historyBlocked||!revisions.length)return;
+        var id=btn.getAttribute('data-sp-incident-light');
+        var confirmation=el('sp-incident-confirmed-'+id),field=el('sp-incident-'+id);
+        if(!confirmation||!confirmation.checked){
+          status('Potvrdi fizičko očitavanje incidentnim svetlomerom i izdvajanje izvora.',true);return;
+        }
+        try{
+          var previous=revisions[revisions.length-1];
+          var revision=core().createIncidentLuxRevision(previous,{
+            lightId:id,lux:field&&field.value,confirmed:true,fixtureIsolated:true
+          });
+          revisions=revisions.concat([revision]);state.plan=revision.plan;
+          renderResult();remember();
+          status('Lux je sačuvan kao korisničko očitavanje u novoj reviziji. Nije nezavisno potvrđen.');
+        }catch(error){status('Očitavanje nije sačuvano: '+error.message,true);}
       };
     });
     el('sp-warnings').innerHTML='<div class="sp-note" style="margin-top:10px"><b style="color:#f5c542">PROCENE I KOMPROMISI</b><ul>'+

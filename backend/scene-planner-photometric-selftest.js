@@ -78,6 +78,91 @@ assert.deepEqual(opticAndDistance.plan.photometricBasis.entries[0].publishedRefe
   status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
 });
 assert.equal(opticAndDistance.plan.photometricBasis.entries[0].onSetLux,null);
+
+// A real meter reading is never estimated from manufacturer lux or pixels and requires
+// a recorded physical distance plus a separate, user-attested isolated-light reading.
+assert.throws(()=>core.createIncidentLuxRevision(wrappedRevision,{
+  lightId:'L1',lux:325.125,confirmed:true,fixtureIsolated:true
+}),/distance/i,'without a physical distance the incident meter value is not tied to a setup');
+const meterRevision=core.createIncidentLuxRevision(opticAndDistance,{
+  lightId:'L1',lux:'325.125',confirmed:true,fixtureIsolated:true
+});
+assert.equal(meterRevision.sequence,opticAndDistance.sequence+1);
+assert.equal(meterRevision.parentRevisionId,opticAndDistance.revisionId);
+assert.equal(meterRevision.plan.incidentLuxReadings.length,1);
+assert.deepEqual(meterRevision.plan.incidentLuxReadings[0],{
+  lightId:'L1',fixtureId:'aputure-ls-300d-ii',lux:325.125,unit:'lx',
+  distanceMAtMeasurement:3,meterType:'INCIDENT_LUX_METER',
+  target:'SUBJECT_AT_MEASUREMENT_POINT',measurementScope:'FIXTURE_ISOLATED_OTHER_SOURCES_CONTROLLED',
+  source:'USER_REPORTED_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED',
+  userAttested:true,fixtureIsolated:true
+});
+assert.equal(meterRevision.plan.dataStatus.incidentLuxReadings,'user-reported-not-independently-verified');
+assert.equal(meterRevision.plan.photometricBasis.entries[0].onSetLux,null,
+  'on-set incident reading cannot overwrite manufacturer slot or appear as published lux');
+assert.equal(meterRevision.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance.lux,3500,
+  'the published lux remains separate from user-reported 325.125 lx');
+const revisedMeter=core.createIncidentLuxRevision(meterRevision,{
+  lightId:'L1',lux:0,confirmed:true,fixtureIsolated:true
+});
+assert.equal(revisedMeter.plan.incidentLuxReadings.length,1,'a second reading replaces only the active reading');
+assert.equal(revisedMeter.plan.incidentLuxReadings[0].lux,0,'zero incident lux is a valid meter result');
+assert.equal(meterRevision.plan.incidentLuxReadings[0].lux,325.125,
+  'earlier immutable revision must retain original reading');
+assert.equal(core.restoreRevisions([wrappedRevision,opticOnly,opticAndDistance,meterRevision,revisedMeter]).length,5);
+const relocated=core.createDistanceMeasurementRevision(meterRevision,{
+  lightId:'L1',distanceM:4,confirmed:true
+});
+assert.ok(!relocated.plan.incidentLuxReadings||relocated.plan.incidentLuxReadings.length===0,
+  'moving the fixture invalidates a recorded on-set meter value in the current revision');
+assert.equal(meterRevision.plan.incidentLuxReadings[0].distanceMAtMeasurement,3);
+assert.equal(core.restoreRevisions([wrappedRevision,opticOnly,opticAndDistance,meterRevision,relocated]).length,5);
+const changedOptical=core.createMountedOpticRevision(meterRevision,{
+  lightId:'L1',opticId:'HYPER_REFLECTOR_55',confirmed:true
+});
+assert.ok(!changedOptical.plan.incidentLuxReadings||changedOptical.plan.incidentLuxReadings.length===0,
+  'a newly confirmed optic is a different physical context; old incident lux must not carry over');
+assert.equal(core.restoreRevisions([wrappedRevision,opticOnly,opticAndDistance,meterRevision,changedOptical]).length,5);
+const otherLampDist=core.createDistanceMeasurementRevision(meterRevision,{
+  lightId:'L2',distanceM:5,confirmed:true
+});
+assert.equal(otherLampDist.plan.incidentLuxReadings[0].lux,325.125,
+  'changing an unrelated fixture must not invalidate this light measurement');
+const renewedPlan=core.createRevision(wrappedPlan,{
+  ...raw,equipment:additionalFixtures.map(f=>({fixtureId:f.id,name:f.model,qty:1}))
+},'ai',meterRevision,'new-optic-references');
+assert.ok(!renewedPlan.plan.incidentLuxReadings ||
+  renewedPlan.plan.incidentLuxReadings.length===0,
+  'fresh AI analysis must not inherit human-reported lux from a previous physical setup');
+for(const bad of ['',null,undefined,true,[],{},-1,-0.1,1000000.001,1.0001,'NaN',
+  'Infinity','1e3','3abc','12,5',Number.POSITIVE_INFINITY,Number.NaN]){
+  assert.throws(()=>core.createIncidentLuxRevision(opticAndDistance,{
+    lightId:'L1',lux:bad,confirmed:true,fixtureIsolated:true
+  }),/lux/i,'invalid lux meter values must fail closed without clipping');
+}
+assert.throws(()=>core.createIncidentLuxRevision(opticAndDistance,{
+  lightId:'L1',lux:101,confirmed:false,fixtureIsolated:true
+}),/confirmation/i,'no UI attestation means no meter reading');
+assert.throws(()=>core.createIncidentLuxRevision(opticAndDistance,{
+  lightId:'L1',lux:101,confirmed:true,fixtureIsolated:false
+}),/confirmation/i,'mixed ambient/unisolated fixture cannot be reported as isolated fixture lux');
+assert.throws(()=>core.createIncidentLuxRevision(opticAndDistance,{
+  lightId:'L999',lux:101,confirmed:true,fixtureIsolated:true
+}),/owned|distance/i);
+const tamperedLux=JSON.parse(JSON.stringify(meterRevision));
+tamperedLux.plan.incidentLuxReadings[0].lux=999999;
+assert.throws(()=>core.restoreRevisions([
+  wrappedRevision,opticOnly,opticAndDistance,tamperedLux
+]),/integrity|invalid|mismatch/i);
+const fakeMeter=JSON.parse(JSON.stringify(meterRevision));
+fakeMeter.plan.incidentLuxReadings[0].source='MANUFACTURER_PUBLISHED_REFERENCE';
+assert.throws(()=>core.verifyRevision(fakeMeter),/Invalid on-set incident lux/i,
+  'a recorded meter reading must never gain factory provenance');
+const uiMeter=fs.readFileSync(new URL('../app/src/main/assets/scene-planner.js',import.meta.url),'utf8');
+assert.match(uiMeter,/createIncidentLuxRevision\(previous/);
+assert.match(uiMeter,/data-sp-incident-light/);
+assert.match(uiMeter,/Potvrđujem očitavanje svetlomerom/);
+
 const distanceFirst=core.createMountedOpticRevision(newDistance,{
   lightId:'L1',opticId:'HYPER_REFLECTOR_55',confirmed:true
 });

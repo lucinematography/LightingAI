@@ -88,6 +88,14 @@
     var d=Number(value);
     return Number.isFinite(d)&&d>=0.1&&d<=100?d:null;
   }
+  // Accept only user-entered incident meter values. Never round or clip a measurement.
+  function incidentLux(value) {
+    if(typeof value!=='number' && typeof value!=='string')return null;
+    if(typeof value==='string' && !/^(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)$/.test(value.trim()))return null;
+    var lux=Number(value);
+    return Number.isFinite(lux)&&lux>=0&&lux<=1000000&&
+      Math.round(lux*1000)/1000===lux?lux:null;
+  }
   function key(value) { return str(value, 250).toLowerCase().replace(/[^a-z0-9]/g, ''); }
   function mode(value) { return value === 'own' ? 'own' : 'best'; }
   function equipment(items) {
@@ -598,6 +606,31 @@
     });
     if(readings.length&&plan.dataStatus.distanceMeasurements!=='user-reported-not-independently-verified')
       throw new Error('Unlabeled fixture distance measurement');
+    // User-reported physical incident meter reading, never a manufacturer's lux figure.
+    var incidentReports=plan.incidentLuxReadings===undefined?[]:plan.incidentLuxReadings;
+    if(!Array.isArray(incidentReports)||incidentReports.length>MAX_LIGHTS)
+      throw new Error('Invalid on-set incident lux evidence');
+    var incidentIds=Object.create(null);
+    incidentReports.forEach(function(m){
+      if(!m||typeof m!=='object'||typeof m.lightId!=='string'||incidentIds[m.lightId]||
+        plan.mode!=='own'||m.source!=='USER_REPORTED_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED'||
+        m.unit!=='lx'||m.meterType!=='INCIDENT_LUX_METER'||
+        m.target!=='SUBJECT_AT_MEASUREMENT_POINT'||
+        m.measurementScope!=='FIXTURE_ISOLATED_OTHER_SOURCES_CONTROLLED'||
+        m.userAttested!==true||m.fixtureIsolated!==true||
+        typeof m.lux!=='number'||incidentLux(m.lux)!==m.lux)
+        throw new Error('Invalid on-set incident lux evidence');
+      var light=plan.lights.find(function(l){return l.id===m.lightId;});
+      var distance=readingIds[m.lightId];
+      if(!light||!light.available||!light.fixtureId||m.fixtureId!==light.fixtureId||
+        !distance||distance.fixtureId!==m.fixtureId||
+        m.distanceMAtMeasurement!==distance.distanceM)
+        throw new Error('On-set incident lux evidence requires matching measured distance');
+      incidentIds[m.lightId]=m;
+    });
+    if(incidentReports.length &&
+      plan.dataStatus.incidentLuxReadings!=='user-reported-not-independently-verified')
+      throw new Error('Unlabeled on-set incident meter values');
     // Only an explicitly attested mounted optic can unlock a published reference.
     var attestations=plan.opticConfirmations===undefined?[]:plan.opticConfirmations;
     if(!Array.isArray(attestations)||attestations.length>MAX_LIGHTS)
@@ -729,6 +762,14 @@
       .filter(function(a){return a.lightId!==light.id;}).concat([item])
       .sort(function(a,b){return Number(a.lightId.slice(1))-Number(b.lightId.slice(1));});
     plan.dataStatus.mountedOptics='user-reported-not-independently-verified';
+    // A changed or reconfirmed optic is a new physical setup: retain older lux only in its parent revision.
+    if(Array.isArray(plan.incidentLuxReadings)){
+      plan.incidentLuxReadings=plan.incidentLuxReadings.filter(function(x){return x.lightId!==light.id;});
+      if(!plan.incidentLuxReadings.length){
+        delete plan.incidentLuxReadings;
+        delete plan.dataStatus.incidentLuxReadings;
+      }
+    }
     refreshAttestedOpticReference(plan,light.id);
     var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
       sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
@@ -757,6 +798,14 @@
     plan.distanceMeasurements=list.filter(function(x){return x.lightId!==light.id;}).concat([evidence])
       .sort(function(a,b){return Number(a.lightId.slice(1))-Number(b.lightId.slice(1));});
     plan.dataStatus.distanceMeasurements='user-reported-not-independently-verified';
+    // A changed/reconfirmed distance invalidates the meter reading at the former physical setup.
+    if(Array.isArray(plan.incidentLuxReadings)){
+      plan.incidentLuxReadings=plan.incidentLuxReadings.filter(function(x){return x.lightId!==light.id;});
+      if(!plan.incidentLuxReadings.length){
+        delete plan.incidentLuxReadings;
+        delete plan.dataStatus.incidentLuxReadings;
+      }
+    }
     if(plan.photometricBasis && Array.isArray(plan.photometricBasis.entries)){
       plan.photometricBasis.entries.forEach(function(e){
         if(e.lightId!==light.id||e.fixtureId!==light.fixtureId)return;
@@ -786,6 +835,42 @@
     verifyRevision(revision);
     return freezeJson(revision);
   }
+  // Store only user-attested actual meter input, never infer it from AI, camera or product tables.
+  // The fixture must be isolated and its physical distance already recorded for this same revision.
+  function createIncidentLuxRevision(parent, report) {
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||
+      report.confirmed!==true||report.fixtureIsolated!==true||
+      typeof report.lightId!=='string')
+      throw new Error('Explicit incident meter and isolated-light confirmation is required');
+    var lux=incidentLux(report.lux);
+    if(lux===null)throw new Error('Invalid measured incident lux (0-1000000 lx, up to 3 decimals)');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var light=plan.lights.find(function(l){return l.id===report.lightId;});
+    var distance=(plan.distanceMeasurements||[]).find(function(m){return m.lightId===report.lightId;});
+    if(plan.mode!=='own'||!light||!light.available||!light.fixtureId||
+      !distance||distance.fixtureId!==light.fixtureId)
+      throw new Error('A verified owned light and its user-measured distance are required for incident lux');
+    var evidence={
+      lightId:light.id,fixtureId:light.fixtureId,lux:lux,unit:'lx',
+      distanceMAtMeasurement:distance.distanceM,
+      meterType:'INCIDENT_LUX_METER',target:'SUBJECT_AT_MEASUREMENT_POINT',
+      measurementScope:'FIXTURE_ISOLATED_OTHER_SOURCES_CONTROLLED',
+      source:'USER_REPORTED_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED',
+      userAttested:true,fixtureIsolated:true
+    };
+    plan.incidentLuxReadings=(plan.incidentLuxReadings||[])
+      .filter(function(x){return x.lightId!==light.id;}).concat([evidence])
+      .sort(function(a,b){return Number(a.lightId.slice(1))-Number(b.lightId.slice(1));});
+    plan.dataStatus.incidentLuxReadings='user-reported-not-independently-verified';
+    // The manufacturer-reference onSetLux slot remains null: never relabel reported lux as published output.
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
   function restoreRevisions(items) {
     if(!Array.isArray(items) || !items.length)throw new Error('Empty revision history');
     var revisions=JSON.parse(canonicalJson(items));
@@ -807,6 +892,7 @@
     canonicalJson:canonicalJson,sha256:sha256,planHash:planHash,createRevision:createRevision,
     createDistanceMeasurementRevision:createDistanceMeasurementRevision,
     createMountedOpticRevision:createMountedOpticRevision,
+    createIncidentLuxRevision:createIncidentLuxRevision,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};

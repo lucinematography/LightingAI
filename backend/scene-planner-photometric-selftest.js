@@ -79,66 +79,6 @@ assert.deepEqual(opticAndDistance.plan.photometricBasis.entries[0].publishedRefe
 });
 assert.equal(opticAndDistance.plan.photometricBasis.entries[0].onSetLux,null);
 
-// Build a genuine two-light key/fill history through public creation APIs.
-const ratioRaw={...rawLight,lights:[
-  {...rawLight.lights[0],role:'key'},
-  {...rawLight.lights[1],role:'fill'}
-]};
-const ratioPlan=core.createRevision({...generated.plan,lights:ratioRaw.lights},raw,'ai',null,'ratio-demo');
-const ratioA=core.createDistanceMeasurementRevision(ratioPlan,{lightId:'L1',distanceM:3,confirmed:true});
-const ratioB=core.createDistanceMeasurementRevision(ratioA,{lightId:'L2',distanceM:5,confirmed:true});
-const commonContext={meterModel:'Sekonic C-800 test fixture',measurementPoint:'Face mark A',
-  receptorOrientation:'RECEPTOR_TOWARD_CAMERA',measuredAtLocal:'2026-10-11T14:30'};
-const ratioC=core.createIncidentLuxRevision(ratioB,{
-  ...commonContext,lightId:'L1',lux:400,confirmed:true,fixtureIsolated:true
-});
-const ratioD=core.createIncidentLuxRevision(ratioC,{
-  ...commonContext,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
-  measuredAtLocal:'2026-10-11T14:34'
-});
-const positive=core.compareKeyFillMeasurements(ratioD,'L1','L2');
-assert.equal(positive.status,'COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY');
-assert.equal(positive.ratio,4);
-assert.deepEqual([positive.keyLux,positive.fillLux],[400,100]);
-assert.equal(positive.sceneContrastVerified,false);
-assert.equal(positive.cameraExposureVerified,false);
-assert.equal(positive.manufacturerPhotometricsUsed,false);
-assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,ratioC,ratioD]).length,5);
-const differentPoint=core.createIncidentLuxRevision(ratioC,{
-  ...commonContext,measurementPoint:'Different face mark',lightId:'L2',
-  lux:100,confirmed:true,fixtureIsolated:true
-});
-assert.equal(core.compareKeyFillMeasurements(differentPoint,'L1','L2').reason,'DIFFERENT_MEASUREMENT_POINTS');
-const rotated=core.createIncidentLuxRevision(ratioC,{
-  ...commonContext,receptorOrientation:'RECEPTOR_TOWARD_FIXTURE',
-  lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true
-});
-assert.equal(core.compareKeyFillMeasurements(rotated,'L1','L2').reason,
-  'SENSOR_ORIENTATION_NOT_COMMON_CAMERA_AXIS');
-const remoteTime=core.createIncidentLuxRevision(ratioC,{
-  ...commonContext,measuredAtLocal:'2026-10-11T15:30',
-  lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true
-});
-assert.equal(core.compareKeyFillMeasurements(remoteTime,'L1','L2').reason,
-  'MEASUREMENT_TIMES_TOO_FAR_APART');
-const absentTime=core.createIncidentLuxRevision(ratioC,{
-  ...commonContext,measuredAtLocal:'',lightId:'L2',
-  lux:100,confirmed:true,fixtureIsolated:true
-});
-assert.equal(core.compareKeyFillMeasurements(absentTime,'L1','L2').reason,'MISSING_MEASUREMENT_TIMES');
-const wrongInstrument=core.createIncidentLuxRevision(ratioC,{
-  ...commonContext,meterModel:'Other incident meter',lightId:'L2',
-  lux:100,confirmed:true,fixtureIsolated:true
-});
-assert.equal(core.compareKeyFillMeasurements(wrongInstrument,'L1','L2').reason,
-  'DIFFERENT_METER_IDENTITIES');
-const zeroFill=core.createIncidentLuxRevision(ratioC,{
-  ...commonContext,lightId:'L2',lux:0,confirmed:true,fixtureIsolated:true
-});
-assert.equal(core.compareKeyFillMeasurements(zeroFill,'L1','L2').reason,'ZERO_READING_NO_FINITE_RATIO');
-const oneMeter=core.compareKeyFillMeasurements(ratioC,'L1','L2');
-assert.equal(oneMeter.reason,'MISSING_USER_REPORTED_LUX');
-assert.ok(positive.bookCardIds.every(id=>ratioD.plan.knowledgeBasis.cards.some(c=>c.id===id)));
 const meterContext={meterModel:'Sekonic C-800 test fixture',measurementPoint:'Face mark A',
   receptorOrientation:'RECEPTOR_TOWARD_FIXTURE',measuredAtLocal:'2026-10-11T14:30'};
 const incidentRevision=(parent,report)=>core.createIncidentLuxRevision(parent,{...meterContext,...report});
@@ -353,6 +293,67 @@ assert.equal(generated.plan.photometricBasis.entries[0].onSetLux,null);
 assert.ok(generated.plan.knowledgeBasis.cards.some(c=>c.id==='PHY-005'));
 assert.ok(generated.plan.photometricBasis.entries[0].bookCardIds.includes('PHY-005'));
 const revision=core.createRevision(generated.plan,raw,'ai',null,'photo-provenance-1');
+// Build a genuine two-light key/fill history through public creation APIs.
+const ratioRaw={...rawLight,lights:[
+  {...rawLight.lights[0],role:'key'},
+  {...rawLight.lights[1],role:'fill'}
+]};
+const ratioPlan=core.createRevision({...generated.plan,lights:ratioRaw.lights},raw,'ai',null,'ratio-demo');
+const ratioA=core.createDistanceMeasurementRevision(ratioPlan,{lightId:'L1',distanceM:3,confirmed:true});
+const ratioB=core.createDistanceMeasurementRevision(ratioA,{lightId:'L2',distanceM:5,confirmed:true});
+const commonContext={meterModel:'Sekonic C-800 test fixture',measurementPoint:'Face mark A',
+  receptorOrientation:'RECEPTOR_TOWARD_CAMERA',measuredAtLocal:'2026-10-11T14:30'};
+const ratioC=core.createIncidentLuxRevision(ratioB,{
+  ...commonContext,lightId:'L1',lux:400,confirmed:true,fixtureIsolated:true
+});
+const ratioD=core.createIncidentLuxRevision(ratioC,{
+  ...commonContext,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
+  measuredAtLocal:'2026-10-11T14:34'
+});
+const positive=core.compareKeyFillMeasurements(ratioD,'L1','L2');
+assert.equal(positive.status,'COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY');
+assert.equal(positive.ratio,4);
+assert.deepEqual([positive.keyLux,positive.fillLux],[400,100]);
+assert.equal(positive.sceneContrastVerified,false);
+assert.equal(positive.cameraExposureVerified,false);
+assert.equal(positive.manufacturerPhotometricsUsed,false);
+assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,ratioC,ratioD]).length,5);
+const differentPoint=core.createIncidentLuxRevision(ratioC,{
+  ...commonContext,measurementPoint:'Different face mark',lightId:'L2',
+  lux:100,confirmed:true,fixtureIsolated:true
+});
+assert.equal(core.compareKeyFillMeasurements(differentPoint,'L1','L2').reason,'DIFFERENT_MEASUREMENT_POINTS');
+const rotated=core.createIncidentLuxRevision(ratioC,{
+  ...commonContext,receptorOrientation:'RECEPTOR_TOWARD_FIXTURE',
+  lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true
+});
+assert.equal(core.compareKeyFillMeasurements(rotated,'L1','L2').reason,
+  'SENSOR_ORIENTATION_NOT_COMMON_CAMERA_AXIS');
+const remoteTime=core.createIncidentLuxRevision(ratioC,{
+  ...commonContext,measuredAtLocal:'2026-10-11T15:30',
+  lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true
+});
+assert.equal(core.compareKeyFillMeasurements(remoteTime,'L1','L2').reason,
+  'MEASUREMENT_TIMES_TOO_FAR_APART');
+const absentTime=core.createIncidentLuxRevision(ratioC,{
+  ...commonContext,measuredAtLocal:'',lightId:'L2',
+  lux:100,confirmed:true,fixtureIsolated:true
+});
+assert.equal(core.compareKeyFillMeasurements(absentTime,'L1','L2').reason,'MISSING_MEASUREMENT_TIMES');
+const wrongInstrument=core.createIncidentLuxRevision(ratioC,{
+  ...commonContext,meterModel:'Other incident meter',lightId:'L2',
+  lux:100,confirmed:true,fixtureIsolated:true
+});
+assert.equal(core.compareKeyFillMeasurements(wrongInstrument,'L1','L2').reason,
+  'DIFFERENT_METER_IDENTITIES');
+const zeroFill=core.createIncidentLuxRevision(ratioC,{
+  ...commonContext,lightId:'L2',lux:0,confirmed:true,fixtureIsolated:true
+});
+assert.equal(core.compareKeyFillMeasurements(zeroFill,'L1','L2').reason,'ZERO_READING_NO_FINITE_RATIO');
+const oneMeter=core.compareKeyFillMeasurements(ratioC,'L1','L2');
+assert.equal(oneMeter.reason,'MISSING_USER_REPORTED_LUX');
+assert.ok(positive.bookCardIds.every(id=>ratioD.plan.knowledgeBasis.cards.some(c=>c.id===id)));
+
 assert.equal(revision.plan.photometricBasis.entries.length,2);
 assert.equal(revision.plan.photometricBasis.entries[0].onSetLux,null);
 assert.deepEqual(revision.plan.photometricBasis.entries[0].bookCardIds,

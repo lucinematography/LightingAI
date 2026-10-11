@@ -121,6 +121,7 @@ assert.ok(frontend.includes('capture="environment"'),"camera/video capture reque
 assert.ok(frontend.includes("Android.startSpeechInput"),"native voice input wired");
 assert.ok(frontend.includes("sp-description"),"voice destination exists");
 assert.ok(frontend.includes("Stručna baza: knjige i obrazloženja"),"UI must show retrieved book principles");
+assert.ok(frontend.includes("AI predlog nema knjišku potporu"),"UI must disclose missing matching book evidence");
 assert.ok(frontend.includes('id="sp-location"'),"Scene Planner must support editable location");
 assert.ok(frontend.includes('value="Beograd, Srbija"'),"Belgrade is the initial user location");
 assert.ok(frontend.includes('id="sp-scene-datetime"'),"shooting time is optional");

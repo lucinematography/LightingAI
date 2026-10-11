@@ -1230,6 +1230,8 @@ revision as a numeric before/after list. Existing light IDs, fixture identity
 and their source remain unchanged. Each changed proposed X/Y, height,
 distance, output percentage or Kelvin appears alongside its prior value;
 camera FPS, shutter angle, f-number, ISO, WB and ND appear as planned values.
+Fields previously unknown (null) are displayed as not yet entered, rather
+than causing the comparison to disappear or being treated as measured zero.
 The SHA-256-verified core function compareDopPlannedRevisions(before, after)
 requires direct lineage and exact numeric correspondence with the saved
 changed-field ledger. Later physical-meter revisions inheriting a prior DoP

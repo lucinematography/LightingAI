@@ -424,6 +424,10 @@ assert.deepEqual(plannedDiff.cameraChanges.map(c=>c.field),
 assert.equal(plannedDiff.lightChanges.find(c=>c.field==='intensityPct').before,
   ratioD.plan.lights[0].intensityPct);
 assert.equal(plannedDiff.lightChanges.find(c=>c.field==='intensityPct').after,45);
+assert.equal(ratioD.plan.lights[0].heightM,null);
+assert.equal(plannedDiff.lightChanges.find(c=>c.field==='heightM').before,null,
+  'a newly specified height must compare against the formerly unknown height');
+assert.equal(plannedDiff.lightChanges.find(c=>c.field==='heightM').after,3.2);
 assert.equal(plannedDiff.cameraChanges.find(c=>c.field==='iso').before,
   ratioD.plan.cameraSettings.iso);
 assert.equal(plannedDiff.cameraChanges.find(c=>c.field==='iso').after,1600);

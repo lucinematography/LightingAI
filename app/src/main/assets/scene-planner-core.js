@@ -1154,7 +1154,8 @@
         throw new Error('DoP comparison fixture identity mismatch');
       entry.fields.forEach(function(k){
         if(lightKeys.indexOf(k)<0||oldLight[k]===newLight[k]||
-           !Number.isFinite(oldLight[k])||!Number.isFinite(newLight[k]))
+           (oldLight[k]!==null&&!Number.isFinite(oldLight[k]))||
+           !Number.isFinite(newLight[k]))
           throw new Error('DoP comparison has an unsubstantiated changed-light field');
         lightChanges.push({lightId:entry.lightId,fixtureName:newLight.fixtureName,
           field:k,before:oldLight[k],after:newLight[k]});

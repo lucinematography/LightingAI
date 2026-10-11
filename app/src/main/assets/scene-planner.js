@@ -1401,7 +1401,7 @@
       function plannedRow(change,labels){
         var field=labels.find(function(f){return f.k===change.field;});
         return '<li>'+(change.lightId?'<b>'+esc(change.lightId)+'</b> / ':'')+
-          esc(field?field.name:change.field)+': <b>'+esc(String(change.before))+
+          esc(field?field.name:change.field)+': <b>'+esc(change.before===null?'nije uneto':String(change.before))+
           '</b> → <b>'+esc(String(change.after))+'</b></li>';
       }
       html+='<details class="sp-lamp" open><summary><b>DoP — PRE / POSLE (SAMO PLAN)</b></summary>'+

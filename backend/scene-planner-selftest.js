@@ -88,6 +88,7 @@ assert.ok(produced.plan.knowledgeBasis.cards.every(c=>typeof c.validation==="str
 assert.ok(produced.plan.knowledgeBasis.cards.every(c=>c.id!=="FAKE-999"),"model-invented citations must not enter trusted evidence");
 const knowledgeRevision=core.createRevision(produced.plan,clip,"ai",null,"scene-book-evidence-test");
 assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revision must preserve book evidence");
+assert.deepEqual(knowledgeRevision.plan.knowledgeBasis.cards.map(c=>c.validation),produced.plan.knowledgeBasis.cards.map(c=>c.validation),"immutable revision must preserve every on-set check");
 const revisionPrompt=buildScenePlannerPrompt(canonicalInventory(validateScenePlannerRequest({
   ...own,previousPlan:knowledgeRevision.plan
 }),catalog));
@@ -99,6 +100,9 @@ assert.deepEqual(core.restoreRevisions([JSON.parse(JSON.stringify(knowledgeRevis
 const tamperedKnowledgeRevision=JSON.parse(JSON.stringify(knowledgeRevision));
 tamperedKnowledgeRevision.plan.knowledgeBasis.cards.find(c=>c.references.length).references[0].pdfPage=999;
 assert.throws(()=>core.restoreRevisions([tamperedKnowledgeRevision]),"altered source page must invalidate the revision hash");
+const tamperedKnowledgeValidation=JSON.parse(JSON.stringify(knowledgeRevision));
+tamperedKnowledgeValidation.plan.knowledgeBasis.cards[0].validation="Unsafe fabricated on-set check";
+assert.throws(()=>core.restoreRevisions([tamperedKnowledgeValidation]),"altered on-set validation must invalidate the revision hash");
 const tamperedKnowledgeTitle=JSON.parse(JSON.stringify(knowledgeRevision));
 tamperedKnowledgeTitle.plan.knowledgeBasis.cards[0].title="Fabricated authority";
 assert.throws(()=>core.restoreRevisions([tamperedKnowledgeTitle]),"altered book authority must invalidate the revision hash");

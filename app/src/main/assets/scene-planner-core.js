@@ -915,6 +915,60 @@
     verifyRevision(revision);
     return freezeJson(revision);
   }
+  // The result is a ratio of separately measured, isolated fixture contributions,
+  // NOT a scene-contrast ratio, total illuminance, T-stop, or calibrated camera exposure.
+  // Comparing "toward fixture" dome orientations is unsafe: each fixture points elsewhere.
+  // User-reported metadata matching is necessary, never proof of actual comparability.
+  function compareKeyFillMeasurements(revision, keyLightId, fillLightId) {
+    verifyRevision(revision);
+    var plan=revision.plan,lights=plan.lights,records=plan.incidentLuxReadings||[];
+    var keyLight=lights.find(function(l){return l.id===keyLightId;});
+    var fillLight=lights.find(function(l){return l.id===fillLightId;});
+    var bookCards=plan.knowledgeBasis&&Array.isArray(plan.knowledgeBasis.cards)?
+      plan.knowledgeBasis.cards:[];
+    var bookCardIds=bookCards.filter(function(c){
+      return c&&['SET-005','SET-002','EXP-001'].indexOf(c.id)>=0;
+    }).map(function(c){return c.id;}).filter(function(id,i,a){return a.indexOf(id)===i;});
+    var shared={kind:'ISOLATED_INCIDENT_LUX_CONTRIBUTION_RATIO',
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      keyLightId:keyLightId,fillLightId:fillLightId,bookCardIds:bookCardIds,
+      sceneContrastVerified:false,cameraExposureVerified:false,
+      manufacturerPhotometricsUsed:false};
+    function blocked(why){return freezeJson(Object.assign({},shared,{
+      status:'NOT_COMPARABLE',reason:why,ratio:null,keyLux:null,fillLux:null,
+      minutesApart:null
+    }));}
+    if(plan.mode!=='own'||!keyLight||!fillLight||keyLight.id===fillLight.id||
+      !keyLight.available||!fillLight.available||keyLight.role!=='key'||fillLight.role!=='fill')
+      return blocked('INVALID_KEY_FILL_PAIR');
+    var key=records.find(function(r){return r.lightId===keyLight.id;});
+    var fill=records.find(function(r){return r.lightId===fillLight.id;});
+    if(!key||!fill)return blocked('MISSING_USER_REPORTED_LUX');
+    if(key.protocolVersion!==2||fill.protocolVersion!==2)
+      return blocked('LEGACY_READING_LACKS_CONTEXT');
+    if(key.meterModel!==fill.meterModel)return blocked('DIFFERENT_METER_IDENTITIES');
+    if(key.measurementPoint!==fill.measurementPoint)return blocked('DIFFERENT_MEASUREMENT_POINTS');
+    if(key.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA'||
+      fill.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA')
+      return blocked('SENSOR_ORIENTATION_NOT_COMMON_CAMERA_AXIS');
+    if(!key.measuredAtLocal||!fill.measuredAtLocal)
+      return blocked('MISSING_MEASUREMENT_TIMES');
+    var first=Date.parse(key.measuredAtLocal+':00Z'),second=Date.parse(fill.measuredAtLocal+':00Z');
+    if(!Number.isFinite(first)||!Number.isFinite(second))
+      return blocked('INVALID_MEASUREMENT_TIMES');
+    var minutesApart=Math.abs(first-second)/60000;
+    if(minutesApart>15)return blocked('MEASUREMENT_TIMES_TOO_FAR_APART');
+    // Both zero and denominator zero are meaningful meter readings, not finite ratios.
+    if(key.lux<=0||fill.lux<=0)return blocked('ZERO_READING_NO_FINITE_RATIO');
+    var ratio=Number((key.lux/fill.lux).toPrecision(6));
+    if(!Number.isFinite(ratio)||ratio<=0)return blocked('NON_FINITE_RATIO');
+    return freezeJson(Object.assign({},shared,{
+      status:'COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY',
+      reason:null,ratio:ratio,keyLux:key.lux,fillLux:fill.lux,
+      meterModel:key.meterModel,measurementPoint:key.measurementPoint,
+      receptorOrientation:'RECEPTOR_TOWARD_CAMERA',minutesApart:minutesApart
+    }));
+  }
   function restoreRevisions(items) {
     if(!Array.isArray(items) || !items.length)throw new Error('Empty revision history');
     var revisions=JSON.parse(canonicalJson(items));
@@ -937,6 +991,7 @@
     createDistanceMeasurementRevision:createDistanceMeasurementRevision,
     createMountedOpticRevision:createMountedOpticRevision,
     createIncidentLuxRevision:createIncidentLuxRevision,
+    compareKeyFillMeasurements:compareKeyFillMeasurements,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};

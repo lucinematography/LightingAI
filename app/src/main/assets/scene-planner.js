@@ -538,6 +538,19 @@
         lines.push('Ovo nije fabrički lux, nije AI procena niti dokaz ekspozicije cele scene.');
       });
     }
+    if(revisions.length&&core().compareKeyFillMeasurements){
+      var keys=plan.lights.filter(function(l){return l.role==='key'&&l.available;});
+      var fills=plan.lights.filter(function(l){return l.role==='fill'&&l.available;});
+      if(keys.length===1&&fills.length===1){
+        var comparison=core().compareKeyFillMeasurements(revisions[revisions.length-1],keys[0].id,fills[0].id);
+        lines.push('','KEY/FILL — ODNOS IZDVOJENIH MERENJA, NIJE KONTRAST SCENE');
+        lines.push(comparison.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY'?
+          'Odnos '+comparison.ratio+':1 ('+comparison.keyLux+' lx / '+comparison.fillLux+
+          ' lx); instrument i metapodaci prijavljeni od korisnika, nezavisno nepotvrđeni.':
+          'Nije uporedivo: '+comparison.reason);
+        lines.push('Knjiški principi prisutni u planu: '+(comparison.bookCardIds.join(', ')||'nema'));
+      }
+    }
     lines.push('','OGRANIČENJA',...plan.limitations,'','BEZBEDNOST',...plan.safetyNotes);
     return lines.join('\n');
   }
@@ -607,6 +620,20 @@
               '<div>Nema pouzdanog poklapanja sa tačnom tabelom proizvođača. Lux ne računamo interpolacijom.</div>')+
             '<div>Stvarni lux: nije izmeren; proveriti svetlomerom i kamerom na setu.</div></div>';
         }).join('')+'</details>';
+    }
+    if(current&&core().compareKeyFillMeasurements){
+      var keyLights=plan.lights.filter(function(l){return l.role==='key'&&l.available;});
+      var fillLights=plan.lights.filter(function(l){return l.role==='fill'&&l.available;});
+      if(keyLights.length===1&&fillLights.length===1){
+        var pair=core().compareKeyFillMeasurements(current,keyLights[0].id,fillLights[0].id);
+        el('sp-summary').innerHTML+='<details class="sp-lamp"><summary><b>KEY / FILL — PROVERA UPOREDIVOSTI</b></summary>'+
+          (pair.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY'?
+            '<p>'+esc(pair.ratio)+':1, key '+esc(pair.keyLux)+' lx / fill '+esc(pair.fillLux)+
+            ' lx. Samo izolovani doprinosi, podaci korisnika, ne kontrast kadra.</p>':
+            '<p>Odnos nije pouzdano uporediv: '+esc(pair.reason)+'.</p>')+
+          '<p>Stručni principi iz plana: '+esc(pair.bookCardIds.join(', ')||'nema relevantne kartice')+
+          '. Bez univerzalnog idealnog odnosa; proveriti senke i izgled kamerom. Očitavanja i kalibracija nisu nezavisno potvrđeni.</p></details>';
+      }
     }
     var camera=plan.cameraSettings||{};
     var cameraBox=el('sp-camera-result');

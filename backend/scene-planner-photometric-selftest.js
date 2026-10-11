@@ -52,7 +52,7 @@ const unmeasured=buildPhotometricBasis(unmeasuredReq,core.sanitizePlan(rawLight,
   fixtures,[]);
 assert.equal(unmeasured.entries[0].estimatedXMetres,null);
 assert.equal(unmeasured.geometry.userMarkedMeasured,false);
-const invalidGeometry=core.request({...raw,roomWidthM:101,dimensionsMeasured:true});
+const invalidGeometry=canonicalInventory(core.request({...raw,roomWidthM:101,dimensionsMeasured:true}),fixtures);
 assert.equal(invalidGeometry.roomWidthM,null);
 assert.equal(invalidGeometry.dimensionsMeasured,false);
 const invalidPlan=core.sanitizePlan(rawLight,invalidGeometry,'ai');

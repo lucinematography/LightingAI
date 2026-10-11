@@ -1246,3 +1246,35 @@ comparison results, lineage rejection, inherited measurement revisions,
 and the visible UI contract. Only four approved Scene Planner files on
 feature/scene-planner-first-release change. Draft PR #415 remains open;
 main, K0, K1, release, publishing and APK installation are not touched.
+
+
+### Full DoP change history in Android UI, JSON, and text handoff (2026-10-11)
+
+The verified offline creative-edit history now shows **all actual DoP
+parent/child plan changes**, rather than only the last revision's copied
+label. Each entry displays chronological revision sequence/IDs, the precise
+DoP instruction and old/new numeric planned fixture and camera values.
+The most recent entry is expanded by default; older entries are collapsible.
+All relevant original immutable revisions remain intact. The full timeline
+is included in the Android share-text report and in JSON as the optional
+derived `dopPlannedEditHistory` field. Existing export version and revision
+schema are unchanged. Photo/video source bytes are not included.
+
+`listDopPlannedEditEvents(history)` first validates the complete SHA-256
+revision chain, examines actual changes to the six permitted light and six
+camera parameters, and calls the strict existing direct-revision comparison
+only when planned numeric parameters genuinely changed. Measurement, optic
+and camera-signal records may carry an inherited DoP label, but those do NOT
+count as new creative edits. Conversely, two consecutive authentic DoP edits
+with identical wording and changed-field labels but different numeric values
+both count: simple metadata string comparison would have dropped the second.
+Any claimed creative event whose actual values contradict its recorded
+change ledger fails closed. History and all nested comparisons are immutable.
+
+Regression coverage includes two separated creative revisions with an
+intervening real meter entry, repeated identical DoP metadata with different
+values, camera-only edits, no-edit histories, forged/skipped lineage, frozen
+results and the UI/export handoff. All outputs retain explicit false flags
+for real lamp control, lux verification, measured camera exposure and AI
+video relighting. This feature neither requests an AI generation nor
+modifies `main`, K0/K1, releases, or installed Android applications.

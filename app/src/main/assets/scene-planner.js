@@ -565,6 +565,28 @@
           'Provera na setu: '+card.validation,'Ograničenje: '+card.limitations);
       });
     }
+    // Text shared with the DoP contains the full validated creative timeline,
+    // not just the last label copied into a later on-set measurement revision.
+    if(plan===state.plan&&revisions.length&&core().listDopPlannedEditEvents){
+      var doPHistory=core().listDopPlannedEditEvents(revisions);
+      if(doPHistory.eventCount){
+        lines.push('','ISTORIJA DoP KREATIVNIH IZMENA — SAMO PREDLOŽENI PARAMETRI');
+        doPHistory.events.forEach(function(item,index){
+          lines.push('Izmena '+(index+1)+' (revizije '+item.beforeSequence+' → '+
+            item.afterSequence+'): '+item.reason);
+          item.lightChanges.forEach(function(c){
+            lines.push('Rasveta '+c.lightId+' / '+c.field+': '+
+              (c.before===null?'nije uneto':c.before)+' → '+c.after);
+          });
+          item.cameraChanges.forEach(function(c){
+            lines.push('Kamera '+c.field+': '+
+              (c.before===null?'nije uneto':c.before)+' → '+c.after);
+          });
+        });
+        lines.push('Provere: istorija je izvedena iz SHA-256 povezanih revizija. '+
+          'Nema komandi lampama, potvrđenog lux-a, izmerene ekspozicije ni video relight-a.');
+      }
+    }
     if(plan.sceneIncidentLuxReading){
       var sceneMeterText=plan.sceneIncidentLuxReading;
       lines.push('','CELA POSTAVKA — KORISNIKOVO OČITAVANJE NA JEDNOJ TAČKI (NE EKSPОZICIJA)',
@@ -1382,41 +1404,45 @@
             '<div>Ograničenje: '+esc(card.limitations)+'</div></div>';
         }).join('')+'</details>';
     }
-    // Read-only before/after history: skip physical reading revisions carrying
-    // the old DoP plan label instead of treating them as creative edits.
-    var plannedComparison=null;
-    if(plan.dopLocalVariant&&core().compareDopPlannedRevisions){
-      for(var index=revisions.length-1;index>0;index--){
-        if(!revisions[index].plan.dopLocalVariant)continue;
-        try{
-          plannedComparison=core().compareDopPlannedRevisions(
-            revisions[index-1],revisions[index]);
-          break;
-        }catch(irrelevantRevision){
-          // Measurement and optic revisions can retain the prior DoP label.
-        }
+    // Display actual chronological creative-edit events, never copied meter
+    // revisions carrying an inherited DoP label.
+    var dopHistory=null;
+    if(revisions.length&&core().listDopPlannedEditEvents){
+      try{dopHistory=core().listDopPlannedEditEvents(revisions);}
+      catch(error){
+        html+='<p class="sp-note">Istorija DoP poređenja nije potvrđena: '+
+          esc(error.message)+'. Izmene se ne prikazuju kao proverene.</p>';
       }
     }
-    if(plannedComparison){
+    if(dopHistory&&dopHistory.eventCount){
       function plannedRow(change,labels){
         var field=labels.find(function(f){return f.k===change.field;});
         return '<li>'+(change.lightId?'<b>'+esc(change.lightId)+'</b> / ':'')+
-          esc(field?field.name:change.field)+': <b>'+esc(change.before===null?'nije uneto':String(change.before))+
+          esc(field?field.name:change.field)+': <b>'+
+          esc(change.before===null?'nije uneto':String(change.before))+
           '</b> → <b>'+esc(String(change.after))+'</b></li>';
       }
-      html+='<details class="sp-lamp" open><summary><b>DoP — PRE / POSLE (SAMO PLAN)</b></summary>'+
-        '<p class="sp-note">Poslednja potvrđena kreativna izmena između revizija '+
-        esc(plannedComparison.beforeRevisionId.slice(0,16))+' i '+
-        esc(plannedComparison.afterRevisionId.slice(0,16))+'.</p>'+
-        '<p>Instrukcija: '+esc(plannedComparison.reason)+'</p>'+
-        '<p><b>RASVETA — PREDLOŽENE VREDNOSTI</b></p><ul>'+
-        (plannedComparison.lightChanges.map(function(c){return plannedRow(c,lightFields);}).join('')||
-          '<li>Bez promene predloga za rasvetu.</li>')+'</ul>'+
-        '<p><b>KAMERA — PREDLOŽENE VREDNOSTI</b></p><ul>'+
-        (plannedComparison.cameraChanges.map(function(c){return plannedRow(c,cameraFields);}).join('')||
-          '<li>Bez promene predloga za kameru.</li>')+'</ul>'+
-        '<p class="sp-note">Poređenje dva sačuvana plana: stvarni lux, mogućnosti lampe, '+
-        'ekspozicija kamere, fizička postavka i video relighting nisu potvrđeni.</p></details>';
+      html+='<details class="sp-lamp" open><summary><b>DoP — PRE / POSLE (SAMO PLAN) • ISTORIJA ('+
+        dopHistory.eventCount+')</b></summary>'+
+        '<p class="sp-note">Sve potvrđene lokalne kreativne izmene po redosledu. '+
+        'Poslednja potvrđena kreativna izmena je otvorena; prethodne možeš proširiti.</p>'+
+        dopHistory.events.map(function(item,index){
+          return '<details class="sp-lamp" '+(index===dopHistory.events.length-1?'open':'')+
+            '><summary><b>DoP izmena '+(index+1)+' • revizija '+
+            esc(item.beforeSequence)+' → '+esc(item.afterSequence)+'</b></summary>'+
+            '<p class="sp-note">Provereni zapisi: '+esc(item.beforeRevisionId.slice(0,16))+
+            ' → '+esc(item.afterRevisionId.slice(0,16))+'</p>'+
+            '<p>Instrukcija: '+esc(item.reason)+'</p>'+
+            '<p><b>RASVETA — PREDLOŽENE VREDNOSTI</b></p><ul>'+
+            (item.lightChanges.map(function(c){return plannedRow(c,lightFields);}).join('')||
+              '<li>Bez promene predloga za rasvetu.</li>')+'</ul>'+
+            '<p><b>KAMERA — PREDLOŽENE VREDNOSTI</b></p><ul>'+
+            (item.cameraChanges.map(function(c){return plannedRow(c,cameraFields);}).join('')||
+              '<li>Bez promene predloga za kameru.</li>')+'</ul></details>';
+        }).join('')+
+        '<p class="sp-note">Ovo je istorija zamišljenih vrednosti, ne istorija '+
+        'stvarnih pomeranja lampi, svetlomerne kalibracije, ekspozicije niti '+
+        'promena originalnog snimka.</p></details>';
     }
     plan.lights.forEach(function(l){
       html+='<details class="sp-lamp"><summary><b>'+esc(l.id)+' / '+
@@ -1872,9 +1898,12 @@
     catch(error){if(error.name!=='AbortError')exportMessage('Deljenje nije uspelo.',true);}
   }
   function exportObject(){
+    var doPHistory=revisions.length&&core().listDopPlannedEditEvents?
+      core().listDopPlannedEditEvents(revisions):null;
     return {format:'LightingAI.ScenePlanner.v1',savedAt:new Date().toISOString(),
       plan:state.plan,revisionSchemaVersion:1,revisions:revisions,
-      notes:'Originalni foto i video materijal nisu uključeni u JSON izvoz.'};
+      dopPlannedEditHistory:doPHistory,
+      notes:'Originalni foto i video materijal nisu uključeni u JSON izvoz. DoP istorija je izvedena iz revizija, nije fizički izmerena.'};
   }
   function restorePlanHistory(){
     if(revisions.length)return true;

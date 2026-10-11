@@ -1196,6 +1196,45 @@
       cameraExposureVerified:false,videoRelightGenerated:false
     });
   }
+  // An edit is an actual before/after parameter change. Measurement and
+  // mounted-optic revisions may inherit the last DoP label without a new edit.
+  function listDopPlannedEditEvents(history) {
+    var historyRevisions=restoreRevisions(history);
+    var lightKeys=['x','y','heightM','distanceM','intensityPct','kelvin'];
+    var cameraKeys=['fps','shutterAngle','aperture','iso','whiteBalanceK','ndStops'];
+    var events=[];
+    for(var i=1;i<historyRevisions.length;i++){
+      var before=historyRevisions[i-1],after=historyRevisions[i];
+      if(!after.plan.dopLocalVariant)continue;
+      var changed=before.plan.lights.length!==after.plan.lights.length;
+      if(!changed){
+        changed=before.plan.lights.some(function(oldLight){
+          var newLight=after.plan.lights.find(function(l){return l.id===oldLight.id;});
+          return !newLight||lightKeys.some(function(k){return oldLight[k]!==newLight[k];});
+        });
+      }
+      if(!changed){
+        changed=cameraKeys.some(function(k){
+          return before.plan.cameraSettings[k]!==after.plan.cameraSettings[k];
+        });
+      }
+      if(!changed)continue;
+      // A changed planned value with a purported DoP record MUST match its
+      // verified ledger. Do not silently turn it into an unverified edit event.
+      var verified=compareDopPlannedRevisions(before,after);
+      events.push(Object.assign({
+        beforeSequence:before.sequence,afterSequence:after.sequence
+      },verified));
+    }
+    return freezeJson({
+      contract:'lightingai-dop-edit-event-history/1',
+      currentRevisionId:historyRevisions[historyRevisions.length-1].revisionId,
+      historyRevisionCount:historyRevisions.length,eventCount:events.length,
+      events:events,physicalFixtureCommandsPerformed:false,
+      meterEvidenceVerified:false,cameraExposureVerified:false,
+      videoRelightGenerated:false
+    });
+  }
   function refreshAttestedOpticReference(plan, lightId) {
     var entry=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
       plan.photometricBasis.entries.find(function(e){return e.lightId===lightId;}):null;
@@ -2048,6 +2087,7 @@
     createSceneIncidentLuxRevision:createSceneIncidentLuxRevision,
     createDopLightingVariantRevision:createDopLightingVariantRevision,
     compareDopPlannedRevisions:compareDopPlannedRevisions,
+    listDopPlannedEditEvents:listDopPlannedEditEvents,
     createCameraGrayCardWaveformRevision:createCameraGrayCardWaveformRevision,
     compareKeyFillMeasurements:compareKeyFillMeasurements,
     assessSceneMeterAlignment:assessSceneMeterAlignment,

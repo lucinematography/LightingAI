@@ -443,6 +443,59 @@ assert.throws(()=>core.compareDopPlannedRevisions(dopVariant,dopFollowup),
 assert.throws(()=>core.compareDopPlannedRevisions(ratioD,dopFollowup),
   /direct creative/i,'skipping the actual edit event is forbidden');
 
+// The chronological DoP audit must preserve every real creative event even
+// after an inherited measurement revision, without inventing a new DoP event.
+const secondDoP=core.createDopLightingVariantRevision(dopFollowup,{
+  confirmed:true,reason:'DoP sada trazi blago pojacanje key izvora',
+  lightEdits:[{lightId:'L1',intensityPct:50}],cameraEdits:{}
+});
+const twoDoPHistory=core.listDopPlannedEditEvents([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,dopVariant,dopFollowup,secondDoP
+]);
+assert.equal(twoDoPHistory.contract,'lightingai-dop-edit-event-history/1');
+assert.equal(twoDoPHistory.eventCount,2);
+assert.equal(twoDoPHistory.historyRevisionCount,8);
+assert.equal(twoDoPHistory.currentRevisionId,secondDoP.revisionId);
+assert.deepEqual(twoDoPHistory.events.map(c=>c.afterRevisionId),
+  [dopVariant.revisionId,secondDoP.revisionId],
+  'inherited on-set meter child must not be counted as a creative DoP edit');
+assert.equal(twoDoPHistory.events[0].beforeSequence,ratioD.sequence);
+assert.equal(twoDoPHistory.events[1].beforeRevisionId,dopFollowup.revisionId);
+assert.deepEqual(twoDoPHistory.events[1].lightChanges.map(c=>c.field),['intensityPct']);
+assert.equal(twoDoPHistory.events[1].lightChanges[0].before,45);
+assert.equal(twoDoPHistory.events[1].lightChanges[0].after,50);
+assert.equal(twoDoPHistory.events[1].cameraChanges.length,0);
+assert.ok(Object.isFrozen(twoDoPHistory));
+assert.ok(Object.isFrozen(twoDoPHistory.events));
+assert.ok(Object.isFrozen(twoDoPHistory.events[0].lightChanges));
+for(const flag of ['physicalFixtureCommandsPerformed','meterEvidenceVerified',
+  'cameraExposureVerified','videoRelightGenerated'])
+  assert.equal(twoDoPHistory[flag],false);
+assert.equal(core.listDopPlannedEditEvents([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,dopVariant,dopFollowup
+]).eventCount,1);
+assert.equal(core.listDopPlannedEditEvents([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD
+]).eventCount,0);
+const sameDopText='Isti DoP zahtev, nova jačina istog izvora';
+const sameDopFirst=core.createDopLightingVariantRevision(ratioD,{
+  confirmed:true,reason:sameDopText,
+  lightEdits:[{lightId:'L1',intensityPct:55}],cameraEdits:{}
+});
+const sameDopSecond=core.createDopLightingVariantRevision(sameDopFirst,{
+  confirmed:true,reason:sameDopText,
+  lightEdits:[{lightId:'L1',intensityPct:65}],cameraEdits:{}
+});
+assert.deepEqual(sameDopFirst.plan.dopLocalVariant,sameDopSecond.plan.dopLocalVariant,
+  'same description and same changed field legitimately occur twice');
+assert.equal(core.listDopPlannedEditEvents([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,sameDopFirst,sameDopSecond
+]).eventCount,2,'identical last-edit provenance must not hide a second numeric change');
+assert.throws(()=>core.listDopPlannedEditEvents([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,dopFollowup
+]),/Broken revision history/i);
+assert.throws(()=>core.listDopPlannedEditEvents([tamperedDop]),/Invalid|integrity|mismatch/i);
+
 const cameraOnlyEdit=core.createDopLightingVariantRevision(ratioD,{
   confirmed:true,reason:'DoP menja samo shutter za plan',lightEdits:[],
   cameraEdits:{shutterAngle:'90'}
@@ -450,6 +503,9 @@ const cameraOnlyEdit=core.createDopLightingVariantRevision(ratioD,{
 assert.equal(cameraOnlyEdit.plan.cameraSettings.shutterAngle,90);
 const cameraOnlyDiff=core.compareDopPlannedRevisions(ratioD,cameraOnlyEdit);
 assert.equal(cameraOnlyDiff.lightChanges.length,0);
+assert.equal(core.listDopPlannedEditEvents([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,cameraOnlyEdit
+]).events[0].cameraChanges[0].field,'shutterAngle');
 assert.deepEqual(cameraOnlyDiff.cameraChanges,[{field:'shutterAngle',
   before:ratioD.plan.cameraSettings.shutterAngle,after:90}]);
 assert.deepEqual(cameraOnlyEdit.plan.incidentLuxReadings,ratioD.plan.incidentLuxReadings,
@@ -1740,9 +1796,13 @@ assert.match(uiSource,/cameraWaveformEvidence/);
 assert.match(uiSource,/referenceDifferenceIrePoints/);
 assert.match(uiSource,/Korisnički zadat referentni nivo/);
 assert.match(uiSource,/createDopLightingVariantRevision\(latest/);
-assert.match(uiSource,/compareDopPlannedRevisions\(/);
+assert.match(uiSource,/listDopPlannedEditEvents\(revisions\)/);
+assert.match(uiSource,/dopPlannedEditHistory:doPHistory/);
+assert.match(uiSource,/ISTORIJA DoP KREATIVNIH IZMENA/);
 assert.match(uiSource,/DoP — PRE \/ POSLE \(SAMO PLAN\)/);
 assert.match(uiSource,/Poslednja potvrđena kreativna izmena/);
+assert.match(uiSource,/DoP izmena/);
+assert.match(uiSource,/historyRevisionCount|eventCount/);
 assert.match(uiSource,/sp-dop-local-save/);
 assert.match(uiSource,/sp-dop-local-confirmed/);
 assert.match(uiSource,/sp-dop-local-reason/);

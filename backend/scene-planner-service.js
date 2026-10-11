@@ -141,7 +141,7 @@ export async function generateScenePlannerPlan(openai, body, catalog) {
     cards:evidence.map(card=>({
       id:card.id,title:card.title,principle:card.principle,application:card.application,
       limitations:card.limitations,references:card.evidence.map(e=>({
-        source:e.source_id,author:e.author,pdfPage:e.pdf_page,printedPage:e.printed_page,
+        source:e.source_id,title:e.title,author:e.author,edition:e.edition,pdfPage:e.pdf_page,printedPage:e.printed_page,
         verification:e.recordVerification
       }))
     }))

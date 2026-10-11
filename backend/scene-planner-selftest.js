@@ -99,6 +99,11 @@ assert.ok(frontend.includes('id="sp-scene-datetime"'),"shooting time is optional
 assert.ok(frontend.includes("el('sp-scene-lat').value=''"),"changing cities must clear stale GPS coordinates");
 assert.ok(frontend.includes("videoFrames(state.videoUrl)"),"must sample video before AI request");
 assert.ok(frontend.includes("Originalni video ostaje na telefonu"),"raw video stays on device");
+assert.ok(frontend.includes("binding:currentVideoBinding()"),"paid video must capture immutable revision binding");
+assert.ok(frontend.includes("binding:pending.binding"),"paid submission receipt must persist its original revision");
+assert.ok(frontend.includes("binding:value.binding||videoReceipt&&videoReceipt.binding"),"receipt must retain its original binding during status updates");
+assert.ok(frontend.includes("videoReceipt.binding.planHash.slice(0,12)"),"video result must display plan identity");
+assert.ok(frontend.includes("Prethodni AI video nema pouzdanu vezu sa planom"),"legacy unbound receipts must fail closed");
 assert.ok(frontend.includes("sp-mode"),"mode selection required");
 assert.ok(frontend.includes("sp-plot"),"2D light plot required");
 assert.ok(catalogUi.includes("lightingai-scene-planner-script"),"AI navigation entry required");

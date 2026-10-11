@@ -218,6 +218,11 @@ const exactAllowed = new Set([
   'backend/scene-planner-knowledge-adapter.js',
   'backend/scene-planner-knowledge-adapter-selftest.js',
   'docs/SCENE_PLANNER_KNOWLEDGE_K0.md',
+  // K1: isolated read-only source audit and professional brief, no K0 rewrites.
+  'backend/scene-planner-knowledge-review.js',
+  'backend/scene-planner-knowledge-k1.js',
+  'backend/scene-planner-knowledge-k1-selftest.js',
+  'docs/SCENE_PLANNER_KNOWLEDGE_K1.md',
   'docs/SCENE_PLANNER_PHASE3B.md',
   'backend/scene-planner-video.js',
   'backend/scene-planner-video-selftest.js',

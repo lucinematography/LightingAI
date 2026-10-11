@@ -602,7 +602,7 @@ const alteredWave=JSON.parse(JSON.stringify(waveRev));
 alteredWave.plan.cameraGrayCardWaveformReading.waveformIre=90;
 assert.throws(()=>core.verifyRevision(alteredWave),/integrity|Invalid|mismatch/i);
 const alteredCamera=JSON.parse(JSON.stringify(waveRev));
-alteredCamera.plan.cameraSettings.iso=800;
+alteredCamera.plan.cameraSettings.iso=alteredCamera.plan.cameraSettings.iso===800?1600:800;
 assert.throws(()=>core.verifyRevision(alteredCamera),
   /stale|integrity|Invalid/i,'waveform must bind to exact camera setting fingerprint');
 const fakeReference=JSON.parse(JSON.stringify(waveRev));

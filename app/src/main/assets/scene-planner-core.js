@@ -598,10 +598,47 @@
     });
     if(readings.length&&plan.dataStatus.distanceMeasurements!=='user-reported-not-independently-verified')
       throw new Error('Unlabeled fixture distance measurement');
+    // Only an explicitly attested mounted optic can unlock a published reference.
+    var attestations=plan.opticConfirmations===undefined?[]:plan.opticConfirmations;
+    if(!Array.isArray(attestations)||attestations.length>MAX_LIGHTS)
+      throw new Error('Invalid mounted optic evidence');
+    var opticsByLight=Object.create(null);
+    attestations.forEach(function(a){
+      if(!a||typeof a!=='object'||!/^L[1-9][0-9]{0,8}$/.test(a.lightId)||
+        opticsByLight[a.lightId]||plan.mode!=='own'||
+        a.source!=='USER_REPORTED_MOUNTED_OPTIC_NOT_INDEPENDENTLY_VERIFIED'||
+        a.userAttested!==true||typeof a.opticId!=='string'||a.opticId.length>60)
+        throw new Error('Invalid mounted optic evidence');
+      var light=plan.lights.find(function(l){return l.id===a.lightId;});
+      var basis=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
+        plan.photometricBasis.entries.find(function(e){return e.lightId===a.lightId;}):null;
+      if(!light||!light.available||light.fixtureId!==a.fixtureId||!basis||
+        !basis.requiresAttestedOptic||basis.fixtureId!==a.fixtureId||
+        !Array.isArray(basis.samples)||!basis.samples.some(function(sample){return sample.opticId===a.opticId;}))
+        throw new Error('Mounted optic is not a verified profile option for this light');
+      opticsByLight[a.lightId]=a;
+    });
+    if(attestations.length&&plan.dataStatus.mountedOptics!=='user-reported-not-independently-verified')
+      throw new Error('Unlabeled on-set optic confirmation');
     if(plan.photometricBasis && Array.isArray(plan.photometricBasis.entries)){
       plan.photometricBasis.entries.forEach(function(e){
         if(!e||e.onSetLux!==null)throw new Error('Invalid on-set photometric claim');
         var reading=readingIds[e.lightId];
+        var verifiedOptic=opticsByLight[e.lightId];
+        var lightForOptic=plan.lights.find(function(l){return l.id===e.lightId;});
+        if(e.requiresAttestedOptic){
+          var selectedOptic=verifiedOptic&&verifiedOptic.fixtureId===e.fixtureId?verifiedOptic.opticId:null;
+          if((e.attestedOpticId||null)!==selectedOptic||!lightForOptic)
+            throw new Error('Missing or mismatched physical optic confirmation');
+          var opticSamples=(Array.isArray(e.samples)?e.samples:[]).filter(function(s){
+            return selectedOptic!==null&&s.opticId===selectedOptic;
+          });
+          var expectedMatch=!!(selectedOptic&&opticSamples.length&&lightForOptic.available&&
+            lightForOptic.intensityPct===100&&lightForOptic.kelvin===e.cctK&&
+            !lightForOptic.modifier&&opticSamples[0].beamAngleDeg===lightForOptic.beamAngleDeg);
+          if(e.configurationMatchesReference!==expectedMatch)
+            throw new Error('Optic reference configuration is not supported');
+        }
         if(e.measuredDistanceM!==null && (!reading || reading.fixtureId!==e.fixtureId ||
           reading.distanceM!==e.measuredDistanceM))
           throw new Error('Fixture distance source mismatch');
@@ -616,6 +653,8 @@
           if(!reading||!light||e.configurationMatchesReference!==true||!sample||
             selected.lux!==sample.lux||selected.distanceM!==sample.distanceM||
             selected.beamAngleDeg!==sample.beamAngleDeg||
+            (e.requiresAttestedOptic && (!verifiedOptic||selected.opticId!==verifiedOptic.opticId||
+              sample.opticId!==verifiedOptic.opticId))||
             selected.status!=='MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT')
             throw new Error('Invalid manufacturer sample at reported distance');
         }
@@ -636,6 +675,63 @@
     var next=plan.lights.reduce(function(n,l){return Math.max(n,Number(l.id.slice(1))+1);},parent?parent.nextLightId:1);
     var revision={schemaVersion:1,sceneId:sceneId,parentRevisionId:parent?parent.revisionId:null,
       sequence:parent?parent.sequence+1:1,nextLightId:next,plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  function refreshAttestedOpticReference(plan, lightId) {
+    var entry=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
+      plan.photometricBasis.entries.find(function(e){return e.lightId===lightId;}):null;
+    if(!entry||!entry.requiresAttestedOptic)return;
+    var light=plan.lights.find(function(l){return l.id===lightId;});
+    var optic=(plan.opticConfirmations||[]).find(function(a){
+      return a.lightId===lightId&&a.fixtureId===entry.fixtureId;
+    });
+    var measurement=(plan.distanceMeasurements||[]).find(function(a){
+      return a.lightId===lightId&&a.fixtureId===entry.fixtureId;
+    });
+    entry.attestedOpticId=optic?optic.opticId:null;
+    entry.measuredDistanceM=measurement?measurement.distanceM:null;
+    var candidates=(entry.samples||[]).filter(function(s){return optic&&s.opticId===optic.opticId;});
+    entry.configurationMatchesReference=!!(light&&optic&&candidates.length&&light.available&&
+      light.kelvin===entry.cctK&&light.intensityPct===100&&!light.modifier&&
+      light.beamAngleDeg===candidates[0].beamAngleDeg);
+    var matching=entry.configurationMatchesReference&&measurement&&candidates.find(function(s){
+      return s.distanceM===measurement.distanceM&&s.beamAngleDeg===light.beamAngleDeg;
+    });
+    entry.publishedReferenceAtMeasuredDistance=matching?{
+      opticId:optic.opticId,distanceM:matching.distanceM,
+      beamAngleDeg:matching.beamAngleDeg,lux:matching.lux,
+      status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
+    }:null;
+    entry.onSetLux=null;
+  }
+  function createMountedOpticRevision(parent, report) {
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||report.confirmed!==true||
+      typeof report.lightId!=='string'||typeof report.opticId!=='string')
+      throw new Error('Explicit physical mounted-optic confirmation is required');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var light=plan.lights.find(function(l){return l.id===report.lightId;});
+    var basis=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
+      plan.photometricBasis.entries.find(function(e){return e.lightId===report.lightId;}):null;
+    if(plan.mode!=='own'||!light||!light.available||!basis||!basis.requiresAttestedOptic||
+      basis.fixtureId!==light.fixtureId)
+      throw new Error('Verified owned fixture and manufacturer optic profile are required');
+    var opticId=report.opticId;
+    if(!/^[A-Z0-9_]{2,60}$/.test(opticId)||
+      !basis.samples.some(function(sample){return sample.opticId===opticId;}))
+      throw new Error('Unsupported mounted optic for this fixture');
+    var item={lightId:light.id,fixtureId:light.fixtureId,opticId:opticId,
+      source:'USER_REPORTED_MOUNTED_OPTIC_NOT_INDEPENDENTLY_VERIFIED',userAttested:true};
+    plan.opticConfirmations=(plan.opticConfirmations||[])
+      .filter(function(a){return a.lightId!==light.id;}).concat([item])
+      .sort(function(a,b){return Number(a.lightId.slice(1))-Number(b.lightId.slice(1));});
+    plan.dataStatus.mountedOptics='user-reported-not-independently-verified';
+    refreshAttestedOpticReference(plan,light.id);
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
     revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
     revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
     verifyRevision(revision);
@@ -665,6 +761,10 @@
       plan.photometricBasis.entries.forEach(function(e){
         if(e.lightId!==light.id||e.fixtureId!==light.fixtureId)return;
         e.measuredDistanceM=distance;
+        if(e.requiresAttestedOptic){
+          refreshAttestedOpticReference(plan,light.id);
+          return;
+        }
         // Exact published sample at same reported distance and nominal settings only.
         // Lens alignment, target reflectance, modifiers, ambient and on-set lux remain unknown.
         var match=e.configurationMatchesReference===true &&
@@ -706,6 +806,7 @@
   return {VERSION:VERSION, request:request, equipment:equipment, modifiers:modifiers,
     canonicalJson:canonicalJson,sha256:sha256,planHash:planHash,createRevision:createRevision,
     createDistanceMeasurementRevision:createDistanceMeasurementRevision,
+    createMountedOpticRevision:createMountedOpticRevision,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};

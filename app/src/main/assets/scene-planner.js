@@ -518,6 +518,13 @@
         }
       });
     }
+    if(Array.isArray(plan.opticConfirmations)&&plan.opticConfirmations.length){
+      lines.push('','KORISNIK POTVRDIO MONTIRANI REFLEKTOR (NIJE NEZAVISNO PROVEREN)');
+      plan.opticConfirmations.forEach(function(a){
+        lines.push(a.lightId+' / '+a.fixtureId+': '+a.opticId+
+          ' — lično potvrđeno na setu; AI nije identifikovao optički dodatak.');
+      });
+    }
     lines.push('','OGRANIČENJA',...plan.limitations,'','BEZBEDNOST',...plan.safetyNotes);
     return lines.join('\n');
   }
@@ -561,11 +568,14 @@
           return '<div class="sp-note"><b>'+esc(e.lightId)+' / '+esc(e.fixtureId)+'</b>'+
             '<div>Izvor proizvođača: '+esc(e.sourceUrl)+'</div>'+
             '<div>Referentni uslovi: '+esc(e.cctK)+' K, '+esc(e.outputPct)+'% izlaza; '+(e.requiresAttestedOptic?
-              'tačno navedeni optički reflektor iz tabele, čija montaža NIJE potvrđena.':
+              'tačno navedeni optički reflektor iz tabele; status montaže je korisnička potvrda.':
               'spot/flood bez modifikatora.')+'</div>'+
             '<div>Objavljeno (ne na setu): '+e.samples.map(function(s){
               return (s.opticId?esc(s.opticId)+' / ':'')+esc(s.beamAngleDeg)+'° / '+esc(s.distanceM)+' m: '+esc(s.lux)+' lx';
             }).join(' • ')+'</div>'+
+            (e.requiresAttestedOptic?'<div>Montirani optički dodatak: '+
+              (e.attestedOpticId?esc(e.attestedOpticId)+' (prijavio i potvrdio korisnik, nije nezavisno provereno)':
+                'NIJE POTVRĐEN')+'</div>':'')+
             '<div>Parametri plana: '+(e.configurationMatchesReference?
               'nominalno odgovaraju tabeli, ali distanca i stvarni izlaz nisu potvrđeni.':
               'ne odgovaraju u potpunosti uslovima tabele — ne koristiti tabelu za obračun ekspozicije.')+'</div>'+
@@ -575,7 +585,10 @@
             '<div>Udaljenost do subjekta koju je korisnik potvrdio: '+
               (e.measuredDistanceM==null?'nije prijavljena':esc(e.measuredDistanceM)+' m (nije nezavisno proverena)')+'</div>'+
             (e.publishedReferenceAtMeasuredDistance?
-              '<div>Referenca proizvođača ZA ISTU UDALJENOST: '+esc(e.publishedReferenceAtMeasuredDistance.lux)+
+              '<div>Referenca proizvođača ZA ISTU UDALJENOST I PRIJAVLJENI OPTIČKI DODATAK: '+
+              (e.publishedReferenceAtMeasuredDistance.opticId?
+                esc(e.publishedReferenceAtMeasuredDistance.opticId)+' / ':'')+
+              esc(e.publishedReferenceAtMeasuredDistance.lux)+
               ' lx pri '+esc(e.publishedReferenceAtMeasuredDistance.beamAngleDeg)+
               '° — NIJE merenje scene i ne dokazuje ekspoziciju.</div>':
               '<div>Nema pouzdanog poklapanja sa tačnom tabelom proizvođača. Lux ne računamo interpolacijom.</div>')+
@@ -596,6 +609,14 @@
     renderBlocking();
     el('sp-preview').innerHTML=conceptPhoto(plan);
     el('sp-lights').innerHTML=plan.lights.length?plan.lights.map(function(l){
+      var opticBasis=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
+        plan.photometricBasis.entries.find(function(e){
+          return e.lightId===l.id&&e.fixtureId===l.fixtureId&&e.requiresAttestedOptic;
+        }):null;
+      var mounted=(plan.opticConfirmations||[]).find(function(a){return a.lightId===l.id;});
+      var availableOptics=opticBasis?(opticBasis.samples||[]).filter(function(sample,i,all){
+        return sample.opticId&&all.findIndex(function(s){return s.opticId===sample.opticId;})===i;
+      }):[];
       return '<div class="sp-lamp"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
         '<b style="color:#f5c542">'+esc(l.id)+' / '+esc(l.role.toUpperCase())+'</b>'+
         '<span class="sp-pill">'+(l.available?'U INVENTARU':'PREDLOG • NIJE U INVENTARU')+'</span></div>'+
@@ -621,6 +642,22 @@
           '<input type="checkbox" id="sp-distance-verified-'+esc(l.id)+'"> Lično potvrđujem merenje na setu; AI nije merio distancu</label>'+
           '<button type="button" class="sp-btn" data-sp-distance-light="'+esc(l.id)+'">SAČUVAJ MERENJE KAO NOVU REVIZIJU</button>'+
           '<div>Izmerena je samo udaljenost koju korisnik prijavljuje, ne i lux, smer snopa ili ekspozicija.</div></div>':'')+
+        (plan.mode==='own'&&l.available&&opticBasis&&availableOptics.length?
+          '<div class="sp-note" style="margin-top:12px;padding-top:10px;border-top:1px solid #4b4b4b">'+
+          '<label for="sp-optic-'+esc(l.id)+'">FIZIČKI MONTIRANI REFLEKTOR (NE AI PREDLOG)</label>'+
+          '<select id="sp-optic-'+esc(l.id)+'" class="sp-field">'+
+          '<option value="">Izaberi provereni dodatak</option>'+
+          availableOptics.map(function(o){
+            return '<option value="'+esc(o.opticId)+'"'+
+              (mounted&&mounted.opticId===o.opticId?' selected':'')+'>'+
+              esc(o.opticId)+' ('+esc(o.beamAngleDeg)+'°)</option>';
+          }).join('')+'</select>'+
+          '<label style="display:flex;align-items:center;gap:7px;margin:7px 0">'+
+          '<input type="checkbox" id="sp-optic-confirmed-'+esc(l.id)+'">'+
+          ' Potvrđujem da sam fizički proverio montirani dodatak na setu</label>'+
+          '<button type="button" class="sp-btn" data-sp-optic-light="'+esc(l.id)+'">'+
+          'POTVRDI OPTIČKI DODATAK — NOVA REVIZIJA</button>'+
+          '<div>Potvrda dodatka nije potvrda jačine, Kelvina ili lux vrednosti na setu.</div></div>':'')+
         '</div>';
     }).join(''):'<p class="sp-note">Nije moguće napraviti pouzdan izbor lampi iz dostupnog inventara.</p>';
     if(typeof el('sp-lights').querySelectorAll==='function')
@@ -641,6 +678,26 @@
           renderResult();remember();
           status('Udaljenost je sačuvana u novoj reviziji kao korisnički prijavljeno merenje. Lux nije izmeren.');
         }catch(error){status('Merenje nije sačuvano: '+error.message,true);}
+      };
+    });
+    if(typeof el('sp-lights').querySelectorAll==='function')
+      el('sp-lights').querySelectorAll('button[data-sp-optic-light]').forEach(function(btn){
+      btn.onclick=function(){
+        if(state.busy||historyBlocked||!revisions.length)return;
+        var id=btn.getAttribute('data-sp-optic-light');
+        var confirmed=el('sp-optic-confirmed-'+id),field=el('sp-optic-'+id);
+        if(!confirmed||!confirmed.checked){
+          status('Potvrdi da si fizički proverio koji je reflektor montiran na setu.',true);return;
+        }
+        try{
+          var previous=revisions[revisions.length-1];
+          var revision=core().createMountedOpticRevision(previous,{
+            lightId:id,opticId:field&&field.value,confirmed:true
+          });
+          revisions=revisions.concat([revision]);state.plan=revision.plan;
+          renderResult();remember();
+          status('Montirani dodatak je korisnički potvrđen u novoj reviziji. Lux na setu nije izmeren.');
+        }catch(error){status('Optički dodatak nije potvrđen: '+error.message,true);}
       };
     });
     el('sp-warnings').innerHTML='<div class="sp-note" style="margin-top:10px"><b style="color:#f5c542">PROCENE I KOMPROMISI</b><ul>'+

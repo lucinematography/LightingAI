@@ -58,6 +58,80 @@ assert.equal(newDistance.plan.photometricBasis.entries[0].publishedReferenceAtMe
   'never claim optical configuration from AI beam angle alone');
 assert.equal(newDistance.plan.photometricBasis.entries[0].onSetLux,null);
 
+// Mounted optic must be explicitly confirmed on set; it never comes from AI beam estimates.
+const opticOnly=core.createMountedOpticRevision(wrappedRevision,{
+  lightId:'L1',opticId:'HYPER_REFLECTOR_55',confirmed:true
+});
+assert.equal(opticOnly.parentRevisionId,wrappedRevision.revisionId);
+assert.equal(opticOnly.plan.opticConfirmations[0].source,
+  'USER_REPORTED_MOUNTED_OPTIC_NOT_INDEPENDENTLY_VERIFIED');
+assert.equal(opticOnly.plan.opticConfirmations[0].opticId,'HYPER_REFLECTOR_55');
+assert.equal(opticOnly.plan.photometricBasis.entries[0].attestedOpticId,'HYPER_REFLECTOR_55');
+assert.equal(opticOnly.plan.photometricBasis.entries[0].configurationMatchesReference,true);
+assert.equal(opticOnly.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance,null);
+assert.equal(opticOnly.plan.photometricBasis.entries[0].onSetLux,null);
+const opticAndDistance=core.createDistanceMeasurementRevision(opticOnly,{
+  lightId:'L1',distanceM:3,confirmed:true
+});
+assert.deepEqual(opticAndDistance.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance,{
+  opticId:'HYPER_REFLECTOR_55',distanceM:3,beamAngleDeg:55,lux:3500,
+  status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
+});
+assert.equal(opticAndDistance.plan.photometricBasis.entries[0].onSetLux,null);
+const distanceFirst=core.createMountedOpticRevision(newDistance,{
+  lightId:'L1',opticId:'HYPER_REFLECTOR_55',confirmed:true
+});
+assert.deepEqual(distanceFirst.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance,
+  opticAndDistance.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance,
+  'measuring before mounting confirmation has identical trusted reference semantics');
+assert.equal(core.restoreRevisions([wrappedRevision,opticOnly,opticAndDistance]).length,3);
+assert.equal(core.restoreRevisions([wrappedRevision,newDistance,distanceFirst]).length,3);
+const wrongAngle=core.createMountedOpticRevision(wrappedRevision,{
+  lightId:'L2',opticId:'BM1230_MEDIUM',confirmed:true
+});
+assert.equal(wrongAngle.plan.photometricBasis.entries[1].configurationMatchesReference,false,
+  'user-mounted medium beam does not override AI plan with 15-degree beam');
+const wrongAngleDist=core.createDistanceMeasurementRevision(wrongAngle,{
+  lightId:'L2',distanceM:5,confirmed:true
+});
+assert.equal(wrongAngleDist.plan.photometricBasis.entries[1].publishedReferenceAtMeasuredDistance,null);
+const correctedOptic=core.createMountedOpticRevision(wrongAngleDist,{
+  lightId:'L2',opticId:'BM1215_NARROW',confirmed:true
+});
+assert.equal(correctedOptic.plan.opticConfirmations.length,1,'optic replacement must not duplicate a light');
+assert.equal(correctedOptic.plan.photometricBasis.entries[1].configurationMatchesReference,true);
+assert.deepEqual(correctedOptic.plan.photometricBasis.entries[1].publishedReferenceAtMeasuredDistance,{
+  opticId:'BM1215_NARROW',distanceM:5,beamAngleDeg:15,lux:28340,
+  status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
+});
+assert.equal(correctedOptic.plan.photometricBasis.entries[1].onSetLux,null);
+assert.throws(()=>core.createMountedOpticRevision(wrappedRevision,{
+  lightId:'L1',opticId:'BM1215_NARROW',confirmed:true
+}),/Unsupported mounted optic/i);
+assert.throws(()=>core.createMountedOpticRevision(wrappedRevision,{
+  lightId:'L1',opticId:'HYPER_REFLECTOR_55',confirmed:false
+}),/confirmation/i);
+assert.throws(()=>core.createMountedOpticRevision(wrappedRevision,{
+  lightId:'L99',opticId:'HYPER_REFLECTOR_55',confirmed:true
+}),/verified owned fixture/i);
+const incorrectLux=JSON.parse(JSON.stringify(opticAndDistance));
+incorrectLux.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance.lux=999999;
+assert.throws(()=>core.restoreRevisions([wrappedRevision,opticOnly,incorrectLux]),/integrity|invalid|mismatch/i);
+const incorrectOptic=JSON.parse(JSON.stringify(opticAndDistance));
+incorrectOptic.plan.opticConfirmations[0].opticId='BM1230_MEDIUM';
+assert.throws(()=>core.restoreRevisions([wrappedRevision,opticOnly,incorrectOptic]),/invalid|mismatch/i);
+const newPlanAfterOptic=core.createRevision(wrappedPlan,{
+  ...raw,equipment:additionalFixtures.map(f=>({fixtureId:f.id,name:f.model,qty:1}))
+},'ai',opticAndDistance,'new-optic-references');
+assert.ok(!newPlanAfterOptic.plan.opticConfirmations||!newPlanAfterOptic.plan.opticConfirmations.length,
+  'new AI plan must not inherit physical optical attestation');
+assert.equal(newPlanAfterOptic.plan.photometricBasis.entries[0].configurationMatchesReference,false);
+const uiOptics=fs.readFileSync(new URL('../app/src/main/assets/scene-planner.js',import.meta.url),'utf8');
+assert.match(uiOptics,/createMountedOpticRevision\(previous/);
+assert.match(uiOptics,/data-sp-optic-light/);
+assert.match(uiOptics,/Potvrđujem da sam fizički proverio/);
+
+
 assert.deepEqual(refs[0].samples.map(s=>s.lux),[54300,7602,2715,9014,1096,402]);
 assert.deepEqual(refs[1].samples.map(s=>s.lux),[33480,4241,1451,5803,703,268]);
 assert.equal(getManufacturerPhotometricReferences(core.request(raw),fixtures).length,0,

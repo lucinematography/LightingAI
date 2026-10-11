@@ -521,7 +521,7 @@
         '<p class="sp-note">Kurirani principi; stranice još nisu nezavisno stručno potvrđene. Nisu fotometrijska merenja.</p>'+
         plan.knowledgeBasis.cards.map(function(c){
           return '<div class="sp-note"><b>'+esc(c.title)+'</b><div>'+esc(c.principle)+'</div>'+
-            '<div>Primena: '+esc(c.application)+'</div><div>Ograničenja: '+esc(c.limitations)+'</div>'+
+            '<div>Primena: '+esc(c.application)+'</div><div>Provera na setu: '+esc(c.validation||'Potrebna provera sa direktorom fotografije.')+'</div><div>Ograničenja: '+esc(c.limitations)+'</div>'+
             (c.references||[]).map(function(r){return '<div>Izvor: '+esc(r.author||r.source)+
               ' — '+esc(r.title||'Nepoznat naslov')+(r.edition?' ('+esc(r.edition)+')':'')+
               ' • PDF str. '+esc(r.pdfPage)+' • štampana str. '+esc(r.printedPage)+'</div>';}).join('')+'</div>';

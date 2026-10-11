@@ -246,7 +246,7 @@
       });
       if(samples.some(function(s){return s===null;}))return null;
       var sampleIds=samples.map(function(s){return (s.opticId?s.opticId+':':'')+s.beamAngleDeg+':'+s.distanceM;});
-      if((new Set(sampleIds)).size!==6)return null;
+      if((new Set(sampleIds)).size!==reference.lux.length)return null;
       var expectedIds=reference.ids||['15:1','15:3','15:5','45:1','45:3','45:5'];
       if(sampleIds.some(function(x,i){return x!==expectedIds[i]||samples[i].lux!==reference.lux[i];}))return null;
       seen[id]=true;

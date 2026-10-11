@@ -46,6 +46,133 @@ export function compareVisualFrames(a,b){
     confidence:large?'LOW_UNCALIBRATED_HEURISTIC':'UNKNOWN'});
 }
 
+
+// Pure offline grouping of changes across ALL supplied frame records. A raw
+// JSON object passed to this helper does NOT gain decoder/source provenance.
+export function summarizeDecodedCodeContinuity(input){
+  const frames=input?.frames,changes=input?.changes,timeBase=input?.timeBase;
+  if(!Array.isArray(frames)||frames.length<2||frames.length>1800||
+     !Array.isArray(changes)||changes.length!==frames.length-1||
+     !timeBase||!Number.isSafeInteger(timeBase.numerator)||timeBase.numerator<1||
+     !Number.isSafeInteger(timeBase.denominator)||timeBase.denominator<1)fail();
+  frames.forEach((f,i)=>{
+    if(!f||f.index!==i||!Number.isSafeInteger(f.ptsTick)||f.ptsTick<0||
+       !Number.isSafeInteger(f.durationTicks)||f.durationTicks<1||
+       !Number.isSafeInteger(f.ptsTick+f.durationTicks)||
+       (i===0&&f.ptsTick!==0)||
+       (i>0&&f.ptsTick!==frames[i-1].ptsTick+frames[i-1].durationTicks)||
+       typeof f.decodedPixelHash!=='string'||!/^[a-f0-9]{64}$/.test(f.decodedPixelHash)||
+       !f.measurements||!Number.isFinite(f.measurements.y?.mean)||
+       f.measurements.y.mean<0||f.measurements.y.mean>255||
+       !Array.isArray(f.measurements.y?.histogram)||
+       f.measurements.y.histogram.length!==16||
+       !Array.isArray(f.measurements.lumaGrid)||
+       f.measurements.lumaGrid.length!==16)fail();
+  });
+  const expected=frames.slice(1).map((f,i)=>({
+    fromIndex:i,toIndex:i+1,fromPixelHash:frames[i].decodedPixelHash,
+    toPixelHash:f.decodedPixelHash,ptsTick:f.ptsTick,
+    ...compareVisualFrames(frames[i].measurements,f.measurements)
+  }));
+  // Match exactly the look-ahead heuristic of analyzeOriginalVideo; neither
+  // a flash nor an editorial cut may be upgraded to a proven observation.
+  for(let i=0;i<expected.length-1;i++)if(expected[i].candidate&&expected[i+1].candidate&&
+    !compareVisualFrames(frames[i].measurements,frames[i+2].measurements).candidate){
+    expected[i].interpretation=expected[i+1].interpretation='TRANSIENT_FLASH_OR_OTHER_CHANGE';
+  }
+  changes.forEach((change,i)=>{
+    if(!change||core.canonicalJson(change)!==core.canonicalJson(expected[i]))fail();
+  });
+  const intervals=[];let flagged=0,flashWindows=0;
+  for(let start=0;start<changes.length;){
+    const candidate=changes[start].candidate===true;
+    let end=start;
+    while(end+1<changes.length&&(changes[end+1].candidate===true)===candidate)end++;
+    const transitions=changes.slice(start,end+1);
+    const means=frames.slice(start,end+2).map(f=>f.measurements.y.mean);
+    const flashLike=transitions.some(c=>c.interpretation==='TRANSIENT_FLASH_OR_OTHER_CHANGE');
+    if(candidate){flagged+=transitions.length;if(flashLike)flashWindows++;}
+    intervals.push({
+      kind:candidate?'POSSIBLE_CODE_CHANGE_NEEDS_DOP_REVIEW':
+        'NO_HEURISTIC_CHANGE_FLAG_NOT_PROOF_OF_CONTINUITY',
+      firstTransitionIndex:start,lastTransitionIndex:end,
+      fromFrameIndex:start,toFrameIndex:end+1,
+      startPtsTick:frames[start].ptsTick,
+      endPtsTickExclusive:frames[end+1].ptsTick+frames[end+1].durationTicks,
+      transitionCount:transitions.length,
+      rangeOfFrameMeanYCode:Number((Math.max(...means)-Math.min(...means)).toFixed(4)),
+      maxAbsAdjacentMeanYCodeDelta:Number(Math.max(...transitions.map(c=>Math.abs(c.lumaDelta))).toFixed(4)),
+      maxHistogramDistance:Number(Math.max(...transitions.map(c=>c.histogramDistance)).toFixed(4)),
+      hasTransientFlashLikeCandidate:flashLike,
+      confirmedCut:false,confirmedFlicker:false,confirmedPhysicalLightChange:false
+    });
+    start=end+1;
+  }
+  return freeze({
+    contract:'lightingai-untrusted-all-decoded-frame-code-continuity-summary/1',
+    authority:'UNTRUSTED_METRIC_INPUT_NOT_A_DECODER_RECEIPT',
+    sampleFrameCount:frames.length,transitionCount:changes.length,
+    timeBase:{numerator:timeBase.numerator,denominator:timeBase.denominator},
+    startPtsTick:frames[0].ptsTick,
+    endPtsTickExclusive:frames.at(-1).ptsTick+frames.at(-1).durationTicks,
+    candidateTransitionCount:flagged,
+    candidateIntervalCount:intervals.filter(x=>x.kind==='POSSIBLE_CODE_CHANGE_NEEDS_DOP_REVIEW').length,
+    flashLikeCandidateIntervalCount:flashWindows,
+    intervals:intervals,
+    canProveTemporalVisualStability:false,
+    humanShotAndMotionReviewRequired:true,
+    videoRelightGenerated:false
+  });
+}
+
+// Only a genuinely decoded and hash-verified, in-process visual bundle can
+// receive the strong provenance below. This neither decodes again nor renders.
+const trustedContinuityAudits=new WeakSet();
+export function createVerifiedDecodedContinuityAudit(bundle,revision){
+  if(!bundle||!bundle.analysis||!bundle.ingestion)fail();
+  verifyVisualAnalysis(bundle.analysis,bundle.ingestion,revision);
+  const a=bundle.analysis,summary=summarizeDecodedCodeContinuity(a);
+  const record={
+    contract:'lightingai-verified-decoded-code-continuity-audit/1',
+    ...core.videoRevisionBinding(revision),
+    sourceIdentity:a.sourceIdentity,ingestionHash:a.ingestionHash,
+    visualHash:a.visualHash,temporalHash:a.temporalHash,
+    evidence:'LOCALLY_HASH_VERIFIED_ALL_DECODED_YUV420P_FRAMES',
+    decoderVersion:bundle.ingestion.decoder.version,
+    timeBase:summary.timeBase,
+    frameCount:summary.sampleFrameCount,
+    frameTransitionCount:summary.transitionCount,
+    candidateTransitionCount:summary.candidateTransitionCount,
+    candidateIntervalCount:summary.candidateIntervalCount,
+    flashLikeCandidateIntervalCount:summary.flashLikeCandidateIntervalCount,
+    startPtsTick:summary.startPtsTick,
+    endPtsTickExclusive:summary.endPtsTickExclusive,
+    reviewIntervals:summary.intervals,
+    decision:summary.candidateTransitionCount?
+      'REVIEW_POTENTIAL_VISUAL_DISCONTINUITIES':
+      'NO_HEURISTIC_FLAGS_NOT_VERIFIED_STABLE',
+    actualVideoCutConfirmed:false,flickerConfirmed:false,
+    opticalFlowVerified:false,actorMotionVerified:false,
+    sourceColorimetryVerified:false,physicalIlluminanceVerified:false,
+    cameraExposureVerified:false,videoRelightGenerated:false
+  };
+  const audit=freeze({...record,continuityHash:core.planHash(record)});
+  trustedContinuityAudits.add(audit);return audit;
+}
+export function verifyDecodedContinuityAudit(audit,bundle,revision){
+  if(!trustedContinuityAudits.has(audit)||!bundle?.analysis||!bundle?.ingestion)fail();
+  verifyVisualAnalysis(bundle.analysis,bundle.ingestion,revision);
+  const {continuityHash,...record}=audit;
+  if(continuityHash!==core.planHash(record)||
+     audit.visualHash!==bundle.analysis.visualHash||
+     audit.ingestionHash!==bundle.analysis.ingestionHash||
+     audit.temporalHash!==bundle.analysis.temporalHash||
+     audit.sourceIdentity!==bundle.analysis.sourceIdentity)fail();
+  const binding=core.videoRevisionBinding(revision);
+  if(Object.keys(binding).some(k=>audit[k]!==binding[k]))fail();
+  return true;
+}
+
 const trusted=new WeakSet();
 export async function analyzeOriginalVideo(options,revision){
   const ingestion=await ingestOriginalVideo(options,revision);

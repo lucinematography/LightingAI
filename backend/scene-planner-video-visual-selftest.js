@@ -5,7 +5,9 @@ import path from 'node:path';
 import os from 'node:os';
 import {spawnSync} from 'node:child_process';
 import {createRequire} from 'node:module';
-import {measureYuv420p,compareVisualFrames,analyzeOriginalVideo,verifyVisualAnalysis} from './scene-planner-video-visual.js';
+import {measureYuv420p,compareVisualFrames,analyzeOriginalVideo,verifyVisualAnalysis,
+  summarizeDecodedCodeContinuity,createVerifiedDecodedContinuityAudit,
+  verifyDecodedContinuityAudit} from './scene-planner-video-visual.js';
 import {ingestOriginalVideo,streamVerifiedVideoPixels} from './scene-planner-video-ingestion.js';
 const core=createRequire(import.meta.url)('../app/src/main/assets/scene-planner-core.js');
 const revision=core.createRevision({lights:[{fixtureName:'Offline LED',fixtureId:'offline',role:'key'}]},
@@ -49,6 +51,84 @@ test('corrupt buffer, unsupported format and memory dimensions rejected',()=>{
   for(const fn of [()=>measureYuv420p(Buffer.alloc(5),32,32),()=>measureYuv420p(new Uint8Array(1536),32,32),
     ()=>measureYuv420p(Buffer.alloc(1),1921,1080),()=>measureYuv420p(Buffer.alloc(1),Infinity,1)])assert.throws(fn);
 });
+
+// Group every presentation-adjacent decoded frame, not six spaced WebView
+// previews. Pure synthetic inputs NEVER grant verified decoder provenance.
+function syntheticContinuityInput(codeValues,durations){
+  const frames=[];let tick=0;
+  codeValues.forEach((value,index)=>{
+    const framePixels=pixels(value),durationTicks=durations[index];
+    frames.push({index,ptsTick:tick,durationTicks,
+      decodedPixelHash:core.sha256(framePixels),
+      measurements:measureYuv420p(framePixels,32,32)});
+    tick+=durationTicks;
+  });
+  const changes=frames.slice(1).map((f,i)=>({
+    fromIndex:i,toIndex:i+1,fromPixelHash:frames[i].decodedPixelHash,
+    toPixelHash:f.decodedPixelHash,ptsTick:f.ptsTick,
+    ...compareVisualFrames(frames[i].measurements,f.measurements)
+  }));
+  for(let i=0;i<changes.length-1;i++)if(changes[i].candidate&&changes[i+1].candidate&&
+    !compareVisualFrames(frames[i].measurements,frames[i+2].measurements).candidate)
+    changes[i].interpretation=changes[i+1].interpretation='TRANSIENT_FLASH_OR_OTHER_CHANGE';
+  return {frames,changes,timeBase:{numerator:1,denominator:1000}};
+}
+test('decoded-frame candidate intervals preserve every original PTS and VFR duration',()=>{
+  const fixture=syntheticContinuityInput([16,16,235,16,16],[100,200,50,150,300]);
+  const before=core.canonicalJson(fixture),audit=summarizeDecodedCodeContinuity(fixture);
+  assert.equal(audit.authority,'UNTRUSTED_METRIC_INPUT_NOT_A_DECODER_RECEIPT');
+  assert.equal(audit.sampleFrameCount,5);
+  assert.equal(audit.transitionCount,4);
+  assert.equal(audit.startPtsTick,0);
+  assert.equal(audit.endPtsTickExclusive,800);
+  assert.equal(audit.candidateTransitionCount,2);
+  assert.equal(audit.candidateIntervalCount,1);
+  assert.equal(audit.flashLikeCandidateIntervalCount,1);
+  assert.deepEqual(audit.intervals.map(x=>x.kind),[
+    'NO_HEURISTIC_CHANGE_FLAG_NOT_PROOF_OF_CONTINUITY',
+    'POSSIBLE_CODE_CHANGE_NEEDS_DOP_REVIEW',
+    'NO_HEURISTIC_CHANGE_FLAG_NOT_PROOF_OF_CONTINUITY'
+  ]);
+  assert.deepEqual(audit.intervals.map(x=>[x.startPtsTick,x.endPtsTickExclusive]),
+    [[0,300],[100,500],[350,800]]);
+  assert.deepEqual(audit.intervals.map(x=>x.transitionCount),[1,2,1]);
+  assert.equal(audit.intervals[1].hasTransientFlashLikeCandidate,true);
+  assert.equal(audit.intervals[1].maxAbsAdjacentMeanYCodeDelta,219);
+  assert.equal(audit.canProveTemporalVisualStability,false);
+  assert.ok(audit.intervals.every(x=>!x.confirmedCut&&!x.confirmedFlicker&&!x.confirmedPhysicalLightChange));
+  assert.ok(Object.isFrozen(audit)&&Object.isFrozen(audit.intervals)&&Object.isFrozen(audit.intervals[1]));
+  assert.equal(core.canonicalJson(fixture),before,'pure audit must not rewrite original frames');
+  assert.doesNotMatch(JSON.stringify(audit),/decodedPixelHash|base64|filePath|private/i);
+});
+test('no candidate event is not temporal stability or a relit MP4',()=>{
+  const quiet=summarizeDecodedCodeContinuity(syntheticContinuityInput([24,24,24,24],[100,100,200,50]));
+  assert.equal(quiet.candidateTransitionCount,0);
+  assert.equal(quiet.candidateIntervalCount,0);
+  assert.equal(quiet.intervals.length,1);
+  assert.equal(quiet.intervals[0].transitionCount,3);
+  assert.equal(quiet.intervals[0].rangeOfFrameMeanYCode,0);
+  assert.equal(quiet.canProveTemporalVisualStability,false);
+  assert.equal(quiet.videoRelightGenerated,false);
+});
+test('pure grouping fails closed on malformed timing and forged frame changes',()=>{
+  const a=syntheticContinuityInput([16,16,235,16,16],[100,100,100,100,100]);
+  const edit=fn=>{const v=clone(a);fn(v);assert.throws(()=>summarizeDecodedCodeContinuity(v));};
+  edit(x=>x.frames[1].ptsTick+=1);
+  edit(x=>x.frames[0].durationTicks=0);
+  edit(x=>x.frames[2].index=1);
+  edit(x=>x.frames[2].decodedPixelHash='fake');
+  edit(x=>x.frames[2].measurements.y.mean=NaN);
+  edit(x=>x.changes[1].lumaDelta=0);
+  edit(x=>x.changes[1].candidate=false);
+  edit(x=>x.changes[1].interpretation='NO_LARGE_CHANGE');
+  edit(x=>x.changes[1].toPixelHash='a'.repeat(64));
+  edit(x=>x.changes.pop());
+  edit(x=>x.timeBase.denominator=0);
+  assert.throws(()=>summarizeDecodedCodeContinuity(syntheticContinuityInput([30],[100])));
+  assert.throws(()=>createVerifiedDecodedContinuityAudit({analysis:a,ingestion:{}},revision),
+    'untrusted handmade visual JSON must never acquire a verified receipt');
+});
+
 console.log(`${groups} synthetic visual pixel groups passed; no decoder provenance granted.`);
 
 const decoderPath=process.env.SCENE_PLANNER_TEST_FFMPEG;
@@ -80,6 +160,16 @@ else{
       assert.equal(result.analysis.frames[0].measurements.y.stddev,0);
       assert.equal(result.analysis.changes[9].interpretation,'ILLUMINATION_CHANGE_OR_FLASH');
       assert.equal(verifyVisualAnalysis(result.analysis,result.ingestion,revision),true);
+      const qc=createVerifiedDecodedContinuityAudit(result,revision);
+      assert.equal(qc.contract,'lightingai-verified-decoded-code-continuity-audit/1');
+      assert.equal(qc.frameCount,20);assert.equal(qc.frameTransitionCount,19);
+      assert.equal(qc.candidateTransitionCount,1);assert.equal(qc.candidateIntervalCount,1);
+      assert.equal(qc.reviewIntervals.find(x=>x.kind==='POSSIBLE_CODE_CHANGE_NEEDS_DOP_REVIEW').firstTransitionIndex,9);
+      assert.equal(qc.sourceIdentity,result.ingestion.sourceIdentity);
+      assert.equal(qc.visualHash,result.analysis.visualHash);
+      assert.equal(qc.videoRelightGenerated,false);assert.equal(qc.actualVideoCutConfirmed,false);
+      assert.equal(verifyDecodedContinuityAudit(qc,result,revision),true);
+      assert.throws(()=>verifyDecodedContinuityAudit(clone(qc),result,revision));
       const repeated=await analyzeOriginalVideo(opts,revision);
       assert.equal(repeated.analysis.visualHash,result.analysis.visualHash);
     });
@@ -89,6 +179,10 @@ else{
       assert.equal(r.analysis.changes[9].interpretation,'TRANSIENT_FLASH_OR_OTHER_CHANGE');
       assert.equal(r.analysis.changes[10].interpretation,'TRANSIENT_FLASH_OR_OTHER_CHANGE');
       assert.ok(r.analysis.changes.every(c=>!c.confirmedCut));
+      const audit=createVerifiedDecodedContinuityAudit(r,revision);
+      assert.equal(audit.flashLikeCandidateIntervalCount,1);
+      assert.ok(audit.reviewIntervals.some(x=>x.hasTransientFlashLikeCandidate));
+      assert.equal(audit.flickerConfirmed,false);
     });
     await run('gradual illumination and chroma measurements from decoded bytes',async()=>{
       const f=await generate('ramp',Array.from({length:20},(_,i)=>pixels(32+i*8,64+i*5,192-i*5)));
@@ -109,6 +203,10 @@ else{
       const f=await generate('vfr',sequence,true),r=await analyzeOriginalVideo(f,revision);
       assert.equal(r.analysis.frames.length,19);assert.equal(r.analysis.frames[0].durationTicks,200);
       assert.equal(r.analysis.frames[1].ptsTick,200);assert.equal(verifyVisualAnalysis(r.analysis,r.ingestion,revision),true);
+      const qc=createVerifiedDecodedContinuityAudit(r,revision);
+      assert.equal(qc.frameCount,19);
+      assert.equal(qc.reviewIntervals.at(-1).endPtsTickExclusive,
+        r.analysis.frames.at(-1).ptsTick+r.analysis.frames.at(-1).durationTicks);
     });
     await run('wrong source/revision, forged JSON, historical immutability',async()=>{
       assert.throws(()=>verifyVisualAnalysis(clone(result.analysis),result.ingestion,revision));
@@ -118,6 +216,9 @@ else{
       const f=await generate('other',Array(20).fill(pixels(120))),other=await ingestOriginalVideo(f,revision);
       await assert.rejects(()=>streamVerifiedVideoPixels(f,revision,result.ingestion,()=>{}),/SOURCE_IDENTITY_MISMATCH/);
       assert.throws(()=>verifyVisualAnalysis(result.analysis,other,revision));
+      const sourceAudit=createVerifiedDecodedContinuityAudit(result,revision);
+      assert.throws(()=>verifyDecodedContinuityAudit(sourceAudit,{analysis:result.analysis,ingestion:other},revision));
+      assert.throws(()=>createVerifiedDecodedContinuityAudit(result,child));
       assert.equal(core.canonicalJson(revision),beforeRevision);
     });
     await run('consumer failure, timeout, abort, corrupt source and cleanup',async()=>{

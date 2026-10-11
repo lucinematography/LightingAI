@@ -1407,3 +1407,48 @@ revision tampering and preservation of source measurements across DoP edits.
 Feature is **not** full-frame video analysis, Day-for-Night relighting, motion
 tracking, a color-managed preview, or a verified continuity metric. No AI
 provider, fixture command, app publication, K0/K1 or `main` mutation occurs.
+
+
+### Source-bound all-decoded-frame code continuity audit (2026-10-11)
+
+An offline read-only QC function now summarizes **every adjacent decoded
+presentation-frame pair**, not six widely spaced Android samples. It reuses
+the pre-existing `ingestOriginalVideo` + `analyzeOriginalVideo` bounded H.264
+decoder pipeline and does not call any AI endpoint. Frame source-byte hash,
+YUV pixel hashes, immutable DoP revision, PTS/timebase, and duration continue
+to be verified by that pipeline before provenance is granted. Existing
+max-30-second/max-1800-frame, input-size, time, memory and concurrency
+guards stay in force; originals remain unchanged.
+
+`summarizeDecodedCodeContinuity` is a **pure UNTRUSTED-input** metric grouper.
+It verifies contiguous CFR/VFR presentation timing and re-derives existing
+per-frame comparison fields and single-frame transient heuristics, rejecting
+forged or inconsistent transition records. Adjacent transitions are grouped
+into candidate and unflagged code-value intervals, using original PTS ticks
+without rounding away variable frame durations. The timeline covers all
+adjacent frame transitions. Each interval includes bounded luma/histogram
+summary scalars and explicit false flags for physical or cinematic facts.
+A flagged interval means DoP review is warranted; an unflagged interval does
+NOT prove flicker-free imagery, a correct cut, lighting stability or correct
+Day-for-Night treatment. Motion/camera movement, edits and physical light
+changes are not disentangled. No optical flow, depth, masks or video is made.
+
+`createVerifiedDecodedContinuityAudit(bundle, revision)` uses the existing
+private in-process `verifyVisualAnalysis` trust boundary, then creates an
+immutable content-hashed, original-source/plan/plot/temporal/visual-bound
+diagnostic receipt. Untrusted JSON, synthetic buffers, cloned receipts and
+mismatched source/revisions cannot gain that status. A separate verifier
+checks the trusted instance and parent identities. Reports contain no pixel
+bytes, media paths, links, tokens or newly rendered video. These reports are
+**offline backend diagnostics only**, not yet integrated into Android UI,
+the paid provider route, or an automatic export/publishing pipeline.
+
+Synthetic mandatory tests cover VFR interval boundaries, exact candidate/
+transient interval grouping, quiet frames, immutable outputs, raw-data leaks,
+forged summaries, duplicate/nonmonotonic PTS and rejection of untrusted
+provenance. Optional tests on explicitly selected existing FFmpeg fixtures
+cover an actual decoded illumination jump, one-frame flash-like pattern,
+VFR full-frame coverage, original-byte preservation and wrong source/revision
+rejection. CI without an approved existing FFmpeg binary must report actual
+decoded-frame tests **NOT EXECUTED**; mandatory synthetic tests alone do
+not validate performance on real footage or verify practical visual quality.

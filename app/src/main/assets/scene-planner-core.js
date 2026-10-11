@@ -82,6 +82,12 @@
     var n=Number(value);
     return Number.isFinite(n) && n>=0.5 && n<=100 ? n : null;
   }
+  function measuredFixtureDistance(value) {
+    if(typeof value!=='number' && typeof value!=='string')return null;
+    if(typeof value==='string' && !/^(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)$/.test(value.trim()))return null;
+    var d=Number(value);
+    return Number.isFinite(d)&&d>=0.1&&d<=100?d:null;
+  }
   function key(value) { return str(value, 250).toLowerCase().replace(/[^a-z0-9]/g, ''); }
   function mode(value) { return value === 'own' ? 'own' : 'best'; }
   function equipment(items) {
@@ -565,6 +571,46 @@
       range(l.angleDeg,0,360,true);range(l.intensityPct,0,100,true);range(l.kelvin,1000,20000,true);
       range(l.verticalTiltDeg,-90,90,true);range(l.beamAngleDeg,5,180,true);range(l.powerDrawW,1,100000,true);
     });
+    // On-set user reports are not AI estimates and never constitute a lux-meter measurement.
+    var readings=plan.distanceMeasurements===undefined?[]:plan.distanceMeasurements;
+    if(!Array.isArray(readings)||readings.length>MAX_LIGHTS)throw new Error('Invalid fixture distance evidence');
+    var readingIds=Object.create(null);
+    readings.forEach(function(m){
+      if(!m || typeof m!=='object' || typeof m.lightId!=='string' || readingIds[m.lightId] ||
+        plan.mode!=='own' || m.source!=='USER_REPORTED_ON_SET_NOT_INDEPENDENTLY_VERIFIED' ||
+        m.target!=='SUBJECT_AT_MEASUREMENT_POINT' || m.userAttested!==true ||
+        measuredFixtureDistance(m.distanceM)!==m.distanceM)
+        throw new Error('Invalid fixture distance evidence');
+      var light=plan.lights.find(function(l){return l.id===m.lightId;});
+      if(!light||!light.available||!light.fixtureId||m.fixtureId!==light.fixtureId)
+        throw new Error('Fixture distance must refer to an owned light in this revision');
+      readingIds[m.lightId]=m;
+    });
+    if(readings.length&&plan.dataStatus.distanceMeasurements!=='user-reported-not-independently-verified')
+      throw new Error('Unlabeled fixture distance measurement');
+    if(plan.photometricBasis && Array.isArray(plan.photometricBasis.entries)){
+      plan.photometricBasis.entries.forEach(function(e){
+        if(!e||e.onSetLux!==null)throw new Error('Invalid on-set photometric claim');
+        var reading=readingIds[e.lightId];
+        if(e.measuredDistanceM!==null && (!reading || reading.fixtureId!==e.fixtureId ||
+          reading.distanceM!==e.measuredDistanceM))
+          throw new Error('Fixture distance source mismatch');
+        if(reading&&reading.fixtureId===e.fixtureId&&e.measuredDistanceM!==reading.distanceM)
+          throw new Error('Fixture distance binding missing');
+        var selected=e.publishedReferenceAtMeasuredDistance;
+        if(selected!=null){
+          var light=plan.lights.find(function(l){return l.id===e.lightId;});
+          var sample=(Array.isArray(e.samples)?e.samples:[]).find(function(s){
+            return light&&s.distanceM===e.measuredDistanceM&&s.beamAngleDeg===light.beamAngleDeg;
+          });
+          if(!reading||!light||e.configurationMatchesReference!==true||!sample||
+            selected.lux!==sample.lux||selected.distanceM!==sample.distanceM||
+            selected.beamAngleDeg!==sample.beamAngleDeg||
+            selected.status!=='MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT')
+            throw new Error('Invalid manufacturer sample at reported distance');
+        }
+      });
+    }
     if(planHash(plan)!==revision.planHash || revision.revisionId!=='rev-'+sha256(canonicalJson(revisionPayload(revision))) ||
       revision.lightPlotRevisionId!=='plot-'+revision.revisionId.slice(4))throw new Error('Revision integrity mismatch');
     return true;
@@ -580,6 +626,51 @@
     var next=plan.lights.reduce(function(n,l){return Math.max(n,Number(l.id.slice(1))+1);},parent?parent.nextLightId:1);
     var revision={schemaVersion:1,sceneId:sceneId,parentRevisionId:parent?parent.revisionId:null,
       sequence:parent?parent.sequence+1:1,nextLightId:next,plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // Human-attested physical distance is stored in a new immutable revision, not inferred
+  // from footage, AI or the plan's estimated light.distanceM.
+  function createDistanceMeasurementRevision(parent, reading) {
+    verifyRevision(parent);
+    if(!reading||typeof reading!=='object'||Array.isArray(reading)||
+      reading.confirmed!==true||typeof reading.lightId!=='string')
+      throw new Error('Explicit on-set distance confirmation is required');
+    var distance=measuredFixtureDistance(reading.distanceM);
+    if(distance===null)throw new Error('Invalid measured fixture distance (0.1-100m)');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var light=plan.lights.find(function(l){return l.id===reading.lightId;});
+    if(plan.mode!=='own'||!light||light.available!==true||!light.fixtureId)
+      throw new Error('Only available owned lights can have user-reported on-set distances');
+    var list=Array.isArray(plan.distanceMeasurements)?plan.distanceMeasurements:[];
+    var evidence={lightId:light.id,fixtureId:light.fixtureId,distanceM:distance,
+      source:'USER_REPORTED_ON_SET_NOT_INDEPENDENTLY_VERIFIED',
+      target:'SUBJECT_AT_MEASUREMENT_POINT',userAttested:true};
+    plan.distanceMeasurements=list.filter(function(x){return x.lightId!==light.id;}).concat([evidence])
+      .sort(function(a,b){return Number(a.lightId.slice(1))-Number(b.lightId.slice(1));});
+    plan.dataStatus.distanceMeasurements='user-reported-not-independently-verified';
+    if(plan.photometricBasis && Array.isArray(plan.photometricBasis.entries)){
+      plan.photometricBasis.entries.forEach(function(e){
+        if(e.lightId!==light.id||e.fixtureId!==light.fixtureId)return;
+        e.measuredDistanceM=distance;
+        // Exact published sample at same reported distance and nominal settings only.
+        // Lens alignment, target reflectance, modifiers, ambient and on-set lux remain unknown.
+        var match=e.configurationMatchesReference===true &&
+          (Array.isArray(e.samples)?e.samples:[]).find(function(s){
+            return s.distanceM===distance && s.beamAngleDeg===light.beamAngleDeg;
+          });
+        e.publishedReferenceAtMeasuredDistance=match?{
+          distanceM:distance,beamAngleDeg:match.beamAngleDeg,lux:match.lux,
+          status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
+        }:null;
+        e.onSetLux=null;
+      });
+    }
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,
+      plan:plan,planHash:planHash(plan)};
     revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
     revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
     verifyRevision(revision);
@@ -604,6 +695,7 @@
   }
   return {VERSION:VERSION, request:request, equipment:equipment, modifiers:modifiers,
     canonicalJson:canonicalJson,sha256:sha256,planHash:planHash,createRevision:createRevision,
+    createDistanceMeasurementRevision:createDistanceMeasurementRevision,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};

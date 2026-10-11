@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {createRequire} from 'node:module';
 import {getManufacturerPhotometricReferences,buildPhotometricBasis} from './scene-planner-photometry.js';
 import {canonicalInventory,buildScenePlannerPrompt,generateScenePlannerPlan} from './scene-planner-service.js';
@@ -95,6 +96,61 @@ noBook.knowledgeBasis.cards=[];
 const noBookRev=core.createRevision(noBook,raw,'ai',null,'no-book-links');
 assert.deepEqual(noBookRev.plan.photometricBasis.entries[0].bookCardIds,[],
   'photometry must not cite book cards absent from current validated plan');
+// Explicit on-set distance: user attestation, immutable revision and exact manufacturer lookup.
+const distRev=core.createDistanceMeasurementRevision(revision,{lightId:'L2',distanceM:'5',confirmed:true});
+assert.equal(distRev.sequence,revision.sequence+1);
+assert.equal(distRev.parentRevisionId,revision.revisionId);
+assert.equal(distRev.plan.distanceMeasurements.length,1);
+assert.deepEqual([distRev.plan.distanceMeasurements[0].lightId,
+  distRev.plan.distanceMeasurements[0].distanceM,
+  distRev.plan.distanceMeasurements[0].source],
+  ['L2',5,'USER_REPORTED_ON_SET_NOT_INDEPENDENTLY_VERIFIED']);
+assert.equal(distRev.plan.lights[1].distanceM,revision.plan.lights[1].distanceM,
+  'physical user distance must not overwrite AI estimated placement');
+assert.equal(distRev.plan.photometricBasis.entries[1].measuredDistanceM,5);
+assert.equal(distRev.plan.photometricBasis.entries[1].onSetLux,null);
+assert.deepEqual(distRev.plan.photometricBasis.entries[1].publishedReferenceAtMeasuredDistance,{
+  distanceM:5,beamAngleDeg:45,lux:268,status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
+});
+const secondRev=core.createDistanceMeasurementRevision(distRev,{lightId:'L1',distanceM:3,confirmed:true});
+assert.equal(secondRev.plan.distanceMeasurements.length,2);
+assert.equal(secondRev.plan.photometricBasis.entries[0].measuredDistanceM,3);
+assert.equal(secondRev.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance,null,
+  'dimmer 60% cannot be equated with the published full-output reading');
+assert.equal(secondRev.plan.photometricBasis.entries[0].onSetLux,null);
+assert.equal(secondRev.plan.photometricBasis.entries[1].publishedReferenceAtMeasuredDistance.lux,268);
+assert.equal(core.restoreRevisions([revision,distRev,secondRev]).length,3);
+const changedReading=JSON.parse(JSON.stringify(secondRev));
+changedReading.plan.distanceMeasurements[0].distanceM=7;
+assert.throws(()=>core.restoreRevisions([revision,distRev,changedReading]),/integrity|Invalid|mismatch/i);
+for(const input of ['',0,0.05,101,'NaN','Infinity','3abc','1e1',null,true,[3]]){
+  assert.throws(()=>core.createDistanceMeasurementRevision(revision,{
+    lightId:'L2',distanceM:input,confirmed:true
+  }),/distance/i,'invalid on-set distances must be rejected without clipping');
+}
+assert.throws(()=>core.createDistanceMeasurementRevision(revision,{
+  lightId:'L2',distanceM:5,confirmed:false
+}),/confirmation/i);
+assert.throws(()=>core.createDistanceMeasurementRevision(revision,{
+  lightId:'L999',distanceM:5,confirmed:true
+}),/owned/i);
+const nonSampleRev=core.createDistanceMeasurementRevision(revision,{lightId:'L2',distanceM:4,confirmed:true});
+assert.equal(nonSampleRev.plan.photometricBasis.entries[1].measuredDistanceM,4);
+assert.equal(nonSampleRev.plan.photometricBasis.entries[1].publishedReferenceAtMeasuredDistance,null,
+  'no unsupported interpolation between 3 m and 5 m');
+const nextAiRev=core.createRevision(generated.plan,raw,'ai',distRev,'photo-provenance-1');
+assert.ok(!nextAiRev.plan.distanceMeasurements || nextAiRev.plan.distanceMeasurements.length===0,
+  'a fresh AI plan must not inherit stale measured distances');
+assert.equal(nextAiRev.plan.photometricBasis.entries[1].measuredDistanceM,null);
+const bestRev=core.createRevision(core.localPlan({mode:'best',description:'test'}),{
+  mode:'best',description:'test'},'local',null,'best-distance');
+assert.throws(()=>core.createDistanceMeasurementRevision(bestRev,{
+  lightId:bestRev.plan.lights[0].id,distanceM:5,confirmed:true
+}),/owned/i,'suggested or rented lights cannot be flagged as physically measured by this workflow');
+const uiSource=fs.readFileSync(new URL('../app/src/main/assets/scene-planner.js',import.meta.url),'utf8');
+assert.match(uiSource,/createDistanceMeasurementRevision\(previous/);
+assert.match(uiSource,/data-sp-distance-light/);
+assert.match(uiSource,/Lično potvrđujem merenje na setu/);
 const tampered=JSON.parse(JSON.stringify(revision));
 tampered.plan.photometricBasis.entries[0].samples[0].lux=99999;
 assert.throws(()=>core.restoreRevisions([tampered]),/integrity|Invalid/i);

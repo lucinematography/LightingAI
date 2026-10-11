@@ -505,6 +505,19 @@
         'Napajanje: '+l.power,
         'Zašto: '+l.why);
     });
+    if(Array.isArray(plan.distanceMeasurements)&&plan.distanceMeasurements.length){
+      lines.push('','KORISNIČKI PRIJAVLJENE UDALJENOSTI (NISU NEZAVISNO PROVERENE)');
+      plan.distanceMeasurements.forEach(function(m){
+        lines.push(m.lightId+' / '+m.fixtureId+': '+m.distanceM+
+          ' m od izvora do subjekta u tački merenja; nije merenje osvetljenosti.');
+        var ref=plan.photometricBasis&&plan.photometricBasis.entries&&
+          plan.photometricBasis.entries.find(function(x){return x.lightId===m.lightId;});
+        if(ref&&ref.publishedReferenceAtMeasuredDistance){
+          lines.push('Referenca proizvođača za iste nominalne uslove: '+
+            ref.publishedReferenceAtMeasuredDistance.lux+' lx (NIJE lux izmeren na setu).');
+        }
+      });
+    }
     lines.push('','OGRANIČENJA',...plan.limitations,'','BEZBEDNOST',...plan.safetyNotes);
     return lines.join('\n');
   }
@@ -557,6 +570,13 @@
             '<div>Procena položaja u planu: x ~'+fmt(e.estimatedXMetres,' m')+
               ', y ~'+fmt(e.estimatedYMetres,' m')+' (nije fizičko merenje pozicije).</div>'+
             '<div>Knjiški principi: '+esc((e.bookCardIds||[]).join(', ')||'nema posebno povezanog principa')+'</div>'+
+            '<div>Udaljenost do subjekta koju je korisnik potvrdio: '+
+              (e.measuredDistanceM==null?'nije prijavljena':esc(e.measuredDistanceM)+' m (nije nezavisno proverena)')+'</div>'+
+            (e.publishedReferenceAtMeasuredDistance?
+              '<div>Referenca proizvođača ZA ISTU UDALJENOST: '+esc(e.publishedReferenceAtMeasuredDistance.lux)+
+              ' lx pri '+esc(e.publishedReferenceAtMeasuredDistance.beamAngleDeg)+
+              '° — NIJE merenje scene i ne dokazuje ekspoziciju.</div>':
+              '<div>Nema pouzdanog poklapanja sa tačnom tabelom proizvođača. Lux ne računamo interpolacijom.</div>')+
             '<div>Stvarni lux: nije izmeren; proveriti svetlomerom i kamerom na setu.</div></div>';
         }).join('')+'</details>';
     }
@@ -589,8 +609,37 @@
         ' • Ugao snopa ~'+fmt(l.beamAngleDeg,'°')+'</div>'+
         '<div>Pokret/glumac: '+(l.coverageStages.length?l.coverageStages.map(function(i){return i+1;}).join(', '):'pokrivenost nepotvrđena')+'</div>'+
         '<div>'+esc(l.positionNote||'Potrebna provera položaja')+'</div></div>'+
-        '<p style="font-size:13px;line-height:1.4;margin:9px 0 0">'+esc(l.why)+'</p></div>';
+        '<p style="font-size:13px;line-height:1.4;margin:9px 0 0">'+esc(l.why)+'</p>'+
+        (plan.mode==='own'&&l.available?
+          '<div class="sp-note" style="margin-top:12px;padding-top:10px;border-top:1px solid #4b4b4b">'+
+          '<label for="sp-distance-'+esc(l.id)+'">IZMERENA UDALJENOST REFLEKTOR–SUBJEKAT U TAČKI MERENJA (m)</label>'+
+          '<input class="sp-field" id="sp-distance-'+esc(l.id)+'" type="number" min="0.1" max="100" step="any" placeholder="0.1–100" value="'+
+          esc(((plan.distanceMeasurements||[]).find(function(m){return m.lightId===l.id;})||{}).distanceM||'')+'">'+
+          '<label style="display:flex;align-items:center;gap:7px;margin:7px 0">'+
+          '<input type="checkbox" id="sp-distance-verified-'+esc(l.id)+'"> Lično potvrđujem merenje na setu; AI nije merio distancu</label>'+
+          '<button type="button" class="sp-btn" data-sp-distance-light="'+esc(l.id)+'">SAČUVAJ MERENJE KAO NOVU REVIZIJU</button>'+
+          '<div>Izmerena je samo udaljenost koju korisnik prijavljuje, ne i lux, smer snopa ili ekspozicija.</div></div>':'')+
+        '</div>';
     }).join(''):'<p class="sp-note">Nije moguće napraviti pouzdan izbor lampi iz dostupnog inventara.</p>';
+    el('sp-lights').querySelectorAll('button[data-sp-distance-light]').forEach(function(btn){
+      btn.onclick=function(){
+        if(state.busy||historyBlocked||!revisions.length)return;
+        var id=btn.getAttribute('data-sp-distance-light');
+        var confirmed=el('sp-distance-verified-'+id),field=el('sp-distance-'+id);
+        if(!confirmed||!confirmed.checked){
+          status('Potvrdi da si zaista izmerio udaljenost na setu.',true);return;
+        }
+        try{
+          var previous=revisions[revisions.length-1];
+          var revision=core().createDistanceMeasurementRevision(previous,{
+            lightId:id,distanceM:field&&field.value,confirmed:true
+          });
+          revisions=revisions.concat([revision]);state.plan=revision.plan;
+          renderResult();remember();
+          status('Udaljenost je sačuvana u novoj reviziji kao korisnički prijavljeno merenje. Lux nije izmeren.');
+        }catch(error){status('Merenje nije sačuvano: '+error.message,true);}
+      };
+    });
     el('sp-warnings').innerHTML='<div class="sp-note" style="margin-top:10px"><b style="color:#f5c542">PROCENE I KOMPROMISI</b><ul>'+
       plan.limitations.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+
       '</ul><b style="color:#f5c542">DAN ZA NOĆ / KONTROLA DNEVNOG SVETLA</b><ul>'+

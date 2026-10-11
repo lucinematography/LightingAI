@@ -640,6 +640,53 @@
       typeof plan.dopRequest!=='string' || ['ai','local'].indexOf(plan.source)<0 || ['own','best'].indexOf(plan.mode)<0 ||
       plan.dataStatus.lightSettings!=='estimated' || plan.dataStatus.exposure!=='unconfirmed')
       throw new Error('Invalid validated plan data');
+    // A DoP manual revision is a creative plan edit, not a physical observation.
+    // Older AI/local plans do not carry this optional last-edit provenance.
+    var dopEdit=plan.dopLocalVariant;
+    if(dopEdit!==undefined){
+      var allowedLightFields=['x','y','heightM','distanceM','intensityPct','kelvin'];
+      var allowedCameraFields=['fps','shutterAngle','aperture','iso','whiteBalanceK','ndStops'];
+      if(!dopEdit||typeof dopEdit!=='object'||Array.isArray(dopEdit)||
+        dopEdit.contract!=='lightingai-dop-local-variant/1'||
+        dopEdit.source!=='DOP_CONFIRMED_PLANNED_EDIT_NOT_PHYSICALLY_VERIFIED'||
+        dopEdit.userConfirmed!==true||
+        dopEdit.physicalFixtureCommandsPerformed!==false||
+        dopEdit.meterEvidenceVerified!==false||
+        dopEdit.cameraExposureVerified!==false||
+        dopEdit.videoRelightGenerated!==false||
+        meterText(dopEdit.reason,500)!==dopEdit.reason||
+        plan.dopRequest!==dopEdit.reason||
+        !Array.isArray(dopEdit.changedLights)||dopEdit.changedLights.length>MAX_LIGHTS||
+        !Array.isArray(dopEdit.changedCameraFields)||dopEdit.changedCameraFields.length>6||
+        !Array.isArray(dopEdit.bookCardIds)||dopEdit.bookCardIds.length>8||
+        plan.dataStatus.dopLocalVariant!=='user-specified-plan-only-not-measured')
+        throw new Error('Invalid DoP planned-variant provenance');
+      var dopSeen=Object.create(null);
+      dopEdit.changedLights.forEach(function(item){
+        if(!item||typeof item!=='object'||Array.isArray(item)||dopSeen[item.lightId]||
+          !plan.lights.some(function(l){return l.id===item.lightId;})||
+          !Array.isArray(item.fields)||!item.fields.length||
+          item.fields.length>allowedLightFields.length||
+          item.fields.some(function(k,i){return allowedLightFields.indexOf(k)<0||
+            item.fields.indexOf(k)!==i;}))
+          throw new Error('Invalid DoP changed-light provenance');
+        dopSeen[item.lightId]=true;
+      });
+      if(dopEdit.changedCameraFields.some(function(k,i){
+        return allowedCameraFields.indexOf(k)<0||
+          dopEdit.changedCameraFields.indexOf(k)!==i;
+      }))throw new Error('Invalid DoP changed-camera provenance');
+      if(!dopEdit.changedLights.length&&!dopEdit.changedCameraFields.length)
+        throw new Error('DoP provenance without a planned change');
+      var attachedCards=plan.knowledgeBasis&&Array.isArray(plan.knowledgeBasis.cards)?
+        plan.knowledgeBasis.cards:[];
+      if(dopEdit.bookCardIds.some(function(k,i){
+        return typeof k!=='string'||dopEdit.bookCardIds.indexOf(k)!==i||
+          !attachedCards.some(function(card){return card.id===k;});
+      }))throw new Error('DoP provenance cannot invent book sources');
+    }else if(plan.dataStatus.dopLocalVariant!==undefined){
+      throw new Error('Orphaned DoP planned-variant provenance');
+    }
     var cameraRanges={fps:[1,120],shutterAngle:[11.25,360],aperture:[0.7,32],iso:[50,25600],
       whiteBalanceK:[1700,20000],ndStops:[0,12],focalLengthMm:[8,300]};
     Object.keys(cameraRanges).forEach(function(k){range(plan.cameraSettings[k],cameraRanges[k][0],cameraRanges[k][1],k==='focalLengthMm');});
@@ -906,6 +953,180 @@
     var next=plan.lights.reduce(function(n,l){return Math.max(n,Number(l.id.slice(1))+1);},parent?parent.nextLightId:1);
     var revision={schemaVersion:1,sceneId:sceneId,parentRevisionId:parent?parent.revisionId:null,
       sequence:parent?parent.sequence+1:1,nextLightId:next,plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // Strict DoP-specified PLANNED numerical parameters. No clipping or inference.
+  function dopNumber(value,min,max){
+    if(typeof value!=='string'&&typeof value!=='number')return null;
+    if(typeof value==='string'&&!/^(?:[0-9]+(?:[.][0-9]+)?|[.][0-9]+)$/.test(value.trim()))
+      return null;
+    var n=Number(value);
+    return Number.isFinite(n)&&n>=min&&n<=max?n:null;
+  }
+  function createDopLightingVariantRevision(parent,report){
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||
+      report.confirmed!==true||
+      Object.keys(report).some(function(k){
+        return ['confirmed','reason','lightEdits','cameraEdits'].indexOf(k)<0;
+      }))throw new Error('Explicit DoP creative-plan confirmation is required');
+    var reason=meterText(report.reason,500);
+    if(!reason)throw new Error('DoP must describe the requested creative change (2-500 characters)');
+    var edits=report.lightEdits===undefined?[]:report.lightEdits;
+    var camEdits=report.cameraEdits===undefined?{}:report.cameraEdits;
+    if(!Array.isArray(edits)||edits.length>MAX_LIGHTS||
+      !camEdits||typeof camEdits!=='object'||Array.isArray(camEdits))
+      throw new Error('Invalid DoP manual edit structure');
+    var lightRanges={x:[5,95],y:[5,95],heightM:[0.1,25],distanceM:[0.1,100],
+      intensityPct:[0,100],kelvin:[1000,20000]};
+    var cameraRanges={fps:[1,120],shutterAngle:[11.25,360],aperture:[0.7,32],
+      iso:[50,25600],whiteBalanceK:[1700,20000],ndStops:[0,12]};
+    if(Object.keys(camEdits).some(function(k){
+      return !Object.prototype.hasOwnProperty.call(cameraRanges,k);
+    }))throw new Error('Unsupported DoP camera parameter');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var touched=[],cameraChanged=[],positionChanged=Object.create(null);
+    var seen=Object.create(null);
+    edits.forEach(function(item){
+      if(!item||typeof item!=='object'||Array.isArray(item)||
+        typeof item.lightId!=='string'||seen[item.lightId]||
+        Object.keys(item).some(function(k){
+          return k!=='lightId'&&!Object.prototype.hasOwnProperty.call(lightRanges,k);
+        }))throw new Error('Invalid DoP light ID or edited field');
+      seen[item.lightId]=true;
+      var light=plan.lights.find(function(l){return l.id===item.lightId;});
+      if(!light)throw new Error('DoP edit cannot create or replace a fixture');
+      var fields=[];
+      Object.keys(lightRanges).forEach(function(k){
+        if(!Object.prototype.hasOwnProperty.call(item,k))return;
+        var limits=lightRanges[k],number=dopNumber(item[k],limits[0],limits[1]);
+        if(number===null)throw new Error('Invalid or out-of-range planned DoP '+k);
+        // Fixture ranges explicitly present in the project's curated catalog
+        // may reject an impossible creative CCT target. Other models remain
+        // unverified rather than inventing a manufacturer range.
+        if(k==='kelvin'&&light.available){
+          var knownCctRanges={
+            'aputure-ls-60d':[5600,5600],
+            'aputure-ls-60x':[2700,6500]
+          };
+          var cctRange=knownCctRanges[light.fixtureId];
+          if(cctRange&&(number<cctRange[0]||number>cctRange[1]))
+            throw new Error('Requested DoP Kelvin is outside the verified catalog fixture range');
+        }
+        if(light[k]===number)return;
+        light[k]=number;
+        fields.push(k);
+        if(['x','y','heightM','distanceM'].indexOf(k)>=0)
+          positionChanged[light.id]=true;
+      });
+      if(fields.length)touched.push({lightId:light.id,fields:fields});
+    });
+    Object.keys(cameraRanges).forEach(function(k){
+      if(!Object.prototype.hasOwnProperty.call(camEdits,k))return;
+      var limits=cameraRanges[k],v=dopNumber(camEdits[k],limits[0],limits[1]);
+      if(v===null)throw new Error('Invalid or out-of-range planned camera '+k);
+      if(plan.cameraSettings[k]===v)return;
+      cameraChanged.push(k);
+    });
+    if(!touched.length&&!cameraChanged.length)
+      throw new Error('DoP requested no actual changes; no duplicate revision created');
+    if(touched.length){
+      // A changed planned rig cannot inherit real incident/scene readings
+      // of the previous configuration. Keep the old measurements in history.
+      plan.incidentLuxReadings=[];
+      delete plan.dataStatus.incidentLuxReadings;
+      delete plan.sceneIncidentLuxReading;
+      delete plan.dataStatus.sceneIncidentLuxReading;
+      delete plan.cameraGrayCardWaveformReading;
+      delete plan.dataStatus.cameraGrayCardWaveformReading;
+      if(Object.keys(positionChanged).length){
+        plan.distanceMeasurements=(plan.distanceMeasurements||[])
+          .filter(function(m){return !positionChanged[m.lightId];});
+        if(!plan.distanceMeasurements.length)delete plan.dataStatus.distanceMeasurements;
+      }
+      if(plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)){
+        plan.photometricBasis.entries.forEach(function(entry){
+          var light=plan.lights.find(function(l){return l.id===entry.lightId;});
+          if(!light)return;
+          entry.estimatedXMetres=plan.geometry.measured&&plan.geometry.widthM!==null?
+            Number((plan.geometry.widthM*light.x/100).toFixed(2)):null;
+          entry.estimatedYMetres=plan.geometry.measured&&plan.geometry.depthM!==null?
+            Number((plan.geometry.depthM*light.y/100).toFixed(2)):null;
+          if(entry.requiresAttestedOptic){
+            refreshAttestedOpticReference(plan,entry.lightId);
+          }else{
+            var measured=(plan.distanceMeasurements||[]).find(function(d){
+              return d.lightId===entry.lightId&&d.fixtureId===entry.fixtureId;
+            });
+            entry.measuredDistanceM=measured?measured.distanceM:null;
+            entry.configurationMatchesReference=!!(light.available&&
+              light.intensityPct===100&&light.kelvin===entry.cctK&&!light.modifier&&
+              (light.beamAngleDeg===15||light.beamAngleDeg===45));
+            var sample=measured&&entry.configurationMatchesReference?
+              (entry.samples||[]).find(function(s){
+                return s.distanceM===measured.distanceM&&
+                  s.beamAngleDeg===light.beamAngleDeg;
+              }):null;
+            entry.publishedReferenceAtMeasuredDistance=sample?{
+              distanceM:sample.distanceM,beamAngleDeg:sample.beamAngleDeg,
+              lux:sample.lux,status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
+            }:null;
+            entry.onSetLux=null;
+          }
+        });
+      }
+    }else{
+      // A camera-only plan change leaves scene illuminance and its actual
+      // incident measurements untouched, but invalidates gray-card video
+      // signal claims bound to the former camera settings.
+      delete plan.cameraGrayCardWaveformReading;
+      delete plan.dataStatus.cameraGrayCardWaveformReading;
+    }
+    if(cameraChanged.length){
+      var old=plan.cameraSettings,base=old.referenceCamera||old,overrides={};
+      Object.keys(cameraRanges).forEach(function(k){
+        if(Object.prototype.hasOwnProperty.call(camEdits,k) &&
+          cameraChanged.indexOf(k)>=0)overrides[k]=dopNumber(camEdits[k],
+            cameraRanges[k][0],cameraRanges[k][1]);
+        else if(old[k]!==base[k])overrides[k]=old[k];
+      });
+      plan.cameraSettings=cameraPlan(base,{cameraOverrides:overrides});
+      plan.dataStatus.cameraSettings=plan.dataStatus.cameraSettings||{};
+      cameraChanged.forEach(function(k){plan.dataStatus.cameraSettings[k]='dop-specified';});
+    }
+    // Books are active expert guidance only when actually attached to the
+    // current plan; never fabricate book pages, lux, or equipment capability.
+    var wanted=[];
+    if(touched.length)wanted.push('PHY-001','PHY-002','PHY-005','SET-005','SET-007');
+    if(cameraChanged.length)wanted.push('EXP-001','EXP-002','EXP-003');
+    var cards=plan.knowledgeBasis&&Array.isArray(plan.knowledgeBasis.cards)?
+      plan.knowledgeBasis.cards:[];
+    var attachedIds=[];
+    wanted.forEach(function(id){
+      if(attachedIds.indexOf(id)<0&&cards.some(function(card){return card.id===id;}))
+        attachedIds.push(id);
+    });
+    plan.dopRequest=reason;
+    plan.dopLocalVariant={
+      contract:'lightingai-dop-local-variant/1',
+      source:'DOP_CONFIRMED_PLANNED_EDIT_NOT_PHYSICALLY_VERIFIED',
+      reason:reason,userConfirmed:true,
+      changedLights:touched,changedCameraFields:cameraChanged,
+      bookCardIds:attachedIds,
+      physicalFixtureCommandsPerformed:false,
+      meterEvidenceVerified:false,cameraExposureVerified:false,
+      videoRelightGenerated:false
+    };
+    plan.dataStatus.dopLocalVariant='user-specified-plan-only-not-measured';
+    var warning='Lokalna DoP varijanta menja samo predloženi plan i 2D prikaz. '+
+      'Postavka, sposobnosti lampi i stvarna ekspozicija nisu nezavisno provereni.';
+    if(plan.limitations.indexOf(warning)<0)plan.limitations.push(warning);
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,
+      plan:plan,planHash:planHash(plan)};
     revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
     revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
     verifyRevision(revision);
@@ -1761,6 +1982,7 @@
     createMountedOpticRevision:createMountedOpticRevision,
     createIncidentLuxRevision:createIncidentLuxRevision,
     createSceneIncidentLuxRevision:createSceneIncidentLuxRevision,
+    createDopLightingVariantRevision:createDopLightingVariantRevision,
     createCameraGrayCardWaveformRevision:createCameraGrayCardWaveformRevision,
     compareKeyFillMeasurements:compareKeyFillMeasurements,
     assessSceneMeterAlignment:assessSceneMeterAlignment,

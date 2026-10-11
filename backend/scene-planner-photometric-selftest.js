@@ -78,6 +78,19 @@ assert.deepEqual(opticAndDistance.plan.photometricBasis.entries[0].publishedRefe
   status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
 });
 assert.equal(opticAndDistance.plan.photometricBasis.entries[0].onSetLux,null);
+// User-declared dimmer change must revoke the full-output published match
+// without deleting the physical optic or reusing the old 3500 lux.
+const dopOpticVariant=core.createDopLightingVariantRevision(opticAndDistance,{
+  confirmed:true,reason:'DoP zahteva slabiji 300d uz zadržani reflektor',
+  lightEdits:[{lightId:'L1',intensityPct:55}],cameraEdits:{}
+});
+assert.equal(dopOpticVariant.plan.opticConfirmations[0].opticId,'HYPER_REFLECTOR_55');
+assert.equal(dopOpticVariant.plan.distanceMeasurements[0].distanceM,3);
+assert.equal(dopOpticVariant.plan.photometricBasis.entries[0].attestedOpticId,'HYPER_REFLECTOR_55');
+assert.equal(dopOpticVariant.plan.photometricBasis.entries[0].configurationMatchesReference,false);
+assert.equal(dopOpticVariant.plan.photometricBasis.entries[0].publishedReferenceAtMeasuredDistance,null);
+assert.equal(dopOpticVariant.plan.photometricBasis.entries[0].onSetLux,null);
+assert.equal(core.restoreRevisions([wrappedRevision,opticOnly,opticAndDistance,dopOpticVariant]).length,4);
 
 const meterContext={meterModel:'Sekonic C-800 test fixture',measurementPoint:'Face mark A',
   receptorOrientation:'RECEPTOR_TOWARD_FIXTURE',measuredAtLocal:'2026-10-11T14:30'};
@@ -310,6 +323,147 @@ const ratioD=core.createIncidentLuxRevision(ratioC,{
   ...commonContext,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
   measuredAtLocal:'2026-10-11T14:34'
 });
+// A DoP can manually revise real plan parameters OFFLINE without AI calls,
+ // preserving fixture identity and expert guidance while invalidating stale
+ // on-set measurements only in the new immutable plan.
+const dopRequestText='DoP: pomeri key ulevo i blize, ucini ga blazim, topliji fill i promeni kameru';
+const dopVariant=core.createDopLightingVariantRevision(ratioD,{
+  confirmed:true,reason:dopRequestText,
+  lightEdits:[
+    {lightId:'L1',x:'40',y:'45',heightM:'3.2',distanceM:'4.2',intensityPct:'45'},
+    {lightId:'L2',kelvin:'4800'}
+  ],
+  cameraEdits:{iso:'1600',aperture:'4',ndStops:'1'}
+});
+assert.equal(dopVariant.sceneId,ratioD.sceneId);
+assert.equal(dopVariant.sequence,ratioD.sequence+1);
+assert.equal(dopVariant.parentRevisionId,ratioD.revisionId);
+assert.equal(dopVariant.nextLightId,ratioD.nextLightId);
+assert.notEqual(dopVariant.planHash,ratioD.planHash);
+assert.notEqual(dopVariant.lightPlotRevisionId,ratioD.lightPlotRevisionId);
+assert.deepEqual(dopVariant.plan.lights.map(l=>[l.id,l.fixtureId,l.role]),
+  ratioD.plan.lights.map(l=>[l.id,l.fixtureId,l.role]),
+  'offline DoP edit may not create, replace or relabel inventory fixtures');
+assert.deepEqual([
+  dopVariant.plan.lights[0].x,dopVariant.plan.lights[0].y,
+  dopVariant.plan.lights[0].heightM,dopVariant.plan.lights[0].distanceM,
+  dopVariant.plan.lights[0].intensityPct,dopVariant.plan.lights[1].kelvin
+],[40,45,3.2,4.2,45,4800]);
+assert.equal(dopVariant.plan.lights[0].estimated,true);
+assert.deepEqual([
+  dopVariant.plan.cameraSettings.aperture,
+  dopVariant.plan.cameraSettings.iso,
+  dopVariant.plan.cameraSettings.ndStops
+],[4,1600,1]);
+assert.equal(dopVariant.plan.cameraSettings.apertureSource,'dop-override');
+assert.equal(dopVariant.plan.cameraSettings.isoSource,'dop-override');
+assert.equal(dopVariant.plan.dataStatus.exposure,'unconfirmed');
+assert.equal(dopVariant.plan.dataStatus.lightSettings,'estimated');
+assert.equal(dopVariant.plan.dopRequest,dopRequestText);
+assert.equal(dopVariant.plan.dopLocalVariant.contract,'lightingai-dop-local-variant/1');
+assert.equal(dopVariant.plan.dopLocalVariant.source,
+  'DOP_CONFIRMED_PLANNED_EDIT_NOT_PHYSICALLY_VERIFIED');
+assert.equal(dopVariant.plan.dopLocalVariant.videoRelightGenerated,false);
+assert.equal(dopVariant.plan.dopLocalVariant.physicalFixtureCommandsPerformed,false);
+assert.equal(dopVariant.plan.dopLocalVariant.cameraExposureVerified,false);
+assert.equal(dopVariant.plan.dopLocalVariant.meterEvidenceVerified,false);
+assert.deepEqual(dopVariant.plan.dopLocalVariant.changedLights,[
+  {lightId:'L1',fields:['x','y','heightM','distanceM','intensityPct']},
+  {lightId:'L2',fields:['kelvin']}
+]);
+assert.deepEqual(dopVariant.plan.dopLocalVariant.changedCameraFields,
+  ['aperture','iso','ndStops']);
+assert.equal(dopVariant.plan.dataStatus.dopLocalVariant,
+  'user-specified-plan-only-not-measured');
+assert.ok(dopVariant.plan.dopLocalVariant.bookCardIds.every(id=>
+  dopVariant.plan.knowledgeBasis.cards.some(card=>card.id===id)),
+  'DoP edit advice may use only already validated attached book principles');
+assert.equal(dopVariant.plan.distanceMeasurements.length,1);
+assert.equal(dopVariant.plan.distanceMeasurements[0].lightId,'L2',
+  'changed source location must invalidate that source physical distance only');
+assert.equal(dopVariant.plan.incidentLuxReadings.length,0,
+  'all isolated meter reports are invalidated when the light plan changes');
+assert.equal(dopVariant.plan.dataStatus.incidentLuxReadings,undefined);
+assert.equal(dopVariant.plan.sceneIncidentLuxReading,undefined);
+assert.equal(dopVariant.plan.cameraGrayCardWaveformReading,undefined);
+assert.equal(dopVariant.plan.photometricBasis.entries[0].estimatedXMetres,2.4);
+assert.equal(dopVariant.plan.photometricBasis.entries[0].estimatedYMetres,1.8);
+assert.equal(dopVariant.plan.photometricBasis.entries[0].measuredDistanceM,null);
+assert.equal(dopVariant.plan.photometricBasis.entries[1].measuredDistanceM,5);
+assert.equal(dopVariant.plan.photometricBasis.entries[1].configurationMatchesReference,false,
+  'new requested CCT cannot reuse a 5600 K, 100 percent manufacturer reference');
+assert.equal(dopVariant.plan.photometricBasis.entries[1].publishedReferenceAtMeasuredDistance,null);
+assert.equal(dopVariant.plan.photometricBasis.entries[1].onSetLux,null);
+assert.equal(ratioD.plan.incidentLuxReadings.length,2);
+assert.equal(ratioD.plan.distanceMeasurements.length,2);
+assert.equal(core.verifyRevision(dopVariant),true);
+assert.equal(core.restoreRevisions([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,dopVariant]).length,6);
+assert.equal(Object.isFrozen(dopVariant),true);
+const dopFollowup=core.createIncidentLuxRevision(dopVariant,{
+  ...commonContext,lightId:'L2',lux:175,confirmed:true,fixtureIsolated:true
+});
+assert.equal(dopFollowup.plan.dopLocalVariant.reason,dopRequestText,
+  'last DoP plan change remains labelled when later physical evidence is recorded');
+assert.equal(core.restoreRevisions([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,dopVariant,dopFollowup]).length,7);
+
+const cameraOnlyEdit=core.createDopLightingVariantRevision(ratioD,{
+  confirmed:true,reason:'DoP menja samo shutter za plan',lightEdits:[],
+  cameraEdits:{shutterAngle:'90'}
+});
+assert.equal(cameraOnlyEdit.plan.cameraSettings.shutterAngle,90);
+assert.deepEqual(cameraOnlyEdit.plan.incidentLuxReadings,ratioD.plan.incidentLuxReadings,
+  'camera-only creative edit leaves actual scene illuminance untouched');
+assert.deepEqual(cameraOnlyEdit.plan.distanceMeasurements,ratioD.plan.distanceMeasurements);
+assert.equal(cameraOnlyEdit.plan.cameraSettings.exposureDeltaStops,
+  core.exposureDeltaStops(cameraOnlyEdit.plan.cameraSettings,
+    cameraOnlyEdit.plan.cameraSettings.referenceCamera));
+assert.equal(cameraOnlyEdit.plan.dopLocalVariant.meterEvidenceVerified,false);
+const unchangedCameraAndLight=()=>{
+  core.createDopLightingVariantRevision(ratioD,{
+    confirmed:true,reason:'This should not create a duplicate revision',
+    lightEdits:[{lightId:'L1',x:String(ratioD.plan.lights[0].x)}],
+    cameraEdits:{iso:String(ratioD.plan.cameraSettings.iso)}
+  });
+};
+assert.throws(unchangedCameraAndLight,/no actual changes/i);
+for(const bad of [
+  {confirmed:false},
+  {reason:''},{reason:'<'},{reason:' '},
+  {lightEdits:[{lightId:'L999',x:40}]},
+  {lightEdits:[{lightId:'L1',fixtureId:'forged replacement',x:40}]},
+  {lightEdits:[{lightId:'L1',x:40},{lightId:'L1',y:42}]},
+  {lightEdits:[{lightId:'L1',x:2}]},
+  {lightEdits:[{lightId:'L1',distanceM:0}]},
+  {lightEdits:[{lightId:'L1',intensityPct:101}]},
+  {lightEdits:[{lightId:'L1',kelvin:4300}]},
+  {lightEdits:[{lightId:'L2',kelvin:9000}]},
+  {lightEdits:[{lightId:'L2',kelvin:'1e3'}]},
+  {lightEdits:[{lightId:'L1',intensityPct:'NaN'}]},
+  {lightEdits:[{lightId:'L1',heightM:''}]},
+  {cameraEdits:{iso:30000}},
+  {cameraEdits:{aperture:0}},
+  {cameraEdits:{ndStops:'Infinity'}},
+  {cameraEdits:{focalLengthMm:50}},
+  {paymentApproved:true}
+]){
+  assert.throws(()=>core.createDopLightingVariantRevision(ratioD,{
+    confirmed:true,reason:'DoP requires safe planned edits',lightEdits:[],
+    cameraEdits:{},...bad
+  }),/DoP|camera|range|fixture|confirmation|Kelvin|creative/i,
+  'unsafe DoP input must fail closed: '+JSON.stringify(bad));
+}
+const changedDop=JSON.parse(JSON.stringify(dopVariant));
+changedDop.plan.dopLocalVariant.bookCardIds=['FAKE-BOOK'];
+assert.throws(()=>core.verifyRevision(changedDop),/book sources/i);
+const tamperedDop=JSON.parse(JSON.stringify(dopVariant));
+tamperedDop.plan.lights[0].intensityPct=77;
+assert.throws(()=>core.verifyRevision(tamperedDop),/integrity|Invalid|mismatch/i);
+const extraDopStatus=JSON.parse(JSON.stringify(ratioD));
+extraDopStatus.plan.dataStatus.dopLocalVariant='user-specified-plan-only-not-measured';
+assert.throws(()=>core.verifyRevision(extraDopStatus),/Orphaned DoP/i);
+
 const positive=core.compareKeyFillMeasurements(ratioD,'L1','L2');
 assert.equal(positive.status,'COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY');
 assert.equal(positive.ratio,4);
@@ -716,6 +870,33 @@ assert.equal(evidence.signalCodeRange,null);
 assert.equal(evidence.observedTransferLabel,null);
 assert.equal(evidence.referenceContextHash,null);
 assert.equal(core.verifyRevision(waveRev),true,'V1 history remains readable without V2 backfill');
+// Camera-only DoP changes preserve physically reported scene lux while clearing
+// waveform bound to the previous camera settings. A light edit clears both.
+const dopCameraFromWave=core.createDopLightingVariantRevision(waveRev,{
+  confirmed:true,reason:'DoP traži ISO 1600 za sledeći kadar',
+  cameraEdits:{iso:'1600'},lightEdits:[]
+});
+assert.equal(dopCameraFromWave.plan.sceneIncidentLuxReading.lux,650.125);
+assert.deepEqual(dopCameraFromWave.plan.incidentLuxReadings,waveRev.plan.incidentLuxReadings);
+assert.equal(dopCameraFromWave.plan.cameraGrayCardWaveformReading,undefined);
+assert.equal(dopCameraFromWave.plan.dataStatus.cameraGrayCardWaveformReading,undefined);
+assert.equal(dopCameraFromWave.plan.cameraSettings.iso,1600);
+assert.equal(dopCameraFromWave.plan.dataStatus.cameraSettings.iso,'dop-specified');
+assert.equal(dopCameraFromWave.plan.dataStatus.exposure,'unconfirmed');
+assert.equal(core.analyzeMeteredExposureContext(dopCameraFromWave,'L1','L2')
+  .cameraWaveformEvidence.status,'NOT_RECORDED');
+assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,ratioC,ratioD,
+  sceneRev,waveRev,dopCameraFromWave]).length,8);
+const dopLightFromWave=core.createDopLightingVariantRevision(waveRev,{
+  confirmed:true,reason:'DoP traži novi fill samo kao lokalni predlog',
+  lightEdits:[{lightId:'L2',intensityPct:'30'}],cameraEdits:{}
+});
+assert.equal(dopLightFromWave.plan.sceneIncidentLuxReading,undefined);
+assert.equal(dopLightFromWave.plan.cameraGrayCardWaveformReading,undefined);
+assert.equal(dopLightFromWave.plan.incidentLuxReadings.length,0);
+assert.equal(dopLightFromWave.plan.distanceMeasurements.length,2);
+assert.equal(waveRev.plan.sceneIncidentLuxReading.lux,650.125);
+assert.equal(core.verifyRevision(dopLightFromWave),true);
 
 // V2 requires an explicit and consistent description of the displayed signal.
 // No camera profile or target IRE is inferred by the system.
@@ -1519,6 +1700,23 @@ assert.match(uiSource,/monitoringTransformId:el\(/);
 assert.match(uiSource,/cameraWaveformEvidence/);
 assert.match(uiSource,/referenceDifferenceIrePoints/);
 assert.match(uiSource,/Korisnički zadat referentni nivo/);
+assert.match(uiSource,/createDopLightingVariantRevision\(latest/);
+assert.match(uiSource,/sp-dop-local-save/);
+assert.match(uiSource,/sp-dop-local-confirmed/);
+assert.match(uiSource,/sp-dop-local-reason/);
+assert.match(uiSource,/sp-dop-light-/);
+assert.match(uiSource,/sp-dop-camera-/);
+assert.match(uiSource,/DoP LOKALNO IZMENJEN PLAN/);
+assert.match(uiSource,/renderDopManualVariant\(plan,current\)/);
+assert.match(uiSource,/state\.aiPreview='';state\.aiStoryboard=\[\];state\.exportedVideo=null;/,
+  'old generated visual and video outputs must not survive a new creative edit');
+const offlineEditorSource=uiSource.split('function renderDopManualVariant(plan,current)')[1]
+  .split('function previewPayload(plan)')[0];
+assert.doesNotMatch(offlineEditorSource,/\bfetch\s*\(/,'manual editing cannot request online AI');
+assert.doesNotMatch(offlineEditorSource,/videoRequest\s*\(|startAIVideo\s*\(/,
+  'manual editing cannot request paid video');
+assert.doesNotMatch(offlineEditorSource,/window\.Android\.|\.setCharacteristic\s*\(/,
+  'manual editing cannot command physical lights');
 assert.match(uiSource,/compareGrayCardWaveformRevisions\(/,
   'user-visible history comparison must use revision-validated core');
 assert.match(uiSource,/listGrayCardWaveformCaptures\(revisions\)/,

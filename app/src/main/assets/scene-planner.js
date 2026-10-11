@@ -187,7 +187,8 @@
       '<div id="sp-stage-info" class="sp-note"></div>'+
       '<p class="sp-note">2D položaji i pokrivenost su AI procene, ne stvarna fotometrijska merenja.</p></div>'+
       '<div class="sp-card"><h2 class="sp-h">PREDLOG RASVETE</h2>'+
-      '<div id="sp-summary"></div><div id="sp-camera-result" class="sp-lamp"></div><div id="sp-lights"></div><div id="sp-warnings"></div>'+
+      '<div id="sp-summary"></div><div id="sp-camera-result" class="sp-lamp"></div><div id="sp-lights"></div>'+
+      '<div id="sp-dop-manual"></div><div id="sp-warnings"></div>'+
       '<div class="sp-actions" style="margin-top:12px"><button type="button" class="sp-btn" id="sp-save">SAČUVAJ PLAN (JSON)</button>'+
       '<button type="button" class="sp-btn" id="sp-share">PODELI PLAN</button></div></div></div></div>';
     document.body.appendChild(wrap);
@@ -548,6 +549,22 @@
         lines.push('Ovo nije fabrički lux, nije AI procena niti dokaz ekspozicije cele scene.');
       });
     }
+    if(plan.dopLocalVariant){
+      var dop=plan.dopLocalVariant;
+      lines.push('','LOKALNA DoP VARIJANTA — IZMENJEN SAMO PLAN',
+        'Zahtev: '+dop.reason,
+        'Izmenjene lampe: '+dop.changedLights.map(function(x){
+          return x.lightId+' ('+x.fields.join(', ')+')';
+        }).join('; '),
+        'Izmenjeni predloženi parametri kamere: '+(dop.changedCameraFields.join(', ')||'nema'),
+        'Bez komandi ka rasveti, stvarne ekspozicije, potvrde sposobnosti lampe ili AI relight videa.');
+      (plan.knowledgeBasis&&plan.knowledgeBasis.cards||[]).filter(function(card){
+        return dop.bookCardIds.indexOf(card.id)>=0;
+      }).forEach(function(card){
+        lines.push('Stručni princip '+card.id+': '+card.principle,
+          'Provera na setu: '+card.validation,'Ograničenje: '+card.limitations);
+      });
+    }
     if(plan.sceneIncidentLuxReading){
       var sceneMeterText=plan.sceneIncidentLuxReading;
       lines.push('','CELA POSTAVKA — KORISNIKOVO OČITAVANJE NA JEDNOJ TAČKI (NE EKSPОZICIJA)',
@@ -719,7 +736,8 @@
     el('sp-summary').innerHTML='<div style="line-height:1.55">'+esc(plan.summary)+'</div>'+
       '<p class="sp-note">'+esc(plan.rationale)+'</p>'+
       '<div class="sp-pill" style="display:inline-block">'+(plan.source==='ai'?'AI PREDLOG':'LOKALNI KONCEPT')+
-      ' • '+(plan.mode==='own'?'SAMO MOJA OPREMA':'NAJBOLJA RASVETA')+'</div>';
+      ' • '+(plan.mode==='own'?'SAMO MOJA OPREMA':'NAJBOLJA RASVETA')+
+      (plan.dopLocalVariant?' • DoP LOKALNO IZMENJEN PLAN':'')+'</div>';
     var current=revisions[revisions.length-1];
     if(current)el('sp-summary').innerHTML+='<p class="sp-note">Revizija '+current.sequence+
       ' • '+esc(current.sceneId)+'<br>Light plot: '+esc(current.lightPlotRevisionId)+
@@ -1314,6 +1332,7 @@
         }catch(error){status('Očitavanje nije sačuvano: '+error.message,true);}
       };
     });
+    renderDopManualVariant(plan,current);
     el('sp-warnings').innerHTML='<div class="sp-note" style="margin-top:10px"><b style="color:#f5c542">PROCENE I KOMPROMISI</b><ul>'+
       plan.limitations.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+
       '</ul><b style="color:#f5c542">DAN ZA NOĆ / KONTROLA DNEVNOG SVETLA</b><ul>'+
@@ -1321,6 +1340,126 @@
       '</ul><b style="color:#f5c542">BEZBEDNOST</b><ul>'+
       plan.safetyNotes.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+'</ul></div>';
     el('sp-result').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  // A purely local editing path for concrete DoP creative parameters.
+  // It does NOT regenerate via any AI endpoint or send commands to fixtures.
+  function renderDopManualVariant(plan,current){
+    var root=el('sp-dop-manual');
+    if(!root||!current||!core().createDopLightingVariantRevision)return;
+    var lightFields=[
+      {k:'x',name:'X U PLOTU (%)',min:5,max:95},
+      {k:'y',name:'Y U PLOTU (%)',min:5,max:95},
+      {k:'heightM',name:'PREDLOŽENA VISINA (m)',min:0.1,max:25},
+      {k:'distanceM',name:'PREDLOŽENA DISTANCA (m)',min:0.1,max:100},
+      {k:'intensityPct',name:'PREDLOŽENI INTENZITET (%)',min:0,max:100},
+      {k:'kelvin',name:'TRAŽENA BOJA (K)',min:1000,max:20000}
+    ];
+    var cameraFields=[
+      {k:'aperture',name:'PREDLOŽENA BLENDA (f)',min:0.7,max:32},
+      {k:'iso',name:'PREDLOŽENI ISO',min:50,max:25600},
+      {k:'fps',name:'FPS',min:1,max:120},
+      {k:'shutterAngle',name:'SHUTTER ANGLE (°)',min:11.25,max:360},
+      {k:'whiteBalanceK',name:'WHITE BALANCE (K)',min:1700,max:20000},
+      {k:'ndStops',name:'ND FILTER (stop)',min:0,max:12}
+    ];
+    var html='<div class="sp-card"><h2 class="sp-h">DoP — RUČNA VARIJANTA PLANA (OFFLINE)</h2>'+
+      '<p class="sp-note">Menjaš plan svakog izvora bez plaćenog AI-ja i bez kontrole lampe. '+
+      'Ova izmena odmah pravi novu SHA-256 reviziju, ažurira 2D light plot i konceptualni prikaz. '+
+      'X/Y nisu izmerena 3D rastojanja. Traženi Kelvin nije dokaz da ga konkretna lampa podržava.</p>';
+    if(plan.dopLocalVariant){
+      var v=plan.dopLocalVariant;
+      html+='<details><summary><b>POSLEDNJA RUČNA DoP VARIJANTA</b></summary>'+
+        '<p>Uputstvo: '+esc(v.reason)+'</p><p>Lampе: '+
+        esc(v.changedLights.map(function(l){return l.lightId+' ('+l.fields.join(', ')+')';}).join('; ')||'nema')+
+        '. Kamera: '+esc(v.changedCameraFields.join(', ')||'bez promene')+'.</p>'+
+        '<p class="sp-note">Stručni principi važe kao smernice, a ne kao merenje ili garancija parametara.</p>'+
+        (plan.knowledgeBasis&&plan.knowledgeBasis.cards||[]).filter(function(card){
+          return v.bookCardIds.indexOf(card.id)>=0;
+        }).map(function(card){
+          return '<div class="sp-note"><b>'+esc(card.id)+' — '+esc(card.title)+'</b>'+
+            '<div>Princip: '+esc(card.principle)+'</div>'+
+            '<div>Provera: '+esc(card.validation)+'</div>'+
+            '<div>Ograničenje: '+esc(card.limitations)+'</div></div>';
+        }).join('')+'</details>';
+    }
+    plan.lights.forEach(function(l){
+      html+='<details class="sp-lamp"><summary><b>'+esc(l.id)+' / '+
+        esc(l.role.toUpperCase())+' — '+esc(l.fixtureName)+'</b></summary>'+
+        '<div class="sp-two">';
+      lightFields.forEach(function(f){
+        html+='<div><label for="sp-dop-light-'+esc(l.id)+'-'+f.k+'">'+f.name+'</label>'+
+          '<input class="sp-field" type="number" step="any" min="'+f.min+
+          '" max="'+f.max+'" id="sp-dop-light-'+esc(l.id)+'-'+f.k+
+          '" value="'+(l[f.k]===null?'':esc(l[f.k]))+'"></div>';
+      });
+      html+='</div><p class="sp-note">Ovo su tražene vrednosti za light plot. '+
+        'Fizička postavka, dopustiva CCT snaga, stvarni dimmer i fotometrija nisu potvrđeni.</p></details>';
+    });
+    html+='<details class="sp-lamp"><summary><b>DoP — PREDLOŽENA KAMERA</b></summary><div class="sp-two">';
+    cameraFields.forEach(function(f){
+      html+='<div><label for="sp-dop-camera-'+f.k+'">'+f.name+'</label>'+
+        '<input class="sp-field" type="number" step="any" min="'+f.min+
+        '" max="'+f.max+'" id="sp-dop-camera-'+f.k+
+        '" value="'+esc(plan.cameraSettings[f.k])+'"></div>';
+    });
+    html+='</div><p class="sp-note">Promena kamere ne znači da je potvrđena stvarna ekspozicija. '+
+      'Prethodno očitavanje sive karte neće važiti za novi plan sa izmenjenom kamerom.</p></details>'+
+      '<label for="sp-dop-local-reason">ŠTA ŽELIŠ DA PROMENIŠ U OVOM KADRU?</label>'+
+      '<textarea id="sp-dop-local-reason" class="sp-field" rows="2" maxlength="500" '+
+      'placeholder="Npr. bliži key sa leve strane i toplija pozadina, prema zahtevu DoP-a"></textarea>'+
+      '<label style="display:flex;gap:8px;align-items:center">'+
+      '<input type="checkbox" id="sp-dop-local-confirmed"> Potvrđujem da je ovo SAMO kreativna varijanta plana, '+
+      'bez merenja na setu, fizičke komande lampama ili nove AI video obrade.</label>'+
+      '<button id="sp-dop-local-save" type="button" class="sp-btn sp-primary" '+
+      'style="width:100%;margin-top:8px">SAČUVAJ DoP VARIJANTU I NOVI LIGHT PLOT</button>'+
+      '<p class="sp-note">Za svaku promenu moraš uneti stvaran zahtev. '+
+      'Prazno polje kod ranije nepoznate vrednosti znači bez promene. '+
+      'Izmene rasporeda/jačine poništavaju stara očitavanja rasvete samo u novoj reviziji. '+
+      'Izmene samo kamere čuvaju incidentna lux merenja, ali poništavaju waveform zapis.</p></div>';
+    root.innerHTML=html;
+    var button=el('sp-dop-local-save');
+    if(!button)return;
+    button.onclick=function(){
+      if(state.busy||state.videoBusy||historyBlocked||!revisions.length)return;
+      if(!el('sp-dop-local-confirmed').checked){
+        status('Potvrdi da je ovo kreativna izmena plana, a ne fizičko merenje.',true);return;
+      }
+      try{
+        var lightEdits=[],cameraEdits={};
+        function readChange(domId,oldValue,output,key){
+          var node=el(domId);
+          if(!node)throw new Error('Nedostaje polje za '+key);
+          var value=node.value.trim();
+          if(value===''){
+            if(oldValue!==null)throw new Error('Broj za '+key+' je obrisan; vrati ga ili unesi novi.');
+            return;
+          }
+          if(value!==String(oldValue))output[key]=value;
+        }
+        plan.lights.forEach(function(l){
+          var change={lightId:l.id};
+          lightFields.forEach(function(f){
+            readChange('sp-dop-light-'+l.id+'-'+f.k,l[f.k],change,f.k);
+          });
+          if(Object.keys(change).length>1)lightEdits.push(change);
+        });
+        cameraFields.forEach(function(f){
+          readChange('sp-dop-camera-'+f.k,plan.cameraSettings[f.k],cameraEdits,f.k);
+        });
+        var latest=revisions[revisions.length-1];
+        var child=core().createDopLightingVariantRevision(latest,{
+          confirmed:true,reason:el('sp-dop-local-reason').value,
+          lightEdits:lightEdits,cameraEdits:cameraEdits
+        });
+        revisions=revisions.concat([child]);state.plan=child.plan;
+        state.aiPreview='';state.aiStoryboard=[];state.exportedVideo=null;
+        if(el('sp-video-share'))el('sp-video-share').disabled=true;
+        renderResult();remember();
+        status('Sačuvana je nova lokalna DoP varijanta. Plot i predlozi su ažurirani; stvarna rasveta i ekspozicija nisu potvrđene.');
+      }catch(error){
+        status('DoP varijanta nije sačuvana: '+(error&&error.message||'Neispravan zahtev'),true);
+      }
+    };
   }
   function previewPayload(plan){
     return {

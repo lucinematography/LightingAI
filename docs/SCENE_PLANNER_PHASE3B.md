@@ -1145,3 +1145,79 @@ malformed or tampered records, book-card binding and UI provenance notices.
 This change touches only approved Scene Planner files on
 `feature/scene-planner-first-release`; `main`, K0, K1 and Draft PR #415
 are not modified outside that branch.
+
+
+### Offline DoP creative lighting and camera variants (2026-10-11)
+
+The Android Scene Planner now has a **manual DoP variant editor** directly
+beneath the light plan. This closes a practical gap: changing one proposed
+fixture or camera parameter no longer requires sending another prompt to the
+AI server or rebuilding a generic local plan. Users can enter a meaningful
+DoP instruction and edit **explicit planned values** for existing light IDs:
+normalized 2D X/Y position (5..95%), height (0.1..25 m), proposed source-
+to-subject distance (0.1..100 m), output percentage (0..100%), and requested
+color temperature (1000..20000 K). They can independently change camera
+aperture, ISO, FPS, shutter angle, white balance and ND. No UI or core path
+for this feature can buy AI inference, generate a video, send BLE/DMX commands,
+replace an inventory fixture or silently create a new lamp. All edits are
+**creative intention, not a report of physical rig state**.
+
+The new `createDopLightingVariantRevision(parent, report)` operates
+locally on the verified immutable plan, fails closed on unapproved fields,
+out-of-range numbers, exponent/nonfinite input, unknown or duplicate lamp
+IDs, missing explicit consent, empty instruction and no-op edits. Numeric
+input is never clamped to an apparently plausible setting. Explicit catalog
+ranges for Aputure LS 60d (5600 K) and LS 60x (2700–6500 K) reject unsupported
+CCT targets. Other model capabilities and the physical output/dimmer
+behavior are NOT presumed verified. Changing the requested Kelvin, position
+or intensity is not proof that a selected physical fixture can produce it.
+
+Each accepted edit creates a new SHA-256-bound child plan and light plot
+with the same scene identity, stable fixture IDs and preserved parent
+history. `dopLocalVariant` records the last user-confirmed instruction,
+which planned lamps and camera fields changed, provenance
+`DOP_CONFIRMED_PLANNED_EDIT_NOT_PHYSICALLY_VERIFIED`, and explicit false
+flags for measured light, calibrated camera exposure, real fixture control
+and generated AI video. The last DoP variant label survives subsequent
+on-set measurement revisions; it does not falsely report those measurements
+as additional creative changes.
+
+Evidence invalidation is deliberately asymmetric. **Any edit to the
+planned lights** invalidates isolated on-set lux readings, combined scene
+incident lux and gray-card waveform evidence in the **child** plan, since
+they belong to the old rig. Changes to normalized position, estimated
+distance or planned fixture height also remove that lamp's now-stale
+user-attested physical distance; unchanged lamp distances and independently
+attested optical attachments remain. **Camera-only** plan changes preserve
+actual incident/scene lux and measured physical distances but remove the
+gray-card waveform reading bound to the old camera settings. The complete
+original parent remains unmodified and readable. Manufacturer photometric
+references are recalculated only against their **exact documented 100%
+output, optic, Kelvin, beam and measured distance**; the full-output lux
+sample is revoked if the new creative setting no longer matches. An edited
+percentage is never interpolated into a fabricated lux figure.
+
+The UI immediately rerenders the shared 2D light plot, local conceptual
+photo and all parameter cards from the child revision. It discards stale
+AI still previews, storyboard and exported conceptual video instead of
+displaying them as though they reflected the edited rig. It never changes
+an existing paid-video receipt: such receipts remain tied to their original
+revision, and the new editor issues no paid calls. Both the plan export and
+UI explain the last manual DoP request and, if present in the current
+revision's already curated expert base, practical principles/validations
+from PHY-001, PHY-002, PHY-005, SET-005, SET-007, EXP-001,
+EXP-002 and EXP-003. No book card or book page is invented.
+
+The Android plot and photo stay **illustrative**, not a real relighted
+still/video or a metrically reconstructed scene. The revised camera values
+are **unverified proposed camera settings**, not on-set ISO/T-stop
+calibration, and no measured scene EV or lens/sensor exposure is inferred.
+Regression tests cover valid combined and camera-only creative revisions,
+fixed-CCT fixture rejection, invalid range/field/fixture submissions,
+strict no-op rejection, preserved revision history, invalidated old
+meter/waveform data, retained physical optics, stale manufacturer lux
+references, attached book-card provenance, hash tampering, and a UI
+contract without network calls, video payment or physical-light commands.
+The changes are restricted to the Scene Planner feature branch; K0/K1,
+`main`, Draft PR #415, release, APK installation and publication remain
+untouched.

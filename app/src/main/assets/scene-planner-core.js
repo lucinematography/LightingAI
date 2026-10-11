@@ -316,7 +316,7 @@
           cards:raw.knowledgeBasis.cards.slice(0,8).map(function(c){
             return {id:str(c&&c.id,40),title:str(c&&c.title,180),
               principle:str(c&&c.principle,1200),application:str(c&&c.application,1200),
-              limitations:str(c&&c.limitations,1200),
+              validation:str(c&&c.validation,1200),limitations:str(c&&c.limitations,1200),
               references:(Array.isArray(c&&c.references)?c.references:[]).slice(0,4).map(function(r){
                 return {source:str(r&&r.source,40),title:str(r&&r.title,240),edition:str(r&&r.edition,120),author:str(r&&r.author,120),
                   pdfPage:num(r&&r.pdfPage,1,5000,null),printedPage:num(r&&r.printedPage,0,5000,null),

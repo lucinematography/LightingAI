@@ -62,6 +62,9 @@ assert.ok(core.localPlan({...own,equipment:[]}).limitations.some(x=>x.includes("
 assert.ok(core.localPlan({mode:"best",description:"test"}).lights.every(x=>!x.available));
 const prompt=buildScenePlannerPrompt(canonical);
 assert.match(prompt,/ONLY MY EQUIPMENT/);
+assert.match(prompt,/REFERENCE KNOWLEDGE/);
+assert.match(prompt,/pdfPage/);
+assert.match(prompt,/book principles/);
 assert.match(prompt,/fixture-1/);
 assert.doesNotMatch(prompt,/DMX|Art-Net|CRMX|ART7|Bluetooth/);
 const clip={...own,scenePhoto:"",videoFrames:[{timeSec:1.5,image:PHOTO},{timeSec:4.5,image:PHOTO}]};

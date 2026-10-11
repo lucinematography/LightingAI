@@ -192,6 +192,45 @@
       estimated: true
     };
   }
+  function sanitizePhotometricBasis(raw, req, emitted) {
+    if(!raw || raw.status!=='MANUFACTURER_REFERENCE_NOT_SCENE_MEASUREMENT' ||
+      !Array.isArray(raw.entries))return null;
+    var measured=!!(req.roomWidthM && req.roomDepthM && req.dimensionsMeasured);
+    var validUrls=['https://aputure.com/EN-US/products/ls-60d','https://aputure.com/en-US/products/ls-60x'];
+    var ids=raw.knowledgeBasis && Array.isArray(raw.knowledgeBasis.cards) ?
+      raw.knowledgeBasis.cards.map(function(c){return str(c&&c.id,40);}) : [];
+    var seen=Object.create(null);
+    var entries=raw.entries.slice(0,8).map(function(e){
+      if(!e||typeof e!=='object')return null;
+      var id=str(e.lightId,12),fixtureId=str(e.fixtureId,150),url=str(e.sourceUrl,240);
+      var light=emitted.find(function(l){return l.id===id && l.fixtureId===fixtureId && l.available;});
+      if(!light||seen[id]||validUrls.indexOf(url)<0||e.sourceType!=='MANUFACTURER_PUBLISHED_REFERENCE'||
+        !Array.isArray(e.samples)||e.samples.length!==6)return null;
+      var samples=e.samples.map(function(s){
+        if(!s||[15,45].indexOf(s.beamAngleDeg)<0||[1,3,5].indexOf(s.distanceM)<0||
+          !Number.isSafeInteger(s.lux)||s.lux<1||s.lux>1000000)return null;
+        return {beamAngleDeg:s.beamAngleDeg,distanceM:s.distanceM,lux:s.lux};
+      });
+      if(samples.some(function(s){return s===null;}))return null;
+      var sampleIds=samples.map(function(s){return s.beamAngleDeg+':'+s.distanceM;});
+      if((new Set(sampleIds)).size!==6)return null;
+      seen[id]=true;
+      var k=num(e.cctK,1000,20000,null);
+      return {lightId:id,fixtureId:fixtureId,sourceUrl:url,
+        sourceType:'MANUFACTURER_PUBLISHED_REFERENCE',cctK:k,outputPct:100,
+        samples:samples,
+        configurationMatchesReference:light.intensityPct===100 && light.kelvin===k &&
+          (light.beamAngleDeg===15||light.beamAngleDeg===45) && !light.modifier,
+        estimatedXMetres:measured?Number((req.roomWidthM*light.x/100).toFixed(2)):null,
+        estimatedYMetres:measured?Number((req.roomDepthM*light.y/100).toFixed(2)):null,
+        bookCardIds:(Array.isArray(e.bookCardIds)?e.bookCardIds:[]).slice(0,5).map(function(x){return str(x,40);})
+          .filter(function(x){return ids.indexOf(x)>=0;}),
+        measuredDistanceM:null,onSetLux:null};
+    }).filter(Boolean);
+    return {status:'MANUFACTURER_REFERENCE_NOT_SCENE_MEASUREMENT',
+      geometry:{widthM:req.roomWidthM,depthM:req.roomDepthM,
+        userMarkedMeasured:measured,plotPositionsEstimated:true},entries:entries};
+  }
   function sanitizePlan(raw, input, source) {
     var req = request(input), own = req.mode === 'own';
     raw = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
@@ -324,6 +363,7 @@
               })};
           })
         } : null,
+      photometricBasis:source==='ai'?sanitizePhotometricBasis(raw.photometricBasis,req,emitted):null,
       dayForNightNotes:nightNotes,
       unknownCoverageStages:unlit,
       geometry: {widthM: req.roomWidthM, depthM: req.roomDepthM,

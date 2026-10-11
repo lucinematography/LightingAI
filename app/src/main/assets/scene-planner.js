@@ -531,6 +531,31 @@
        !plan.knowledgeBasis.cards.length){
       el('sp-summary').innerHTML+='<p class="sp-note">Stručna baza: za ovaj opis scene nisu pronađeni odgovarajući kurirani principi iz knjiga. AI predlog nema knjišku potporu; proveriti sa direktorom fotografije.</p>';
     }
+    if(plan.photometricBasis && Array.isArray(plan.photometricBasis.entries) &&
+       plan.photometricBasis.entries.length){
+      var ph=plan.photometricBasis;
+      el('sp-summary').innerHTML+='<details class="sp-lamp"><summary><b>Fotometrija proizvođača — referentni podaci ('+
+        ph.entries.length+')</b></summary>'+
+        '<p class="sp-note">Objavljene vrednosti proizvođača, a NE stvarni lux na setu. Važe samo za navedenu distancu, 5600 K, 100% izlaza, spot/flood položaj i bez dodatnih modifikatora. AI distance i položaji nisu izmereni. Potvrditi svetlomerom.</p>'+
+        '<p class="sp-note">'+(ph.geometry&&ph.geometry.userMarkedMeasured?
+          'Dimenzije prostorije korisnik je označio kao izmerene; koordinate reflektora su i dalje AI procene.':
+          'Dimenzije nisu označene kao izmerene; metrički položaji nisu dostupni.')+'</p>'+
+        ph.entries.map(function(e){
+          return '<div class="sp-note"><b>'+esc(e.lightId)+' / '+esc(e.fixtureId)+'</b>'+
+            '<div>Izvor proizvođača: '+esc(e.sourceUrl)+'</div>'+
+            '<div>Referentni uslovi: '+esc(e.cctK)+' K, '+esc(e.outputPct)+'% izlaza; spot/flood bez modifikatora.</div>'+
+            '<div>Objavljeno (ne na setu): '+e.samples.map(function(s){
+              return esc(s.beamAngleDeg)+'° / '+esc(s.distanceM)+' m: '+esc(s.lux)+' lx';
+            }).join(' • ')+'</div>'+
+            '<div>Parametri plana: '+(e.configurationMatchesReference?
+              'nominalno odgovaraju tabeli, ali distanca i stvarni izlaz nisu potvrđeni.':
+              'ne odgovaraju u potpunosti uslovima tabele — ne koristiti tabelu za obračun ekspozicije.')+'</div>'+
+            '<div>Procena položaja u planu: x ~'+fmt(e.estimatedXMetres,' m')+
+              ', y ~'+fmt(e.estimatedYMetres,' m')+' (nije fizičko merenje pozicije).</div>'+
+            '<div>Knjiški principi: '+esc((e.bookCardIds||[]).join(', ')||'nema posebno povezanog principa')+'</div>'+
+            '<div>Stvarni lux: nije izmeren; proveriti svetlomerom i kamerom na setu.</div></div>';
+        }).join('')+'</details>';
+    }
     var camera=plan.cameraSettings||{};
     var cameraBox=el('sp-camera-result');
     if(cameraBox)cameraBox.innerHTML='<b style="color:#f5c542">KAMERA / PREPORUKA, NIJE MERENJE</b>'+

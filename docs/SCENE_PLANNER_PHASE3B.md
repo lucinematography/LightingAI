@@ -1082,3 +1082,66 @@ introduced. Regression tests cover inherited snapshots, identical re-entry,
 true two-capture sequences with intervening and later revisions, empty active
 waveform state, missing history, tampering and the UI selector contract.
 No K0/K1, `main`, paid AI, fixture control, merge, release or APK install.
+
+
+### DoP comparison of two whole-scene incident-lux observations (2026-10-11)
+
+The DoP can now compare **two genuinely distinct on-set incident-lux observations**
+of the **entire intended owned-light arrangement with ambient included**,
+reported at a single named subject mark. The pure offline
+`listSceneIncidentLuxCaptures(history)` helper validates the whole immutable
+SHA-256 revision chain and identifies only revisions where the reported
+whole-scene reading appears for the first time or changes. A later revision
+inheriting an unchanged record, or an exact manual re-entry with the same
+observation and timestamp, is **not** another actual measurement. The app
+labels the true origin of a currently inherited report. The two most recent
+capture events, not the two most recent waveform/lux-bearing *revisions*,
+are selected for comparison in the DoP camera panel and exported report.
+
+`compareSceneIncidentLuxRevisions(history, beforeId, afterId)` requires two
+actual captured readings in the same valid contiguous history, chronological
+revision order and **strictly increasing user-declared UTC-offset-adjusted
+measurement instants**, with at most **15 elapsed minutes** separating the
+observations. It also requires the same declared meter model and physical
+identifier, the same named subject measurement point, receptor orientation,
+and an unchanged whole-setup metering protocol (all planned available
+sources active plus ambient). These are declarations and NOT independent
+instrument identification or laboratory traceability. Different fixture
+counts and planned-position fingerprints are *reported*, not silently
+treated as evidence of physical lamp levels or a known causal lighting
+change. A daylight-saving wall-clock transition is handled using each
+record's explicit UTC offset.
+
+An accepted comparison reports the two actual **user-entered lux values**,
+their signed absolute difference in lux, and the elapsed minutes. If both
+observations are strictly positive, it additionally reports the ratio of
+second-to-first incident illuminance and signed
+`log2(laterLux/earlierLux)` **relative illuminance stops**. This is a
+relative photometric representation of the *reported meter values* only,
+**NOT a camera exposure correction, lens T-stop, scene EV, key/fill ratio,
+image contrast, or automatic ISO/aperture recommendation**. If either
+reading is zero, the absolute signed lux change is valid but the finite
+ratio and stop difference stay `null` with an explicit zero-reading reason.
+Missing, mismatched, stale, tampered, inherited or out-of-window readings
+fail closed as `NOT_COMPARABLE`, returning null lux, ratio and stop fields
+instead of invented numbers.
+
+The comparison emits curated practical guidance only from relevant
+EXP-001, SET-007 and PHY-005 book-principle cards *attached to the current
+validated plan*, including real-world checks and limitations; these
+paraphrases are not a claim that the complete copyrighted books have been
+independently reviewed or that the user's device is calibrated. In all
+outcomes the flags for physical rig, ambient stability, independent
+meter identity/calibration and camera exposure validation remain false.
+The feature makes no paid AI request, performs no physical fixture command,
+does not sum isolated key/fill contributions, and never publishes or installs
+a new APK.
+
+The deterministic regression suite covers positive/negative/equal changes,
+zero denominator, instrument/point mismatches, the inclusive 15-minute
+boundary, DST fall-back, strictly ordered timestamps, changed reported
+setup, immutable history, copied/identical readings, unknown revisions,
+malformed or tampered records, book-card binding and UI provenance notices.
+This change touches only approved Scene Planner files on
+`feature/scene-planner-first-release`; `main`, K0, K1 and Draft PR #415
+are not modified outside that branch.

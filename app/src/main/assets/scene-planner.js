@@ -671,6 +671,45 @@
         lines.push('Nema izvedenog ISO, blende, log-EV, kontrasta kadra ili automatskog saveta za lampu.');
       }
     }
+    if(revisions.length&&core().listSceneIncidentLuxCaptures&&
+      core().compareSceneIncidentLuxRevisions&&
+      revisions[revisions.length-1].plan.sceneIncidentLuxReading){
+      var sceneCaptures=core().listSceneIncidentLuxCaptures(revisions);
+      if(sceneCaptures.currentReadingInherited){
+        lines.push('','POREKLO UKUPNOG LUX OČITAVANJA',
+          'Aktuelna revizija '+sceneCaptures.currentRevisionId+
+          ' prenosi korisničko očitavanje iz '+sceneCaptures.activeCaptureRevisionId+
+          '; ovo nije novo merenje.');
+      }
+      if(sceneCaptures.captureRevisionIds.length>=2){
+        var sceneBeforeId=sceneCaptures.captureRevisionIds[sceneCaptures.captureRevisionIds.length-2];
+        var sceneAfterId=sceneCaptures.captureRevisionIds[sceneCaptures.captureRevisionIds.length-1];
+        var sceneDiff=core().compareSceneIncidentLuxRevisions(revisions,sceneBeforeId,sceneAfterId);
+        lines.push('','POREĐENJE DVA STVARNA OČITAVANJA UKUPNE OSVETLJENOSTI',
+          'Pre: '+sceneDiff.beforeRevisionId+'; posle: '+sceneDiff.afterRevisionId);
+        if(sceneDiff.status==='USER_REPORTED_INCIDENT_ILLUMINANCE_DIFFERENCE_ONLY'){
+          lines.push('Na istoj prijavljenoj tački '+sceneDiff.measurementPoint+
+            ' uz isti prijavljeni svetlomer '+sceneDiff.meterModel+' / '+sceneDiff.meterIdentifier+
+            ': '+sceneDiff.beforeLux+' lx ranije, '+sceneDiff.afterLux+
+            ' lx kasnije; razlika '+sceneDiff.deltaLux+' lx.'+
+            ' Vremenski razmak '+sceneDiff.minutesBetween+' minuta.',
+            sceneDiff.ratio!==null?
+              'Odnos ukupnog incidentnog svetla: '+sceneDiff.ratio+
+              ':1; relativna promena osvetljenosti '+sceneDiff.relativeIlluminanceStops+
+              ' stopa (NIJE promena ekspozicije kamere).':
+              'Nije izračunat odnos/stop razlika: '+sceneDiff.ratioReason+'.',
+            'Otisak predložene postavke: '+
+              (sceneDiff.plannedSetupFingerprintMatches?'isti.':'promenjen.')+
+            ' Ovo ne potvrđuje stvarni raspored reflektora ni stabilnost ambijenta.');
+        }else lines.push('Očitavanja scene nisu uporediva: '+sceneDiff.reason+
+          '; ne izvodimo odnos niti relativne stope.');
+        (sceneDiff.bookGuidance||[]).forEach(function(card){
+          lines.push('Stručni princip '+card.id+': '+card.principle,
+            'Provera na setu: '+card.validation,'Ograničenje: '+card.limitations);
+        });
+        lines.push('Bez automatskog ISO, blende, scene EV, kontrasta kadra ili promene lampi.');
+      }
+    }
     lines.push('','OGRANIČENJA',...plan.limitations,'','BEZBEDNOST',...plan.safetyNotes);
     return lines.join('\n');
   }
@@ -1002,6 +1041,55 @@
           status('Prijavljeno očitavanje sive karte je sačuvano u novoj reviziji. Ekspozicija nije kalibrisana.');
         }catch(error){status('Waveform očitavanje nije sačuvano: '+error.message,true);}
       };
+    }
+    // A copied whole-scene lux record is not another measurement.
+    if(cameraBox&&current&&current.plan.sceneIncidentLuxReading&&
+      core().listSceneIncidentLuxCaptures&&core().compareSceneIncidentLuxRevisions){
+      var sceneHistory=core().listSceneIncidentLuxCaptures(revisions);
+      if(sceneHistory.currentReadingInherited){
+        cameraBox.innerHTML+='<p class="sp-note">UKUPNI LUX: trenutna revizija samo prenosi '+
+          'staro očitavanje iz '+esc(sceneHistory.activeCaptureRevisionId)+
+          '; to NIJE novo merenje.</p>';
+      }
+      if(sceneHistory.captureRevisionIds.length>=2){
+        var firstSceneId=sceneHistory.captureRevisionIds[sceneHistory.captureRevisionIds.length-2];
+        var secondSceneId=sceneHistory.captureRevisionIds[sceneHistory.captureRevisionIds.length-1];
+        var sceneComparison=core().compareSceneIncidentLuxRevisions(
+          revisions,firstSceneId,secondSceneId);
+        cameraBox.innerHTML+='<details class="sp-lamp"><summary><b>DoP — POREĐENJE UKUPNOG LUX-A SCENE</b></summary>'+
+          '<p class="sp-note">Dva stvarna korisnički evidentirana merenja: '+
+          esc(sceneComparison.beforeRevisionId)+' i '+esc(sceneComparison.afterRevisionId)+'</p>'+
+          (sceneComparison.status==='USER_REPORTED_INCIDENT_ILLUMINANCE_DIFFERENCE_ONLY'?
+            '<p>Pre '+esc(sceneComparison.beforeLux)+' lx; posle '+
+            esc(sceneComparison.afterLux)+' lx; promena '+
+            esc(sceneComparison.deltaLux)+' lx. Svetlomer '+esc(sceneComparison.meterModel)+
+            ' / '+esc(sceneComparison.meterIdentifier)+' na tački '+
+            esc(sceneComparison.measurementPoint)+'; razmak '+
+            esc(sceneComparison.minutesBetween)+' minuta.</p>'+
+            (sceneComparison.ratio!==null?
+              '<p>Odnos ukupne prijavljene incidentne osvetljenosti: '+
+              esc(sceneComparison.ratio)+':1; '+esc(sceneComparison.relativeIlluminanceStops)+
+              ' stopa promene OSVETLJENOSTI, NE ekspozicije kamere.</p>':
+              '<p>Lux očitavanje je nula; nema konačnog odnosa niti razlike u stopama.</p>')+
+            '<p class="sp-note">Otisak PLANIRANE postavke: '+
+              (sceneComparison.plannedSetupFingerprintMatches?'isti.':'različit.')+
+              ' Stvarni dimmer, ambijent, promena svetla i pozicije nisu nezavisno provereni.</p>':
+            '<p>Poređenje odbijeno: <b>'+esc(sceneComparison.reason)+
+              '</b>. Proveri svetlomer, identitet, mernu tačku i vremenski razmak.</p>')+
+          '<p class="sp-note">Obe vrednosti su korisnički prijavljene, sa svim planiranim izvorima i ambijentom. '+
+          'Ovo nije kontrast kadra, zbir key/fill izvora, scena EV, ISO ili predlog blende. '+
+          'Svetlomer, kalibracija, fizička postavka i promena ambijenta nisu nezavisno provereni.</p>'+
+          (sceneComparison.bookGuidance||[]).map(function(card){
+            return '<div class="sp-note"><b>'+esc(card.id)+' — '+esc(card.title)+'</b>'+
+              '<div>Princip: '+esc(card.principle)+'</div>'+
+              '<div>Praktična provera: '+esc(card.validation)+'</div>'+
+              '<div>Ograničenje: '+esc(card.limitations)+'</div></div>';
+          }).join('')+'</details>';
+      }else{
+        cameraBox.innerHTML+='<p class="sp-note">Za poređenje ukupnog lux-a scene '+
+          'potrebna su dva zasebna stvarna očitavanja na istom mestu u razmaku do 15 minuta. '+
+          'Kopija starog očitavanja ne računa se kao novo merenje.</p>';
+      }
     }
     // A revision may inherit an older waveform. Show only actual distinct
     // capture events, verified against the intact history by the core.

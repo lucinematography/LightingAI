@@ -456,6 +456,194 @@ for(const key of ['derivedSceneLux','measuredSceneEv100','recommendedAperture','
 assert.equal(sceneContext.cameraExposureVerified,false);
 assert.equal(sceneContext.manufacturerPhotometricsUsed,false);
 
+// Before/after WHOLE-SCENE incident lux, not a sum of isolated key+fill and
+// never a calibrated camera exposure or a substitute for waveform metrology.
+const firstSceneChain=[ratioPlan,ratioA,ratioB,ratioC,ratioD,sceneRev];
+const firstSceneIndex=core.listSceneIncidentLuxCaptures(firstSceneChain);
+assert.equal(firstSceneIndex.contract,'lightingai-whole-scene-meter-capture-index/1');
+assert.deepEqual(firstSceneIndex.captureRevisionIds,[sceneRev.revisionId]);
+assert.equal(firstSceneIndex.currentReadingInherited,false);
+assert.equal(firstSceneIndex.currentReadingPresent,true);
+assert.equal(firstSceneIndex.activeCaptureRevisionId,sceneRev.revisionId);
+assert.equal(Object.isFrozen(firstSceneIndex),true);
+assert.equal(Object.isFrozen(firstSceneIndex.captureRevisionIds),true);
+const secondScene=core.createSceneIncidentLuxRevision(sceneRev,{
+  ...sceneInput,lux:'900.125',measuredAtLocal:'2026-10-11T16:13'
+});
+const sceneTwoHistory=[...firstSceneChain,secondScene];
+const twoSceneIndex=core.listSceneIncidentLuxCaptures(sceneTwoHistory);
+assert.deepEqual(twoSceneIndex.captureRevisionIds,[sceneRev.revisionId,secondScene.revisionId]);
+const twoSceneLux=core.compareSceneIncidentLuxRevisions(sceneTwoHistory,
+  sceneRev.revisionId,secondScene.revisionId);
+assert.equal(twoSceneLux.contract,'lightingai-whole-scene-incident-lux-revision-comparison/1');
+assert.equal(twoSceneLux.status,'USER_REPORTED_INCIDENT_ILLUMINANCE_DIFFERENCE_ONLY');
+assert.equal(twoSceneLux.reason,null);
+assert.deepEqual([twoSceneLux.beforeLux,twoSceneLux.afterLux,twoSceneLux.deltaLux],
+  [650.125,900.125,250]);
+assert.equal(twoSceneLux.minutesBetween,8);
+assert.equal(twoSceneLux.ratio,Number((900.125/650.125).toPrecision(6)));
+assert.equal(twoSceneLux.relativeIlluminanceStops,
+  Number(Math.log2(900.125/650.125).toFixed(3)));
+assert.equal(twoSceneLux.ratioReason,null);
+assert.equal(twoSceneLux.plannedSetupFingerprintMatches,true);
+assert.equal(twoSceneLux.measurementScope,
+  'ALL_PLANNED_AVAILABLE_SOURCES_ACTIVE_AMBIENT_INCLUDED');
+assert.equal(twoSceneLux.meterIdentifier,sceneInput.meterIdentifier);
+for(const flag of ['independentMeterIdentityVerified','meterCalibrationVerified',
+  'lightingStateVerified','ambientStabilityVerified','physicalRigStateVerified',
+  'cameraExposureVerified'])
+  assert.equal(twoSceneLux[flag],false,'user meter report cannot prove '+flag);
+for(const field of ['derivedSceneEv100','recommendedAperture','recommendedIso'])
+  assert.equal(twoSceneLux[field],null,'do not infer '+field+' from incident lux');
+assert.ok(twoSceneLux.bookGuidance.every(card=>
+  secondScene.plan.knowledgeBasis.cards.some(attached=>attached.id===card.id&&
+    attached.principle===card.principle&&attached.validation===card.validation&&
+    attached.limitations===card.limitations)),
+  'expert guidance must come from active attached book cards');
+assert.equal(Object.isFrozen(twoSceneLux),true);
+assert.equal(Object.isFrozen(twoSceneLux.bookGuidance),true);
+assert.equal(sceneRev.plan.sceneIncidentLuxReading.lux,650.125);
+assert.equal(secondScene.plan.sceneIncidentLuxReading.lux,900.125);
+
+const sceneCopy=core.createIncidentLuxRevision(sceneRev,{
+  ...commonContext,lightId:'L1',lux:390,confirmed:true,fixtureIsolated:true
+});
+const sceneCopyChain=[...firstSceneChain,sceneCopy];
+assert.deepEqual(core.listSceneIncidentLuxCaptures(sceneCopyChain).captureRevisionIds,
+  [sceneRev.revisionId]);
+assert.equal(core.listSceneIncidentLuxCaptures(sceneCopyChain).currentReadingInherited,true);
+assert.equal(core.compareSceneIncidentLuxRevisions(sceneCopyChain,
+  sceneRev.revisionId,sceneCopy.revisionId).reason,
+  'INHERITED_SCENE_LUX_NOT_A_NEW_OBSERVATION');
+const sceneIdenticalReentry=core.createSceneIncidentLuxRevision(sceneRev,sceneInput);
+const identicalSceneChain=[...firstSceneChain,sceneIdenticalReentry];
+assert.deepEqual(core.listSceneIncidentLuxCaptures(identicalSceneChain).captureRevisionIds,
+  [sceneRev.revisionId],
+  'the exact same meter value and timestamp cannot prove a new observation');
+assert.equal(core.compareSceneIncidentLuxRevisions(identicalSceneChain,
+  sceneRev.revisionId,sceneIdenticalReentry.revisionId).deltaLux,null);
+const afterSecondSceneCopy=core.createIncidentLuxRevision(secondScene,{
+  ...commonContext,lightId:'L1',lux:450,confirmed:true,fixtureIsolated:true
+});
+const afterSecondSceneChain=[...sceneTwoHistory,afterSecondSceneCopy];
+assert.deepEqual(core.listSceneIncidentLuxCaptures(afterSecondSceneChain).captureRevisionIds,
+  [sceneRev.revisionId,secondScene.revisionId]);
+assert.equal(core.listSceneIncidentLuxCaptures(afterSecondSceneChain).activeCaptureRevisionId,
+  secondScene.revisionId);
+assert.equal(core.compareSceneIncidentLuxRevisions(afterSecondSceneChain,
+  sceneRev.revisionId,secondScene.revisionId).deltaLux,250);
+assert.equal(core.compareSceneIncidentLuxRevisions(afterSecondSceneChain,
+  secondScene.revisionId,afterSecondSceneCopy.revisionId).reason,
+  'INHERITED_SCENE_LUX_NOT_A_NEW_OBSERVATION');
+const newMeterAfterCopy=core.createSceneIncidentLuxRevision(sceneCopy,{
+  ...sceneInput,lux:'900.125',measuredAtLocal:'2026-10-11T16:13'
+});
+const copiedThenMeasured=[...sceneCopyChain,newMeterAfterCopy];
+assert.deepEqual(core.listSceneIncidentLuxCaptures(copiedThenMeasured).captureRevisionIds,
+  [sceneRev.revisionId,newMeterAfterCopy.revisionId]);
+assert.equal(core.compareSceneIncidentLuxRevisions(copiedThenMeasured,
+  sceneCopy.revisionId,newMeterAfterCopy.revisionId).reason,
+  'INHERITED_SCENE_LUX_NOT_A_NEW_OBSERVATION');
+assert.equal(core.compareSceneIncidentLuxRevisions(copiedThenMeasured,
+  sceneRev.revisionId,newMeterAfterCopy.revisionId).deltaLux,250);
+
+function sceneComparisonVariant(changes,firstOverride){
+  const from=firstOverride?core.createSceneIncidentLuxRevision(ratioD,{
+    ...sceneInput,...firstOverride
+  }):sceneRev;
+  const next=core.createSceneIncidentLuxRevision(from,{
+    ...sceneInput,lux:'900.125',measuredAtLocal:'2026-10-11T16:13',
+    ...(changes||{})
+  });
+  const history=[ratioPlan,ratioA,ratioB,ratioC,ratioD];
+  if(from===sceneRev)history.push(sceneRev);else history.push(from);
+  history.push(next);
+  return core.compareSceneIncidentLuxRevisions(history,from.revisionId,next.revisionId);
+}
+assert.equal(sceneComparisonVariant({lux:'500'}).deltaLux,-150.125);
+assert.equal(sceneComparisonVariant({lux:'650.125'}).deltaLux,0);
+assert.equal(sceneComparisonVariant({meterModel:'Another light meter'}).reason,
+  'DIFFERENT_METER_MODELS');
+assert.equal(sceneComparisonVariant({meterIdentifier:'DEVICE-02'}).reason,
+  'DIFFERENT_METER_IDENTIFIERS');
+assert.equal(sceneComparisonVariant({measurementPoint:'Different subject mark'}).reason,
+  'DIFFERENT_MEASUREMENT_POINTS');
+assert.equal(sceneComparisonVariant({measuredAtLocal:'2026-10-11T16:05'}).reason,
+  'MEASUREMENT_TIMES_NOT_CHRONOLOGICAL');
+assert.equal(sceneComparisonVariant({measuredAtLocal:'2026-10-11T16:04'}).reason,
+  'MEASUREMENT_TIMES_NOT_CHRONOLOGICAL');
+assert.equal(sceneComparisonVariant({measuredAtLocal:'2026-10-11T16:20'}).minutesBetween,15);
+assert.equal(sceneComparisonVariant({measuredAtLocal:'2026-10-11T16:21'}).reason,
+  'MEASUREMENTS_MORE_THAN_15_MIN_APART');
+const zeroSceneComparison=sceneComparisonVariant({lux:0});
+assert.equal(zeroSceneComparison.status,'USER_REPORTED_INCIDENT_ILLUMINANCE_DIFFERENCE_ONLY');
+assert.equal(zeroSceneComparison.deltaLux,-650.125);
+assert.equal(zeroSceneComparison.ratio,null);
+assert.equal(zeroSceneComparison.relativeIlluminanceStops,null);
+assert.equal(zeroSceneComparison.ratioReason,'ZERO_READING_NO_FINITE_RATIO');
+const fromZeroSceneComparison=sceneComparisonVariant({},{
+  ...sceneInput,lux:0
+});
+assert.equal(fromZeroSceneComparison.beforeLux,0);
+assert.equal(fromZeroSceneComparison.relativeIlluminanceStops,null);
+assert.equal(fromZeroSceneComparison.ratio,null);
+const dstSceneFirst=core.createSceneIncidentLuxRevision(ratioD,{
+  ...sceneInput,measuredAtLocal:'2026-10-25T02:55',measuredUtcOffset:'+02:00'
+});
+const dstSceneAfter=core.createSceneIncidentLuxRevision(dstSceneFirst,{
+  ...sceneInput,lux:1300.25,measuredAtLocal:'2026-10-25T02:05',
+  measuredUtcOffset:'+01:00'
+});
+const dstSceneComparison=core.compareSceneIncidentLuxRevisions([
+  ratioPlan,ratioA,ratioB,ratioC,ratioD,dstSceneFirst,dstSceneAfter],
+  dstSceneFirst.revisionId,dstSceneAfter.revisionId);
+assert.equal(dstSceneComparison.minutesBetween,10,'DST fallback must use UTC offsets');
+assert.equal(dstSceneComparison.ratio,2);
+assert.equal(dstSceneComparison.relativeIlluminanceStops,1);
+const changedSceneSetup=core.createDistanceMeasurementRevision(sceneRev,{
+  lightId:'L1',distanceM:4,confirmed:true
+});
+const newSetupScene=core.createSceneIncidentLuxRevision(changedSceneSetup,{
+  ...sceneInput,lux:900.125,measuredAtLocal:'2026-10-11T16:13'
+});
+const changedSetupComparison=core.compareSceneIncidentLuxRevisions([
+  ...firstSceneChain,changedSceneSetup,newSetupScene],
+  sceneRev.revisionId,newSetupScene.revisionId);
+assert.equal(changedSetupComparison.status,
+  'USER_REPORTED_INCIDENT_ILLUMINANCE_DIFFERENCE_ONLY');
+assert.equal(changedSetupComparison.plannedSetupFingerprintMatches,false,
+  'changed planned setup is disclosed but not assigned lighting causality');
+assert.equal(changedSetupComparison.lightingStateVerified,false);
+assert.equal(core.compareSceneIncidentLuxRevisions(sceneTwoHistory,
+  secondScene.revisionId,sceneRev.revisionId).reason,
+  'REVISIONS_NOT_CHRONOLOGICAL');
+assert.equal(core.compareSceneIncidentLuxRevisions(sceneTwoHistory,
+  'rev-'+'0'.repeat(64),secondScene.revisionId).reason,'UNKNOWN_REVISION');
+assert.equal(core.compareSceneIncidentLuxRevisions(firstSceneChain,
+  ratioD.revisionId,sceneRev.revisionId).reason,'MISSING_ALL_SOURCES_ON_READING');
+const blockedScene=sceneComparisonVariant({meterIdentifier:'DEVICE-02'});
+assert.equal(blockedScene.status,'NOT_COMPARABLE');
+assert.equal(blockedScene.beforeLux,null);
+assert.equal(blockedScene.afterLux,null);
+assert.equal(blockedScene.deltaLux,null);
+assert.equal(blockedScene.relativeIlluminanceStops,null);
+assert.equal(blockedScene.cameraExposureVerified,false);
+assert.throws(()=>core.compareSceneIncidentLuxRevisions(sceneTwoHistory.slice(1),
+  sceneRev.revisionId,secondScene.revisionId),/Broken revision history/i);
+const corruptedScene=JSON.parse(JSON.stringify(secondScene));
+corruptedScene.plan.sceneIncidentLuxReading.lux=10;
+assert.throws(()=>core.compareSceneIncidentLuxRevisions([
+  ...firstSceneChain,corruptedScene],sceneRev.revisionId,corruptedScene.revisionId),
+  /integrity|Invalid|mismatch/i,'tampered lux cannot be compared');
+assert.throws(()=>core.listSceneIncidentLuxCaptures([
+  ...firstSceneChain,corruptedScene]),/integrity|Invalid|mismatch/i);
+const sceneNoCurrent=core.listSceneIncidentLuxCaptures([
+  ...firstSceneChain,changedSceneSetup]);
+assert.equal(sceneNoCurrent.currentReadingPresent,false);
+assert.equal(sceneNoCurrent.currentReadingInherited,false);
+assert.equal(sceneNoCurrent.activeCaptureRevisionId,null);
+assert.deepEqual(sceneNoCurrent.captureRevisionIds,[sceneRev.revisionId]);
+
 // The reported camera waveform is not sampled by the app and is NEVER
 // converted to lux, camera EV, aperture, ISO, or a default gray-card IRE.
 const waveInput={
@@ -1335,6 +1523,16 @@ assert.match(uiSource,/compareGrayCardWaveformRevisions\(/,
   'user-visible history comparison must use revision-validated core');
 assert.match(uiSource,/listGrayCardWaveformCaptures\(revisions\)/,
   'DoP panel and export must select actual capture events, not every inherited revision');
+assert.match(uiSource,/listSceneIncidentLuxCaptures\(revisions\)/,
+  'DoP lux comparison must select actual user-recorded whole-scene readings');
+assert.match(uiSource,/compareSceneIncidentLuxRevisions\(/,
+  'DoP lux comparison must use revision-validated core');
+assert.match(uiSource,/currentReadingInherited/,
+  'user must see when a whole-scene meter value was inherited');
+assert.match(uiSource,/ratioReason/);
+assert.match(uiSource,/relativeIlluminanceStops/);
+assert.match(uiSource,/POREĐENJE UKUPNOG LUX-A SCENE/);
+assert.match(uiSource,/NIJE.*novo merenje|nije novo merenje/i);
 assert.doesNotMatch(uiSource,/revisions\.filter\(function\(r\)\{\s*return r\.plan&&r\.plan\.cameraGrayCardWaveformReading;/,
   'UI may not count carried-forward waveforms as independent readings');
 assert.match(uiSource,/currentWaveformInherited/);

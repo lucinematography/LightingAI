@@ -1531,6 +1531,106 @@
     });
     return freezeJson(revisions);
   }
+  // A revision can inherit an unchanged whole-scene lux observation.
+  // Identify capture events from the immutable record, not merely revision count.
+  function hasNewSceneIncidentLuxCapture(revisions,index) {
+    var reading=revisions[index]&&revisions[index].plan.sceneIncidentLuxReading;
+    if(!reading)return false;
+    var previous=index>0?revisions[index-1].plan.sceneIncidentLuxReading:null;
+    return !previous||canonicalJson(reading)!==canonicalJson(previous);
+  }
+  function listSceneIncidentLuxCaptures(history) {
+    var revisions=restoreRevisions(history);
+    var ids=[];
+    revisions.forEach(function(r,i){
+      if(hasNewSceneIncidentLuxCapture(revisions,i))ids.push(r.revisionId);
+    });
+    var latest=revisions[revisions.length-1];
+    var active=!!latest.plan.sceneIncidentLuxReading;
+    return freezeJson({
+      contract:'lightingai-whole-scene-meter-capture-index/1',
+      currentRevisionId:latest.revisionId,
+      currentReadingPresent:active,
+      currentReadingInherited:active&&!hasNewSceneIncidentLuxCapture(revisions,revisions.length-1),
+      activeCaptureRevisionId:active&&ids.length?ids[ids.length-1]:null,
+      captureRevisionIds:ids
+    });
+  }
+  // Compare two ACTUAL user-entered incident-lux observations of the entire
+  // intended rig plus ambient. Lux difference and a positive-only illuminance
+  // ratio are not camera EV, image contrast, exposure or a causal lighting model.
+  function compareSceneIncidentLuxRevisions(history,earlierRevisionId,laterRevisionId) {
+    var revisions=restoreRevisions(history);
+    var beforeIndex=revisions.findIndex(function(r){return r.revisionId===earlierRevisionId;});
+    var afterIndex=revisions.findIndex(function(r){return r.revisionId===laterRevisionId;});
+    var after=afterIndex>=0?revisions[afterIndex]:null;
+    var cards=after&&after.plan.knowledgeBasis&&Array.isArray(after.plan.knowledgeBasis.cards)?
+      after.plan.knowledgeBasis.cards:[];
+    var guidance=cards.filter(function(card){
+      return card&&['EXP-001','SET-007','PHY-005'].indexOf(card.id)>=0;
+    }).map(function(card){
+      return {id:card.id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
+    var result={
+      contract:'lightingai-whole-scene-incident-lux-revision-comparison/1',
+      status:'NOT_COMPARABLE',reason:null,
+      sceneId:revisions[0].sceneId,
+      beforeRevisionId:earlierRevisionId,afterRevisionId:laterRevisionId,
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      measurementScope:'ALL_PLANNED_AVAILABLE_SOURCES_ACTIVE_AMBIENT_INCLUDED',
+      beforeLux:null,afterLux:null,deltaLux:null,
+      ratio:null,relativeIlluminanceStops:null,ratioReason:null,
+      minutesBetween:null,meterModel:null,meterIdentifier:null,measurementPoint:null,
+      beforeFixtureCount:null,afterFixtureCount:null,
+      plannedSetupFingerprintMatches:null,
+      independentMeterIdentityVerified:false,meterCalibrationVerified:false,
+      lightingStateVerified:false,ambientStabilityVerified:false,
+      physicalRigStateVerified:false,cameraExposureVerified:false,
+      derivedSceneEv100:null,recommendedAperture:null,recommendedIso:null,
+      bookGuidance:guidance
+    };
+    function blocked(reason){return freezeJson(Object.assign({},result,{reason:reason}));}
+    if(beforeIndex<0||afterIndex<0)return blocked('UNKNOWN_REVISION');
+    if(beforeIndex>=afterIndex)return blocked('REVISIONS_NOT_CHRONOLOGICAL');
+    var before=revisions[beforeIndex].plan.sceneIncidentLuxReading;
+    var later=revisions[afterIndex].plan.sceneIncidentLuxReading;
+    if(!before||!later)return blocked('MISSING_ALL_SOURCES_ON_READING');
+    if(!hasNewSceneIncidentLuxCapture(revisions,beforeIndex)||
+      !hasNewSceneIncidentLuxCapture(revisions,afterIndex))
+      return blocked('INHERITED_SCENE_LUX_NOT_A_NEW_OBSERVATION');
+    if(before.meterModel!==later.meterModel)
+      return blocked('DIFFERENT_METER_MODELS');
+    if(before.meterIdentifier!==later.meterIdentifier)
+      return blocked('DIFFERENT_METER_IDENTIFIERS');
+    if(before.measurementPoint!==later.measurementPoint)
+      return blocked('DIFFERENT_MEASUREMENT_POINTS');
+    if(before.receptorOrientation!==later.receptorOrientation||
+      before.measurementScope!==later.measurementScope)
+      return blocked('DIFFERENT_MEASUREMENT_PROTOCOL');
+    var first=meterUtcMinute(before.measuredAtLocal,before.utcOffsetMinutes);
+    var second=meterUtcMinute(later.measuredAtLocal,later.utcOffsetMinutes);
+    if(!Number.isFinite(first)||!Number.isFinite(second)||second<=first)
+      return blocked('MEASUREMENT_TIMES_NOT_CHRONOLOGICAL');
+    var elapsed=second-first;
+    if(elapsed>15)return blocked('MEASUREMENTS_MORE_THAN_15_MIN_APART');
+    var delta=Number((later.lux-before.lux).toFixed(3));
+    if(delta===0)delta=0;
+    var positive=before.lux>0&&later.lux>0;
+    var ratio=positive?Number((later.lux/before.lux).toPrecision(6)):null;
+    var stops=positive?Number(Math.log2(later.lux/before.lux).toFixed(3)):null;
+    if(stops===0)stops=0;
+    return freezeJson(Object.assign({},result,{
+      status:'USER_REPORTED_INCIDENT_ILLUMINANCE_DIFFERENCE_ONLY',
+      reason:null,beforeLux:before.lux,afterLux:later.lux,deltaLux:delta,
+      ratio:ratio,relativeIlluminanceStops:stops,
+      ratioReason:positive?null:'ZERO_READING_NO_FINITE_RATIO',
+      minutesBetween:elapsed,meterModel:later.meterModel,
+      meterIdentifier:later.meterIdentifier,measurementPoint:later.measurementPoint,
+      beforeFixtureCount:before.fixtureCount,afterFixtureCount:later.fixtureCount,
+      plannedSetupFingerprintMatches:before.setupFingerprint===later.setupFingerprint
+    }));
+  }
   // A revision carrying forward identical camera evidence is a snapshot of a
   // previous reading, not a second observation. Historical V1/V2 records are
   // left untouched. A byte-identical re-entry also cannot prove a new capture.
@@ -1667,6 +1767,8 @@
     analyzeMeteredExposureContext:analyzeMeteredExposureContext,
     compareGrayCardWaveformRevisions:compareGrayCardWaveformRevisions,
     listGrayCardWaveformCaptures:listGrayCardWaveformCaptures,
+    listSceneIncidentLuxCaptures:listSceneIncidentLuxCaptures,
+    compareSceneIncidentLuxRevisions:compareSceneIncidentLuxRevisions,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};

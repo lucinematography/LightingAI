@@ -593,6 +593,20 @@
         'Nominalni EV100 postavke: '+exposure.camera.nominalSettingsEv100+
         ' (f-broj, shutter, ISO i ND; NIJE mereni EV scene).',
         'Iz lux očitavanja nisu računati blenda, ISO, ukupni lux scene ni ekspozicija kamere.');
+      var alignment=exposure.sceneMeterAlignment;
+      lines.push('','METAPODACI TRI MERENJA — KEY, FILL I CELA POSTAVKA',
+        alignment.status==='ALIGNED_BY_USER_REPORTED_METADATA_ONLY'?
+          'Usklađeni samo prijavljeni podaci: '+alignment.meterModel+
+          ' / '+alignment.meterIdentifier+' / '+alignment.measurementPoint+
+          '; najveći razmak '+alignment.minutesSpan+' min. Očitano key '+
+          alignment.keyLux+' lx, fill '+alignment.fillLux+' lx, cela postavka '+
+          alignment.sceneLux+' lx, bez nezavisne provere.':
+          'Nisu usklađeni ili nepotpuni: '+alignment.reason,
+        'Očitavanja su iz različitih fizičkih stanja; NE sabirati, ne oduzimati i ne izvoditi ambient lux, ekspoziciju, ISO ili blendu.');
+      (alignment.bookGuidance||[]).forEach(function(card){
+        lines.push('Kartica '+card.id+': '+card.principle,
+          'Provera: '+card.validation,'Ograničenje: '+card.limitations);
+      });
     }
     lines.push('','OGRANIČENJA',...plan.limitations,'','BEZBEDNOST',...plan.safetyNotes);
     return lines.join('\n');
@@ -717,6 +731,24 @@
           'Nema prijavljenog zasebnog incidentnog očitavanja cele postavke. ')+
         'EV scene, stvarna ekspozicija, ukupni lux cele slike i preporučena blenda/ISO nisu izračunati. '+
         'Za validaciju: potvrditi kalibraciju instrumenta, profil kamere, gray card i waveform.</p>';
+      var alignment=cameraEvidence.sceneMeterAlignment;
+      cameraBox.innerHTML+='<details class="sp-lamp"><summary><b>METAPODACI TRI MERENJA — KEY / FILL / SCENA</b></summary>'+
+        (alignment.status==='ALIGNED_BY_USER_REPORTED_METADATA_ONLY'?
+          '<p>Protokol se poklapa prema prijavljenim podacima: isti model/ID svetlomera, tačka, '+
+          'orijentacija senzora prema kameri i najviše 15 minuta između SVA tri merenja. '+
+          'Razmak '+esc(alignment.minutesSpan)+' min; key '+esc(alignment.keyLux)+
+          ' lx, fill '+esc(alignment.fillLux)+' lx, svi izvori '+esc(alignment.sceneLux)+' lx.</p>':
+          '<p>Podaci nisu uporedivi kao jedna merna sesija: <b>'+
+          esc(alignment.reason)+'</b>. Nije izveden trostruki proračun.</p>')+
+        '<p class="sp-note">Ovo su tri različita stanja osvetljenja. Ne sabirati ili oduzimati očitavanja radi dobijanja ambijentalnog lux-a ili doprinosa izvora. '+
+        'Fizička postavka, promena ambijenta, kalibracija i ekspozicija kamere nisu nezavisno potvrđeni. '+
+        'ISO, blenda, T-stop, kontrast kadra i EV scene ostaju nepotvrđeni.</p>'+
+        (alignment.bookGuidance||[]).map(function(card){
+          return '<div class="sp-note"><b>'+esc(card.id)+' — '+esc(card.title)+'</b>'+
+            '<div>Princip: '+esc(card.principle)+'</div>'+
+            '<div>Provera: '+esc(card.validation)+'</div>'+
+            '<div>Ograničenje: '+esc(card.limitations)+'</div></div>';
+        }).join('')+'</details>';
     }
     if(cameraBox&&current&&plan.mode==='own'&&plan.lights.some(function(l){return l.available;})){
       var combined=plan.sceneIncidentLuxReading||null;

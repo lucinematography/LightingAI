@@ -553,6 +553,114 @@ assert.equal(core.analyzeMeteredExposureContext(v3B,'L1','L2').cameraExposureVer
 assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,v3A,v3B]).length,5,
   'V3 records must be restorable with immutable history');
 
+// The three-state comparison is METADATA ALIGNMENT, not additive photometry.
+const noCombined=core.assessSceneMeterAlignment(v3B,'L1','L2');
+assert.equal(noCombined.status,'NOT_ALIGNED');
+assert.equal(noCombined.reason,'MISSING_ALL_SOURCES_ON_READING');
+assert.equal(noCombined.sceneLux,null);
+assert.equal(noCombined.keyLux,null);
+assert.equal(noCombined.minutesSpan,null);
+const sameSessionSceneInput={...sceneInput,
+  meterModel:v3context.meterModel,meterIdentifier:v3context.meterIdentifier,
+  measurementPoint:v3context.measurementPoint,
+  measuredAtLocal:'2026-10-25T02:10',measuredUtcOffset:'+01:00'
+};
+const alignedThreeState=core.createSceneIncidentLuxRevision(v3B,sameSessionSceneInput);
+const aligned=core.assessSceneMeterAlignment(alignedThreeState,'L1','L2');
+assert.equal(aligned.contract,'lightingai-three-state-meter-alignment/1');
+assert.equal(aligned.revisionId,alignedThreeState.revisionId);
+assert.equal(aligned.planHash,alignedThreeState.planHash);
+assert.equal(aligned.status,'ALIGNED_BY_USER_REPORTED_METADATA_ONLY');
+assert.equal(aligned.reason,null);
+assert.equal(aligned.minutesSpan,15,'DST transition and inclusive fifteen-minute bound');
+assert.deepEqual([aligned.keyLux,aligned.fillLux,aligned.sceneLux],[400,100,650.125]);
+assert.equal(aligned.meterModel,v3context.meterModel);
+assert.equal(aligned.meterIdentifier,v3context.meterIdentifier);
+assert.equal(aligned.measurementPoint,v3context.measurementPoint);
+assert.equal(Object.isFrozen(aligned),true);
+for(const check of ['cameraExposureVerified','meterCalibrationVerified',
+  'physicalSetupVerified','ambientStabilityVerified','additiveLuxDecompositionSupported']){
+  assert.equal(aligned[check],false,'three-state metadata never establishes '+check);
+}
+for(const missingResult of ['derivedAmbientLux','derivedSceneEv100',
+  'recommendedAperture','recommendedIso']){
+  assert.equal(aligned[missingResult],null,'do not infer '+missingResult+' from three states');
+}
+assert.ok(aligned.bookGuidance.every(card=>
+  alignedThreeState.plan.knowledgeBasis.cards.some(c=>c.id===card.id &&
+    c.validation===card.validation && c.limitations===card.limitations)),
+  'three-state advice must come from the current validated book cards only');
+const meteredThree=core.analyzeMeteredExposureContext(alignedThreeState,'L1','L2');
+assert.equal(meteredThree.sceneMeterAlignment.status,'ALIGNED_BY_USER_REPORTED_METADATA_ONLY');
+assert.equal(meteredThree.sceneMeterAlignment.minutesSpan,15);
+assert.equal(meteredThree.sceneMeterAlignment.sceneLux,650.125);
+assert.equal(meteredThree.sceneIncidentEvidence.userReportedLux,650.125);
+assert.equal(meteredThree.derivedSceneLux,null);
+assert.equal(meteredThree.measuredSceneEv100,null);
+assert.equal(meteredThree.recommendedAperture,null);
+assert.equal(meteredThree.recommendedIso,null);
+assert.equal(meteredThree.cameraExposureVerified,false);
+assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,v3A,v3B,alignedThreeState]).length,6);
+
+const threeStateReason=(input)=>core.assessSceneMeterAlignment(
+  core.createSceneIncidentLuxRevision(v3B,{...sameSessionSceneInput,...input}),
+  'L1','L2').reason;
+assert.equal(threeStateReason({meterModel:'Different meter model'}),'DIFFERENT_METER_MODELS');
+assert.equal(threeStateReason({meterIdentifier:'METER-02'}),'DIFFERENT_METER_IDENTIFIERS');
+assert.equal(threeStateReason({measurementPoint:'Another face mark'}),'DIFFERENT_MEASUREMENT_POINTS');
+assert.equal(threeStateReason({measuredAtLocal:'2026-10-25T02:11'}),
+  'MEASUREMENT_SESSION_EXCEEDS_15_MIN');
+assert.equal(threeStateReason({measuredAtLocal:'2026-10-25T02:09'}),null);
+assert.equal(core.assessSceneMeterAlignment(sceneRev,'L1','L2').reason,
+  'ISOLATED_READINGS_REQUIRE_V3_METADATA',
+  'legacy V2 readings must never be treated as an identified three-state session');
+assert.equal(core.assessSceneMeterAlignment(alignedThreeState,'L2','L1').reason,
+  'INVALID_KEY_FILL_PAIR');
+const withoutFill=core.createSceneIncidentLuxRevision(v3A,sameSessionSceneInput);
+assert.equal(core.assessSceneMeterAlignment(withoutFill,'L1','L2').reason,
+  'MISSING_ISOLATED_KEY_FILL_READINGS');
+const rotatedV3=core.createIncidentLuxRevision(v3A,{
+  ...v3context,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
+  measuredAtLocal:'2026-10-25T02:05',measuredUtcOffset:'+01:00',
+  receptorOrientation:'RECEPTOR_TOWARD_FIXTURE'
+});
+const rotatedThree=core.createSceneIncidentLuxRevision(rotatedV3,sameSessionSceneInput);
+assert.equal(core.assessSceneMeterAlignment(rotatedThree,'L1','L2').reason,
+  'SENSOR_ORIENTATION_NOT_COMMON_CAMERA_AXIS');
+const zeroV3=core.createIncidentLuxRevision(v3A,{
+  ...v3context,lightId:'L2',lux:0,confirmed:true,fixtureIsolated:true,
+  measuredAtLocal:'2026-10-25T02:05',measuredUtcOffset:'+01:00'
+});
+const zeroThree=core.createSceneIncidentLuxRevision(zeroV3,{
+  ...sameSessionSceneInput,lux:0
+});
+assert.equal(core.assessSceneMeterAlignment(zeroThree,'L1','L2').status,
+  'ALIGNED_BY_USER_REPORTED_METADATA_ONLY',
+  'zero meter values are valid observations, though ratio may be blocked');
+assert.equal(core.compareKeyFillMeasurements(zeroThree,'L1','L2').reason,
+  'ZERO_READING_NO_FINITE_RATIO');
+const movedThree=core.createDistanceMeasurementRevision(alignedThreeState,{
+  lightId:'L1',distanceM:4,confirmed:true
+});
+assert.equal(core.assessSceneMeterAlignment(movedThree,'L1','L2').reason,
+  'MISSING_ALL_SOURCES_ON_READING');
+assert.equal(alignedThreeState.plan.sceneIncidentLuxReading.lux,650.125);
+const damagedThree=JSON.parse(JSON.stringify(alignedThreeState));
+damagedThree.plan.sceneIncidentLuxReading.measurementPoint='Forged point';
+assert.throws(()=>core.assessSceneMeterAlignment(damagedThree,'L1','L2'),
+  /integrity|Invalid|mismatch/i,'tampered three-state record is never analyzed');
+const incompatibleThree=core.assessSceneMeterAlignment(
+  core.createSceneIncidentLuxRevision(v3B,{
+    ...sameSessionSceneInput,meterIdentifier:'METER-02'
+  }),'L1','L2');
+assert.equal(incompatibleThree.status,'NOT_ALIGNED');
+assert.equal(incompatibleThree.keyLux,null);
+assert.equal(incompatibleThree.fillLux,null);
+assert.equal(incompatibleThree.sceneLux,null);
+assert.equal(incompatibleThree.minutesSpan,null);
+assert.equal(core.analyzeMeteredExposureContext(v3B,'L1','L2').sceneMeterAlignment.reason,
+  'MISSING_ALL_SOURCES_ON_READING');
+
 const mismatchedIdentifier=core.createIncidentLuxRevision(v3A,{
   ...v3context,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
   meterIdentifier:'SET-METER-02'
@@ -705,6 +813,9 @@ assert.match(uiSource,/createSceneIncidentLuxRevision\(revisions/);
 assert.match(uiSource,/sp-scene-total-lux/);
 assert.match(uiSource,/sp-scene-total-measured/);
 assert.match(uiSource,/sp-scene-total-active/);
+assert.match(uiSource,/sceneMeterAlignment/,'alignment gate must be exposed in UI');
+assert.match(uiSource,/METAPODACI TRI MERENJA/,'specific in-app alignment explanation is required');
+assert.match(uiSource,/aditivno|sabirati/i,'cannot imply addition of different lighting states');
 assert.match(uiSource,/sceneIncidentEvidence\.userReportedLux/);
 assert.match(uiSource,/Ne sabirati sa izolovanim|Ne sabirati/i);
 assert.match(uiSource,/data-sp-distance-light/);

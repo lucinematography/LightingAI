@@ -803,3 +803,53 @@ missing confirmation, bad timestamps/offsets, stale fingerprints, tampering
 and use in non-owned plans, while checking historical revision preservation and
 non-calibrated exposure status. No paid AI, direct device control, APK
 installation, release/publish, `main`, K0 or K1 change.
+
+
+### Three-reading scene metering protocol alignment (2026-10-11)
+
+The Scene Planner now separately checks the **metadata compatibility** of three
+user-reported incident-meter readings at the subject mark:
+
+1. Key contribution, fixture isolated (V3 with physical meter ID and UTC offset).
+2. Fill contribution, fixture isolated (also V3).
+3. Full intended owned-light arrangement, all available sources active and ambient
+   present (separate whole-setup incident-meter evidence).
+
+The deterministic `assessSceneMeterAlignment(revision, keyId, fillId)` first verifies
+the immutable revision and the key/fill fixture roles. It then requires all three
+readings, V3 identity/time metadata for both isolated readings, exactly equal
+reported meter models and physical-device identifiers, the same named subject
+measurement point, each receptor facing the camera and an **overall** elapsed
+span of at most 15 minutes across the three user-declared UTC-offset timestamps.
+This is NOT three independent pairwise windows and it correctly handles
+daylight-saving offset transitions. Missing/mismatched evidence fails closed
+with an explicit blocker and null three-reading values. Zero lux is a valid
+record and does not make the session alignment disappear.
+
+The success state is deliberately named
+`ALIGNED_BY_USER_REPORTED_METADATA_ONLY`. It does **not** verify that the
+meter/device was really the same, that the physical lamp levels and modifiers
+matched the plan, that ambient spill was stable or that light contributions
+sum algebraically between different switch states. The report **does not**
+calculate a residual `sceneLux-keyLux-fillLux`, attribute excess lux to
+ambient, infer exposure, derive T-stop, adjust aperture/ISO, assert image
+contrast or request any actual fixture control. Blocked session results expose
+neither a guessed ratio nor inferred key/fill/scene lux values.
+
+`analyzeMeteredExposureContext` now includes this separate, revision-bound
+three-state alignment report alongside its pre-existing scene-lux observation,
+isolated key/fill comparison and nominal settings-only EV100 math. All previous
+scene/camera verification booleans remain false, with aperture/ISO and measured
+scene EV still null. The user-facing camera panel and text report explain a
+matched session, or the exact reason it is blocked, and display the applicable
+curated **EXP-001 / SET-005 / PHY-005** principles attached to that active
+revision, with practical validation steps and limitations rather than invented
+source citations. This is advisory evidence organization, not camera calibration.
+
+Regression cases include daylight-saving crossover, the inclusive 15-minute
+boundary, too-distant readings, instrument/model/point mismatches, receptor
+orientation, V2 compatibility (readable but not eligible for aligned V3 session),
+zero readings, invalid light roles, invalidated physical setup, tamper-evident
+history, no numeric data on a blocked comparison and no fabrication of camera
+or ambient calculations. Neither K0, K1, `main`, direct fixture control,
+paid AI, release/publish nor APK installation is changed.

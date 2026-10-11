@@ -1127,6 +1127,83 @@
       receptorOrientation:'RECEPTOR_TOWARD_CAMERA',minutesApart:minutesApart
     }));
   }
+  // Test whether a full-scene meter reading and the TWO isolated fixture readings
+  // have compatible user-declared measurement metadata. This does not establish
+  // stable ambient illumination or the additivity of physically different setups.
+  function assessSceneMeterAlignment(revision,keyLightId,fillLightId) {
+    verifyRevision(revision);
+    var plan=revision.plan,lights=plan.lights;
+    var cards=plan.knowledgeBasis&&Array.isArray(plan.knowledgeBasis.cards)?
+      plan.knowledgeBasis.cards:[];
+    var bookGuidance=cards.filter(function(card){
+      return card&&['EXP-001','SET-005','PHY-005'].indexOf(card.id)>=0;
+    }).map(function(card){
+      return {id:card.id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
+    var basis={
+      contract:'lightingai-three-state-meter-alignment/1',
+      revisionId:revision.revisionId,planHash:revision.planHash,
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      kind:'ISOLATED_KEY_FILL_AND_ALL_SOURCES_ON_METADATA_ALIGNMENT',
+      status:'NOT_ALIGNED',reason:null,
+      keyLightId:keyLightId,fillLightId:fillLightId,
+      keyLux:null,fillLux:null,sceneLux:null,minutesSpan:null,
+      meterModel:null,meterIdentifier:null,measurementPoint:null,
+      cameraExposureVerified:false,meterCalibrationVerified:false,
+      physicalSetupVerified:false,ambientStabilityVerified:false,
+      additiveLuxDecompositionSupported:false,
+      derivedAmbientLux:null,derivedSceneEv100:null,
+      recommendedAperture:null,recommendedIso:null,
+      bookGuidance:bookGuidance
+    };
+    function blocked(reason){
+      return freezeJson(Object.assign({},basis,{reason:reason}));
+    }
+    var scene=plan.sceneIncidentLuxReading;
+    if(!scene)return blocked('MISSING_ALL_SOURCES_ON_READING');
+    var key=lights.find(function(l){return l.id===keyLightId;});
+    var fill=lights.find(function(l){return l.id===fillLightId;});
+    if(plan.mode!=='own'||!key||!fill||key.id===fill.id||
+      !key.available||!fill.available||key.role!=='key'||fill.role!=='fill')
+      return blocked('INVALID_KEY_FILL_PAIR');
+    var readings=plan.incidentLuxReadings||[];
+    var keyReading=readings.find(function(r){return r.lightId===key.id;});
+    var fillReading=readings.find(function(r){return r.lightId===fill.id;});
+    if(!keyReading||!fillReading)return blocked('MISSING_ISOLATED_KEY_FILL_READINGS');
+    // V2 local wall-clock evidence lacks physical meter identifier and UTC offset.
+    if(keyReading.protocolVersion!==3||fillReading.protocolVersion!==3)
+      return blocked('ISOLATED_READINGS_REQUIRE_V3_METADATA');
+    if(scene.meterModel!==keyReading.meterModel||
+      scene.meterModel!==fillReading.meterModel)
+      return blocked('DIFFERENT_METER_MODELS');
+    if(scene.meterIdentifier!==keyReading.meterIdentifier||
+      scene.meterIdentifier!==fillReading.meterIdentifier)
+      return blocked('DIFFERENT_METER_IDENTIFIERS');
+    if(scene.measurementPoint!==keyReading.measurementPoint||
+      scene.measurementPoint!==fillReading.measurementPoint)
+      return blocked('DIFFERENT_MEASUREMENT_POINTS');
+    if(keyReading.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA'||
+      fillReading.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA'||
+      scene.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA')
+      return blocked('SENSOR_ORIENTATION_NOT_COMMON_CAMERA_AXIS');
+    var instants=[keyReading,fillReading,scene].map(function(r){
+      return meterUtcMinute(r.measuredAtLocal,r.utcOffsetMinutes);
+    });
+    if(instants.some(function(v){return !Number.isFinite(v);}))
+      return blocked('INVALID_MEASUREMENT_TIMES');
+    // Entire three-reading session must fit inside 15 actual elapsed minutes,
+    // not three independent 15-minute pairwise checks against scene only.
+    var span=Math.max.apply(null,instants)-Math.min.apply(null,instants);
+    if(span>15)return blocked('MEASUREMENT_SESSION_EXCEEDS_15_MIN');
+    return freezeJson(Object.assign({},basis,{
+      status:'ALIGNED_BY_USER_REPORTED_METADATA_ONLY',
+      reason:null,keyLux:keyReading.lux,fillLux:fillReading.lux,
+      sceneLux:scene.lux,minutesSpan:span,
+      meterModel:scene.meterModel,meterIdentifier:scene.meterIdentifier,
+      measurementPoint:scene.measurementPoint
+    }));
+  }
   // Mathematical camera-settings context plus *separate* user-reported meter evidence.
   // Even a comparable key/fill pair does not calibrate lux to the camera response,
   // and cannot determine a new f-stop, ISO, combined scene lux or captured contrast.
@@ -1142,6 +1219,7 @@
     var comparison=compareKeyFillMeasurements(revision,keyLightId,fillLightId);
     var comparable=comparison.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY';
     var sceneReading=revision.plan.sceneIncidentLuxReading||null;
+    var sceneMeterAlignment=assessSceneMeterAlignment(revision,keyLightId,fillLightId);
     return freezeJson({
       contract:'lightingai-metered-exposure-context/1',
       revisionId:revision.revisionId,planHash:revision.planHash,
@@ -1179,6 +1257,7 @@
         allSourcesActiveConfirmed:!!sceneReading,
         calibrationVerified:false,cameraExposureVerified:false
       },
+      sceneMeterAlignment:sceneMeterAlignment,
       derivedSceneLux:null,measuredSceneEv100:null,
       recommendedAperture:null,recommendedIso:null,
       sceneExposureVerified:false,cameraExposureVerified:false,
@@ -1210,6 +1289,7 @@
     createIncidentLuxRevision:createIncidentLuxRevision,
     createSceneIncidentLuxRevision:createSceneIncidentLuxRevision,
     compareKeyFillMeasurements:compareKeyFillMeasurements,
+    assessSceneMeterAlignment:assessSceneMeterAlignment,
     analyzeMeteredExposureContext:analyzeMeteredExposureContext,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,

@@ -89,6 +89,12 @@ const knowledgeRevision=core.createRevision(produced.plan,clip,"ai",null,"scene-
 assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revision must preserve book evidence");
 assert.deepEqual(core.restoreRevisions([JSON.parse(JSON.stringify(knowledgeRevision))])[0].plan.knowledgeBasis,
   knowledgeRevision.plan.knowledgeBasis,"restored revision must retain identical citations");
+const tamperedKnowledgeRevision=JSON.parse(JSON.stringify(knowledgeRevision));
+tamperedKnowledgeRevision.plan.knowledgeBasis.cards[0].references[0].pdfPage=999;
+assert.throws(()=>core.restoreRevisions([tamperedKnowledgeRevision]),"altered source page must invalidate the revision hash");
+const tamperedKnowledgeTitle=JSON.parse(JSON.stringify(knowledgeRevision));
+tamperedKnowledgeTitle.plan.knowledgeBasis.cards[0].title="Fabricated authority";
+assert.throws(()=>core.restoreRevisions([tamperedKnowledgeTitle]),"altered book authority must invalidate the revision hash");
 assert.ok(produced.plan.knowledgeBasis.cards.some(c=>c.references.some(r=>r.source&&r.pdfPage>0)),"generated plan must carry source pages");
 assert.ok(produced.plan.knowledgeBasis.cards.some(c=>c.references.some(r=>r.title&&r.author&&r.edition&&r.pdfPage>0)),"book citations must identify title, edition and page");
 assert.equal(produced.plan.knowledgeBasis.status,"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED");

@@ -180,6 +180,7 @@ test('stable-base guard validates future committed content and blocks regression
       'scripts/ci-report-summary.mjs', 'scripts/run-ci-check.mjs', 'backend/project5-stable-base-selftest.js',
       // Include the complete phase-2/3A candidate in the isolated future-commit check.
       'app/src/main/assets/scene-planner-core.js', 'backend/scene-planner-service.js',
+      'backend/scene-planner-photometry.js', 'backend/scene-planner-photometric-selftest.js',
       'backend/scene-planner-revisions-selftest.js', 'docs/SCENE_PLANNER_PHASE3A.md',
       'backend/scene-planner-temporal.js', 'backend/scene-planner-temporal-selftest.js',
       'backend/scene-planner-video-ingestion.js', 'backend/scene-planner-video-ingestion-selftest.js',
@@ -213,6 +214,8 @@ test('stable-base guard validates future committed content and blocks regression
       const report = JSON.parse(result.stdout);
       assert.equal(report.ok, true);
       for (const file of files) assert.ok(report.changedFiles.includes(file), `Candidate omits ${file}`);
+      assert.ok(report.changedFiles.includes('backend/scene-planner-photometry.js'));
+      assert.ok(report.changedFiles.includes('backend/scene-planner-photometric-selftest.js'));
     });
     await t.test('unknown CI path remains blocked after commit', () => {
       const file = 'scripts/unapproved-ci-change.mjs';

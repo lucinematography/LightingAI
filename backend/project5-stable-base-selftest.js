@@ -196,6 +196,9 @@ const exactAllowed = new Set([
   'app/src/main/assets/scene-planner-core.js',
   'backend/scene-planner-service.js',
   'backend/scene-planner-selftest.js',
+  // Reviewed photometric pilot: exact source-reference module and regression test; no controls.
+  'backend/scene-planner-photometry.js',
+  'backend/scene-planner-photometric-selftest.js',
   // Phase 3A: exact offline revision regression and architecture documentation paths.
   'backend/scene-planner-revisions-selftest.js',
   'docs/SCENE_PLANNER_PHASE3A.md',

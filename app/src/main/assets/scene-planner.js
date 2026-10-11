@@ -494,6 +494,12 @@
       (night?'linear-gradient(125deg,rgba(23,59,112,.28),transparent 55%)':'radial-gradient(circle at 25% 20%,rgba(255,199,97,.11),transparent 60%)')+'"></div>'+
       '<div style="position:absolute;left:8px;bottom:8px;padding:7px;background:#080d13db;color:#f5c542;border-radius:6px;font-size:11px;font-weight:800">LOKALNA SIMULACIJA • NIJE AI FOTO-RENDER</div>';
   }
+  function formatMeterUtcOffset(minutes){
+    if(!Number.isInteger(minutes)||minutes< -720||minutes>840)return '';
+    var abs=Math.abs(minutes);
+    return (minutes<0?'-':'+')+
+      String(Math.floor(abs/60)).padStart(2,'0')+':'+String(abs%60).padStart(2,'0');
+  }
   function resultText(plan){
     var lines=['AI SCENE PLANNER',plan.summary,'',plan.rationale,'',
       'PREDLOG SVETALA'];
@@ -530,10 +536,14 @@
       plan.incidentLuxReadings.forEach(function(m){
         lines.push(m.lightId+' / '+m.fixtureId+': '+m.lux+' lx na subjektu pri '+
           m.distanceMAtMeasurement+' m; incidentni svetlomer, ovaj reflektor izdvojen, ostali izvori kontrolisani.');
-        lines.push(m.protocolVersion===2?
+        lines.push(m.protocolVersion===2||m.protocolVersion===3?
           'Instrument: '+m.meterModel+'; tačka: '+m.measurementPoint+
           '; orijentacija: '+m.receptorOrientation+'; vreme: '+(m.measuredAtLocal||'nije navedeno')+
-          '; kalibracija: nije nezavisno proverena.':
+          (m.protocolVersion===3?
+            '; ID instrumenta: '+m.meterIdentifier+'; UTC pomeraj: '+formatMeterUtcOffset(m.utcOffsetMinutes)+
+            ' (prijavio korisnik).':
+            '; V2 lokalni sat bez poznatog UTC pomeraja.')+
+          ' Kalibracija: nije nezavisno proverena.':
           'Istorijski zapis bez potpunih podataka o instrumentu i tački merenja.');
         lines.push('Ovo nije fabrički lux, nije AI procena niti dokaz ekspozicije cele scene.');
       });
@@ -552,6 +562,8 @@
         if(comparison.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY'){
           lines.push('Razlika izolovanih doprinosa: '+comparison.relativeStops+
             ' stop (key minus fill); ovo nije kontrast slike niti izmerena ekspozicija.');
+          lines.push('Osnova vremena: '+comparison.timeBasis+
+            '; identitet uređaja i kalibracija nisu nezavisno provereni.');
         }
         (comparison.bookGuidance||[]).forEach(function(card){
           lines.push('Kartica '+card.id+': '+card.principle,
@@ -655,7 +667,11 @@
         el('sp-summary').innerHTML+='<details class="sp-lamp"><summary><b>KEY / FILL — PROVERA UPOREDIVOSTI</b></summary>'+
           (pair.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY'?
             '<p>'+esc(pair.ratio)+':1, key '+esc(pair.keyLux)+' lx / fill '+esc(pair.fillLux)+
-            ' lx; razlika '+esc(pair.relativeStops)+' stop (key minus fill). To su samo izolovani doprinosi, ne kontrast kadra ili ekspozicija.</p>':
+            ' lx; razlika '+esc(pair.relativeStops)+' stop (key minus fill). To su samo izolovani doprinosi, ne kontrast kadra ili ekspozicija.</p>'+
+            '<p>Osnova poređenja: '+(pair.meterProtocolVersion===3?
+              'V3 — prijavljeni ID svetlomera i UTC pomeraj oba očitavanja.':
+              'V2 — lokalni sat bez UTC pomeraja; vremenska uporedivost nije potpuna.')+
+            ' Kalibracija i identitet instrumenta nisu nezavisno provereni.</p>':
             '<p>Odnos nije pouzdano uporediv: '+esc(pair.reason)+'. Razlika u stopama se ne računa.</p>')+
           '<p>Kurirani stručni principi iz ovog plana: '+esc(pair.bookCardIds.join(', ')||'nema relevantne kartice')+
           '. Bez univerzalnog idealnog odnosa; proveriti senke i izgled kamerom. Očitavanja, identitet i kalibracija instrumenta nisu nezavisno potvrđeni.</p>'+
@@ -749,10 +765,15 @@
             '<div>Korisnik prijavio: '+esc(meterReading.lux)+' lx sa incidentnog svetlomera pri '+
               esc(meterReading.distanceMAtMeasurement)+
               ' m, samo ovaj izvor, ostali izvori kontrolisani. Nije nezavisno provereno.</div>'+
-            (meterReading.protocolVersion===2?
+            (meterReading.protocolVersion===2||meterReading.protocolVersion===3?
               '<div>Instrument: '+esc(meterReading.meterModel)+'; tačka: '+
               esc(meterReading.measurementPoint)+'; orijentacija: '+
-              esc(meterReading.receptorOrientation)+'. Kalibracija nepotvrđena.</div>':
+              esc(meterReading.receptorOrientation)+
+              (meterReading.protocolVersion===3?
+                '; ID: '+esc(meterReading.meterIdentifier)+
+                '; UTC pomeraj: '+esc(formatMeterUtcOffset(meterReading.utcOffsetMinutes)):
+                '; V2 lokalno vreme — UTC pomeraj nije zabeležen')+
+              '. Kalibracija nepotvrđena.</div>':
               '<div>Istorijski zapis: nepotpuni podaci o instrumentu i mestu merenja.</div>'):
             '<div>Nema korisnički prijavljenog lux očitavanja za ovu postavku.</div>')+
           (measuredDistance?
@@ -778,10 +799,17 @@
             '<option value="">Izaberi orijentaciju</option>'+
             '<option value="RECEPTOR_TOWARD_FIXTURE"'+(meterReading&&meterReading.receptorOrientation==='RECEPTOR_TOWARD_FIXTURE'?' selected':'')+'>Prema merenom izvoru</option>'+
             '<option value="RECEPTOR_TOWARD_CAMERA"'+(meterReading&&meterReading.receptorOrientation==='RECEPTOR_TOWARD_CAMERA'?' selected':'')+'>Prema kameri</option></select>'+
-            '<label for="sp-meter-time-'+esc(l.id)+'">LOKALNO VREME MERENJA (opciono)</label>'+
+            '<label for="sp-meter-time-'+esc(l.id)+'">LOKALNO VREME MERENJA (za poređenje obavezno)</label>'+
             '<input class="sp-field" type="datetime-local" id="sp-meter-time-'+esc(l.id)+'" value="'+
-            esc(meterReading&&meterReading.measuredAtLocal||'')+'">':'')+
-          '<div>Kalibracija instrumenta nije nezavisno proverena. Ne obračunava se automatski blenda/ISO.</div></div>':'')+
+            esc(meterReading&&meterReading.measuredAtLocal||'')+'">'+
+            '<label for="sp-meter-identifier-'+esc(l.id)+'">OZNAKA KONKRETNOG SVETLOMERA (za V3)</label>'+
+            '<input class="sp-field" id="sp-meter-identifier-'+esc(l.id)+'" maxlength="80" placeholder="Npr. inventarski ID uređaja" value="'+
+            esc(meterReading&&meterReading.protocolVersion===3?meterReading.meterIdentifier:'')+'">'+
+            '<label for="sp-meter-offset-'+esc(l.id)+'">UTC POMERAJ U TRENUTKU MERENJA (za V3, npr. +02:00)</label>'+
+            '<input class="sp-field" id="sp-meter-offset-'+esc(l.id)+'" maxlength="6" placeholder="+02:00" value="'+
+            esc(meterReading&&meterReading.protocolVersion===3?
+              formatMeterUtcOffset(meterReading.utcOffsetMinutes):'')+'">':'')+
+          '<div>Za V3 unesi zajedno oznaku konkretnog svetlomera, vreme i tačan UTC pomeraj. Prazna oba nova polja čuvaju stari V2 zapis sa slabijom vremenskom uporedivošću. Korisnički podaci i kalibracija nisu nezavisno provereni. Ne obračunava se automatski blenda/ISO.</div></div>':'')+
         '</div>';
     }).join(''):'<p class="sp-note">Nije moguće napraviti pouzdan izbor lampi iz dostupnog inventara.</p>';
     if(typeof el('sp-lights').querySelectorAll==='function')
@@ -840,7 +868,9 @@
             meterModel:el('sp-meter-model-'+id)&&el('sp-meter-model-'+id).value,
             measurementPoint:el('sp-meter-point-'+id)&&el('sp-meter-point-'+id).value,
             receptorOrientation:el('sp-meter-orientation-'+id)&&el('sp-meter-orientation-'+id).value,
-            measuredAtLocal:el('sp-meter-time-'+id)&&el('sp-meter-time-'+id).value
+            measuredAtLocal:el('sp-meter-time-'+id)&&el('sp-meter-time-'+id).value,
+            meterIdentifier:el('sp-meter-identifier-'+id)&&el('sp-meter-identifier-'+id).value,
+            measuredUtcOffset:el('sp-meter-offset-'+id)&&el('sp-meter-offset-'+id).value
           });
           revisions=revisions.concat([revision]);state.plan=revision.plan;
           renderResult();remember();

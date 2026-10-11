@@ -116,6 +116,17 @@
     return date.getUTCFullYear()===y&&date.getUTCMonth()===m-1&&date.getUTCDate()===d&&
       date.getUTCHours()===hh&&date.getUTCMinutes()===mm?value:null;
   }
+  // A declared numeric UTC offset disambiguates local wall-clock meter readings
+  // even across a daylight-saving transition; it is not independent time verification.
+  function measuredUtcOffset(value) {
+    if(typeof value!=='string'||!/^[+-](?:0[0-9]|1[0-4]):(?:00|15|30|45)$/.test(value))return null;
+    var hour=Number(value.slice(1,3)),minute=Number(value.slice(4,6));
+    var total=(hour*60+minute)*(value[0]==='-'?-1:1);
+    return total>=-720&&total<=840?total:null;
+  }
+  function meterUtcMinute(localTime,offsetMinutes) {
+    return Date.parse(localTime+':00Z')/60000-offsetMinutes;
+  }
   function key(value) { return str(value, 250).toLowerCase().replace(/[^a-z0-9]/g, ''); }
   function mode(value) { return value === 'own' ? 'own' : 'best'; }
   function equipment(items) {
@@ -641,18 +652,28 @@
         typeof m.lux!=='number'||incidentLux(m.lux)!==m.lux)
         throw new Error('Invalid on-set incident lux evidence');
       if(m.protocolVersion!==undefined){
-        // Archived V1 meter records remain valid, but only V2 records have enough
-        // context to consider future same-point, same-orientation comparisons.
-        if(m.protocolVersion!==2||
+        // Archived V2 readings remain valid, but local wall-clock times are not
+        // absolute instants. V3 records bind user-reported meter ID and UTC offset.
+        if((m.protocolVersion!==2&&m.protocolVersion!==3)||
           meterText(m.meterModel,120)!==m.meterModel||
           meterText(m.measurementPoint,100)!==m.measurementPoint||
           meterOrientation(m.receptorOrientation)!==m.receptorOrientation||
           meterLocalTime(m.measuredAtLocal)!==m.measuredAtLocal||
           m.calibrationStatus!=='NOT_INDEPENDENTLY_VERIFIED')
           throw new Error('Invalid incident meter context or calibration provenance');
+        if(m.protocolVersion===3){
+          if(meterText(m.meterIdentifier,80)!==m.meterIdentifier||!m.measuredAtLocal||
+            typeof m.utcOffsetMinutes!=='number'||!Number.isInteger(m.utcOffsetMinutes)||
+            m.utcOffsetMinutes< -720||m.utcOffsetMinutes>840||
+            m.utcOffsetMinutes%15!==0)
+            throw new Error('Invalid incident meter identity or UTC offset');
+        }else if(m.meterIdentifier!==undefined||m.utcOffsetMinutes!==undefined){
+          throw new Error('V2 reading cannot claim V3 meter identity or UTC offset');
+        }
       }else if(m.meterModel!==undefined||m.measurementPoint!==undefined||
         m.receptorOrientation!==undefined||m.measuredAtLocal!==undefined||
-        m.calibrationStatus!==undefined){
+        m.calibrationStatus!==undefined||m.meterIdentifier!==undefined||
+        m.utcOffsetMinutes!==undefined){
         throw new Error('Unversioned incident meter metadata');
       }
       var light=plan.lights.find(function(l){return l.id===m.lightId;});
@@ -886,6 +907,13 @@
     var measuredAtLocal=meterLocalTime(report.measuredAtLocal);
     if(!meterModel||!measurementPoint||!receptorOrientation||measuredAtLocal===null)
       throw new Error('Incident meter model, measurement point, receptor orientation and valid time are required');
+    // Empty optional V3 fields preserve the older V2 workflow. Supplying either
+    // without the other is an error, never a silent downgrade to local-only time.
+    var requestV3=!!(report.meterIdentifier||report.measuredUtcOffset);
+    var meterIdentifier=requestV3?meterText(report.meterIdentifier,80):null;
+    var utcOffsetMinutes=requestV3?measuredUtcOffset(report.measuredUtcOffset):null;
+    if(requestV3&&(!meterIdentifier||utcOffsetMinutes===null||!measuredAtLocal))
+      throw new Error('V3 incident meter requires device ID, local time and explicit UTC offset');
     var plan=JSON.parse(canonicalJson(parent.plan));
     var light=plan.lights.find(function(l){return l.id===report.lightId;});
     var distance=(plan.distanceMeasurements||[]).find(function(m){return m.lightId===report.lightId;});
@@ -898,11 +926,15 @@
       meterType:'INCIDENT_LUX_METER',target:'SUBJECT_AT_MEASUREMENT_POINT',
       measurementScope:'FIXTURE_ISOLATED_OTHER_SOURCES_CONTROLLED',
       source:'USER_REPORTED_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED',
-      protocolVersion:2,meterModel:meterModel,measurementPoint:measurementPoint,
+      protocolVersion:requestV3?3:2,meterModel:meterModel,measurementPoint:measurementPoint,
       receptorOrientation:receptorOrientation,measuredAtLocal:measuredAtLocal,
       calibrationStatus:'NOT_INDEPENDENTLY_VERIFIED',
       userAttested:true,fixtureIsolated:true
     };
+    if(requestV3){
+      evidence.meterIdentifier=meterIdentifier;
+      evidence.utcOffsetMinutes=utcOffsetMinutes;
+    }
     plan.incidentLuxReadings=(plan.incidentLuxReadings||[])
       .filter(function(x){return x.lightId!==light.id;}).concat([evidence])
       .sort(function(a,b){return Number(a.lightId.slice(1))-Number(b.lightId.slice(1));});
@@ -952,19 +984,30 @@
     var key=records.find(function(r){return r.lightId===keyLight.id;});
     var fill=records.find(function(r){return r.lightId===fillLight.id;});
     if(!key||!fill)return blocked('MISSING_USER_REPORTED_LUX');
-    if(key.protocolVersion!==2||fill.protocolVersion!==2)
+    if(![2,3].includes(key.protocolVersion)||![2,3].includes(fill.protocolVersion))
       return blocked('LEGACY_READING_LACKS_CONTEXT');
+    if(key.protocolVersion!==fill.protocolVersion)return blocked('MIXED_METER_PROTOCOLS');
     if(key.meterModel!==fill.meterModel)return blocked('DIFFERENT_METER_IDENTITIES');
+    if(key.protocolVersion===3&&key.meterIdentifier!==fill.meterIdentifier)
+      return blocked('DIFFERENT_METER_IDENTIFIERS');
     if(key.measurementPoint!==fill.measurementPoint)return blocked('DIFFERENT_MEASUREMENT_POINTS');
     if(key.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA'||
       fill.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA')
       return blocked('SENSOR_ORIENTATION_NOT_COMMON_CAMERA_AXIS');
     if(!key.measuredAtLocal||!fill.measuredAtLocal)
       return blocked('MISSING_MEASUREMENT_TIMES');
-    var first=Date.parse(key.measuredAtLocal+':00Z'),second=Date.parse(fill.measuredAtLocal+':00Z');
+    // V2 preserves historical wall-clock behavior, explicitly marked unverified.
+    // V3 computes elapsed instants with each reading's user-declared UTC offset,
+    // so an hour of DST change cannot masquerade as a four-minute interval.
+    var first=key.protocolVersion===3?
+      meterUtcMinute(key.measuredAtLocal,key.utcOffsetMinutes):
+      Date.parse(key.measuredAtLocal+':00Z')/60000;
+    var second=fill.protocolVersion===3?
+      meterUtcMinute(fill.measuredAtLocal,fill.utcOffsetMinutes):
+      Date.parse(fill.measuredAtLocal+':00Z')/60000;
     if(!Number.isFinite(first)||!Number.isFinite(second))
       return blocked('INVALID_MEASUREMENT_TIMES');
-    var minutesApart=Math.abs(first-second)/60000;
+    var minutesApart=Math.abs(first-second);
     if(minutesApart>15)return blocked('MEASUREMENT_TIMES_TOO_FAR_APART');
     // Both zero and denominator zero are meaningful meter readings, not finite ratios.
     if(key.lux<=0||fill.lux<=0)return blocked('ZERO_READING_NO_FINITE_RATIO');
@@ -982,6 +1025,11 @@
       relativeMeaning:'KEY_MINUS_FILL_ISOLATED_CONTRIBUTION_STOPS',
       keyLux:key.lux,fillLux:fill.lux,
       meterModel:key.meterModel,measurementPoint:key.measurementPoint,
+      meterIdentifier:key.protocolVersion===3?key.meterIdentifier:null,
+      meterProtocolVersion:key.protocolVersion,
+      timeBasis:key.protocolVersion===3?'USER_DECLARED_UTC_OFFSET':
+        'LEGACY_UNVERIFIED_LOCAL_WALL_CLOCK',
+      independentInstrumentIdentityVerified:false,
       receptorOrientation:'RECEPTOR_TOWARD_CAMERA',minutesApart:minutesApart
     }));
   }
@@ -1017,6 +1065,10 @@
         ratio:comparable?comparison.ratio:null,
         relativeStops:comparable?comparison.relativeStops:null,
         meterModel:comparable?comparison.meterModel:null,
+        meterIdentifier:comparable?comparison.meterIdentifier:null,
+        meterProtocolVersion:comparable?comparison.meterProtocolVersion:null,
+        timeBasis:comparable?comparison.timeBasis:null,
+        independentInstrumentIdentityVerified:false,
         measurementPoint:comparable?comparison.measurementPoint:null,
         minutesApart:comparable?comparison.minutesApart:null
       },

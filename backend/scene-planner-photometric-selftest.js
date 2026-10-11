@@ -409,6 +409,102 @@ const zeroFill=core.createIncidentLuxRevision(ratioC,{
 assert.equal(core.compareKeyFillMeasurements(zeroFill,'L1','L2').reason,'ZERO_READING_NO_FINITE_RATIO');
 const oneMeter=core.compareKeyFillMeasurements(ratioC,'L1','L2');
 assert.equal(oneMeter.reason,'MISSING_USER_REPORTED_LUX');
+assert.equal(positive.meterProtocolVersion,2,'previous V2 workflow must remain readable');
+assert.equal(positive.timeBasis,'LEGACY_UNVERIFIED_LOCAL_WALL_CLOCK');
+assert.equal(positive.meterIdentifier,null);
+assert.equal(positive.independentInstrumentIdentityVerified,false);
+
+// V3 captures the specific user-identified meter and each reading's explicit UTC offset.
+const v3context={...commonContext,meterIdentifier:'SET-METER-01',
+  measuredUtcOffset:'+02:00',measuredAtLocal:'2026-10-25T02:55'};
+const v3A=core.createIncidentLuxRevision(ratioB,{
+  ...v3context,lightId:'L1',lux:400,confirmed:true,fixtureIsolated:true
+});
+const v3B=core.createIncidentLuxRevision(v3A,{
+  ...v3context,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
+  measuredAtLocal:'2026-10-25T02:05',measuredUtcOffset:'+01:00'
+});
+assert.equal(v3A.plan.incidentLuxReadings[0].protocolVersion,3);
+assert.equal(v3A.plan.incidentLuxReadings[0].meterIdentifier,'SET-METER-01');
+assert.equal(v3A.plan.incidentLuxReadings[0].utcOffsetMinutes,120);
+assert.equal(v3B.plan.incidentLuxReadings[1].utcOffsetMinutes,60);
+const v3ratio=core.compareKeyFillMeasurements(v3B,'L1','L2');
+assert.equal(v3ratio.status,'COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY');
+assert.equal(v3ratio.meterProtocolVersion,3);
+assert.equal(v3ratio.meterIdentifier,'SET-METER-01');
+assert.equal(v3ratio.timeBasis,'USER_DECLARED_UTC_OFFSET');
+assert.equal(v3ratio.minutesApart,10,
+  'DST fallback of one wall-clock hour must be converted to 10 actual minutes');
+assert.deepEqual([v3ratio.ratio,v3ratio.relativeStops],[4,2]);
+assert.equal(v3ratio.sceneContrastVerified,false);
+assert.equal(v3ratio.independentInstrumentIdentityVerified,false);
+assert.equal(core.analyzeMeteredExposureContext(v3B,'L1','L2').incidentEvidence.timeBasis,
+  'USER_DECLARED_UTC_OFFSET');
+assert.equal(core.analyzeMeteredExposureContext(v3B,'L1','L2').cameraExposureVerified,false);
+assert.equal(core.restoreRevisions([ratioPlan,ratioA,ratioB,v3A,v3B]).length,5,
+  'V3 records must be restorable with immutable history');
+
+const mismatchedIdentifier=core.createIncidentLuxRevision(v3A,{
+  ...v3context,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
+  meterIdentifier:'SET-METER-02'
+});
+assert.equal(core.compareKeyFillMeasurements(mismatchedIdentifier,'L1','L2').reason,
+  'DIFFERENT_METER_IDENTIFIERS');
+assert.equal(core.compareKeyFillMeasurements(mismatchedIdentifier,'L1','L2').relativeStops,null);
+const mismatchedOffset=core.createIncidentLuxRevision(v3A,{
+  ...v3context,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
+  measuredAtLocal:'2026-10-25T02:59',measuredUtcOffset:'+01:00'
+});
+assert.equal(core.compareKeyFillMeasurements(mismatchedOffset,'L1','L2').reason,
+  'MEASUREMENT_TIMES_TOO_FAR_APART',
+  'nearby wall-clock times cannot bypass an hour of actual UTC elapsed time');
+const exactlyFifteen=core.createIncidentLuxRevision(v3A,{
+  ...v3context,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
+  measuredAtLocal:'2026-10-25T02:10',measuredUtcOffset:'+01:00'
+});
+assert.equal(core.compareKeyFillMeasurements(exactlyFifteen,'L1','L2').minutesApart,15);
+const sixteenMinutes=core.createIncidentLuxRevision(v3A,{
+  ...v3context,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true,
+  measuredAtLocal:'2026-10-25T02:11',measuredUtcOffset:'+01:00'
+});
+assert.equal(core.compareKeyFillMeasurements(sixteenMinutes,'L1','L2').reason,
+  'MEASUREMENT_TIMES_TOO_FAR_APART');
+const mixedProtocol=core.createIncidentLuxRevision(ratioC,{
+  ...v3context,lightId:'L2',lux:100,confirmed:true,fixtureIsolated:true
+});
+const mixedRatio=core.compareKeyFillMeasurements(mixedProtocol,'L1','L2');
+assert.equal(mixedRatio.reason,'MIXED_METER_PROTOCOLS');
+assert.equal(mixedRatio.ratio,null);
+assert.equal(mixedRatio.relativeStops,null);
+assert.equal(core.analyzeMeteredExposureContext(mixedProtocol,'L1','L2').status,
+  'CAMERA_SETTINGS_ONLY','never combine V2 and V3 meter evidence');
+for(const badOffset of ['+02:99','+15:00','-13:00','+02:17','Europe/Belgrade','Z',
+  '+2:00','02:00','+14:15','',null,120]){
+  assert.throws(()=>core.createIncidentLuxRevision(ratioB,{
+    ...v3context,lightId:'L1',lux:400,confirmed:true,fixtureIsolated:true,
+    measuredUtcOffset:badOffset
+  }),/V3 incident meter/i,'bad UTC offset must fail closed: '+badOffset);
+}
+for(const missing of [
+  {meterIdentifier:'',measuredUtcOffset:'+02:00'},
+  {meterIdentifier:'SET-METER-01',measuredUtcOffset:''},
+  {meterIdentifier:'  ',measuredUtcOffset:'+02:00'},
+  {meterIdentifier:'SET-METER-01',measuredAtLocal:''}
+]){
+  assert.throws(()=>core.createIncidentLuxRevision(ratioB,{
+    ...v3context,...missing,lightId:'L1',lux:400,confirmed:true,fixtureIsolated:true
+  }),/V3 incident meter/i,'incomplete V3 must not silently downgrade to V2');
+}
+const tamperedV3=JSON.parse(JSON.stringify(v3B));
+tamperedV3.plan.incidentLuxReadings[0].utcOffsetMinutes=0;
+assert.throws(()=>core.restoreRevisions([ratioPlan,ratioA,ratioB,v3A,tamperedV3]),
+  /integrity|Invalid|mismatch/i,'tampering with V3 offset must break revision integrity');
+const spoofedV2=JSON.parse(JSON.stringify(ratioD));
+spoofedV2.plan.incidentLuxReadings[0].meterIdentifier='FORGED-ID';
+assert.throws(()=>core.verifyRevision(spoofedV2),/V2 reading cannot claim V3/i);
+const spoofedV3=JSON.parse(JSON.stringify(v3B));
+spoofedV3.plan.incidentLuxReadings[1].utcOffsetMinutes=90;
+assert.throws(()=>core.verifyRevision(spoofedV3),/integrity|Invalid|mismatch/i);
 assert.ok(positive.bookCardIds.every(id=>ratioD.plan.knowledgeBasis.cards.some(c=>c.id===id)));
 
 assert.equal(revision.plan.photometricBasis.entries.length,2);
@@ -491,6 +587,11 @@ assert.match(uiSource,/analyzeMeteredExposureContext\(current/);
 assert.match(uiSource,/nominalSettingsEv100/);
 assert.match(uiSource,/pair\.relativeStops/);
 assert.match(uiSource,/card\.validation/,'validated book checks must reach the user');
+assert.match(uiSource,/sp-meter-identifier-/,'UI must let users tag a specific physical meter');
+assert.match(uiSource,/sp-meter-offset-/,'UI must capture UTC offset at the moment of reading');
+assert.match(uiSource,/formatMeterUtcOffset/,'offset provenance must be printable');
+assert.match(uiSource,/meterIdentifier:el\(/,'new meter tag must reach revision creator');
+assert.match(uiSource,/measuredUtcOffset:el\(/,'offset must reach revision creator');
 assert.match(uiSource,/data-sp-distance-light/);
 assert.match(uiSource,/Lično potvrđujem merenje na setu/);
 const tampered=JSON.parse(JSON.stringify(revision));

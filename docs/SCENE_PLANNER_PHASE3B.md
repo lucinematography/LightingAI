@@ -733,3 +733,30 @@ The existing `test:scene-planner-photometry` suite covers positive/negative/zero
 stop differences, book-card binding, blocked comparisons, camera-only math,
 no fabricated lux or camera settings and tampered revision rejection. No
 fixture-control, paid AI job, publish/release, K0 or K1 changes are involved.
+
+
+### V3 instrument identity and UTC-offset evidence (2026-10-11)
+
+The user can optionally enter a **specific physical light-meter inventory identifier** and
+the **actual local UTC offset** (for example `+02:00`) at each reading. Both fields,
+plus the local measurement time, are mandatory together for protocol V3. A missing
+or malformed identifier or offset is rejected; neither can be inferred from city,
+timezone name, device time, or photograph. Historical V2 readings remain readable
+and keep their original comparability behavior and warning about unverified
+wall-clock times. Comparing a V2 reading with a V3 reading is blocked.
+
+V3 reports compare equal *user-declared* meter identifiers as well as models,
+measurement points, and camera-facing receptor orientations, then calculate
+elapsed minutes from each local time minus its own reported UTC offset. This
+handles the ambiguous wall-clock hour around daylight-saving changes without
+silently treating local times as UTC. The original maximum gap of 15 minutes
+remains unchanged. Invalid offsets and instrument mismatches fail closed; blocked
+comparisons have no numeric ratio or relative stops. Captured UTC offset and ID
+are revision-bound and tamper-evident, but **neither clock accuracy nor meter
+identity/calibration is independently verified**. No scene exposure, calibrated
+EV, lux, aperture or ISO is computed from this comparison.
+
+Regression fixtures cover the DST fall-back hour, 15/16-minute boundary,
+partial/invalid offset records, V2/V3 mismatch, immutable history, tampering,
+and in-app entry/display of V3 provenance. This remains an optional evidence
+upgrade; no physical fixture control, paid AI, publication or K0/K1 change.

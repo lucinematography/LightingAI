@@ -318,7 +318,7 @@
               principle:str(c&&c.principle,1200),application:str(c&&c.application,1200),
               limitations:str(c&&c.limitations,1200),
               references:(Array.isArray(c&&c.references)?c.references:[]).slice(0,4).map(function(r){
-                return {source:str(r&&r.source,40),author:str(r&&r.author,120),
+                return {source:str(r&&r.source,40),title:str(r&&r.title,240),edition:str(r&&r.edition,120),author:str(r&&r.author,120),
                   pdfPage:num(r&&r.pdfPage,1,5000,null),printedPage:num(r&&r.printedPage,0,5000,null),
                   verification:str(r&&r.verification,120)};
               })};

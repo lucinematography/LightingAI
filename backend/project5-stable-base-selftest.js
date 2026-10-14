@@ -206,6 +206,10 @@ const exactAllowed = new Set([
   'docs/SCENE_PLANNER_PHASE3A.md',
   // Step 114: reviewed prelight checklist report; exact path, no broader docs exemption.
   'docs/STEP114_PRELIGHT_REVIEW.md',
+  // Exact recovery regression, native CI instrumentation and update-safety report.
+  'backend/scene-planner-recovery-selftest.js',
+  'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
+  'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md',
   // Phase 3B.1: isolated offline temporal model, regressions and architecture only.
   'backend/scene-planner-temporal.js',
   'backend/scene-planner-temporal-selftest.js',

@@ -17,7 +17,13 @@
   function el(id){return document.getElementById(id);}
   function draft(){return window.LightingAIScenePlannerDraft;}
   function activeRevisionId(){return revisions.length?revisions[revisions.length-1].revisionId:null;}
-  function saveDraftPhoto(){if(draft()&&state.photo)draft().savePhoto(state.photo);}
+  var planPersistenceError='',photoPersistenceError='';
+  function draftStatus(ok,message){
+    var box=el('sp-draft-status');if(!box)return;
+    box.textContent=planPersistenceError||photoPersistenceError||message||(ok?'Nacrt se automatski čuva na ovom uređaju.':'Nacrt nije sačuvan.');
+    box.style.color=planPersistenceError||photoPersistenceError||!ok?'#ffd1c7':'#c2e8cc';
+  }
+  function saveDraftPhoto(){return draft()&&state.photo?draft().savePhoto(state.photo):Promise.resolve(false);}
 
   function esc(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
@@ -74,6 +80,7 @@
       var value=String(spoken||'').trim();
       if(!value){status('Nije prepoznat govor.',true);return;}
       field.value=(field.value.trim()?field.value.trim()+' ':'')+value;
+      if(draft())draft().flush();
       status('Glasovni opis je dodat.');
     };
     var oldVoiceError=window.LightingAIVoiceInputError;
@@ -166,7 +173,8 @@
       '<div class="sp-card"><h2 class="sp-h">3 / IZGRADI PLAN I VIZUELNI PRIKAZ</h2>'+
       '<div class="sp-actions"><button type="button" class="sp-btn sp-primary" id="sp-generate">GENERISI AI PLAN</button>'+
       '<button type="button" class="sp-btn" id="sp-local">LOKALNI KONCEPT (BEZ INTERNETA)</button></div>'+
-      '<p id="sp-status" role="status" aria-live="polite" class="sp-note" style="min-height:20px;margin:12px 0 0"></p></div>'+
+      '<p id="sp-status" role="status" aria-live="polite" class="sp-note" style="min-height:20px;margin:12px 0 0"></p>'+
+      '<p id="sp-draft-status" role="status" class="sp-note"></p></div>'+
       '<div id="sp-result" hidden><div class="sp-card"><h2 class="sp-h">VIZUELNI PREVIEW</h2>'+
       '<div id="sp-preview" style="position:relative;overflow:hidden;border-radius:10px;background:#090d13"></div>'+
       '<div class="sp-actions" style="margin-top:12px"><button type="button" class="sp-btn" id="sp-ai-preview">NAPRAVI AI FOTO-PREVIEW</button></div>'+
@@ -241,10 +249,15 @@
     el('sp-save').onclick=save;
     el('sp-share').onclick=share;
     updateInventory();
-    if(draft())draft().attach(wrap,activeRevisionId);
+    if(draft()){
+      draft().restore(wrap,null);
+      draft().attach(wrap,activeRevisionId,draftStatus);
+      draftStatus(!draft().lastError(),draft().lastError());
+    }
     loadCore(function(){
       if(!restorePlanHistory())return;
       if(draft())draft().restore(wrap,activeRevisionId());
+      updateInventory();
       if(draft())draft().loadPhoto().then(function(photo){
         if(!photo||!el(MODULE)||state.photo)return;
         state.photo=photo;
@@ -295,9 +308,11 @@
       if(state.plan){renderSampledVideoCues();renderMotionStage(0);}
       renderSampledFrameComparison();
       var image=el('sp-image');if(image){image.src=state.photo;image.hidden=false;}
-      saveDraftPhoto();
+      var photoSaved=await saveDraftPhoto();
+      photoPersistenceError=photoSaved?'':'Fotografija nije trajno sačuvana. Sačuvaj original pre zatvaranja aplikacije.';
       if(draft())draft().flush();
-      status('Fotografija dodata.');
+      status(photoSaved?'Fotografija dodata i sačuvana na uređaju.':
+        'Fotografija je učitana, ali nije trajno sačuvana. Sačuvaj original pre zatvaranja aplikacije.',!photoSaved);
     }catch(e){status(e.message||'Fotografija nije učitana.',true);}
   }
   function videoElement(url) {
@@ -2325,7 +2340,7 @@
       notes:'Originalni foto i video materijal nisu uključeni u JSON izvoz. DoP istorija je izvedena iz revizija, nije fizički izmerena.'};
   }
   function restorePlanHistory(){
-    if(revisions.length)return true;
+    if(revisions.length){renderResult();return true;}
     try{
       var saved=localStorage.getItem(REVISION_STORE);if(!saved)return true;
       revisions=core().restoreRevisions(JSON.parse(saved));
@@ -2339,7 +2354,11 @@
     try{
       localStorage.setItem(REVISION_STORE,JSON.stringify(revisions));
       localStorage.setItem(STORE,JSON.stringify(exportObject()));
-    }catch(e){status('Revizija je u memoriji; lokalno čuvanje nije uspelo. Sačuvaj JSON izvoz.',true);}
+      planPersistenceError='';
+    }catch(e){planPersistenceError='Plan je u memoriji; lokalno čuvanje nije uspelo. Sačuvaj JSON izvoz.';
+      status(planPersistenceError,true);}
+    if(draft())draft().flush();
+    draftStatus(!planPersistenceError,planPersistenceError);
   }
   function save(){
     if(!state.plan)return;

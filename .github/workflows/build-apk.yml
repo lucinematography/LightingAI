@@ -124,7 +124,56 @@ jobs:
         run: gradle testDebugUnitTest
 
       - name: Build debug APK
-        run: gradle assembleDebug
+        run: gradle assembleDebug -PreleaseVersionCode=${{ github.run_number }}
+
+      - name: Build recovery instrumentation APK
+        run: gradle assembleDebugAndroidTest -PreleaseVersionCode=${{ github.run_number }}
+
+      - name: Enable emulator acceleration on disposable CI runner
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Android background and process-death recovery
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 29
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install app/build/outputs/apk/debug/app-debug.apk
+            adb install app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w -e phase prepare com.lightingai.app.review13.test/com.lightingai.app.ScenePlannerRecoveryInstrumentation | tee app/build/recovery-prepare.txt
+            grep -Fq 'SCENE_PLANNER_RECOVERY_PASS prepare' app/build/recovery-prepare.txt
+            adb shell am force-stop com.lightingai.app.review13
+            adb shell am instrument -w -e phase restore com.lightingai.app.review13.test/com.lightingai.app.ScenePlannerRecoveryInstrumentation | tee app/build/recovery-restore.txt
+            grep -Fq 'SCENE_PLANNER_RECOVERY_PASS restore' app/build/recovery-restore.txt
+
+      - name: Verify APK signature and update identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          APK='app/build/outputs/apk/debug/app-debug.apk'
+          "$TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee app/build/apk-identity.txt
+          "$TOOLS/aapt" dump badging "$APK" > app/build/apk-badging.txt
+          head -n 1 app/build/apk-badging.txt > app/build/apk-package.txt
+          cat app/build/apk-package.txt | tee -a app/build/apk-identity.txt
+          grep -Fq "name='com.lightingai.app.review13'" app/build/apk-package.txt
+          grep -Fq "versionCode='${{ github.run_number }}'" app/build/apk-package.txt
+          echo 'Signing unchanged: this CI debug APK is not an update for older differently signed APKs.' | tee -a app/build/apk-identity.txt
+
+      - name: Upload public APK identity and recovery results
+        uses: actions/upload-artifact@v7
+        with:
+          name: apk-identity-and-recovery-${{ github.run_number }}
+          path: |
+            app/build/apk-identity.txt
+            app/build/recovery-prepare.txt
+            app/build/recovery-restore.txt
+          retention-days: 14
 
       - name: Verify packaged Project 5 APK
         shell: bash

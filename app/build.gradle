@@ -15,6 +15,7 @@ android { namespace 'com.lightingai.app'; compileSdk 35
         targetSdk 35
         versionCode releaseVersionCode
         versionName releaseVersionName
+        testInstrumentationRunner 'com.lightingai.app.ScenePlannerRecoveryInstrumentation'
     }
 
     signingConfigs {

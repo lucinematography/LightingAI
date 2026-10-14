@@ -1381,6 +1381,21 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void checkpointScenePlanner() {
+        if (webView != null) webView.evaluateJavascript(
+            "(function(){var d=window.LightingAIScenePlannerDraft;if(d)d.flush();})()", null);
+    }
+
+    @Override protected void onSaveInstanceState(Bundle outState) {
+        checkpointScenePlanner();
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override protected void onStop() {
+        checkpointScenePlanner();
+        super.onStop();
+    }
+
     @Override protected void onPause() {
         stopNativeSunCompass();
         artNetLiveEngine.stopAll();

@@ -241,6 +241,11 @@ assert.equal(reviewReload.api.exportObject().prelightReviewHistory[0].decisions.
 assert.match(reviewReload.nodes.get('sp-prelight').innerHTML,/ selected/);
 console.log('PASS prelight UI requires three choices, persists and reloads without changing plan');passed++;
 const oldUiPlan=JSON.stringify(ui.api.exportObject().revisions[0]);
+ui.nodes.get('sp-summary').innerHTML='';
+assert.equal(ui.api.restore(),true);
+assert.ok(ui.nodes.get('sp-summary').innerHTML.includes('Revizija 1'));
+assert.match(ui.nodes.get('sp-prelight').innerHTML,/Poslednja provera ove revizije/);
+console.log('PASS existing in-memory history renders again when the planner is reopened');passed++;
 ui.nodes.get('sp-dop-request').value='Hladnija kontra';
 await ui.api.generate(false);
 const saved=ui.api.exportObject();

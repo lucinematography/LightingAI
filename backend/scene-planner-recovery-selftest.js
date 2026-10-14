@@ -40,6 +40,12 @@ function context(store=new Map(),media=new Map(),options={}){
         }};req.onsuccess?.();
       });return req;
     }}};
+  if(options.nativeFiles)root.Android={
+    saveScenePlannerWorkspace(value){if(options.nativeFailure)return false;options.nativeFiles.set('workspace',value);return true;},
+    loadScenePlannerWorkspace(){return options.nativeFiles.get('workspace')||'';},
+    saveScenePlannerPhoto(value){if(options.nativeFailure)return false;options.nativeFiles.set('photo',value);return true;},
+    loadScenePlannerPhoto(){return options.nativeFiles.get('photo')||'';}
+  };
   const sandbox={window:root};vm.createContext(sandbox);vm.runInContext(source,sandbox);
   return {api:root.LightingAIScenePlannerDraft,root,document,overlay,nodes,field,store,media,
     notifications,attach:rev=>root.LightingAIScenePlannerDraft.attach(overlay,()=>rev,(ok,message)=>notifications.push({ok,message})),
@@ -127,5 +133,31 @@ await test('persisted generated plan and saved prelight history remain immutable
   assert.equal(restored[0].planHash,revision.planHash);assert.equal(reviews[0].decisions.fill,'reviewed');
   const restarted=context(store);restarted.api.restore(restarted.overlay,restored[0].revisionId);
   assert.equal(restarted.nodes.get('sp-prelight-fill').value,'needs_adjustment');
+});
+await test('native committed checkpoint restores fields, plan and reviews after WebView storage loss',async()=>{
+  const nativeFiles=new Map(),c=context(new Map(),new Map(),{nativeFiles});c.attach('native-revision');
+  c.nodes.get('sp-description').value='Native durable description';c.nodes.get('sp-prelight-fill').value='needs_adjustment';
+  c.overlay.emit('input',c.nodes.get('sp-description'));
+  assert.equal(c.api.checkpointWorkspace({lighting_scene_planner_revisions_v1:'["fixture-plan"]',
+    lighting_scene_planner_prelight_reviews_v1:'["fixture-review"]',private_token:'must-not-be-stored'}),true);
+  assert.equal(await c.api.savePhoto(photoSmall),true);c.api.detach();
+  assert.ok(!nativeFiles.get('workspace').includes('must-not-be-stored'));
+  const restarted=context(new Map(),new Map(),{nativeFiles,noDb:true});
+  restarted.api.restore(restarted.overlay,'native-revision');
+  assert.equal(restarted.nodes.get('sp-description').value,'Native durable description');
+  assert.equal(restarted.nodes.get('sp-prelight-fill').value,'needs_adjustment');
+  assert.equal(restarted.api.readWorkspaceValue('lighting_scene_planner_revisions_v1'),'["fixture-plan"]');
+  assert.equal(await restarted.api.loadPhoto(),photoSmall);
+});
+await test('native storage failures preserve the prior committed snapshot and show failure',async()=>{
+  const nativeFiles=new Map(),c=context(new Map(),new Map(),{nativeFiles});c.attach('rev-one');
+  c.nodes.get('sp-description').value='Committed';c.overlay.emit('input',c.nodes.get('sp-description'));c.api.detach();
+  const committed=nativeFiles.get('workspace');
+  const failed=context(new Map(),new Map(),{nativeFiles,nativeFailure:true});failed.attach('rev-one');
+  failed.nodes.get('sp-description').value='Uncommitted';failed.overlay.emit('input',failed.nodes.get('sp-description'));
+  assert.equal(failed.notifications.at(-1).ok,false);assert.equal(nativeFiles.get('workspace'),committed);
+  assert.equal(await failed.api.savePhoto(photoSmall),false);failed.api.detach();
+  const recovered=context(failed.store,new Map(),{nativeFiles});recovered.api.restore(recovered.overlay,'rev-one');
+  assert.equal(recovered.nodes.get('sp-description').value,'Uncommitted','newer surviving local draft is preserved');
 });
 console.log(`${passed} recovery regression groups passed; no provider or video processing calls.`);

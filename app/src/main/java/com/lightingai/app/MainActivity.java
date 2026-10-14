@@ -42,6 +42,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.util.Base64;
+import android.util.AtomicFile;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.OutputStream;
@@ -54,6 +55,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class MainActivity extends Activity {
+    private volatile boolean recoveryOriginTrusted = false;
     private WebView webView;
     private FrameLayout rootView;
     private View startupSplash;
@@ -156,6 +158,11 @@ public class MainActivity extends Activity {
         webView.clearCache(true);
         webView.clearHistory();
         webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                recoveryOriginTrusted = "file:///android_asset/index.html".equals(url) ||
+                    (url != null && url.startsWith("file:///android_asset/index.html?"));
+                super.onPageStarted(view, url, favicon);
+            }
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 applyNavigationInset();
@@ -1050,7 +1057,75 @@ public class MainActivity extends Activity {
         }, "LightingAI-scene-planner-mp4-save").start();
     }
 
+    private synchronized boolean writeRecoveryFile(String name, String data, int maxBytes) {
+        if (data == null || data.length() > maxBytes) return false;
+        byte[] bytes = data.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (bytes.length > maxBytes) return false;
+        AtomicFile file = new AtomicFile(new java.io.File(getFilesDir(), name));
+        java.io.FileOutputStream output = null;
+        try {
+            output = file.startWrite();
+            output.write(bytes);
+            output.getFD().sync();
+            file.finishWrite(output);
+            return true;
+        } catch (java.io.IOException error) {
+            if (output != null) file.failWrite(output);
+            return false;
+        }
+    }
+
+    private synchronized String readRecoveryFile(String name, int maxBytes) {
+        AtomicFile file = new AtomicFile(new java.io.File(getFilesDir(), name));
+        try (InputStream input = file.openRead(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192]; int count, total = 0;
+            while ((count = input.read(buffer)) != -1) {
+                total += count; if (total > maxBytes) return "";
+                output.write(buffer, 0, count);
+            }
+            return output.toString(java.nio.charset.StandardCharsets.UTF_8.name());
+        } catch (java.io.IOException error) { return ""; }
+    }
+
     public class AndroidBridge {
+        @JavascriptInterface public boolean saveScenePlannerWorkspace(String data) {
+            if (!recoveryOriginTrusted) return false;
+            try {
+                if (data == null || data.length() > 8 * 1024 * 1024) return false;
+                JSONObject snapshot = new JSONObject(data);
+                if (snapshot.length() != 3 || snapshot.getInt("version") != 1 || snapshot.getLong("checkpoint") < 0) return false;
+                JSONObject values = snapshot.getJSONObject("values");
+                java.util.Iterator<String> keys = values.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    if (!key.equals("lighting_scene_planner_draft_v1") &&
+                        !key.equals("lighting_scene_planner_revisions_v1") &&
+                        !key.equals("lighting_scene_planner_prelight_reviews_v1") &&
+                        !key.equals("lighting_scene_planner_last_v1")) return false;
+                    if (!(values.get(key) instanceof String)) return false;
+                }
+                return writeRecoveryFile("scene-planner-workspace-v1.json", data, 8 * 1024 * 1024);
+            } catch (org.json.JSONException error) { return false; }
+        }
+        @JavascriptInterface public String loadScenePlannerWorkspace() {
+            if (!recoveryOriginTrusted) return "";
+            return readRecoveryFile("scene-planner-workspace-v1.json", 8 * 1024 * 1024);
+        }
+        @JavascriptInterface public boolean saveScenePlannerPhoto(String data) {
+            if (!recoveryOriginTrusted) return false;
+            try {
+                if (data == null || data.length() > 12100000) return false;
+                JSONObject record = new JSONObject(data);
+                String value = record.getString("value");
+                if (record.length() != 3 || record.getInt("version") != 2 || record.getLong("sequence") < 0 || value.length() > 12000000 ||
+                    !value.matches("^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=\\r\\n]+$")) return false;
+                return writeRecoveryFile("scene-planner-photo-v2.json", data, 12100000);
+            } catch (org.json.JSONException error) { return false; }
+        }
+        @JavascriptInterface public String loadScenePlannerPhoto() {
+            if (!recoveryOriginTrusted) return "";
+            return readRecoveryFile("scene-planner-photo-v2.json", 12100000);
+        }
         @JavascriptInterface public void releaseScenePlannerCaptures(boolean keepLatest) {
             runOnUiThread(() -> MainActivity.this.releaseScenePlannerCaptures(keepLatest));
         }

@@ -49,6 +49,17 @@ not a physical-phone test, and does not test video processing or call AI provide
 Existing security checks remain enabled. The stable-base guard admits only the
 three exact new test/report paths, with its negative checks retained.
 
+The first real process-death run (7646) passed background/resume preparation but
+failed automatic recovery after the target process was killed. WebView-only
+persistence was therefore insufficient in that test. The follow-up adds private
+Android AtomicFile checkpoints for the four whitelisted workspace keys and for
+the selected photo. Successful native calls complete an atomic file write before
+the UI acknowledges persistence. On startup the newest native checkpoint restores
+WebView data; a newer surviving local draft and malformed local data are preserved.
+The native store is bounded to 8 MiB of workspace JSON and 12.1 MB of photo JSON.
+Reads/writes are restricted to the trusted Android asset page, and no tokens,
+external file paths, private keys or control transport commands are included.
+
 ## APK inspection and current limitation
 
 Both downloaded original artifacts match GitHub's published file SHA-256.

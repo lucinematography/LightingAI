@@ -24,6 +24,7 @@
     box.style.color=planPersistenceError||photoPersistenceError||!ok?'#ffd1c7':'#c2e8cc';
   }
   function saveDraftPhoto(){return draft()&&state.photo?draft().savePhoto(state.photo):Promise.resolve(false);}
+  function storedWorkspace(key){return draft()&&draft().readWorkspaceValue?draft().readWorkspaceValue(key):localStorage.getItem(key);}
 
   function esc(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
@@ -1725,7 +1726,7 @@
     if(prelightLoaded)return;
     prelightLoaded=true;
     try{
-      var saved=localStorage.getItem(PRELIGHT_STORE);
+      var saved=storedWorkspace(PRELIGHT_STORE);
       prelightReviews=core().restorePrelightReviews(saved?JSON.parse(saved):[],revisions);
     }catch(error){prelightBlocked=true;}
   }
@@ -1768,8 +1769,12 @@
         var record=core().createPrelightReview(current,decisions,new Date().toISOString());
         var next=prelightReviews.concat([record]);
         // Persist the plan first, so a restored review always has its parent revision.
-        localStorage.setItem(REVISION_STORE,JSON.stringify(revisions));
-        localStorage.setItem(PRELIGHT_STORE,JSON.stringify(next));
+        var reviewUpdates={};reviewUpdates[REVISION_STORE]=JSON.stringify(revisions);reviewUpdates[PRELIGHT_STORE]=JSON.stringify(next);
+        var nativeSaved=draft()&&draft().nativeAvailable()&&draft().checkpointWorkspace(reviewUpdates);
+        if(draft()&&draft().nativeAvailable()&&!nativeSaved)throw new Error('Android upis provere nije uspeo.');
+        try{localStorage.setItem(REVISION_STORE,reviewUpdates[REVISION_STORE]);
+          localStorage.setItem(PRELIGHT_STORE,reviewUpdates[PRELIGHT_STORE]);
+        }catch(storageError){if(!nativeSaved)throw storageError;}
         prelightReviews=next;remember();renderResult();
         if(draft())draft().flush();
         el('sp-prelight-status').textContent='Provera je sačuvana za ovu reviziju plana.';
@@ -2342,7 +2347,7 @@
   function restorePlanHistory(){
     if(revisions.length){renderResult();return true;}
     try{
-      var saved=localStorage.getItem(REVISION_STORE);if(!saved)return true;
+      var saved=storedWorkspace(REVISION_STORE);if(!saved)return true;
       revisions=core().restoreRevisions(JSON.parse(saved));
       sceneId=revisions[0].sceneId;state.plan=revisions[revisions.length-1].plan;
       renderResult();
@@ -2351,11 +2356,14 @@
   }
   function remember(){
     if(!state.plan)return;
+    var updates={};updates[REVISION_STORE]=JSON.stringify(revisions);updates[STORE]=JSON.stringify(exportObject());
+    var nativeSaved=draft()&&draft().nativeAvailable()&&draft().checkpointWorkspace(updates);
     try{
-      localStorage.setItem(REVISION_STORE,JSON.stringify(revisions));
-      localStorage.setItem(STORE,JSON.stringify(exportObject()));
-      planPersistenceError='';
+      localStorage.setItem(REVISION_STORE,updates[REVISION_STORE]);
+      localStorage.setItem(STORE,updates[STORE]);
+      planPersistenceError=draft()&&draft().nativeAvailable()&&!nativeSaved?'Android upis plana nije uspeo. Sačuvaj JSON izvoz.':'';
     }catch(e){planPersistenceError='Plan je u memoriji; lokalno čuvanje nije uspelo. Sačuvaj JSON izvoz.';
+      if(nativeSaved)planPersistenceError='';
       status(planPersistenceError,true);}
     if(draft())draft().flush();
     draftStatus(!planPersistenceError,planPersistenceError);

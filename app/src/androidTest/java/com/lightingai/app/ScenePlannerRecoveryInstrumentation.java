@@ -39,7 +39,12 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
             result.putString("stream", "SCENE_PLANNER_RECOVERY_PASS " + phase + "\n");
             finish(Activity.RESULT_OK, result);
         } catch (Exception error) {
-            result.putString("stream", "SCENE_PLANNER_RECOVERY_FAIL " + phase + ": " + error + "\n");
+            String diagnostic = "";
+            try { if (webView != null) diagnostic = evaluate("JSON.stringify({" +
+                "hasOverlay:!!document.getElementById('sp-description')," +
+                "draft:LightingAIScenePlannerDraft.readWorkspaceValue('lighting_scene_planner_draft_v1')," +
+                "nativeSaved:!!Android.loadScenePlannerWorkspace()})"); } catch (Exception ignored) { }
+            result.putString("stream", "SCENE_PLANNER_RECOVERY_FAIL " + phase + ": " + error + "\n" + diagnostic + "\n");
             finish(Activity.RESULT_CANCELED, result);
         }
     }

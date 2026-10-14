@@ -9,7 +9,49 @@
     'sp-dop-request','sp-aperture','sp-iso','sp-fps','sp-shutter','sp-wb','sp-nd'];
   var CHECK_IDS=['motivation','fill','separation'];
   var PHOTO_SEQUENCE_KEY='lighting_scene_planner_draft_photo_sequence_v2';
+  var WORKSPACE_KEYS=[DRAFT_KEY,'lighting_scene_planner_revisions_v1',
+    'lighting_scene_planner_prelight_reviews_v1','lighting_scene_planner_last_v1'];
   var active=null,lastError='',photoSequence=Date.now(),photoWrites=Promise.resolve();
+  var nativeWorkspace=null,checkpoint=Date.now();
+  function nativeAvailable(){return !!(root.Android&&typeof root.Android.saveScenePlannerWorkspace==='function');}
+  function readWorkspaceValue(key){
+    if(WORKSPACE_KEYS.indexOf(key)<0)return null;
+    if(nativeWorkspace&&Object.prototype.hasOwnProperty.call(nativeWorkspace.values,key))return nativeWorkspace.values[key];
+    var s=storage();try{return s?s.getItem(key):null;}catch(e){return null;}
+  }
+  function checkpointWorkspace(updates){
+    if(!nativeAvailable())return false;
+    try{
+      var values={},s=storage();
+      WORKSPACE_KEYS.forEach(function(key){
+        var value=nativeWorkspace&&nativeWorkspace.values[key];
+        if(typeof value!=='string')value=s&&s.getItem(key);
+        if(updates&&Object.prototype.hasOwnProperty.call(updates,key))value=updates[key];
+        if(typeof value==='string')values[key]=value;
+      });
+      checkpoint=Math.max(checkpoint,Date.now())+1;
+      if(values[DRAFT_KEY]){var d=JSON.parse(values[DRAFT_KEY]);d.checkpoint=checkpoint;values[DRAFT_KEY]=JSON.stringify(d);}
+      var snapshot={version:1,checkpoint:checkpoint,values:values};
+      if(root.Android.saveScenePlannerWorkspace(JSON.stringify(snapshot))!==true)return false;
+      nativeWorkspace=snapshot;
+      return true;
+    }catch(e){return false;}
+  }
+  function recoverNativeWorkspace(){
+    if(!nativeAvailable()||typeof root.Android.loadScenePlannerWorkspace!=='function')return;
+    try{
+      var raw=root.Android.loadScenePlannerWorkspace();if(!raw)return;
+      var saved=JSON.parse(raw),s=storage(),local=s&&s.getItem(DRAFT_KEY),localDraft=local?JSON.parse(local):null;
+      if(!saved||saved.version!==1||!saved.values||!Number.isSafeInteger(saved.checkpoint))return;
+      // Preserve corrupt/unsupported local data; never silently replace it.
+      if(localDraft&&(localDraft.version!==1||!localDraft.fields||typeof localDraft.fields!=='object'||Array.isArray(localDraft.fields)))return;
+      if(localDraft&&Number(localDraft.checkpoint)>saved.checkpoint)return;
+      nativeWorkspace=saved;checkpoint=Math.max(checkpoint,saved.checkpoint);
+      WORKSPACE_KEYS.forEach(function(key){
+        if(typeof saved.values[key]==='string'&&s){try{s.setItem(key,saved.values[key]);}catch(e){}}
+      });
+    }catch(e){}
+  }
   function report(ok,message){
     lastError=ok?'':message||'Nacrt nije sačuvan. Proveri slobodan prostor i sačuvaj JSON plana.';
     if(active&&active.onStatus)active.onStatus(ok,lastError);
@@ -18,7 +60,7 @@
   function storage(){try{return root.localStorage;}catch(e){return null;}}
   function read(){
     var s=storage();if(!s){report(false);return null;}
-    try{var raw=s.getItem(DRAFT_KEY);if(!raw)return null;
+    try{var raw=readWorkspaceValue(DRAFT_KEY);if(!raw)return null;
       var d=JSON.parse(raw);
       if(!d||d.version!==1||typeof d!=='object'||Array.isArray(d)||
          !d.fields||typeof d.fields!=='object'||Array.isArray(d.fields))throw new Error('Invalid draft');
@@ -26,14 +68,22 @@
     }catch(e){report(false,'Sačuvan nacrt nije čitljiv. Postojeći zapis je očuvan; automatski upis je blokiran.');return null;}
   }
   function write(d){
-    var s=storage();if(!s)return report(false);
-    try{s.setItem(DRAFT_KEY,JSON.stringify(d));return report(true);}catch(e){return report(false);}
+    checkpoint=Math.max(checkpoint,Date.now())+1;d.checkpoint=checkpoint;
+    var s=storage(),localSaved=false,value=JSON.stringify(d);
+    try{if(s){s.setItem(DRAFT_KEY,value);localSaved=true;}}catch(e){}
+    var updates={};updates[DRAFT_KEY]=value;
+    if(nativeAvailable()){
+      var saved=checkpointWorkspace(updates);
+      if(!saved&&localSaved)nativeWorkspace=null;
+      return report(saved);
+    }
+    return report(localSaved);
   }
   function initial(){
     var saved=read(),s=storage();
     if(saved)return saved;
     // Never replace a malformed existing draft with a blank one.
-    try{if(!s||s.getItem(DRAFT_KEY))return null;}catch(e){return null;}
+    try{if((!s&&!nativeAvailable())||readWorkspaceValue(DRAFT_KEY))return null;}catch(e){return null;}
     return {version:1,open:false,fields:{},review:null,scrollTop:0};
   }
   function node(overlay,id){return overlay&&overlay.querySelector('#'+id);}
@@ -180,6 +230,14 @@
       if(s)s.setItem(PHOTO_SEQUENCE_KEY,String(photoSequence));
     }catch(e){photoSequence++;}
     var record={version:2,sequence:photoSequence,value:value};
+    if(root.Android&&typeof root.Android.saveScenePlannerPhoto==='function'){
+      try{
+        if(root.Android.saveScenePlannerPhoto(JSON.stringify(record))!==true){
+          report(false,'Fotografija nije trajno sačuvana u Android skladištu.');return Promise.resolve(false);
+        }
+        report(true);return Promise.resolve(true);
+      }catch(e){report(false,'Fotografija nije trajno sačuvana u Android skladištu.');return Promise.resolve(false);}
+    }
     if(s&&value.length<=2300000){
       try{s.setItem(PHOTO_KEY,JSON.stringify(record));report(true);return Promise.resolve(true);}catch(e){}
     }
@@ -193,15 +251,21 @@
     try{var raw=s&&s.getItem(PHOTO_KEY);local=photoRecord(raw);
       if(!local&&raw)local=photoRecord(JSON.parse(raw));
     }catch(e){}
+    var native=null;
+    try{if(root.Android&&typeof root.Android.loadScenePlannerPhoto==='function')
+      native=photoRecord(JSON.parse(root.Android.loadScenePlannerPhoto()||'null'));}catch(e){}
     return readPhotoDb().then(function(record){
       var latest=local&&(!record||local.sequence>=record.sequence)?local:record;
+      if(native&&(!latest||native.sequence>=latest.sequence))latest=native;
       if(latest)photoSequence=Math.max(photoSequence,latest.sequence);
       return latest?latest.value:null;
     });
   }
+  recoverNativeWorkspace();
   return void (root.LightingAIScenePlannerDraft={
     shouldReopen:shouldReopen,setOpen:setOpen,capture:capture,restore:restore,
     attach:attach,detach:detach,flush:flush,savePhoto:savePhoto,loadPhoto:loadPhoto,
-    lastError:function(){return lastError;},version:'1.1-durable-background-recovery'
+    readWorkspaceValue:readWorkspaceValue,checkpointWorkspace:checkpointWorkspace,nativeAvailable:nativeAvailable,
+    lastError:function(){return lastError;},version:'1.2-native-atomic-recovery'
   });
 })(window);

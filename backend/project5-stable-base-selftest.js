@@ -202,6 +202,8 @@ const exactAllowed = new Set([
   // Phase 3A: exact offline revision regression and architecture documentation paths.
   'backend/scene-planner-revisions-selftest.js',
   'docs/SCENE_PLANNER_PHASE3A.md',
+  // Step 114: reviewed prelight checklist report; exact path, no broader docs exemption.
+  'docs/STEP114_PRELIGHT_REVIEW.md',
   // Phase 3B.1: isolated offline temporal model, regressions and architecture only.
   'backend/scene-planner-temporal.js',
   'backend/scene-planner-temporal-selftest.js',

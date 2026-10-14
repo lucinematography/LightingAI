@@ -182,6 +182,7 @@ test('stable-base guard validates future committed content and blocks regression
       'app/src/main/assets/scene-planner-core.js', 'backend/scene-planner-service.js',
       'backend/scene-planner-photometry.js', 'backend/scene-planner-photometric-selftest.js',
       'backend/scene-planner-revisions-selftest.js', 'docs/SCENE_PLANNER_PHASE3A.md',
+      'docs/STEP114_PRELIGHT_REVIEW.md',
       'backend/scene-planner-temporal.js', 'backend/scene-planner-temporal-selftest.js',
       'backend/scene-planner-video-ingestion.js', 'backend/scene-planner-video-ingestion-selftest.js',
       'backend/scene-planner-video-visual.js', 'backend/scene-planner-video-visual-selftest.js',

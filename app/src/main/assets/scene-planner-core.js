@@ -2235,6 +2235,53 @@
           after.plan.sceneIncidentLuxReading.setupFingerprint
     }));
   }
+  // Independent DoP acknowledgements; never add these to the hashed lighting plan.
+  // Popovic PDF SHA-256 and page checks are documented in STEP114_PRELIGHT_REVIEW.md.
+  var prelightChecks=freezeJson([
+    {id:'motivation',title:'Motivacija svetla',
+      question:'Da li smer, mekoća, boja i intenzitet odgovaraju izvoru koji scena sugeriše?',
+      source:'Boris Popović (priredio) — Svjetlo u TV studiju / Primijenjena rasvjeta',page:93},
+    {id:'fill',title:'Dopunsko svetlo i kontrast',
+      question:'Da li senke zadržavaju željene detalje, bez neželjenih dodatnih senki od dopunskog svetla?',
+      source:'Boris Popović (priredio) — Svjetlo u TV studiju / Primijenjena rasvjeta',page:32},
+    {id:'separation',title:'Odvajanje od pozadine',
+      question:'Da li je subjekt dovoljno odvojen od pozadine za nameru scene? Kontra nije obavezna.',
+      source:'Boris Popović (priredio) — Svjetlo u TV studiju / Primijenjena rasvjeta',page:32}
+  ]);
+  function validatePrelightRecord(record,revision) {
+    verifyRevision(revision);
+    if(!record||record.schemaVersion!==1||record.kind!=='DOP_PRELIGHT_REVIEW'||
+       record.sceneId!==revision.sceneId||record.revisionId!==revision.revisionId||
+       record.planHash!==revision.planHash||record.lightPlotRevisionId!==revision.lightPlotRevisionId)
+      throw new Error('Provera ne pripada ovoj reviziji plana.');
+    if(typeof record.reviewedAt!=='string'||!Number.isFinite(Date.parse(record.reviewedAt))||
+       new Date(record.reviewedAt).toISOString()!==record.reviewedAt)
+      throw new Error('Nevažeće vreme provere.');
+    if(!record.decisions||Object.keys(record.decisions).length!==prelightChecks.length)
+      throw new Error('Potrebne su sve tri odluke.');
+    prelightChecks.forEach(function(check){
+      if(!Object.prototype.hasOwnProperty.call(record.decisions,check.id)||
+         ['reviewed','needs_adjustment','not_applicable'].indexOf(record.decisions[check.id])<0)
+        throw new Error('Izaberi odluku za svaku stručnu proveru.');
+    });
+    return freezeJson({schemaVersion:1,kind:'DOP_PRELIGHT_REVIEW',
+      sceneId:revision.sceneId,revisionId:revision.revisionId,planHash:revision.planHash,
+      lightPlotRevisionId:revision.lightPlotRevisionId,reviewedAt:record.reviewedAt,
+      decisions:JSON.parse(JSON.stringify(record.decisions))});
+  }
+  function createPrelightReview(revision,decisions,reviewedAt) {
+    verifyRevision(revision);
+    return validatePrelightRecord(Object.assign({},videoRevisionBinding(revision),{
+      kind:'DOP_PRELIGHT_REVIEW',decisions:decisions,reviewedAt:reviewedAt}),revision);
+  }
+  function restorePrelightReviews(records,history) {
+    if(!Array.isArray(records)||!Array.isArray(history))throw new Error('Nevažeća istorija provera.');
+    return freezeJson(records.map(function(record){
+      var revision=history.find(function(item){return record&&item.revisionId===record.revisionId;});
+      if(!revision)throw new Error('Revizija stručne provere nije dostupna.');
+      return validatePrelightRecord(record,revision);
+    }));
+  }
   // Future MP4 receipt contract only. No provider calls or paid-flow integration.
   function videoRevisionBinding(revision) {
     verifyRevision(revision);
@@ -2242,6 +2289,8 @@
       lightPlotRevisionId:revision.lightPlotRevisionId,planHash:revision.planHash});
   }
   return {VERSION:VERSION, request:request, equipment:equipment, modifiers:modifiers,
+    prelightChecks:prelightChecks,createPrelightReview:createPrelightReview,
+    restorePrelightReviews:restorePrelightReviews,
     canonicalJson:canonicalJson,sha256:sha256,planHash:planHash,createRevision:createRevision,
     createDistanceMeasurementRevision:createDistanceMeasurementRevision,
     createMountedOpticRevision:createMountedOpticRevision,

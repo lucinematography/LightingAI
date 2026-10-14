@@ -210,10 +210,44 @@ function uiContext(store=new Map(),quota=false,aiPlan=null) {
 }
 const ui=uiContext();
 await ui.api.generate(false);
+test('prelight acknowledgements preserve plans and require exact revision binding',()=>{
+  const original=core.canonicalJson(first);
+  const decisions={motivation:'reviewed',fill:'needs_adjustment',separation:'not_applicable'};
+  const review=core.createPrelightReview(first,decisions,'2026-10-14T12:00:00.000Z');
+  decisions.fill='reviewed';
+  assert.equal(review.decisions.fill,'needs_adjustment');
+  assert.ok(Object.isFrozen(review.decisions));
+  assert.equal(core.canonicalJson(first),original);
+  assert.deepEqual(core.restorePrelightReviews(JSON.parse(JSON.stringify([review])),[first]),[review]);
+  assert.throws(()=>core.restorePrelightReviews([review],[second]));
+  assert.throws(()=>core.restorePrelightReviews([{...review,planHash:second.planHash}],[first]));
+  assert.throws(()=>core.createPrelightReview(first,{motivation:'reviewed'},review.reviewedAt));
+  assert.throws(()=>core.createPrelightReview(first,{...review.decisions,fill:'approved'},review.reviewedAt));
+  assert.throws(()=>core.createPrelightReview(first,review.decisions,'not a date'));
+});
+const prelightKey='lighting_scene_planner_prelight_reviews_v1';
+const unreviewedPlan=core.canonicalJson(ui.api.exportObject().revisions);
+ui.nodes.get('sp-prelight-save').onclick();
+assert.match(ui.nodes.get('sp-prelight-status').textContent,/nije sačuvana/);
+assert.equal(ui.store.has(prelightKey),false);
+for(const [id,value] of Object.entries({motivation:'reviewed',fill:'needs_adjustment',separation:'not_applicable'}))
+  ui.nodes.get('sp-prelight-'+id).value=value;
+ui.nodes.get('sp-prelight-save').onclick();
+assert.equal(ui.api.exportObject().prelightReviewHistory.length,1);
+assert.equal(core.canonicalJson(ui.api.exportObject().revisions),unreviewedPlan);
+const reviewReload=uiContext(ui.store);
+assert.equal(reviewReload.api.restore(),true);
+assert.equal(reviewReload.api.exportObject().prelightReviewHistory[0].decisions.fill,'needs_adjustment');
+assert.match(reviewReload.nodes.get('sp-prelight').innerHTML,/ selected/);
+console.log('PASS prelight UI requires three choices, persists and reloads without changing plan');passed++;
 const oldUiPlan=JSON.stringify(ui.api.exportObject().revisions[0]);
 ui.nodes.get('sp-dop-request').value='Hladnija kontra';
 await ui.api.generate(false);
 const saved=ui.api.exportObject();
+assert.equal(saved.prelightReviewHistory.length,1);
+assert.notEqual(saved.prelightReviewHistory[0].revisionId,saved.revisions[1].revisionId);
+assert.match(ui.nodes.get('sp-prelight').innerHTML,/zahteva novu proveru/);
+assert.ok(!ui.nodes.get('sp-prelight').innerHTML.includes(' selected'));
 assert.equal(saved.revisions.length,2);
 assert.equal(JSON.stringify(saved.revisions[0]),oldUiPlan);
 assert.equal(saved.plan,saved.revisions[1].plan,'plot and technical UI share the exact frozen revision plan');
@@ -240,6 +274,19 @@ await quotaUi.api.generate(false);
 assert.equal(quotaUi.api.exportObject().revisions.length,1);
 assert.match(quotaUi.nodes.get('sp-status').textContent,/JSON/);
 console.log('PASS corrupt history preservation and visible storage failure');passed++;
+const badReviews=uiContext(new Map([
+  ['lighting_scene_planner_revisions_v1',JSON.stringify([first])],
+  [prelightKey,'invalid review json']
+]));
+assert.equal(badReviews.api.restore(),true);
+assert.equal(badReviews.api.exportObject().prelightReviewHistoryStatus,'UNAVAILABLE_PRESERVED');
+badReviews.nodes.get('sp-prelight-save').onclick();
+assert.equal(badReviews.store.get(prelightKey),'invalid review json');
+for(const c of core.prelightChecks)quotaUi.nodes.get('sp-prelight-'+c.id).value='reviewed';
+quotaUi.nodes.get('sp-prelight-save').onclick();
+assert.match(quotaUi.nodes.get('sp-prelight-status').textContent,/nije sačuvana/);
+assert.equal(quotaUi.api.exportObject().prelightReviewHistory.length,0);
+console.log('PASS corrupt prelight history is preserved and storage failure does not claim success');passed++;
 
 const fullScene=capacityScene(16);
 const fullRoot=core.createRevision(fullScene.raw,fullScene.input,'ai',null,'scene-ui-16');

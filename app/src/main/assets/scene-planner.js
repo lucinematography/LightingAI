@@ -6,6 +6,8 @@
   var STORE='lighting_scene_planner_last_v1';
   var REVISION_STORE='lighting_scene_planner_revisions_v1';
   var revisions=[],sceneId=null,historyBlocked=false;
+  var PRELIGHT_STORE='lighting_scene_planner_prelight_reviews_v1';
+  var prelightReviews=[],prelightLoaded=false,prelightBlocked=false;
   // Local video samples are not immutable PTS evidence. Bind them to the
   // video session used for the current plan; never reuse an older light plot.
   var videoFrameSession=0,plannedVideoFrameSession=null,selectedFrameCompare=0;
@@ -1080,7 +1082,7 @@
       '<p class="sp-note">'+esc(plan.rationale)+'</p>'+
       '<div class="sp-pill" style="display:inline-block">'+(plan.source==='ai'?'AI PREDLOG':'LOKALNI KONCEPT')+
       ' • '+(plan.mode==='own'?'SAMO MOJA OPREMA':'NAJBOLJA RASVETA')+
-      (plan.dopLocalVariant?' • DoP LOKALNO IZMENJEN PLAN':'')+'</div>';
+      (plan.dopLocalVariant?' • DoP LOKALNO IZMENJEN PLAN':'')+'</div><div id="sp-prelight"></div>';
     var current=revisions[revisions.length-1];
     if(current)el('sp-summary').innerHTML+='<p class="sp-note">Revizija '+current.sequence+
       ' • '+esc(current.sceneId)+'<br>Light plot: '+esc(current.lightPlotRevisionId)+
@@ -1678,6 +1680,7 @@
       };
     });
     renderDopManualVariant(plan,current);
+    renderPrelightReview(current);
     el('sp-warnings').innerHTML='<div class="sp-note" style="margin-top:10px"><b style="color:#f5c542">PROCENE I KOMPROMISI</b><ul>'+
       plan.limitations.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+
       '</ul><b style="color:#f5c542">DAN ZA NOĆ / KONTROLA DNEVNOG SVETLA</b><ul>'+
@@ -1685,6 +1688,60 @@
       '</ul><b style="color:#f5c542">BEZBEDNOST</b><ul>'+
       plan.safetyNotes.map(function(w){return '<li>'+esc(w)+'</li>';}).join('')+'</ul></div>';
     el('sp-result').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function loadPrelightReviews(){
+    if(prelightLoaded)return;
+    prelightLoaded=true;
+    try{
+      var saved=localStorage.getItem(PRELIGHT_STORE);
+      prelightReviews=core().restorePrelightReviews(saved?JSON.parse(saved):[],revisions);
+    }catch(error){prelightBlocked=true;}
+  }
+  function renderPrelightReview(current){
+    if(!current)return;
+    loadPrelightReviews();
+    var matching=prelightReviews.filter(function(r){return r.revisionId===current.revisionId;});
+    var latest=matching.length?matching[matching.length-1]:null;
+    var labels={reviewed:'Provereno',needs_adjustment:'Potrebna dorada',not_applicable:'Nije primenljivo'};
+    el('sp-prelight').innerHTML='<section class="sp-lamp">'+
+      '<h3>Provera plana pre snimanja</h3><p class="sp-note">Procena snimatelja za reviziju '+
+      esc(current.sequence)+'. Proveri nameru plana i rezultat na setu. Ove odluke nisu merenja niti automatska potvrda kvaliteta osvetljenja.</p>'+
+      '<p class="sp-note">'+(prelightBlocked?'Sačuvane provere nisu učitane. Postojeći zapis je sačuvan; unos je blokiran.':
+      latest?'Poslednja provera ove revizije: '+esc(latest.reviewedAt):
+      prelightReviews.length?'Ova revizija zahteva novu proveru. Prethodne odluke ostaju u istoriji.':'Ova revizija još nije proverena.')+'</p>'+
+      core().prelightChecks.map(function(check){
+        return '<label class="sp-note" style="display:block;margin:12px 0"><b>'+esc(check.title)+
+          '</b><div>'+esc(check.question)+'</div><div>Izvor: '+esc(check.source)+' — str. '+check.page+
+          ' (proverena stranica izvornog PDF-a).</div><select class="sp-field" id="sp-prelight-'+check.id+'"'+
+          (prelightBlocked?' disabled':'')+'><option value="">Izaberi odluku…</option>'+
+          Object.keys(labels).map(function(key){return '<option value="'+key+'"'+
+            (latest&&latest.decisions[check.id]===key?' selected':'')+'>'+labels[key]+'</option>';}).join('')+
+          '</select></label>';
+      }).join('')+'<button type="button" class="sp-btn" id="sp-prelight-save"'+
+      (prelightBlocked?' disabled':'')+'>SAČUVAJ PROVERU OVE REVIZIJE</button><p class="sp-note" id="sp-prelight-status" role="status"></p>'+
+      (prelightReviews.length?'<details><summary>Istorija stručnih provera ('+prelightReviews.length+')</summary>'+
+        prelightReviews.map(function(r){var rev=revisions.find(function(item){return item.revisionId===r.revisionId;});
+          return '<p class="sp-note">Revizija '+esc(rev.sequence)+' • '+esc(r.reviewedAt)+'<br>'+
+            core().prelightChecks.map(function(c){return esc(c.title)+': '+esc(labels[r.decisions[c.id]]);}).join('<br>')+'</p>';
+        }).join('')+'</details>':'')+'</section>';
+    core().prelightChecks.forEach(function(check){
+      el('sp-prelight-'+check.id).onchange=function(){el('sp-prelight-status').textContent='Izbor je promenjen; sačuvaj novu proveru.';};
+    });
+    el('sp-prelight-save').onclick=function(){
+      if(prelightBlocked||historyBlocked||state.busy||state.videoBusy)return;
+      try{
+        if(revisions[revisions.length-1].revisionId!==current.revisionId)
+          throw new Error('Plan je promenjen. Pregledaj novu reviziju.');
+        var decisions={};core().prelightChecks.forEach(function(c){decisions[c.id]=el('sp-prelight-'+c.id).value;});
+        var record=core().createPrelightReview(current,decisions,new Date().toISOString());
+        var next=prelightReviews.concat([record]);
+        // Persist the plan first, so a restored review always has its parent revision.
+        localStorage.setItem(REVISION_STORE,JSON.stringify(revisions));
+        localStorage.setItem(PRELIGHT_STORE,JSON.stringify(next));
+        prelightReviews=next;remember();renderResult();
+        el('sp-prelight-status').textContent='Provera je sačuvana za ovu reviziju plana.';
+      }catch(error){el('sp-prelight-status').textContent='Provera nije sačuvana: '+error.message;}
+    };
   }
   // A purely local editing path for concrete DoP creative parameters.
   // It does NOT regenerate via any AI endpoint or send commands to fixtures.
@@ -2243,6 +2300,8 @@
     return {format:'LightingAI.ScenePlanner.v1',savedAt:new Date().toISOString(),
       plan:state.plan,revisionSchemaVersion:1,revisions:revisions,
       dopPlannedEditHistory:doPHistory,
+      prelightReviewHistory:prelightReviews,
+      prelightReviewHistoryStatus:prelightBlocked?'UNAVAILABLE_PRESERVED':'DOP_REPORTED_NOT_PHYSICAL_VERIFICATION',
       sampledVideoCueSheet:safeExportCueSheet(),
       webViewCodeValueAudit:codeAudit,
       notes:'Originalni foto i video materijal nisu uključeni u JSON izvoz. DoP istorija je izvedena iz revizija, nije fizički izmerena.'};

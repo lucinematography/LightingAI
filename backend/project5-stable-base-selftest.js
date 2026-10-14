@@ -210,6 +210,11 @@ const exactAllowed = new Set([
   'backend/scene-planner-recovery-selftest.js',
   'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
   'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md',
+  // Studio parallel release: exact identity overlay and public preflight/report paths.
+  'app/src/studio/AndroidManifest.xml',
+  'backend/studio-release-selftest.js',
+  'scripts/studio-update-identity.mjs',
+  'docs/STUDIO_LOCAL_SIGNING_PREPARATION.md',
   // Phase 3B.1: isolated offline temporal model, regressions and architecture only.
   'backend/scene-planner-temporal.js',
   'backend/scene-planner-temporal-selftest.js',

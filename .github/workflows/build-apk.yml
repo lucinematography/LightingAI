@@ -129,6 +129,32 @@ jobs:
       - name: Build recovery instrumentation APK
         run: gradle assembleDebugAndroidTest -PreleaseVersionCode=${{ github.run_number }}
 
+      - name: Build unsigned parallel Studio release and run its unit tests
+        run: gradle assembleStudio testStudioUnitTest lintStudio -PreleaseVersionCode=${{ github.run_number }}
+
+      - name: Verify unsigned Studio identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          APK='app/build/outputs/apk/studio/app-studio-unsigned.apk'
+          test -s "$APK"
+          "$TOOLS/aapt" dump badging "$APK" > app/build/studio-badging.txt
+          head -n 1 app/build/studio-badging.txt > app/build/studio-identity.txt
+          grep -Fq "name='com.lightingai.app.studio'" app/build/studio-identity.txt
+          grep -Fq "versionCode='${{ github.run_number }}'" app/build/studio-identity.txt
+          grep -Fq "application-label:'LightingAI Studio'" app/build/studio-badging.txt
+          if grep -Fq 'application-debuggable' app/build/studio-badging.txt; then exit 1; fi
+          if "$TOOLS/apksigner" verify "$APK" > /dev/null 2>&1; then
+            echo 'Studio must remain unsigned in CI; signing happens on the owner computer.'
+            exit 1
+          fi
+          for asset in scene-planner.js scene-planner-core.js scene-planner-draft.js; do
+            unzip -p "$APK" "assets/$asset" > "app/build/studio-$asset"
+            cmp "app/build/studio-$asset" "app/src/main/assets/$asset"
+          done
+          echo 'Unsigned Studio release: separate identity; owner-controlled local signing required.' >> app/build/studio-identity.txt
+
       - name: Enable emulator acceleration on disposable CI runner
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -222,6 +248,14 @@ jobs:
         run: |
           set -euo pipefail
           cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/LightingAI-build-${GITHUB_RUN_NUMBER}.apk"
+
+      - name: Upload unsigned Studio release for local signing
+        uses: actions/upload-artifact@v7
+        with:
+          name: LightingAI-Studio-UNSIGNED-${{ github.run_number }}.apk
+          path: app/build/outputs/apk/studio/app-studio-unsigned.apk
+          archive: false
+          retention-days: 14
 
       - name: Upload APK
         uses: actions/upload-artifact@v7

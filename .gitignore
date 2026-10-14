@@ -3,3 +3,10 @@
 /.gradle/
 /.ci-check-results/
 /.ci-safe-reports/
+# Defense in depth: permanent signing material is kept outside the repository.
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.dpapi
+*.recovery-secret

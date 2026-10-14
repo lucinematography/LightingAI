@@ -186,6 +186,8 @@ test('stable-base guard validates future committed content and blocks regression
       'backend/scene-planner-recovery-selftest.js',
       'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
       'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md', 'app/build.gradle',
+      'app/src/studio/AndroidManifest.xml', 'backend/studio-release-selftest.js',
+      'scripts/studio-update-identity.mjs', 'docs/STUDIO_LOCAL_SIGNING_PREPARATION.md',
       'backend/scene-planner-temporal.js', 'backend/scene-planner-temporal-selftest.js',
       'backend/scene-planner-video-ingestion.js', 'backend/scene-planner-video-ingestion-selftest.js',
       'backend/scene-planner-video-visual.js', 'backend/scene-planner-video-visual-selftest.js',

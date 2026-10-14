@@ -1,4 +1,4 @@
-name: Build Signed Release APK
+name: Build Unsigned Studio APK for Local Signing
 
 on:
   workflow_dispatch:
@@ -6,14 +6,15 @@ on:
       version_code:
         description: Android versionCode (must increase for every update)
         required: true
-        default: "14"
+        default: "10001"
       version_name:
         description: Android versionName
         required: true
-        default: "2.2"
+        default: "1.0-studio"
 
 jobs:
   release:
+    if: github.ref == 'refs/heads/feature/scene-planner-first-release'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -54,49 +55,57 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Require release signing secrets
+      - name: Validate public version inputs
         shell: bash
         env:
-          KEYSTORE_B64: ${{ secrets.LIGHTINGAI_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
+          STUDIO_VERSION_CODE: ${{ inputs.version_code }}
+          STUDIO_VERSION_NAME: ${{ inputs.version_name }}
         run: |
           set -euo pipefail
-          test -n "$KEYSTORE_B64" || { echo "Missing LIGHTINGAI_KEYSTORE_BASE64"; exit 1; }
-          test -n "$STORE_PASSWORD" || { echo "Missing LIGHTINGAI_KEYSTORE_PASSWORD"; exit 1; }
-          test -n "$KEY_ALIAS" || { echo "Missing LIGHTINGAI_KEY_ALIAS"; exit 1; }
-          test -n "$KEY_PASSWORD" || { echo "Missing LIGHTINGAI_KEY_PASSWORD"; exit 1; }
-          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lightingai-release.jks"
+          [[ "$STUDIO_VERSION_CODE" =~ ^[1-9][0-9]{0,9}$ ]]
+          test "$STUDIO_VERSION_CODE" -le 2100000000
+          [[ "$STUDIO_VERSION_NAME" =~ ^[A-Za-z0-9._-]{1,40}$ ]]
 
       - name: Run Android unit tests
-        run: gradle testDebugUnitTest
+        run: gradle testDebugUnitTest testStudioUnitTest
 
-      - name: Build signed release APK
+      - name: Studio Android lint
+        run: gradle lintStudio
+
+      - name: Build unsigned Studio release APK
         env:
-          LIGHTINGAI_KEYSTORE_PATH: ${{ runner.temp }}/lightingai-release.jks
-          LIGHTINGAI_KEYSTORE_PASSWORD: ${{ secrets.LIGHTINGAI_KEYSTORE_PASSWORD }}
-          LIGHTINGAI_KEY_ALIAS: ${{ secrets.LIGHTINGAI_KEY_ALIAS }}
-          LIGHTINGAI_KEY_PASSWORD: ${{ secrets.LIGHTINGAI_KEY_PASSWORD }}
+          STUDIO_VERSION_CODE: ${{ inputs.version_code }}
+          STUDIO_VERSION_NAME: ${{ inputs.version_name }}
         run: |
-          gradle assembleRelease             -PreleaseVersionCode=${{ inputs.version_code }}             -PreleaseVersionName=${{ inputs.version_name }}
+          gradle assembleStudio "-PreleaseVersionCode=$STUDIO_VERSION_CODE" "-PreleaseVersionName=$STUDIO_VERSION_NAME"
 
       - name: Verify release APK
         shell: bash
+        env:
+          STUDIO_VERSION_CODE: ${{ inputs.version_code }}
         run: |
           set -euo pipefail
-          APK='app/build/outputs/apk/release/app-release.apk'
+          APK='app/build/outputs/apk/studio/app-studio-unsigned.apk'
+          TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
           test -s "$APK"
-          unzip -Z1 "$APK" | grep -Fxq 'assets/ai-visual-scene-plan.js'
-          unzip -Z1 "$APK" | grep -Fxq 'assets/catalog.js'
-          jarsigner -verify "$APK"
-          cp "$APK" "app/build/outputs/apk/release/LightingAI-${{ inputs.version_name }}-${{ inputs.version_code }}.apk"
+          "$TOOLS/aapt" dump badging "$APK" > app/build/studio-badging.txt
+          head -n 1 app/build/studio-badging.txt > app/build/studio-identity.txt
+          grep -Fq "name='com.lightingai.app.studio'" app/build/studio-identity.txt
+          grep -Fq "versionCode='$STUDIO_VERSION_CODE'" app/build/studio-identity.txt
+          grep -Fq "application-label:'LightingAI Studio'" app/build/studio-badging.txt
+          if grep -Fq 'application-debuggable' app/build/studio-badging.txt; then exit 1; fi
+          if "$TOOLS/apksigner" verify "$APK" > /dev/null 2>&1; then exit 1; fi
+          for asset in scene-planner.js scene-planner-core.js scene-planner-draft.js; do
+            unzip -p "$APK" "assets/$asset" > "app/build/studio-$asset"
+            cmp "app/build/studio-$asset" "app/src/main/assets/$asset"
+          done
+          cp "$APK" "app/build/outputs/apk/studio/LightingAI-Studio-UNSIGNED-$STUDIO_VERSION_CODE.apk"
 
-      - name: Upload signed release APK
+      - name: Upload unsigned Studio APK
         uses: actions/upload-artifact@v7
         with:
-          name: LightingAI-${{ inputs.version_name }}-${{ inputs.version_code }}.apk
-          path: app/build/outputs/apk/release/LightingAI-${{ inputs.version_name }}-${{ inputs.version_code }}.apk
+          name: LightingAI-Studio-UNSIGNED-${{ inputs.version_code }}.apk
+          path: app/build/outputs/apk/studio/LightingAI-Studio-UNSIGNED-${{ inputs.version_code }}.apk
           archive: false
           retention-days: 30
 

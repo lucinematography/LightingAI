@@ -198,7 +198,8 @@ test('stable-base guard validates future committed content and blocks regression
       'backend/scene-planner-video-test-support.js', 'backend/scene-planner-video-phase2-selftest.js',
       'backend/scene-planner-postgres-selftest.js', 'backend/scene-planner-postgres-worker.js',
       'backend/staging-safety-selftest.js', 'backend/package.json', 'backend/package-lock.json',
-      'app/src/main/assets/scene-planner.js', 'app/src/main/java/com/lightingai/app/MainActivity.java',
+      'app/src/main/assets/scene-planner.js', 'app/src/main/assets/scene-planner-draft.js',
+      'app/src/main/java/com/lightingai/app/MainActivity.java',
       'app/src/main/java/com/lightingai/app/ScenePlannerCaptureCleanup.java',
       'app/src/test/java/com/lightingai/app/ScenePlannerCaptureCleanupTest.java',
       'docs/SCENE_PLANNER_VIDEO_PHASE2.md'];

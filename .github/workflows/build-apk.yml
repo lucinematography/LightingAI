@@ -134,6 +134,7 @@ jobs:
           SHORT_SHA="${GITHUB_SHA:0:7}"
           REQUIRED=(
             'assets/ai-visual-scene-launcher.js'
+            'assets/scene-planner-draft.js'
             'assets/ai-visual-scene-plan.js'
             'assets/ai-visual-local-simulation.js'
             'assets/ai-visual-result-polish.js'

@@ -193,6 +193,8 @@ const exactAllowed = new Set([
   'app/src/test/java/com/lightingai/app/SacnProtocolTest.java',
   'backend/project5-stable-base-selftest.js',
   'app/src/main/assets/scene-planner.js',
+  // Android background recovery: the one reviewed local-only draft module.
+  'app/src/main/assets/scene-planner-draft.js',
   'app/src/main/assets/scene-planner-core.js',
   'backend/scene-planner-service.js',
   'backend/scene-planner-selftest.js',

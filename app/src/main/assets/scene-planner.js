@@ -15,6 +15,10 @@
   var videoReceipt=null,videoReceiptBlocked=false;
   var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null,videoDurationSec:null,aiVideoPending:null,aiVideoCompletedPlan:null};
   function el(id){return document.getElementById(id);}
+  function draft(){return window.LightingAIScenePlannerDraft;}
+  function activeRevisionId(){return revisions.length?revisions[revisions.length-1].revisionId:null;}
+  function saveDraftPhoto(){if(draft()&&state.photo)draft().savePhoto(state.photo);}
+
   function esc(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -237,7 +241,17 @@
     el('sp-save').onclick=save;
     el('sp-share').onclick=share;
     updateInventory();
-    loadCore(function(){if(restorePlanHistory())status('Spremno. Dodaj fotografiju ili video i opiši kadar.');});
+    if(draft())draft().attach(wrap,activeRevisionId);
+    loadCore(function(){
+      if(!restorePlanHistory())return;
+      if(draft())draft().restore(wrap,activeRevisionId());
+      if(draft())draft().loadPhoto().then(function(photo){
+        if(!photo||!el(MODULE)||state.photo)return;
+        state.photo=photo;
+        var image=el('sp-image');if(image){image.src=photo;image.hidden=false;}
+      });
+      status('Spremno. Sačuvan plan i nacrt su vraćeni gde je dostupno.');
+    });
     restoreVideoReceipt();
   }
   function updateInventory(){
@@ -281,6 +295,8 @@
       if(state.plan){renderSampledVideoCues();renderMotionStage(0);}
       renderSampledFrameComparison();
       var image=el('sp-image');if(image){image.src=state.photo;image.hidden=false;}
+      saveDraftPhoto();
+      if(draft())draft().flush();
       status('Fotografija dodata.');
     }catch(e){status(e.message||'Fotografija nije učitana.',true);}
   }
@@ -436,6 +452,7 @@
       revisions=revisions.concat([revision]);state.plan=revision.plan;
       plannedVideoFrameSession=state.frames.length?videoFrameSession:null;
       renderResult();remember();
+      if(draft())draft().flush();
     }catch(error){status('Revizija nije sačuvana: '+error.message,true);}
   }
   function fmt(value,unit){
@@ -1739,6 +1756,7 @@
         localStorage.setItem(REVISION_STORE,JSON.stringify(revisions));
         localStorage.setItem(PRELIGHT_STORE,JSON.stringify(next));
         prelightReviews=next;remember();renderResult();
+        if(draft())draft().flush();
         el('sp-prelight-status').textContent='Provera je sačuvana za ovu reviziju plana.';
       }catch(error){el('sp-prelight-status').textContent='Provera nije sačuvana: '+error.message;}
     };
@@ -2349,6 +2367,7 @@
     }
   }
   function close(){
+    if(draft()){draft().flush();draft().setOpen(false);draft().detach();}
     releaseCaptures(false);
     state.videoFile=null;state.videoDurationSec=null;
     if(el('sp-video-auth'))el('sp-video-auth').value='';

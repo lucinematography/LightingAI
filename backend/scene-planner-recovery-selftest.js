@@ -47,6 +47,15 @@ function context(store=new Map(),media=new Map(),options={}){
     saveScenePlannerPhoto(value){if(options.nativeFailure)return false;options.nativeFiles.set('photo',value);return true;},
     loadScenePlannerPhoto(){return options.nativeFiles.get('photo')||'';}
   };
+  if(options.scenes&&root.Android)Object.assign(root.Android,{
+    loadScenePlannerSceneIndex(){return options.nativeFiles.get('scene-index')||'';},
+    saveScenePlannerSceneIndex(value){if(options.sceneIndexFailure)return false;options.nativeFiles.set('scene-index',value);return true;},
+    saveScenePlannerSceneData(id,kind,value){
+      if(options.nativeFailure)return false;
+      options.nativeFiles.set('scene:'+id+':'+kind,value);return true;
+    },
+    loadScenePlannerSceneData(id,kind){return options.nativeFiles.get('scene:'+id+':'+kind)||'';}
+  });
   const sandbox={window:root};vm.createContext(sandbox);vm.runInContext(source,sandbox);
   return {api:root.LightingAIScenePlannerDraft,root,document,overlay,nodes,field,store,media,
     notifications,attach:rev=>root.LightingAIScenePlannerDraft.attach(overlay,()=>rev,(ok,message)=>notifications.push({ok,message})),
@@ -292,6 +301,108 @@ await test('restoration rejects forged confirmations, unknown select choices and
   assert.equal(recovered.nodes.get('sp-waveform-ire').value,'');
   assert.equal(recovered.nodes.get('sp-scene-total-point').value,'');
   assert.equal(recovered.nodes.get('sp-video-auth').value,'private-token');
+});
+
+
+function seedFilmScene(c,label,iso){
+  const input=core.request({description:label,mode:'best',cameraOverrides:{iso}});
+  const revision=core.createRevision(core.localPlan(input),input,'local',null,'film-'+label.replace(/\s/g,'-'));
+  const review=core.createPrelightReview(revision,{motivation:'reviewed',fill:'reviewed',separation:'not_applicable'},'2026-10-15T12:00:00.000Z');
+  c.attach(revision.revisionId);
+  c.nodes.get('sp-description').value=label;
+  c.nodes.get('sp-iso').value=String(iso);
+  c.nodes.get('sp-waveform-ire').value=label==='Scene A'?'42.5':'55';
+  c.nodes.get('sp-prelight-fill').value='needs_adjustment';
+  c.overlay.emit('input',c.nodes.get('sp-description'));
+  assert.equal(c.api.checkpointWorkspace({
+    lighting_scene_planner_revisions_v1:JSON.stringify([revision]),
+    lighting_scene_planner_prelight_reviews_v1:JSON.stringify([review]),
+    lighting_scene_planner_last_v1:JSON.stringify({plan:revision.plan,revisions:[revision]})
+  }),true);
+  return {revision,review};
+}
+await test('film scenes A-B-A retain distinct photos, plans, revisions, reviews and pending measurements',async()=>{
+  const nativeFiles=new Map(),store=new Map(),options={nativeFiles,scenes:true};
+  const a=measurementContext(store,options),ra=seedFilmScene(a,'Scene A',800);
+  const photoA=photoSmall+'AAAA',photoB=photoSmall+'BBBB';
+  assert.equal(await a.api.savePhoto(photoA),true);
+  let legacyCommitted=nativeFiles.get('workspace');
+  assert.equal(a.api.createScene('Scena B'),true);
+  legacyCommitted=nativeFiles.get('workspace');
+  const bId=a.api.activeSceneId();assert.ok(bId!=='legacy');
+  assert.equal(a.api.readWorkspaceValue(DRAFT),null);
+  assert.equal(await a.api.loadPhoto(),null,'new scene must not inherit legacy photo');
+  const b=measurementContext(store,options);
+  assert.equal(b.nodes.get('sp-description').value,'');
+  const rb=seedFilmScene(b,'Scene B',1600);
+  assert.equal(await b.api.savePhoto(photoB),true);
+  assert.equal(nativeFiles.get('workspace'),legacyCommitted,'new scene never overwrites legacy native file');
+  assert.equal(b.api.selectScene('legacy'),true);
+  const backA=measurementContext(new Map(),{...options,noStorage:true,noDb:true});
+  assert.equal(backA.api.restore(backA.overlay,ra.revision.revisionId),true);
+  assert.equal(backA.nodes.get('sp-description').value,'Scene A');
+  assert.equal(backA.nodes.get('sp-iso').value,'800');
+  assert.equal(backA.nodes.get('sp-waveform-ire').value,'42.5');
+  assert.equal(backA.nodes.get('sp-prelight-fill').value,'needs_adjustment');
+  assert.equal(await backA.api.loadPhoto(),photoA);
+  assert.equal(JSON.parse(backA.api.readWorkspaceValue('lighting_scene_planner_revisions_v1'))[0].planHash,ra.revision.planHash);
+  assert.equal(JSON.parse(backA.api.readWorkspaceValue('lighting_scene_planner_prelight_reviews_v1'))[0].revisionId,ra.review.revisionId);
+  assert.equal(backA.api.selectScene(bId),true);
+  const reopenedB=measurementContext(new Map(),{...options,noStorage:true,noDb:true});
+  assert.equal(reopenedB.api.shouldReopen(),true);
+  reopenedB.api.restore(reopenedB.overlay,rb.revision.revisionId);
+  assert.equal(reopenedB.nodes.get('sp-description').value,'Scene B');
+  assert.equal(reopenedB.nodes.get('sp-waveform-ire').value,'55');
+  assert.equal(await reopenedB.api.loadPhoto(),photoB);
+  assert.equal(JSON.parse(reopenedB.api.readWorkspaceValue('lighting_scene_planner_revisions_v1'))[0].planHash,rb.revision.planHash);
+});
+await test('failed scene selection and failed current checkpoint keep prior scene and committed data',()=>{
+  const nativeFiles=new Map(),options={nativeFiles,scenes:true};
+  const c=measurementContext(new Map(),options);seedFilmScene(c,'Scene A',800);
+  options.sceneIndexFailure=true;
+  assert.equal(c.api.createScene('Scena B'),false);
+  assert.equal(c.api.activeSceneId(),'legacy');assert.equal(nativeFiles.has('scene-index'),false);
+  options.sceneIndexFailure=false;
+  assert.equal(c.api.createScene('Scena B'),true);
+  const selected=c.api.activeSceneId(),index=nativeFiles.get('scene-index');
+  const b=measurementContext(new Map(),options);seedFilmScene(b,'Scene B',1600);
+  const committed=nativeFiles.get('scene:'+selected+':workspace');
+  options.nativeFailure=true;
+  assert.equal(b.api.selectScene('legacy'),false);
+  assert.equal(b.api.activeSceneId(),selected);assert.equal(nativeFiles.get('scene-index'),index);
+  assert.equal(nativeFiles.get('scene:'+selected+':workspace'),committed);b.api.detach();
+});
+await test('corrupt scene index and target data are preserved without silent replacement',async()=>{
+  const nativeFiles=new Map(),options={nativeFiles,scenes:true};
+  const c=measurementContext(new Map(),options);seedFilmScene(c,'Scene A',800);
+  assert.equal(c.api.createScene('Scena B'),true);
+  const bId=c.api.activeSceneId();
+  assert.equal(c.api.selectScene('legacy'),true);
+  const index=nativeFiles.get('scene-index');
+  nativeFiles.set('scene:'+bId+':workspace','invalid-json');
+  assert.equal(c.api.selectScene(bId),false);
+  assert.equal(c.api.activeSceneId(),'legacy');assert.equal(nativeFiles.get('scene-index'),index);
+  assert.equal(nativeFiles.get('scene:'+bId+':workspace'),'invalid-json');
+  nativeFiles.set('scene-index','broken-index');
+  const blocked=measurementContext(new Map(),options),before=nativeFiles.get('workspace');
+  blocked.attach('bad-index');blocked.overlay.emit('input',blocked.nodes.get('sp-description'));
+  assert.equal(await blocked.api.savePhoto(photoSmall),false);
+  assert.equal(blocked.api.createScene('Do not overwrite'),false);
+  assert.equal(nativeFiles.get('scene-index'),'broken-index');assert.equal(nativeFiles.get('workspace'),before);
+  blocked.api.detach();
+});
+await test('scene picker rejects unknown scenes and invalid names; legacy records remain in place',()=>{
+  const nativeFiles=new Map(),options={nativeFiles,scenes:true},c=measurementContext(new Map(),options);
+  seedFilmScene(c,'Scene A',800);
+  const original=nativeFiles.get('workspace');
+  for(const name of ['', ' '.repeat(10), 'x'.repeat(81), 'bad\nname']){
+    assert.equal(c.api.createScene(name),false);
+  }
+  assert.equal(c.api.selectScene('../../other'),false);
+  assert.equal(c.api.activeSceneId(),'legacy');
+  assert.equal(c.api.listScenes().length,1);
+  assert.ok(nativeFiles.get('workspace').includes('Scene A'));
+  assert.ok(original.includes('Scene A'));c.api.detach();
 });
 
 console.log(`${passed} recovery regression groups passed; no provider or video processing calls.`);

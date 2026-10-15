@@ -13,7 +13,8 @@
   var videoFrameSession=0,plannedVideoFrameSession=null,selectedFrameCompare=0;
   var VIDEO_RECEIPT='lighting_scene_planner_video_receipt_v1';
   var videoReceipt=null,videoReceiptBlocked=false;
-  var state={photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null,videoDurationSec:null,aiVideoPending:null,aiVideoCompletedPlan:null};
+  function emptyState(){return {photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null,videoDurationSec:null,aiVideoPending:null,aiVideoCompletedPlan:null};}
+  var state=emptyState(),sceneChanging=false,sceneReady=false,photoBusy=false;
   function el(id){return document.getElementById(id);}
   function draft(){return window.LightingAIScenePlannerDraft;}
   function activeRevisionId(){return revisions.length?revisions[revisions.length-1].revisionId:null;}
@@ -25,6 +26,44 @@
   }
   function saveDraftPhoto(){return draft()&&state.photo?draft().savePhoto(state.photo):Promise.resolve(false);}
   function storedWorkspace(key){return draft()&&draft().readWorkspaceValue?draft().readWorkspaceValue(key):localStorage.getItem(key);}
+
+  function sceneStorage(){return draft()&&draft().sceneStorage?draft().sceneStorage():localStorage;}
+  function renderSceneControls(){
+    var picker=el('sp-scene-select'),create=el('sp-scene-create');
+    if(!picker||!create)return;
+    var supported=draft()&&draft().sceneSupport&&draft().sceneSupport();
+    picker.innerHTML=(draft()&&draft().listScenes?draft().listScenes():[]).map(function(s){
+      return '<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>';
+    }).join('');
+    if(draft()&&draft().activeSceneId)picker.value=draft().activeSceneId();
+    picker.disabled=create.disabled=!supported||!sceneReady||sceneChanging;
+  }
+  async function changeScene(id,name){
+    if(sceneChanging)return;
+    if(!sceneReady||photoBusy||state.busy||state.videoBusy||
+       state.aiVideoPending&&state.aiVideoPending.started){
+      renderSceneControls();status('Sačekaj da se prethodno učitavanje ili obrada završi.',true);return;
+    }
+    if(!draft()||!draft().sceneSupport()||historyBlocked||prelightBlocked||
+       planPersistenceError||photoPersistenceError){
+      renderSceneControls();status('Promena scene je blokirana dok prethodni rad nije bezbedno sačuvan.',true);return;
+    }
+    if(name===undefined&&id===draft().activeSceneId())return;
+    sceneChanging=true;renderSceneControls();
+    try{
+      if(!draft().flush())throw new Error('Nacrt prethodne scene nije sačuvan.');
+      if(state.photo&&!await saveDraftPhoto())throw new Error('Fotografija prethodne scene nije sačuvana.');
+      close();
+      var switched=name===undefined?draft().selectScene(id):draft().createScene(name);
+      if(!switched){var error=draft().lastError();open();throw new Error(error||'Scena nije otvorena.');}
+      revisions=[];sceneId=null;historyBlocked=false;
+      prelightReviews=[];prelightLoaded=false;prelightBlocked=false;
+      state=emptyState();planPersistenceError='';photoPersistenceError='';
+      videoReceipt=null;videoReceiptBlocked=false;videoFrameSession++;plannedVideoFrameSession=null;selectedFrameCompare=0;
+      open();
+    }catch(error){status(error.message||'Promena scene nije uspela.',true);}
+    finally{sceneChanging=false;renderSceneControls();}
+  }
 
   function esc(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
@@ -92,6 +131,7 @@
   }
   function open(){
     if(el(MODULE))return;
+    sceneReady=false;
     var wrap=document.createElement('div');wrap.id=MODULE;
     wrap.innerHTML='<style>'+
       '#'+MODULE+'{position:fixed;inset:0;z-index:10030;background:#0c1016;overflow:auto;color:#f2f2f2;font-family:system-ui,sans-serif}'+
@@ -118,6 +158,11 @@
       '<h1 style="color:#f5c542;margin:5px 0 3px;font-size:25px">AI SCENE PLANNER</h1>'+
       '<div class="sp-note">Virtual Prelight / Previz — kreativno planiranje, bez upravljanja lampama</div></div>'+
       '<button type="button" id="sp-close" class="sp-btn" style="flex:none">ZATVORI ✕</button></header>'+
+      '<div class="sp-card"><h2 class="sp-h">FILMSKE SCENE</h2>'+
+      '<label for="sp-scene-select">NASTAVI RAD NA SCENI</label><select id="sp-scene-select" class="sp-field" disabled></select>'+
+      '<label for="sp-scene-name">NAZIV NOVE SCENE</label><input id="sp-scene-name" class="sp-field" maxlength="80" placeholder="Npr. 12 — kuhinja, noć">'+
+      '<button type="button" id="sp-scene-create" class="sp-btn" disabled>NOVA SCENA</button>'+
+      '<p class="sp-note">Svaka scena čuva svoj nacrt, fotografiju, plan, revizije i započeta merenja. Promena scene najpre čuva prethodni rad.</p></div>'+
       '<div class="sp-card"><h2 class="sp-h">1 / SNIMI ILI DODAJ PROSTOR I KRETANJE</h2>'+
       '<div class="sp-two"><div><label>FOTOGRAFIJA PROSTORA / KADRA</label>'+
       '<div class="sp-actions"><button type="button" class="sp-btn" id="sp-gallery-btn">DODAJ FOTOGRAFIJU</button>'+
@@ -213,6 +258,9 @@
       '<button type="button" class="sp-btn" id="sp-share">PODELI PLAN</button></div></div></div></div>';
     document.body.appendChild(wrap);
     el('sp-close').onclick=close;
+    renderSceneControls();
+    el('sp-scene-select').onchange=function(){changeScene(this.value);};
+    el('sp-scene-create').onclick=function(){changeScene(null,el('sp-scene-name').value);};
     el('sp-gallery-btn').onclick=function(){el('sp-gallery').click();};
     el('sp-camera-btn').onclick=function(){el('sp-camera').click();};
     el('sp-video-btn').onclick=function(){el('sp-video-input').click();};
@@ -256,14 +304,16 @@
       draftStatus(!draft().lastError(),draft().lastError());
     }
     loadCore(function(){
+      if(el(MODULE)!==wrap)return;
       if(!restorePlanHistory())return;
       if(draft())draft().restore(wrap,activeRevisionId());
       updateInventory();
       if(draft())draft().loadPhoto().then(function(photo){
-        if(!photo||!el(MODULE)||state.photo)return;
+        if(!photo||el(MODULE)!==wrap||state.photo)return;
         state.photo=photo;
         var image=el('sp-image');if(image){image.src=photo;image.hidden=false;}
-      });
+      }).finally(function(){if(el(MODULE)===wrap){sceneReady=true;renderSceneControls();}});
+      else {sceneReady=true;renderSceneControls();}
       status('Spremno. Sačuvan plan i nacrt su vraćeni gde je dostupno.');
     });
     restoreVideoReceipt();
@@ -301,6 +351,8 @@
   }
   async function photoPicked(file){
     if(state.busy||state.videoBusy){status('Sačekaj završetak prethodne obrade.',true);return;}
+    if(photoBusy){status('Sačekaj čuvanje fotografije.',true);return;}
+    photoBusy=true;
     status('Pripremam fotografiju…');
     try{
       state.photo=await optimizePhoto(file);state.aiPreview='';
@@ -315,6 +367,7 @@
       status(photoSaved?'Fotografija dodata i sačuvana na uređaju.':
         'Fotografija je učitana, ali nije trajno sačuvana. Sačuvaj original pre zatvaranja aplikacije.',!photoSaved);
     }catch(e){status(e.message||'Fotografija nije učitana.',true);}
+    finally{photoBusy=false;}
   }
   function videoElement(url) {
     var v=document.createElement('video');
@@ -1772,8 +1825,8 @@
         var reviewUpdates={};reviewUpdates[REVISION_STORE]=JSON.stringify(revisions);reviewUpdates[PRELIGHT_STORE]=JSON.stringify(next);
         var nativeSaved=draft()&&draft().nativeAvailable()&&draft().checkpointWorkspace(reviewUpdates);
         if(draft()&&draft().nativeAvailable()&&!nativeSaved)throw new Error('Android upis provere nije uspeo.');
-        try{localStorage.setItem(REVISION_STORE,reviewUpdates[REVISION_STORE]);
-          localStorage.setItem(PRELIGHT_STORE,reviewUpdates[PRELIGHT_STORE]);
+        try{sceneStorage().setItem(REVISION_STORE,reviewUpdates[REVISION_STORE]);
+          sceneStorage().setItem(PRELIGHT_STORE,reviewUpdates[PRELIGHT_STORE]);
         }catch(storageError){if(!nativeSaved)throw storageError;}
         prelightReviews=next;remember();renderResult();
         if(draft())draft().flush();
@@ -2066,12 +2119,12 @@
       throw new Error('AI video nema potvrđenu vezu sa revizijom plana.');
     var receipt={requestId:value.requestId,uploadId:value.uploadId||null,taskId:value.taskId||null,
       status:value.status||'SUBMITTING',binding:binding};
-    localStorage.setItem(VIDEO_RECEIPT,JSON.stringify(receipt));
+    sceneStorage().setItem(VIDEO_RECEIPT,JSON.stringify(receipt));
     videoReceipt=receipt;
   }
   function restoreVideoReceipt(){
     try{
-      var raw=localStorage.getItem(VIDEO_RECEIPT);
+      var raw=sceneStorage().getItem(VIDEO_RECEIPT);
       if(!raw)return;
       var value=JSON.parse(raw),id=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
       if(!value||!id.test(value.requestId)||!id.test(value.uploadId)||
@@ -2359,8 +2412,8 @@
     var updates={};updates[REVISION_STORE]=JSON.stringify(revisions);updates[STORE]=JSON.stringify(exportObject());
     var nativeSaved=draft()&&draft().nativeAvailable()&&draft().checkpointWorkspace(updates);
     try{
-      localStorage.setItem(REVISION_STORE,updates[REVISION_STORE]);
-      localStorage.setItem(STORE,updates[STORE]);
+      sceneStorage().setItem(REVISION_STORE,updates[REVISION_STORE]);
+      sceneStorage().setItem(STORE,updates[STORE]);
       planPersistenceError=draft()&&draft().nativeAvailable()&&!nativeSaved?'Android upis plana nije uspeo. Sačuvaj JSON izvoz.':'';
     }catch(e){planPersistenceError='Plan je u memoriji; lokalno čuvanje nije uspelo. Sačuvaj JSON izvoz.';
       if(nativeSaved)planPersistenceError='';

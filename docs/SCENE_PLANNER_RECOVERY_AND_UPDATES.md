@@ -137,3 +137,31 @@ Numeric examples in tests are arbitrary fixtures, not lighting or camera referen
 This is a persistence fix supporting practical on-set work, not a new lighting
 recommendation. K0/K1 and their Landau, Brown and Popović references are unchanged;
 no new book quotations, page claims or exposure rules are introduced.
+
+## Separate film scenes on the same device
+
+The existing Projects screen does not isolate the Scene Planner workspace.
+The planner previously had one shared draft/photo and no A-B-A scene picker.
+
+An Android-backed scene selector now keeps the existing workspace in its original
+files and keys as "Postojeća scena". Each added scene has separate AtomicFile
+workspace/photo records and namespaced WebView caches. An atomic scene index
+records the selected scene; no existing files are moved, imported or deleted.
+The original one-photo-per-scene workflow is retained; this does not add a gallery.
+
+Changing scenes first checkpoints the current draft and photo, blocks while media
+or plan work is pending, and refuses to change selection on a failed save.
+The destination is validated before committing the selection. In-memory plan,
+review and preview state is reset; delayed photo/core callbacks cannot populate
+another overlay. Accepted history and pending measurements stay scene-specific.
+New scene storage remains bounded per record; disk failures do not evict scenes.
+
+Four additional regression groups cover A-B-A, native-only reopening, photos,
+plan/review isolation, pending measurements, failed writes and corrupt records.
+The existing Android prepare/force-stop/restore test now exercises the actual
+scene picker, distinct fixture photos, two plans/reviews and pending distances,
+then verifies both scenes after process death. Fixture readings are not references.
+
+No lighting recommendations or K0/K1 references change. Existing JSON export still
+exports the current plan, not a complete multi-scene/photo disaster-recovery backup.
+Device-local scenes are not independent backups.

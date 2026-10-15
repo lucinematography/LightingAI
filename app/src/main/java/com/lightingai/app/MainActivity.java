@@ -1087,9 +1087,7 @@ public class MainActivity extends Activity {
         } catch (java.io.IOException error) { return ""; }
     }
 
-    public class AndroidBridge {
-        @JavascriptInterface public boolean saveScenePlannerWorkspace(String data) {
-            if (!recoveryOriginTrusted) return false;
+    private boolean validSceneWorkspace(String data) {
             try {
                 if (data == null || data.length() > 8 * 1024 * 1024) return false;
                 JSONObject snapshot = new JSONObject(data);
@@ -1104,23 +1102,89 @@ public class MainActivity extends Activity {
                         !key.equals("lighting_scene_planner_last_v1")) return false;
                     if (!(values.get(key) instanceof String)) return false;
                 }
-                return writeRecoveryFile("scene-planner-workspace-v1.json", data, 8 * 1024 * 1024);
+                return true;
             } catch (org.json.JSONException error) { return false; }
         }
-        @JavascriptInterface public String loadScenePlannerWorkspace() {
-            if (!recoveryOriginTrusted) return "";
-            return readRecoveryFile("scene-planner-workspace-v1.json", 8 * 1024 * 1024);
-        }
-        @JavascriptInterface public boolean saveScenePlannerPhoto(String data) {
-            if (!recoveryOriginTrusted) return false;
+    private boolean validScenePhoto(String data) {
             try {
                 if (data == null || data.length() > 12100000) return false;
                 JSONObject record = new JSONObject(data);
                 String value = record.getString("value");
                 if (record.length() != 3 || record.getInt("version") != 2 || record.getLong("sequence") < 0 || value.length() > 12000000 ||
                     !value.matches("^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=\\r\\n]+$")) return false;
-                return writeRecoveryFile("scene-planner-photo-v2.json", data, 12100000);
+                return true;
             } catch (org.json.JSONException error) { return false; }
+        }
+
+    private String sceneFile(String scene, String kind) {
+        if (scene == null || !scene.matches("^s-[a-z0-9]{8,64}$") ||
+            (!"workspace".equals(kind) && !"photo".equals(kind))) return null;
+        return "scene-planner-" + scene + "-" + kind + "-v1.json";
+    }
+    private String readSceneFile(String name, int maxBytes) {
+        String value = readRecoveryFile(name, maxBytes);
+        if (value.isEmpty() && (new java.io.File(getFilesDir(), name).exists() ||
+            new java.io.File(getFilesDir(), name + ".bak").exists())) return "!unreadable";
+        return value;
+    }
+    private boolean registeredScene(String id) {
+        try {
+            org.json.JSONArray scenes = new JSONObject(readRecoveryFile("scene-planner-scenes-v1.json", 65536)).getJSONArray("scenes");
+            for (int i = 0; i < scenes.length(); i++) if (id.equals(scenes.getJSONObject(i).getString("id"))) return true;
+        } catch (org.json.JSONException ignored) { }
+        return false;
+    }
+
+    public class AndroidBridge {
+        @JavascriptInterface public String loadScenePlannerSceneIndex() {
+            if (!recoveryOriginTrusted) return "";
+            return readSceneFile("scene-planner-scenes-v1.json", 65536);
+        }
+        @JavascriptInterface public boolean saveScenePlannerSceneIndex(String data) {
+            if (!recoveryOriginTrusted || data == null || data.length() > 65536) return false;
+            try {
+                JSONObject index = new JSONObject(data);
+                if (index.length() != 3 || index.getInt("version") != 1) return false;
+                org.json.JSONArray scenes = index.getJSONArray("scenes");
+                if (scenes.length() < 1 || scenes.length() > 100) return false;
+                java.util.HashSet<String> ids = new java.util.HashSet<>();
+                for (int i = 0; i < scenes.length(); i++) {
+                    JSONObject scene = scenes.getJSONObject(i);
+                    String id = scene.getString("id"), name = scene.getString("name");
+                    if (scene.length() != 2 || !("legacy".equals(id) || id.matches("^s-[a-z0-9]{8,64}$")) ||
+                        !ids.add(id) || name.trim().isEmpty() || name.length() > 80) return false;
+                }
+                if (!ids.contains("legacy") || !ids.contains(index.getString("activeId"))) return false;
+                String previous = readSceneFile("scene-planner-scenes-v1.json", 65536);
+                if (!previous.isEmpty()) {
+                    org.json.JSONArray old = new JSONObject(previous).getJSONArray("scenes");
+                    for (int i = 0; i < old.length(); i++) if (!ids.contains(old.getJSONObject(i).getString("id"))) return false;
+                }
+                return writeRecoveryFile("scene-planner-scenes-v1.json", data, 65536);
+            } catch (org.json.JSONException error) { return false; }
+        }
+        @JavascriptInterface public String loadScenePlannerSceneData(String scene, String kind) {
+            String name = sceneFile(scene, kind);
+            if (!recoveryOriginTrusted || name == null || !registeredScene(scene)) return "";
+            return readSceneFile(name, "photo".equals(kind) ? 12100000 : 8 * 1024 * 1024);
+        }
+        @JavascriptInterface public boolean saveScenePlannerSceneData(String scene, String kind, String data) {
+            String name = sceneFile(scene, kind);
+            if (!recoveryOriginTrusted || name == null || !registeredScene(scene) ||
+                !("photo".equals(kind) ? validScenePhoto(data) : validSceneWorkspace(data))) return false;
+            return writeRecoveryFile(name, data, "photo".equals(kind) ? 12100000 : 8 * 1024 * 1024);
+        }
+        @JavascriptInterface public boolean saveScenePlannerWorkspace(String data) {
+            return recoveryOriginTrusted && validSceneWorkspace(data) &&
+                writeRecoveryFile("scene-planner-workspace-v1.json", data, 8 * 1024 * 1024);
+        }
+        @JavascriptInterface public String loadScenePlannerWorkspace() {
+            if (!recoveryOriginTrusted) return "";
+            return readRecoveryFile("scene-planner-workspace-v1.json", 8 * 1024 * 1024);
+        }
+        @JavascriptInterface public boolean saveScenePlannerPhoto(String data) {
+            return recoveryOriginTrusted && validScenePhoto(data) &&
+                writeRecoveryFile("scene-planner-photo-v2.json", data, 12100000);
         }
         @JavascriptInterface public String loadScenePlannerPhoto() {
             if (!recoveryOriginTrusted) return "";

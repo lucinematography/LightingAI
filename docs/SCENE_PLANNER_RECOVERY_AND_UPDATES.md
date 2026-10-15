@@ -165,3 +165,66 @@ then verifies both scenes after process death. Fixture readings are not referenc
 No lighting recommendations or K0/K1 references change. Existing JSON export still
 exports the current plan, not a complete multi-scene/photo disaster-recovery backup.
 Device-local scenes are not independent backups.
+
+
+## Portable scene backup v1
+
+The separate **KOPIJA SCENE** card exports one UTF-8 JSON file, `LightingAI_SceneBackup_<timestamp>.json`.
+It contains the selected scene name, draft description and whitelisted settings, the saved optimized
+photo, pending plan edits and measurements, the complete saved revision chain and saved prelight reviews.
+The latest lighting plan is reconstructed from its verified revision. This reuses the existing scene
+registry and private per-scene files; it does not replace the older plan-only JSON export.
+
+The envelope has `format: "LightingAI.SceneBackup"`, `version: 1`, `payload` and
+`integrity: {algorithm: "SHA-256", digest: "..."}`. The digest covers the core's canonical JSON
+serialization of the entire payload, including the photo and explicit exclusions. Import rejects
+unknown versions/fields, malformed drafts/photos, invalid revision/review chains, checksum mismatch,
+oversized input and credential-shaped keys. Native Android computes SHA-256 without a JavaScript
+byte-array copy and validates image bounds before decoding any raster. Bounds: 24 MiB UTF-8 file,
+existing 8 MiB workspace, existing photo data-URI limit of 12,000,000 characters, 16 megapixels and
+8192 px on either side, and at most 100 scenes. A very long history may exceed the existing workspace
+limit even when its portable file is smaller; this is reported as an import failure.
+
+Preview is local and shows scene name, timestamp, photo, description, latest plan summary, history
+counts and pending inputs/settings. It writes no new scene. Only the separate checkbox and explicit
+confirmation button import it as a **new** scene with a fresh UUID and ` (uvoz)` name suffix.
+The active scene and every existing scene remain unchanged. Cancelling discards the staged payload.
+The image must finish loading before confirmation can import. SHA-256 detects corruption; it does
+not authenticate an author, validate a lighting recommendation or prove a physical measurement.
+
+Native import checks the current registry against the preview's expected registry, writes the new
+workspace and photo with AtomicFile/fsync, and publishes the expanded registry last, atomically.
+Failures clean up only this import's unregistered files. Process death before publication may leave
+unlisted orphan files, but never a selectable partial scene; death after publication retains both files.
+Existing registered scenes are never overwritten, removed or replaced. Freeing space permits retry.
+No auto-import runs during startup. Completed imports use normal native recovery on subsequent starts.
+
+Saved revision history and its accepted measurements remain immutable historical records.
+Import clears the current `sp-measured` and coordinate verification flags. Pending measurement
+confirmation checkboxes are not serialized at all. The imported-scene notice distinguishes old records
+from fresh on-set confirmation; numeric drafts do not become measured facts through import.
+This changes data portability only, and introduces no new cinematography claims or K0/K1 references.
+
+### Privacy and exact scope
+
+Android 10+ writes a new app-created file to local Downloads and reports success only after completion.
+Android 8–9 uses ACTION_CREATE_DOCUMENT with a local-only picker and a completion callback. JSON import
+uses a separate local-only ACTION_OPEN_DOCUMENT flow rather than the image/video gallery.
+The feature makes no network requests. Tokens, authentication controls, global app preferences,
+signing material and arbitrary WebView storage are not copied. Test photos, plans and credentials are
+synthetic; no user scene data is committed or uploaded to CI.
+
+The file is **not encrypted**: it contains private scene content. The UI tells the user to protect it.
+Only the application's one saved optimized scene photo is included, not its original full-resolution
+file or additional unsaved photos. Original video, sampled video frames, AI-generated media and the
+global equipment inventory are explicitly excluded in both the format and UI. Fixtures embedded in
+a saved plan remain in that plan. This is a backup of the persisted Scene Planner workspace, not a
+claim to archive all source media or the whole application. Transfer the file locally between phones;
+there is no automatic cloud upload or data migration.
+
+Recovery self-tests include synthetic export/import, checksum and semantic corruption, explicit
+confirmation/cancel, separate repeated imports, transfer to a fresh storage context, process replacement
+without WebView storage, physical-confirmation separation, and storage exhaustion at workspace/photo/
+registry transaction phases. Android emulator instrumentation additionally exports through the actual
+Downloads writer, previews through FileReader, imports via the real native transaction, and verifies
+the imported photo/history/pending inputs after the CI host force-stops and restarts Android's process.

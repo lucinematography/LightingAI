@@ -83,9 +83,172 @@
       if(root.Android.saveScenePlannerSceneIndex(JSON.stringify(next))!==true)
         return report(false,'Izbor scene nije sačuvan. Prethodna scena ostaje aktivna.');
     }catch(e){return report(false,'Izbor scene nije sačuvan.');}
-    detach();scenes=next;nativeWorkspace=null;checkpoint=Date.now();photoSequence=Date.now();
+    stagedBackup=null;detach();scenes=next;nativeWorkspace=null;checkpoint=Date.now();photoSequence=Date.now();
     lastError='';recoverNativeWorkspace();return !scenesBlocked;
   }
+  var stagedBackup=null;
+  var BACKUP_LIMIT=24*1024*1024;
+  var BACKUP_EXCLUDED=['originalVideo','sampledVideoFrames','aiGeneratedMedia',
+    'originalFullResolutionPhoto','globalEquipmentInventory','accessTokens'];
+  function backupCore(){
+    var c=root.LightingAIScenePlannerCore;
+    if(!c||typeof c.sha256!=='function')throw new Error('Model plana nije učitan.');
+    return c;
+  }
+  function backupHash(text){
+    if(root.Android&&typeof root.Android.sceneBackupSha256==='function'){
+      var result=root.Android.sceneBackupSha256(text);
+      if(typeof result!=='string'||!/^[a-f0-9]{64}$/.test(result))throw new Error('SHA-256 provera nije dostupna.');
+      return result;
+    }
+    return backupCore().sha256(text);
+  }
+  function utf8Size(value){
+    var size=0;
+    for(var i=0;i<value.length;i++){
+      var code=value.charCodeAt(i);
+      if(code>=0xd800&&code<=0xdbff&&i+1<value.length&&value.charCodeAt(i+1)>=0xdc00&&value.charCodeAt(i+1)<=0xdfff){size+=4;i++;}
+      else size+=code<128?1:code<2048?2:3;
+      if(size>BACKUP_LIMIT)return size;
+    }
+    return size;
+  }
+  function backupSafeKeys(value,depth){
+    if(depth>80)throw new Error('Kopija ima previše ugnježdenih podataka.');
+    if(!value||typeof value!=='object')return;
+    Object.keys(value).forEach(function(k){
+      if(/password|passphrase|secret|token|authorization|api[_-]?key|private[_-]?key|keystore/i.test(k)||
+         ['__proto__','constructor','prototype'].indexOf(k)>=0)throw new Error('Kopija sadrži nedozvoljeno polje.');
+      backupSafeKeys(value[k],depth+1);
+    });
+  }
+  function backupDraft(value){
+    if(!value||value.version!==1||!value.fields||typeof value.fields!=='object'||Array.isArray(value.fields))
+      throw new Error('Nacrt nije podržan.');
+    var result={version:1,open:false,fields:{},review:null,scrollTop:0};
+    FIELD_IDS.forEach(function(id){
+      var v=value.fields[id];
+      if(['sp-measured','sp-scene-coords-verified'].indexOf(id)>=0){
+        if(typeof v==='boolean')result.fields[id]=v;
+      }else if(typeof v==='string')result.fields[id]=v;
+    });
+    if(value.review&&typeof value.review.revisionId==='string'&&value.review.decisions){
+      var decisions={};
+      CHECK_IDS.forEach(function(id){
+        var v=value.review.decisions[id];
+        if(['','reviewed','needs_adjustment','not_applicable'].indexOf(v)>=0)decisions[id]=v;
+      });
+      result.review={revisionId:value.review.revisionId,decisions:decisions};
+    }
+    ['planFields','measurementFields'].forEach(function(kind){
+      var group=value[kind];
+      if(!group||typeof group.revisionId!=='string'||!group.fields||typeof group.fields!=='object'||Array.isArray(group.fields))return;
+      var fields={};
+      Object.keys(group.fields).forEach(function(id){
+        var allowed=kind==='measurementFields'?measurementFieldId(id):
+          /^sp-dop-(light-L\d+-(x|y|heightM|distanceM|intensityPct|kelvin)|camera-(fps|shutterAngle|aperture|iso|whiteBalanceK|ndStops)|local-reason)$/.test(id);
+        if(allowed&&typeof group.fields[id]==='string'&&group.fields[id].length<=1000)fields[id]=group.fields[id];
+      });
+      result[kind]={revisionId:group.revisionId,fields:fields};
+    });
+    if(value.importedFromBackup&&value.importedFromBackup.version===1){
+      result.importedFromBackup={version:1,savedAt:String(value.importedFromBackup.savedAt||''),
+        importedAt:String(value.importedFromBackup.importedAt||'')};
+    }
+    return result;
+  }
+  function validateBackupPayload(payload){
+    var c=backupCore();
+    if(!payload||typeof payload!=='object'||Array.isArray(payload)||
+       Object.keys(payload).sort().join(',')!=='draft,excluded,name,photo,prelightReviews,revisions,savedAt'||
+       typeof payload.name!=='string'||!payload.name.trim()||payload.name.length>80||
+       typeof payload.savedAt!=='string'||!Number.isFinite(Date.parse(payload.savedAt))||
+       !Array.isArray(payload.excluded)||c.canonicalJson(payload.excluded)!==c.canonicalJson(BACKUP_EXCLUDED))
+      throw new Error('Nepodržana struktura kopije.');
+    backupSafeKeys({draft:payload.draft,revisions:payload.revisions,prelightReviews:payload.prelightReviews},0);
+    var cleanDraft=backupDraft(payload.draft);
+    if(c.canonicalJson(cleanDraft)!==c.canonicalJson(payload.draft))throw new Error('Nacrt sadrži nepodržana polja.');
+    if(!Array.isArray(payload.revisions)||payload.revisions.length>2000||!Array.isArray(payload.prelightReviews)||
+       payload.prelightReviews.length>10000)throw new Error('Istorija nije podržana.');
+    var history=payload.revisions.length?c.restoreRevisions(payload.revisions):[];
+    c.restorePrelightReviews(payload.prelightReviews,history);
+    if(payload.photo!==null&&(typeof payload.photo!=='string'||payload.photo.length>12000000||
+       !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(payload.photo)||
+       (payload.photo.length-payload.photo.indexOf(',')-1)%4!==0))
+      throw new Error('Fotografija nije podržana.');
+    if(payload.photo&&root.Android&&typeof root.Android.validateScenePlannerBackupPhoto==='function'&&
+       root.Android.validateScenePlannerBackupPhoto(payload.photo)!==true)throw new Error('Fotografija nije čitljiva ili prelazi 16 megapiksela / 8192 px.');
+    return payload;
+  }
+  async function exportSceneBackup(){
+    if(scenesBlocked)throw new Error('Skladište scena nije dostupno.');
+    if(active&&!flush())throw new Error('Nacrt nije trajno sačuvan.');
+    var id=scenes.activeId,c=backupCore(),d=read();
+    if(!d)throw new Error('Nema čitljivog nacrta za izvoz.');
+    var rawRevisions=readWorkspaceValue(WORKSPACE_KEYS[1]),rawReviews=readWorkspaceValue(WORKSPACE_KEYS[2]);
+    var photo;
+    if(root.Android&&typeof root.Android.loadScenePlannerPhoto==='function'){
+      var raw=nativeRead('photo');
+      if(raw&&!photoRecord(JSON.parse(raw)))throw new Error('Sačuvana fotografija nije čitljiva.');
+    }
+    photo=await loadPhoto();
+    if(scenes.activeId!==id)throw new Error('Scena je promenjena tokom izvoza.');
+    var payload={name:scenes.scenes.find(function(s){return s.id===id;}).name,
+      savedAt:new Date().toISOString(),draft:backupDraft(d),revisions:rawRevisions?JSON.parse(rawRevisions):[],
+      prelightReviews:rawReviews?JSON.parse(rawReviews):[],photo:photo,excluded:BACKUP_EXCLUDED.slice()};
+    validateBackupPayload(payload);
+    var canonical=c.canonicalJson(payload);
+    if(utf8Size(canonical)>BACKUP_LIMIT-1024)throw new Error('Scena prelazi ograničenje kopije od 24 MiB.');
+    return JSON.stringify({format:'LightingAI.SceneBackup',version:1,payload:payload,
+      integrity:{algorithm:'SHA-256',digest:backupHash(canonical)}});
+  }
+  function previewSceneBackup(text){
+    stagedBackup=null;
+    if(typeof text!=='string'||text.length>BACKUP_LIMIT||utf8Size(text)>BACKUP_LIMIT)
+      throw new Error('Datoteka prelazi 24 MiB.');
+    var file=JSON.parse(text),c=backupCore();
+    if(!file||file.format!=='LightingAI.SceneBackup'||file.version!==1||
+       Object.keys(file).sort().join(',')!=='format,integrity,payload,version'||
+       !file.integrity||Object.keys(file.integrity).sort().join(',')!=='algorithm,digest'||file.integrity.algorithm!=='SHA-256'||!/^[a-f0-9]{64}$/.test(file.integrity.digest))
+      throw new Error('Format ili verzija kopije nisu podržani.');
+    if(backupHash(c.canonicalJson(file.payload))!==file.integrity.digest)throw new Error('Provera integriteta nije uspela.');
+    var p=validateBackupPayload(file.payload);
+    stagedBackup=p;
+    return {name:p.name,savedAt:p.savedAt,description:String(p.draft.fields['sp-description']||''),
+      settings:JSON.parse(JSON.stringify(p.draft.fields)),photo:p.photo,revisionCount:p.revisions.length,
+      reviewCount:p.prelightReviews.length,
+      pendingMeasurements:p.draft.measurementFields?JSON.parse(JSON.stringify(p.draft.measurementFields)):null,
+      pendingPlanFields:p.draft.planFields?JSON.parse(JSON.stringify(p.draft.planFields)):null,
+      planSummary:p.revisions.length?p.revisions[p.revisions.length-1].plan.summary:'',
+      excluded:p.excluded.slice(),digest:file.integrity.digest};
+  }
+  function cancelSceneBackup(){stagedBackup=null;}
+  function importSceneBackup(confirmed){
+    if(confirmed!==true||!stagedBackup)throw new Error('Najpre pregledaj kopiju i izričito potvrdi uvoz.');
+    if(scenesBlocked||!sceneSupport()||!root.Android||
+       typeof root.Android.importScenePlannerBackup!=='function')throw new Error('Android uvoz nije dostupan.');
+    var p=stagedBackup,c=backupCore(),d=backupDraft(p.draft);
+    // Historical records remain immutable; a new device/setup is never attested by import.
+    d.fields['sp-measured']=false;d.fields['sp-scene-coords-verified']=false;
+    d.importedFromBackup={version:1,savedAt:p.savedAt,importedAt:new Date().toISOString()};
+    var values={};d.checkpoint=Date.now();values[DRAFT_KEY]=JSON.stringify(d);
+    if(p.revisions.length){
+      values[WORKSPACE_KEYS[1]]=JSON.stringify(p.revisions);
+      values[WORKSPACE_KEYS[2]]=JSON.stringify(p.prelightReviews);
+      values[WORKSPACE_KEYS[3]]=JSON.stringify({format:'LightingAI.ScenePlanner.v1',
+        plan:p.revisions[p.revisions.length-1].plan,revisions:p.revisions,prelightReviewHistory:p.prelightReviews});
+    }
+    var workspace=JSON.stringify({version:1,checkpoint:d.checkpoint,values:values});
+    if(utf8Size(workspace)>8*1024*1024)throw new Error('Scena prelazi ograničenje Android radnog zapisa od 8 MiB.');
+    var photo=p.photo?JSON.stringify({version:2,sequence:Date.now(),value:p.photo}):'';
+    var name=p.name.slice(0,72)+' (uvoz)';
+    var id=root.Android.importScenePlannerBackup(name,workspace,photo,JSON.stringify(scenes));
+    if(typeof id!=='string'||!/^s-[a-z0-9]{8,64}$/.test(id))throw new Error('Uvoz nije sačuvan. Proveri slobodan prostor; postojeće scene nisu menjane.');
+    stagedBackup=null;loadScenes();
+    return {id:id,name:name};
+  }
+  function importedSceneInfo(){var d=read();return d&&d.importedFromBackup||null;}
+
   function createScene(name){return selectScene(null,name);}
   function nativeAvailable(){return !!(root.Android&&typeof root.Android.saveScenePlannerWorkspace==='function');}
   function readWorkspaceValue(key){
@@ -390,6 +553,8 @@
     shouldReopen:shouldReopen,setOpen:setOpen,capture:capture,restore:restore,
     attach:attach,detach:detach,flush:flush,savePhoto:savePhoto,loadPhoto:loadPhoto,
     readWorkspaceValue:readWorkspaceValue,checkpointWorkspace:checkpointWorkspace,nativeAvailable:nativeAvailable,
+    exportSceneBackup:exportSceneBackup,previewSceneBackup:previewSceneBackup,importSceneBackup:importSceneBackup,
+    cancelSceneBackup:cancelSceneBackup,importedSceneInfo:importedSceneInfo,backupMaxBytes:BACKUP_LIMIT,
     listScenes:listScenes,selectScene:selectScene,createScene:createScene,sceneStorage:storage,
     activeSceneId:function(){return scenes.activeId;},sceneSupport:sceneSupport,
     lastError:function(){return lastError;},version:'1.2-native-atomic-recovery'

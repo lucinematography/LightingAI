@@ -104,6 +104,9 @@ public class MainActivity extends Activity {
     private static final int BLE_PERMISSION = 507;
     private static final int AUDIO_PERMISSION = 508;
     private static final int SAVE_AI_SCENE_MP4 = 509;
+    private static final int SAVE_SCENE_BACKUP = 510;
+    private String pendingSceneBackupText = null;
+    private String pendingSceneBackupRequest = null;
     private static final long MAX_AI_MP4_BYTES = 140L * 1024L * 1024L;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
@@ -218,6 +221,20 @@ public class MainActivity extends Activity {
                         return true;
                     }
                     return pendingVideoCapture ? openVideoForWebView() : openCameraForWebView();
+                }
+                if (fileChooserParams != null && fileChooserParams.getAcceptTypes() != null) {
+                    for (String accept : fileChooserParams.getAcceptTypes()) {
+                        if (accept != null && (accept.contains("application/json") || accept.contains(".json"))) {
+                            try {
+                                Intent document = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                                document.addCategory(Intent.CATEGORY_OPENABLE); document.setType("application/json");
+                                document.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                                document.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                startActivityForResult(document, CHOOSE_IMAGE);
+                                return true;
+                            } catch (RuntimeException error) { finishFileChooser(null); return false; }
+                        }
+                    }
                 }
                 return openGalleryForWebView(fileChooserParams);
             }
@@ -689,6 +706,15 @@ public class MainActivity extends Activity {
         startActivityForResult(intent, CREATE_FILE);
     }
 
+    private void notifySceneBackupSaved(String request, boolean success) {
+        if (webView == null || !recoveryOriginTrusted) return;
+        webView.post(() -> {
+            if (recoveryOriginTrusted) webView.evaluateJavascript(
+                "window.LightingAIScenePlanner&&window.LightingAIScenePlanner.onBackupSaved(" +
+                JSONObject.quote(request) + "," + success + ");", null);
+        });
+    }
+
     private boolean saveTextDirectlyToDownloads(String filename, String text) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false;
         Uri uri = null;
@@ -1116,6 +1142,26 @@ public class MainActivity extends Activity {
             } catch (org.json.JSONException error) { return false; }
         }
 
+    private boolean readableBackupPhoto(String value) {
+            if (!recoveryOriginTrusted || value == null || value.length() > 12000000 ||
+                !value.matches("^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=\\r\\n]+$")) return false;
+            try {
+                byte[] bytes = android.util.Base64.decode(value.substring(value.indexOf(',') + 1), android.util.Base64.DEFAULT);
+                android.graphics.BitmapFactory.Options options = new android.graphics.BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+                return options.outWidth > 0 && options.outHeight > 0 && options.outWidth <= 8192 &&
+                    options.outHeight <= 8192 && 1L * options.outWidth * options.outHeight <= 16000000 &&
+                    ("image/png".equals(options.outMimeType) || "image/jpeg".equals(options.outMimeType) ||
+                     "image/webp".equals(options.outMimeType));
+            } catch (IllegalArgumentException error) { return false; }
+        }
+
+    private boolean validBackupPhotoRecord(String data) {
+        try { return readableBackupPhoto(new JSONObject(data).getString("value")); }
+        catch (org.json.JSONException error) { return false; }
+    }
+
     private String sceneFile(String scene, String kind) {
         if (scene == null || !scene.matches("^s-[a-z0-9]{8,64}$") ||
             (!"workspace".equals(kind) && !"photo".equals(kind))) return null;
@@ -1136,6 +1182,87 @@ public class MainActivity extends Activity {
     }
 
     public class AndroidBridge {
+        @JavascriptInterface public String sceneBackupSha256(String text) {
+            if (!recoveryOriginTrusted || text == null || text.length() > 24 * 1024 * 1024) return "";
+            try {
+                byte[] bytes = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                if (bytes.length > 24 * 1024 * 1024) return "";
+                byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(bytes);
+                StringBuilder hex = new StringBuilder(64);
+                for (byte value : digest) hex.append(String.format(java.util.Locale.ROOT, "%02x", value & 255));
+                return hex.toString();
+            } catch (java.security.NoSuchAlgorithmException error) { return ""; }
+        }
+        @JavascriptInterface public boolean validateScenePlannerBackupPhoto(String value) {
+            return readableBackupPhoto(value);
+        }
+
+        @JavascriptInterface public String importScenePlannerBackup(String name, String workspace, String photo, String expectedIndex) {
+            if (!recoveryOriginTrusted || name == null || name.trim().isEmpty() || name.length() > 80 ||
+                !validSceneWorkspace(workspace) || photo == null || (!photo.isEmpty() && (!validScenePhoto(photo) || !validBackupPhotoRecord(photo))) ||
+                expectedIndex == null || expectedIndex.length() > 65536) return "";
+            synchronized (MainActivity.this) {
+                String workspaceFile = null, photoFile = null;
+                boolean published = false;
+                try {
+                    String current = readSceneFile("scene-planner-scenes-v1.json", 65536);
+                    JSONObject index = new JSONObject(expectedIndex);
+                    org.json.JSONArray entries = index.getJSONArray("scenes");
+                    if (current.isEmpty()) {
+                        if (entries.length() != 1 || !"legacy".equals(entries.getJSONObject(0).getString("id")) ||
+                            !"legacy".equals(index.getString("activeId"))) return "";
+                    } else if (!current.equals(expectedIndex)) return "";
+                    if (entries.length() >= 100) return "";
+                    String id = "s-" + UUID.randomUUID().toString().replace("-", "");
+                    workspaceFile = sceneFile(id, "workspace"); photoFile = sceneFile(id, "photo");
+                    for (String file : new String[]{workspaceFile, photoFile}) {
+                        if (new java.io.File(getFilesDir(), file).exists() ||
+                            new java.io.File(getFilesDir(), file + ".bak").exists() ||
+                            new java.io.File(getFilesDir(), file + ".new").exists()) {
+                            workspaceFile = null; photoFile = null; return "";
+                        }
+                    }
+                    // Publish metadata only after BOTH new files have durable writes.
+                    if (!writeRecoveryFile(workspaceFile, workspace, 8 * 1024 * 1024) ||
+                        (!photo.isEmpty() && !writeRecoveryFile(photoFile, photo, 12100000))) return "";
+                    entries.put(new JSONObject().put("id", id).put("name", name));
+                    if (!saveScenePlannerSceneIndex(index.toString())) return "";
+                    published = true;
+                    return id;
+                } catch (org.json.JSONException | RuntimeException error) { return ""; }
+                finally {
+                    // Only unregistered files created by this failed import are removed.
+                    if (!published && workspaceFile != null) new AtomicFile(new java.io.File(getFilesDir(), workspaceFile)).delete();
+                    if (!published && photoFile != null) new AtomicFile(new java.io.File(getFilesDir(), photoFile)).delete();
+                }
+            }
+        }
+        @JavascriptInterface public boolean exportScenePlannerBackup(String request, String text) {
+            if (!recoveryOriginTrusted || request == null || !request.matches("^backup-[a-z0-9-]{1,80}$") ||
+                text == null || text.length() > 24 * 1024 * 1024 ||
+                text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 24 * 1024 * 1024) return false;
+            String filename = "LightingAI_SceneBackup_" + System.currentTimeMillis() + ".json";
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                new Thread(() -> notifySceneBackupSaved(request, saveTextDirectlyToDownloads(filename, text)),
+                    "LightingAI-SceneBackup").start();
+            } else {
+                runOnUiThread(() -> {
+                    if (pendingSceneBackupText != null) { notifySceneBackupSaved(request, false); return; }
+                    pendingSceneBackupText = text; pendingSceneBackupRequest = request;
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE); intent.setType("application/json");
+                        intent.putExtra(Intent.EXTRA_TITLE, filename); intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                        startActivityForResult(intent, SAVE_SCENE_BACKUP);
+                    } catch (RuntimeException error) {
+                        pendingSceneBackupText = null; pendingSceneBackupRequest = null;
+                        notifySceneBackupSaved(request, false);
+                    }
+                });
+            }
+            return true;
+        }
+
         @JavascriptInterface public String loadScenePlannerSceneIndex() {
             if (!recoveryOriginTrusted) return "";
             return readSceneFile("scene-planner-scenes-v1.json", 65536);
@@ -1545,6 +1672,25 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SAVE_SCENE_BACKUP) {
+            String text = pendingSceneBackupText, request = pendingSceneBackupRequest;
+            pendingSceneBackupText = null; pendingSceneBackupRequest = null;
+            Uri uri = resultCode == RESULT_OK && data != null ? data.getData() : null;
+            if (text == null || request == null || uri == null) {
+                if (request != null) notifySceneBackupSaved(request, false);
+            } else {
+                new Thread(() -> {
+                    boolean saved = false;
+                    try (OutputStream out = getContentResolver().openOutputStream(uri, "w")) {
+                        if (out != null) { out.write(text.getBytes(java.nio.charset.StandardCharsets.UTF_8)); out.flush(); saved = true; }
+                    } catch (Exception ignored) { saved = false; }
+                    if (!saved) { try { getContentResolver().delete(uri, null, null); } catch (Exception ignored) { } }
+                    notifySceneBackupSaved(request, saved);
+                }, "LightingAI-SceneBackupSave").start();
+            }
+            return;
+        }
 
         if (requestCode == SAVE_AI_SCENE_MP4) {
             String taskId = pendingAiMp4TaskId;

@@ -54,8 +54,25 @@ function context(store=new Map(),media=new Map(),options={}){
       if(options.nativeFailure)return false;
       options.nativeFiles.set('scene:'+id+':'+kind,value);return true;
     },
-    loadScenePlannerSceneData(id,kind){return options.nativeFiles.get('scene:'+id+':'+kind)||'';}
+    loadScenePlannerSceneData(id,kind){return options.nativeFiles.get('scene:'+id+':'+kind)||'';},
+    importScenePlannerBackup(name,workspace,photo,expected){
+      const files=options.nativeFiles,raw=files.get('scene-index')||'';
+      const index=JSON.parse(expected);
+      if((raw&&raw!==expected)||options.nativeFailure||index.scenes.length>=100)return '';
+      const id='s-import'+String(index.scenes.length).padStart(8,'0');
+      const keys=['scene:'+id+':workspace','scene:'+id+':photo'];
+      if(keys.some(k=>files.has(k)))return '';
+      try{
+        if(options.importFailure==='workspace')throw new Error('ENOSPC workspace');
+        files.set(keys[0],workspace);
+        if(options.importFailure==='photo')throw new Error('ENOSPC photo');
+        if(photo)files.set(keys[1],photo);
+        if(options.importFailure==='index')throw new Error('ENOSPC index');
+        index.scenes.push({id,name});files.set('scene-index',JSON.stringify(index));return id;
+      }catch(error){keys.forEach(k=>files.delete(k));return '';}
+    }
   });
+  root.LightingAIScenePlannerCore=core;
   const sandbox={window:root};vm.createContext(sandbox);vm.runInContext(source,sandbox);
   return {api:root.LightingAIScenePlannerDraft,root,document,overlay,nodes,field,store,media,
     notifications,attach:rev=>root.LightingAIScenePlannerDraft.attach(overlay,()=>rev,(ok,message)=>notifications.push({ok,message})),
@@ -403,6 +420,134 @@ await test('scene picker rejects unknown scenes and invalid names; legacy record
   assert.equal(c.api.listScenes().length,1);
   assert.ok(nativeFiles.get('workspace').includes('Scene A'));
   assert.ok(original.includes('Scene A'));c.api.detach();
+});
+
+
+const backupPhoto='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aRXsAAAAASUVORK5CYII=';
+function backupFixture(){
+  const nativeFiles=new Map(),options={nativeFiles,scenes:true,noDb:true};
+  const c=measurementContext(new Map(),options),records=seedFilmScene(c,'Scene A',800);
+  c.nodes.get('sp-measured').checked=true;
+  c.nodes.get('sp-distance-L1').value='3.25';
+  c.nodes.get('sp-distance-verified-L1').checked=true;
+  c.overlay.emit('input',c.nodes.get('sp-distance-L1'));
+  return {c,options,nativeFiles,...records};
+}
+function rehashBackup(value){
+  value.integrity.digest=core.sha256(core.canonicalJson(value.payload));return JSON.stringify(value);
+}
+await test('portable scene round trip includes photo, settings, revisions, reviews and pending measurements without credentials',async()=>{
+  const f=backupFixture();assert.equal(await f.c.api.savePhoto(backupPhoto),true);
+  const text=await f.c.api.exportSceneBackup(),archive=JSON.parse(text);
+  assert.equal(archive.format,'LightingAI.SceneBackup');assert.equal(archive.version,1);
+  assert.equal(archive.payload.photo,backupPhoto);
+  assert.equal(archive.integrity.digest,core.sha256(core.canonicalJson(archive.payload)));
+  assert.equal(text.includes('private-token'),false);
+  assert.equal(text.includes('sp-distance-verified-L1'),false);
+  const before=JSON.stringify([...f.nativeFiles]),preview=f.c.api.previewSceneBackup(text);
+  assert.equal(preview.revisionCount,1);assert.equal(preview.reviewCount,1);
+  assert.equal(preview.pendingMeasurements.fields['sp-distance-L1'],'3.25');
+  assert.equal(JSON.stringify([...f.nativeFiles]),before,'preview must not write');
+  assert.throws(()=>f.c.api.importSceneBackup(false),/potvrdi/);
+  preview.settings['sp-description']='Preview object is not the staged payload';
+  const imported=f.c.api.importSceneBackup(true);
+  assert.equal(f.c.api.activeSceneId(),'legacy');assert.equal(f.c.api.listScenes().length,2);
+  assert.equal(f.nativeFiles.get('workspace'),JSON.parse(before).find(([k])=>k==='workspace')[1]);
+  assert.equal(f.c.api.selectScene(imported.id),true);
+  const restarted=measurementContext(new Map(),{...f.options,noStorage:true,noDb:true});
+  restarted.api.restore(restarted.overlay,f.revision.revisionId);
+  assert.equal(restarted.nodes.get('sp-description').value,'Scene A');
+  assert.equal(restarted.nodes.get('sp-iso').value,'800');
+  assert.equal(restarted.nodes.get('sp-distance-L1').value,'3.25');
+  assert.equal(restarted.nodes.get('sp-measured').checked,false);
+  assert.equal(restarted.nodes.get('sp-distance-verified-L1').checked,false);
+  assert.equal(await restarted.api.loadPhoto(),backupPhoto);
+  assert.equal(restarted.api.importedSceneInfo().version,1);
+  assert.equal(restarted.api.readWorkspaceValue('lighting_scene_planner_revisions_v1'),JSON.stringify([f.revision]));
+  assert.equal(restarted.api.readWorkspaceValue('lighting_scene_planner_prelight_reviews_v1'),JSON.stringify([f.review]));
+  // Transfer to an unrelated device with no WebView or native scene files.
+  const other=measurementContext(new Map(),{nativeFiles:new Map(),scenes:true,noStorage:true,noDb:true});
+  other.api.previewSceneBackup(text);const transferred=other.api.importSceneBackup(true);
+  assert.equal(other.api.selectScene(transferred.id),true);
+  assert.equal(await other.api.loadPhoto(),backupPhoto);
+  f.c.api.detach();
+});
+await test('repeated import adds distinct scenes and cancelled preview cannot import',async()=>{
+  const f=backupFixture();const text=await f.c.api.exportSceneBackup();
+  f.c.api.previewSceneBackup(text);f.c.api.cancelSceneBackup();
+  assert.throws(()=>f.c.api.importSceneBackup(true),/potvrdi/);
+  f.c.api.previewSceneBackup(text);const first=f.c.api.importSceneBackup(true);
+  const saved=f.nativeFiles.get('scene:'+first.id+':workspace');
+  f.c.api.previewSceneBackup(text);const second=f.c.api.importSceneBackup(true);
+  assert.ok(first.id!==second.id);assert.equal(f.c.api.listScenes().length,3);
+  assert.equal(f.nativeFiles.get('scene:'+first.id+':workspace'),saved);
+  assert.equal(f.c.api.activeSceneId(),'legacy');f.c.api.detach();
+});
+await test('corrupt, unsupported, forged, oversized and secret-bearing backups fail without writes',async()=>{
+  const f=backupFixture();const text=await f.c.api.exportSceneBackup();
+  const before=JSON.stringify([...f.nativeFiles]);
+  const changes=[
+    a=>{a.version=2;},a=>{a.integrity.algorithm='MD5';},
+    a=>{a.integrity.extra='unsupported';},a=>{a.payload.name='Changed without checksum';}
+  ];
+  for(const mutate of changes){const a=JSON.parse(text);mutate(a);assert.throws(()=>f.c.api.previewSceneBackup(JSON.stringify(a)));}
+  for(const mutate of [
+    a=>{a.payload.photo='data:image/png;base64,broken';},
+    a=>{a.payload.draft.fields['sp-video-auth']='synthetic-secret';},
+    a=>{a.payload.draft.fields['sp-description']={wrong:'type'};},
+    a=>{a.payload.revisions[0].plan.summary='tampered plan';},
+    a=>{a.payload.draft.measurementFields.fields['sp-distance-verified-L1']='true';},
+    a=>{a.payload.excluded=[];}
+  ]){const a=JSON.parse(text);mutate(a);assert.throws(()=>f.c.api.previewSceneBackup(rehashBackup(a)));}
+  assert.throws(()=>f.c.api.previewSceneBackup('{broken'));
+  assert.throws(()=>f.c.api.previewSceneBackup(' '.repeat(f.c.api.backupMaxBytes+1)),/24 MiB/);
+  assert.equal(JSON.stringify([...f.nativeFiles]),before);
+  assert.throws(()=>f.c.api.importSceneBackup(true),/potvrdi/);f.c.api.detach();
+});
+await test('storage exhaustion at each native transaction phase leaves all existing scenes intact',async()=>{
+  for(const phase of ['workspace','photo','index']){
+    const f=backupFixture();await f.c.api.savePhoto(backupPhoto);
+    const text=await f.c.api.exportSceneBackup();f.c.api.previewSceneBackup(text);
+    const before=JSON.stringify([...f.nativeFiles]);f.options.importFailure=phase;
+    assert.throws(()=>f.c.api.importSceneBackup(true),/nije sačuvan/);
+    assert.equal(JSON.stringify([...f.nativeFiles]),before,phase);
+    assert.equal(f.c.api.listScenes().length,1);
+    const recovered=measurementContext(new Map(),{...f.options,noStorage:true});
+    recovered.api.restore(recovered.overlay,f.revision.revisionId);
+    assert.equal(recovered.nodes.get('sp-description').value,'Scene A');
+    assert.equal(await recovered.api.loadPhoto(),backupPhoto);
+    f.options.importFailure=null;
+    assert.ok(f.c.api.importSceneBackup(true).id,'retry after freeing storage');f.c.api.detach();
+  }
+});
+await test('stale index, invalid native photo and failed checkpoint cannot produce a misleading success',async()=>{
+  const f=backupFixture(),text=await f.c.api.exportSceneBackup();
+  f.c.api.previewSceneBackup(text);
+  f.nativeFiles.set('scene-index',JSON.stringify({version:1,activeId:'legacy',scenes:[
+    {id:'legacy',name:'Postojeća scena'},{id:'s-external00001',name:'External scene'}]}));
+  const before=JSON.stringify([...f.nativeFiles]);
+  assert.throws(()=>f.c.api.importSceneBackup(true),/nije sačuvan/);
+  assert.equal(JSON.stringify([...f.nativeFiles]),before);
+  f.options.nativeFailure=true;
+  await assert.rejects(()=>f.c.api.exportSceneBackup(),/sačuvan/);
+  f.options.nativeFailure=false;f.c.api.detach();
+  const g=backupFixture();g.nativeFiles.set('photo','broken-json');
+  await assert.rejects(()=>g.c.api.exportSceneBackup());g.c.api.detach();
+});
+await test('blank scene without plan or photo is portable and native image rejection blocks import',async()=>{
+  const options={nativeFiles:new Map(),scenes:true,noDb:true};
+  const c=measurementContext(new Map(),options);c.attach(null);
+  c.nodes.get('sp-description').value='Unplanned scene';c.api.flush();
+  const text=await c.api.exportSceneBackup();assert.equal(JSON.parse(text).payload.photo,null);
+  const p=c.api.previewSceneBackup(text);assert.equal(p.revisionCount,0);
+  const added=c.api.importSceneBackup(true);assert.equal(c.api.selectScene(added.id),true);
+  const restarted=measurementContext(new Map(),{...options,noStorage:true});
+  restarted.api.restore(restarted.overlay,null);
+  assert.equal(restarted.nodes.get('sp-description').value,'Unplanned scene');
+  const f=backupFixture();await f.c.api.savePhoto(backupPhoto);const withPhoto=await f.c.api.exportSceneBackup();
+  c.root.Android.validateScenePlannerBackupPhoto=()=>false;
+  assert.throws(()=>c.api.previewSceneBackup(withPhoto),/Fotografija/);
+  c.api.detach();f.c.api.detach();
 });
 
 console.log(`${passed} recovery regression groups passed; no provider or video processing calls.`);

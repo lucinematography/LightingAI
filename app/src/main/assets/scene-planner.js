@@ -15,6 +15,7 @@
   var videoReceipt=null,videoReceiptBlocked=false;
   function emptyState(){return {photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null,videoDurationSec:null,aiVideoPending:null,aiVideoCompletedPlan:null};}
   var state=emptyState(),sceneChanging=false,sceneReady=false,photoBusy=false;
+  var backupBusy=false,backupPreviewReady=false,backupRequest=null;
   function el(id){return document.getElementById(id);}
   function draft(){return window.LightingAIScenePlannerDraft;}
   function activeRevisionId(){return revisions.length?revisions[revisions.length-1].revisionId:null;}
@@ -36,11 +37,12 @@
       return '<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>';
     }).join('');
     if(draft()&&draft().activeSceneId)picker.value=draft().activeSceneId();
-    picker.disabled=create.disabled=!supported||!sceneReady||sceneChanging;
+    picker.disabled=create.disabled=!supported||!sceneReady||sceneChanging||backupBusy;
+    ['sp-backup-export','sp-backup-import'].forEach(function(id){if(el(id))el(id).disabled=!supported||!sceneReady||sceneChanging||backupBusy;});
   }
   async function changeScene(id,name){
     if(sceneChanging)return;
-    if(!sceneReady||photoBusy||state.busy||state.videoBusy||
+    if(!sceneReady||photoBusy||backupBusy||state.busy||state.videoBusy||
        state.aiVideoPending&&state.aiVideoPending.started){
       renderSceneControls();status('Sačekaj da se prethodno učitavanje ili obrada završi.',true);return;
     }
@@ -63,6 +65,93 @@
       open();
     }catch(error){status(error.message||'Promena scene nije uspela.',true);}
     finally{sceneChanging=false;renderSceneControls();}
+  }
+
+  function backupMessage(message,error){
+    var box=el('sp-backup-status');if(!box)return;
+    box.textContent=message;box.style.color=error?'#ffd1c7':'#c2e8cc';
+  }
+  function canUseBackup(){
+    if(!sceneReady||photoBusy||backupBusy||sceneChanging||state.busy||state.videoBusy||
+       state.aiVideoPending&&state.aiVideoPending.started||historyBlocked||prelightBlocked||planPersistenceError||photoPersistenceError){
+      backupMessage('Sačekaj završetak obrade i uspešno čuvanje tekuće scene.',true);return false;
+    }
+    return true;
+  }
+  async function exportSceneFile(){
+    if(!canUseBackup())return;
+    backupBusy=true;renderSceneControls();
+    try{
+      if(state.photo&&!await saveDraftPhoto())throw new Error('Fotografija nije sačuvana.');
+      var data=await draft().exportSceneBackup();
+      if(!window.Android||typeof window.Android.exportScenePlannerBackup!=='function')
+        throw new Error('Izvoz zahteva aktuelnu Android verziju aplikacije.');
+      backupRequest='backup-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+      backupMessage('Čuvam privatnu kopiju lokalno na telefonu…');
+      if(window.Android.exportScenePlannerBackup(backupRequest,data)!==true)throw new Error('Čuvanje datoteke nije pokrenuto.');
+    }catch(error){backupRequest=null;backupBusy=false;renderSceneControls();backupMessage(error.message||'Izvoz nije uspeo.',true);}
+  }
+  function onBackupSaved(request,saved){
+    if(request!==backupRequest)return;
+    backupRequest=null;backupBusy=false;renderSceneControls();
+    backupMessage(saved?'Kopija scene je sačuvana lokalno kao LightingAI_SceneBackup_….json.':
+      'Kopija nije sačuvana ili je čuvanje otkazano. Proveri slobodan prostor i pokušaj ponovo.',!saved);
+  }
+  function cancelBackupPreview(){
+    if(draft()&&draft().cancelSceneBackup)draft().cancelSceneBackup();
+    backupPreviewReady=false;
+    if(el('sp-backup-preview'))el('sp-backup-preview').innerHTML='';
+  }
+  async function previewSceneFile(file){
+    if(!canUseBackup())return;
+    cancelBackupPreview();backupBusy=true;renderSceneControls();
+    try{
+      if(file.size>draft().backupMaxBytes)throw new Error('Datoteka prelazi 24 MiB.');
+      var text=await new Promise(function(resolve,reject){
+        var reader=new FileReader();
+        reader.onload=function(){resolve(String(reader.result));};
+        reader.onerror=function(){reject(new Error('Datoteka nije čitljiva.'));};
+        reader.readAsText(file.slice(0,draft().backupMaxBytes+1),'UTF-8');
+      });
+      var preview=draft().previewSceneBackup(text);
+      var box=el('sp-backup-preview');if(!box){draft().cancelSceneBackup();return;}
+      box.innerHTML='<div class="sp-lamp"><b>'+esc(preview.name)+'</b>'+
+        '<p>Kopija: '+esc(preview.savedAt)+'<br>Revizije: '+preview.revisionCount+' • stručne provere: '+preview.reviewCount+
+        ' • fotografija: '+(preview.photo?'DA':'NE')+'</p>'+
+        '<p>'+esc(preview.description)+'</p><p>Plan: '+esc(preview.planSummary||'Plan još nije napravljen')+'</p>'+
+        (preview.photo?'<img id="sp-backup-photo" class="sp-media" alt="Fotografija iz kopije">':'')+
+        '<details><summary>Podešavanja i započeti unosi</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+
+        esc(JSON.stringify({settings:preview.settings,pendingMeasurements:preview.pendingMeasurements,pendingPlanFields:preview.pendingPlanFields},null,2))+'</pre></details>'+
+        '<p class="sp-note">SHA-256 integritet je proveren; to ne potvrđuje autora, stručnu tačnost ni fizička merenja. '+
+        'Originalni video, video kadrovi, AI mediji, originalna fotografija pune rezolucije i globalni inventar nisu uključeni.</p>'+
+        '<label><input type="checkbox" id="sp-backup-confirm"> Pregledao sam sadržaj. Dodaj kao NOVU scenu, bez prepisivanja postojećih. Istorijska merenja ne potvrđuju novu fizičku postavku.</label>'+
+        '<div class="sp-actions"><button type="button" class="sp-btn" id="sp-backup-apply" disabled>POTVRDI UVOZ NOVE SCENE</button>'+
+        '<button type="button" class="sp-btn" id="sp-backup-cancel">OTKAŽI</button></div></div>';
+      var image=el('sp-backup-photo');
+      backupPreviewReady=!preview.photo;
+      if(image){
+        image.onload=function(){backupPreviewReady=true;};
+        image.onerror=function(){cancelBackupPreview();backupMessage('Fotografija nije čitljiva; uvoz je otkazan.',true);};
+        image.src=preview.photo;
+      }
+      el('sp-backup-confirm').onchange=function(){el('sp-backup-apply').disabled=!this.checked;};
+      el('sp-backup-cancel').onclick=function(){cancelBackupPreview();backupMessage('Uvoz je otkazan; scene nisu menjane.');};
+      el('sp-backup-apply').onclick=function(){
+        if(!backupPreviewReady||!el('sp-backup-confirm').checked){
+          backupMessage('Sačekaj pregled fotografije i potvrdi uvoz.',true);return;
+        }
+        if(!canUseBackup())return;
+        backupBusy=true;renderSceneControls();
+        try{
+          if(!draft().flush())throw new Error('Tekuća scena nije sačuvana.');
+          var result=draft().importSceneBackup(true);
+          cancelBackupPreview();backupMessage('Dodata je nova scena: '+result.name+'. Nastavi je kroz izbor scena.');
+        }catch(error){backupMessage(error.message||'Uvoz nije sačuvan.',true);}
+        finally{backupBusy=false;renderSceneControls();}
+      };
+      backupMessage('Pregledaj sadržaj. Uvoz još nije izvršen.');
+    }catch(error){cancelBackupPreview();backupMessage(error.message||'Kopija nije čitljiva.',true);}
+    finally{backupBusy=false;renderSceneControls();}
   }
 
   function esc(value){
@@ -163,6 +252,14 @@
       '<label for="sp-scene-name">NAZIV NOVE SCENE</label><input id="sp-scene-name" class="sp-field" maxlength="80" placeholder="Npr. 12 — kuhinja, noć">'+
       '<button type="button" id="sp-scene-create" class="sp-btn" disabled>NOVA SCENA</button>'+
       '<p class="sp-note">Svaka scena čuva svoj nacrt, fotografiju, plan, revizije i započeta merenja. Promena scene najpre čuva prethodni rad.</p></div>'+
+      '<div class="sp-card"><h2 class="sp-h">KOPIJA CELE SCENE</h2>'+
+      '<div class="sp-actions"><button type="button" id="sp-backup-export" class="sp-btn">IZVEZI KOPIJU SCENE</button>'+
+      '<button type="button" id="sp-backup-import" class="sp-btn">UVEZI KOPIJU — PREGLED</button></div>'+
+      '<input id="sp-backup-file" type="file" accept=".json,application/json" hidden>'+
+      '<p class="sp-note">Kopija sadrži lokalno sačuvanu fotografiju, opis, podešavanja, nacrt i istoriju. Nije šifrovana. Čuvaj je kao privatnu datoteku. '+
+      'Ne sadrži originalni video, izdvojene video kadrove, AI medije, originalnu fotografiju pune rezolucije ni globalni inventar opreme.</p>'+
+      '<div id="sp-backup-status" class="sp-note" role="status"></div><div id="sp-backup-preview"></div>'+
+      '<div id="sp-imported-note" class="sp-note"></div></div>'+
       '<div class="sp-card"><h2 class="sp-h">1 / SNIMI ILI DODAJ PROSTOR I KRETANJE</h2>'+
       '<div class="sp-two"><div><label>FOTOGRAFIJA PROSTORA / KADRA</label>'+
       '<div class="sp-actions"><button type="button" class="sp-btn" id="sp-gallery-btn">DODAJ FOTOGRAFIJU</button>'+
@@ -261,6 +358,16 @@
     renderSceneControls();
     el('sp-scene-select').onchange=function(){changeScene(this.value);};
     el('sp-scene-create').onclick=function(){changeScene(null,el('sp-scene-name').value);};
+    el('sp-backup-export').onclick=exportSceneFile;
+    el('sp-backup-import').onclick=function(){
+      if(!canUseBackup())return;
+      if(!draft().flush()){backupMessage('Nacrt nije sačuvan; uvoz nije otvoren.',true);return;}
+      el('sp-backup-file').click();
+    };
+    el('sp-backup-file').onchange=function(e){
+      var file=e.target.files&&e.target.files[0];e.target.value='';
+      if(file)previewSceneFile(file);
+    };
     el('sp-gallery-btn').onclick=function(){el('sp-gallery').click();};
     el('sp-camera-btn').onclick=function(){el('sp-camera').click();};
     el('sp-video-btn').onclick=function(){el('sp-video-input').click();};
@@ -307,6 +414,8 @@
       if(el(MODULE)!==wrap)return;
       if(!restorePlanHistory())return;
       if(draft())draft().restore(wrap,activeRevisionId());
+      if(draft()&&draft().importedSceneInfo&&draft().importedSceneInfo())
+        el('sp-imported-note').textContent='Scena je uvezena iz kopije. Preneta merenja i stručne provere su istorijski zapisi, ne potvrda nove postavke ili novog telefona. Nove potvrde unosiš lično.';
       updateInventory();
       if(draft())draft().loadPhoto().then(function(photo){
         if(!photo||el(MODULE)!==wrap||state.photo)return;
@@ -350,7 +459,7 @@
     });
   }
   async function photoPicked(file){
-    if(state.busy||state.videoBusy){status('Sačekaj završetak prethodne obrade.',true);return;}
+    if(backupBusy||state.busy||state.videoBusy){status('Sačekaj završetak prethodne obrade.',true);return;}
     if(photoBusy){status('Sačekaj čuvanje fotografije.',true);return;}
     photoBusy=true;
     status('Pripremam fotografiju…');
@@ -2447,6 +2556,7 @@
     }
   }
   function close(){
+    cancelBackupPreview();backupRequest=null;backupBusy=false;
     if(draft()){draft().flush();draft().setOpen(false);draft().detach();}
     releaseCaptures(false);
     state.videoFile=null;state.videoDurationSec=null;
@@ -2464,5 +2574,5 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});
   else load();
   window.LightingAIScenePlanner={open:open,close:close,closeIfOpen:closeIfOpen,
-    onNativeVideoSaved:onNativeVideoSaved,version:'0.3-native-mp4-saf-save'};
+    onBackupSaved:onBackupSaved,onNativeVideoSaved:onNativeVideoSaved,version:'0.3-native-mp4-saf-save'};
 })();

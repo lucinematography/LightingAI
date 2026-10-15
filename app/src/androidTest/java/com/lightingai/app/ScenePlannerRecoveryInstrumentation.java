@@ -92,6 +92,7 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
         waitFor("document.getElementById('sp-prelight-fill') && " +
             "document.getElementById('sp-prelight-fill').value==='needs_adjustment'");
         prepareSecondScene();
+        prepareBackupImport();
         evaluate("document.getElementById('sp-description').value='Recovery fixture after background';");
         runOnMainSync(() -> activity.moveTaskToBack(true));
         // onStop/visibility checkpoint must save the latest DOM before the CI host kills the process.
@@ -120,8 +121,62 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
             "'lighting_scene_planner_prelight_reviews_v1'));return h.length===1 && " +
             "h[0].plan.cameraSettings.iso===800 && r.length===1 && r[0].decisions.fill==='not_applicable';})()");
         assertPhoto("red");
+        selectSceneByName("Postojeća scena (uvoz)", "Recovery fixture before background");
+        assertRecovered();
+        waitFor("!document.getElementById('sp-measured').checked && " +
+            "document.getElementById('sp-imported-note').textContent.length>0");
         selectLegacyScene();
         assertRecovered();
+    }
+
+    private void prepareBackupImport() throws Exception {
+        // Exercise the real Downloads writer, FileReader preview and native transaction, synthetic data only.
+        waitFor("document.getElementById('sp-backup-export') && !document.getElementById('sp-backup-export').disabled");
+        evaluate("document.getElementById('sp-video-auth').value='synthetic-not-for-backup';" +
+            "document.getElementById('sp-measured').checked=true;" +
+            "document.getElementById('sp-backup-export').click();");
+        waitFor("document.getElementById('sp-backup-status').textContent.indexOf('sačuvana lokalno')>=0");
+        String backup = null;
+        try (android.database.Cursor cursor = getTargetContext().getContentResolver().query(
+                android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                new String[]{android.provider.MediaStore.MediaColumns._ID},
+                android.provider.MediaStore.MediaColumns.DISPLAY_NAME + " LIKE ?",
+                new String[]{"LightingAI_SceneBackup_%.json"},
+                android.provider.MediaStore.MediaColumns.DATE_ADDED + " DESC")) {
+            if (cursor != null && cursor.moveToFirst()) {
+                android.net.Uri uri = android.content.ContentUris.withAppendedId(
+                    android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, cursor.getLong(0));
+                try (java.io.InputStream in = getTargetContext().getContentResolver().openInputStream(uri);
+                     java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                    if (in == null) throw new IllegalStateException("Missing synthetic backup stream");
+                    byte[] buffer = new byte[4096]; int count;
+                    while ((count = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, count);
+                        if (out.size() > 1024 * 1024) throw new IllegalStateException("Unexpected synthetic fixture size");
+                    }
+                    backup = out.toString("UTF-8");
+                }
+            }
+        }
+        if (backup == null || backup.contains("synthetic-not-for-backup"))
+            throw new IllegalStateException("Backup absent or credential field included");
+        evaluate("(function(){var file=new File([" + org.json.JSONObject.quote(backup) +
+            "],'synthetic-scene.json',{type:'application/json'});" +
+            "document.getElementById('sp-backup-file').onchange({target:{files:[file],value:''}});})()");
+        waitFor("document.getElementById('sp-backup-confirm') && document.getElementById('sp-backup-photo') && " +
+            "document.getElementById('sp-backup-photo').complete && document.getElementById('sp-backup-photo').naturalWidth>0 && " +
+            "!document.getElementById('sp-scene-select').disabled");
+        waitFor("LightingAIScenePlannerDraft.listScenes().length===2 && " +
+            "document.getElementById('sp-backup-apply').disabled");
+        evaluate("document.getElementById('sp-backup-confirm').checked=true;" +
+            "document.getElementById('sp-backup-confirm').dispatchEvent(new Event('change'));" +
+            "document.getElementById('sp-backup-apply').click();");
+        waitFor("LightingAIScenePlannerDraft.listScenes().length===3 && " +
+            "LightingAIScenePlannerDraft.activeSceneId()==='legacy'");
+        // A malformed native transaction must not change any registered scene.
+        waitFor("(function(){var index=Android.loadScenePlannerSceneIndex(),old=Android.loadScenePlannerWorkspace();" +
+            "return Android.importScenePlannerBackup('Invalid','broken-json','',index)==='' && " +
+            "Android.loadScenePlannerSceneIndex()===index && Android.loadScenePlannerWorkspace()===old;})()");
     }
 
     private void assertRecovered() throws Exception {

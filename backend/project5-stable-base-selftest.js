@@ -206,6 +206,9 @@ const exactAllowed = new Set([
   'docs/SCENE_PLANNER_PHASE3A.md',
   // Step 114: reviewed prelight checklist report; exact path, no broader docs exemption.
   'docs/STEP114_PRELIGHT_REVIEW.md',
+  // Portable encrypted backups: exact reviewed offline crypto implementation and JUnit tests.
+  'app/src/main/java/com/lightingai/app/SceneBackupCrypto.java',
+  'app/src/test/java/com/lightingai/app/SceneBackupCryptoTest.java',
   // Exact recovery regression, native CI instrumentation and update-safety report.
   'backend/scene-planner-recovery-selftest.js',
   'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',

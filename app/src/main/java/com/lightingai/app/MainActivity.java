@@ -107,6 +107,8 @@ public class MainActivity extends Activity {
     private static final int SAVE_SCENE_BACKUP = 510;
     private String pendingSceneBackupText = null;
     private String pendingSceneBackupRequest = null;
+    private volatile BackupPasswordJob backupPasswordJob;
+    private android.app.AlertDialog backupPasswordDialog;
     private static final long MAX_AI_MP4_BYTES = 140L * 1024L * 1024L;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
@@ -706,6 +708,174 @@ public class MainActivity extends Activity {
         startActivityForResult(intent, CREATE_FILE);
     }
 
+
+    private static final class BackupPasswordJob {
+        final String request;
+        final boolean encrypt;
+        final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        volatile Thread worker;
+        boolean submitted;
+        BackupPasswordJob(String request, boolean encrypt) { this.request = request; this.encrypt = encrypt; }
+    }
+
+    private static byte[] encryptedBackupData(String text) throws org.json.JSONException {
+        JSONObject envelope = new JSONObject(text);
+        if (envelope.length() != 3 || !"LightingAI.EncryptedSceneBackup".equals(envelope.getString("format")) ||
+            !Integer.valueOf(1).equals(envelope.get("version")))
+            throw new IllegalArgumentException("Unsupported encrypted backup");
+        return java.util.Base64.getDecoder().decode(envelope.getString("data"));
+    }
+
+    private synchronized boolean beginBackupPasswordJob(String request, String text, boolean encrypt) {
+        if (request == null || !request.matches("^backup-[a-z0-9-]{1,80}$") || backupPasswordJob != null ||
+            pendingSceneBackupRequest != null) return false;
+        BackupPasswordJob job = new BackupPasswordJob(request, encrypt);
+        backupPasswordJob = job;
+        runOnUiThread(() -> showBackupPasswordDialog(job, text));
+        return true;
+    }
+
+    private android.widget.EditText backupPasswordField(String hint) {
+        android.widget.EditText field = new android.widget.EditText(this);
+        field.setHint(hint);
+        field.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        field.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);
+        field.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+        field.setSaveEnabled(false); field.setSaveFromParentEnabled(false); field.setFreezesText(false);
+        field.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(1024)});
+        return field;
+    }
+
+    private static char[] backupPasswordChars(android.widget.EditText field) {
+        android.text.Editable value = field.getText();
+        char[] chars = new char[value.length()]; value.getChars(0, value.length(), chars, 0);
+        return chars;
+    }
+
+    private void showBackupPasswordDialog(BackupPasswordJob job, String text) {
+        if (job.cancelled.get() || isFinishing() || isDestroyed()) { cancelBackupPasswordJob(job); return; }
+        android.widget.LinearLayout content = new android.widget.LinearLayout(this);
+        content.setOrientation(android.widget.LinearLayout.VERTICAL); content.setPadding(32, 12, 32, 12);
+        android.widget.TextView note = new android.widget.TextView(this);
+        note.setText(job.encrypt ?
+            "Unesi posebnu lozinku od najmanje 12 znakova, najbolje dugu frazu. Sačuvaj je odvojeno: bez nje kopija ne može da se otvori ni na drugom telefonu. Lozinku ne čuvamo." :
+            "Unesi lozinku ove kopije. Tek posle provere autentičnosti prikazaćemo pregled; scena se još ne uvozi.");
+        android.widget.EditText password = backupPasswordField("Lozinka kopije");
+        android.widget.EditText repeat = job.encrypt ? backupPasswordField("Ponovi lozinku") : null;
+        content.addView(note); content.addView(password); if (repeat != null) content.addView(repeat);
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
+            .setTitle(job.encrypt ? "ŠIFRUJ KOPIJU SCENE" : "OTKLJUČAJ KOPIJU SCENE")
+            .setView(content).setPositiveButton(job.encrypt ? "ŠIFRUJ I SAČUVAJ" : "OTKLJUČAJ ZA PREGLED", null)
+            .setNegativeButton("OTKAŽI", (d, which) -> cancelBackupPasswordJob(job)).create();
+        backupPasswordDialog = dialog;
+        dialog.setOnDismissListener(d -> {
+            password.getText().clear(); if (repeat != null) repeat.getText().clear();
+            if (backupPasswordDialog == dialog) backupPasswordDialog = null;
+            if (!job.submitted) cancelBackupPasswordJob(job);
+        });
+        dialog.setOnShowListener(d -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+                dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            }
+            password.requestFocus();
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                char[] chars = backupPasswordChars(password);
+                char[] confirmation = repeat == null ? null : backupPasswordChars(repeat);
+                boolean valid = chars.length >= (job.encrypt ? 12 : 1) &&
+                    (confirmation == null || java.util.Arrays.equals(chars, confirmation));
+                if (confirmation != null) java.util.Arrays.fill(confirmation, '\0');
+                if (!valid) {
+                    java.util.Arrays.fill(chars, '\0');
+                    password.setError(job.encrypt ? "Najmanje 12 znakova; oba unosa moraju biti ista." : "Unesi lozinku.");
+                    return;
+                }
+                job.submitted = true;
+                password.getText().clear(); if (repeat != null) repeat.getText().clear();
+                dialog.dismiss();
+                Thread worker = new Thread(() -> processPasswordBackup(job, text, chars), "LightingAI-BackupCrypto");
+                job.worker = worker; worker.start();
+            });
+        });
+        dialog.show();
+    }
+
+    private synchronized void finishBackupPasswordJob(BackupPasswordJob job) {
+        if (backupPasswordJob == job) backupPasswordJob = null;
+    }
+
+    private void cancelBackupPasswordJob(BackupPasswordJob job) {
+        if (job == null || job.cancelled.getAndSet(true)) return;
+        if (job.worker != null) job.worker.interrupt();
+        if (backupPasswordDialog != null) backupPasswordDialog.dismiss();
+        if (job.worker == null) finishBackupPasswordJob(job);
+        if (job.encrypt) notifySceneBackupSaved(job.request, false);
+        else notifySceneBackupUnlocked(job, "", "cancelled");
+    }
+
+    private void processPasswordBackup(BackupPasswordJob job, String text, char[] password) {
+        byte[] plain = null;
+        try {
+            if (job.cancelled.get()) return;
+            if (job.encrypt) {
+                plain = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                byte[] encrypted = SceneBackupCrypto.encrypt(plain, password);
+                if (job.cancelled.get()) return;
+                String envelope = new JSONObject().put("format", "LightingAI.EncryptedSceneBackup")
+                    .put("version", 1).put("data", java.util.Base64.getEncoder().encodeToString(encrypted)).toString();
+                if (job.cancelled.get()) return;
+                saveEncryptedSceneBackup(job, envelope);
+            } else {
+                plain = SceneBackupCrypto.decrypt(encryptedBackupData(text), password);
+                if (!job.cancelled.get()) notifySceneBackupUnlocked(job,
+                    new String(plain, java.nio.charset.StandardCharsets.UTF_8), "ok");
+            }
+        } catch (java.security.GeneralSecurityException | org.json.JSONException | RuntimeException error) {
+            // Deliberately do not log exceptions, content, credentials or provider messages.
+            if (!job.cancelled.get()) {
+                if (job.encrypt) notifySceneBackupSaved(job.request, false);
+                else notifySceneBackupUnlocked(job, "", "error");
+            }
+        } finally {
+            java.util.Arrays.fill(password, '\0');
+            if (plain != null) java.util.Arrays.fill(plain, (byte) 0);
+            finishBackupPasswordJob(job);
+        }
+    }
+
+    private void saveEncryptedSceneBackup(BackupPasswordJob job, String envelope) {
+        String filename = "LightingAI_SceneBackup_" + System.currentTimeMillis() + ".encrypted.json";
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (job.cancelled.get()) return;
+            boolean saved = saveTextDirectlyToDownloads(filename, envelope);
+            if (!job.cancelled.get()) notifySceneBackupSaved(job.request, saved);
+        } else {
+            runOnUiThread(() -> {
+                if (job.cancelled.get()) return;
+                if (pendingSceneBackupText != null) { notifySceneBackupSaved(job.request, false); return; }
+                pendingSceneBackupText = envelope; pendingSceneBackupRequest = job.request;
+                try {
+                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE); intent.setType("application/json");
+                    intent.putExtra(Intent.EXTRA_TITLE, filename); intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                    startActivityForResult(intent, SAVE_SCENE_BACKUP);
+                } catch (RuntimeException error) {
+                    pendingSceneBackupText = null; pendingSceneBackupRequest = null;
+                    notifySceneBackupSaved(job.request, false);
+                }
+            });
+        }
+    }
+
+    private void notifySceneBackupUnlocked(BackupPasswordJob job, String text, String status) {
+        if (webView == null || !recoveryOriginTrusted) return;
+        webView.post(() -> {
+            if (recoveryOriginTrusted && !(job.cancelled.get() && "ok".equals(status))) webView.evaluateJavascript(
+                "window.LightingAIScenePlanner&&LightingAIScenePlanner.onBackupUnlocked(" +
+                JSONObject.quote(job.request) + "," + JSONObject.quote(text) + "," + JSONObject.quote(status) + ");", null);
+        });
+    }
+
     private void notifySceneBackupSaved(String request, boolean success) {
         if (webView == null || !recoveryOriginTrusted) return;
         webView.post(() -> {
@@ -1238,29 +1408,20 @@ public class MainActivity extends Activity {
             }
         }
         @JavascriptInterface public boolean exportScenePlannerBackup(String request, String text) {
-            if (!recoveryOriginTrusted || request == null || !request.matches("^backup-[a-z0-9-]{1,80}$") ||
-                text == null || text.length() > 24 * 1024 * 1024 ||
-                text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 24 * 1024 * 1024) return false;
-            String filename = "LightingAI_SceneBackup_" + System.currentTimeMillis() + ".json";
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                new Thread(() -> notifySceneBackupSaved(request, saveTextDirectlyToDownloads(filename, text)),
-                    "LightingAI-SceneBackup").start();
-            } else {
-                runOnUiThread(() -> {
-                    if (pendingSceneBackupText != null) { notifySceneBackupSaved(request, false); return; }
-                    pendingSceneBackupText = text; pendingSceneBackupRequest = request;
-                    try {
-                        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-                        intent.addCategory(Intent.CATEGORY_OPENABLE); intent.setType("application/json");
-                        intent.putExtra(Intent.EXTRA_TITLE, filename); intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-                        startActivityForResult(intent, SAVE_SCENE_BACKUP);
-                    } catch (RuntimeException error) {
-                        pendingSceneBackupText = null; pendingSceneBackupRequest = null;
-                        notifySceneBackupSaved(request, false);
-                    }
-                });
-            }
-            return true;
+            if (!recoveryOriginTrusted || text == null || text.length() > SceneBackupCrypto.MAX_PLAIN_BYTES ||
+                text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > SceneBackupCrypto.MAX_PLAIN_BYTES) return false;
+            return beginBackupPasswordJob(request, text, true);
+        }
+        @JavascriptInterface public boolean unlockScenePlannerBackup(String request, String text) {
+            if (!recoveryOriginTrusted || text == null || text.length() > SceneBackupCrypto.MAX_FILE_BYTES ||
+                text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > SceneBackupCrypto.MAX_FILE_BYTES) return false;
+            try { encryptedBackupData(text); }
+            catch (org.json.JSONException | IllegalArgumentException error) { return false; }
+            return beginBackupPasswordJob(request, text, false);
+        }
+        @JavascriptInterface public void cancelSceneBackupOperation() {
+            if (!recoveryOriginTrusted) return;
+            runOnUiThread(() -> cancelBackupPasswordJob(backupPasswordJob));
         }
 
         @JavascriptInterface public String loadScenePlannerSceneIndex() {
@@ -1658,6 +1819,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onStop() {
+        cancelBackupPasswordJob(backupPasswordJob);
         checkpointScenePlanner();
         super.onStop();
     }
@@ -1781,6 +1943,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        cancelBackupPasswordJob(backupPasswordJob);
         releaseScenePlannerCaptures(false);
         if (isFinishing() && pendingVideoCapture && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
             deletePendingCameraUri();

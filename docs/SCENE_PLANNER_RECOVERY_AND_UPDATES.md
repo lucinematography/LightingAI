@@ -214,7 +214,8 @@ The feature makes no network requests. Tokens, authentication controls, global a
 signing material and arbitrary WebView storage are not copied. Test photos, plans and credentials are
 synthetic; no user scene data is committed or uploaded to CI.
 
-The file is **not encrypted**: it contains private scene content. The UI tells the user to protect it.
+The original v1 JSON file is **not encrypted** and remains readable with an explicit warning.
+New exports use the password-encrypted envelope documented below; old files are never auto-deleted.
 Only the application's one saved optimized scene photo is included, not its original full-resolution
 file or additional unsaved photos. Original video, sampled video frames, AI-generated media and the
 global equipment inventory are explicitly excluded in both the format and UI. Fixtures embedded in
@@ -228,3 +229,77 @@ without WebView storage, physical-confirmation separation, and storage exhaustio
 registry transaction phases. Android emulator instrumentation additionally exports through the actual
 Downloads writer, previews through FileReader, imports via the real native transaction, and verifies
 the imported photo/history/pending inputs after the CI host force-stops and restarts Android's process.
+
+
+## Password-encrypted scene backup envelope v1
+
+New exports retain the complete existing inner SceneBackup v1 payload and SHA-256/schema/history checks.
+Only the outer, authenticated encrypted envelope is sent to the Downloads writer. No plaintext temporary
+file is created in Downloads, cache or app files by encryption/decryption. Normal scene storage is still
+local app storage; this feature encrypts portable exports, not the app's existing private workspace.
+
+The JSON wrapper has exactly `format: "LightingAI.EncryptedSceneBackup"`, integer `version: 1`, and
+`data` (strict standard Base64). Decoded data is:
+
+- Six bytes `4c 41 49 53 42 01` (LAISB, version 1).
+- Four-byte big-endian iteration count, exactly 600000; no attacker-selected KDF cost.
+- A fresh 32-byte SecureRandom salt and fresh 12-byte SecureRandom nonce.
+- AES-256-GCM ciphertext followed by its 16-byte authentication tag.
+
+The entire 54-byte header is authenticated as AAD. The 256-bit key is derived using
+PBKDF2WithHmacSHA256, 600000 iterations. Password characters use the platform's UTF-8 PBKDF2 encoding,
+without trimming or Unicode normalization. Separate salt and nonce are generated for every export.
+No Android Keystore, signing key, device identifier or USB material participates. A copied file and
+the same exact password are enough on another supported Android device (minimum API 26).
+Java/Android cryptography provides the algorithms; no custom cipher or new external dependency is used.
+
+References: [Android cryptography](https://developer.android.com/privacy-and-security/cryptography)
+and [OWASP password derivation guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
+The OWASP PBKDF2-HMAC-SHA256 work factor is 600000; the user still needs a strong, unique passphrase.
+This is a security/data-portability feature; cinematography knowledge and K0/K1 remain unchanged.
+
+### Local password handling and interruption
+
+A native password dialog collects the password and, for export, its confirmation (12–1024 UTF-16
+code units, long unique phrases recommended). It is masked, has no saved view state or autofill,
+requests no personalized IME learning, and sets FLAG_SECURE on its window. The password never enters
+the WebView/JavaScript, storage, network, crash messages or logs. Fields are cleared on submit,
+cancel and dismissal; char arrays, PBEKeySpec passwords and derived key bytes are cleared in finally
+blocks. Runtime/provider copies may remain in managed memory until garbage collection; no claim of
+perfect physical RAM erasure is made.
+
+PBKDF2 and encryption run on one background worker. Cancelling, closing Scene Planner, stopping or
+destroying the Activity cancels pending work and clears the dialog. Password work is never resumed
+automatically after process death. Interrupted KDF work is checked before/after derivation; results of
+cancelled jobs cannot open an import preview. If an already encrypted Downloads write has started at
+the time of cancellation, a completed encrypted file can remain; no plaintext is written.
+On Android 8–9 the document chooser receives only ciphertext. A failed/cancelled export reports failure,
+and an incomplete app-created file is removed by the existing writer. No old backup is deleted.
+
+Import limits the encrypted wrapper to 34 MiB and the authenticated inner JSON to the existing 24 MiB.
+Unknown wrapper/header versions, invalid Base64, wrong passwords, altered salt/nonce/ciphertext/tag
+and truncation are rejected before any scene is staged or written. AES-GCM doFinal must verify the tag
+before plaintext is returned. Only then do the existing SHA-256 and schema/history/photo checks run,
+followed by the preview and explicit checkbox/button confirmation. Decryption itself never adds a scene.
+Failed imports preserve registered scenes. Atomic native import, storage-failure handling and historical
+measurement separation are unchanged. The GCM tag authenticates possession of the password, not a
+named author, the truth of a lighting plan, or current physical measurements.
+
+Legacy SceneBackup v1 JSON continues to import with a prominent **NEŠIFROVANA** warning.
+No new unencrypted scene-backup export option is provided. Existing plan-only JSON exports are separate
+from this scene-backup feature. Exact media/inventory exclusions remain displayed in preview and UI.
+
+### Verification
+
+The existing offline recovery suite still covers multiple scenes, fresh-device storage, corrupted inner
+payloads, simulated workspace/photo/index storage exhaustion and restoration without WebView storage.
+It also generates an artificial Unicode-password AES-GCM interoperability fixture using Node's crypto.
+JUnit must decrypt that independently generated fixture with the Java implementation and additionally
+tests round trips, fresh random salt/nonce, wrong passwords, header/ciphertext/tag corruption, bounds
+and interruption. Run the Node recovery suite before standalone Gradle unit tests to generate that fixture.
+
+The disposable Android emulator exercises native password entry (synthetic credentials only), encrypted
+Downloads output, wrong password, modified GCM tag, cancellation on background, old plaintext warning,
+authenticated preview followed by explicit import, multiple scenes, and imported photo/history/pending
+measurements after force-stop. It also force-stops with a partially entered password and checks no native
+password dialog returns after restart. No user files, real passwords, signing credentials or photos enter CI.

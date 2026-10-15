@@ -103,6 +103,9 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
         getTargetContext().startActivity(resume);
         waitFor("document.getElementById('sp-description').value==='Recovery fixture after background'");
         assertRecovered();
+        // Kill the Android process while a local password is partially entered.
+        evaluate("document.getElementById('sp-backup-export').click();");
+        fillBackupPassword("unfinished-synthetic-input", false);
     }
 
     private void restore() throws Exception {
@@ -111,6 +114,9 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
             "document.getElementById('sp-description').value==='Recovery fixture after background'");
         waitFor("document.getElementById('sp-image').src.indexOf('data:image/png;base64,')===0");
         assertRecovered();
+        Field dialogField = MainActivity.class.getDeclaredField("backupPasswordDialog");
+        dialogField.setAccessible(true);
+        if (dialogField.get(activity) != null) throw new IllegalStateException("Password dialog restored after process death");
         selectSceneByName("CI Scene B", "Recovery fixture scene B");
         waitFor("document.getElementById('sp-iso').value==='800' && " +
             "document.getElementById('sp-distance-L1').value==='7.5' && " +
@@ -135,6 +141,7 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
         evaluate("document.getElementById('sp-video-auth').value='synthetic-not-for-backup';" +
             "document.getElementById('sp-measured').checked=true;" +
             "document.getElementById('sp-backup-export').click();");
+        fillBackupPassword("synthetic-password-Ž-2026", true);
         waitFor("document.getElementById('sp-backup-status').textContent.indexOf('sačuvana lokalno')>=0");
         String backup = null;
         try (android.database.Cursor cursor = getTargetContext().getContentResolver().query(
@@ -158,11 +165,42 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
                 }
             }
         }
-        if (backup == null || backup.contains("synthetic-not-for-backup"))
-            throw new IllegalStateException("Backup absent or credential field included");
-        evaluate("(function(){var file=new File([" + org.json.JSONObject.quote(backup) +
-            "],'synthetic-scene.json',{type:'application/json'});" +
-            "document.getElementById('sp-backup-file').onchange({target:{files:[file],value:''}});})()");
+        if (backup == null || backup.contains("Recovery fixture") || backup.contains("synthetic-not-for-backup") ||
+            !"LightingAI.EncryptedSceneBackup".equals(new org.json.JSONObject(backup).getString("format")))
+            throw new IllegalStateException("Backup absent or plaintext written");
+        String indexBefore = evaluate("Android.loadScenePlannerSceneIndex()");
+        String workspaceBefore = stableSceneWorkspace();
+        previewBackupFile(backup);
+        fillBackupPassword("wrong-synthetic-password", true);
+        waitFor("document.getElementById('sp-backup-status').textContent.indexOf('Lozinka nije ispravna')>=0");
+        assertBackupFailureUnchanged(indexBefore, workspaceBefore);
+        org.json.JSONObject damaged = new org.json.JSONObject(backup);
+        byte[] bytes = java.util.Base64.getDecoder().decode(damaged.getString("data"));
+        bytes[bytes.length - 1] ^= 1;
+        damaged.put("data", java.util.Base64.getEncoder().encodeToString(bytes));
+        previewBackupFile(damaged.toString());
+        fillBackupPassword("synthetic-password-Ž-2026", true);
+        waitFor("document.getElementById('sp-backup-status').textContent.indexOf('Lozinka nije ispravna')>=0");
+        assertBackupFailureUnchanged(indexBefore, workspaceBefore);
+        // Leaving the app cancels an unsubmitted password and clears native input buffers.
+        previewBackupFile(backup);
+        fillBackupPassword("partial-synthetic-input", false);
+        runOnMainSync(() -> activity.moveTaskToBack(true));
+        waitFor("document.getElementById('sp-backup-status').textContent.indexOf('otkazano')>=0");
+        Intent resume = getTargetContext().getPackageManager().getLaunchIntentForPackage(getTargetContext().getPackageName());
+        resume.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        getTargetContext().startActivity(resume);
+        assertBackupFailureUnchanged(indexBefore, workspaceBefore);
+        // Old plaintext JSON remains readable in memory, with an explicit warning, never rewritten to Downloads.
+        evaluate("LightingAIScenePlannerDraft.exportSceneBackup().then(function(text){window.__legacyBackup=text;});");
+        waitFor("!!window.__legacyBackup");
+        evaluate("(function(){var file=new File([window.__legacyBackup],'legacy.json',{type:'application/json'});" +
+            "document.getElementById('sp-backup-file').onchange({target:{files:[file],value:''}});window.__legacyBackup=null;})()");
+        waitFor("document.getElementById('sp-backup-preview').textContent.indexOf('NEŠIFROVANA')>=0 && " +
+            "document.getElementById('sp-backup-apply').disabled");
+        evaluate("document.getElementById('sp-backup-cancel').click();");
+        previewBackupFile(backup);
+        fillBackupPassword("synthetic-password-Ž-2026", true);
         waitFor("document.getElementById('sp-backup-confirm') && document.getElementById('sp-backup-photo') && " +
             "document.getElementById('sp-backup-photo').complete && document.getElementById('sp-backup-photo').naturalWidth>0 && " +
             "!document.getElementById('sp-scene-select').disabled");
@@ -177,6 +215,63 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
         waitFor("(function(){var index=Android.loadScenePlannerSceneIndex(),old=Android.loadScenePlannerWorkspace();" +
             "return Android.importScenePlannerBackup('Invalid','broken-json','',index)==='' && " +
             "Android.loadScenePlannerSceneIndex()===index && Android.loadScenePlannerWorkspace()===old;})()");
+    }
+
+
+    private void previewBackupFile(String backup) throws Exception {
+        waitFor("!document.getElementById('sp-backup-import').disabled");
+        evaluate("(function(){var file=new File([" + org.json.JSONObject.quote(backup) +
+            "],'synthetic-scene.encrypted.json',{type:'application/json'});" +
+            "document.getElementById('sp-backup-file').onchange({target:{files:[file],value:''}});})()");
+    }
+
+    private String stableSceneWorkspace() throws Exception {
+        return evaluate("(function(){var s=JSON.parse(Android.loadScenePlannerWorkspace());" +
+            "var d=JSON.parse(s.values.lighting_scene_planner_draft_v1);delete d.checkpoint;" +
+            "s.values.lighting_scene_planner_draft_v1=d;return LightingAIScenePlannerCore.canonicalJson(s.values);})()");
+    }
+
+    private void assertBackupFailureUnchanged(String index, String workspace) throws Exception {
+        if (!index.equals(evaluate("Android.loadScenePlannerSceneIndex()")) ||
+            !workspace.equals(stableSceneWorkspace()))
+            throw new IllegalStateException("Failed unlock modified stored scenes");
+        waitFor("LightingAIScenePlannerDraft.listScenes().length===2 && " +
+            "!document.getElementById('sp-backup-confirm')");
+    }
+
+    private void collectPasswordInputs(android.view.View view, java.util.List<android.widget.EditText> fields) {
+        if (view instanceof android.widget.EditText) fields.add((android.widget.EditText) view);
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) view;
+            for (int j = 0; j < group.getChildCount(); j++) collectPasswordInputs(group.getChildAt(j), fields);
+        }
+    }
+
+    private void fillBackupPassword(String value, boolean submit) throws Exception {
+        Field field = MainActivity.class.getDeclaredField("backupPasswordDialog");
+        field.setAccessible(true);
+        long deadline = System.currentTimeMillis() + 25000;
+        while (field.get(activity) == null && System.currentTimeMillis() < deadline) Thread.sleep(100);
+        if (field.get(activity) == null) throw new IllegalStateException("Local password dialog missing");
+        runOnMainSync(() -> {
+            try {
+                android.app.AlertDialog dialog = (android.app.AlertDialog) field.get(activity);
+                java.util.List<android.widget.EditText> inputs = new java.util.ArrayList<>();
+                collectPasswordInputs(dialog.getWindow().getDecorView(), inputs);
+                if (inputs.isEmpty()) throw new IllegalStateException("Password input missing");
+                for (android.widget.EditText input : inputs) {
+                    if (input.isSaveEnabled() || input.isSaveFromParentEnabled() ||
+                        input.getImportantForAutofill() != android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS)
+                        throw new IllegalStateException("Password input permits persistence");
+                    input.setText(value);
+                }
+                if (submit) {
+                    dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick();
+                    for (android.widget.EditText input : inputs)
+                        if (input.length() != 0) throw new IllegalStateException("Password input was not cleared");
+                }
+            } catch (ReflectiveOperationException error) { throw new IllegalStateException("Password fixture setup failed"); }
+        });
     }
 
     private void assertRecovered() throws Exception {

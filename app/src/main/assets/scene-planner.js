@@ -15,7 +15,8 @@
   var videoReceipt=null,videoReceiptBlocked=false;
   function emptyState(){return {photo:'',frames:[],videoUrl:'',plan:null,aiPreview:'',busy:false,videoBusy:false,abort:null,videoFile:null,exportedVideo:null,aiStoryboard:[],aiVideoTaskId:null,aiVideoAvailable:false,aiVideoPreviewUrl:null,videoDurationSec:null,aiVideoPending:null,aiVideoCompletedPlan:null};}
   var state=emptyState(),sceneChanging=false,sceneReady=false,photoBusy=false;
-  var backupBusy=false,backupPreviewReady=false,backupRequest=null;
+  var backupBusy=false,backupPreviewReady=false,backupRequest=null,backupUnlockRequest=null,backupReadSequence=0;
+  var ENCRYPTED_BACKUP_LIMIT=34*1024*1024;
   function el(id){return document.getElementById(id);}
   function draft(){return window.LightingAIScenePlannerDraft;}
   function activeRevisionId(){return revisions.length?revisions[revisions.length-1].revisionId:null;}
@@ -87,14 +88,14 @@
       if(!window.Android||typeof window.Android.exportScenePlannerBackup!=='function')
         throw new Error('Izvoz zahteva aktuelnu Android verziju aplikacije.');
       backupRequest='backup-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
-      backupMessage('Čuvam privatnu kopiju lokalno na telefonu…');
+      backupMessage('Unesi i ponovi lozinku u lokalnom Android dijalogu. Šifrovanje može potrajati…');
       if(window.Android.exportScenePlannerBackup(backupRequest,data)!==true)throw new Error('Čuvanje datoteke nije pokrenuto.');
     }catch(error){backupRequest=null;backupBusy=false;renderSceneControls();backupMessage(error.message||'Izvoz nije uspeo.',true);}
   }
   function onBackupSaved(request,saved){
     if(request!==backupRequest)return;
     backupRequest=null;backupBusy=false;renderSceneControls();
-    backupMessage(saved?'Kopija scene je sačuvana lokalno kao LightingAI_SceneBackup_….json.':
+    backupMessage(saved?'Šifrovana kopija scene je sačuvana lokalno kao LightingAI_SceneBackup_….encrypted.json.':
       'Kopija nije sačuvana ili je čuvanje otkazano. Proveri slobodan prostor i pokušaj ponovo.',!saved);
   }
   function cancelBackupPreview(){
@@ -105,17 +106,46 @@
   async function previewSceneFile(file){
     if(!canUseBackup())return;
     cancelBackupPreview();backupBusy=true;renderSceneControls();
+    var sequence=++backupReadSequence,waiting=false;
     try{
-      if(file.size>draft().backupMaxBytes)throw new Error('Datoteka prelazi 24 MiB.');
+      if(file.size>ENCRYPTED_BACKUP_LIMIT)throw new Error('Datoteka prelazi 34 MiB.');
       var text=await new Promise(function(resolve,reject){
         var reader=new FileReader();
         reader.onload=function(){resolve(String(reader.result));};
         reader.onerror=function(){reject(new Error('Datoteka nije čitljiva.'));};
-        reader.readAsText(file.slice(0,draft().backupMaxBytes+1),'UTF-8');
+        reader.readAsText(file.slice(0,ENCRYPTED_BACKUP_LIMIT+1),'UTF-8');
       });
+      if(sequence!==backupReadSequence||!el(MODULE))return;
+      var envelope=JSON.parse(text);
+      if(envelope&&envelope.format==='LightingAI.EncryptedSceneBackup'){
+        if(!window.Android||typeof window.Android.unlockScenePlannerBackup!=='function')
+          throw new Error('Za otključavanje je potrebna aktuelna Android verzija.');
+        backupUnlockRequest='backup-unlock-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+        if(window.Android.unlockScenePlannerBackup(backupUnlockRequest,text)!==true){
+          backupUnlockRequest=null;throw new Error('Šifrovana kopija nije podržana ili druga obrada još traje.');
+        }
+        waiting=true;backupMessage('Unesi lozinku u lokalnom Android dijalogu. Najpre proveravamo autentičnost…');
+      }else showBackupPreview(text,false);
+    }catch(error){cancelBackupPreview();backupMessage(error.message||'Kopija nije čitljiva.',true);}
+    finally{if(sequence===backupReadSequence&&!waiting){backupBusy=false;renderSceneControls();}}
+  }
+  function onBackupUnlocked(request,text,result){
+    if(request!==backupUnlockRequest)return;
+    backupUnlockRequest=null;
+    try{
+      if(result!=='ok'){
+        cancelBackupPreview();
+        backupMessage(result==='cancelled'?'Otključavanje je otkazano; scene nisu menjane.':
+          'Lozinka nije ispravna ili je datoteka oštećena/nepodržana. Scene nisu menjane.',true);return;
+      }
+      showBackupPreview(text,true);
+    }catch(error){cancelBackupPreview();backupMessage('Sadržaj kopije nije podržan; scene nisu menjane.',true);}
+    finally{backupBusy=false;renderSceneControls();}
+  }
+  function showBackupPreview(text,encrypted){
       var preview=draft().previewSceneBackup(text);
       var box=el('sp-backup-preview');if(!box){draft().cancelSceneBackup();return;}
-      box.innerHTML='<div class="sp-lamp"><b>'+esc(preview.name)+'</b>'+
+      box.innerHTML='<div class="sp-lamp"><p><b>'+(encrypted?'AES-256-GCM: autentičnost je proverena.':'UPOZORENJE: stara NEŠIFROVANA JSON kopija. Privatni sadržaj nije zaštićen lozinkom.')+'</b></p><b>'+esc(preview.name)+'</b>'+
         '<p>Kopija: '+esc(preview.savedAt)+'<br>Revizije: '+preview.revisionCount+' • stručne provere: '+preview.reviewCount+
         ' • fotografija: '+(preview.photo?'DA':'NE')+'</p>'+
         '<p>'+esc(preview.description)+'</p><p>Plan: '+esc(preview.planSummary||'Plan još nije napravljen')+'</p>'+
@@ -149,9 +179,9 @@
         }catch(error){backupMessage(error.message||'Uvoz nije sačuvan.',true);}
         finally{backupBusy=false;renderSceneControls();}
       };
-      backupMessage('Pregledaj sadržaj. Uvoz još nije izvršen.');
-    }catch(error){cancelBackupPreview();backupMessage(error.message||'Kopija nije čitljiva.',true);}
-    finally{backupBusy=false;renderSceneControls();}
+
+      backupMessage(encrypted?'Autentičnost je proverena. Pregledaj sadržaj; uvoz još nije izvršen.':
+        'UPOZORENJE: nešifrovana kopija. Pregledaj sadržaj; uvoz još nije izvršen.',!encrypted);
   }
 
   function esc(value){
@@ -256,7 +286,7 @@
       '<div class="sp-actions"><button type="button" id="sp-backup-export" class="sp-btn">IZVEZI KOPIJU SCENE</button>'+
       '<button type="button" id="sp-backup-import" class="sp-btn">UVEZI KOPIJU — PREGLED</button></div>'+
       '<input id="sp-backup-file" type="file" accept=".json,application/json" hidden>'+
-      '<p class="sp-note">Kopija sadrži lokalno sačuvanu fotografiju, opis, podešavanja, nacrt i istoriju. Nije šifrovana. Čuvaj je kao privatnu datoteku. '+
+      '<p class="sp-note">Kopija sadrži sačuvanu fotografiju, opis, podešavanja, nacrt i istoriju. Novi izvoz je šifrovan lozinkom (AES-256-GCM). Lozinku čuvaj odvojeno; ne možemo je povratiti. '+
       'Ne sadrži originalni video, izdvojene video kadrove, AI medije, originalnu fotografiju pune rezolucije ni globalni inventar opreme.</p>'+
       '<div id="sp-backup-status" class="sp-note" role="status"></div><div id="sp-backup-preview"></div>'+
       '<div id="sp-imported-note" class="sp-note"></div></div>'+
@@ -2556,7 +2586,9 @@
     }
   }
   function close(){
-    cancelBackupPreview();backupRequest=null;backupBusy=false;
+    backupReadSequence++;
+    if(window.Android&&typeof window.Android.cancelSceneBackupOperation==='function')window.Android.cancelSceneBackupOperation();
+    cancelBackupPreview();backupRequest=null;backupUnlockRequest=null;backupBusy=false;
     if(draft()){draft().flush();draft().setOpen(false);draft().detach();}
     releaseCaptures(false);
     state.videoFile=null;state.videoDurationSec=null;
@@ -2574,5 +2606,5 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});
   else load();
   window.LightingAIScenePlanner={open:open,close:close,closeIfOpen:closeIfOpen,
-    onBackupSaved:onBackupSaved,onNativeVideoSaved:onNativeVideoSaved,version:'0.3-native-mp4-saf-save'};
+    onBackupSaved:onBackupSaved,onBackupUnlocked:onBackupUnlocked,onNativeVideoSaved:onNativeVideoSaved,version:'0.3-native-mp4-saf-save'};
 })();

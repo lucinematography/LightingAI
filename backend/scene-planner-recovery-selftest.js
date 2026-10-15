@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {pbkdf2Sync,createCipheriv} from 'node:crypto';
 import {createRequire} from 'node:module';
 const core=createRequire(import.meta.url)('../app/src/main/assets/scene-planner-core.js');
 const source=fs.readFileSync(new URL('../app/src/main/assets/scene-planner-draft.js',import.meta.url),'utf8');
@@ -550,4 +551,15 @@ await test('blank scene without plan or photo is portable and native image rejec
   c.api.detach();f.c.api.detach();
 });
 
+await test('independent Node AES-GCM fixture for Java/Android interoperability (synthetic Unicode password only)',()=>{
+  const salt=Buffer.from(Array.from({length:32},(_,i)=>i)),nonce=Buffer.from(Array.from({length:12},(_,i)=>i+32));
+  const cost=Buffer.alloc(4);cost.writeUInt32BE(600000);
+  const header=Buffer.concat([Buffer.from([76,65,73,83,66,1]),cost,salt,nonce]);
+  const key=pbkdf2Sync('synthetic-password-Ž-2026',salt,600000,32,'sha256');
+  const cipher=createCipheriv('aes-256-gcm',key,nonce);cipher.setAAD(header);
+  const encrypted=Buffer.concat([cipher.update('{"synthetic":"Scena Ž ć — 42"}','utf8'),cipher.final()]);
+  const encoded=Buffer.concat([header,encrypted,cipher.getAuthTag()]).toString('base64');key.fill(0);
+  const directory=new URL('../app/build/',import.meta.url);fs.mkdirSync(directory,{recursive:true});
+  fs.writeFileSync(new URL('scene-backup-interop.txt',directory),encoded+'\n',{mode:0o600});
+});
 console.log(`${passed} recovery regression groups passed; no provider or video processing calls.`);

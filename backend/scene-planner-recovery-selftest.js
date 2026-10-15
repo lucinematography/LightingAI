@@ -275,11 +275,17 @@ await test('restoration rejects forged confirmations, unknown select choices and
   const raw=JSON.parse(c.store.get(DRAFT));
   raw.measurementFields.fields={
     'sp-waveform-source':'NO_SUCH_INSTRUMENT','sp-waveform-card-confirmed':'true',
-    'sp-scene-total-active':true,'sp-waveform-ire':{value:'42.5'},
+    'sp-scene-total-active':true,'sp-waveform-ire':{value:'42.5'},'sp-waveform-ire[':'bad-selector',
     'sp-scene-total-point':'A'.repeat(1001),'sp-video-auth':'forged-token'
   };
   c.store.set(DRAFT,JSON.stringify(raw));
-  const recovered=measurementContext(c.store);recovered.api.restore(recovered.overlay,'meter-validation');
+  const recovered=measurementContext(c.store);
+  const query=recovered.overlay.querySelector.bind(recovered.overlay);
+  recovered.overlay.querySelector=selector=>{
+    if(selector.includes('['))throw new Error('Invalid selector must not reach the DOM');
+    return query(selector);
+  };
+  recovered.api.restore(recovered.overlay,'meter-validation');
   assert.equal(recovered.nodes.get('sp-waveform-source').value,'');
   assert.equal(recovered.nodes.get('sp-waveform-card-confirmed').checked,false);
   assert.equal(recovered.nodes.get('sp-scene-total-active').checked,false);

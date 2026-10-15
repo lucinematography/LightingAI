@@ -97,13 +97,15 @@
     try{return typeof getRevisionId==='function'?getRevisionId():null;}catch(e){return null;}
   }
   // Pending on-set entries are drafts, never measurement attestations.
+  function measurementFieldId(id){
+    return /^sp-(distance|optic|incident)-L\d+$/.test(id)||
+      /^sp-meter-(model|point|orientation|time|identifier|offset)-L\d+$/.test(id)||
+      /^sp-scene-total-(lux|meter-model|meter-id|point|time|offset)$/.test(id)||
+      /^sp-waveform-(ire|camera-model|profile|card|source|path|code-range|transfer|lut|time|offset|target|basis)$/.test(id);
+  }
   function measurementField(f){
-    if(!f||['INPUT','TEXTAREA','SELECT'].indexOf(f.tagName)<0)return false;
-    if(['text','number','datetime-local','textarea','select-one'].indexOf(f.type)<0)return false;
-    return /^sp-(distance|optic|incident)-L\d+$/.test(f.id)||
-      /^sp-meter-(model|point|orientation|time|identifier|offset)-L\d+$/.test(f.id)||
-      /^sp-scene-total-(lux|meter-model|meter-id|point|time|offset)$/.test(f.id)||
-      /^sp-waveform-(ire|camera-model|profile|card|source|path|code-range|transfer|lut|time|offset|target|basis)$/.test(f.id);
+    return !!(f&&['INPUT','TEXTAREA','SELECT'].indexOf(f.tagName)>=0&&
+      ['text','number','datetime-local','textarea','select-one'].indexOf(f.type)>=0&&measurementFieldId(f.id));
   }
   function capture(overlay,getRevisionId){
     if(!overlay)return false;
@@ -165,6 +167,7 @@
     if(measurements&&currentRevisionId&&measurements.revisionId===currentRevisionId&&
        measurements.fields&&typeof measurements.fields==='object'&&!Array.isArray(measurements.fields))
       Object.keys(measurements.fields).forEach(function(id){
+        if(!measurementFieldId(id))return;
         var f=node(overlay,id),value=measurements.fields[id];
         if(!measurementField(f)||typeof value!=='string'||value.length>1000)return;
         if(f.tagName==='SELECT'&&!Array.prototype.some.call(f.options,function(o){return o.value===value;}))return;

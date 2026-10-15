@@ -24,8 +24,8 @@ function context(store=new Map(),media=new Map(),options={}){
   field('sp-dop-camera-iso','800');field('sp-dop-local-reason');field('sp-video-auth','private-token');
   const document={...events(),hidden:false};
   const root={...events(),document,setTimeout,clearTimeout,
-    localStorage:{getItem:k=>store.get(k)||null,setItem(k,v){
-      if(options.quota===true || (options.photoQuota&&k===PHOTO))throw new Error('Quota');
+    localStorage:{getItem(k){if(options.storageBlocked)throw new Error('WebView storage denied');return store.get(k)||null;},setItem(k,v){
+      if(options.storageBlocked||options.quota===true || (options.photoQuota&&k===PHOTO))throw new Error('Quota');
       writes++;store.set(k,v);
     }},indexedDB:options.noDb?undefined:{open(){
       const req={};setImmediate(()=>{
@@ -40,6 +40,7 @@ function context(store=new Map(),media=new Map(),options={}){
         }};req.onsuccess?.();
       });return req;
     }}};
+  if(options.noStorage)root.localStorage=undefined;
   if(options.nativeFiles)root.Android={
     saveScenePlannerWorkspace(value){if(options.nativeFailure)return false;options.nativeFiles.set('workspace',value);return true;},
     loadScenePlannerWorkspace(){return options.nativeFiles.get('workspace')||'';},
@@ -159,5 +160,38 @@ await test('native storage failures preserve the prior committed snapshot and sh
   assert.equal(await failed.api.savePhoto(photoSmall),false);failed.api.detach();
   const recovered=context(failed.store,new Map(),{nativeFiles});recovered.api.restore(recovered.overlay,'rev-one');
   assert.equal(recovered.nodes.get('sp-description').value,'Uncommitted','newer surviving local draft is preserved');
+});
+await test('native checkpoint restores and saves without WebView localStorage',()=>{
+  const nativeFiles=new Map(),original=context(new Map(),new Map(),{nativeFiles});
+  original.attach('rev-offline');
+  original.nodes.get('sp-description').value='Pre prelaska u pozadinu';
+  original.overlay.emit('input',original.nodes.get('sp-description'));original.api.detach();
+  const recovered=context(new Map(),new Map(),{nativeFiles,noStorage:true});
+  assert.equal(recovered.api.shouldReopen(),true);
+  assert.equal(recovered.api.restore(recovered.overlay,'rev-offline'),true);
+  assert.equal(recovered.nodes.get('sp-description').value,'Pre prelaska u pozadinu');
+  recovered.attach('rev-offline');
+  recovered.nodes.get('sp-description').value='Sacuvano bez WebView baze';
+  recovered.overlay.emit('input',recovered.nodes.get('sp-description'));
+  assert.equal(recovered.api.lastError(),'');recovered.api.detach();
+  const next=context(new Map(),new Map(),{nativeFiles,noStorage:true});
+  assert.equal(next.api.restore(next.overlay,'rev-offline'),true);
+  assert.equal(next.nodes.get('sp-description').value,'Sacuvano bez WebView baze');
+});
+await test('denied WebView storage still permits native recovery and checkpoint',()=>{
+  const nativeFiles=new Map(),original=context(new Map(),new Map(),{nativeFiles});
+  original.attach('rev-denied');
+  original.nodes.get('sp-description').value='Pre zabrane lokalnog skladista';
+  original.overlay.emit('input',original.nodes.get('sp-description'));original.api.detach();
+  const blocked=context(new Map(),new Map(),{nativeFiles,storageBlocked:true});
+  assert.equal(blocked.api.restore(blocked.overlay,'rev-denied'),true);
+  assert.equal(blocked.nodes.get('sp-description').value,'Pre zabrane lokalnog skladista');
+  blocked.attach('rev-denied');
+  blocked.nodes.get('sp-description').value='Nova native sacuvana izmena';
+  blocked.overlay.emit('input',blocked.nodes.get('sp-description'));
+  assert.equal(blocked.api.lastError(),'');blocked.api.detach();
+  const next=context(new Map(),new Map(),{nativeFiles,noStorage:true});
+  assert.equal(next.api.restore(next.overlay,'rev-denied'),true);
+  assert.equal(next.nodes.get('sp-description').value,'Nova native sacuvana izmena');
 });
 console.log(`${passed} recovery regression groups passed; no provider or video processing calls.`);

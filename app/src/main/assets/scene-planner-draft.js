@@ -25,7 +25,9 @@
       var values={},s=storage();
       WORKSPACE_KEYS.forEach(function(key){
         var value=nativeWorkspace&&nativeWorkspace.values[key];
-        if(typeof value!=='string')value=s&&s.getItem(key);
+        if(typeof value!=='string'){
+          try{value=s&&s.getItem(key);}catch(e){value=null;}
+        }
         if(updates&&Object.prototype.hasOwnProperty.call(updates,key))value=updates[key];
         if(typeof value==='string')values[key]=value;
       });
@@ -41,7 +43,10 @@
     if(!nativeAvailable()||typeof root.Android.loadScenePlannerWorkspace!=='function')return;
     try{
       var raw=root.Android.loadScenePlannerWorkspace();if(!raw)return;
-      var saved=JSON.parse(raw),s=storage(),local=s&&s.getItem(DRAFT_KEY),localDraft=local?JSON.parse(local):null;
+      var saved=JSON.parse(raw),s=storage(),local=null;
+      // A denied WebView storage read must not hide a valid Android native checkpoint.
+      try{local=s&&s.getItem(DRAFT_KEY);}catch(e){}
+      var localDraft=local?JSON.parse(local):null;
       if(!saved||saved.version!==1||!saved.values||!Number.isSafeInteger(saved.checkpoint))return;
       // Preserve corrupt/unsupported local data; never silently replace it.
       if(localDraft&&(localDraft.version!==1||!localDraft.fields||typeof localDraft.fields!=='object'||Array.isArray(localDraft.fields)))return;
@@ -59,7 +64,8 @@
   }
   function storage(){try{return root.localStorage;}catch(e){return null;}}
   function read(){
-    var s=storage();if(!s){report(false);return null;}
+    // Native AtomicFile data can survive even when WebView localStorage is unavailable.
+    var s=storage();if(!s&&!nativeWorkspace){report(false);return null;}
     try{var raw=readWorkspaceValue(DRAFT_KEY);if(!raw)return null;
       var d=JSON.parse(raw);
       if(!d||d.version!==1||typeof d!=='object'||Array.isArray(d)||

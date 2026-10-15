@@ -34,11 +34,12 @@ function provenance(saved,light,field){
   if(!light&&p.dataStatus.cameraSettings[field]==='dop-specified')return 'KORISNIČKI_ZADATO_NIJE_PROVERENO_NA_KAMERI';
   return p.source==='ai'?'AI_PROCENA_NIJE_MERENJE':'LOKALNI_PREDLOG_NIJE_MERENJE';
 }
+function flatSavedMap(items,fn){return [].concat.apply([],items.map(fn));}
 function automaticPairs(a,b){
   if(!a.plan||!b.plan)return [];
   const sameLineage=a.history[0].revisionId===b.history[0].revisionId;
   const signature=l=>l.fixtureId?l.fixtureId+'|'+l.role:null;
-  return a.plan.lights.flatMap(left=>{
+  return flatSavedMap(a.plan.lights,left=>{
     if(sameLineage){
       const right=b.plan.lights.find(r=>r.id===left.id);
       return right?[{left:left.id,right:right.id,method:'ISTI_LOGIČKI_ID_U_ISTORIJI'}]:[];
@@ -60,8 +61,8 @@ function compareSaved(reference,current,core,options={}){
   };
   const old=reference.legacy||{},now=current.legacy||{};
   cameraFields.forEach(k=>{
-    const legacy=(s,k)=>({fps:s.exposure?.fps,shutterAngle:s.exposure?.shutterAngleDeg,iso:s.exposure?.iso,
-      ndStops:s.exposure?.ndStops,aperture:s.dof?.aperture,focalLengthMm:s.camera?.focalLengthMm})[k];
+    const legacy=(s,k)=>({fps:(s.exposure||{}).fps,shutterAngle:(s.exposure||{}).shutterAngleDeg,iso:(s.exposure||{}).iso,
+      ndStops:(s.exposure||{}).ndStops,aperture:(s.dof||{}).aperture,focalLengthMm:(s.camera||{}).focalLengthMm})[k];
     add('Kamera',k,a.plan?a.plan.cameraSettings[k]:legacy(old,k),b.plan?b.plan.cameraSettings[k]:legacy(now,k),
       provenance(a,null,k),provenance(b,null,k),!a.plan||!b.plan?'Stari kadar nema verifikovanu Scene Planner vezu; vrednosti mogu biti podrazumevane.':null);
   });
@@ -70,10 +71,10 @@ function compareSaved(reference,current,core,options={}){
   if(!Array.isArray(proposed))throw new Error('Neispravno uparivanje izvora.');
   const seenA=new Set(),seenB=new Set();
   const pairs=proposed.map(pair=>{
-    const l=a.plan?.lights.find(x=>x.id===pair.left),r=b.plan?.lights.find(x=>x.id===pair.right);
+    const l=(a.plan?a.plan.lights.find(x=>x.id===pair.left):null),r=(b.plan?b.plan.lights.find(x=>x.id===pair.right):null);
     if(!l||!r||seenA.has(l.id)||seenB.has(r.id))throw new Error('Svaki izvor može biti uparen samo jednom.');
     seenA.add(l.id);seenB.add(r.id);
-    return {left:l.id,right:r.id,method:automatic.find(p=>p.left===l.id&&p.right===r.id)?.method||'RUČNO_UPARENI_PLANOVI_NIJE_POTVRDA_UREĐAJA'};
+    return {left:l.id,right:r.id,method:(automatic.find(p=>p.left===l.id&&p.right===r.id)||{}).method||'RUČNO_UPARENI_PLANOVI_NIJE_POTVRDA_UREĐAJA'};
   });
   pairs.forEach(pair=>{
     const l=a.plan.lights.find(x=>x.id===pair.left),r=b.plan.lights.find(x=>x.id===pair.right);
@@ -91,7 +92,7 @@ function compareSaved(reference,current,core,options={}){
     const distance=(s,l)=>(s.plan.distanceMeasurements||[]).find(m=>m.lightId===l.id&&m.fixtureId===l.fixtureId);
     const meter=(s,l)=>(s.plan.incidentLuxReadings||[]).find(m=>m.lightId===l.id&&m.fixtureId===l.fixtureId);
     const da=distance(a,l),db=distance(b,r),ma=meter(a,l),mb=meter(b,r);
-    add(group,'sačuvano merenje rastojanja (m)',da?.distanceM,db?.distanceM,
+    add(group,'sačuvano merenje rastojanja (m)',(da||{}).distanceM,(db||{}).distanceM,
       da?'KORISNIČKI_PRIJAVLJENO_MERENJE_NIJE_NEZAVISNO_PROVERENO':'NEPOZNATO',
       db?'KORISNIČKI_PRIJAVLJENO_MERENJE_NIJE_NEZAVISNO_PROVERENO':'NEPOZNATO',
       'Istorijski unosi korisnika; tačka i fizička postavka između scena nisu automatski usaglašene.');
@@ -101,7 +102,7 @@ function compareSaved(reference,current,core,options={}){
       'Samo sačuvana očitavanja sa kontekstom. Nema pretvaranja procenata u lux ili automatskog poređenja različitih uslova.');
   });
   [a,b].forEach((s,index)=>{
-    (s.plan?.lights||[]).forEach(l=>{
+    ((s.plan||{}).lights||[]).forEach(l=>{
       if((index?seenB:seenA).has(l.id))return;
       add('Neuparen izvor',index?'Samo u trenutnoj: '+l.id:'Samo u referentnoj: '+l.id,
         index?null:{id:l.id,role:l.role,fixture:l.fixtureName},
@@ -118,10 +119,10 @@ function compareSaved(reference,current,core,options={}){
   let meterComparison=null;
   if(a.revision&&b.revision&&b.history.some(r=>r.revisionId===a.revision.revisionId))
     meterComparison=core.compareSceneIncidentLuxRevisions(b.history,a.revision.revisionId,b.revision.revisionId);
-  return copied({contract:'lightingai-saved-continuity/1',reference:{id:reference.id,name:reference.name,revisionId:a.revision?.revisionId||null},
-    current:{id:current.id,name:current.name,revisionId:b.revision?.revisionId||null},pairs,rows,
+  return copied({contract:'lightingai-saved-continuity/1',reference:{id:reference.id,name:reference.name,revisionId:(a.revision||{}).revisionId||null},
+    current:{id:current.id,name:current.name,revisionId:(b.revision||{}).revisionId||null},pairs,rows,
     counts:{match:rows.filter(r=>r.status==='MATCH').length,changed:rows.filter(r=>r.status==='CHANGED').length,unknown:rows.filter(r=>r.status==='UNKNOWN').length},
-    wholeSceneMeterRecords:{reference:a.plan?.sceneIncidentLuxReading||null,current:b.plan?.sceneIncidentLuxReading||null},
+    wholeSceneMeterRecords:{reference:(a.plan||{}).sceneIncidentLuxReading||null,current:(b.plan||{}).sceneIncidentLuxReading||null},
     meterComparison:meterComparison,knowledge:continuityKnowledge,
     importedHistory:!!(reference.imported||current.imported),
     physicalFixtureCommandsPerformed:false,originalScenesModified:false,sceneContrastVerified:false,cameraExposureVerified:false,
@@ -151,7 +152,7 @@ function readSavedSource(source,draft){
   if(!source)throw new Error('Izaberi referentnu i trenutnu scenu ili kadar.');
   if(source.kind==='scene')return draft.readSceneSnapshot(source.id);
   const record=source.record,setup=source.kind==='shot'?record.setup:record.data;
-  const binding=source.kind==='shot'&&setup?.scenePlannerBinding;
+  const binding=source.kind==='shot'&&(setup||{}).scenePlannerBinding;
   if(binding){
     const snapshot=draft.readSceneSnapshot(binding.sceneId);
     const index=snapshot.revisions.findIndex(r=>r.revisionId===binding.revisionId);
@@ -162,7 +163,7 @@ function readSavedSource(source,draft){
     snapshot.reviews=snapshot.reviews.filter(r=>ids.includes(r.revisionId));
     return snapshot;
   }
-  return {kind:'shot',id:record.id,name:record.name,revisions:[],legacy:copied(setup?.continuity||setup||{})};
+  return {kind:'shot',id:record.id,name:record.name,revisions:[],legacy:copied((setup||{}).continuity||setup||{})};
 }
 function ensureSavedCore(){
   if(window.LightingAIScenePlannerCore)return Promise.resolve(window.LightingAIScenePlannerCore);
@@ -210,9 +211,9 @@ function mountSavedComparison(box){
     const a=normalizeSaved(reference,core),b=normalizeSaved(current,core),pairs=automaticPairs(a,b);
     preparedKeys=node('reference').value+'|'+node('current').value;
     node('pairs').innerHTML='<p>Uparivanje je između zapisa plana, ne potvrda identiteta fizičkog reflektora. Prazan izbor ostaje NEPOZNATO.</p>'+
-      (a.plan?.lights||[]).map(l=>'<label>'+safeHtml(l.id+' • '+l.role+' • '+l.fixtureName)+
+      ((a.plan||{}).lights||[]).map(l=>'<label>'+safeHtml(l.id+' • '+l.role+' • '+l.fixtureName)+
         '<select data-cont-light="'+safeHtml(l.id)+'"><option value="">NEUPAREN</option>'+
-        (b.plan?.lights||[]).map(r=>'<option value="'+safeHtml(r.id)+'"'+(pairs.some(p=>p.left===l.id&&p.right===r.id)?' selected':'')+'>'+
+        ((b.plan||{}).lights||[]).map(r=>'<option value="'+safeHtml(r.id)+'"'+(pairs.some(p=>p.left===l.id&&p.right===r.id)?' selected':'')+'>'+
         safeHtml(r.id+' • '+r.role+' • '+r.fixtureName)+'</option>').join('')+'</select></label>').join('');
     message('Pregledani su sačuvani planovi. Po potrebi ručno upari izvore, zatim prikaži razlike.');
     return true;
@@ -268,16 +269,16 @@ const TXT={sr:{title:'🎬 Continuity / Match Shot',intro:'Sačuvaj tehničku re
 const t=()=>TXT[lang()];
 function parse(k,f){try{const v=JSON.parse(localStorage.getItem(k));return v==null?f:v}catch(e){return f}}
 function num(v){if(v==null||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)?n:null}
-function input(id){return num(E(id)?.value)}
+function input(id){return num((E(id)||{}).value)}
 function activeScene(){const s=parse(SET_KEY,null);if(!s||!Array.isArray(s.scenes)||!s.scenes.length)return null;return s.scenes.find(x=>x.id===s.activeId)||s.scenes[0]}
 function latestMeasure(target){const a=parse(MEASURE_KEY,[]);if(!Array.isArray(a))return null;const rows=a.filter(x=>x&&x.target===target&&Number(x.distance)>0);if(!rows.length)return null;rows.sort((a,b)=>{const ta=Date.parse(a.createdAt||a.timestamp||0)||0,tb=Date.parse(b.createdAt||b.timestamp||0)||0;return tb-ta});return num(rows[0].distance)}
 function equipment(){const fs=Array.isArray(window.catalogFixtures)?window.catalogFixtures:[],sel=Array.isArray(window.equipment)?window.equipment:[];return sel.map(e=>{const f=fs.find(x=>x.id===e.id||x.id===e.fixtureId);return {id:(f&&f.id)||e.id||e.fixtureId||'?',name:f?((f.manufacturer||'')+' '+(f.model||f.id)).trim():String(e.id||e.fixtureId||'?'),qty:Math.max(1,Math.round(Number(e.qty)||1))}}).sort((a,b)=>a.id.localeCompare(b.id))}
 function dmx(){if(typeof window.LightingAIDmxSnapshot==='function'){try{return window.LightingAIDmxSnapshot()}catch(e){}}const s=parse(DMX_KEY,{rows:[]});return {rows:(s.rows||[]).map(r=>({name:r.name||'',mode:r.mode||'',universe:Number(r.universe)||1,start:Number(r.start)||1,channels:Number(r.channels)||0}))}}
-function snapshot(){const scene=activeScene(),cam=scene&&(scene.objects||[]).find(o=>o.type==='camera'),ratio=Object.assign({},parse(RATIO_KEY,{}));let dof=null,flicker=null;try{dof=typeof window.LightingAIDofSnapshot==='function'?window.LightingAIDofSnapshot():null}catch(e){}try{flicker=typeof window.LightingAIFlickerSnapshot==='function'?window.LightingAIFlickerSnapshot():null}catch(e){}return {sceneId:scene?.id||null,sceneName:scene?.name||null,camera:{focalLengthMm:num(cam?.focalLengthMm),sensorWidthMm:num(cam?.sensorWidthMm)},subjectDistanceM:latestMeasure('subject'),equipment:equipment(),exposure:{iso:input('lightCalcIso'),fps:input('lightCalcFps'),shutterAngleDeg:input('lightCalcShutter'),ndStops:input('lightCalcNd')},ratio:{keyLux:num(ratio.key),fillLux:num(ratio.fill),backLux:num(ratio.back)},dof:dof?{focalLengthMm:num(dof.focalLengthMm),aperture:num(dof.aperture),subjectDistanceM:num(dof.subjectDistanceM),sensorWidthMm:num(dof.sensorWidthMm),cocMm:num(dof.circleOfConfusionMm)}:null,flicker:flicker?{fps:num(flicker.fps),shutterAngleDeg:num(flicker.shutterAngleDeg),frequencyHz:num(flicker.frequencyHz)}:null,dmx:dmx()}}
+function snapshot(){const scene=activeScene(),cam=scene&&(scene.objects||[]).find(o=>o.type==='camera'),ratio=Object.assign({},parse(RATIO_KEY,{}));let dof=null,flicker=null;try{dof=typeof window.LightingAIDofSnapshot==='function'?window.LightingAIDofSnapshot():null}catch(e){}try{flicker=typeof window.LightingAIFlickerSnapshot==='function'?window.LightingAIFlickerSnapshot():null}catch(e){}return {sceneId:(scene||{}).id||null,sceneName:(scene||{}).name||null,camera:{focalLengthMm:num((cam||{}).focalLengthMm),sensorWidthMm:num((cam||{}).sensorWidthMm)},subjectDistanceM:latestMeasure('subject'),equipment:equipment(),exposure:{iso:input('lightCalcIso'),fps:input('lightCalcFps'),shutterAngleDeg:input('lightCalcShutter'),ndStops:input('lightCalcNd')},ratio:{keyLux:num(ratio.key),fillLux:num(ratio.fill),backLux:num(ratio.back)},dof:dof?{focalLengthMm:num(dof.focalLengthMm),aperture:num(dof.aperture),subjectDistanceM:num(dof.subjectDistanceM),sensorWidthMm:num(dof.sensorWidthMm),cocMm:num(dof.circleOfConfusionMm)}:null,flicker:flicker?{fps:num(flicker.fps),shutterAngleDeg:num(flicker.shutterAngleDeg),frequencyHz:num(flicker.frequencyHz)}:null,dmx:dmx()}}
 window.LightingAIContinuitySnapshot=snapshot;
 function read(){const v=parse(KEY,{refs:[],activeId:null});if(!Array.isArray(v.refs))v.refs=[];return v}
 let state=read();function persist(){localStorage.setItem(KEY,JSON.stringify(state))}function id(){return 'cont_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6)}
-function saveRef(){const d=snapshot(),name=(E('continuityName')?.value||d.sceneName||('Reference '+(state.refs.length+1))).trim()||('Reference '+(state.refs.length+1)),r={id:id(),name,createdAt:new Date().toISOString(),data:d};state.refs.push(r);state.activeId=r.id;persist();renderSelect();compare();status(t().saved)}
+function saveRef(){const d=snapshot(),name=((E('continuityName')||{}).value||d.sceneName||('Reference '+(state.refs.length+1))).trim()||('Reference '+(state.refs.length+1)),r={id:id(),name,createdAt:new Date().toISOString(),data:d};state.refs.push(r);state.activeId=r.id;persist();renderSelect();compare();status(t().saved)}
 function activeRef(){return state.refs.find(r=>r.id===state.activeId)||state.refs[0]||null}
 function eqNum(a,b,tol){if(a==null&&b==null)return false;if(a==null||b==null)return false;return Math.abs(Number(a)-Number(b))<=tol}
 function eqJson(a,b){try{return JSON.stringify(a)===JSON.stringify(b)}catch(e){return false}}
@@ -286,11 +287,11 @@ function equipmentText(a){return (a||[]).map(x=>x.name+' ×'+x.qty).join(', ')||
 function dmxText(d){const rows=d&&Array.isArray(d.rows)?d.rows:[];return rows.length?rows.map(r=>'U'+(r.universe||1)+' '+(r.start||1)+'-'+((r.start||1)+(r.channels||0)-1)+' '+(r.name||'')).join(' | '):'—'}
 function dofText(d){return d?(fmt(d.focalLengthMm,' mm')+' · f/'+fmt(d.aperture)+' · '+fmt(d.subjectDistanceM,' m')):'—'}
 function flickerText(f){return f?(fmt(f.fps,' fps')+' · '+fmt(f.shutterAngleDeg,'°')+' @ '+fmt(f.frequencyHz,' Hz')):'—'}
-function rows(base,cur){const x=t();return [{l:x.focal,a:fmt(base.camera?.focalLengthMm,' mm'),b:fmt(cur.camera?.focalLengthMm,' mm'),ok:eqNum(base.camera?.focalLengthMm,cur.camera?.focalLengthMm,0.01)},{l:x.sensor,a:fmt(base.camera?.sensorWidthMm,' mm'),b:fmt(cur.camera?.sensorWidthMm,' mm'),ok:eqNum(base.camera?.sensorWidthMm,cur.camera?.sensorWidthMm,0.01)},{l:x.distance,a:fmt(base.subjectDistanceM,' m'),b:fmt(cur.subjectDistanceM,' m'),ok:eqNum(base.subjectDistanceM,cur.subjectDistanceM,0.02)},{l:x.equipment,a:equipmentText(base.equipment),b:equipmentText(cur.equipment),ok:eqJson(base.equipment,cur.equipment)},{l:x.iso,a:fmt(base.exposure?.iso),b:fmt(cur.exposure?.iso),ok:eqNum(base.exposure?.iso,cur.exposure?.iso,0.1)},{l:x.fps,a:fmt(base.exposure?.fps),b:fmt(cur.exposure?.fps),ok:eqNum(base.exposure?.fps,cur.exposure?.fps,0.001)},{l:x.shutter,a:fmt(base.exposure?.shutterAngleDeg,'°'),b:fmt(cur.exposure?.shutterAngleDeg,'°'),ok:eqNum(base.exposure?.shutterAngleDeg,cur.exposure?.shutterAngleDeg,0.1)},{l:x.nd,a:fmt(base.exposure?.ndStops),b:fmt(cur.exposure?.ndStops),ok:eqNum(base.exposure?.ndStops,cur.exposure?.ndStops,0.01)},{l:x.key,a:fmt(base.ratio?.keyLux,' lx'),b:fmt(cur.ratio?.keyLux,' lx'),ok:eqNum(base.ratio?.keyLux,cur.ratio?.keyLux,1)},{l:x.fill,a:fmt(base.ratio?.fillLux,' lx'),b:fmt(cur.ratio?.fillLux,' lx'),ok:eqNum(base.ratio?.fillLux,cur.ratio?.fillLux,1)},{l:x.back,a:fmt(base.ratio?.backLux,' lx'),b:fmt(cur.ratio?.backLux,' lx'),ok:eqNum(base.ratio?.backLux,cur.ratio?.backLux,1)},{l:x.dof,a:dofText(base.dof),b:dofText(cur.dof),ok:eqJson(base.dof,cur.dof)},{l:x.flicker,a:flickerText(base.flicker),b:flickerText(cur.flicker),ok:eqJson(base.flicker,cur.flicker)},{l:x.dmx,a:dmxText(base.dmx),b:dmxText(cur.dmx),ok:eqJson(base.dmx,cur.dmx)}]}
+function rows(base,cur){const x=t();return [{l:x.focal,a:fmt((base.camera||{}).focalLengthMm,' mm'),b:fmt((cur.camera||{}).focalLengthMm,' mm'),ok:eqNum((base.camera||{}).focalLengthMm,(cur.camera||{}).focalLengthMm,0.01)},{l:x.sensor,a:fmt((base.camera||{}).sensorWidthMm,' mm'),b:fmt((cur.camera||{}).sensorWidthMm,' mm'),ok:eqNum((base.camera||{}).sensorWidthMm,(cur.camera||{}).sensorWidthMm,0.01)},{l:x.distance,a:fmt(base.subjectDistanceM,' m'),b:fmt(cur.subjectDistanceM,' m'),ok:eqNum(base.subjectDistanceM,cur.subjectDistanceM,0.02)},{l:x.equipment,a:equipmentText(base.equipment),b:equipmentText(cur.equipment),ok:eqJson(base.equipment,cur.equipment)},{l:x.iso,a:fmt((base.exposure||{}).iso),b:fmt((cur.exposure||{}).iso),ok:eqNum((base.exposure||{}).iso,(cur.exposure||{}).iso,0.1)},{l:x.fps,a:fmt((base.exposure||{}).fps),b:fmt((cur.exposure||{}).fps),ok:eqNum((base.exposure||{}).fps,(cur.exposure||{}).fps,0.001)},{l:x.shutter,a:fmt((base.exposure||{}).shutterAngleDeg,'°'),b:fmt((cur.exposure||{}).shutterAngleDeg,'°'),ok:eqNum((base.exposure||{}).shutterAngleDeg,(cur.exposure||{}).shutterAngleDeg,0.1)},{l:x.nd,a:fmt((base.exposure||{}).ndStops),b:fmt((cur.exposure||{}).ndStops),ok:eqNum((base.exposure||{}).ndStops,(cur.exposure||{}).ndStops,0.01)},{l:x.key,a:fmt((base.ratio||{}).keyLux,' lx'),b:fmt((cur.ratio||{}).keyLux,' lx'),ok:eqNum((base.ratio||{}).keyLux,(cur.ratio||{}).keyLux,1)},{l:x.fill,a:fmt((base.ratio||{}).fillLux,' lx'),b:fmt((cur.ratio||{}).fillLux,' lx'),ok:eqNum((base.ratio||{}).fillLux,(cur.ratio||{}).fillLux,1)},{l:x.back,a:fmt((base.ratio||{}).backLux,' lx'),b:fmt((cur.ratio||{}).backLux,' lx'),ok:eqNum((base.ratio||{}).backLux,(cur.ratio||{}).backLux,1)},{l:x.dof,a:dofText(base.dof),b:dofText(cur.dof),ok:eqJson(base.dof,cur.dof)},{l:x.flicker,a:flickerText(base.flicker),b:flickerText(cur.flicker),ok:eqJson(base.flicker,cur.flicker)},{l:x.dmx,a:dmxText(base.dmx),b:dmxText(cur.dmx),ok:eqJson(base.dmx,cur.dmx)}]}
 function compare(){const out=E('continuityResults'),r=activeRef();if(!out)return;if(!r){out.innerHTML='<div class="continuity-empty">'+t().none+'</div>';return}const rs=rows(r.data,snapshot());out.innerHTML='<p>Stari tehnički snimci: podudaranje zapisa nije potvrda fizičkog ili vizuelnog kontinuiteta. Lux unosi nemaju potvrđeno poreklo svetlomera.</p>'+rs.map((q,i)=>{const known=q.a!=='—'&&q.b!=='—'&&![8,9,10].includes(i);return '<div class="continuity-row '+(!known?'unknown':q.ok?'ok':'changed')+'"><div><b>'+safeHtml(q.l)+'</b><small>'+safeHtml(q.a)+'</small><small>→ '+safeHtml(q.b)+'</small></div><strong>'+(!known?'NEPOZNATO / NEPROVERENO':q.ok?'✓ POKLAPA SE ZAPIS':'PROMENJENO')+'</strong></div>'}).join('')}
 
 function renderSelect(){const s=E('continuitySelect');if(!s)return;s.innerHTML=state.refs.length?state.refs.map(r=>'<option value="'+safeHtml(r.id)+'" '+(r.id===state.activeId?'selected':'')+'>'+safeHtml(r.name)+'</option>').join(''):'<option value="">'+t().none+'</option>'}
-function delRef(){const r=activeRef();if(!r)return;state.refs=state.refs.filter(x=>x.id!==r.id);state.activeId=state.refs[0]?.id||null;persist();renderSelect();compare();status(t().deleted)}
+function delRef(){const r=activeRef();if(!r)return;state.refs=state.refs.filter(x=>x.id!==r.id);state.activeId=(state.refs[0]||{}).id||null;persist();renderSelect();compare();status(t().deleted)}
 function status(v){const e=E('continuityStatus');if(!e)return;e.textContent=v;setTimeout(()=>{if(e.textContent===v)e.textContent=''},2200)}
 function translate(){if(!E('continuityCard'))return;const x=t();E('continuityTitle').textContent=x.title;E('continuityIntro').textContent=x.intro;E('continuityNameLabel').firstChild.textContent=x.name+' ';E('continuitySave').textContent=x.save;E('continuityCompare').textContent=x.compare;E('continuityDelete').textContent=x.del;renderSelect();compare()}
 function init(){const page=E('planner');if(!page||E('continuityCard'))return false;const st=document.createElement('style');st.id='continuityStyle';st.textContent='.continuity-controls{display:grid;grid-template-columns:1.5fr 1fr;gap:8px}.continuity-results{margin-top:10px}.continuity-row{display:grid;grid-template-columns:1fr auto;gap:10px;padding:9px;border-bottom:1px solid #292d33;align-items:center}.continuity-row small{display:block;color:#9299a3;font-size:11px;margin-top:2px}.continuity-row strong{font-size:11px}.continuity-row.ok strong{color:#9de3bd}.continuity-row.changed{background:#24191b}.continuity-row.changed strong{color:#ffb5b5}.continuity-empty,.continuity-status{font-size:12px;color:#9299a3}.continuity-status{color:#b8f0d1;min-height:18px}@media(max-width:560px){.continuity-controls{grid-template-columns:1fr}.continuity-row{grid-template-columns:1fr}}';document.head.appendChild(st);const card=document.createElement('details');card.id='continuityCard';card.className='card';card.innerHTML='<summary style="font-weight:900;font-size:20px;cursor:pointer"><span id="continuityTitle"></span></summary><div style="margin-top:12px"><p id="continuityIntro" class="muted small"></p><div class="continuity-controls"><label id="continuityNameLabel">REFERENCE <input id="continuityName" type="text" maxlength="60"></label><select id="continuitySelect"></select></div><div class="actions" style="margin-top:8px"><button id="continuitySave" class="btn primary" type="button"></button><button id="continuityCompare" class="btn secondary" type="button"></button><button id="continuityDelete" class="btn secondary" type="button"></button></div><div id="continuityResults" class="continuity-results"></div><div id="continuityStatus" class="continuity-status"></div></div>';page.appendChild(card);const saved=document.createElement('div');saved.id='continuitySavedScenes';card.appendChild(saved);mountSavedComparison(saved);E('continuitySave').addEventListener('click',saveRef);E('continuityCompare').addEventListener('click',compare);E('continuityDelete').addEventListener('click',delRef);E('continuitySelect').addEventListener('change',()=>{state.activeId=E('continuitySelect').value||null;persist();compare()});if(typeof window.setLanguage==='function'&&!window.__continuityLangHook){const old=window.setLanguage;window.__continuityLangHook=true;window.setLanguage=function(l){old(l);setTimeout(translate,0)}}translate();return true}

@@ -701,6 +701,12 @@ await test('legacy Continuity snapshots do not invent default lenses, sensors or
   assert.equal(saved.ratio.keyLux,null);assert.equal(saved.ratio.fillLux,null);assert.equal(saved.ratio.backLux,null);
 });
 
+await test('shared Continuity and Shot List remain parseable on older Android WebViews',()=>{
+  for(const file of ['continuity-match-shot.js','shot-list-planner.js']){
+    const text=fs.readFileSync(new URL('../app/src/main/assets/'+file,import.meta.url),'utf8');
+    assert.ok(!/\?\.|\?\?|\.\s*at\s*\(|\.\s*flatMap\s*\(|\{\s*\.\.\./.test(text),'Unsupported WebView syntax/API in '+file);
+  }
+});
 await test('independent Node AES-GCM fixture for Java/Android interoperability (synthetic Unicode password only)',()=>{
   const salt=Buffer.from(Array.from({length:32},(_,i)=>i)),nonce=Buffer.from(Array.from({length:12},(_,i)=>i+32));
   const cost=Buffer.alloc(4);cost.writeUInt32BE(600000);

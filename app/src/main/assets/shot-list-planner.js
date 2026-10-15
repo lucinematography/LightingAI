@@ -19,9 +19,9 @@ function id(){return 'shot_'+Date.now().toString(36)+'_'+Math.random().toString(
 function activeScene(){const s=parse(SET_KEY,null);if(!s||!Array.isArray(s.scenes)||!s.scenes.length)return null;return s.scenes.find(x=>x.id===s.activeId)||s.scenes[0]}
 function latestSubjectDistance(){const a=parse(MEASURE_KEY,[]);if(!Array.isArray(a))return null;const m=a.find(x=>x&&x.target==='subject'&&Number(x.distance)>0);return m?Number(m.distance):null}
 function plannerBinding(){
- if(!E('shotListBindPlanner')?.checked)return null;
+ if(!E('shotListBindPlanner')||!E('shotListBindPlanner').checked)return null;
  const d=window.LightingAIScenePlannerDraft;if(!d||!d.readSceneSnapshot)throw new Error('Scene Planner nije dostupan.');
- const scene=d.readSceneSnapshot(d.activeSceneId()),last=scene.revisions.at(-1);
+ const scene=d.readSceneSnapshot(d.activeSceneId()),last=scene.revisions[scene.revisions.length-1];
  if(!last)throw new Error('Izabrana Scene Planner scena nema sačuvan plan.');
  return {sceneId:scene.id,sceneName:scene.name,revisionId:last.revisionId,sequence:last.sequence};
 }
@@ -30,7 +30,7 @@ function currentSetup(){const sc=activeScene();const cam=sc&&Array.isArray(sc.ob
  return {scenePlannerBinding:plannerBinding(),sceneId:sc&&sc.id||null,sceneName:sc&&sc.name||null,focalLengthMm:cam&&Number(cam.focalLengthMm)||null,sensorWidthMm:cam&&Number(cam.sensorWidthMm)||null,cameraToSubjectM:distance>0?distance:null,dof:dof||null,flicker:flicker||null,dmx:dmx||null,continuity:continuity||null,createdAt:new Date().toISOString()};}
 function appendShot(setup,name){
  const row={id:id(),name:String(name||'').trim().slice(0,80)||t().shot+' '+(state.rows.length+1),type:'medium',status:'planned',notes:'',setup};
- const next={...state,rows:state.rows.concat([row])};
+ const next=Object.assign({},state,{rows:state.rows.concat([row])});
  localStorage.setItem(KEY,JSON.stringify(next));state=next;render();return JSON.parse(JSON.stringify(row));
 }
 function add(){try{appendShot(currentSetup())}catch(error){E('shotListSummary').textContent=error.message;}}
@@ -46,7 +46,7 @@ window.LightingAIShotList={captureScenePlannerShot:captureScenePlannerShot};
 function statusOptions(v){const x=t();return [['planned',x.planned],['ready',x.ready],['done',x.done]].map(a=>'<option value="'+a[0]+'" '+(v===a[0]?'selected':'')+'>'+a[1]+'</option>').join('')}
 function typeOptions(v){const x=t();return [['wide',x.wide],['medium',x.medium],['close',x.close],['detail',x.detail],['insert',x.insert],['other',x.other]].map(a=>'<option value="'+a[0]+'" '+(v===a[0]?'selected':'')+'>'+a[1]+'</option>').join('')}
 function fmt(v,s=''){return Number.isFinite(Number(v))?Number(v).toFixed(2)+s:'—'}
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function render(){const box=E('shotListRows');if(!box)return;const x=t();if(!state.rows.length){box.innerHTML='<div class="shot-list-empty">'+x.empty+'</div>';summary();return}box.innerHTML=state.rows.map((r,i)=>{const s=r.setup||{};return '<div class="shot-list-row" data-row="'+r.id+'"><div class="shot-list-main"><input class="shot-name" data-id="'+r.id+'" value="'+esc(r.name||x.shot+' '+(i+1))+'"><select class="shot-type" data-id="'+r.id+'">'+typeOptions(r.type)+'</select><select class="shot-status" data-id="'+r.id+'">'+statusOptions(r.status)+'</select></div><div class="shot-list-tech"><span><small>'+x.lens+'</small><b>'+(s.focalLengthMm?fmt(s.focalLengthMm,' mm'):'—')+'</b></span><span><small>'+x.distance+'</small><b>'+(s.cameraToSubjectM?fmt(s.cameraToSubjectM,' m'):'—')+'</b></span><span><small>SCENA</small><b>'+esc(s.scenePlannerBinding?('Scene Planner: '+s.scenePlannerBinding.sceneName+' · rev '+s.scenePlannerBinding.sequence):(s.sceneName||'—'))+'</b></span></div><textarea class="shot-notes" data-id="'+r.id+'" placeholder="'+x.notes+'">'+esc(r.notes||'')+'</textarea><div class="actions"><button class="btn secondary shot-dup" data-id="'+r.id+'" type="button">'+x.duplicate+'</button><button class="btn secondary shot-remove" data-id="'+r.id+'" type="button">'+x.remove+'</button></div></div>'}).join('');summary()}
 function summary(){const el=E('shotListSummary');if(!el)return;const done=state.rows.filter(r=>r.status==='done').length;el.textContent=t().summary+': '+state.rows.length+' · '+done+' '+t().captured}
 function update(el){const r=state.rows.find(x=>x.id===el.dataset.id);if(!r)return;if(el.classList.contains('shot-name'))r.name=el.value;if(el.classList.contains('shot-type'))r.type=el.value;if(el.classList.contains('shot-status'))r.status=el.value;if(el.classList.contains('shot-notes'))r.notes=el.value;save();summary()}

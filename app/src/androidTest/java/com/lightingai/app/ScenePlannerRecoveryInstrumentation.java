@@ -42,7 +42,7 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
             String diagnostic = "";
             try { if (webView != null) diagnostic = evaluate("JSON.stringify({" +
                 "hasOverlay:!!document.getElementById('sp-description')," +
-                "shotAPI:!!window.LightingAIShotList,snapshotAPI:typeof LightingAIScenePlannerDraft.readSceneSnapshot," +
+                "shotAPI:!!window.LightingAIShotList,snapshotAPI:typeof LightingAIScenePlannerDraft.readSceneSnapshot,webView:navigator.userAgent," +
                 "shotRows:localStorage.getItem('lighting_shot_list_v1')," +
                 "sceneStatus:document.getElementById('sp-status')&&document.getElementById('sp-status').textContent," +
                 "draft:LightingAIScenePlannerDraft.readWorkspaceValue('lighting_scene_planner_draft_v1')," +

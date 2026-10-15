@@ -114,3 +114,26 @@ Primary Android references:
 - https://developer.android.com/google/play/app-updates
 - https://developer.android.com/studio/publish/versioning
 - https://source.android.com/docs/security/features/apksigning/v2
+
+## Pending on-set measurement drafts
+
+Distance, selected mounted optic, isolated incident-lux metadata, combined scene
+incident-lux metadata and gray-card/waveform input fields now survive app backgrounding
+or process replacement through the existing draft/native checkpoint path.
+These are uncommitted user entries, bound to the exact active plan revision.
+They do not create a measurement record, new plan revision or accepted prelight review.
+
+Only explicitly listed text/number/date/select fields are persisted. Physical
+measurement, camera/setup and reference confirmation checkboxes are deliberately
+excluded and require the operator's fresh confirmation after recovery. Changed
+revision IDs, unknown select choices, secret/hidden/file controls, malformed values
+and unsupported fields are not restored. Existing version-1 drafts remain readable.
+
+Four additional recovery regression groups cover same-revision restoration,
+native-only recovery, immutable accepted history, confirmation/privacy exclusions
+and malformed input. The new regression fails on the previous implementation.
+Numeric examples in tests are arbitrary fixtures, not lighting or camera references.
+
+This is a persistence fix supporting practical on-set work, not a new lighting
+recommendation. K0/K1 and their Landau, Brown and Popović references are unchanged;
+no new book quotations, page claims or exposure rules are introduced.

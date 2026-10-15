@@ -96,6 +96,15 @@
   function revisionId(getRevisionId){
     try{return typeof getRevisionId==='function'?getRevisionId():null;}catch(e){return null;}
   }
+  // Pending on-set entries are drafts, never measurement attestations.
+  function measurementField(f){
+    if(!f||['INPUT','TEXTAREA','SELECT'].indexOf(f.tagName)<0)return false;
+    if(['text','number','datetime-local','textarea','select-one'].indexOf(f.type)<0)return false;
+    return /^sp-(distance|optic|incident)-L\d+$/.test(f.id)||
+      /^sp-meter-(model|point|orientation|time|identifier|offset)-L\d+$/.test(f.id)||
+      /^sp-scene-total-(lux|meter-model|meter-id|point|time|offset)$/.test(f.id)||
+      /^sp-waveform-(ire|camera-model|profile|card|source|path|code-range|transfer|lut|time|offset|target|basis)$/.test(f.id);
+  }
   function capture(overlay,getRevisionId){
     if(!overlay)return false;
     var saved=initial(),fields={};if(!saved)return false;
@@ -120,6 +129,11 @@
         planFields[f.id]=String(f.value||'');
     });
     saved.planFields={revisionId:revisionId(getRevisionId),fields:planFields};
+    var measurementFields={};
+    if(overlay.querySelectorAll)Array.prototype.forEach.call(overlay.querySelectorAll('input[id],textarea[id],select[id]'),function(f){
+      if(measurementField(f)&&String(f.value||'').length<=1000)measurementFields[f.id]=String(f.value||'');
+    });
+    saved.measurementFields={revisionId:revisionId(getRevisionId),fields:measurementFields};
     return write(saved);
   }
   function restore(overlay,currentRevisionId){
@@ -146,6 +160,15 @@
       Object.keys(pending.fields).forEach(function(id){
         if(!/^sp-dop-(light-L\d+-(x|y|heightM|distanceM|intensityPct|kelvin)|camera-(fps|shutterAngle|aperture|iso|whiteBalanceK|ndStops)|local-reason)$/.test(id))return;
         var f=node(overlay,id);if(f&&typeof pending.fields[id]==='string')f.value=pending.fields[id];
+      });
+    var measurements=saved.measurementFields;
+    if(measurements&&currentRevisionId&&measurements.revisionId===currentRevisionId&&
+       measurements.fields&&typeof measurements.fields==='object'&&!Array.isArray(measurements.fields))
+      Object.keys(measurements.fields).forEach(function(id){
+        var f=node(overlay,id),value=measurements.fields[id];
+        if(!measurementField(f)||typeof value!=='string'||value.length>1000)return;
+        if(f.tagName==='SELECT'&&!Array.prototype.some.call(f.options,function(o){return o.value===value;}))return;
+        f.value=value;
       });
     var y=Number(saved.scrollTop);
     if(Number.isFinite(y)&&y>=0){

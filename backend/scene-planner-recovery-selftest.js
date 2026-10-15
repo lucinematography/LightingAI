@@ -194,4 +194,98 @@ await test('denied WebView storage still permits native recovery and checkpoint'
   assert.equal(next.api.restore(next.overlay,'rev-denied'),true);
   assert.equal(next.nodes.get('sp-description').value,'Nova native sacuvana izmena');
 });
+
+const measurementExamples=[
+  ['sp-distance-L1','3.25','number'],['sp-optic-L1','reflector-A','select-one'],
+  ['sp-incident-L1','250','number'],['sp-meter-model-L1','User meter','text'],
+  ['sp-meter-point-L1','Actor A','text'],['sp-meter-orientation-L1','RECEPTOR_TOWARD_CAMERA','select-one'],
+  ['sp-meter-time-L1','2026-10-15T14:30','datetime-local'],['sp-meter-identifier-L1','M-07','text'],
+  ['sp-meter-offset-L1','+02:00','text'],['sp-scene-total-lux','420','number'],
+  ['sp-scene-total-meter-model','Scene meter','text'],['sp-scene-total-meter-id','M-08','text'],
+  ['sp-scene-total-point','Actor A','text'],['sp-scene-total-time','2026-10-15T14:32','datetime-local'],
+  ['sp-scene-total-offset','+02:00','text'],['sp-waveform-ire','42.5','number'],
+  ['sp-waveform-camera-model','User camera','text'],['sp-waveform-profile','User recording profile','text'],
+  ['sp-waveform-card','Card A','text'],['sp-waveform-source','CAMERA_INTERNAL','select-one'],
+  ['sp-waveform-path','RECORDING_SIGNAL','select-one'],['sp-waveform-code-range','VIDEO_LEGAL','select-one'],
+  ['sp-waveform-transfer','User transfer','text'],['sp-waveform-lut','','text'],
+  ['sp-waveform-time','2026-10-15T14:33','datetime-local'],['sp-waveform-offset','+02:00','text'],
+  ['sp-waveform-target','41','number'],['sp-waveform-basis','User reference notes','text']
+];
+const measurementConfirmations=[
+  'sp-distance-verified-L1','sp-optic-confirmed-L1','sp-incident-confirmed-L1',
+  'sp-scene-total-measured','sp-scene-total-active','sp-waveform-reference-confirmed',
+  'sp-waveform-card-confirmed','sp-waveform-camera-confirmed','sp-waveform-lights-confirmed'
+];
+function measurementContext(store=new Map(),options={}){
+  const c=context(store,new Map(),options);
+  for(const [id,value,type] of measurementExamples){
+    const f=c.field(id,'',type);
+    if(type==='select-one'){f.tagName='SELECT';f.options=[{value:''},{value}];}
+  }
+  for(const id of measurementConfirmations)c.field(id,'','checkbox');
+  return c;
+}
+await test('pending on-set fields survive immediate replacement only on the same plan revision',()=>{
+  const c=measurementContext();c.attach('meter-revision');
+  for(const [id,value] of measurementExamples)c.nodes.get(id).value=value;
+  for(const id of measurementConfirmations)c.nodes.get(id).checked=true;
+  c.overlay.emit('input',c.nodes.get('sp-waveform-ire'));c.api.detach();
+  const same=measurementContext(c.store);same.api.restore(same.overlay,'meter-revision');
+  for(const [id,value] of measurementExamples)assert.equal(same.nodes.get(id).value,value,id);
+  for(const id of measurementConfirmations)assert.equal(same.nodes.get(id).checked,false,id+' requires fresh confirmation');
+  const other=measurementContext(c.store);other.api.restore(other.overlay,'different-revision');
+  for(const [id] of measurementExamples)assert.equal(other.nodes.get(id).value,'',id+' must not cross revisions');
+  const unbound=measurementContext(c.store);unbound.api.restore(unbound.overlay,null);
+  assert.equal(unbound.nodes.get('sp-waveform-ire').value,'');
+});
+await test('pending measurements recover from native storage without changing accepted plan or reviews',()=>{
+  const nativeFiles=new Map(),c=measurementContext(new Map(),{nativeFiles});
+  const acceptedPlan='["accepted-plan-fixture"]',acceptedReview='["accepted-review-fixture"]';
+  c.api.checkpointWorkspace({lighting_scene_planner_revisions_v1:acceptedPlan,
+    lighting_scene_planner_prelight_reviews_v1:acceptedReview});
+  c.attach('meter-native');
+  c.nodes.get('sp-scene-total-lux').value='420';
+  c.nodes.get('sp-waveform-ire').value='42.5';
+  c.overlay.emit('input',c.nodes.get('sp-waveform-ire'));c.api.detach();
+  const recovered=measurementContext(new Map(),{nativeFiles,noStorage:true,noDb:true});
+  recovered.api.restore(recovered.overlay,'meter-native');
+  assert.equal(recovered.nodes.get('sp-scene-total-lux').value,'420');
+  assert.equal(recovered.nodes.get('sp-waveform-ire').value,'42.5');
+  assert.equal(recovered.api.readWorkspaceValue('lighting_scene_planner_revisions_v1'),acceptedPlan);
+  assert.equal(recovered.api.readWorkspaceValue('lighting_scene_planner_prelight_reviews_v1'),acceptedReview);
+});
+await test('measurement draft whitelist excludes secrets, unsupported inputs and physical confirmations',()=>{
+  const c=measurementContext();
+  c.field('sp-waveform-auth','private-measurement-token');
+  c.field('sp-waveform-camera-model','private-password','password');
+  c.field('sp-meter-model-L2','private-file-path','file');
+  c.field('sp-meter-identifier-L2','private-hidden-value','hidden');
+  c.field('sp-scene-total-point','A'.repeat(1001));
+  c.attach('meter-privacy');c.overlay.emit('input',c.nodes.get('sp-waveform-ire'));c.api.detach();
+  const saved=JSON.parse(c.store.get(DRAFT)).measurementFields.fields;
+  for(const id of measurementConfirmations)assert.equal(Object.hasOwn(saved,id),false,id);
+  const all=JSON.stringify([...c.store]);
+  for(const secret of ['private-measurement-token','private-password','private-file-path','private-hidden-value','private-token'])
+    assert.equal(all.includes(secret),false,secret+' must not be stored');
+  assert.equal(Object.hasOwn(saved,'sp-scene-total-point'),false);
+});
+await test('restoration rejects forged confirmations, unknown select choices and malformed measurement values',()=>{
+  const c=measurementContext();c.attach('meter-validation');
+  c.overlay.emit('input',c.nodes.get('sp-waveform-ire'));c.api.detach();
+  const raw=JSON.parse(c.store.get(DRAFT));
+  raw.measurementFields.fields={
+    'sp-waveform-source':'NO_SUCH_INSTRUMENT','sp-waveform-card-confirmed':'true',
+    'sp-scene-total-active':true,'sp-waveform-ire':{value:'42.5'},
+    'sp-scene-total-point':'A'.repeat(1001),'sp-video-auth':'forged-token'
+  };
+  c.store.set(DRAFT,JSON.stringify(raw));
+  const recovered=measurementContext(c.store);recovered.api.restore(recovered.overlay,'meter-validation');
+  assert.equal(recovered.nodes.get('sp-waveform-source').value,'');
+  assert.equal(recovered.nodes.get('sp-waveform-card-confirmed').checked,false);
+  assert.equal(recovered.nodes.get('sp-scene-total-active').checked,false);
+  assert.equal(recovered.nodes.get('sp-waveform-ire').value,'');
+  assert.equal(recovered.nodes.get('sp-scene-total-point').value,'');
+  assert.equal(recovered.nodes.get('sp-video-auth').value,'private-token');
+});
+
 console.log(`${passed} recovery regression groups passed; no provider or video processing calls.`);

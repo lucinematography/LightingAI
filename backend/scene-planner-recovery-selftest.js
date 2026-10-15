@@ -5,6 +5,10 @@ import {pbkdf2Sync,createCipheriv} from 'node:crypto';
 import {createRequire} from 'node:module';
 const core=createRequire(import.meta.url)('../app/src/main/assets/scene-planner-core.js');
 const source=fs.readFileSync(new URL('../app/src/main/assets/scene-planner-draft.js',import.meta.url),'utf8');
+const continuityModule={exports:{}};
+vm.runInNewContext(fs.readFileSync(new URL('../app/src/main/assets/continuity-match-shot.js',import.meta.url),'utf8'),{module:continuityModule});
+const continuity=continuityModule.exports;
+const continuityCatalog=JSON.parse(fs.readFileSync(new URL('./scene-planner-knowledge-seed-v1.json',import.meta.url),'utf8'));
 const DRAFT='lighting_scene_planner_draft_v1',PHOTO='lighting_scene_planner_draft_photo_v1';
 let passed=0;
 function events(){const listeners=new Map();return {
@@ -549,6 +553,152 @@ await test('blank scene without plan or photo is portable and native image rejec
   c.root.Android.validateScenePlannerBackupPhoto=()=>false;
   assert.throws(()=>c.api.previewSceneBackup(withPhoto),/Fotografija/);
   c.api.detach();f.c.api.detach();
+});
+
+
+function continuityFixture(id='continuity-a',qty=1,sourceKind='local'){
+  const req=core.request({description:'Synthetic continuity scene',mode:'own',
+    roomWidthM:6,roomDepthM:4,equipment:[{fixtureId:'ci-key',id:'ci-key',name:'Synthetic key',qty}],
+    cameraOverrides:{iso:800}});
+  const revision=core.createRevision(core.localPlan(req),req,sourceKind,null,id);
+  return {kind:'scene',id,name:id,revisions:[revision],reviews:[]};
+}
+await test('read-only continuity compares saved values without claiming visual continuity or measured lux',()=>{
+  const a=continuityFixture(),before=JSON.stringify(a);
+  const report=continuity.compareSaved(a,a,core);
+  assert.equal(JSON.stringify(a),before);
+  assert.equal(report.originalScenesModified,false);assert.equal(report.physicalFixtureCommandsPerformed,false);
+  assert.equal(report.cameraExposureVerified,false);assert.equal(report.sceneContrastVerified,false);
+  assert.ok(report.rows.some(r=>r.field==='intensityPct'&&r.status==='MATCH'));
+  assert.ok(report.rows.some(r=>r.field==='x'&&r.status==='UNKNOWN'));
+  assert.equal(report.rows.find(r=>r.field==='iso').beforeEvidence,'KORISNIČKI_ZADATO_NIJE_PROVERENO_NA_KAMERI');
+  assert.ok(!report.rows.some(r=>r.field==='sačuvano izolovano očitavanje lux'&&r.before!==null));
+});
+await test('independent scenes do not equate L1; ambiguous fixture/role pairs require explicit one-to-one mapping',()=>{
+  const a=continuityFixture(),b=continuityFixture('continuity-b');
+  assert.equal(continuity.automaticPairs(a,b,core).length,1,'unique role/model can be linked as planned records only');
+  const req=core.request({description:'Different fixture',mode:'own',equipment:[{id:'different',name:'Different fixture',qty:1}]});
+  const different={kind:'scene',id:'other',name:'Other',revisions:[core.createRevision(core.localPlan(req),req,'local',null,'other')]};
+  assert.equal(continuity.automaticPairs(a,different,core).length,0,'L1 alone is not identity');
+  const mapped=continuity.compareSaved(a,different,core,{pairs:[{left:'L1',right:'L1'}]});
+  assert.equal(mapped.rows.find(r=>r.field==='fixtureId').status,'CHANGED');
+  assert.equal(mapped.rows.find(r=>r.field==='intensityPct').status,'UNKNOWN');
+  assert.throws(()=>continuity.compareSaved(a,b,core,{pairs:[{left:'L1',right:'L1'},{left:'L1',right:'L1'}]}));
+  const duplicated=continuityFixture('duplicated',2);
+  const repeated=JSON.parse(JSON.stringify(duplicated.revisions[0].plan));repeated.lights[1].role='key';
+  const dupRequest=core.request({description:'Duplicate model and role',mode:'own',equipment:[{id:'ci-key',name:'Synthetic key',qty:2}]});
+  const dupRev=core.createRevision(repeated,dupRequest,'local',null,'different-root');
+  const other={kind:'scene',id:'dup',name:'Dup',revisions:[dupRev]};
+  const left=JSON.parse(JSON.stringify(duplicated.revisions[0].plan));left.lights[1].role='key';
+  const leftRev=core.createRevision(left,dupRequest,'local',null,'left-root');
+  assert.equal(continuity.automaticPairs({kind:'scene',id:'left',name:'Left',revisions:[leftRev]},other,core).length,0);
+});
+await test('DoP edits retain plan-only provenance through a later measurement revision',()=>{
+  const a=continuityFixture(),base=a.revisions[0];
+  const edit=core.createDopLightingVariantRevision(base,{confirmed:true,reason:'Synthetic continuity change',
+    lightEdits:[{lightId:'L1',intensityPct:35,kelvin:5000,x:40}],cameraEdits:{iso:1600}});
+  const distance=core.createDistanceMeasurementRevision(edit,{confirmed:true,lightId:'L1',distanceM:3});
+  const b={...a,revisions:[base,edit,distance]};
+  const unchanged=JSON.stringify(b),report=continuity.compareSaved(a,b,core,{sharedAxes:true});
+  assert.equal(report.rows.find(r=>r.field==='intensityPct').status,'CHANGED');
+  assert.equal(report.rows.find(r=>r.field==='intensityPct').afterEvidence,'DOP_POTVRĐEN_PLAN_NIJE_FIZIČKO_MERENJE');
+  assert.equal(report.rows.find(r=>r.field==='iso').afterEvidence,'DOP_POTVRĐEN_PLAN_NIJE_FIZIČKO_MERENJE');
+  assert.equal(report.rows.find(r=>r.field==='x').status,'CHANGED');
+  assert.equal(report.rows.find(r=>r.field==='sačuvano merenje rastojanja (m)').after,3);
+  assert.equal(report.rows.find(r=>r.field==='sačuvano merenje rastojanja (m)').status,'UNKNOWN');
+  assert.equal(JSON.stringify(b),unchanged);
+});
+await test('reported physical meter records remain distinct from AI/local estimates and are not reinterpreted across scenes',()=>{
+  const a=continuityFixture(),base=a.revisions[0];
+  const distance=core.createDistanceMeasurementRevision(base,{confirmed:true,lightId:'L1',distanceM:3});
+  const metered=core.createIncidentLuxRevision(distance,{confirmed:true,fixtureIsolated:true,lightId:'L1',lux:123,
+    meterModel:'Synthetic meter',measurementPoint:'Synthetic actor mark',receptorOrientation:'RECEPTOR_TOWARD_CAMERA',
+    measuredAtLocal:'2026-10-15T12:00',meterIdentifier:'CI-METER',measuredUtcOffset:'+02:00'});
+  const saved={...a,revisions:[base,distance,metered],imported:true};
+  const report=continuity.compareSaved(saved,continuityFixture('new-setup'),core);
+  const meter=report.rows.find(r=>r.field==='sačuvano izolovano očitavanje lux');
+  assert.equal(meter.before.lux,123);assert.equal(meter.after,null);assert.equal(meter.status,'UNKNOWN');
+  assert.match(meter.beforeEvidence,/FIZIČKOG_SVETLOMERA/);assert.equal(report.meterComparison,null);
+  assert.equal(report.importedHistory,true);
+  const ai=continuityFixture('ai-scene',1,'ai');
+  assert.equal(continuity.compareSaved(ai,ai,core).rows.find(r=>r.field==='kelvin').beforeEvidence,'AI_PROCENA_NIJE_MERENJE');
+});
+await test('missing plans and legacy shot defaults stay UNKNOWN; corrupt revision histories fail without mutation',()=>{
+  const legacy={kind:'shot',id:'old',name:'Old',revisions:[],legacy:{camera:{focalLengthMm:35},ratio:{keyLux:0}}};
+  const result=continuity.compareSaved(legacy,legacy,core);
+  assert.equal(result.counts.match,0);assert.equal(result.counts.changed,0);
+  assert.ok(result.rows.every(r=>r.status==='UNKNOWN'));
+  const a=continuityFixture(),bad=JSON.parse(JSON.stringify(a));bad.revisions[0].plan.lights[0].kelvin=9999;
+  const before=JSON.stringify(bad);assert.throws(()=>continuity.compareSaved(a,bad,core));
+  assert.equal(JSON.stringify(bad),before);
+  const noPlan={kind:'scene',id:'empty',name:'Empty',revisions:[]};
+  assert.equal(continuity.compareSaved(noPlan,noPlan,core).counts.match,0);
+});
+await test('shot bindings resolve exact historical revisions and never silently substitute a newer plan',()=>{
+  const a=continuityFixture(),base=a.revisions[0];
+  const later=core.createDopLightingVariantRevision(base,{confirmed:true,reason:'Later synthetic edit',cameraEdits:{iso:1600}});
+  const snapshot={...a,revisions:[base,later],reviews:[]};
+  const draft={readSceneSnapshot:()=>JSON.parse(JSON.stringify(snapshot))};
+  const shot={kind:'shot',record:{id:'shot-ci',name:'Shot CI',setup:{scenePlannerBinding:{sceneId:a.id,revisionId:base.revisionId}}}};
+  const read=continuity.readSavedSource(shot,draft);
+  assert.equal(read.revisions.length,1);assert.equal(read.revisions[0].plan.cameraSettings.iso,800);
+  shot.record.setup.scenePlannerBinding.revisionId='rev-'+'0'.repeat(64);
+  assert.throws(()=>continuity.readSavedSource(shot,draft),/revizija/);
+});
+await test('comparison snapshots read committed native data without switching scenes, writing caches or reading photos',()=>{
+  const f=backupFixture(),before=JSON.stringify([...f.nativeFiles]),writes=f.c.writes(),active=f.c.api.activeSceneId();
+  let photoReads=0;f.c.root.Android.loadScenePlannerPhoto=()=>{photoReads++;throw new Error('Must not read photos');};
+  const snapshot=f.c.api.readSceneSnapshot('legacy');
+  assert.equal(snapshot.revisions.length,1);
+  assert.equal(f.c.api.activeSceneId(),active);assert.equal(f.c.writes(),writes);
+  assert.equal(JSON.stringify([...f.nativeFiles]),before);assert.equal(photoReads,0);
+  assert.throws(()=>f.c.api.readSceneSnapshot('../../escape'));
+  f.nativeFiles.set('workspace','broken');
+  assert.throws(()=>f.c.api.readSceneSnapshot('legacy'));
+  f.c.api.detach();
+});
+await test('continuity explanations exactly reuse unchanged K0 card principles and stored unverified citations',()=>{
+  const cards=continuity.knowledge();assert.equal(cards.length,7);
+  for(const card of cards){
+    const original=continuityCatalog.cards.find(c=>c.id===card.id);
+    assert.equal(card.principle,original.principle);assert.equal(card.validation,original.validation);
+    assert.equal(card.limitations,original.limitations);
+    assert.equal(JSON.stringify(card.references.map(r=>({source_id:r.source,pdf_page:r.pdfPage,printed_page:r.printedPage}))),JSON.stringify(original.evidence));
+    assert.ok(card.references.every(r=>r.verification==='UNVERIFIED_ORIGINAL_PDF_NOT_AVAILABLE'));
+  }
+});
+
+
+await test('Shot List captures exact saved revision bindings, preserves them after restart and leaves source scenes untouched',()=>{
+  const data=new Map(),snapshot=continuityFixture(),before=JSON.stringify(snapshot);
+  const sandbox={window:{LightingAIScenePlannerCore:core,LightingAIScenePlannerDraft:{readSceneSnapshot:()=>JSON.parse(JSON.stringify(snapshot))}},
+    localStorage:{getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)},
+    document:{getElementById:()=>null},setInterval:()=>1,clearInterval:()=>{}};
+  const script=fs.readFileSync(new URL('../app/src/main/assets/shot-list-planner.js',import.meta.url),'utf8');
+  vm.runInNewContext(script,sandbox);
+  const first=sandbox.window.LightingAIShotList.captureScenePlannerShot(snapshot.id,'Synthetic Shot A');
+  assert.equal(first.setup.scenePlannerBinding.revisionId,snapshot.revisions[0].revisionId);
+  const next=core.createDopLightingVariantRevision(snapshot.revisions[0],{confirmed:true,reason:'Synthetic later camera setting',cameraEdits:{iso:1600}});
+  snapshot.revisions.push(next);
+  const second=sandbox.window.LightingAIShotList.captureScenePlannerShot(snapshot.id,'Synthetic Shot B');
+  assert.equal(second.setup.scenePlannerBinding.revisionId,next.revisionId);
+  const saved=JSON.parse(data.get('lighting_shot_list_v1'));
+  assert.equal(saved.rows[0].setup.scenePlannerBinding.revisionId,first.setup.scenePlannerBinding.revisionId);
+  delete sandbox.window.LightingAIShotList;vm.runInNewContext(script,sandbox);
+  const afterRestart=JSON.parse(data.get('lighting_shot_list_v1'));assert.equal(afterRestart.rows.length,2);
+  const old=continuity.readSavedSource({kind:'shot',record:afterRestart.rows[0]},sandbox.window.LightingAIScenePlannerDraft);
+  const current=continuity.readSavedSource({kind:'shot',record:afterRestart.rows[1]},sandbox.window.LightingAIScenePlannerDraft);
+  assert.equal(continuity.compareSaved(old,current,core).rows.find(r=>r.field==='iso').status,'CHANGED');
+  assert.equal(JSON.stringify(snapshot.revisions[0]),JSON.stringify(JSON.parse(before).revisions[0]));
+});
+
+await test('legacy Continuity snapshots do not invent default lenses, sensors or zero lux',()=>{
+  const sandbox={window:{},document:{getElementById:()=>null},localStorage:{getItem:()=>null},
+    setInterval:()=>1,clearInterval:()=>{},setTimeout:()=>1};
+  vm.runInNewContext(fs.readFileSync(new URL('../app/src/main/assets/continuity-match-shot.js',import.meta.url),'utf8'),sandbox);
+  const saved=sandbox.window.LightingAIContinuitySnapshot();
+  assert.equal(saved.camera.focalLengthMm,null);assert.equal(saved.camera.sensorWidthMm,null);
+  assert.equal(saved.ratio.keyLux,null);assert.equal(saved.ratio.fillLux,null);assert.equal(saved.ratio.backLux,null);
 });
 
 await test('independent Node AES-GCM fixture for Java/Android interoperability (synthetic Unicode password only)',()=>{

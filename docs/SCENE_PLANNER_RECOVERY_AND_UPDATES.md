@@ -303,3 +303,73 @@ Downloads output, wrong password, modified GCM tag, cancellation on background, 
 authenticated preview followed by explicit import, multiple scenes, and imported photo/history/pending
 measurements after force-stop. It also force-stops with a partially entered password and checks no native
 password dialog returns after restart. No user files, real passwords, signing credentials or photos enter CI.
+
+
+## Saved lighting continuity across scenes and shots
+
+The existing Continuity / Match Shot module now owns the shared read-only comparison API and renderer.
+Scene Planner and Shot List open that same implementation; there is no second continuity store or
+new comparison service. Legacy Continuity references remain available as saved snapshots with unknown
+provenance. The original controls remain separate from the saved-plan comparison.
+
+`LightingAIScenePlannerDraft.readSceneSnapshot(id)` reads only committed native workspace metadata,
+without selecting scenes, recovering caches, flushing drafts, loading photos or changing native files.
+It validates the scene ID and snapshot envelope. The shared comparison verifies the full immutable
+revision chain and saved review bindings through the existing core before comparing the latest plan.
+
+The reference/current selectors accept saved scenes, existing Shot List rows and Continuity references.
+Scene Planner can explicitly save its currently committed plan as a named Shot List frame.
+The Shot List row stores a small `scenePlannerBinding` (native scene ID, exact immutable revision ID,
+sequence and display name). It does not duplicate the plan/history/photo. Later source revisions do not
+move the reference: lookup slices the original history at that exact revision. Missing source/revision
+is an error, never a silent substitution with a newer plan. The traditional Shot List add action has an
+explicit optional binding checkbox; legacy setup data is not silently associated with an unrelated plan.
+Duplicating a shot retains its original setup/binding, rather than recapturing a different current setup.
+Existing shot records are not migrated or rewritten.
+
+Comparison includes saved source/model IDs and names, roles, proposed x/y, height, distance, angles,
+dimmer percentage, Kelvin, modifiers, color/gel, beam/tilt and camera FPS, shutter, aperture, ISO, WB,
+ND and focal length. It reports MATCH of recorded values, CHANGED, and UNKNOWN/NOT COMPARABLE.
+Null/empty values never become zero or a match. No overall right/wrong lighting score is computed.
+
+Lights in an identical verified lineage can match by stable logical light ID. Between independent
+scenes, automatic pairing requires a unique fixture-model/role combination on both sides. Repeated
+models/roles and conceptual sources without model IDs remain unmatched until the user explicitly pairs
+them one-to-one. L1 in unrelated scenes is never sufficient evidence of a shared physical fixture.
+Manual pairing links plan records, not hardware identity. Changed roles/models can be inspected through
+manual mapping. Numeric x/y/angle values remain spatially UNKNOWN unless the user declares a shared
+coordinate basis and both plans have the same positive room dimensions; even then these remain
+planned values, not measured world coordinates. Different models' percentages are not photometric matches.
+
+Evidence labels distinguish AI estimates, local rule-based suggestions, user-specified camera plans,
+verified DoP creative edit events, user-declared inventory and user-reported physical meter/distance
+records. The existing core's DoP edit ledger is reused so meter-only revisions do not invent new creative
+edits. A user-confirmed plan is not called a physical measurement. Historical instrument records retain
+meter/point/orientation/time metadata and their NOT_INDEPENDENTLY_VERIFIED status. Pending inputs are
+not treated as committed measurements. Imported histories are explicitly identified as historical.
+
+No estimated percentage, camera code value, nominal Kelvin or manufacturer sample is converted to
+measured lux. Whole-scene lux comparison reuses the existing core only when both selected revisions
+belong to its verified chronological chain; the existing meter/context/time restrictions still apply.
+Independent scenes show recorded observations with unknown physical comparability and no automatic
+lux ratio. Equal CCT does not prove spectral/skin-color matching. Physical shadow direction, real scene
+contrast, spectral equivalence and camera exposure remain unverified.
+
+### Existing book basis and limits
+
+The renderer uses exact existing K0 records PHY-002, PHY-003, SET-005, SET-007, COL-003, COL-004 and
+EXP-001, with their stored Landau, Brown and Popović bibliographic/page metadata. These cover source
+direction and softness, fill/contrast, camera angle dependence, white balance/spectrum and exposure
+measurement limits. Short existing card paraphrases and references are copied into the shared offline
+module; regression tests compare them exactly to the unchanged K0 source. No new card, citation or page
+number is invented, and K0/K1 files are unchanged. Original PDFs are not present in the repository.
+Every displayed page citation is explicitly UNVERIFIED here, not SOURCE_VERIFIED. No PDFs or book
+figures are packaged. The comparison supports a DoP's continuity review; it does not replace an on-set
+meter/camera test or decide that creative changes between different scenes are mistakes.
+
+Regression coverage includes read-only native snapshots, independent/ambiguous light identities,
+manual mapping and duplicates, missing data/defaults, changed DoP settings and inherited evidence,
+physical versus estimated records, corrupted histories, precise historical shot bindings and restart,
+and exact K0 metadata parity. Emulator coverage compares saved scenes and bound shots, checks originals
+and the active registry are unchanged, then compares the same bound shots after force-stop/restart.
+All fixtures, descriptions and readings are artificial; no real scene/photos are uploaded.

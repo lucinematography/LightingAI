@@ -281,6 +281,8 @@
       '<label for="sp-scene-select">NASTAVI RAD NA SCENI</label><select id="sp-scene-select" class="sp-field" disabled></select>'+
       '<label for="sp-scene-name">NAZIV NOVE SCENE</label><input id="sp-scene-name" class="sp-field" maxlength="80" placeholder="Npr. 12 — kuhinja, noć">'+
       '<button type="button" id="sp-scene-create" class="sp-btn" disabled>NOVA SCENA</button>'+
+      '<button type="button" id="sp-continuity-open" class="sp-btn">KONTINUITET — POREDI SAČUVANE SCENE / KADROVE</button><div id="sp-continuity-panel" hidden></div>'+
+      '<label>NAZIV KADRA ZA SHOT LIST<input id="sp-continuity-shot-name" class="sp-field" maxlength="80"></label><button type="button" id="sp-continuity-shot" class="sp-btn">SAČUVAJ SAČUVANI PLAN KAO KADAR</button>'+
       '<p class="sp-note">Svaka scena čuva svoj nacrt, fotografiju, plan, revizije i započeta merenja. Promena scene najpre čuva prethodni rad.</p></div>'+
       '<div class="sp-card"><h2 class="sp-h">KOPIJA CELE SCENE</h2>'+
       '<div class="sp-actions"><button type="button" id="sp-backup-export" class="sp-btn">IZVEZI KOPIJU SCENE</button>'+
@@ -388,6 +390,26 @@
     renderSceneControls();
     el('sp-scene-select').onchange=function(){changeScene(this.value);};
     el('sp-scene-create').onclick=function(){changeScene(null,el('sp-scene-name').value);};
+    el('sp-continuity-open').onclick=function(){
+      var box=el('sp-continuity-panel');box.hidden=!box.hidden;
+      if(box.hidden)return;
+      function mount(){if(box.isConnected)window.LightingAIContinuity.mountSavedComparison(box);}
+      if(window.LightingAIContinuity){mount();return;}
+      var script=document.createElement('script');script.src='file:///android_asset/continuity-match-shot.js';
+      script.onload=mount;script.onerror=function(){box.textContent='Poređenje nije učitano.';};
+      document.body.appendChild(script);
+    };
+    el('sp-continuity-shot').onclick=function(){
+      var scene=draft().activeSceneId(),name=el('sp-continuity-shot-name').value;
+      function capture(){
+        try{var row=window.LightingAIShotList.captureScenePlannerShot(scene,name);
+          status('Kadar '+row.name+' je vezan za sačuvanu reviziju '+row.setup.scenePlannerBinding.sequence+'. Osveži spisak u poređenju.');}
+        catch(error){status(error.message,true);}
+      }
+      if(window.LightingAIShotList){capture();return;}
+      var script=document.createElement('script');script.src='file:///android_asset/shot-list-planner.js';
+      script.onload=capture;script.onerror=function(){status('Shot List nije učitan.',true);};document.body.appendChild(script);
+    };
     el('sp-backup-export').onclick=exportSceneFile;
     el('sp-backup-import').onclick=function(){
       if(!canUseBackup())return;

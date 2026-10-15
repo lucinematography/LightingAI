@@ -92,6 +92,7 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
         waitFor("document.getElementById('sp-prelight-fill') && " +
             "document.getElementById('sp-prelight-fill').value==='needs_adjustment'");
         prepareSecondScene();
+        prepareContinuity();
         prepareBackupImport();
         evaluate("document.getElementById('sp-description').value='Recovery fixture after background';");
         runOnMainSync(() -> activity.moveTaskToBack(true));
@@ -133,6 +134,54 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
             "document.getElementById('sp-imported-note').textContent.length>0");
         selectLegacyScene();
         assertRecovered();
+        compareSavedShots();
+    }
+
+
+    private void prepareContinuity() throws Exception {
+        evaluate("document.getElementById('sp-continuity-shot-name').value='CI Shot A';" +
+            "document.getElementById('sp-continuity-shot').click();");
+        waitFor("window.LightingAIShotList && JSON.parse(localStorage.getItem('lighting_shot_list_v1')).rows.length===1");
+        selectSceneByName("CI Scene B", "Recovery fixture scene B");
+        evaluate("document.getElementById('sp-continuity-shot-name').value='CI Shot B';" +
+            "document.getElementById('sp-continuity-shot').click();");
+        waitFor("JSON.parse(localStorage.getItem('lighting_shot_list_v1')).rows.length===2");
+        selectLegacyScene();
+        String workspace = stableSceneWorkspace();
+        String index = evaluate("Android.loadScenePlannerSceneIndex()");
+        evaluate("document.getElementById('sp-continuity-open').click();");
+        waitFor("document.querySelector('#sp-continuity-panel [data-cont=current]')");
+        evaluate("(function(){var box=document.getElementById('sp-continuity-panel');" +
+            "var b=LightingAIScenePlannerDraft.listScenes().find(function(s){return s.name==='CI Scene B';});" +
+            "var a=box.querySelector('[data-cont=reference]'),c=box.querySelector('[data-cont=current]');" +
+            "a.value='scene:legacy';c.value='scene:'+b.id;" +
+            "a.dispatchEvent(new Event('change',{bubbles:true}));c.dispatchEvent(new Event('change',{bubbles:true}));" +
+            "box.querySelector('[data-cont=compare]').click();})()");
+        waitFor("(function(){var text=document.querySelector('#sp-continuity-panel [data-cont=result]').textContent;" +
+            "return text.indexOf('1600')>=0 && text.indexOf('800')>=0 && text.indexOf('PROMENJENO')>=0 && " +
+            "text.indexOf('NEPOZNATO')>=0 && text.indexOf('NEPROVERENO')>=0;})()");
+        if (!workspace.equals(stableSceneWorkspace()) || !index.equals(evaluate("Android.loadScenePlannerSceneIndex()")))
+            throw new IllegalStateException("Continuity changed source scenes");
+        compareSavedShots();
+    }
+
+    private void compareSavedShots() throws Exception {
+        if ("false".equals(evaluate("!!document.querySelector('#sp-continuity-panel [data-cont=current]')")))
+            evaluate("document.getElementById('sp-continuity-open').click();");
+        waitFor("document.querySelector('#sp-continuity-panel [data-cont=current]')");
+        String workspace = stableSceneWorkspace();
+        String index = evaluate("Android.loadScenePlannerSceneIndex()");
+        evaluate("(function(){var box=document.getElementById('sp-continuity-panel');" +
+            "var rows=JSON.parse(localStorage.getItem('lighting_shot_list_v1')).rows;" +
+            "var a=box.querySelector('[data-cont=reference]'),b=box.querySelector('[data-cont=current]');" +
+            "a.value='shot:'+rows.find(function(s){return s.name==='CI Shot A';}).id;" +
+            "b.value='shot:'+rows.find(function(s){return s.name==='CI Shot B';}).id;" +
+            "a.dispatchEvent(new Event('change',{bubbles:true}));b.dispatchEvent(new Event('change',{bubbles:true}));" +
+            "box.querySelector('[data-cont=compare]').click();})()");
+        waitFor("(function(){var text=document.querySelector('#sp-continuity-panel [data-cont=result]').textContent;" +
+            "return text.indexOf('CI Shot A')>=0 && text.indexOf('CI Shot B')>=0 && text.indexOf('PROMENJENO')>=0;})()");
+        if (!workspace.equals(stableSceneWorkspace()) || !index.equals(evaluate("Android.loadScenePlannerSceneIndex()")))
+            throw new IllegalStateException("Saved-shot comparison changed original scene");
     }
 
     private void prepareBackupImport() throws Exception {

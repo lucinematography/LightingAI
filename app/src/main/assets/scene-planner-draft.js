@@ -46,6 +46,25 @@
     return kind==='workspace'?root.Android.saveScenePlannerWorkspace(data):root.Android.saveScenePlannerPhoto(data);
   }
   function listScenes(){return scenes.scenes.map(function(s){return {id:s.id,name:s.name};});}
+  // Read committed metadata directly; never select, recover, flush or load private photos.
+  function readSceneSnapshot(id){
+    if(scenesBlocked||!sceneSupport())throw new Error('Sačuvane scene nisu dostupne.');
+    var scene=scenes.scenes.find(function(s){return s.id===id;});
+    if(!scene)throw new Error('Scena nije pronađena.');
+    var raw=id==='legacy'?root.Android.loadScenePlannerWorkspace():root.Android.loadScenePlannerSceneData(id,'workspace');
+    if(!raw)return {kind:'scene',id:id,name:scene.name,revisions:[],reviews:[],imported:false};
+    var data=JSON.parse(raw);
+    if(!data||data.version!==1||!Number.isSafeInteger(data.checkpoint)||!data.values||typeof data.values!=='object'||Array.isArray(data.values))
+      throw new Error('Sačuvana scena nije čitljiva.');
+    function value(key,fallback){
+      if(data.values[key]===undefined)return fallback;
+      if(typeof data.values[key]!=='string')throw new Error('Zapis scene nije podržan.');
+      return JSON.parse(data.values[key]);
+    }
+    var draft=value(DRAFT_KEY,null);
+    return {kind:'scene',id:id,name:scene.name,revisions:value(WORKSPACE_KEYS[1],[]),
+      reviews:value(WORKSPACE_KEYS[2],[]),imported:!!(draft&&draft.importedFromBackup)};
+  }
   function selectScene(id,name){
     if(!sceneSupport()||scenesBlocked)return report(false,'Izbor scena zahteva dostupno Android skladište.');
     if(active&&!flush())return false;
@@ -555,7 +574,7 @@
     readWorkspaceValue:readWorkspaceValue,checkpointWorkspace:checkpointWorkspace,nativeAvailable:nativeAvailable,
     exportSceneBackup:exportSceneBackup,previewSceneBackup:previewSceneBackup,importSceneBackup:importSceneBackup,
     cancelSceneBackup:cancelSceneBackup,importedSceneInfo:importedSceneInfo,backupMaxBytes:BACKUP_LIMIT,
-    listScenes:listScenes,selectScene:selectScene,createScene:createScene,sceneStorage:storage,
+    readSceneSnapshot:readSceneSnapshot,listScenes:listScenes,selectScene:selectScene,createScene:createScene,sceneStorage:storage,
     activeSceneId:function(){return scenes.activeId;},sceneSupport:sceneSupport,
     lastError:function(){return lastError;},version:'1.2-native-atomic-recovery'
   });

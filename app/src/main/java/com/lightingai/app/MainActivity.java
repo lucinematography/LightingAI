@@ -1943,8 +1943,8 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
-        cancelBackupPasswordJob(backupPasswordJob);
         releaseScenePlannerCaptures(false);
+        cancelBackupPasswordJob(backupPasswordJob);
         if (isFinishing() && pendingVideoCapture && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
             deletePendingCameraUri();
         pendingAiMp4AccessToken = null;

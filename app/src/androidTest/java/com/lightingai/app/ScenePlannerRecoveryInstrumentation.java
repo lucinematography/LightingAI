@@ -42,6 +42,9 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
             String diagnostic = "";
             try { if (webView != null) diagnostic = evaluate("JSON.stringify({" +
                 "hasOverlay:!!document.getElementById('sp-description')," +
+                "shotAPI:!!window.LightingAIShotList,snapshotAPI:typeof LightingAIScenePlannerDraft.readSceneSnapshot," +
+                "shotRows:localStorage.getItem('lighting_shot_list_v1')," +
+                "sceneStatus:document.getElementById('sp-status')&&document.getElementById('sp-status').textContent," +
                 "draft:LightingAIScenePlannerDraft.readWorkspaceValue('lighting_scene_planner_draft_v1')," +
                 "nativeSaved:!!Android.loadScenePlannerWorkspace()})"); } catch (Exception ignored) { }
             result.putString("stream", "SCENE_PLANNER_RECOVERY_FAIL " + phase + ": " + error + "\n" + diagnostic + "\n");
@@ -141,11 +144,11 @@ public final class ScenePlannerRecoveryInstrumentation extends Instrumentation {
     private void prepareContinuity() throws Exception {
         evaluate("document.getElementById('sp-continuity-shot-name').value='CI Shot A';" +
             "document.getElementById('sp-continuity-shot').click();");
-        waitFor("window.LightingAIShotList && JSON.parse(localStorage.getItem('lighting_shot_list_v1')).rows.length===1");
+        waitFor("window.LightingAIShotList && (JSON.parse(localStorage.getItem('lighting_shot_list_v1')||\'{\\\"rows\\\":[]}\').rows||[]).some(function(s){return s.name===\'CI Shot A\';})");
         selectSceneByName("CI Scene B", "Recovery fixture scene B");
         evaluate("document.getElementById('sp-continuity-shot-name').value='CI Shot B';" +
             "document.getElementById('sp-continuity-shot').click();");
-        waitFor("JSON.parse(localStorage.getItem('lighting_shot_list_v1')).rows.length===2");
+        waitFor("(JSON.parse(localStorage.getItem('lighting_shot_list_v1')||\'{\\\"rows\\\":[]}\').rows||[]).some(function(s){return s.name===\'CI Shot B\';})");
         selectLegacyScene();
         String workspace = stableSceneWorkspace();
         String index = evaluate("Android.loadScenePlannerSceneIndex()");

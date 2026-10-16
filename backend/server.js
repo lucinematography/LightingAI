@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import OpenAI from "openai";
+import {getStep16Gate,createStep16SimulationClient} from "./staging-access.js";
 import { RUNTIME_CATALOG } from "./catalog-runtime.js";
 import { validateCatalog } from "./catalog-validation.js";
 import { catalogStatus } from "./catalog-status.js";
@@ -10,7 +10,10 @@ import { aputureReviewCatalog, aputureReviewHtml } from "./aputure-review.js";
 import { generateVisualPreview, VISUAL_PREVIEW_MODEL, VISUAL_PREVIEW_QUALITY } from "./visual-preview.js";
 import { generateScenePlannerPlan } from "./scene-planner-service.js";
 import { createVideoRouter } from "./scene-planner-video.js";
-import { paidAiConfigured, guardPaidAIRequests } from "./staging-safety.js";
+import { guardPaidAIRequests } from "./staging-safety.js";
+import { createLightingPlanRequest, lightingPlanFailure } from "./lighting-plan-request.js";
+import { prepareLightingInventory, assertLightingPlanInventory, lightingInventoryFailure } from "./lighting-plan-inventory.js";
+import { buildLightingKnowledgeContext, lightingKnowledgePrompt, attachLightingKnowledge } from "./lighting-plan-knowledge.js";
 
 const FIXTURE_LIBRARY = RUNTIME_CATALOG.fixtures;
 const ACCESSORY_LIBRARY = RUNTIME_CATALOG.accessories;
@@ -22,11 +25,14 @@ if (catalogHealth.warnings.length) console.warn("LIGHTING AI catalog validation 
 dotenv.config();
 const app = express();
 app.use(cors());
-app.use(guardPaidAIRequests());
+const stage16Gate=getStep16Gate();
 // JSON must be parsed before /video/start. express.json() leaves raw video/* uploads untouched.
 app.use(express.json({ limit: "15mb" }));
+app.use(stage16Gate.middleware);
+app.use((req,res,next)=>stage16Gate.isAdmitted(req)?next():guardPaidAIRequests()(req,res,next));
 app.use("/api/scene-planner/video",createVideoRouter(express));
-const openai = paidAiConfigured() ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const openai = null; // Step16 review copy: all non-plan providers remain unavailable.
+const requestLightingPlan = createLightingPlanRequest(createStep16SimulationClient());
 
 function normalizeEquipmentName(value = "") { return String(value).toLowerCase().replace(/aputure/g, "").replace(/[^a-z0-9]+/g, "").trim(); }
 const FIXTURE_ALIASES = new Map();
@@ -52,7 +58,7 @@ function accessoryTreeForFixture(fixtureId) {
     const parentNames=r.parentIds.map(id=>id===fixtureId?(RUNTIME_CATALOG.fixtureById.get(id)?.model||id):(RUNTIME_CATALOG.accessoryById.get(id)?.model||id));
     const dependency=r.depth>1?`dependency level: ${r.depth-1}, requires: ${parentNames.join(' or ')}`:'direct fixture accessory';
     const a=RUNTIME_CATALOG.accessoryById.get(r.id);
-    return `${r.manufacturer} ${r.model} [${accessoryDetails(a,r.depth===1?fixtureId:null)}, ${dependency}]`;
+    return `${r.manufacturer} ${r.model} [accessoryId: ${r.id}, ${accessoryDetails(a,r.depth===1?fixtureId:null)}, ${dependency}]`;
   });
 }
 function formatEquipmentForAI(equipment = []) {
@@ -76,8 +82,10 @@ app.get("/review/aputure",(req,res)=>res.type('html').send(aputureReviewHtml()))
 app.post("/api/analyze-scene",async(req,res)=>{try{const{image,description="",equipment=[],language="sr"}=req.body;if(!image)return res.status(400).json({error:"Nedostaje fotografija scene."});const equipmentText=formatEquipmentForAI(equipment);const prompt=language==="en"?`You are a professional film and studio lighting assistant. Analyze the supplied scene photograph. Available equipment: ${equipmentText||"Not provided"}. Scene description: ${description||"Not provided"}. Use only listed fixtures and explicitly compatible accessories. Never invent compatibility. OPTIONAL ACCESSORY must not be assumed physically available. Follow the complete accessory dependency chain: a dependency-level accessory may be used only when every required parent modifier in its chain is present. Respect every compatibility status and condition. Clearly state Compatible but not optimized when applicable. Give practical key, fill, negative fill, backlight, color, placement, exposure and safety recommendations.`:`Ti si profesionalni asistent za filmsku i studijsku rasvetu. Analiziraj fotografiju scene. Dostupna oprema: ${equipmentText||"Nije uneta"}. Opis scene: ${description||"Nije unet"}. Koristi samo navedena rasvetna tela i eksplicitno kompatibilne dodatke. Ne izmisljaj kompatibilnost. OPTIONAL ACCESSORY ne sme se pretpostaviti kao fizicki dostupan. Prati ceo lanac zavisnosti dodataka: zavisni dodatak sme se koristiti samo kada su prisutni svi potrebni parent modifikatori u njegovom lancu. Postuj svaki status i uslov. Jasno navedi Compatible but not optimized kada vazi. Daj prakticne preporuke za key, fill, negative fill, backlight, boju, pozicije, ekspoziciju i bezbednost.`;const response=await openai.responses.create({model:"gpt-5.6-luna",input:[{role:"user",content:[{type:"input_text",text:prompt},{type:"input_image",image_url:image}]}]});res.json({analysis:response.output_text});}catch(error){console.error(error);res.status(500).json({error:"Scene analysis failed."});}});
 app.post("/api/lighting-plan",async(req,res)=>{try{
  const{project="",scene="",type="",look="",space="",camera="",description="",scenePhoto="",subjects=[],sun=null,dmx=null,equipment=[],language="sr"}=req.body;
- const equipmentText=formatEquipmentForAI(equipment);
- const selectedEquipment=equipment.map(e=>({id:e.id||e.fixtureId||"",name:e.name||"",qty:e.qty||1}));
+ const inventory=prepareLightingInventory(equipment,RUNTIME_CATALOG);
+ const selectedEquipment=inventory.equipment;
+ const knowledgeContext=buildLightingKnowledgeContext(req.body||{},inventory);
+ const equipmentText=formatEquipmentForAI(selectedEquipment);
  const normalizedSubjects=(Array.isArray(subjects)?subjects:[]).slice(0,20).map((s,i)=>({
    id:String(s?.id||`S${i+1}`).slice(0,16),
    label:String(s?.label||s?.name||`Subject ${i+1}`).slice(0,80),
@@ -86,12 +94,12 @@ app.post("/api/lighting-plan",async(req,res)=>{try{
  }));
  if(!normalizedSubjects.length)normalizedSubjects.push({id:"S1",label:language==="en"?"Subject":"Glumac",x:50,y:50});
  const validSubjectIds=new Set(normalizedSubjects.map(s=>s.id));
- const prompt=`You are LIGHTING AI, a professional gaffer assistant. ${language==="en"?"Write all JSON text values in English.":"Write all JSON text values in Serbian, Latin script."} Project: ${project}. Scene: ${scene}. Production type: ${type}. Look: ${look}. Space: ${space}. Camera: ${camera}. Description: ${description}. Physically selected equipment is exactly: ${JSON.stringify(selectedEquipment)}. Catalog/specification and compatibility reference: ${equipmentText||"Not provided"}. Use only physically selected fixtures. An OPTIONAL ACCESSORY may be mounted only if that accessory is present in the physically selected equipment list. The verified accessory tree is compatibility reference only and does not mean optional accessories are physically available. INCLUDED WITH FIXTURE may be treated as available. Never invent accessories or compatibility. Follow complete accessory dependency chains and use a dependent accessory only when every required parent modifier is physically selected or included with the fixture. Respect every compatibility status and condition. Natural Sun context from LightingAI is: ${sun&&typeof sun==="object"?JSON.stringify(sun):"not provided"}. When Sun context is provided, treat the real Sun as a physical scene light source: respect azimuth, elevation, shadow direction, golden/blue windows, camera heading and whether the Sun is above the horizon. Use artificial fixtures to shape, supplement, balance or control that natural light; do not invent daylight when the Sun is below the horizon. DMX patch from LightingAI is: ${dmx&&typeof dmx==="object"?JSON.stringify(dmx):"not provided"}. When DMX is provided, preserve the supplied Universe, start address, channel footprint and named mode exactly. Never invent a DMX mode, channel count, address or capability. If a DMX row has missing_channels, overlap or overflow flags, call that out in dmx_notes instead of silently repairing it. Relate selected fixtures to DMX rows only when fixtureId or the device name clearly matches. The lighting_diagram must describe the same setup as the text plan. The authoritative subject layout from the Planner Set Sketch is: ${JSON.stringify(normalizedSubjects)}. Treat every listed subject as a real actor/person that must be considered in the lighting design. When there are multiple subjects, balance exposure and separation across the group and explain any intentional differences. Copy all subject IDs, labels and x/y coordinates exactly into lighting_diagram.subjects. Assign each used fixture a stable sequential ID L1, L2, L3 and so on. For every light give the exact selected fixture name, only the accessories actually mounted on it, its role, top-down x and y coordinates from 5 to 95, a targets array containing the subject IDs actually lit by that fixture, and a short direction/placement note. Camera is at x=50,y=90 unless the text description explicitly requires otherwise. Do not create a diagram light for equipment that is not a fixture. Return ONLY valid JSON with exactly these top-level fields: {"summary":"","key":"","fill":"","backlight":"","negative_fill":"","camera_notes":"","color_notes":"","sun_notes":"","dmx_notes":"","safety_notes":"","equipment_list":[],"lighting_diagram":{"subjects":[{"id":"S1","label":"","x":50,"y":50}],"camera":"","lights":[{"id":"L1","role":"KEY","fixture":"","accessories":[],"targets":["S1"],"x":25,"y":25,"direction":"","notes":""}]}}.`;
+ let prompt=`You are LIGHTING AI, a professional gaffer assistant. ${language==="en"?"Write all JSON text values in English.":"Write all JSON text values in Serbian, Latin script."} Project: ${project}. Scene: ${scene}. Production type: ${type}. Look: ${look}. Space: ${space}. Camera: ${camera}. Description: ${description}. Physically selected equipment is exactly: ${JSON.stringify(selectedEquipment)}. Catalog/specification and compatibility reference: ${equipmentText||"Not provided"}. Use only physically selected fixtures. An OPTIONAL ACCESSORY may be mounted only if that accessory is present in the physically selected equipment list. The verified accessory tree is compatibility reference only and does not mean optional accessories are physically available. INCLUDED WITH FIXTURE may be treated as available. Never invent accessories or compatibility. Follow complete accessory dependency chains and use a dependent accessory only when every required parent modifier is physically selected or included with the fixture. Respect every compatibility status and condition. Natural Sun context from LightingAI is: ${sun&&typeof sun==="object"?JSON.stringify(sun):"not provided"}. When Sun context is provided, treat the real Sun as a physical scene light source: respect azimuth, elevation, shadow direction, golden/blue windows, camera heading and whether the Sun is above the horizon. Use artificial fixtures to shape, supplement, balance or control that natural light; do not invent daylight when the Sun is below the horizon. DMX patch from LightingAI is: ${dmx&&typeof dmx==="object"?JSON.stringify(dmx):"not provided"}. When DMX is provided, preserve the supplied Universe, start address, channel footprint and named mode exactly. Never invent a DMX mode, channel count, address or capability. If a DMX row has missing_channels, overlap or overflow flags, call that out in dmx_notes instead of silently repairing it. Relate selected fixtures to DMX rows only when fixtureId or the device name clearly matches. The lighting_diagram must describe the same setup as the text plan. The authoritative subject layout from the Planner Set Sketch is: ${JSON.stringify(normalizedSubjects)}. Treat every listed subject as a real actor/person that must be considered in the lighting design. When there are multiple subjects, balance exposure and separation across the group and explain any intentional differences. Copy all subject IDs, labels and x/y coordinates exactly into lighting_diagram.subjects. Assign each used fixture a stable sequential ID L1, L2, L3 and so on. For every light give fixtureId copied exactly from the selected catalog fixture ID, the exact selected fixture name, accessoryIds copied from catalog accessory IDs and a parallel accessories array of their exact catalog names. Never identify equipment by a guessed name. One diagram entry is one physical lamp; never exceed each selected fixture quantity or reuse one optional accessory on simultaneous lights beyond its selected quantity. Mount dependent accessories only with their required parents on that same light. equipment_list must contain only exact catalog names of the items actually mounted or used, without quantity text or unlisted items. Give its role, top-down x and y coordinates from 5 to 95, a targets array containing the subject IDs actually lit by that fixture, and a short direction/placement note. Camera is at x=50,y=90 unless the text description explicitly requires otherwise. Do not create a diagram light for equipment that is not a fixture. Return ONLY valid JSON with exactly these top-level fields: {"summary":"","key":"","fill":"","backlight":"","negative_fill":"","camera_notes":"","color_notes":"","sun_notes":"","dmx_notes":"","safety_notes":"","equipment_list":[],"knowledgeCardIds":[],"lighting_diagram":{"subjects":[{"id":"S1","label":"","x":50,"y":50}],"camera":"","lights":[{"id":"L1","role":"KEY","fixtureId":"","fixture":"","accessoryIds":[],"accessories":[],"targets":["S1"],"x":25,"y":25,"direction":"","heightM":null,"cctK":null,"dimmerPercent":null,"intensityPct":null,"notes":""}]}}.`;
+ prompt+=lightingKnowledgePrompt(knowledgeContext);
  const content=[{type:"input_text",text:prompt}];
  if(scenePhoto)content.push({type:"input_image",image_url:scenePhoto});
- const response=await openai.responses.create({model:"gpt-5.6-luna",input:[{role:"user",content}]});
- let text=response.output_text.trim().replace(/^```json\s*/i,"").replace(/```$/i,"").trim();
- const plan=JSON.parse(text);
+ let plan=await requestLightingPlan(content);
+ assertLightingPlanInventory(plan,inventory);
  if(!plan.lighting_diagram||typeof plan.lighting_diagram!=="object"||Array.isArray(plan.lighting_diagram))plan.lighting_diagram={};
  plan.lighting_diagram.subjects=normalizedSubjects;
  if(Array.isArray(plan.lighting_diagram.lights)){
@@ -107,8 +115,9 @@ app.post("/api/lighting-plan",async(req,res)=>{try{
    const existing=String(plan.camera_notes||"").trim();
    plan.camera_notes=existing.startsWith(prefix)?existing:`${prefix}${existing?` ${existing}`:""}`;
  }
+ plan=attachLightingKnowledge(plan,knowledgeContext);
  res.json(plan);
-}catch(error){console.error(error);res.status(500).json({error:"Lighting plan generation failed."});}});
+}catch(error){const failure=lightingInventoryFailure(error,req.body?.language)||(error?.code==="LIGHTING_PLAN_KNOWLEDGE"?{status:502,body:{code:"LIGHTING_PLAN_KNOWLEDGE",error:req.body?.language==="en"?"The AI plan contains unverified source information. Please review the request; no PDF plan was accepted.":"AI plan sadrži neproverene podatke o izvorima. Proverite zahtev; plan za PDF nije prihvaćen."}}:lightingPlanFailure(error));console.error("Lighting plan request:",failure.body.code);res.status(failure.status).json(failure.body);}});
 app.post("/api/scene-planner/plan",async(req,res)=>{
   try {
     const result=await generateScenePlannerPlan(openai,req.body||{},FIXTURE_LIBRARY);

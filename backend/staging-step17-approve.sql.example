@@ -1,0 +1,6 @@
+-- ADMIN ONLY, parameterized approval performed ONCE after explicit human approval.
+-- $1 = unique test ID; $2 = SHA256 of the EXACT canonical full request JSON.
+-- This is a query template, not a ready-to-run psql script.
+-- NO ON CONFLICT, UPDATE, DELETE or rearm. Reuse of an ID must fail.
+INSERT INTO lightingai_stage17.ai_test_attempt (test_id, payload_sha256)
+VALUES ($1, $2);

@@ -1,0 +1,32 @@
+-- REVIEWED PRIVATE ADMIN SESSION ONLY. No automatic startup migration.
+\set ON_ERROR_STOP on
+\getenv expected_database LIGHTINGAI_STAGE_DB_EXPECTED_NAME
+SELECT current_database() = :'expected_database' AS target_matches \gset
+\if :target_matches
+BEGIN;
+SELECT pg_advisory_xact_lock(20261016,20);
+-- Existing role/schema are deliberately an error, never silently adopted/reset.
+CREATE ROLE lightingai_stage17_runtime NOLOGIN NOSUPERUSER NOCREATEDB
+  NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS CONNECTION LIMIT 4;
+ALTER ROLE lightingai_stage17_runtime SET search_path = pg_catalog;
+ALTER ROLE lightingai_stage17_runtime SET statement_timeout = '5s';
+ALTER ROLE lightingai_stage17_runtime SET lock_timeout = '3s';
+ALTER ROLE lightingai_stage17_runtime SET idle_in_transaction_session_timeout = '10s';
+\ir staging-step20-schema.sql
+REVOKE ALL ON DATABASE :"expected_database" FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON DATABASE :"expected_database" FROM lightingai_stage17_runtime;
+GRANT CONNECT ON DATABASE :"expected_database" TO lightingai_stage17_runtime;
+REVOKE ALL ON SCHEMA lightingai_stage17 FROM lightingai_stage17_runtime;
+GRANT USAGE ON SCHEMA lightingai_stage17 TO lightingai_stage17_runtime;
+REVOKE ALL ON ALL TABLES IN SCHEMA lightingai_stage17 FROM lightingai_stage17_runtime;
+GRANT SELECT ON lightingai_stage17.ai_test_attempt TO lightingai_stage17_runtime;
+GRANT UPDATE (state,spent_at) ON lightingai_stage17.ai_test_attempt TO lightingai_stage17_runtime;
+GRANT SELECT ON lightingai_stage17.schema_migration TO lightingai_stage17_runtime;
+COMMIT;
+-- Remain NOLOGIN. In a separate approved secure admin session use psql \password,
+-- then ALTER ROLE lightingai_stage17_runtime LOGIN. Never put password SQL in a file.
+\else
+\echo 'Refused: wrong database'
+\quit 3
+\endif

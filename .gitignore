@@ -10,3 +10,26 @@
 *.keystore
 *.dpapi
 *.recovery-secret
+
+# Private reference books: local use only, never include in Git or CI.
+/LightingAI_Reference_Books/
+/LightingAI_Knjige_za_Codex_VSCode.zip
+
+# Isolated test backend: never publish local secrets, binaries or generated state.
+.env
+.env.*
+node_modules/
+*.pdf
+*.PDF
+*.apk
+*.aab
+*.zip
+*.keystore
+*.jks
+*.pem
+*.key
+pg-data*/
+*.claim
+backend/catalog-runtime-render.js
+backend/server-render.js
+backend/catalog-status-render.js

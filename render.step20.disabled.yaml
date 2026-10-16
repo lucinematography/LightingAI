@@ -1,0 +1,66 @@
+{
+  "previews": {
+    "generation": "off"
+  },
+  "services": [
+    {
+      "type": "web",
+      "name": "LightingAI-AI-OneShot-Test",
+      "runtime": "node",
+      "region": "frankfurt",
+      "plan": "free",
+      "branch": "test/lightingai-photo-pdf-k0k1",
+      "autoDeployTrigger": "off",
+      "numInstances": 1,
+      "buildCommand": "cd backend && npm ci --omit=dev --ignore-scripts --no-audit --no-fund",
+      "startCommand": "cd backend && node staging-step19.mjs",
+      "healthCheckPath": "/health",
+      "envVars": [
+        {
+          "key": "NODE_VERSION",
+          "value": "22"
+        },
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "LIGHTINGAI_DISABLE_PAID_AI",
+          "value": "true"
+        },
+        {
+          "key": "SCENE_PLANNER_VIDEO_ENABLED",
+          "value": "false"
+        },
+        {
+          "key": "LIGHTINGAI_PREVIEW_TEST",
+          "value": "0"
+        },
+        {
+          "key": "LIGHTINGAI_STAGE_MODE",
+          "value": "disabled"
+        },
+        {
+          "key": "LIGHTINGAI_STAGE_DB_TRANSPORT",
+          "value": "render-internal-tls"
+        },
+        {
+          "key": "LIGHTINGAI_STAGE_PG_PREFLIGHT",
+          "value": "off"
+        },
+        {
+          "key": "LIGHTINGAI_STAGE_DATABASE_URL",
+          "sync": false
+        },
+        {
+          "key": "LIGHTINGAI_STAGE_DB_EXPECTED_NAME",
+          "sync": false
+        },
+        {
+          "key": "LIGHTINGAI_STAGE_DB_EXPECTED_HOST",
+          "sync": false
+        }
+      ]
+    }
+  ]
+}

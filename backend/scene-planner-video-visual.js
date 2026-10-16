@@ -770,7 +770,7 @@ export async function runExperimentalDayForNightScratchMp4(
       '-protocol_whitelist','file,pipe','-f','rawvideo',
       '-pixel_format','yuv420p','-video_size',pilot.width+'x'+pilot.height,
       '-framerate','1','-i',rawPath,
-      '-vf',pilot.setPtsFilter,'-fps_mode','passthrough',
+      '-vf',pilot.setPtsFilter,'-vsync','0',
       '-enc_time_base','1/'+den,'-c:v',pilotOptions.encoder,
       '-threads','1','-bf','0','-pix_fmt','yuv420p',
       '-video_track_timescale',den,'-use_editlist','0',

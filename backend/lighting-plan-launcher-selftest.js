@@ -34,7 +34,8 @@ function screenFor(transport, language='sr') {
     CustomEvent:class {constructor(type,options={}){this.type=type;this.detail=options.detail;}}});
   screen.ctx.window.addEventListener=(type,fn)=>{if(!listeners.has(type))listeners.set(type,[]);listeners.get(type).push(fn);};
   screen.ctx.window.dispatchEvent = event => {
-    (event.type==='lightingai-visual-plan-ready'?events:invalidations).push(event);
+    if(event.type==='lightingai-visual-plan-ready')events.push(event);
+    else if(event.type==='lightingai-visual-plan-invalidated')invalidations.push(event);
     for(const fn of listeners.get(event.type)||[])fn(event);
   };
   vm.runInContext(launcher.slice(launcher.indexOf('function selectedLook('), launcher.indexOf('function previewGet(')), screen.ctx);

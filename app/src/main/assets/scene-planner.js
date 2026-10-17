@@ -143,11 +143,12 @@
     finally{backupBusy=false;renderSceneControls();}
   }
   function showBackupPreview(text,encrypted){
-      var preview=draft().previewSceneBackup(text);
+      var preview=draft().previewSceneBackup(text,encrypted);
       var box=el('sp-backup-preview');if(!box){draft().cancelSceneBackup();return;}
       box.innerHTML='<div class="sp-lamp"><p><b>'+(encrypted?'AES-256-GCM: autentičnost je proverena.':'UPOZORENJE: stara NEŠIFROVANA JSON kopija. Privatni sadržaj nije zaštićen lozinkom.')+'</b></p><b>'+esc(preview.name)+'</b>'+
         '<p>Kopija: '+esc(preview.savedAt)+'<br>Revizije: '+preview.revisionCount+' • stručne provere: '+preview.reviewCount+
         ' • fotografija: '+(preview.photo?'DA':'NE')+'</p>'+
+        (preview.aiVisualDescription!==null&&preview.aiVisualDescription!==undefined?'<p><b>AI Visual nacrt</b><br>'+esc(preview.aiVisualDescription)+'<br>DP: '+esc(preview.aiVisualDpRequest||'')+'</p>':'')+
         '<p>'+esc(preview.description)+'</p><p>Plan: '+esc(preview.planSummary||'Plan još nije napravljen')+'</p>'+
         (preview.photo?'<img id="sp-backup-photo" class="sp-media" alt="Fotografija iz kopije">':'')+
         '<details><summary>Podešavanja i započeti unosi</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+

@@ -179,7 +179,7 @@
   function validateBackupPayload(payload){
     var c=backupCore();
     if(!payload||typeof payload!=='object'||Array.isArray(payload)||
-       Object.keys(payload).sort().join(',')!=='draft,excluded,name,photo,prelightReviews,revisions,savedAt'||
+       !['draft,excluded,name,photo,prelightReviews,revisions,savedAt','aiVisual,draft,excluded,name,photo,prelightReviews,revisions,savedAt'].includes(Object.keys(payload).sort().join(','))||
        typeof payload.name!=='string'||!payload.name.trim()||payload.name.length>80||
        typeof payload.savedAt!=='string'||!Number.isFinite(Date.parse(payload.savedAt))||
        !Array.isArray(payload.excluded)||c.canonicalJson(payload.excluded)!==c.canonicalJson(BACKUP_EXCLUDED))
@@ -197,6 +197,11 @@
       throw new Error('Fotografija nije podržana.');
     if(payload.photo&&root.Android&&typeof root.Android.validateScenePlannerBackupPhoto==='function'&&
        root.Android.validateScenePlannerBackupPhoto(payload.photo)!==true)throw new Error('Fotografija nije čitljiva ili prelazi 16 megapiksela / 8192 px.');
+    if(Object.prototype.hasOwnProperty.call(payload,'aiVisual')) {
+      if(!root.LightingAIVisualDraft||!root.LightingAIVisualDraft.valid(payload.aiVisual))throw new Error('AI Visual nacrt nije podrzan.');
+      backupSafeKeys(payload.aiVisual,0);
+      if(payload.aiVisual.photo&&root.Android&&root.Android.validateScenePlannerBackupPhoto&&root.Android.validateScenePlannerBackupPhoto(payload.aiVisual.photo)!==true)throw new Error('AI Visual fotografija nije citljiva.');
+    }
     return payload;
   }
   async function exportSceneBackup(){
@@ -215,26 +220,33 @@
     var payload={name:scenes.scenes.find(function(s){return s.id===id;}).name,
       savedAt:new Date().toISOString(),draft:backupDraft(d),revisions:rawRevisions?JSON.parse(rawRevisions):[],
       prelightReviews:rawReviews?JSON.parse(rawReviews):[],photo:photo,excluded:BACKUP_EXCLUDED.slice()};
+    if(typeof root.LightingAIVisualFlush==='function'&&root.document&&root.document.getElementById('lightingai-ai-visual-scene-plan')&&root.LightingAIVisualFlush()!==true)throw new Error('AI Visual nacrt nije sacuvan.');
+    if(root.Android&&typeof root.Android.loadAIVisualDraft==='function'){
+      var visual=root.Android.loadAIVisualDraft(id);
+      if(visual){payload.aiVisual=JSON.parse(visual);}
+    }
     validateBackupPayload(payload);
     var canonical=c.canonicalJson(payload);
     if(utf8Size(canonical)>BACKUP_LIMIT-1024)throw new Error('Scena prelazi ograničenje kopije od 24 MiB.');
-    return JSON.stringify({format:'LightingAI.SceneBackup',version:1,payload:payload,
+    return JSON.stringify({format:'LightingAI.SceneBackup',version:payload.aiVisual?2:1,payload:payload,
       integrity:{algorithm:'SHA-256',digest:backupHash(canonical)}});
   }
-  function previewSceneBackup(text){
+  function previewSceneBackup(text,authenticated){
     stagedBackup=null;
     if(typeof text!=='string'||text.length>BACKUP_LIMIT||utf8Size(text)>BACKUP_LIMIT)
       throw new Error('Datoteka prelazi 24 MiB.');
     var file=JSON.parse(text),c=backupCore();
-    if(!file||file.format!=='LightingAI.SceneBackup'||file.version!==1||
+    if(!file||file.format!=='LightingAI.SceneBackup'||![1,2].includes(file.version)||
        Object.keys(file).sort().join(',')!=='format,integrity,payload,version'||
        !file.integrity||Object.keys(file.integrity).sort().join(',')!=='algorithm,digest'||file.integrity.algorithm!=='SHA-256'||!/^[a-f0-9]{64}$/.test(file.integrity.digest))
       throw new Error('Format ili verzija kopije nisu podržani.');
     if(backupHash(c.canonicalJson(file.payload))!==file.integrity.digest)throw new Error('Provera integriteta nije uspela.');
+    if(file.version===1&&Object.prototype.hasOwnProperty.call(file.payload,'aiVisual'))throw new Error('AI Visual zahteva verziju 2.');
+    if(file.version===2&&authenticated!==true)throw new Error('AI Visual nacrt se uvozi samo iz autentifikovane sifrovane kopije.');
     var p=validateBackupPayload(file.payload);
     stagedBackup=p;
     return {name:p.name,savedAt:p.savedAt,description:String(p.draft.fields['sp-description']||''),
-      settings:JSON.parse(JSON.stringify(p.draft.fields)),photo:p.photo,revisionCount:p.revisions.length,
+      settings:JSON.parse(JSON.stringify(p.draft.fields)),photo:p.photo||(p.aiVisual?p.aiVisual.photo:null),aiVisualDescription:p.aiVisual?p.aiVisual.description:null,aiVisualDpRequest:p.aiVisual?p.aiVisual.dpRequest:null,revisionCount:p.revisions.length,
       reviewCount:p.prelightReviews.length,
       pendingMeasurements:p.draft.measurementFields?JSON.parse(JSON.stringify(p.draft.measurementFields)):null,
       pendingPlanFields:p.draft.planFields?JSON.parse(JSON.stringify(p.draft.planFields)):null,
@@ -261,9 +273,13 @@
     if(utf8Size(workspace)>8*1024*1024)throw new Error('Scena prelazi ograničenje Android radnog zapisa od 8 MiB.');
     var photo=p.photo?JSON.stringify({version:2,sequence:Date.now(),value:p.photo}):'';
     var name=p.name.slice(0,72)+' (uvoz)';
-    var id=root.Android.importScenePlannerBackup(name,workspace,photo,JSON.stringify(scenes));
+    var id;
+    if(p.aiVisual){if(typeof root.Android.importScenePlannerBackupWithVisual!=='function')throw new Error('Za AI Visual uvoz potrebna je aktuelna Android verzija.');id=root.Android.importScenePlannerBackupWithVisual(name,workspace,photo,JSON.stringify(scenes),JSON.stringify(p.aiVisual));}
+    else id=root.Android.importScenePlannerBackup(name,workspace,photo,JSON.stringify(scenes));
     if(typeof id!=='string'||!/^s-[a-z0-9]{8,64}$/.test(id))throw new Error('Uvoz nije sačuvan. Proveri slobodan prostor; postojeće scene nisu menjane.');
     stagedBackup=null;loadScenes();
+    if(typeof root.__lightingAIVisualDispose==='function')root.__lightingAIVisualDispose();
+    if(root.dispatchEvent&&typeof CustomEvent!=='undefined')root.dispatchEvent(new CustomEvent('lightingai-visual-inputs-changed'));
     return {id:id,name:name};
   }
   function importedSceneInfo(){var d=read();return d&&d.importedFromBackup||null;}

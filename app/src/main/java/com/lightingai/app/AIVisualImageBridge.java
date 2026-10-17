@@ -86,9 +86,9 @@ public final class AIVisualImageBridge {
             try {
                 byte[] pdfBytes = renderPlanPdf(payloadJson);
                 savePdfToDownloads(safeName, pdfBytes);
-                notifyPdfResult(true, safeName);
+                notifyPdfResult(true, safeName, payloadJson);
             } catch (Exception error) {
-                notifyPdfResult(false, safeName);
+                notifyPdfResult(false, safeName, payloadJson);
             }
         }, "LightingAI-pdf-save").start();
     }
@@ -111,13 +111,13 @@ public final class AIVisualImageBridge {
                         share.setClipData(ClipData.newRawUri("LightingAI PDF", uri));
                         share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         activity.startActivity(Intent.createChooser(share, chooserTitle));
-                        notifyPdfResult(true, safeName);
+                        notifyPdfResult(true, safeName, payloadJson);
                     } catch (Exception error) {
-                        notifyPdfResult(false, safeName);
+                        notifyPdfResult(false, safeName, payloadJson);
                     }
                 });
             } catch (Exception error) {
-                notifyPdfResult(false, safeName);
+                notifyPdfResult(false, safeName, payloadJson);
             }
         }, "LightingAI-pdf-share").start();
     }
@@ -166,9 +166,17 @@ public final class AIVisualImageBridge {
         return new PlanPdfRenderer(payload).render();
     }
 
-    private void notifyPdfResult(boolean ok, String filename) {
+    private void notifyPdfResult(boolean ok, String filename, String payloadJson) {
+        String savedMessage = "LightingAI: PDF je sačuvan u Preuzimanja";
+        try {
+            JSONObject payload = new JSONObject(payloadJson == null ? "{}" : payloadJson);
+            if ("en".equals(payload.optString("language", "sr"))) {
+                savedMessage = "LightingAI: PDF saved to Downloads";
+            }
+        } catch (Exception ignored) {}
+        final String toastMessage = savedMessage;
         activity.runOnUiThread(() -> {
-            if (ok) Toast.makeText(activity, "LightingAI: PDF je sačuvan u Preuzimanja", Toast.LENGTH_LONG).show();
+            if (ok) Toast.makeText(activity, toastMessage, Toast.LENGTH_LONG).show();
             if (activity instanceof MainActivity) {
                 ((MainActivity) activity).notifyAIVisualPdfResult(JSONObject.quote(filename), ok);
             }
@@ -205,13 +213,21 @@ public final class AIVisualImageBridge {
                 small(sr ? "Profesionalni LightingAI izvoz" : "Professional LightingAI export", MUTED);
                 gap(8);
 
+                section(sr ? "POREKLO I STATUS PODATAKA" : "DATA ORIGIN AND STATUS");
+                paragraph(sr
+                    ? "Opis scene, zahtev i izbor opreme potiču iz aplikacije. AI plan je predlog za pregled direktora fotografije i gaffera. Izvoz ne beleži njihovo odobrenje."
+                    : "Scene description, brief and equipment selection come from the app. The AI plan is a proposal for review by the director of photography and gaffer. This export does not record their approval.", 10f, false);
+                paragraph(sr
+                    ? "Podešavanja kalkulatora nisu merenja na setu. Proračuni su označeni posebno. Nedostajući podaci ostaju nepoznati."
+                    : "Calculator settings are not on-set measurements. Calculations are identified separately. Missing data remains unknown.", 10f, false);
+
                 section(sr ? "ZAHTEV DP-a" : "DP REQUEST");
                 paragraph(payload.optString("dpRequest", ""), 11f, false);
                 section(sr ? "CILJ / OPIS SCENE" : "SCENE GOAL / DESCRIPTION");
                 paragraph(payload.optString("description", ""), 11f, false);
                 String measurements = payload.optString("measurements", "");
                 if (!measurements.isEmpty()) {
-                    section(sr ? "MERENJA IZ PLANERA" : "PLANNER MEASUREMENTS");
+                    section(sr ? "PODACI IZ PLANERA" : "PLANNER DATA");
                     paragraph(measurements, 10.5f, false);
                 }
 
@@ -246,6 +262,8 @@ public final class AIVisualImageBridge {
 
                 newPage();
                 title(sr ? "AI PREDLOG RASVETE" : "AI LIGHTING PROPOSAL");
+                small(sr ? "Status: predlog; potvrda DoP-a i gaffera nije zabeležena." : "Status: proposal; DoP and gaffer approval is not recorded.", MUTED);
+                gap(8);
                 planSection(planJson, "summary", sr ? "SAŽETAK" : "SUMMARY");
                 planSection(planJson, "key", sr ? "GLAVNO SVETLO / KEY" : "KEY LIGHT");
                 planSection(planJson, "fill", sr ? "FILL SVETLO" : "FILL LIGHT");
@@ -266,7 +284,10 @@ public final class AIVisualImageBridge {
                     }
                 }
 
+                drawCameraReport(payload.optJSONObject("technical"));
+                drawGafferReport(planJson);
                 drawTechnical(payload.optJSONObject("technical"));
+                drawKnowledgeReference(planJson);
 
                 finishPage();
                 ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -277,22 +298,220 @@ public final class AIVisualImageBridge {
             }
         }
 
+        // Scoped local review dated 2026-10-16: Landau PDF 18 / printed 8.
+        // Original paraphrase and bibliography only; no PDF data or AI-supplied citations.
+        // This general reference does not establish applicability or approve the scene plan.
+        private boolean hasScopedKnowledgeReference(JSONObject basis) {
+            if (basis == null || !"lightingai-professional-pdf-knowledge/1".equals(basis.optString("schema")) ||
+                !"SERVER_K0_K1_BRIDGE".equals(basis.optString("producer")) ||
+                !"53f3b96d0f7e231a2c5a6a1c7c2e7e4b3b31a7baa4a8232b5d2ddf9e9319ad02".equals(basis.optString("knowledgeHash"))) return false;
+            boolean used = false;
+            JSONArray usedIds = basis.optJSONArray("usedCardIds");
+            JSONArray cards = basis.optJSONArray("cards");
+            boolean supplied = false;
+            if (usedIds != null) for (int i = 0; i < usedIds.length(); i++) if ("PHY-007".equals(usedIds.optString(i))) used = true;
+            if (cards != null) for (int i = 0; i < cards.length(); i++) {
+                JSONObject card = cards.optJSONObject(i);
+                if (card != null && "PHY-007".equals(card.optString("id")) && "UNVERIFIED".equals(card.optString("sourceStatus"))) supplied = true;
+            }
+            if (!used || !supplied) return false;
+            JSONArray refs = basis.optJSONArray("reviewedReferences");
+            if (refs != null) for (int i = 0; i < refs.length(); i++) {
+                JSONObject r = refs.optJSONObject(i);
+                if (r != null && "PHY007-LANDAU-20261016".equals(r.optString("reviewId")) &&
+                    "PHY-007".equals(r.optString("cardId")) && "landau-2014".equals(r.optString("sourceId")) &&
+                    "SCOPED_LOCAL_PAGE_REVIEW".equals(r.optString("status")) &&
+                    "REDUCING_UNWANTED_BOUNCE_ONLY".equals(r.optString("scope")) &&
+                    "2014 electronic edition".equals(r.optString("edition")) && r.optInt("year") == 2014 &&
+                    r.optInt("pdfPage") == 18 && r.optInt("printedPage") == 8 &&
+                    "7b5005a63525dc17dba2886849661738a7a7d392e222203cf3a8caeb0d554d52".equals(r.optString("sourceSha256")) &&
+                    r.has("wholeCardVerified") && !r.optBoolean("wholeCardVerified", true) &&
+                    "NOT_VERIFIED".equals(r.optString("sceneApplicability")) && "NOT_RECORDED".equals(r.optString("dopApproval"))) return true;
+            }
+            return false;
+        }
+
+        private void drawKnowledgeReference(JSONObject plan) {
+            JSONObject basis = plan.optJSONObject("knowledgeBasis");
+            if (basis == null) { drawReviewedPrincipleReference(); return; }
+            newPage();
+            title(sr ? "STRUČNO ZNANJE / K0-K1" : "PROFESSIONAL KNOWLEDGE / K0-K1");
+            paragraph(sr ? "Savetodavne kartice iz postojeće baze. Pronalaženje kartice nije potvrda njene primenljivosti na scenu. K1 status izvora ostaje UNVERIFIED; odobrenje DoP-a nije zabeleženo."
+                : "Advisory cards from the existing corpus. Retrieval does not confirm scene applicability. K1 source status remains UNVERIFIED; DoP approval is not recorded.", 10f, false);
+            section(sr ? "KARTICE U AI ZAHTEVU" : "CARDS IN THE AI REQUEST");
+            JSONArray cards = basis.optJSONArray("cards");
+            if (cards == null || cards.length() == 0) paragraph(sr ? "Nema relevantnih kartica u ovom kontekstu. Predlog zahteva stručnu procenu."
+                : "No relevant cards in this context. The proposal requires professional review.", 10f, false);
+            if (cards != null) for (int i = 0; i < Math.min(4, cards.length()); i++) {
+                JSONObject c = cards.optJSONObject(i);
+                if (c != null) paragraph(c.optString("id", "UNKNOWN") + " | UNVERIFIED | " + (sr ? "primenljivost nije potvrđena" : "applicability unconfirmed"), 10f, false);
+            }
+            paragraph((sr ? "AI je označio korišćenje: " : "AI reported using: ") + recordedList(basis, "usedCardIds") +
+                (sr ? ". To nije stručna potvrda." : ". This is not professional approval."), 10f, false);
+            section(sr ? "PROVERA IZVORA / OGRANIČEN OBUHVAT" : "SOURCE REVIEW / LIMITED SCOPE");
+            if (hasScopedKnowledgeReference(basis)) {
+                paragraph(sr ? "PHY-007 / landau-2014: zasebna lokalna provera uskog principa, ne cele kartice. Crna tkanina ili zastava mogu smanjiti neželjeno odbijeno svetlo."
+                    : "PHY-007 / landau-2014: separate local review of a narrow principle, not the entire card. Black cloth or a flag can reduce unwanted bounced light.", 10f, false);
+                paragraph("David Landau, Lighting for Cinematography, " + (sr ? "elektronsko izdanje 2014, Bloomsbury Academic. PDF strana 18 / štampana strana 8."
+                    : "2014 electronic edition, Bloomsbury Academic. PDF page 18 / printed page 8."), 10f, false);
+                paragraph(sr ? "Provera: 16.10.2026; naslov i izdanje: PDF 3 i 6. Primenljivost na scenu, ekspozicija i kontrast nisu potvrđeni. Ostale reference nisu unapređene u proverene."
+                    : "Review: 2026-10-16; title and edition: PDF 3 and 6. Scene applicability, exposure and contrast are unconfirmed. Other references have not been promoted to reviewed status.", 10f, false);
+            } else paragraph(sr ? "Za kartice koje je AI označio nema odgovarajuće zasebno proverene reference. Bibliografija se ne preuzima iz AI teksta."
+                : "No matching separately reviewed reference for the cards reported used. Bibliography is not taken from AI text.", 10f, false);
+            section(sr ? "PROCENE I BEZBEDNOST" : "ESTIMATES AND SAFETY");
+            paragraph(sr ? "Visina, CCT, dimmer, intenzitet i geometrija iz AI plana su nepotvrđene procene, ne merenja. Nepoznate vrednosti ostaju nepoznate. Proveriti fotometriju, ekspoziciju, montažu, napajanje i rad iz svih uglova kamere na setu."
+                : "Height, CCT, dimmer, intensity and geometry in the AI plan are unverified estimates, not measurements. Unknown values remain unknown. Verify photometry, exposure, rigging, power and all camera angles on set.", 10f, false);
+            paragraph(sr ? "Stručni princip ne odobrava dodatnu opremu, prekoračenje količine ili bezbednost montaže. K0/K1 i knjige nisu menjani; stranice knjiga i doslovni citati nisu uključeni."
+                : "A literature principle does not authorize extra equipment, excess quantities or rigging safety. K0/K1 and books are unchanged; book pages and verbatim quotations are not included.", 10f, false);
+        }
+
+        private void drawReviewedPrincipleReference() {
+            newPage();
+            title(sr ? "STRUČNI IZVOR / NEGATIVNI FILL" : "SOURCE / NEGATIVE FILL");
+            paragraph(sr
+                ? "Opšta stručna referenca. Primenljivost na ovu scenu nije proverena; ona ne potvrđuje AI predlog, merenja ili odobrenje postavke."
+                : "General professional reference. Applicability to this scene has not been verified; it does not confirm the AI proposal, measurements or setup approval.", 10f, false);
+
+            section(sr ? "PROVEREN STRUČNI PRINCIP" : "REVIEWED PRINCIPLE");
+            paragraph(sr
+                ? "Crna tkanina ili crna zastava mogu smanjiti neželjeno odbijeno svetlo. Ovo je kratka parafraza principa, bez određivanja ekspozicije ili odnosa kontrasta."
+                : "Black cloth or a black flag can reduce unwanted bounced light. This is a brief paraphrase of the principle, without specifying exposure or contrast ratio.", 10.5f, false);
+            paragraph("David Landau, Lighting for Cinematography, " + (sr
+                ? "elektronsko izdanje 2014, Bloomsbury. PDF strana 18 / štampana strana 8."
+                : "2014 electronic edition, Bloomsbury. PDF page 18 / printed page 8."), 10.5f, false);
+            paragraph(sr
+                ? "Obuhvat lokalne provere: samo navedena strana i ovaj uski princip. Naslov i izdanje provereni na PDF stranama 3 i 6. Datum provere: 16.10.2026."
+                : "Local review scope: only the cited page and this narrow principle. Title and edition checked on PDF pages 3 and 6. Review date: 2026-10-16.", 10f, false);
+
+            section(sr ? "PREDLOG ZA PROCENU DoP-a I GAFFERA" : "PROPOSAL FOR DoP AND GAFFER REVIEW");
+            paragraph(sr
+                ? "Ako senovita strana subjekta prima previše odbijenog svetla, razmotriti crnu površinu. Na probi uporediti izgled pre i posle postavljanja. Ovo je predlog za procenu; proba nije potvrđena ovim izvozom."
+                : "If the subject's shadow side receives too much bounced light, consider a black surface. Compare the look before and after placement during a test. This is a proposal for review; this export does not confirm a completed test.", 10.5f, false);
+            paragraph(sr
+                ? "DoP procenjuje željeni izgled senke. Gaffer i grip ekipa proveravaju mogućnost i odgovornosti za montažu. Navedena strana knjige nije odobrenje konkretne postavke."
+                : "The DoP assesses the intended shadow look. The gaffer and grip team assess mounting feasibility and responsibilities. The cited book page does not approve a specific setup.", 10f, false);
+
+            section(sr ? "NEPOTVRĐENI PODACI" : "UNCONFIRMED DATA");
+            paragraph(sr
+                ? "Tačan položaj i veličina crne površine: nisu potvrđeni ovim izvozom. Lux, promena ekspozicije i odnos kontrasta: nisu potvrđeni merenjem u ovom izveštaju. Odobrenje DoP-a i montaže: nije zabeleženo ovim izvozom."
+                : "Exact placement and size of the black surface: not confirmed by this export. Lux, exposure change and contrast ratio: not confirmed by measurements in this report. DoP and mounting approval: not recorded by this export.", 10f, false);
+
+            section(sr ? "GRANICE PROVERE IZVORA" : "SOURCE REVIEW LIMITS");
+            paragraph(sr
+                ? "Ovo nije potvrda cele kartice PHY-007, ostalih referenci ili svih knjiga. K0/K1 nisu menjani. Izvoz sadrži bibliografske podatke i kratku originalnu parafrazu, bez stranica knjiga, ilustracija i doslovnih citata."
+                : "This does not verify the entire PHY-007 card, other references or all books. K0/K1 are unchanged. The export contains bibliographic data and a brief original paraphrase, without book pages, figures or verbatim quotations.", 10f, false);
+        }
+
+        private String recordedText(JSONObject object, String key) {
+            String unknown = sr ? "nije uneto" : "not entered";
+            if (object == null || object.isNull(key)) return unknown;
+            String value = object.optString(key, "").trim();
+            return value.isEmpty() ? unknown : value;
+        }
+
+        private String recordedList(JSONObject object, String key) {
+            JSONArray values = object == null ? null : object.optJSONArray(key);
+            if (values == null || values.length() == 0) return sr ? "nije uneto" : "not entered";
+            List<String> labels = new ArrayList<>();
+            for (int i = 0; i < values.length(); i++) {
+                String value = values.optString(i, "").trim();
+                if (!value.isEmpty()) labels.add(value);
+            }
+            return labels.isEmpty() ? (sr ? "nije uneto" : "not entered") : join(labels, ", ");
+        }
+
+        private void drawCameraReport(JSONObject technical) {
+            JSONObject camera = technical == null ? null : technical.optJSONObject("camera");
+            JSONObject exposure = camera == null ? null : camera.optJSONObject("exposureSettings");
+            newPage();
+            title(sr ? "KAMERA / ZA DoP-a" : "CAMERA / FOR THE DoP");
+            paragraph(sr ? "Izvor: podešavanja aplikacije i aktivna skica seta. Ovo nije očitavanje sa kamere niti potvrda DoP-a."
+                : "Source: app settings and active set sketch. This is not a camera readout or DoP approval.", 10f, false);
+            section(sr ? "PODEŠAVANJA APLIKACIJE" : "APP SETTINGS");
+            paragraph((sr ? "Model kamere: " : "Camera model: ") + recordedText(camera, "model"), 10.5f, false);
+            paragraph("ISO: " + technicalNumber(exposure, "iso", "", false) + " | fps: " + technicalNumber(exposure, "fps", "", false) +
+                (sr ? " | ugao zatvarača: " : " | shutter angle: ") + technicalNumber(exposure, "shutterAngleDeg", "deg", false), 10f, false);
+            paragraph((sr ? "Ciljna blenda (f): " : "Target aperture (f): ") + technicalNumber(exposure, "targetAperture", "", false) +
+                " | ND: " + technicalNumber(exposure, "ndStops", "stop", true), 10f, false);
+            paragraph((sr ? "Ručno uneti lux: " : "Manually entered lux: ") + technicalNumber(exposure, "manualLux", "lux", true) +
+                (sr ? ". Status: unos u kalkulator; merenje i instrument nisu potvrđeni." : ". Status: calculator input; measurement and instrument are not verified."), 9.5f, false);
+            paragraph(sr ? "Ova podešavanja nisu automatski vezana za svaku kameru u skici."
+                : "These settings are not automatically assigned to each camera in the sketch.", 9.5f, false);
+            section(sr ? "KAMERE U AKTIVNOJ SKICI SETA" : "CAMERAS IN THE ACTIVE SET SKETCH");
+            paragraph((sr ? "Scena: " : "Scene: ") + recordedText(camera, "sceneName"), 10f, false);
+            JSONArray cameras = camera == null ? null : camera.optJSONArray("cameras");
+            if (cameras == null || cameras.length() == 0) {
+                paragraph(sr ? "Nema zabeleženih kamera u aktivnoj skici." : "No cameras recorded in the active sketch.", 10f, false);
+                return;
+            }
+            for (int i = 0; i < cameras.length(); i++) {
+                JSONObject item = cameras.optJSONObject(i);
+                if (item == null) continue;
+                ensure(110f);
+                paragraph((i + 1) + ". " + recordedText(item, "label") + " | ID: " + recordedText(item, "id"), 10.5f, true);
+                paragraph("x: " + technicalNumber(item, "xM", "m", true) + " | y: " + technicalNumber(item, "yM", "m", true) +
+                    (sr ? " | smer: " : " | heading: ") + technicalNumber(item, "directionDeg", "deg", true), 10f, false);
+                paragraph((sr ? "Objektiv: " : "Lens: ") + technicalNumber(item, "focalLengthMm", "mm", false) +
+                    (sr ? " | širina senzora: " : " | sensor width: ") + technicalNumber(item, "sensorWidthMm", "mm", false), 10f, false);
+            }
+        }
+
+        private void drawGafferReport(JSONObject plan) {
+            newPage();
+            title(sr ? "RADNA LISTA / GAFFER" : "WORKING LIST / GAFFER");
+            paragraph(sr ? "Izvor: svetla u AI predlogu i pripadajućoj mapi. Jedna stavka odgovara jednoj oznaci svetla. Postavka nije potvrđena na setu."
+                : "Source: lights in the AI proposal and its map. One entry represents one light ID. The setup is not confirmed on set.", 10f, false);
+            paragraph(sr ? "Izabrana oprema i količine navedeni su na početku izveštaja. Napajanje i lokalni DMX patch su u tehničkom delu."
+                : "Selected equipment and quantities are listed at the start. Power and the local DMX patch are in the technical section.", 9.5f, false);
+            paragraph(sr ? "Sve AI vrednosti visine, CCT-a, dimmera i intenziteta su procene, ne merenja na setu. Položaj u mapi je shematski."
+                : "All AI height, CCT, dimmer and intensity values are estimates, not on-set measurements. Map placement is schematic.", 10f, false);
+            JSONObject diagram = plan == null ? null : plan.optJSONObject("lighting_diagram");
+            JSONArray lights = diagram == null ? null : diagram.optJSONArray("lights");
+            if (lights == null || lights.length() == 0) {
+                paragraph(sr ? "Nema pojedinačno zabeleženih svetala u mapi. Radna lista nije izvedena iz slobodnog teksta."
+                    : "No individual lights are recorded in the map. The working list was not inferred from free text.", 10f, false);
+                return;
+            }
+            for (int i = 0; i < lights.length(); i++) {
+                JSONObject light = lights.optJSONObject(i);
+                if (light == null) continue;
+                if (y + 175f > PAGE_H - 42f) {
+                    newPage();
+                    title(sr ? "RADNA LISTA / NASTAVAK" : "WORKING LIST / CONTINUED");
+                }
+                section((sr ? "SVETLO " : "LIGHT ") + (i + 1));
+                paragraph("ID: " + recordedText(light, "id") + " | " + recordedText(light, "fixture"), 10.5f, true);
+                paragraph((sr ? "Uloga: " : "Role: ") + recordedText(light, "role") + (sr ? " | ciljevi: " : " | targets: ") + recordedList(light, "targets"), 10f, false);
+                paragraph((sr ? "Dodaci: " : "Accessories: ") + recordedList(light, "accessories"), 10f, false);
+                paragraph((sr ? "Smer: " : "Direction: ") + recordedText(light, "direction"), 10f, false);
+                paragraph((sr ? "Visina: " : "Height: ") + technicalNumber(light, "heightM", "m", false) +
+                    " | dimmer: " + technicalNumber(light, "dimmerPercent", "%", true) +
+                    " | CCT: " + technicalNumber(light, "cctK", "K", false), 10f, false);
+                paragraph((sr ? "Intenzitet (AI procena): " : "Intensity (AI estimate): ") + technicalNumber(light, "intensityPct", "%", true), 10f, false);
+                paragraph((sr ? "Napomena: " : "Note: ") + recordedText(light, "notes"), 9.5f, false);
+            }
+        }
+
         private void drawTechnical(JSONObject technical) {
-            if (technical == null) return;
+            if (technical == null) technical = new JSONObject();
             newPage();
             title(sr ? "TEHNIČKI PODACI SCENE" : "SCENE TECHNICAL DATA");
+            small(sr ? "Za direktora fotografije i gaffera" : "For the director of photography and gaffer", MUTED);
+            gap(8);
 
             JSONObject power = technical.optJSONObject("power");
-            if (power != null && power.length() > 0) {
-                section(sr ? "NAPAJANJE" : "POWER");
-                paragraph((sr ? "Napon: " : "Voltage: ") + power.optString("voltage", "230") + " V | " +
-                    (sr ? "grana: " : "branch: ") + power.optString("branch", "16") + " A | " +
-                    (sr ? "baterija: " : "battery: ") + power.optString("batteryWh", "1000") + " Wh", 10f, false);
-            }
+            section(sr ? "NAPAJANJE / ZA GAFFERA" : "POWER / FOR THE GAFFER");
+            paragraph(sr ? "Status: podešavanja kalkulatora; nije merenje niti potvrda napajanja na setu."
+                : "Status: calculator settings; not an on-set measurement or power verification.", 9.5f, false);
+            paragraph((sr ? "Napon: " : "Voltage: ") + technicalNumber(power, "voltage", "V", false) + " | " +
+                (sr ? "grana: " : "branch: ") + technicalNumber(power, "branch", "A", false) + " | " +
+                (sr ? "baterija: " : "battery: ") + technicalNumber(power, "batteryWh", "Wh", true), 10f, false);
 
             JSONObject cct = technical.optJSONObject("cctGel");
             if (cct != null && cct.length() > 0) {
                 section(sr ? "CCT / GEL" : "CCT / GEL");
+                paragraph(sr ? "Za DoP-a: podešavanja kalkulatora; nisu merenje kolorimetrom."
+                    : "For the DoP: calculator settings; not a color-meter measurement.", 9.5f, false);
                 paragraph((sr ? "Izvor: " : "Source: ") + cct.optString("source", "-") + " K | " +
                     (sr ? "cilj: " : "target: ") + cct.optString("target", "-") + " K | " +
                     (sr ? "tint: " : "tint: ") + cct.optString("tintMode", "-") + " / " + cct.optString("tintStrength", "-"), 10f, false);
@@ -301,6 +520,8 @@ public final class AIVisualImageBridge {
             JSONObject sun = technical.optJSONObject("sun");
             if (sun != null && sun.length() > 0) {
                 section(sr ? "SUNCE / LOKACIJA" : "SUN / LOCATION");
+                paragraph(sr ? "Status: proračun za prikazani datum, vreme i lokaciju; nije merenje na setu."
+                    : "Status: calculation for the displayed date, time and location; not an on-set measurement.", 9.5f, false);
                 String line = (sr ? "Datum: " : "Date: ") + sun.optString("date", "-") + " " + sun.optString("time", "") +
                     " | lat " + sun.optString("lat", "-") + " | lon " + sun.optString("lon", "-") +
                     " | az " + (sun.has("azimuthDeg") ? String.format(Locale.US, "%.1f", sun.optDouble("azimuthDeg")) + "°" : "-") +
@@ -320,23 +541,37 @@ public final class AIVisualImageBridge {
             JSONArray rows = dmx == null ? null : dmx.optJSONArray("rows");
             if (rows != null && rows.length() > 0) {
                 section(sr ? "DMX PATCH" : "DMX PATCH");
+                paragraph(sr ? "Za gaffera: podaci iz lokalnog patch-a; veza i odziv uređaja nisu potvrđeni ovim izvozom."
+                    : "For the gaffer: local patch data; this export does not verify device connection or response.", 9.5f, false);
                 if (dmx.optInt("warningCount", 0) > 0) {
                     paragraph((sr ? "Upozorenja u patch-u: " : "Patch warnings: ") + dmx.optInt("warningCount", 0), 9.8f, true);
                 }
                 for (int i = 0; i < rows.length(); i++) {
                     JSONObject row = rows.optJSONObject(i);
                     if (row == null) continue;
-                    int start = row.optInt("start", 1);
+                    int start = row.optInt("start", 0);
                     int channels = row.optInt("channels", 0);
-                    int end = channels > 0 ? start + channels - 1 : start;
+                    boolean validRange = start >= 1 && start <= 512 && channels > 0 && channels <= 512 && start + channels - 1 <= 512;
+                    String range = validRange ? start + "-" + (start + channels - 1) : (sr ? "nije potvrđen" : "not confirmed");
                     String line = "- " + row.optString("name", "DMX") +
-                        " | U" + row.optInt("universe", 1) +
-                        " | " + start + "-" + end +
-                        " | " + channels + " ch" +
+                        " | U " + technicalNumber(row, "universe", "", false) +
+                        " | " + (sr ? "opseg " : "range ") + range +
+                        " | " + technicalNumber(row, "channels", "ch", false) +
                         (row.optString("mode", "").isEmpty() ? "" : " | " + row.optString("mode"));
                     paragraph(line, 9.5f, false);
                 }
             }
+        }
+
+        private String technicalNumber(JSONObject object, String key, String unit, boolean allowZero) {
+            String unknown = sr ? "nije uneto" : "not entered";
+            if (object == null || object.isNull(key)) return unknown;
+            Object value = object.opt(key);
+            if (!(value instanceof Number) && !(value instanceof String)) return unknown;
+            if (value instanceof String && ((String) value).trim().isEmpty()) return unknown;
+            double number = object.optDouble(key, Double.NaN);
+            if (Double.isNaN(number) || Double.isInfinite(number) || (allowZero ? number < 0 : number <= 0)) return unknown;
+            return String.valueOf(value).trim() + (unit.isEmpty() ? "" : " " + unit);
         }
 
         private void drawPlannerSetSketch(JSONObject sketch, JSONObject technical) {

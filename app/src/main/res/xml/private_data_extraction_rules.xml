@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Legacy private scene records and AtomicFile siblings share files/. New AI drafts use no_backup/. -->
+        <exclude domain="file" path="." />
+        <exclude domain="root" path="app_webview" />
+        <exclude domain="external" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <!-- Legacy private scene records and AtomicFile siblings share files/. New AI drafts use no_backup/. -->
+        <exclude domain="file" path="." />
+        <exclude domain="root" path="app_webview" />
+        <exclude domain="external" path="." />
+    </device-transfer>
+</data-extraction-rules>

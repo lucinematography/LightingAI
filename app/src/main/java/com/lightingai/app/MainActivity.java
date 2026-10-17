@@ -56,6 +56,8 @@ import java.util.UUID;
 
 public class MainActivity extends Activity {
     private volatile boolean recoveryOriginTrusted = false;
+    private AIVisualDraftStore aiVisualDraftStore;
+    private AIVisualDraftStore visualDraftStore() { if(aiVisualDraftStore==null)aiVisualDraftStore=new AIVisualDraftStore(getNoBackupFilesDir());return aiVisualDraftStore; }
     private WebView webView;
     private FrameLayout rootView;
     private View startupSplash;
@@ -1367,12 +1369,20 @@ public class MainActivity extends Activity {
             return readableBackupPhoto(value);
         }
 
+        private final ThreadLocal<String> pendingImportedVisual=new ThreadLocal<>();
+        @JavascriptInterface public String importScenePlannerBackupWithVisual(String name,String workspace,String photo,String expectedIndex,String visual) {
+            if(!recoveryOriginTrusted||visual==null||visual.length()>12200000)return "";
+            try {if(!validAIVisualDraft(new JSONObject(visual),true))return "";
+                pendingImportedVisual.set(visual);
+                return importScenePlannerBackup(name,workspace,photo,expectedIndex);
+            }catch(org.json.JSONException error){return "";}finally{pendingImportedVisual.remove();}
+        }
         @JavascriptInterface public String importScenePlannerBackup(String name, String workspace, String photo, String expectedIndex) {
             if (!recoveryOriginTrusted || name == null || name.trim().isEmpty() || name.length() > 80 ||
                 !validSceneWorkspace(workspace) || photo == null || (!photo.isEmpty() && (!validScenePhoto(photo) || !validBackupPhotoRecord(photo))) ||
                 expectedIndex == null || expectedIndex.length() > 65536) return "";
             synchronized (MainActivity.this) {
-                String workspaceFile = null, photoFile = null;
+                String workspaceFile = null, photoFile = null, importedId = null;
                 boolean published = false;
                 try {
                     String current = readSceneFile("scene-planner-scenes-v1.json", 65536);
@@ -1384,6 +1394,7 @@ public class MainActivity extends Activity {
                     } else if (!current.equals(expectedIndex)) return "";
                     if (entries.length() >= 100) return "";
                     String id = "s-" + UUID.randomUUID().toString().replace("-", "");
+                    importedId=id;
                     workspaceFile = sceneFile(id, "workspace"); photoFile = sceneFile(id, "photo");
                     for (String file : new String[]{workspaceFile, photoFile}) {
                         if (new java.io.File(getFilesDir(), file).exists() ||
@@ -1396,6 +1407,8 @@ public class MainActivity extends Activity {
                     if (!writeRecoveryFile(workspaceFile, workspace, 8 * 1024 * 1024) ||
                         (!photo.isEmpty() && !writeRecoveryFile(photoFile, photo, 12100000))) return "";
                     entries.put(new JSONObject().put("id", id).put("name", name));
+                    String pendingVisual=pendingImportedVisual.get();
+                    if(pendingVisual!=null&&!visualDraftStore().save(id,new JSONObject(pendingVisual)))return "";
                     if (!saveScenePlannerSceneIndex(index.toString())) return "";
                     published = true;
                     return id;
@@ -1404,6 +1417,7 @@ public class MainActivity extends Activity {
                     // Only unregistered files created by this failed import are removed.
                     if (!published && workspaceFile != null) new AtomicFile(new java.io.File(getFilesDir(), workspaceFile)).delete();
                     if (!published && photoFile != null) new AtomicFile(new java.io.File(getFilesDir(), photoFile)).delete();
+                    if(!published&&importedId!=null)visualDraftStore().discardNewScene(importedId);
                 }
             }
         }
@@ -1462,6 +1476,49 @@ public class MainActivity extends Activity {
                 !("photo".equals(kind) ? validScenePhoto(data) : validSceneWorkspace(data))) return false;
             return writeRecoveryFile(name, data, "photo".equals(kind) ? 12100000 : 8 * 1024 * 1024);
         }
+        // One private atomic record per scene; never WebView storage or a copy of the Planner photo.
+        private String aiVisualDraftFile(String scene) {
+            if (!recoveryOriginTrusted || scene == null ||
+                !("legacy".equals(scene) || (scene.matches("^s-[a-z0-9]{8,64}$") && registeredScene(scene)))) return null;
+            return "ai-visual-draft-" + scene + "-v1.json";
+        }
+        @JavascriptInterface public String loadAIVisualDraft(String scene) {
+            String file = aiVisualDraftFile(scene);
+            if(file==null)return ""; synchronized(MainActivity.this){ return visualDraftStore().load(scene,readSceneFile(file,12200000)); }
+        }
+        @JavascriptInterface public boolean saveAIVisualDraft(String scene, String data) {
+            String file = aiVisualDraftFile(scene);
+            if (file == null || data == null || data.length() > 12200000) return false;
+            try { JSONObject x=new JSONObject(data);if(!validAIVisualDraft(x,true))return false;
+                synchronized(MainActivity.this){return visualDraftStore().save(scene,x);}
+            } catch (org.json.JSONException error) { return false; }
+        }
+        private boolean validAIVisualDraft(JSONObject x, boolean withPhoto) {
+            try {
+                if (x.length() != (withPhoto ? 6 : 5) || x.getInt("version") != 1 ||
+                    !(x.get("description") instanceof String) || x.getString("description").length() > 20000 ||
+                    !(x.get("dpRequest") instanceof String) || x.getString("dpRequest").length() > 20000 ||
+                    (withPhoto && !(x.get("photo") instanceof String))) return false;
+                String photo = withPhoto ? x.getString("photo") : "";
+                if (!photo.isEmpty() && !readableBackupPhoto(photo)) return false;
+                org.json.JSONArray ids = x.getJSONArray("selectedIds");
+                if (ids.length() > 1000) return false;
+                for (int i = 0; i < ids.length(); i++)
+                    if (!(ids.get(i) instanceof String) || ids.getString(i).isEmpty() || ids.getString(i).length() > 200) return false;
+                JSONObject settings = x.getJSONObject("settings");
+                if (settings.length() != 4 || !(settings.get("look") instanceof String) || settings.getString("look").length() > 80) return false;
+                for (String key : new String[]{"useMeasurements", "useSun", "useDmx"})
+                    if (!(settings.get(key) instanceof Boolean)) return false;
+                return true;
+            } catch(org.json.JSONException error) { return false; }
+        }
+        @JavascriptInterface public boolean saveAIVisualDraftMetadata(String scene,String data) {
+            if(aiVisualDraftFile(scene)==null||data==null||data.length()>1200000)return false;
+            try {JSONObject x=new JSONObject(data);if(!validAIVisualDraft(x,false))return false;
+                synchronized(MainActivity.this){return visualDraftStore().saveMetadata(scene,x);}
+            }catch(org.json.JSONException error){return false;}
+        }
+
         @JavascriptInterface public boolean saveScenePlannerWorkspace(String data) {
             return recoveryOriginTrusted && validSceneWorkspace(data) &&
                 writeRecoveryFile("scene-planner-workspace-v1.json", data, 8 * 1024 * 1024);
@@ -1810,7 +1867,7 @@ public class MainActivity extends Activity {
 
     private void checkpointScenePlanner() {
         if (webView != null) webView.evaluateJavascript(
-            "(function(){var d=window.LightingAIScenePlannerDraft;if(d)d.flush();})()", null);
+            "(function(){var d=window.LightingAIScenePlannerDraft;if(d)d.flush();if(window.LightingAIVisualFlush)window.LightingAIVisualFlush();})()", null);
     }
 
     @Override protected void onSaveInstanceState(Bundle outState) {
@@ -1825,6 +1882,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onPause() {
+        checkpointScenePlanner();
         stopNativeSunCompass();
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();

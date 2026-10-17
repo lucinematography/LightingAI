@@ -10,3 +10,20 @@
 *.keystore
 *.dpapi
 *.recovery-secret
+
+# Private reference books: local use only, never include in Git or CI.
+/LightingAI_Reference_Books/
+/LightingAI_Knjige_za_Codex_VSCode.zip
+
+# Local-only instructions, credentials and generated archives/APKs.
+/AGENTS.md
+.env
+.env.*
+**/local.properties
+**/keystore.properties
+*.key
+*.pem
+*.apk
+*.aab
+*.zip
+/LightingAI_Backups/

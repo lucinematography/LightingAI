@@ -44,6 +44,17 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Professional AI photo and PDF regression tests
+        working-directory: backend
+        env:
+          OPENAI_API_KEY: ""
+        run: |
+          node lighting-plan-request-selftest.js
+          node lighting-plan-inventory-selftest.js
+          node lighting-plan-knowledge-selftest.js
+          node lighting-plan-launcher-selftest.js
+          npm run test:ai-visual-draft
+
       - name: CI autofix regression tests
         run: node scripts/run-ci-check.mjs ci-autofix
 
@@ -176,6 +187,12 @@ jobs:
             adb shell am force-stop com.lightingai.app.review13
             adb shell am instrument -w -e phase restore com.lightingai.app.review13.test/com.lightingai.app.ScenePlannerRecoveryInstrumentation | tee app/build/recovery-restore.txt
             grep -Fq 'SCENE_PLANNER_RECOVERY_PASS restore' app/build/recovery-restore.txt
+            gradle assembleDebugAndroidTest '-PlightingaiTestRunner=com.lightingai.app.AIVisualDraftInstrumentation' -PreleaseVersionCode=${{ github.run_number }}
+            TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"; test -x "$TOOLS/aapt" && "$TOOLS/aapt" dump xmltree app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk AndroidManifest.xml > app/build/ai-visual-draft-test-manifest.txt
+            python3 -c 'import pathlib,re; text=pathlib.Path("app/build/ai-visual-draft-test-manifest.txt").read_text(); blocks=re.findall(r"(?ms)^[ \t]*E: instrumentation\b(.*?)(?=^[ \t]*E: |\Z)",text); assert len(blocks)==1,"Expected one instrumentation declaration"; attrs=blocks[0]; assert re.search(r"android:name(?:\([^)]*\))?=\x22com\.lightingai\.app\.AIVisualDraftInstrumentation\x22",attrs),"Wrong instrumentation runner"; assert re.search(r"android:targetPackage(?:\([^)]*\))?=\x22com\.lightingai\.app\.review13\x22",attrs),"Wrong test target package"; print("AI Visual instrumentation manifest verified")'
+            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w com.lightingai.app.review13.test/com.lightingai.app.AIVisualDraftInstrumentation | tee app/build/ai-visual-draft-native.txt
+            grep -Fq 'PASS STEP56 native:' app/build/ai-visual-draft-native.txt
 
       - name: Verify APK signature and update identity
         shell: bash
@@ -192,6 +209,7 @@ jobs:
           echo 'Signing unchanged: this CI debug APK is not an update for older differently signed APKs.' | tee -a app/build/apk-identity.txt
 
       - name: Upload public APK identity and recovery results
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
           name: apk-identity-and-recovery-${{ github.run_number }}
@@ -199,6 +217,7 @@ jobs:
             app/build/apk-identity.txt
             app/build/recovery-prepare.txt
             app/build/recovery-restore.txt
+            app/build/ai-visual-draft-native.txt
           retention-days: 14
 
       - name: Verify packaged Project 5 APK

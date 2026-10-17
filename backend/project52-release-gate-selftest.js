@@ -10,7 +10,7 @@ const launcher = read('app/src/main/assets/ai-visual-scene-launcher.js');
 const plan = read('app/src/main/assets/ai-visual-scene-plan.js');
 const diagnostics = read('app/src/main/assets/ai-visual-phone-diagnostics.js');
 
-assert.match(workflow, /pull_request:\s*[\s\S]*branches:\s*\[\s*["']main["']\s*\]/, 'Android workflow must run on PRs targeting main');
+assert.match(workflow, /pull_request:\s*[\s\S]*?branches:\s*\[\s*["']main["'](?:\s*,\s*["'][^"']+["'])*\s*\]/, 'Android workflow must run on PRs targeting main');
 assert.match(workflow, /Validate Project 5\.2 release gate/, 'Android workflow must execute the Project 5.2 release gate');
 
 const timeoutMatch = launcher.match(/PLAN_TIMEOUT_MS\s*=\s*(\d+)/);

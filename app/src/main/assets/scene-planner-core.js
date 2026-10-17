@@ -74,6 +74,95 @@
     var n = Number(value);
     return value !== '' && value != null && Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
   }
+  // Measured-room input must never be clipped into a plausible measurement.
+  // This is user-declared measurement, not independent depth-camera calibration.
+  function roomDimension(value) {
+    if(typeof value!=='number' && typeof value!=='string')return null;
+    if(typeof value==='string' && !/^(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)$/.test(value.trim()))return null;
+    var n=Number(value);
+    return Number.isFinite(n) && n>=0.5 && n<=100 ? n : null;
+  }
+  function measuredFixtureDistance(value) {
+    if(typeof value!=='number' && typeof value!=='string')return null;
+    if(typeof value==='string' && !/^(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)$/.test(value.trim()))return null;
+    var d=Number(value);
+    return Number.isFinite(d)&&d>=0.1&&d<=100?d:null;
+  }
+  // Accept only user-entered incident meter values. Never round or clip a measurement.
+  function incidentLux(value) {
+    if(typeof value!=='number' && typeof value!=='string')return null;
+    if(typeof value==='string' && !/^(?:[0-9]+(?:[.][0-9]*)?|[.][0-9]+)$/.test(value.trim()))return null;
+    var lux=Number(value);
+    return Number.isFinite(lux)&&lux>=0&&lux<=1000000&&
+      Math.round(lux*1000)/1000===lux?lux:null;
+  }
+  // V2 records are user-declared instrument observations, not certified calibration data.
+  // A user transcribes waveform percentage IRE from a camera/monitor.
+  // This is signal level, never linear lux, scene EV or sensor exposure.
+  function waveformIre(value) {
+    if(typeof value!=='number'&&typeof value!=='string')return null;
+    if(typeof value==='string'&&!/^(?:[0-9]+(?:[.][0-9])?|[.][0-9])$/.test(value.trim()))return null;
+    var n=Number(value);
+    return Number.isFinite(n)&&n>=0&&n<=109&&Math.round(n*10)/10===n?n:null;
+  }
+  // This digest is only a revision-local binding to user-declared signal
+  // context, never proof of the waveform chain, LUT or camera calibration.
+  function cameraWaveformSignalContextHash(evidence) {
+    return sha256(canonicalJson({
+      cameraModel:evidence.cameraModel,recordingProfile:evidence.recordingProfile,
+      waveformSource:evidence.waveformSource,signalPath:evidence.signalPath,
+      signalCodeRange:evidence.signalCodeRange,
+      observedTransferLabel:evidence.observedTransferLabel,
+      monitoringTransformId:evidence.monitoringTransformId,
+      cameraSettingsHash:evidence.cameraSettingsHash
+    }));
+  }
+  function meterText(value,max) {
+    if(typeof value!=='string')return null;
+    var result=value.trim();
+    if(result.length<2||result.length>max||/[<>\x00-\x1f\x7f]/.test(result))return null;
+    return result;
+  }
+  function meterOrientation(value) {
+    return value==='RECEPTOR_TOWARD_FIXTURE'||value==='RECEPTOR_TOWARD_CAMERA'?value:null;
+  }
+  function meterLocalTime(value) {
+    if(value===''||value===null||value===undefined)return '';
+    if(typeof value!=='string'||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$/.test(value))return null;
+    var y=Number(value.slice(0,4)),m=Number(value.slice(5,7)),d=Number(value.slice(8,10));
+    var hh=Number(value.slice(11,13)),mm=Number(value.slice(14,16));
+    if(y<1970||y>2100||m<1||m>12||d<1||d>31||hh>23||mm>59)return null;
+    var date=new Date(Date.UTC(y,m-1,d,hh,mm));
+    return date.getUTCFullYear()===y&&date.getUTCMonth()===m-1&&date.getUTCDate()===d&&
+      date.getUTCHours()===hh&&date.getUTCMinutes()===mm?value:null;
+  }
+  // A declared numeric UTC offset disambiguates local wall-clock meter readings
+  // even across a daylight-saving transition; it is not independent time verification.
+  function measuredUtcOffset(value) {
+    if(typeof value!=='string'||!/^[+-](?:0[0-9]|1[0-4]):(?:00|15|30|45)$/.test(value))return null;
+    var hour=Number(value.slice(1,3)),minute=Number(value.slice(4,6));
+    var total=(hour*60+minute)*(value[0]==='-'?-1:1);
+    return total>=-720&&total<=840?total:null;
+  }
+  function meterUtcMinute(localTime,offsetMinutes) {
+    return Date.parse(localTime+':00Z')/60000-offsetMinutes;
+  }
+  // A fingerprint of the PLANNED setup, not proof of physical rig/level accuracy.
+  function sceneMeterSetupFingerprint(plan) {
+    return sha256(canonicalJson({
+      plannedLights:(plan.lights||[]).filter(function(l){return l.available;}).map(function(l){
+        return {id:l.id,fixtureId:l.fixtureId,role:l.role,x:l.x,y:l.y,
+          heightM:l.heightM,distanceM:l.distanceM,intensityPct:l.intensityPct,
+          kelvin:l.kelvin,modifier:l.modifier,beamAngleDeg:l.beamAngleDeg};
+      }),
+      attestedDistances:(plan.distanceMeasurements||[]).map(function(d){
+        return {lightId:d.lightId,fixtureId:d.fixtureId,distanceM:d.distanceM};
+      }),
+      attestedOptics:(plan.opticConfirmations||[]).map(function(o){
+        return {lightId:o.lightId,fixtureId:o.fixtureId,opticId:o.opticId};
+      })
+    }));
+  }
   function key(value) { return str(value, 250).toLowerCase().replace(/[^a-z0-9]/g, ''); }
   function mode(value) { return value === 'own' ? 'own' : 'best'; }
   function equipment(items) {
@@ -103,6 +192,7 @@
   }
   function request(input) {
     input = input && typeof input === 'object' ? input : {};
+    var width=roomDimension(input.roomWidthM),depth=roomDimension(input.roomDepthM);
     return {
       mode: mode(input.mode),
       description: str(input.description, 3000),
@@ -115,8 +205,8 @@
       sceneLocalDateTime: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(String(input.sceneLocalDateTime||'')) ?
         str(input.sceneLocalDateTime, 20) : '',
       sceneCoordsVerified: input.sceneCoordsVerified === true,
-      roomWidthM: num(input.roomWidthM, 0.5, 100, null),
-      roomDepthM: num(input.roomDepthM, 0.5, 100, null),
+      roomWidthM: width,
+      roomDepthM: depth,
       equipment: equipment(input.equipment),
       modifiers: Array.isArray(input.modifiers) ? input.modifiers.map(function(x){return str(x,180);}).filter(Boolean) : modifiers(input.equipment),
       scenePhoto: str(input.scenePhoto, 12000000),
@@ -125,7 +215,7 @@
       }).map(function(f){
         return {timeSec:num(f.timeSec,0,3600,0),image:str(f.image,3500000)};
       }).filter(function(f){return !!f.image;}),
-      dimensionsMeasured: input.dimensionsMeasured === true,
+      dimensionsMeasured: input.dimensionsMeasured === true && width!==null && depth!==null,
       shotCamera: str(input.shotCamera || '', 400),
       dopRequest: str(input.dopRequest || '', 1500),
       cameraOverrides: cameraInput(input.cameraOverrides),
@@ -191,6 +281,65 @@
       why: str(raw.why || raw.notes, 500),
       estimated: true
     };
+  }
+  function sanitizePhotometricBasis(raw, req, emitted, knowledge) {
+    if(!raw || raw.status!=='MANUFACTURER_REFERENCE_NOT_SCENE_MEASUREMENT' ||
+      !Array.isArray(raw.entries))return null;
+    var measured=!!(req.roomWidthM && req.roomDepthM && req.dimensionsMeasured);
+    // Independently fixed published values: reject plausible but fabricated manufacturer lux.
+    var official={
+      'aputure-ls-60d':{url:'https://aputure.com/EN-US/products/ls-60d',
+        lux:[54300,7602,2715,9014,1096,402]},
+      'aputure-ls-60x':{url:'https://aputure.com/en-US/products/ls-60x',
+        lux:[33480,4241,1451,5803,703,268]},
+      'aputure-ls-300d-ii':{url:'https://aputure.com/en-US/products/ls-300d-ii',
+        requireOptic:true,ids:['HYPER_REFLECTOR_55:55:1','HYPER_REFLECTOR_55:55:3','HYPER_REFLECTOR_55:55:5'],
+        lux:[45000,3500,1200]},
+      'aputure-ls-1200d-pro':{url:'https://aputure.com/en-US/products/ls-1200d-pro',
+        requireOptic:true,
+        ids:['BM1215_NARROW:15:3','BM1215_NARROW:15:5','BM1215_NARROW:15:7','BM1215_NARROW:15:9',
+          'BM1230_MEDIUM:30:3','BM1230_MEDIUM:30:5','BM1230_MEDIUM:30:7','BM1230_MEDIUM:30:9',
+          'BM1245_WIDE:45:3','BM1245_WIDE:45:5','BM1245_WIDE:45:7','BM1245_WIDE:45:9'],
+        lux:[83100,28340,15200,8580,22400,8200,4660,2880,13010,4800,2706,1775]}
+    };
+    var ids=knowledge && Array.isArray(knowledge.cards) ?
+      knowledge.cards.map(function(c){return str(c&&c.id,40);}) : [];
+    var supportedBookIds=['PHY-005','EQ-001','EQ-002','EXP-001','META-002'];
+    var seen=Object.create(null);
+    var entries=raw.entries.slice(0,8).map(function(e){
+      if(!e||typeof e!=='object')return null;
+      var id=str(e.lightId,12),fixtureId=str(e.fixtureId,150),url=str(e.sourceUrl,240);
+      var light=emitted.find(function(l){return l.id===id && l.fixtureId===fixtureId && l.available;});
+      var reference=Object.prototype.hasOwnProperty.call(official,fixtureId)?official[fixtureId]:null;
+      if(!light||seen[id]||!reference||url!==reference.url||e.sourceType!=='MANUFACTURER_PUBLISHED_REFERENCE'||
+        e.cctK!==5600||e.outputPct!==100||!Array.isArray(e.samples)||e.samples.length!==reference.lux.length||
+        !!e.requiresAttestedOptic!==!!reference.requireOptic)return null;
+      var samples=e.samples.map(function(s){
+        if(!s||![15,30,45,55].includes(s.beamAngleDeg)||![1,3,5,7,9].includes(s.distanceM)||
+          !Number.isSafeInteger(s.lux)||s.lux<1||s.lux>1000000)return null;
+        return {opticId:s.opticId==null?null:str(s.opticId,50),beamAngleDeg:s.beamAngleDeg,distanceM:s.distanceM,lux:s.lux};
+      });
+      if(samples.some(function(s){return s===null;}))return null;
+      var sampleIds=samples.map(function(s){return (s.opticId?s.opticId+':':'')+s.beamAngleDeg+':'+s.distanceM;});
+      if((new Set(sampleIds)).size!==reference.lux.length)return null;
+      var expectedIds=reference.ids||['15:1','15:3','15:5','45:1','45:3','45:5'];
+      if(sampleIds.some(function(x,i){return x!==expectedIds[i]||samples[i].lux!==reference.lux[i];}))return null;
+      seen[id]=true;
+      var k=5600;
+      return {lightId:id,fixtureId:fixtureId,sourceUrl:url,
+        sourceType:'MANUFACTURER_PUBLISHED_REFERENCE',cctK:k,outputPct:100,
+        requiresAttestedOptic:!!reference.requireOptic,samples:samples,
+        configurationMatchesReference:!reference.requireOptic && light.intensityPct===100 && light.kelvin===k &&
+          (light.beamAngleDeg===15||light.beamAngleDeg===45) && !light.modifier,
+        estimatedXMetres:measured?Number((req.roomWidthM*light.x/100).toFixed(2)):null,
+        estimatedYMetres:measured?Number((req.roomDepthM*light.y/100).toFixed(2)):null,
+        bookCardIds:(Array.isArray(e.bookCardIds)?e.bookCardIds:[]).slice(0,5).map(function(x){return str(x,40);})
+          .filter(function(x){return ids.indexOf(x)>=0 && supportedBookIds.indexOf(x)>=0;}),
+        measuredDistanceM:null,onSetLux:null};
+    }).filter(Boolean);
+    return {status:'MANUFACTURER_REFERENCE_NOT_SCENE_MEASUREMENT',
+      geometry:{widthM:req.roomWidthM,depthM:req.roomDepthM,
+        userMarkedMeasured:measured,plotPositionsEstimated:true},entries:entries};
   }
   function sanitizePlan(raw, input, source) {
     var req = request(input), own = req.mode === 'own';
@@ -309,6 +458,22 @@
         referencePoints:(Array.isArray(analysis.referencePoints)?analysis.referencePoints:[]).slice(0,10)
           .map(function(a){return {label:str(a&&a.label,80),x:num(a&&a.x,5,95,50),y:num(a&&a.y,5,95,50),estimated:true};})
       },
+      knowledgeBasis: source === 'ai' && raw.knowledgeBasis &&
+        raw.knowledgeBasis.status === 'CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED' &&
+        Array.isArray(raw.knowledgeBasis.cards) ? {
+          status:'CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED',
+          cards:raw.knowledgeBasis.cards.slice(0,8).map(function(c){
+            return {id:str(c&&c.id,40),title:str(c&&c.title,180),
+              principle:str(c&&c.principle,1200),application:str(c&&c.application,1200),
+              validation:str(c&&c.validation,1200),limitations:str(c&&c.limitations,1200),
+              references:(Array.isArray(c&&c.references)?c.references:[]).slice(0,4).map(function(r){
+                return {source:str(r&&r.source,40),title:str(r&&r.title,240),edition:str(r&&r.edition,120),author:str(r&&r.author,120),
+                  pdfPage:num(r&&r.pdfPage,1,5000,null),printedPage:num(r&&r.printedPage,0,5000,null),
+                  verification:str(r&&r.verification,120)};
+              })};
+          })
+        } : null,
+      photometricBasis:source==='ai'?sanitizePhotometricBasis(raw.photometricBasis,req,emitted,raw.knowledgeBasis):null,
       dayForNightNotes:nightNotes,
       unknownCoverageStages:unlit,
       geometry: {widthM: req.roomWidthM, depthM: req.roomDepthM,
@@ -475,6 +640,53 @@
       typeof plan.dopRequest!=='string' || ['ai','local'].indexOf(plan.source)<0 || ['own','best'].indexOf(plan.mode)<0 ||
       plan.dataStatus.lightSettings!=='estimated' || plan.dataStatus.exposure!=='unconfirmed')
       throw new Error('Invalid validated plan data');
+    // A DoP manual revision is a creative plan edit, not a physical observation.
+    // Older AI/local plans do not carry this optional last-edit provenance.
+    var dopEdit=plan.dopLocalVariant;
+    if(dopEdit!==undefined){
+      var allowedLightFields=['x','y','heightM','distanceM','intensityPct','kelvin'];
+      var allowedCameraFields=['fps','shutterAngle','aperture','iso','whiteBalanceK','ndStops'];
+      if(!dopEdit||typeof dopEdit!=='object'||Array.isArray(dopEdit)||
+        dopEdit.contract!=='lightingai-dop-local-variant/1'||
+        dopEdit.source!=='DOP_CONFIRMED_PLANNED_EDIT_NOT_PHYSICALLY_VERIFIED'||
+        dopEdit.userConfirmed!==true||
+        dopEdit.physicalFixtureCommandsPerformed!==false||
+        dopEdit.meterEvidenceVerified!==false||
+        dopEdit.cameraExposureVerified!==false||
+        dopEdit.videoRelightGenerated!==false||
+        meterText(dopEdit.reason,500)!==dopEdit.reason||
+        plan.dopRequest!==dopEdit.reason||
+        !Array.isArray(dopEdit.changedLights)||dopEdit.changedLights.length>MAX_LIGHTS||
+        !Array.isArray(dopEdit.changedCameraFields)||dopEdit.changedCameraFields.length>6||
+        !Array.isArray(dopEdit.bookCardIds)||dopEdit.bookCardIds.length>8||
+        plan.dataStatus.dopLocalVariant!=='user-specified-plan-only-not-measured')
+        throw new Error('Invalid DoP planned-variant provenance');
+      var dopSeen=Object.create(null);
+      dopEdit.changedLights.forEach(function(item){
+        if(!item||typeof item!=='object'||Array.isArray(item)||dopSeen[item.lightId]||
+          !plan.lights.some(function(l){return l.id===item.lightId;})||
+          !Array.isArray(item.fields)||!item.fields.length||
+          item.fields.length>allowedLightFields.length||
+          item.fields.some(function(k,i){return allowedLightFields.indexOf(k)<0||
+            item.fields.indexOf(k)!==i;}))
+          throw new Error('Invalid DoP changed-light provenance');
+        dopSeen[item.lightId]=true;
+      });
+      if(dopEdit.changedCameraFields.some(function(k,i){
+        return allowedCameraFields.indexOf(k)<0||
+          dopEdit.changedCameraFields.indexOf(k)!==i;
+      }))throw new Error('Invalid DoP changed-camera provenance');
+      if(!dopEdit.changedLights.length&&!dopEdit.changedCameraFields.length)
+        throw new Error('DoP provenance without a planned change');
+      var attachedCards=plan.knowledgeBasis&&Array.isArray(plan.knowledgeBasis.cards)?
+        plan.knowledgeBasis.cards:[];
+      if(dopEdit.bookCardIds.some(function(k,i){
+        return typeof k!=='string'||dopEdit.bookCardIds.indexOf(k)!==i||
+          !attachedCards.some(function(card){return card.id===k;});
+      }))throw new Error('DoP provenance cannot invent book sources');
+    }else if(plan.dataStatus.dopLocalVariant!==undefined){
+      throw new Error('Orphaned DoP planned-variant provenance');
+    }
     var cameraRanges={fps:[1,120],shutterAngle:[11.25,360],aperture:[0.7,32],iso:[50,25600],
       whiteBalanceK:[1700,20000],ndStops:[0,12],focalLengthMm:[8,300]};
     Object.keys(cameraRanges).forEach(function(k){range(plan.cameraSettings[k],cameraRanges[k][0],cameraRanges[k][1],k==='focalLengthMm');});
@@ -491,6 +703,241 @@
       range(l.angleDeg,0,360,true);range(l.intensityPct,0,100,true);range(l.kelvin,1000,20000,true);
       range(l.verticalTiltDeg,-90,90,true);range(l.beamAngleDeg,5,180,true);range(l.powerDrawW,1,100000,true);
     });
+    // On-set user reports are not AI estimates and never constitute a lux-meter measurement.
+    var readings=plan.distanceMeasurements===undefined?[]:plan.distanceMeasurements;
+    if(!Array.isArray(readings)||readings.length>MAX_LIGHTS)throw new Error('Invalid fixture distance evidence');
+    var readingIds=Object.create(null);
+    readings.forEach(function(m){
+      if(!m || typeof m!=='object' || typeof m.lightId!=='string' || readingIds[m.lightId] ||
+        plan.mode!=='own' || m.source!=='USER_REPORTED_ON_SET_NOT_INDEPENDENTLY_VERIFIED' ||
+        m.target!=='SUBJECT_AT_MEASUREMENT_POINT' || m.userAttested!==true ||
+        measuredFixtureDistance(m.distanceM)!==m.distanceM)
+        throw new Error('Invalid fixture distance evidence');
+      var light=plan.lights.find(function(l){return l.id===m.lightId;});
+      if(!light||!light.available||!light.fixtureId||m.fixtureId!==light.fixtureId)
+        throw new Error('Fixture distance must refer to an owned light in this revision');
+      readingIds[m.lightId]=m;
+    });
+    if(readings.length&&plan.dataStatus.distanceMeasurements!=='user-reported-not-independently-verified')
+      throw new Error('Unlabeled fixture distance measurement');
+    // User-reported physical incident meter reading, never a manufacturer's lux figure.
+    var incidentReports=plan.incidentLuxReadings===undefined?[]:plan.incidentLuxReadings;
+    if(!Array.isArray(incidentReports)||incidentReports.length>MAX_LIGHTS)
+      throw new Error('Invalid on-set incident lux evidence');
+    var incidentIds=Object.create(null);
+    incidentReports.forEach(function(m){
+      if(!m||typeof m!=='object'||typeof m.lightId!=='string'||incidentIds[m.lightId]||
+        plan.mode!=='own'||m.source!=='USER_REPORTED_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED'||
+        m.unit!=='lx'||m.meterType!=='INCIDENT_LUX_METER'||
+        m.target!=='SUBJECT_AT_MEASUREMENT_POINT'||
+        m.measurementScope!=='FIXTURE_ISOLATED_OTHER_SOURCES_CONTROLLED'||
+        m.userAttested!==true||m.fixtureIsolated!==true||
+        typeof m.lux!=='number'||incidentLux(m.lux)!==m.lux)
+        throw new Error('Invalid on-set incident lux evidence');
+      if(m.protocolVersion!==undefined){
+        // Archived V2 readings remain valid, but local wall-clock times are not
+        // absolute instants. V3 records bind user-reported meter ID and UTC offset.
+        if((m.protocolVersion!==2&&m.protocolVersion!==3)||
+          meterText(m.meterModel,120)!==m.meterModel||
+          meterText(m.measurementPoint,100)!==m.measurementPoint||
+          meterOrientation(m.receptorOrientation)!==m.receptorOrientation||
+          meterLocalTime(m.measuredAtLocal)!==m.measuredAtLocal||
+          m.calibrationStatus!=='NOT_INDEPENDENTLY_VERIFIED')
+          throw new Error('Invalid incident meter context or calibration provenance');
+        if(m.protocolVersion===3){
+          if(meterText(m.meterIdentifier,80)!==m.meterIdentifier||!m.measuredAtLocal||
+            typeof m.utcOffsetMinutes!=='number'||!Number.isInteger(m.utcOffsetMinutes)||
+            m.utcOffsetMinutes< -720||m.utcOffsetMinutes>840||
+            m.utcOffsetMinutes%15!==0)
+            throw new Error('Invalid incident meter identity or UTC offset');
+        }else if(m.meterIdentifier!==undefined||m.utcOffsetMinutes!==undefined){
+          throw new Error('V2 reading cannot claim V3 meter identity or UTC offset');
+        }
+      }else if(m.meterModel!==undefined||m.measurementPoint!==undefined||
+        m.receptorOrientation!==undefined||m.measuredAtLocal!==undefined||
+        m.calibrationStatus!==undefined||m.meterIdentifier!==undefined||
+        m.utcOffsetMinutes!==undefined){
+        throw new Error('Unversioned incident meter metadata');
+      }
+      var light=plan.lights.find(function(l){return l.id===m.lightId;});
+      var distance=readingIds[m.lightId];
+      if(!light||!light.available||!light.fixtureId||m.fixtureId!==light.fixtureId||
+        !distance||distance.fixtureId!==m.fixtureId||
+        m.distanceMAtMeasurement!==distance.distanceM)
+        throw new Error('On-set incident lux evidence requires matching measured distance');
+      incidentIds[m.lightId]=m;
+    });
+    if(incidentReports.length &&
+      plan.dataStatus.incidentLuxReadings!=='user-reported-not-independently-verified')
+      throw new Error('Unlabeled on-set incident meter values');
+    // A user-reported ALL-SOURCES-ON incident meter observation is neither
+    // the sum of isolated contributions nor a measured camera exposure.
+    var sceneMeter=plan.sceneIncidentLuxReading;
+    if(sceneMeter!==undefined){
+      var availableSceneLights=plan.lights.filter(function(l){return l.available;});
+      if(!sceneMeter||typeof sceneMeter!=='object'||Array.isArray(sceneMeter)||
+        plan.mode!=='own'||!availableSceneLights.length||
+        sceneMeter.protocolVersion!==1||
+        sceneMeter.source!=='USER_REPORTED_COMBINED_SCENE_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED'||
+        sceneMeter.unit!=='lx'||sceneMeter.meterType!=='INCIDENT_LUX_METER'||
+        sceneMeter.target!=='SUBJECT_AT_MEASUREMENT_POINT'||
+        sceneMeter.measurementScope!=='ALL_PLANNED_AVAILABLE_SOURCES_ACTIVE_AMBIENT_INCLUDED'||
+        sceneMeter.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA'||
+        sceneMeter.userAttested!==true||sceneMeter.allSourcesActiveConfirmed!==true||
+        sceneMeter.calibrationStatus!=='NOT_INDEPENDENTLY_VERIFIED'||
+        typeof sceneMeter.lux!=='number'||incidentLux(sceneMeter.lux)!==sceneMeter.lux||
+        meterText(sceneMeter.meterModel,120)!==sceneMeter.meterModel||
+        meterText(sceneMeter.meterIdentifier,80)!==sceneMeter.meterIdentifier||
+        meterText(sceneMeter.measurementPoint,100)!==sceneMeter.measurementPoint||
+        meterLocalTime(sceneMeter.measuredAtLocal)!==sceneMeter.measuredAtLocal||
+        !sceneMeter.measuredAtLocal||
+        typeof sceneMeter.utcOffsetMinutes!=='number'||
+        !Number.isInteger(sceneMeter.utcOffsetMinutes)||
+        sceneMeter.utcOffsetMinutes< -720||sceneMeter.utcOffsetMinutes>840||
+        sceneMeter.utcOffsetMinutes%15!==0||
+        sceneMeter.fixtureCount!==availableSceneLights.length||
+        sceneMeter.setupFingerprint!==sceneMeterSetupFingerprint(plan)||
+        plan.dataStatus.sceneIncidentLuxReading!=='user-reported-not-independently-verified')
+        throw new Error('Invalid or stale combined-scene incident meter evidence');
+    }else if(plan.dataStatus.sceneIncidentLuxReading!==undefined){
+      throw new Error('Orphaned combined-scene incident meter status');
+    }
+    // Human-transcribed gray-card waveform evidence is bound to an extant
+    // whole-scene meter reading and camera settings, NOT independently calibrated.
+    var waveform=plan.cameraGrayCardWaveformReading;
+    if(waveform!==undefined){
+      if(!sceneMeter||!waveform||typeof waveform!=='object'||Array.isArray(waveform)||
+        plan.mode!=='own'||![1,2].includes(waveform.protocolVersion)||
+        waveform.source!=='USER_REPORTED_GRAY_CARD_WAVEFORM_NOT_INDEPENDENTLY_VERIFIED'||
+        waveform.subject!=='USER_DECLARED_NEUTRAL_GRAY_CARD_AT_SCENE_MEASUREMENT_POINT'||
+        waveform.unit!=='IRE'||waveform.userAttested!==true||
+        waveform.grayCardPlacedConfirmed!==true||
+        waveform.cameraSettingsMatchedConfirmed!==true||
+        waveform.allSourcesActiveConfirmed!==true||
+        waveform.calibrationStatus!=='NOT_INDEPENDENTLY_VERIFIED'||
+        typeof waveform.waveformIre!=='number'||
+        waveformIre(waveform.waveformIre)!==waveform.waveformIre||
+        ['CAMERA_INTERNAL','EXTERNAL_MONITOR'].indexOf(waveform.waveformSource)<0||
+        ['RECORDING_SIGNAL','DISPLAY_LUT_SIGNAL','UNKNOWN'].indexOf(waveform.signalPath)<0||
+        meterText(waveform.cameraModel,120)!==waveform.cameraModel||
+        meterText(waveform.recordingProfile,120)!==waveform.recordingProfile||
+        meterText(waveform.grayCardIdentifier,100)!==waveform.grayCardIdentifier||
+        waveform.measurementPoint!==sceneMeter.measurementPoint||
+        meterLocalTime(waveform.measuredAtLocal)!==waveform.measuredAtLocal||
+        !waveform.measuredAtLocal||
+        typeof waveform.utcOffsetMinutes!=='number'||
+        !Number.isInteger(waveform.utcOffsetMinutes)||
+        waveform.utcOffsetMinutes< -720||waveform.utcOffsetMinutes>840||
+        waveform.utcOffsetMinutes%15!==0||
+        waveform.sceneReadingHash!==sha256(canonicalJson(sceneMeter))||
+        waveform.cameraSettingsHash!==sha256(canonicalJson(plan.cameraSettings))||
+        plan.dataStatus.cameraGrayCardWaveformReading!=='user-reported-not-independently-verified')
+        throw new Error('Invalid or stale user-reported camera gray-card waveform evidence');
+      var waveformHasReference=waveform.userReferenceIre!==null;
+      if((waveformHasReference&&(
+          typeof waveform.userReferenceIre!=='number'||
+          waveformIre(waveform.userReferenceIre)!==waveform.userReferenceIre||
+          meterText(waveform.referenceBasis,180)!==waveform.referenceBasis||
+          waveform.signalPath==='UNKNOWN'))||
+        (!waveformHasReference&&waveform.referenceBasis!==null))
+        throw new Error('Invalid user-specified waveform reference');
+      // V1 is immutable historical evidence, not silently upgraded to a V2
+      // reference with verified signal levels or LUT provenance.
+      var v2OnlyFields=['signalCodeRange','observedTransferLabel',
+        'monitoringTransformId','signalContextHash','referenceContextConfirmed',
+        'referenceContextHash'];
+      if(waveform.protocolVersion===1){
+        if(v2OnlyFields.some(function(k){return waveform[k]!==undefined;}))
+          throw new Error('V1 camera waveform cannot assert V2 signal context');
+      }else{
+        if(['FULL_DATA','VIDEO_LEGAL','UNKNOWN'].indexOf(waveform.signalCodeRange)<0||
+          meterText(waveform.observedTransferLabel,120)!==waveform.observedTransferLabel||
+          (waveform.signalPath==='DISPLAY_LUT_SIGNAL'?
+            waveform.monitoringTransformId!==null&&
+              meterText(waveform.monitoringTransformId,120)!==waveform.monitoringTransformId:
+            waveform.monitoringTransformId!==null)||
+          waveform.signalContextHash!==cameraWaveformSignalContextHash(waveform))
+          throw new Error('Invalid V2 camera waveform signal context or fingerprint');
+        if(waveformHasReference){
+          if(waveform.referenceContextConfirmed!==true||
+            waveform.signalPath==='UNKNOWN'||waveform.signalCodeRange==='UNKNOWN'||
+            (waveform.signalPath==='DISPLAY_LUT_SIGNAL'&&!waveform.monitoringTransformId)||
+            waveform.referenceContextHash!==waveform.signalContextHash)
+            throw new Error('V2 waveform reference requires matching user-attested signal context');
+        }else if(waveform.referenceContextConfirmed!==false||
+          waveform.referenceContextHash!==null){
+          throw new Error('V2 waveform cannot claim a missing reference');
+        }
+      }
+      var cameraMeterSpan=Math.abs(meterUtcMinute(waveform.measuredAtLocal,waveform.utcOffsetMinutes)-
+        meterUtcMinute(sceneMeter.measuredAtLocal,sceneMeter.utcOffsetMinutes));
+      if(!Number.isFinite(cameraMeterSpan)||cameraMeterSpan>15)
+        throw new Error('Waveform and whole-scene meter readings are not in the same 15-minute session');
+    }else if(plan.dataStatus.cameraGrayCardWaveformReading!==undefined){
+      throw new Error('Orphaned camera waveform evidence status');
+    }
+    // Only an explicitly attested mounted optic can unlock a published reference.
+    var attestations=plan.opticConfirmations===undefined?[]:plan.opticConfirmations;
+    if(!Array.isArray(attestations)||attestations.length>MAX_LIGHTS)
+      throw new Error('Invalid mounted optic evidence');
+    var opticsByLight=Object.create(null);
+    attestations.forEach(function(a){
+      if(!a||typeof a!=='object'||!/^L[1-9][0-9]{0,8}$/.test(a.lightId)||
+        opticsByLight[a.lightId]||plan.mode!=='own'||
+        a.source!=='USER_REPORTED_MOUNTED_OPTIC_NOT_INDEPENDENTLY_VERIFIED'||
+        a.userAttested!==true||typeof a.opticId!=='string'||a.opticId.length>60)
+        throw new Error('Invalid mounted optic evidence');
+      var light=plan.lights.find(function(l){return l.id===a.lightId;});
+      var basis=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
+        plan.photometricBasis.entries.find(function(e){return e.lightId===a.lightId;}):null;
+      if(!light||!light.available||light.fixtureId!==a.fixtureId||!basis||
+        !basis.requiresAttestedOptic||basis.fixtureId!==a.fixtureId||
+        !Array.isArray(basis.samples)||!basis.samples.some(function(sample){return sample.opticId===a.opticId;}))
+        throw new Error('Mounted optic is not a verified profile option for this light');
+      opticsByLight[a.lightId]=a;
+    });
+    if(attestations.length&&plan.dataStatus.mountedOptics!=='user-reported-not-independently-verified')
+      throw new Error('Unlabeled on-set optic confirmation');
+    if(plan.photometricBasis && Array.isArray(plan.photometricBasis.entries)){
+      plan.photometricBasis.entries.forEach(function(e){
+        if(!e||e.onSetLux!==null)throw new Error('Invalid on-set photometric claim');
+        var reading=readingIds[e.lightId];
+        var verifiedOptic=opticsByLight[e.lightId];
+        var lightForOptic=plan.lights.find(function(l){return l.id===e.lightId;});
+        if(e.requiresAttestedOptic){
+          var selectedOptic=verifiedOptic&&verifiedOptic.fixtureId===e.fixtureId?verifiedOptic.opticId:null;
+          if((e.attestedOpticId||null)!==selectedOptic||!lightForOptic)
+            throw new Error('Missing or mismatched physical optic confirmation');
+          var opticSamples=(Array.isArray(e.samples)?e.samples:[]).filter(function(s){
+            return selectedOptic!==null&&s.opticId===selectedOptic;
+          });
+          var expectedMatch=!!(selectedOptic&&opticSamples.length&&lightForOptic.available&&
+            lightForOptic.intensityPct===100&&lightForOptic.kelvin===e.cctK&&
+            !lightForOptic.modifier&&opticSamples[0].beamAngleDeg===lightForOptic.beamAngleDeg);
+          if(e.configurationMatchesReference!==expectedMatch)
+            throw new Error('Optic reference configuration is not supported');
+        }
+        if(e.measuredDistanceM!==null && (!reading || reading.fixtureId!==e.fixtureId ||
+          reading.distanceM!==e.measuredDistanceM))
+          throw new Error('Fixture distance source mismatch');
+        if(reading&&reading.fixtureId===e.fixtureId&&e.measuredDistanceM!==reading.distanceM)
+          throw new Error('Fixture distance binding missing');
+        var selected=e.publishedReferenceAtMeasuredDistance;
+        if(selected!=null){
+          var light=plan.lights.find(function(l){return l.id===e.lightId;});
+          var sample=(Array.isArray(e.samples)?e.samples:[]).find(function(s){
+            return light&&s.distanceM===e.measuredDistanceM&&s.beamAngleDeg===light.beamAngleDeg;
+          });
+          if(!reading||!light||e.configurationMatchesReference!==true||!sample||
+            selected.lux!==sample.lux||selected.distanceM!==sample.distanceM||
+            selected.beamAngleDeg!==sample.beamAngleDeg||
+            (e.requiresAttestedOptic && (!verifiedOptic||selected.opticId!==verifiedOptic.opticId||
+              sample.opticId!==verifiedOptic.opticId))||
+            selected.status!=='MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT')
+            throw new Error('Invalid manufacturer sample at reported distance');
+        }
+      });
+    }
     if(planHash(plan)!==revision.planHash || revision.revisionId!=='rev-'+sha256(canonicalJson(revisionPayload(revision))) ||
       revision.lightPlotRevisionId!=='plot-'+revision.revisionId.slice(4))throw new Error('Revision integrity mismatch');
     return true;
@@ -511,6 +958,1054 @@
     verifyRevision(revision);
     return freezeJson(revision);
   }
+  // Strict DoP-specified PLANNED numerical parameters. No clipping or inference.
+  function dopNumber(value,min,max){
+    if(typeof value!=='string'&&typeof value!=='number')return null;
+    if(typeof value==='string'&&!/^(?:[0-9]+(?:[.][0-9]+)?|[.][0-9]+)$/.test(value.trim()))
+      return null;
+    var n=Number(value);
+    return Number.isFinite(n)&&n>=min&&n<=max?n:null;
+  }
+  function createDopLightingVariantRevision(parent,report){
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||
+      report.confirmed!==true||
+      Object.keys(report).some(function(k){
+        return ['confirmed','reason','lightEdits','cameraEdits'].indexOf(k)<0;
+      }))throw new Error('Explicit DoP creative-plan confirmation is required');
+    var reason=meterText(report.reason,500);
+    if(!reason)throw new Error('DoP must describe the requested creative change (2-500 characters)');
+    var edits=report.lightEdits===undefined?[]:report.lightEdits;
+    var camEdits=report.cameraEdits===undefined?{}:report.cameraEdits;
+    if(!Array.isArray(edits)||edits.length>MAX_LIGHTS||
+      !camEdits||typeof camEdits!=='object'||Array.isArray(camEdits))
+      throw new Error('Invalid DoP manual edit structure');
+    var lightRanges={x:[5,95],y:[5,95],heightM:[0.1,25],distanceM:[0.1,100],
+      intensityPct:[0,100],kelvin:[1000,20000]};
+    var cameraRanges={fps:[1,120],shutterAngle:[11.25,360],aperture:[0.7,32],
+      iso:[50,25600],whiteBalanceK:[1700,20000],ndStops:[0,12]};
+    if(Object.keys(camEdits).some(function(k){
+      return !Object.prototype.hasOwnProperty.call(cameraRanges,k);
+    }))throw new Error('Unsupported DoP camera parameter');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var touched=[],cameraChanged=[],positionChanged=Object.create(null);
+    var seen=Object.create(null);
+    edits.forEach(function(item){
+      if(!item||typeof item!=='object'||Array.isArray(item)||
+        typeof item.lightId!=='string'||seen[item.lightId]||
+        Object.keys(item).some(function(k){
+          return k!=='lightId'&&!Object.prototype.hasOwnProperty.call(lightRanges,k);
+        }))throw new Error('Invalid DoP light ID or edited field');
+      seen[item.lightId]=true;
+      var light=plan.lights.find(function(l){return l.id===item.lightId;});
+      if(!light)throw new Error('DoP edit cannot create or replace a fixture');
+      var fields=[];
+      Object.keys(lightRanges).forEach(function(k){
+        if(!Object.prototype.hasOwnProperty.call(item,k))return;
+        var limits=lightRanges[k],number=dopNumber(item[k],limits[0],limits[1]);
+        if(number===null)throw new Error('Invalid or out-of-range planned DoP '+k);
+        // Fixture ranges explicitly present in the project's curated catalog
+        // may reject an impossible creative CCT target. Other models remain
+        // unverified rather than inventing a manufacturer range.
+        if(k==='kelvin'&&light.available){
+          var knownCctRanges={
+            'aputure-ls-60d':[5600,5600],
+            'aputure-ls-60x':[2700,6500]
+          };
+          var cctRange=knownCctRanges[light.fixtureId];
+          if(cctRange&&(number<cctRange[0]||number>cctRange[1]))
+            throw new Error('Requested DoP Kelvin is outside the verified catalog fixture range');
+        }
+        if(light[k]===number)return;
+        light[k]=number;
+        fields.push(k);
+        if(['x','y','heightM','distanceM'].indexOf(k)>=0)
+          positionChanged[light.id]=true;
+      });
+      if(fields.length)touched.push({lightId:light.id,fields:fields});
+    });
+    Object.keys(cameraRanges).forEach(function(k){
+      if(!Object.prototype.hasOwnProperty.call(camEdits,k))return;
+      var limits=cameraRanges[k],v=dopNumber(camEdits[k],limits[0],limits[1]);
+      if(v===null)throw new Error('Invalid or out-of-range planned camera '+k);
+      if(plan.cameraSettings[k]===v)return;
+      cameraChanged.push(k);
+    });
+    if(!touched.length&&!cameraChanged.length)
+      throw new Error('DoP requested no actual changes; no duplicate revision created');
+    if(touched.length){
+      // A changed planned rig cannot inherit real incident/scene readings
+      // of the previous configuration. Keep the old measurements in history.
+      plan.incidentLuxReadings=[];
+      delete plan.dataStatus.incidentLuxReadings;
+      delete plan.sceneIncidentLuxReading;
+      delete plan.dataStatus.sceneIncidentLuxReading;
+      delete plan.cameraGrayCardWaveformReading;
+      delete plan.dataStatus.cameraGrayCardWaveformReading;
+      if(Object.keys(positionChanged).length){
+        plan.distanceMeasurements=(plan.distanceMeasurements||[])
+          .filter(function(m){return !positionChanged[m.lightId];});
+        if(!plan.distanceMeasurements.length)delete plan.dataStatus.distanceMeasurements;
+      }
+      if(plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)){
+        plan.photometricBasis.entries.forEach(function(entry){
+          var light=plan.lights.find(function(l){return l.id===entry.lightId;});
+          if(!light)return;
+          entry.estimatedXMetres=plan.geometry.measured&&plan.geometry.widthM!==null?
+            Number((plan.geometry.widthM*light.x/100).toFixed(2)):null;
+          entry.estimatedYMetres=plan.geometry.measured&&plan.geometry.depthM!==null?
+            Number((plan.geometry.depthM*light.y/100).toFixed(2)):null;
+          if(entry.requiresAttestedOptic){
+            refreshAttestedOpticReference(plan,entry.lightId);
+          }else{
+            var measured=(plan.distanceMeasurements||[]).find(function(d){
+              return d.lightId===entry.lightId&&d.fixtureId===entry.fixtureId;
+            });
+            entry.measuredDistanceM=measured?measured.distanceM:null;
+            entry.configurationMatchesReference=!!(light.available&&
+              light.intensityPct===100&&light.kelvin===entry.cctK&&!light.modifier&&
+              (light.beamAngleDeg===15||light.beamAngleDeg===45));
+            var sample=measured&&entry.configurationMatchesReference?
+              (entry.samples||[]).find(function(s){
+                return s.distanceM===measured.distanceM&&
+                  s.beamAngleDeg===light.beamAngleDeg;
+              }):null;
+            entry.publishedReferenceAtMeasuredDistance=sample?{
+              distanceM:sample.distanceM,beamAngleDeg:sample.beamAngleDeg,
+              lux:sample.lux,status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
+            }:null;
+            entry.onSetLux=null;
+          }
+        });
+      }
+    }else{
+      // A camera-only plan change leaves scene illuminance and its actual
+      // incident measurements untouched, but invalidates gray-card video
+      // signal claims bound to the former camera settings.
+      delete plan.cameraGrayCardWaveformReading;
+      delete plan.dataStatus.cameraGrayCardWaveformReading;
+    }
+    if(cameraChanged.length){
+      var old=plan.cameraSettings,base=old.referenceCamera||old,overrides={};
+      Object.keys(cameraRanges).forEach(function(k){
+        if(Object.prototype.hasOwnProperty.call(camEdits,k) &&
+          cameraChanged.indexOf(k)>=0)overrides[k]=dopNumber(camEdits[k],
+            cameraRanges[k][0],cameraRanges[k][1]);
+        else if(old[k]!==base[k])overrides[k]=old[k];
+      });
+      plan.cameraSettings=cameraPlan(base,{cameraOverrides:overrides});
+      plan.dataStatus.cameraSettings=plan.dataStatus.cameraSettings||{};
+      cameraChanged.forEach(function(k){plan.dataStatus.cameraSettings[k]='dop-specified';});
+    }
+    // Books are active expert guidance only when actually attached to the
+    // current plan; never fabricate book pages, lux, or equipment capability.
+    var wanted=[];
+    if(touched.length)wanted.push('PHY-001','PHY-002','PHY-005','SET-005','SET-007');
+    if(cameraChanged.length)wanted.push('EXP-001','EXP-002','EXP-003');
+    var cards=plan.knowledgeBasis&&Array.isArray(plan.knowledgeBasis.cards)?
+      plan.knowledgeBasis.cards:[];
+    var attachedIds=[];
+    wanted.forEach(function(id){
+      if(attachedIds.indexOf(id)<0&&cards.some(function(card){return card.id===id;}))
+        attachedIds.push(id);
+    });
+    plan.dopRequest=reason;
+    plan.dopLocalVariant={
+      contract:'lightingai-dop-local-variant/1',
+      source:'DOP_CONFIRMED_PLANNED_EDIT_NOT_PHYSICALLY_VERIFIED',
+      reason:reason,userConfirmed:true,
+      changedLights:touched,changedCameraFields:cameraChanged,
+      bookCardIds:attachedIds,
+      physicalFixtureCommandsPerformed:false,
+      meterEvidenceVerified:false,cameraExposureVerified:false,
+      videoRelightGenerated:false
+    };
+    plan.dataStatus.dopLocalVariant='user-specified-plan-only-not-measured';
+    var warning='Lokalna DoP varijanta menja samo predloženi plan i 2D prikaz. '+
+      'Postavka, sposobnosti lampi i stvarna ekspozicija nisu nezavisno provereni.';
+    if(plan.limitations.indexOf(warning)<0)plan.limitations.push(warning);
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,
+      plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // Read-only comparison of two directly linked DoP creative plan revisions.
+  // Neither reported readings nor actual camera/lighting output can be inferred.
+  function compareDopPlannedRevisions(before,after) {
+    verifyRevision(before);
+    verifyRevision(after);
+    var record=after.plan.dopLocalVariant;
+    if(before.sceneId!==after.sceneId||after.parentRevisionId!==before.revisionId||
+       after.sequence!==before.sequence+1||!record||
+       after.plan.mode!==before.plan.mode||after.plan.source!==before.plan.source||
+       before.plan.lights.length!==after.plan.lights.length)
+      throw new Error('DoP comparison requires a direct creative child revision');
+    var lightKeys=['x','y','heightM','distanceM','intensityPct','kelvin'];
+    var cameraKeys=['fps','shutterAngle','aperture','iso','whiteBalanceK','ndStops'];
+    var lightChanges=[],cameraChanges=[];
+    record.changedLights.forEach(function(entry){
+      var oldLight=before.plan.lights.find(function(l){return l.id===entry.lightId;});
+      var newLight=after.plan.lights.find(function(l){return l.id===entry.lightId;});
+      if(!oldLight||!newLight||oldLight.fixtureId!==newLight.fixtureId||
+         oldLight.role!==newLight.role)
+        throw new Error('DoP comparison fixture identity mismatch');
+      entry.fields.forEach(function(k){
+        if(lightKeys.indexOf(k)<0||oldLight[k]===newLight[k]||
+           (oldLight[k]!==null&&!Number.isFinite(oldLight[k]))||
+           !Number.isFinite(newLight[k]))
+          throw new Error('DoP comparison has an unsubstantiated changed-light field');
+        lightChanges.push({lightId:entry.lightId,fixtureName:newLight.fixtureName,
+          field:k,before:oldLight[k],after:newLight[k]});
+      });
+    });
+    before.plan.lights.forEach(function(oldLight){
+      var newLight=after.plan.lights.find(function(l){return l.id===oldLight.id;});
+      if(!newLight||oldLight.fixtureId!==newLight.fixtureId||
+         oldLight.role!==newLight.role)
+        throw new Error('DoP comparison cannot add, remove, or replace fixtures');
+      lightKeys.forEach(function(k){
+        if(oldLight[k]!==newLight[k]&&!lightChanges.some(function(c){
+          return c.lightId===oldLight.id&&c.field===k;
+        }))throw new Error('DoP comparison has an unreported planned-light change');
+      });
+    });
+    record.changedCameraFields.forEach(function(k){
+      if(cameraKeys.indexOf(k)<0||
+         before.plan.cameraSettings[k]===after.plan.cameraSettings[k])
+        throw new Error('DoP comparison has an unsubstantiated camera field');
+      cameraChanges.push({field:k,before:before.plan.cameraSettings[k],
+        after:after.plan.cameraSettings[k]});
+    });
+    cameraKeys.forEach(function(k){
+      if(before.plan.cameraSettings[k]!==after.plan.cameraSettings[k]&&
+         !cameraChanges.some(function(c){return c.field===k;}))
+        throw new Error('DoP comparison has an unreported camera change');
+    });
+    if(!lightChanges.length&&!cameraChanges.length)
+      throw new Error('DoP comparison has no genuine planned edits');
+    return freezeJson({
+      contract:'lightingai-dop-planned-comparison/1',
+      status:'CREATIVE_PLAN_VALUES_ONLY_NOT_PHYSICALLY_VERIFIED',
+      sceneId:after.sceneId,beforeRevisionId:before.revisionId,
+      afterRevisionId:after.revisionId,reason:record.reason,
+      lightChanges:lightChanges,cameraChanges:cameraChanges,
+      physicalFixtureCommandsPerformed:false,meterEvidenceVerified:false,
+      cameraExposureVerified:false,videoRelightGenerated:false
+    });
+  }
+  // An edit is an actual before/after parameter change. Measurement and
+  // mounted-optic revisions may inherit the last DoP label without a new edit.
+  function listDopPlannedEditEvents(history) {
+    var historyRevisions=restoreRevisions(history);
+    var lightKeys=['x','y','heightM','distanceM','intensityPct','kelvin'];
+    var cameraKeys=['fps','shutterAngle','aperture','iso','whiteBalanceK','ndStops'];
+    var events=[];
+    for(var i=1;i<historyRevisions.length;i++){
+      var before=historyRevisions[i-1],after=historyRevisions[i];
+      if(!after.plan.dopLocalVariant)continue;
+      var changed=before.plan.lights.length!==after.plan.lights.length;
+      if(!changed){
+        changed=before.plan.lights.some(function(oldLight){
+          var newLight=after.plan.lights.find(function(l){return l.id===oldLight.id;});
+          return !newLight||lightKeys.some(function(k){return oldLight[k]!==newLight[k];});
+        });
+      }
+      if(!changed){
+        changed=cameraKeys.some(function(k){
+          return before.plan.cameraSettings[k]!==after.plan.cameraSettings[k];
+        });
+      }
+      if(!changed)continue;
+      // A changed planned value with a purported DoP record MUST match its
+      // verified ledger. Do not silently turn it into an unverified edit event.
+      var verified=compareDopPlannedRevisions(before,after);
+      events.push(Object.assign({
+        beforeSequence:before.sequence,afterSequence:after.sequence
+      },verified));
+    }
+    return freezeJson({
+      contract:'lightingai-dop-edit-event-history/1',
+      currentRevisionId:historyRevisions[historyRevisions.length-1].revisionId,
+      historyRevisionCount:historyRevisions.length,eventCount:events.length,
+      events:events,physicalFixtureCommandsPerformed:false,
+      meterEvidenceVerified:false,cameraExposureVerified:false,
+      videoRelightGenerated:false
+    });
+  }
+  // Offline cue sheet for at most six locally seeked reference frames.
+  // Time values are APPROXIMATE browser samples, never original frame PTS,
+  // image hashes, decoded frames, verified actor tracking or rendered video.
+  function createDopSampledVideoCueSheet(revision,samples) {
+    verifyRevision(revision);
+    if(!Array.isArray(samples)||samples.length<1||samples.length>6)
+      throw new Error('Cue sheet requires one to six ordered sample timestamps');
+    var times=samples.map(function(item,i){
+      if(!item||typeof item!=='object'||Array.isArray(item)||
+         Object.keys(item).length!==1||
+         !Object.prototype.hasOwnProperty.call(item,'timeSec')||
+         typeof item.timeSec!=='number'||!Number.isFinite(item.timeSec)||
+         item.timeSec<0||item.timeSec>120||
+         Math.round(item.timeSec*100)/100!==item.timeSec||
+         (i>0&&item.timeSec<=samples[i-1].timeSec))
+        throw new Error('Invalid or nonmonotonic approximate frame timestamp');
+      return item.timeSec;
+    });
+    var plan=revision.plan;
+    var actor=plan.actors.length===1?plan.actors[0]:null;
+    var path=actor&&Array.isArray(actor.path)?actor.path:[];
+    var lightRoles=['key','fill','backlight','ambient'];
+    var cues=times.map(function(time,index){
+      var matches=[];
+      path.forEach(function(point,stage){
+        if(typeof point.timeSec==='number'&&Number.isFinite(point.timeSec)&&
+           Math.abs(point.timeSec-time)<=0.051)
+          matches.push({stage:stage,point:point});
+      });
+      if(matches.length!==1){
+        return {sampleNumber:index+1,approximateTimeSec:time,stageIndex:null,
+          estimatedActorPosition:null,plannedLights:[],
+          coverageStatus:'UNKNOWN_STAGE_NO_UNAMBIGUOUS_TIMESTAMP_MATCH'};
+      }
+      var match=matches[0];
+      var assigned=plan.lights.filter(function(l){
+        return lightRoles.indexOf(l.role)>=0&&l.coverageStages.indexOf(match.stage)>=0;
+      }).map(function(l){
+        return {lightId:l.id,fixtureName:l.fixtureName,role:l.role,
+          availableInInventory:l.available===true,x:l.x,y:l.y,
+          heightM:l.heightM,distanceM:l.distanceM,
+          intensityPct:l.intensityPct,kelvin:l.kelvin};
+      });
+      return {sampleNumber:index+1,approximateTimeSec:time,stageIndex:match.stage,
+        estimatedActorPosition:{x:match.point.x,y:match.point.y},
+        plannedLights:assigned,
+        coverageStatus:assigned.some(function(l){return l.role==='key'||l.role==='ambient';})?
+          'PLANNED_KEY_OR_AMBIENT_ASSIGNED_NOT_PHYSICALLY_VERIFIED':
+          assigned.length?'PLANNED_KEY_OR_AMBIENT_GAP_NOT_ACTUAL_DARKNESS':
+            'NO_LIGHT_ASSIGNED_IN_PLAN_NOT_ACTUAL_DARKNESS'};
+    });
+    return freezeJson({
+      contract:'lightingai-sampled-shot-lighting-cues/1',
+      sceneId:revision.sceneId,revisionId:revision.revisionId,
+      lightPlotRevisionId:revision.lightPlotRevisionId,planHash:revision.planHash,
+      look:plan.look,captureLighting:plan.captureLighting,
+      cameraProposal:{fps:plan.cameraSettings.fps,
+        shutterAngle:plan.cameraSettings.shutterAngle,
+        aperture:plan.cameraSettings.aperture,iso:plan.cameraSettings.iso,
+        whiteBalanceK:plan.cameraSettings.whiteBalanceK,
+        ndStops:plan.cameraSettings.ndStops},
+      sampleCount:cues.length,cues:cues,
+      timingProvenance:'APPROXIMATE_WEBVIEW_SEEK_NOT_ORIGINAL_VIDEO_PTS',
+      sourceVideoIdentityVerified:false,originalFramePtsVerified:false,
+      actorTrackingVerified:false,physicalLightStateVerified:false,
+      cameraExposureVerified:false,videoRelightGenerated:false
+    });
+  }
+  // A bounded, 32x32 browser-decoded video-frame sample. These are gamma/
+  // transfer-UNKNOWN 8-bit RGB code values, never lux or scene-linear light.
+  function summarizeWebViewFrameCodeValues(imageData) {
+    if(!imageData||imageData.width!==32||imageData.height!==32||
+       !imageData.data||imageData.data.length!==4096)
+      throw new Error('Code-value sample requires an opaque 32x32 RGBA frame');
+    var data=imageData.data,histogram=new Array(256).fill(0),sum=0,black=0,white=0;
+    for(var i=0;i<4096;i+=4){
+      var r=data[i],g=data[i+1],b=data[i+2],alpha=data[i+3];
+      if(!Number.isInteger(r)||r<0||r>255||
+         !Number.isInteger(g)||g<0||g>255||
+         !Number.isInteger(b)||b<0||b>255||alpha!==255)
+        throw new Error('Invalid opaque frame code values');
+      var y=Math.round(0.2126*r+0.7152*g+0.0722*b);
+      histogram[y]++;sum+=y;
+      if(y<=16)black++;
+      if(y>=235)white++;
+    }
+    function percentile(q){
+      var target=Math.ceil(1024*q),seen=0;
+      for(var value=0;value<256;value++){
+        seen+=histogram[value];if(seen>=target)return value;
+      }
+      return 255;
+    }
+    return freezeJson({
+      contract:'lightingai-webview-rgb-code-statistics/1',
+      sampledPixels:1024,
+      meanLumaCode:Number((sum/1024).toFixed(2)),
+      p10LumaCode:percentile(0.10),p90LumaCode:percentile(0.90),
+      nearBlackFraction:Number((black/1024).toFixed(4)),
+      nearWhiteFraction:Number((white/1024).toFixed(4)),
+      colorimetryVerified:false,physicalExposureVerified:false
+    });
+  }
+  function createOfflineCodeValueAudit(revision,frameSamples) {
+    verifyRevision(revision);
+    if(!Array.isArray(frameSamples)||frameSamples.length<1||frameSamples.length>6)
+      throw new Error('Sampled code-value audit requires one to six video frames');
+    // Reuse the strict sequence checks of the existing verified DoP cue sheet.
+    var cue=createDopSampledVideoCueSheet(revision,frameSamples.map(function(s){
+      if(!s||typeof s!=='object'||Array.isArray(s))
+        throw new Error('Invalid video frame code-value sample');
+      return {timeSec:s.timeSec};
+    }));
+    var allowed=['contract','sampledPixels','meanLumaCode','p10LumaCode',
+      'p90LumaCode','nearBlackFraction','nearWhiteFraction',
+      'colorimetryVerified','physicalExposureVerified'];
+    function validStats(s){
+      return s&&typeof s==='object'&&!Array.isArray(s)&&
+        Object.keys(s).length===allowed.length&&
+        Object.keys(s).every(function(k){return allowed.indexOf(k)>=0;})&&
+        s.contract==='lightingai-webview-rgb-code-statistics/1'&&
+        s.sampledPixels===1024&&
+        typeof s.meanLumaCode==='number'&&Number.isFinite(s.meanLumaCode)&&
+        s.meanLumaCode>=0&&s.meanLumaCode<=255&&
+        Number(s.meanLumaCode.toFixed(2))===s.meanLumaCode&&
+        Number.isInteger(s.p10LumaCode)&&s.p10LumaCode>=0&&s.p10LumaCode<=255&&
+        Number.isInteger(s.p90LumaCode)&&s.p90LumaCode>=s.p10LumaCode&&s.p90LumaCode<=255&&
+        ['nearBlackFraction','nearWhiteFraction'].every(function(k){
+          return typeof s[k]==='number'&&Number.isFinite(s[k])&&
+            s[k]>=0&&s[k]<=1&&Number(s[k].toFixed(4))===s[k];
+        })&&s.colorimetryVerified===false&&s.physicalExposureVerified===false;
+    }
+    var previous=null,known=0;
+    var samples=frameSamples.map(function(item,i){
+      if(Object.keys(item).some(function(k){return k!=='timeSec'&&k!=='codeValues';}))
+        throw new Error('Video audit cannot include private JPEG or pixel buffers');
+      if(item.codeValues!==null&&!validStats(item.codeValues))
+        throw new Error('Invalid sampled frame code-value statistics');
+      var metric=item.codeValues;
+      var delta=metric&&previous?Number(
+        (metric.meanLumaCode-previous.meanLumaCode).toFixed(2)):null;
+      previous=metric;
+      if(metric)known++;
+      return {sampleNumber:i+1,approximateTimeSec:cue.cues[i].approximateTimeSec,
+        codeValues:metric,deltaMeanLumaCodeFromPreviousSample:delta,
+        isConsecutiveSourceFrame:false};
+    });
+    return freezeJson({
+      contract:'lightingai-offline-sampled-code-value-audit/1',
+      status:known===samples.length?
+        'WEBVIEW_DECODED_CODE_VALUES_ALL_SAMPLES_UNATTESTED':
+        'SOME_WEBVIEW_CODE_VALUES_MISSING',
+      binding:videoRevisionBinding(revision),
+      sampleCount:samples.length,measuredSampleCount:known,samples:samples,
+      timingProvenance:'APPROXIMATE_WEBVIEW_SEEK_NOT_ORIGINAL_VIDEO_PTS',
+      measurementBasis:'32X32_BROWSER_DECODED_RGB_CODE_VALUES_UNKNOWN_TRANSFER',
+      originalVideoBytesVerified:false,originalFramePtsVerified:false,
+      sourceColorimetryVerified:false,perFrameTemporalContinuityVerified:false,
+      flickerVerified:false,sceneLuxMeasured:false,cameraExposureVerified:false,
+      physicalFixtureCommandsPerformed:false,videoRelightGenerated:false
+    });
+  }
+  function refreshAttestedOpticReference(plan, lightId) {
+    var entry=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
+      plan.photometricBasis.entries.find(function(e){return e.lightId===lightId;}):null;
+    if(!entry||!entry.requiresAttestedOptic)return;
+    var light=plan.lights.find(function(l){return l.id===lightId;});
+    var optic=(plan.opticConfirmations||[]).find(function(a){
+      return a.lightId===lightId&&a.fixtureId===entry.fixtureId;
+    });
+    var measurement=(plan.distanceMeasurements||[]).find(function(a){
+      return a.lightId===lightId&&a.fixtureId===entry.fixtureId;
+    });
+    entry.attestedOpticId=optic?optic.opticId:null;
+    entry.measuredDistanceM=measurement?measurement.distanceM:null;
+    var candidates=(entry.samples||[]).filter(function(s){return optic&&s.opticId===optic.opticId;});
+    entry.configurationMatchesReference=!!(light&&optic&&candidates.length&&light.available&&
+      light.kelvin===entry.cctK&&light.intensityPct===100&&!light.modifier&&
+      light.beamAngleDeg===candidates[0].beamAngleDeg);
+    var matching=entry.configurationMatchesReference&&measurement&&candidates.find(function(s){
+      return s.distanceM===measurement.distanceM&&s.beamAngleDeg===light.beamAngleDeg;
+    });
+    entry.publishedReferenceAtMeasuredDistance=matching?{
+      opticId:optic.opticId,distanceM:matching.distanceM,
+      beamAngleDeg:matching.beamAngleDeg,lux:matching.lux,
+      status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
+    }:null;
+    entry.onSetLux=null;
+  }
+  function createMountedOpticRevision(parent, report) {
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||report.confirmed!==true||
+      typeof report.lightId!=='string'||typeof report.opticId!=='string')
+      throw new Error('Explicit physical mounted-optic confirmation is required');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var light=plan.lights.find(function(l){return l.id===report.lightId;});
+    var basis=plan.photometricBasis&&Array.isArray(plan.photometricBasis.entries)?
+      plan.photometricBasis.entries.find(function(e){return e.lightId===report.lightId;}):null;
+    if(plan.mode!=='own'||!light||!light.available||!basis||!basis.requiresAttestedOptic||
+      basis.fixtureId!==light.fixtureId)
+      throw new Error('Verified owned fixture and manufacturer optic profile are required');
+    var opticId=report.opticId;
+    if(!/^[A-Z0-9_]{2,60}$/.test(opticId)||
+      !basis.samples.some(function(sample){return sample.opticId===opticId;}))
+      throw new Error('Unsupported mounted optic for this fixture');
+    var item={lightId:light.id,fixtureId:light.fixtureId,opticId:opticId,
+      source:'USER_REPORTED_MOUNTED_OPTIC_NOT_INDEPENDENTLY_VERIFIED',userAttested:true};
+    plan.opticConfirmations=(plan.opticConfirmations||[])
+      .filter(function(a){return a.lightId!==light.id;}).concat([item])
+      .sort(function(a,b){return Number(a.lightId.slice(1))-Number(b.lightId.slice(1));});
+    plan.dataStatus.mountedOptics='user-reported-not-independently-verified';
+    // A changed or reconfirmed optic is a new physical setup: retain older lux only in its parent revision.
+    if(Array.isArray(plan.incidentLuxReadings)){
+      plan.incidentLuxReadings=plan.incidentLuxReadings.filter(function(x){return x.lightId!==light.id;});
+      if(!plan.incidentLuxReadings.length){
+        delete plan.incidentLuxReadings;
+        delete plan.dataStatus.incidentLuxReadings;
+      }
+    }
+    // Re-attested optics invalidate whole-scene lux and linked camera waveform.
+    delete plan.sceneIncidentLuxReading;
+    delete plan.dataStatus.sceneIncidentLuxReading;
+    delete plan.cameraGrayCardWaveformReading;
+    delete plan.dataStatus.cameraGrayCardWaveformReading;
+    refreshAttestedOpticReference(plan,light.id);
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // Human-attested physical distance is stored in a new immutable revision, not inferred
+  // from footage, AI or the plan's estimated light.distanceM.
+  function createDistanceMeasurementRevision(parent, reading) {
+    verifyRevision(parent);
+    if(!reading||typeof reading!=='object'||Array.isArray(reading)||
+      reading.confirmed!==true||typeof reading.lightId!=='string')
+      throw new Error('Explicit on-set distance confirmation is required');
+    var distance=measuredFixtureDistance(reading.distanceM);
+    if(distance===null)throw new Error('Invalid measured fixture distance (0.1-100m)');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var light=plan.lights.find(function(l){return l.id===reading.lightId;});
+    if(plan.mode!=='own'||!light||light.available!==true||!light.fixtureId)
+      throw new Error('Only available owned lights can have user-reported on-set distances');
+    var list=Array.isArray(plan.distanceMeasurements)?plan.distanceMeasurements:[];
+    var evidence={lightId:light.id,fixtureId:light.fixtureId,distanceM:distance,
+      source:'USER_REPORTED_ON_SET_NOT_INDEPENDENTLY_VERIFIED',
+      target:'SUBJECT_AT_MEASUREMENT_POINT',userAttested:true};
+    plan.distanceMeasurements=list.filter(function(x){return x.lightId!==light.id;}).concat([evidence])
+      .sort(function(a,b){return Number(a.lightId.slice(1))-Number(b.lightId.slice(1));});
+    plan.dataStatus.distanceMeasurements='user-reported-not-independently-verified';
+    // A changed/reconfirmed distance invalidates the meter reading at the former physical setup.
+    if(Array.isArray(plan.incidentLuxReadings)){
+      plan.incidentLuxReadings=plan.incidentLuxReadings.filter(function(x){return x.lightId!==light.id;});
+      if(!plan.incidentLuxReadings.length){
+        delete plan.incidentLuxReadings;
+        delete plan.dataStatus.incidentLuxReadings;
+      }
+    }
+    // Re-attested distance invalidates whole-scene lux and linked waveform.
+    delete plan.sceneIncidentLuxReading;
+    delete plan.dataStatus.sceneIncidentLuxReading;
+    delete plan.cameraGrayCardWaveformReading;
+    delete plan.dataStatus.cameraGrayCardWaveformReading;
+    if(plan.photometricBasis && Array.isArray(plan.photometricBasis.entries)){
+      plan.photometricBasis.entries.forEach(function(e){
+        if(e.lightId!==light.id||e.fixtureId!==light.fixtureId)return;
+        e.measuredDistanceM=distance;
+        if(e.requiresAttestedOptic){
+          refreshAttestedOpticReference(plan,light.id);
+          return;
+        }
+        // Exact published sample at same reported distance and nominal settings only.
+        // Lens alignment, target reflectance, modifiers, ambient and on-set lux remain unknown.
+        var match=e.configurationMatchesReference===true &&
+          (Array.isArray(e.samples)?e.samples:[]).find(function(s){
+            return s.distanceM===distance && s.beamAngleDeg===light.beamAngleDeg;
+          });
+        e.publishedReferenceAtMeasuredDistance=match?{
+          distanceM:distance,beamAngleDeg:match.beamAngleDeg,lux:match.lux,
+          status:'MANUFACTURER_REFERENCE_NOT_ON_SET_MEASUREMENT'
+        }:null;
+        e.onSetLux=null;
+      });
+    }
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,
+      plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // Store only user-attested actual meter input, never infer it from AI, camera or product tables.
+  // The fixture must be isolated and its physical distance already recorded for this same revision.
+  function createIncidentLuxRevision(parent, report) {
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||
+      report.confirmed!==true||report.fixtureIsolated!==true||
+      typeof report.lightId!=='string')
+      throw new Error('Explicit incident meter and isolated-light confirmation is required');
+    var lux=incidentLux(report.lux);
+    if(lux===null)throw new Error('Invalid measured incident lux (0-1000000 lx, up to 3 decimals)');
+    var meterModel=meterText(report.meterModel,120);
+    var measurementPoint=meterText(report.measurementPoint,100);
+    var receptorOrientation=meterOrientation(report.receptorOrientation);
+    var measuredAtLocal=meterLocalTime(report.measuredAtLocal);
+    if(!meterModel||!measurementPoint||!receptorOrientation||measuredAtLocal===null)
+      throw new Error('Incident meter model, measurement point, receptor orientation and valid time are required');
+    // Empty optional V3 fields preserve the older V2 workflow. Supplying either
+    // without the other is an error, never a silent downgrade to local-only time.
+    var requestV3=!!(report.meterIdentifier||report.measuredUtcOffset);
+    var meterIdentifier=requestV3?meterText(report.meterIdentifier,80):null;
+    var utcOffsetMinutes=requestV3?measuredUtcOffset(report.measuredUtcOffset):null;
+    if(requestV3&&(!meterIdentifier||utcOffsetMinutes===null||!measuredAtLocal))
+      throw new Error('V3 incident meter requires device ID, local time and explicit UTC offset');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var light=plan.lights.find(function(l){return l.id===report.lightId;});
+    var distance=(plan.distanceMeasurements||[]).find(function(m){return m.lightId===report.lightId;});
+    if(plan.mode!=='own'||!light||!light.available||!light.fixtureId||
+      !distance||distance.fixtureId!==light.fixtureId)
+      throw new Error('A verified owned light and its user-measured distance are required for incident lux');
+    var evidence={
+      lightId:light.id,fixtureId:light.fixtureId,lux:lux,unit:'lx',
+      distanceMAtMeasurement:distance.distanceM,
+      meterType:'INCIDENT_LUX_METER',target:'SUBJECT_AT_MEASUREMENT_POINT',
+      measurementScope:'FIXTURE_ISOLATED_OTHER_SOURCES_CONTROLLED',
+      source:'USER_REPORTED_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED',
+      protocolVersion:requestV3?3:2,meterModel:meterModel,measurementPoint:measurementPoint,
+      receptorOrientation:receptorOrientation,measuredAtLocal:measuredAtLocal,
+      calibrationStatus:'NOT_INDEPENDENTLY_VERIFIED',
+      userAttested:true,fixtureIsolated:true
+    };
+    if(requestV3){
+      evidence.meterIdentifier=meterIdentifier;
+      evidence.utcOffsetMinutes=utcOffsetMinutes;
+    }
+    plan.incidentLuxReadings=(plan.incidentLuxReadings||[])
+      .filter(function(x){return x.lightId!==light.id;}).concat([evidence])
+      .sort(function(a,b){return Number(a.lightId.slice(1))-Number(b.lightId.slice(1));});
+    plan.dataStatus.incidentLuxReadings='user-reported-not-independently-verified';
+    // The manufacturer-reference onSetLux slot remains null: never relabel reported lux as published output.
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // Actual user-entered meter lux at the subject with intended owned sources
+  // switched on, including ambient. No image/published/AI inference.
+  function createSceneIncidentLuxRevision(parent,report) {
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||
+      report.confirmed!==true||report.allSourcesActiveConfirmed!==true)
+      throw new Error('Explicit full-scene meter and lighting-state confirmation is required');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var active=plan.lights.filter(function(l){return l.available;});
+    if(plan.mode!=='own'||!active.length)
+      throw new Error('Combined scene incident measurement requires available owned lights');
+    var lux=incidentLux(report.lux);
+    var model=meterText(report.meterModel,120);
+    var identifier=meterText(report.meterIdentifier,80);
+    var point=meterText(report.measurementPoint,100);
+    var when=meterLocalTime(report.measuredAtLocal);
+    var offset=measuredUtcOffset(report.measuredUtcOffset);
+    if(lux===null||!model||!identifier||!point||!when||offset===null)
+      throw new Error('Invalid combined-scene lux or required meter identity, time and UTC offset');
+    plan.sceneIncidentLuxReading={
+      source:'USER_REPORTED_COMBINED_SCENE_INCIDENT_LUX_NOT_INDEPENDENTLY_VERIFIED',
+      protocolVersion:1,lux:lux,unit:'lx',
+      meterType:'INCIDENT_LUX_METER',meterModel:model,meterIdentifier:identifier,
+      measurementPoint:point,receptorOrientation:'RECEPTOR_TOWARD_CAMERA',
+      measuredAtLocal:when,utcOffsetMinutes:offset,
+      measurementScope:'ALL_PLANNED_AVAILABLE_SOURCES_ACTIVE_AMBIENT_INCLUDED',
+      target:'SUBJECT_AT_MEASUREMENT_POINT',
+      fixtureCount:active.length,setupFingerprint:sceneMeterSetupFingerprint(plan),
+      calibrationStatus:'NOT_INDEPENDENTLY_VERIFIED',
+      userAttested:true,allSourcesActiveConfirmed:true
+    };
+    plan.dataStatus.sceneIncidentLuxReading='user-reported-not-independently-verified';
+    // A repeated whole-scene reading is a fresh observation. Never carry over
+    // camera waveform readings from a previous moment or metering setup.
+    delete plan.cameraGrayCardWaveformReading;
+    delete plan.dataStatus.cameraGrayCardWaveformReading;
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,
+      plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // Camera/monitor waveform evidence of a user-positioned gray card. No
+  // camera access, AI vision inference, calibration or automatic exposure change.
+  function createCameraGrayCardWaveformRevision(parent,report) {
+    verifyRevision(parent);
+    if(!report||typeof report!=='object'||Array.isArray(report)||
+      report.confirmed!==true||report.grayCardPlacedConfirmed!==true||
+      report.cameraSettingsMatchedConfirmed!==true||
+      report.allSourcesActiveConfirmed!==true)
+      throw new Error('Explicit camera, gray card and lighting-state confirmation is required');
+    var plan=JSON.parse(canonicalJson(parent.plan));
+    var scene=plan.sceneIncidentLuxReading;
+    if(plan.mode!=='own'||!scene)
+      throw new Error('A user-reported whole-scene meter reading is required before camera waveform evidence');
+    var level=waveformIre(report.waveformIre);
+    var cameraModel=meterText(report.cameraModel,120);
+    var recordingProfile=meterText(report.recordingProfile,120);
+    var grayCardIdentifier=meterText(report.grayCardIdentifier,100);
+    var waveformSource=report.waveformSource;
+    var signalPath=report.signalPath;
+    var when=meterLocalTime(report.measuredAtLocal);
+    var offset=measuredUtcOffset(report.measuredUtcOffset);
+    if(level===null||!cameraModel||!recordingProfile||!grayCardIdentifier||
+      ['CAMERA_INTERNAL','EXTERNAL_MONITOR'].indexOf(waveformSource)<0||
+      ['RECORDING_SIGNAL','DISPLAY_LUT_SIGNAL','UNKNOWN'].indexOf(signalPath)<0||
+      !when||offset===null||
+      report.measurementPoint!==scene.measurementPoint)
+      throw new Error('Invalid gray-card waveform, camera or matching measurement-point context');
+    var span=Math.abs(meterUtcMinute(when,offset)-
+      meterUtcMinute(scene.measuredAtLocal,scene.utcOffsetMinutes));
+    if(!Number.isFinite(span)||span>15)
+      throw new Error('Camera waveform and whole-scene meter are more than 15 minutes apart');
+    // A reference is NEVER picked by AI or from a generic 18-percent-card IRE.
+    // It must be manually provided with a meaningful profile-specific basis.
+    var userReference=report.userReferenceIre;
+    var hasReference=userReference!==null&&userReference!==undefined&&userReference!=='';
+    var referenceLevel=hasReference?waveformIre(userReference):null;
+    var referenceBasis=hasReference?meterText(report.referenceBasis,180):null;
+    if(hasReference&&(referenceLevel===null||!referenceBasis||signalPath==='UNKNOWN')||
+      !hasReference&&report.referenceBasis!==undefined&&report.referenceBasis!==null&&
+        String(report.referenceBasis).trim()!=='')
+      throw new Error('A waveform reference requires a manual IRE value, named basis and known signal path');
+    var v2=report.protocolVersion===2;
+    var v2Keys=['signalCodeRange','observedTransferLabel',
+      'monitoringTransformId','referenceContextConfirmed'];
+    if(report.protocolVersion!==undefined&&report.protocolVersion!==2||
+      !v2&&v2Keys.some(function(k){return report[k]!==undefined;}))
+      throw new Error('V2 signal metadata must have an explicit V2 protocol');
+    var codeRange=null,observedTransfer=null,monitoringTransformId=null;
+    if(v2){
+      codeRange=report.signalCodeRange;
+      observedTransfer=meterText(report.observedTransferLabel,120);
+      var incomingTransform=report.monitoringTransformId;
+      if(['FULL_DATA','VIDEO_LEGAL','UNKNOWN'].indexOf(codeRange)<0||
+        !observedTransfer||
+        (signalPath!=='DISPLAY_LUT_SIGNAL'&&
+          incomingTransform!==null&&incomingTransform!==undefined&&incomingTransform!==''))
+        throw new Error('Invalid V2 waveform signal range, transfer label or transform');
+      if(signalPath==='DISPLAY_LUT_SIGNAL'){
+        monitoringTransformId=incomingTransform==null||incomingTransform===''?
+          null:meterText(incomingTransform,120);
+        if(incomingTransform&&!monitoringTransformId)
+          throw new Error('Invalid V2 monitoring LUT identity');
+      }
+      if(hasReference){
+        if(report.referenceContextConfirmed!==true||
+          codeRange==='UNKNOWN'||signalPath==='UNKNOWN'||
+          signalPath==='DISPLAY_LUT_SIGNAL'&&!monitoringTransformId)
+          throw new Error('V2 reference requires a known signal chain and explicit matching-context attestation');
+      }else if(report.referenceContextConfirmed===true)
+        throw new Error('V2 cannot attest a reference that is absent');
+    }
+    plan.cameraGrayCardWaveformReading={
+      protocolVersion:v2?2:1,
+      source:'USER_REPORTED_GRAY_CARD_WAVEFORM_NOT_INDEPENDENTLY_VERIFIED',
+      subject:'USER_DECLARED_NEUTRAL_GRAY_CARD_AT_SCENE_MEASUREMENT_POINT',
+      unit:'IRE',waveformIre:level,
+      cameraModel:cameraModel,recordingProfile:recordingProfile,
+      grayCardIdentifier:grayCardIdentifier,
+      waveformSource:waveformSource,signalPath:signalPath,
+      measurementPoint:scene.measurementPoint,measuredAtLocal:when,
+      utcOffsetMinutes:offset,userReferenceIre:referenceLevel,
+      referenceBasis:referenceBasis,
+      sceneReadingHash:sha256(canonicalJson(scene)),
+      cameraSettingsHash:sha256(canonicalJson(plan.cameraSettings)),
+      calibrationStatus:'NOT_INDEPENDENTLY_VERIFIED',
+      userAttested:true,grayCardPlacedConfirmed:true,
+      cameraSettingsMatchedConfirmed:true,allSourcesActiveConfirmed:true
+    };
+    if(v2){
+      var wave=plan.cameraGrayCardWaveformReading;
+      wave.signalCodeRange=codeRange;
+      wave.observedTransferLabel=observedTransfer;
+      wave.monitoringTransformId=monitoringTransformId;
+      wave.signalContextHash=cameraWaveformSignalContextHash(wave);
+      wave.referenceContextConfirmed=!!hasReference;
+      wave.referenceContextHash=hasReference?wave.signalContextHash:null;
+    }
+    plan.dataStatus.cameraGrayCardWaveformReading='user-reported-not-independently-verified';
+    var revision={schemaVersion:1,sceneId:parent.sceneId,parentRevisionId:parent.revisionId,
+      sequence:parent.sequence+1,nextLightId:parent.nextLightId,plan:plan,planHash:planHash(plan)};
+    revision.revisionId='rev-'+sha256(canonicalJson(revisionPayload(revision)));
+    revision.lightPlotRevisionId='plot-'+revision.revisionId.slice(4);
+    verifyRevision(revision);
+    return freezeJson(revision);
+  }
+  // The result is a ratio of separately measured, isolated fixture contributions,
+  // NOT a scene-contrast ratio, total illuminance, T-stop, or calibrated camera exposure.
+  // Comparing "toward fixture" dome orientations is unsafe: each fixture points elsewhere.
+  // User-reported metadata matching is necessary, never proof of actual comparability.
+  function compareKeyFillMeasurements(revision, keyLightId, fillLightId) {
+    verifyRevision(revision);
+    var plan=revision.plan,lights=plan.lights,records=plan.incidentLuxReadings||[];
+    var keyLight=lights.find(function(l){return l.id===keyLightId;});
+    var fillLight=lights.find(function(l){return l.id===fillLightId;});
+    var bookCards=plan.knowledgeBasis&&Array.isArray(plan.knowledgeBasis.cards)?
+      plan.knowledgeBasis.cards:[];
+    var bookCardIds=bookCards.filter(function(c){
+      return c&&['SET-005','SET-002','EXP-001'].indexOf(c.id)>=0;
+    }).map(function(c){return c.id;}).filter(function(id,i,a){return a.indexOf(id)===i;});
+    // Guidance is taken only from the cards actually attached to this revision;
+    // a card id alone is never an exposure calibration or a universal ratio.
+    var bookGuidance=bookCardIds.map(function(id){
+      var card=bookCards.find(function(c){return c&&c.id===id;});
+      return {id:id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
+    var shared={kind:'ISOLATED_INCIDENT_LUX_CONTRIBUTION_RATIO',
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      keyLightId:keyLightId,fillLightId:fillLightId,bookCardIds:bookCardIds,
+      bookGuidance:bookGuidance,
+      sceneContrastVerified:false,cameraExposureVerified:false,
+      manufacturerPhotometricsUsed:false};
+    function blocked(why){return freezeJson(Object.assign({},shared,{
+      status:'NOT_COMPARABLE',reason:why,ratio:null,relativeStops:null,
+      keyLux:null,fillLux:null,minutesApart:null
+    }));}
+    if(plan.mode!=='own'||!keyLight||!fillLight||keyLight.id===fillLight.id||
+      !keyLight.available||!fillLight.available||keyLight.role!=='key'||fillLight.role!=='fill')
+      return blocked('INVALID_KEY_FILL_PAIR');
+    var key=records.find(function(r){return r.lightId===keyLight.id;});
+    var fill=records.find(function(r){return r.lightId===fillLight.id;});
+    if(!key||!fill)return blocked('MISSING_USER_REPORTED_LUX');
+    if(![2,3].includes(key.protocolVersion)||![2,3].includes(fill.protocolVersion))
+      return blocked('LEGACY_READING_LACKS_CONTEXT');
+    if(key.protocolVersion!==fill.protocolVersion)return blocked('MIXED_METER_PROTOCOLS');
+    if(key.meterModel!==fill.meterModel)return blocked('DIFFERENT_METER_IDENTITIES');
+    if(key.protocolVersion===3&&key.meterIdentifier!==fill.meterIdentifier)
+      return blocked('DIFFERENT_METER_IDENTIFIERS');
+    if(key.measurementPoint!==fill.measurementPoint)return blocked('DIFFERENT_MEASUREMENT_POINTS');
+    if(key.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA'||
+      fill.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA')
+      return blocked('SENSOR_ORIENTATION_NOT_COMMON_CAMERA_AXIS');
+    if(!key.measuredAtLocal||!fill.measuredAtLocal)
+      return blocked('MISSING_MEASUREMENT_TIMES');
+    // V2 preserves historical wall-clock behavior, explicitly marked unverified.
+    // V3 computes elapsed instants with each reading's user-declared UTC offset,
+    // so an hour of DST change cannot masquerade as a four-minute interval.
+    var first=key.protocolVersion===3?
+      meterUtcMinute(key.measuredAtLocal,key.utcOffsetMinutes):
+      Date.parse(key.measuredAtLocal+':00Z')/60000;
+    var second=fill.protocolVersion===3?
+      meterUtcMinute(fill.measuredAtLocal,fill.utcOffsetMinutes):
+      Date.parse(fill.measuredAtLocal+':00Z')/60000;
+    if(!Number.isFinite(first)||!Number.isFinite(second))
+      return blocked('INVALID_MEASUREMENT_TIMES');
+    var minutesApart=Math.abs(first-second);
+    if(minutesApart>15)return blocked('MEASUREMENT_TIMES_TOO_FAR_APART');
+    // Both zero and denominator zero are meaningful meter readings, not finite ratios.
+    if(key.lux<=0||fill.lux<=0)return blocked('ZERO_READING_NO_FINITE_RATIO');
+    var rawRatio=key.lux/fill.lux;
+    var ratio=Number(rawRatio.toPrecision(6));
+    if(!Number.isFinite(ratio)||ratio<=0)return blocked('NON_FINITE_RATIO');
+    // A stop is a log2 difference between two isolated incident contributions,
+    // not a shadow-to-highlight contrast or a camera exposure recommendation.
+    var relativeStops=Number(Math.log2(rawRatio).toFixed(3));
+    if(!Number.isFinite(relativeStops))return blocked('NON_FINITE_STOPS');
+    if(relativeStops===0)relativeStops=0; // avoid negative zero in UI/export
+    return freezeJson(Object.assign({},shared,{
+      status:'COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY',
+      reason:null,ratio:ratio,relativeStops:relativeStops,
+      relativeMeaning:'KEY_MINUS_FILL_ISOLATED_CONTRIBUTION_STOPS',
+      keyLux:key.lux,fillLux:fill.lux,
+      meterModel:key.meterModel,measurementPoint:key.measurementPoint,
+      meterIdentifier:key.protocolVersion===3?key.meterIdentifier:null,
+      meterProtocolVersion:key.protocolVersion,
+      timeBasis:key.protocolVersion===3?'USER_DECLARED_UTC_OFFSET':
+        'LEGACY_UNVERIFIED_LOCAL_WALL_CLOCK',
+      independentInstrumentIdentityVerified:false,
+      receptorOrientation:'RECEPTOR_TOWARD_CAMERA',minutesApart:minutesApart
+    }));
+  }
+  // Test whether a full-scene meter reading and the TWO isolated fixture readings
+  // have compatible user-declared measurement metadata. This does not establish
+  // stable ambient illumination or the additivity of physically different setups.
+  function assessSceneMeterAlignment(revision,keyLightId,fillLightId) {
+    verifyRevision(revision);
+    var plan=revision.plan,lights=plan.lights;
+    var cards=plan.knowledgeBasis&&Array.isArray(plan.knowledgeBasis.cards)?
+      plan.knowledgeBasis.cards:[];
+    var bookGuidance=cards.filter(function(card){
+      return card&&['EXP-001','SET-005','PHY-005'].indexOf(card.id)>=0;
+    }).map(function(card){
+      return {id:card.id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
+    var basis={
+      contract:'lightingai-three-state-meter-alignment/1',
+      revisionId:revision.revisionId,planHash:revision.planHash,
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      kind:'ISOLATED_KEY_FILL_AND_ALL_SOURCES_ON_METADATA_ALIGNMENT',
+      status:'NOT_ALIGNED',reason:null,
+      keyLightId:keyLightId,fillLightId:fillLightId,
+      keyLux:null,fillLux:null,sceneLux:null,minutesSpan:null,
+      meterModel:null,meterIdentifier:null,measurementPoint:null,
+      cameraExposureVerified:false,meterCalibrationVerified:false,
+      physicalSetupVerified:false,ambientStabilityVerified:false,
+      additiveLuxDecompositionSupported:false,
+      derivedAmbientLux:null,derivedSceneEv100:null,
+      recommendedAperture:null,recommendedIso:null,
+      bookGuidance:bookGuidance
+    };
+    function blocked(reason){
+      return freezeJson(Object.assign({},basis,{reason:reason}));
+    }
+    var scene=plan.sceneIncidentLuxReading;
+    if(!scene)return blocked('MISSING_ALL_SOURCES_ON_READING');
+    var key=lights.find(function(l){return l.id===keyLightId;});
+    var fill=lights.find(function(l){return l.id===fillLightId;});
+    if(plan.mode!=='own'||!key||!fill||key.id===fill.id||
+      !key.available||!fill.available||key.role!=='key'||fill.role!=='fill')
+      return blocked('INVALID_KEY_FILL_PAIR');
+    var readings=plan.incidentLuxReadings||[];
+    var keyReading=readings.find(function(r){return r.lightId===key.id;});
+    var fillReading=readings.find(function(r){return r.lightId===fill.id;});
+    if(!keyReading||!fillReading)return blocked('MISSING_ISOLATED_KEY_FILL_READINGS');
+    // V2 local wall-clock evidence lacks physical meter identifier and UTC offset.
+    if(keyReading.protocolVersion!==3||fillReading.protocolVersion!==3)
+      return blocked('ISOLATED_READINGS_REQUIRE_V3_METADATA');
+    if(scene.meterModel!==keyReading.meterModel||
+      scene.meterModel!==fillReading.meterModel)
+      return blocked('DIFFERENT_METER_MODELS');
+    if(scene.meterIdentifier!==keyReading.meterIdentifier||
+      scene.meterIdentifier!==fillReading.meterIdentifier)
+      return blocked('DIFFERENT_METER_IDENTIFIERS');
+    if(scene.measurementPoint!==keyReading.measurementPoint||
+      scene.measurementPoint!==fillReading.measurementPoint)
+      return blocked('DIFFERENT_MEASUREMENT_POINTS');
+    if(keyReading.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA'||
+      fillReading.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA'||
+      scene.receptorOrientation!=='RECEPTOR_TOWARD_CAMERA')
+      return blocked('SENSOR_ORIENTATION_NOT_COMMON_CAMERA_AXIS');
+    var instants=[keyReading,fillReading,scene].map(function(r){
+      return meterUtcMinute(r.measuredAtLocal,r.utcOffsetMinutes);
+    });
+    if(instants.some(function(v){return !Number.isFinite(v);}))
+      return blocked('INVALID_MEASUREMENT_TIMES');
+    // Entire three-reading session must fit inside 15 actual elapsed minutes,
+    // not three independent 15-minute pairwise checks against scene only.
+    var span=Math.max.apply(null,instants)-Math.min.apply(null,instants);
+    if(span>15)return blocked('MEASUREMENT_SESSION_EXCEEDS_15_MIN');
+    return freezeJson(Object.assign({},basis,{
+      status:'ALIGNED_BY_USER_REPORTED_METADATA_ONLY',
+      reason:null,keyLux:keyReading.lux,fillLux:fillReading.lux,
+      sceneLux:scene.lux,minutesSpan:span,
+      meterModel:scene.meterModel,meterIdentifier:scene.meterIdentifier,
+      measurementPoint:scene.measurementPoint
+    }));
+  }
+  // Mathematical camera-settings context plus *separate* user-reported meter evidence.
+  // Even a comparable key/fill pair does not calibrate lux to the camera response,
+  // and cannot determine a new f-stop, ISO, combined scene lux or captured contrast.
+  function analyzeMeteredExposureContext(revision,keyLightId,fillLightId) {
+    verifyRevision(revision);
+    var camera=revision.plan.cameraSettings;
+    var seconds=shutterSeconds(camera);
+    // Nominal settings-only EV100 index including declared ND attenuation:
+    // log2((f-number^2 / seconds) * (100 / ISO)) + ND stops.
+    // NOT metered scene EV, not lens T-stop, not calibrated sensor exposure.
+    var settingsEv100=Math.log2((camera.aperture*camera.aperture/seconds)*
+      (100/camera.iso))+camera.ndStops;
+    var comparison=compareKeyFillMeasurements(revision,keyLightId,fillLightId);
+    var comparable=comparison.status==='COMPARABLE_BY_USER_REPORTED_PROTOCOL_ONLY';
+    var sceneReading=revision.plan.sceneIncidentLuxReading||null;
+    var sceneMeterAlignment=assessSceneMeterAlignment(revision,keyLightId,fillLightId);
+    var gray=revision.plan.cameraGrayCardWaveformReading||null;
+    var grayCards=revision.plan.knowledgeBasis&&Array.isArray(revision.plan.knowledgeBasis.cards)?
+      revision.plan.knowledgeBasis.cards:[];
+    var grayGuidance=grayCards.filter(function(card){
+      return card&&['EXP-001','EXP-002','EXP-003'].indexOf(card.id)>=0;
+    }).map(function(card){
+      return {id:card.id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
+    return freezeJson({
+      contract:'lightingai-metered-exposure-context/1',
+      revisionId:revision.revisionId,planHash:revision.planHash,
+      status:comparable?'RELATIVE_LIGHT_CONTRIBUTIONS_ONLY':'CAMERA_SETTINGS_ONLY',
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      camera:{
+        aperture:camera.aperture,iso:camera.iso,fps:camera.fps,
+        shutterAngle:camera.shutterAngle,shutterSeconds:Number(seconds.toPrecision(9)),
+        ndStops:camera.ndStops,nominalSettingsEv100:Number(settingsEv100.toFixed(3)),
+        calibrationStatus:'CAMERA_PROFILE_AND_LENS_TRANSMISSION_UNVERIFIED'
+      },
+      incidentEvidence:{
+        comparisonStatus:comparison.status,blocker:comparison.reason,
+        keyLux:comparable?comparison.keyLux:null,
+        fillLux:comparable?comparison.fillLux:null,
+        ratio:comparable?comparison.ratio:null,
+        relativeStops:comparable?comparison.relativeStops:null,
+        meterModel:comparable?comparison.meterModel:null,
+        meterIdentifier:comparable?comparison.meterIdentifier:null,
+        meterProtocolVersion:comparable?comparison.meterProtocolVersion:null,
+        timeBasis:comparable?comparison.timeBasis:null,
+        independentInstrumentIdentityVerified:false,
+        measurementPoint:comparable?comparison.measurementPoint:null,
+        minutesApart:comparable?comparison.minutesApart:null
+      },
+      sceneIncidentEvidence:{
+        status:sceneReading?'USER_REPORTED_COMBINED_INCIDENT_LUX_NOT_VERIFIED':'NOT_RECORDED',
+        userReportedLux:sceneReading?sceneReading.lux:null,
+        meterModel:sceneReading?sceneReading.meterModel:null,
+        meterIdentifier:sceneReading?sceneReading.meterIdentifier:null,
+        measurementPoint:sceneReading?sceneReading.measurementPoint:null,
+        measuredAtLocal:sceneReading?sceneReading.measuredAtLocal:null,
+        utcOffsetMinutes:sceneReading?sceneReading.utcOffsetMinutes:null,
+        setupFingerprint:sceneReading?sceneReading.setupFingerprint:null,
+        allSourcesActiveConfirmed:!!sceneReading,
+        calibrationVerified:false,cameraExposureVerified:false
+      },
+      sceneMeterAlignment:sceneMeterAlignment,
+      cameraWaveformEvidence:{
+        status:gray?'USER_REPORTED_GRAY_CARD_SIGNAL_NOT_CALIBRATED':'NOT_RECORDED',
+        waveformIre:gray?gray.waveformIre:null,
+        protocolVersion:gray?gray.protocolVersion:null,
+        signalCodeRange:gray&&gray.protocolVersion===2?gray.signalCodeRange:null,
+        observedTransferLabel:gray&&gray.protocolVersion===2?gray.observedTransferLabel:null,
+        monitoringTransformId:gray&&gray.protocolVersion===2?gray.monitoringTransformId:null,
+        signalContextHash:gray&&gray.protocolVersion===2?gray.signalContextHash:null,
+        referenceContextHash:gray&&gray.protocolVersion===2?gray.referenceContextHash:null,
+        referenceContextConfirmed:!!(gray&&gray.protocolVersion===2&&
+          gray.referenceContextConfirmed),
+        referenceComparisonStatus:!gray?'NOT_RECORDED':
+          gray.userReferenceIre===null?'NO_USER_REFERENCE':
+          gray.protocolVersion===2?'V2_USER_ATTESTED_SIGNAL_CONTEXT_NOT_VERIFIED':
+            'LEGACY_V1_REFERENCE_SIGNAL_CHAIN_INCOMPLETE',
+        unit:'IRE',cameraModel:gray?gray.cameraModel:null,
+        recordingProfile:gray?gray.recordingProfile:null,
+        waveformSource:gray?gray.waveformSource:null,
+        signalPath:gray?gray.signalPath:null,
+        grayCardIdentifier:gray?gray.grayCardIdentifier:null,
+        measurementPoint:gray?gray.measurementPoint:null,
+        measuredAtLocal:gray?gray.measuredAtLocal:null,
+        utcOffsetMinutes:gray?gray.utcOffsetMinutes:null,
+        userReferenceIre:gray?gray.userReferenceIre:null,
+        userReferenceBasis:gray?gray.referenceBasis:null,
+        referenceDifferenceIrePoints:gray&&gray.userReferenceIre!==null?
+          Number((gray.waveformIre-gray.userReferenceIre).toFixed(1)):null,
+        sceneMeterMinutesApart:gray?Math.abs(
+          meterUtcMinute(gray.measuredAtLocal,gray.utcOffsetMinutes)-
+          meterUtcMinute(sceneReading.measuredAtLocal,sceneReading.utcOffsetMinutes)):null,
+        cameraSettingsHash:gray?gray.cameraSettingsHash:null,
+        sceneReadingHash:gray?gray.sceneReadingHash:null,
+        cameraSettingsVerified:false,monitorSignalPathVerified:false,
+        signalCodeRangeVerified:false,transferFunctionVerified:false,
+        monitoringTransformVerified:false,
+        grayCardReflectanceVerified:false,
+        referenceStandardVerified:false,exposureVerified:false,
+        derivedExposureStops:null,bookGuidance:grayGuidance
+      },
+      derivedSceneLux:null,measuredSceneEv100:null,
+      recommendedAperture:null,recommendedIso:null,
+      sceneExposureVerified:false,cameraExposureVerified:false,
+      meterCalibrationVerified:false,manufacturerPhotometricsUsed:false,
+      bookGuidance:comparison.bookGuidance
+    });
+  }
   function restoreRevisions(items) {
     if(!Array.isArray(items) || !items.length)throw new Error('Empty revision history');
     var revisions=JSON.parse(canonicalJson(items));
@@ -522,6 +2017,271 @@
     });
     return freezeJson(revisions);
   }
+  // A revision can inherit an unchanged whole-scene lux observation.
+  // Identify capture events from the immutable record, not merely revision count.
+  function hasNewSceneIncidentLuxCapture(revisions,index) {
+    var reading=revisions[index]&&revisions[index].plan.sceneIncidentLuxReading;
+    if(!reading)return false;
+    var previous=index>0?revisions[index-1].plan.sceneIncidentLuxReading:null;
+    return !previous||canonicalJson(reading)!==canonicalJson(previous);
+  }
+  function listSceneIncidentLuxCaptures(history) {
+    var revisions=restoreRevisions(history);
+    var ids=[];
+    revisions.forEach(function(r,i){
+      if(hasNewSceneIncidentLuxCapture(revisions,i))ids.push(r.revisionId);
+    });
+    var latest=revisions[revisions.length-1];
+    var active=!!latest.plan.sceneIncidentLuxReading;
+    return freezeJson({
+      contract:'lightingai-whole-scene-meter-capture-index/1',
+      currentRevisionId:latest.revisionId,
+      currentReadingPresent:active,
+      currentReadingInherited:active&&!hasNewSceneIncidentLuxCapture(revisions,revisions.length-1),
+      activeCaptureRevisionId:active&&ids.length?ids[ids.length-1]:null,
+      captureRevisionIds:ids
+    });
+  }
+  // Compare two ACTUAL user-entered incident-lux observations of the entire
+  // intended rig plus ambient. Lux difference and a positive-only illuminance
+  // ratio are not camera EV, image contrast, exposure or a causal lighting model.
+  function compareSceneIncidentLuxRevisions(history,earlierRevisionId,laterRevisionId) {
+    var revisions=restoreRevisions(history);
+    var beforeIndex=revisions.findIndex(function(r){return r.revisionId===earlierRevisionId;});
+    var afterIndex=revisions.findIndex(function(r){return r.revisionId===laterRevisionId;});
+    var after=afterIndex>=0?revisions[afterIndex]:null;
+    var cards=after&&after.plan.knowledgeBasis&&Array.isArray(after.plan.knowledgeBasis.cards)?
+      after.plan.knowledgeBasis.cards:[];
+    var guidance=cards.filter(function(card){
+      return card&&['EXP-001','SET-007','PHY-005'].indexOf(card.id)>=0;
+    }).map(function(card){
+      return {id:card.id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
+    var result={
+      contract:'lightingai-whole-scene-incident-lux-revision-comparison/1',
+      status:'NOT_COMPARABLE',reason:null,
+      sceneId:revisions[0].sceneId,
+      beforeRevisionId:earlierRevisionId,afterRevisionId:laterRevisionId,
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      measurementScope:'ALL_PLANNED_AVAILABLE_SOURCES_ACTIVE_AMBIENT_INCLUDED',
+      beforeLux:null,afterLux:null,deltaLux:null,
+      ratio:null,relativeIlluminanceStops:null,ratioReason:null,
+      minutesBetween:null,meterModel:null,meterIdentifier:null,measurementPoint:null,
+      beforeFixtureCount:null,afterFixtureCount:null,
+      plannedSetupFingerprintMatches:null,
+      independentMeterIdentityVerified:false,meterCalibrationVerified:false,
+      lightingStateVerified:false,ambientStabilityVerified:false,
+      physicalRigStateVerified:false,cameraExposureVerified:false,
+      derivedSceneEv100:null,recommendedAperture:null,recommendedIso:null,
+      bookGuidance:guidance
+    };
+    function blocked(reason){return freezeJson(Object.assign({},result,{reason:reason}));}
+    if(beforeIndex<0||afterIndex<0)return blocked('UNKNOWN_REVISION');
+    if(beforeIndex>=afterIndex)return blocked('REVISIONS_NOT_CHRONOLOGICAL');
+    var before=revisions[beforeIndex].plan.sceneIncidentLuxReading;
+    var later=revisions[afterIndex].plan.sceneIncidentLuxReading;
+    if(!before||!later)return blocked('MISSING_ALL_SOURCES_ON_READING');
+    if(!hasNewSceneIncidentLuxCapture(revisions,beforeIndex)||
+      !hasNewSceneIncidentLuxCapture(revisions,afterIndex))
+      return blocked('INHERITED_SCENE_LUX_NOT_A_NEW_OBSERVATION');
+    if(before.meterModel!==later.meterModel)
+      return blocked('DIFFERENT_METER_MODELS');
+    if(before.meterIdentifier!==later.meterIdentifier)
+      return blocked('DIFFERENT_METER_IDENTIFIERS');
+    if(before.measurementPoint!==later.measurementPoint)
+      return blocked('DIFFERENT_MEASUREMENT_POINTS');
+    if(before.receptorOrientation!==later.receptorOrientation||
+      before.measurementScope!==later.measurementScope)
+      return blocked('DIFFERENT_MEASUREMENT_PROTOCOL');
+    var first=meterUtcMinute(before.measuredAtLocal,before.utcOffsetMinutes);
+    var second=meterUtcMinute(later.measuredAtLocal,later.utcOffsetMinutes);
+    if(!Number.isFinite(first)||!Number.isFinite(second)||second<=first)
+      return blocked('MEASUREMENT_TIMES_NOT_CHRONOLOGICAL');
+    var elapsed=second-first;
+    if(elapsed>15)return blocked('MEASUREMENTS_MORE_THAN_15_MIN_APART');
+    var delta=Number((later.lux-before.lux).toFixed(3));
+    if(delta===0)delta=0;
+    var positive=before.lux>0&&later.lux>0;
+    var ratio=positive?Number((later.lux/before.lux).toPrecision(6)):null;
+    var stops=positive?Number(Math.log2(later.lux/before.lux).toFixed(3)):null;
+    if(stops===0)stops=0;
+    return freezeJson(Object.assign({},result,{
+      status:'USER_REPORTED_INCIDENT_ILLUMINANCE_DIFFERENCE_ONLY',
+      reason:null,beforeLux:before.lux,afterLux:later.lux,deltaLux:delta,
+      ratio:ratio,relativeIlluminanceStops:stops,
+      ratioReason:positive?null:'ZERO_READING_NO_FINITE_RATIO',
+      minutesBetween:elapsed,meterModel:later.meterModel,
+      meterIdentifier:later.meterIdentifier,measurementPoint:later.measurementPoint,
+      beforeFixtureCount:before.fixtureCount,afterFixtureCount:later.fixtureCount,
+      plannedSetupFingerprintMatches:before.setupFingerprint===later.setupFingerprint
+    }));
+  }
+  // A revision carrying forward identical camera evidence is a snapshot of a
+  // previous reading, not a second observation. Historical V1/V2 records are
+  // left untouched. A byte-identical re-entry also cannot prove a new capture.
+  function hasNewGrayCardWaveformCapture(revisions,index) {
+    var current=revisions[index]&&revisions[index].plan.cameraGrayCardWaveformReading;
+    if(!current)return false;
+    var previous=index>0?revisions[index-1].plan.cameraGrayCardWaveformReading:null;
+    return !previous||canonicalJson(current)!==canonicalJson(previous);
+  }
+  function listGrayCardWaveformCaptures(history) {
+    var revisions=restoreRevisions(history);
+    var ids=[];
+    revisions.forEach(function(r,i){
+      if(hasNewGrayCardWaveformCapture(revisions,i))ids.push(r.revisionId);
+    });
+    var latest=revisions[revisions.length-1];
+    var active=!!latest.plan.cameraGrayCardWaveformReading;
+    return freezeJson({
+      contract:'lightingai-gray-card-waveform-capture-index/1',
+      currentRevisionId:latest.revisionId,
+      currentWaveformPresent:active,
+      currentWaveformInherited:active&&!hasNewGrayCardWaveformCapture(revisions,revisions.length-1),
+      activeCaptureRevisionId:active&&ids.length?ids[ids.length-1]:null,
+      captureRevisionIds:ids
+    });
+  }
+  // Compare two independently entered camera-gray-card waveform OBSERVATIONS,
+  // never different signal encodings and never a claimed exposure change.
+  // Verify the entire history chain, not just its endpoints, so sibling or
+  // tampered revisions cannot be passed off as a before/after sequence.
+  function compareGrayCardWaveformRevisions(history,earlierRevisionId,laterRevisionId) {
+    var revisions=restoreRevisions(history);
+    var after=revisions.find(function(r){return r.revisionId===laterRevisionId;});
+    var before=revisions.find(function(r){return r.revisionId===earlierRevisionId;});
+    var attached=after&&after.plan.knowledgeBasis&&Array.isArray(after.plan.knowledgeBasis.cards)?
+      after.plan.knowledgeBasis.cards:[];
+    var guidance=attached.filter(function(card){
+      return card&&['EXP-002','EXP-003','SET-007'].indexOf(card.id)>=0;
+    }).map(function(card){
+      return {id:card.id,title:card.title,principle:card.principle,
+        application:card.application,validation:card.validation,limitations:card.limitations};
+    });
+    var result={
+      contract:'lightingai-gray-card-waveform-revision-comparison/1',
+      status:'NOT_COMPARABLE',reason:null,
+      sceneId:revisions[0].sceneId,
+      beforeRevisionId:earlierRevisionId,afterRevisionId:laterRevisionId,
+      provenance:'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED',
+      kind:'GRAY_CARD_WAVEFORM_IRE_POINTS_ONLY',
+      beforeIre:null,afterIre:null,deltaIrePoints:null,minutesBetween:null,
+      cameraModel:null,recordingProfile:null,signalPath:null,signalCodeRange:null,
+      observedTransferLabel:null,monitoringTransformId:null,
+      grayCardIdentifier:null,measurementPoint:null,
+      plannedSetupFingerprintMatches:null,
+      userReferenceComparisonUsed:false,
+      waveformInstrumentVerified:false,profileVerified:false,
+      grayCardReflectanceVerified:false,ambientStabilityVerified:false,
+      physicalRigStateVerified:false,cameraExposureVerified:false,
+      derivedExposureStops:null,derivedSceneEv100:null,
+      recommendedAperture:null,recommendedIso:null,
+      bookGuidance:guidance
+    };
+    function blocked(reason){return freezeJson(Object.assign({},result,{reason:reason}));}
+    if(!after||!before)return blocked('UNKNOWN_REVISION');
+    if(before.sequence>=after.sequence)return blocked('REVISIONS_NOT_CHRONOLOGICAL');
+    var a=before.plan.cameraGrayCardWaveformReading;
+    var b=after.plan.cameraGrayCardWaveformReading;
+    if(!a||!b)return blocked('MISSING_GRAY_CARD_WAVEFORM');
+    var firstIndex=revisions.findIndex(function(r){return r.revisionId===earlierRevisionId;});
+    var secondIndex=revisions.findIndex(function(r){return r.revisionId===laterRevisionId;});
+    if(!hasNewGrayCardWaveformCapture(revisions,firstIndex)||
+       !hasNewGrayCardWaveformCapture(revisions,secondIndex))
+      return blocked('INHERITED_WAVEFORM_NOT_A_NEW_OBSERVATION');
+    // V1 does not contain the transfer/range fingerprint needed to compare
+    // two cameras' output signals, even if its reported IRE is otherwise valid.
+    if(a.protocolVersion!==2||b.protocolVersion!==2)
+      return blocked('V2_SIGNAL_CONTEXT_REQUIRED');
+    if(a.cameraModel!==b.cameraModel||a.recordingProfile!==b.recordingProfile)
+      return blocked('DIFFERENT_CAMERA_PROFILE');
+    if(a.cameraSettingsHash!==b.cameraSettingsHash)
+      return blocked('DIFFERENT_CAMERA_SETTINGS');
+    if(a.waveformSource!==b.waveformSource||a.signalPath!==b.signalPath||
+      a.signalCodeRange!==b.signalCodeRange||
+      a.observedTransferLabel!==b.observedTransferLabel||
+      a.monitoringTransformId!==b.monitoringTransformId||
+      a.signalContextHash!==b.signalContextHash)
+      return blocked('DIFFERENT_WAVEFORM_SIGNAL_CONTEXT');
+    if(a.signalPath==='UNKNOWN'||a.signalCodeRange==='UNKNOWN'||
+      (a.signalPath==='DISPLAY_LUT_SIGNAL'&&!a.monitoringTransformId))
+      return blocked('INCOMPLETE_WAVEFORM_SIGNAL_CONTEXT');
+    if(a.grayCardIdentifier!==b.grayCardIdentifier)
+      return blocked('DIFFERENT_GRAY_CARD_IDENTIFIERS');
+    if(a.measurementPoint!==b.measurementPoint)
+      return blocked('DIFFERENT_MEASUREMENT_POINTS');
+    var earlierTime=meterUtcMinute(a.measuredAtLocal,a.utcOffsetMinutes);
+    var laterTime=meterUtcMinute(b.measuredAtLocal,b.utcOffsetMinutes);
+    if(!Number.isFinite(earlierTime)||!Number.isFinite(laterTime)||
+      laterTime<=earlierTime)
+      return blocked('MEASUREMENT_TIMES_NOT_CHRONOLOGICAL');
+    // Time is informative only: never infer constant ambient or actual lamp
+    // output between different physical lighting states and meter sessions.
+    var difference=Number((b.waveformIre-a.waveformIre).toFixed(1));
+    if(difference===0)difference=0;
+    return freezeJson(Object.assign({},result,{
+      status:'USER_REPORTED_IRE_LEVEL_DIFFERENCE_ONLY',reason:null,
+      beforeIre:a.waveformIre,afterIre:b.waveformIre,
+      deltaIrePoints:difference,minutesBetween:laterTime-earlierTime,
+      cameraModel:b.cameraModel,recordingProfile:b.recordingProfile,
+      signalPath:b.signalPath,signalCodeRange:b.signalCodeRange,
+      observedTransferLabel:b.observedTransferLabel,
+      monitoringTransformId:b.monitoringTransformId,
+      grayCardIdentifier:b.grayCardIdentifier,
+      measurementPoint:b.measurementPoint,
+      plannedSetupFingerprintMatches:
+        before.plan.sceneIncidentLuxReading.setupFingerprint===
+          after.plan.sceneIncidentLuxReading.setupFingerprint
+    }));
+  }
+  // Independent DoP acknowledgements; never add these to the hashed lighting plan.
+  // Popovic PDF SHA-256 and page checks are documented in STEP114_PRELIGHT_REVIEW.md.
+  var prelightChecks=freezeJson([
+    {id:'motivation',title:'Motivacija svetla',
+      question:'Da li smer, mekoća, boja i intenzitet odgovaraju izvoru koji scena sugeriše?',
+      source:'Boris Popović (priredio) — Svjetlo u TV studiju / Primijenjena rasvjeta',page:93},
+    {id:'fill',title:'Dopunsko svetlo i kontrast',
+      question:'Da li senke zadržavaju željene detalje, bez neželjenih dodatnih senki od dopunskog svetla?',
+      source:'Boris Popović (priredio) — Svjetlo u TV studiju / Primijenjena rasvjeta',page:32},
+    {id:'separation',title:'Odvajanje od pozadine',
+      question:'Da li je subjekt dovoljno odvojen od pozadine za nameru scene? Kontra nije obavezna.',
+      source:'Boris Popović (priredio) — Svjetlo u TV studiju / Primijenjena rasvjeta',page:32}
+  ]);
+  function validatePrelightRecord(record,revision) {
+    verifyRevision(revision);
+    if(!record||record.schemaVersion!==1||record.kind!=='DOP_PRELIGHT_REVIEW'||
+       record.sceneId!==revision.sceneId||record.revisionId!==revision.revisionId||
+       record.planHash!==revision.planHash||record.lightPlotRevisionId!==revision.lightPlotRevisionId)
+      throw new Error('Provera ne pripada ovoj reviziji plana.');
+    if(typeof record.reviewedAt!=='string'||!Number.isFinite(Date.parse(record.reviewedAt))||
+       new Date(record.reviewedAt).toISOString()!==record.reviewedAt)
+      throw new Error('Nevažeće vreme provere.');
+    if(!record.decisions||Object.keys(record.decisions).length!==prelightChecks.length)
+      throw new Error('Potrebne su sve tri odluke.');
+    prelightChecks.forEach(function(check){
+      if(!Object.prototype.hasOwnProperty.call(record.decisions,check.id)||
+         ['reviewed','needs_adjustment','not_applicable'].indexOf(record.decisions[check.id])<0)
+        throw new Error('Izaberi odluku za svaku stručnu proveru.');
+    });
+    return freezeJson({schemaVersion:1,kind:'DOP_PRELIGHT_REVIEW',
+      sceneId:revision.sceneId,revisionId:revision.revisionId,planHash:revision.planHash,
+      lightPlotRevisionId:revision.lightPlotRevisionId,reviewedAt:record.reviewedAt,
+      decisions:JSON.parse(JSON.stringify(record.decisions))});
+  }
+  function createPrelightReview(revision,decisions,reviewedAt) {
+    verifyRevision(revision);
+    return validatePrelightRecord(Object.assign({},videoRevisionBinding(revision),{
+      kind:'DOP_PRELIGHT_REVIEW',decisions:decisions,reviewedAt:reviewedAt}),revision);
+  }
+  function restorePrelightReviews(records,history) {
+    if(!Array.isArray(records)||!Array.isArray(history))throw new Error('Nevažeća istorija provera.');
+    return freezeJson(records.map(function(record){
+      var revision=history.find(function(item){return record&&item.revisionId===record.revisionId;});
+      if(!revision)throw new Error('Revizija stručne provere nije dostupna.');
+      return validatePrelightRecord(record,revision);
+    }));
+  }
   // Future MP4 receipt contract only. No provider calls or paid-flow integration.
   function videoRevisionBinding(revision) {
     verifyRevision(revision);
@@ -529,7 +2289,27 @@
       lightPlotRevisionId:revision.lightPlotRevisionId,planHash:revision.planHash});
   }
   return {VERSION:VERSION, request:request, equipment:equipment, modifiers:modifiers,
+    prelightChecks:prelightChecks,createPrelightReview:createPrelightReview,
+    restorePrelightReviews:restorePrelightReviews,
     canonicalJson:canonicalJson,sha256:sha256,planHash:planHash,createRevision:createRevision,
+    createDistanceMeasurementRevision:createDistanceMeasurementRevision,
+    createMountedOpticRevision:createMountedOpticRevision,
+    createIncidentLuxRevision:createIncidentLuxRevision,
+    createSceneIncidentLuxRevision:createSceneIncidentLuxRevision,
+    createDopLightingVariantRevision:createDopLightingVariantRevision,
+    compareDopPlannedRevisions:compareDopPlannedRevisions,
+    listDopPlannedEditEvents:listDopPlannedEditEvents,
+    createDopSampledVideoCueSheet:createDopSampledVideoCueSheet,
+    summarizeWebViewFrameCodeValues:summarizeWebViewFrameCodeValues,
+    createOfflineCodeValueAudit:createOfflineCodeValueAudit,
+    createCameraGrayCardWaveformRevision:createCameraGrayCardWaveformRevision,
+    compareKeyFillMeasurements:compareKeyFillMeasurements,
+    assessSceneMeterAlignment:assessSceneMeterAlignment,
+    analyzeMeteredExposureContext:analyzeMeteredExposureContext,
+    compareGrayCardWaveformRevisions:compareGrayCardWaveformRevisions,
+    listGrayCardWaveformCaptures:listGrayCardWaveformCaptures,
+    listSceneIncidentLuxCaptures:listSceneIncidentLuxCaptures,
+    compareSceneIncidentLuxRevisions:compareSceneIncidentLuxRevisions,
     verifyRevision:verifyRevision,restoreRevisions:restoreRevisions,videoRevisionBinding:videoRevisionBinding,
     sanitizePlan:sanitizePlan, localPlan:localPlan,chooseLook:chooseLook,nightLook:nightLook,
     cameraInput:cameraInput,cameraPlan:cameraPlan,exposureDeltaStops:exposureDeltaStops};

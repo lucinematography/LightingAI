@@ -24,7 +24,38 @@ assert.equal(belgrade.sceneCoordsVerified,false,"city centre is approximate, not
 assert.equal(core.sanitizePlan({lights:[]},belgrade,"local").location.locationIsApproximate,true);
 assert.equal(core.request({...own,sceneLatitude:350}).sceneLatitude,90);
 assert.equal(core.request({...own,sceneLocalDateTime:"invalid"}).sceneLocalDateTime,"");
+// Geometry is user-declared; missing/invalid measurements may not be silently clipped or marked measured.
+const measuredRoom=core.request({...own,roomWidthM:"6.5",roomDepthM:4,dimensionsMeasured:true});
+assert.deepEqual([measuredRoom.roomWidthM,measuredRoom.roomDepthM,measuredRoom.dimensionsMeasured],[6.5,4,true]);
+assert.equal(core.sanitizePlan({lights:[]},measuredRoom,"local").geometry.measured,true);
+for(const room of [
+  {roomWidthM:"",roomDepthM:4},
+  {roomWidthM:"0.1",roomDepthM:4},
+  {roomWidthM:101,roomDepthM:4},
+  {roomWidthM:"NaN",roomDepthM:4},
+  {roomWidthM:"Infinity",roomDepthM:4},
+  {roomWidthM:"4abc",roomDepthM:4},
+  {roomWidthM:[5],roomDepthM:4},
+  {roomWidthM:5,roomDepthM:0},
+  {roomWidthM:5,roomDepthM:100.5}
+]){
+  const untrusted={...own,...room,dimensionsMeasured:true};
+  const normalized=core.request(untrusted);
+  assert.equal(normalized.dimensionsMeasured,false,"invalid dimensions cannot be tagged as measured");
+  assert.equal(core.sanitizePlan({lights:[]},untrusted,"local").geometry.measured,false);
+  assert.throws(()=>validateScenePlannerRequest(untrusted),error=>
+    error.status===422 && /Measured|measured/i.test(error.message),
+    "backend must refuse false measured status");
+}
+assert.equal(core.request({...own,roomWidthM:101,roomDepthM:2}).roomWidthM,null);
+assert.equal(core.request({...own,roomWidthM:0.1,roomDepthM:2}).roomWidthM,null);
+assert.equal(core.request({...own,roomWidthM:100,roomDepthM:0.5,dimensionsMeasured:true}).dimensionsMeasured,true);
+assert.ok(validateScenePlannerRequest({...own,roomWidthM:"6.5",roomDepthM:4,dimensionsMeasured:true}).dimensionsMeasured);
+
 assert.match(buildScenePlannerPrompt(belgrade),/verified SUN calculation/);
+assert.match(buildScenePlannerPrompt(belgrade),/prefer relevant retrieved book principles/,"AI must use book guidance for lighting decisions");
+assert.match(buildScenePlannerPrompt(belgrade),/creative hypothesis without book support/,"AI must disclose unsupported recommendations");
+assert.match(buildScenePlannerPrompt(belgrade),/do not assert exact lux/,"AI must not invent photometric precision from books");
 assert.deepEqual(core.request(own).modifiers,["Softbox"]);
 assert.throws(()=>validateScenePlannerRequest({...own,scenePhoto:"data:text/plain;base64,SGVsbG8="}),/Invalid/);
 assert.throws(()=>validateScenePlannerRequest({...own,scenePhoto:"",videoFrames:[]}),/photo or video frames/);
@@ -62,6 +93,12 @@ assert.ok(core.localPlan({...own,equipment:[]}).limitations.some(x=>x.includes("
 assert.ok(core.localPlan({mode:"best",description:"test"}).lights.every(x=>!x.available));
 const prompt=buildScenePlannerPrompt(canonical);
 assert.match(prompt,/ONLY MY EQUIPMENT/);
+assert.match(prompt,/REFERENCE KNOWLEDGE/);
+assert.match(prompt,/pdfPage/);
+assert.match(prompt,/book principles/);
+assert.match(prompt,/"source":"(landau-2014|brown-2019|popovic-tv)"/,"AI prompt must include an actual book citation");
+assert.match(prompt,/"principle":/,"AI prompt must include retrieved source-derived advice");
+assert.doesNotMatch(prompt,/NO_DISTRIBUTION_LICENSE_PROVIDED|original_sha256|raw_books_included/,"AI prompt must not expose book rights metadata or raw source");
 assert.match(prompt,/fixture-1/);
 assert.doesNotMatch(prompt,/DMX|Art-Net|CRMX|ART7|Bluetooth/);
 const clip={...own,scenePhoto:"",videoFrames:[{timeSec:1.5,image:PHOTO},{timeSec:4.5,image:PHOTO}]};
@@ -69,7 +106,7 @@ assert.equal(validateScenePlannerRequest(clip).videoFrames.length,2);
 let sent=null;
 const mock={responses:{create:async args=>{
   sent=args;
-  return {output_text:JSON.stringify({summary:"Video scene",
+  return {output_text:JSON.stringify({summary:"Video scene",knowledgeBasis:{status:"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED",cards:[{id:"FAKE-999",title:"Invented citation",references:[{source:"fake",pdfPage:1}]}]},
     actors:[{label:"Zena",x:50,y:50,path:[{x:25,y:65},{x:70,y:35}]}],
     lights:[{fixtureId:"fixture-1",fixtureName:"ARRI Test LED",role:"key",kelvin:4500,modifier:"Softbox"}]
   })};
@@ -77,6 +114,33 @@ const mock={responses:{create:async args=>{
 const produced=await generateScenePlannerPlan(mock,clip,catalog);
 assert.equal(produced.ok,true);
 assert.equal(produced.plan.source,"ai");
+assert.ok(produced.plan.knowledgeBasis.cards.length>0,"generated AI plan must carry retrieved book principles");
+assert.ok(produced.plan.knowledgeBasis.cards.every(c=>typeof c.validation==="string"&&c.validation.length>0),"every retrieved book principle must include a practical on-set check");
+assert.ok(buildScenePlannerPrompt(canonicalInventory(validateScenePlannerRequest(clip),catalog)).includes(produced.plan.knowledgeBasis.cards[0].validation),"AI prompt must receive the source-derived on-set check, not only the final UI");
+assert.ok(produced.plan.knowledgeBasis.cards.every(c=>c.id!=="FAKE-999"),"model-invented citations must not enter trusted evidence");
+const knowledgeRevision=core.createRevision(produced.plan,clip,"ai",null,"scene-book-evidence-test");
+assert.ok(knowledgeRevision.plan.knowledgeBasis.cards.length>0,"immutable revision must preserve book evidence");
+assert.deepEqual(knowledgeRevision.plan.knowledgeBasis.cards.map(c=>c.validation),produced.plan.knowledgeBasis.cards.map(c=>c.validation),"immutable revision must preserve every on-set check");
+const revisionPrompt=buildScenePlannerPrompt(canonicalInventory(validateScenePlannerRequest({
+  ...own,previousPlan:knowledgeRevision.plan
+}),catalog));
+assert.ok(revisionPrompt.includes("Previous plan to revise"),"revision context must remain available");
+assert.ok(!revisionPrompt.includes("CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED"),
+  "book evidence must not be echoed back into the model as previous-plan text");
+assert.deepEqual(core.restoreRevisions([JSON.parse(JSON.stringify(knowledgeRevision))])[0].plan.knowledgeBasis,
+  knowledgeRevision.plan.knowledgeBasis,"restored revision must retain identical citations");
+const tamperedKnowledgeRevision=JSON.parse(JSON.stringify(knowledgeRevision));
+tamperedKnowledgeRevision.plan.knowledgeBasis.cards.find(c=>c.references.length).references[0].pdfPage=999;
+assert.throws(()=>core.restoreRevisions([tamperedKnowledgeRevision]),"altered source page must invalidate the revision hash");
+const tamperedKnowledgeValidation=JSON.parse(JSON.stringify(knowledgeRevision));
+tamperedKnowledgeValidation.plan.knowledgeBasis.cards[0].validation="Unsafe fabricated on-set check";
+assert.throws(()=>core.restoreRevisions([tamperedKnowledgeValidation]),"altered on-set validation must invalidate the revision hash");
+const tamperedKnowledgeTitle=JSON.parse(JSON.stringify(knowledgeRevision));
+tamperedKnowledgeTitle.plan.knowledgeBasis.cards[0].title="Fabricated authority";
+assert.throws(()=>core.restoreRevisions([tamperedKnowledgeTitle]),"altered book authority must invalidate the revision hash");
+assert.ok(produced.plan.knowledgeBasis.cards.some(c=>c.references.some(r=>r.source&&r.pdfPage>0)),"generated plan must carry source pages");
+assert.ok(produced.plan.knowledgeBasis.cards.some(c=>c.references.some(r=>r.title&&r.author&&r.edition&&r.pdfPage>0)),"book citations must identify title, edition and page");
+assert.equal(produced.plan.knowledgeBasis.status,"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED");
 assert.equal(produced.plan.lights.length,1);
 assert.equal(produced.plan.lights[0].fixtureName,"ARRI Test LED");
 assert.equal(produced.plan.actors[0].path.length,2);
@@ -93,12 +157,22 @@ assert.ok(frontend.includes('accept="video/*"'),"video file inputs needed");
 assert.ok(frontend.includes('capture="environment"'),"camera/video capture requested");
 assert.ok(frontend.includes("Android.startSpeechInput"),"native voice input wired");
 assert.ok(frontend.includes("sp-description"),"voice destination exists");
+assert.ok(frontend.includes("Stručna baza: knjige i obrazloženja"),"UI must show retrieved book principles");
+assert.ok(frontend.includes("Provera na setu:"),"UI must show practical validation guidance for book principles");
+assert.ok(frontend.includes("AI predlog nema knjišku potporu"),"UI must disclose missing matching book evidence");
 assert.ok(frontend.includes('id="sp-location"'),"Scene Planner must support editable location");
 assert.ok(frontend.includes('value="Beograd, Srbija"'),"Belgrade is the initial user location");
 assert.ok(frontend.includes('id="sp-scene-datetime"'),"shooting time is optional");
+assert.ok(frontend.includes("el('sp-measured').checked && !req.dimensionsMeasured"),
+  "UI must refuse a false measured-room claim before paid AI request");
 assert.ok(frontend.includes("el('sp-scene-lat').value=''"),"changing cities must clear stale GPS coordinates");
 assert.ok(frontend.includes("videoFrames(state.videoUrl)"),"must sample video before AI request");
 assert.ok(frontend.includes("Originalni video ostaje na telefonu"),"raw video stays on device");
+assert.ok(frontend.includes("binding:currentVideoBinding()"),"paid video must capture immutable revision binding");
+assert.ok(frontend.includes("binding:pending.binding"),"paid submission receipt must persist its original revision");
+assert.ok(frontend.includes("var binding=value.binding||videoReceipt&&videoReceipt.binding;"),"receipt must retain its original binding during status updates");
+assert.ok(frontend.includes("videoReceipt.binding.planHash.slice(0,12)"),"video result must display plan identity");
+assert.ok(frontend.includes("Prethodni AI video nema pouzdanu vezu sa planom"),"legacy unbound receipts must fail closed");
 assert.ok(frontend.includes("sp-mode"),"mode selection required");
 assert.ok(frontend.includes("sp-plot"),"2D light plot required");
 assert.ok(catalogUi.includes("lightingai-scene-planner-script"),"AI navigation entry required");

@@ -193,12 +193,34 @@ const exactAllowed = new Set([
   'app/src/test/java/com/lightingai/app/SacnProtocolTest.java',
   'backend/project5-stable-base-selftest.js',
   'app/src/main/assets/scene-planner.js',
+  // Shared read-only continuity and exact Shot List revision bindings; no fixture control.
+  'app/src/main/assets/continuity-match-shot.js',
+  'app/src/main/assets/shot-list-planner.js',
+  // Android background recovery: the one reviewed local-only draft module.
+  'app/src/main/assets/scene-planner-draft.js',
   'app/src/main/assets/scene-planner-core.js',
   'backend/scene-planner-service.js',
   'backend/scene-planner-selftest.js',
+  // Reviewed photometric pilot: exact source-reference module and regression test; no controls.
+  'backend/scene-planner-photometry.js',
+  'backend/scene-planner-photometric-selftest.js',
   // Phase 3A: exact offline revision regression and architecture documentation paths.
   'backend/scene-planner-revisions-selftest.js',
   'docs/SCENE_PLANNER_PHASE3A.md',
+  // Step 114: reviewed prelight checklist report; exact path, no broader docs exemption.
+  'docs/STEP114_PRELIGHT_REVIEW.md',
+  // Portable encrypted backups: exact reviewed offline crypto implementation and JUnit tests.
+  'app/src/main/java/com/lightingai/app/SceneBackupCrypto.java',
+  'app/src/test/java/com/lightingai/app/SceneBackupCryptoTest.java',
+  // Exact recovery regression, native CI instrumentation and update-safety report.
+  'backend/scene-planner-recovery-selftest.js',
+  'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
+  'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md',
+  // Studio parallel release: exact identity overlay and public preflight/report paths.
+  'app/src/studio/AndroidManifest.xml',
+  'backend/studio-release-selftest.js',
+  'scripts/studio-update-identity.mjs',
+  'docs/STUDIO_LOCAL_SIGNING_PREPARATION.md',
   // Phase 3B.1: isolated offline temporal model, regressions and architecture only.
   'backend/scene-planner-temporal.js',
   'backend/scene-planner-temporal-selftest.js',
@@ -682,7 +704,6 @@ for (const marker of [
   'window.LightingAIBleDiscoveryResult',
   'Manifest.permission.BLUETOOTH_SCAN',
   'BLE_PERMISSION = 507',
-  "file:///android_asset/ble-control.js",
   '@JavascriptInterface public String networkDmxDiagnostics()',
   'artNet.put("livePacketsSent", artNetLiveEngine.packetsSent())',
   'sacn.put("livePacketsSent", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsSent())',
@@ -696,6 +717,17 @@ for (const marker of [
   'out.put("interfaces", NetworkInterfaceInspector.snapshot())'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
+}
+
+// First-release exception: the BLE implementation must remain committed,
+// but direct fixture-control entry points must stay disabled.
+if (mainActivity.includes('private boolean isDirectLightingControlEnabled() { return false; }')) {
+  git(['cat-file', '-e', 'HEAD:app/src/main/assets/ble-control.js']);
+  if (mainActivity.includes('file:///android_asset/ble-control.js')) {
+    fail('first-release BLE control script must not be loaded');
+  }
+} else if (!mainActivity.includes('file:///android_asset/ble-control.js')) {
+  fail('legacy BLE control script marker missing without first-release guard');
 }
 
 const imageBridge = git(['show', `HEAD:${imageBridgePath}`]);

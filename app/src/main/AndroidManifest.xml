@@ -23,6 +23,8 @@
         android:label="LIGHTING AI"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
+        android:fullBackupContent="@xml/private_backup_rules"
+        android:dataExtractionRules="@xml/private_data_extraction_rules"
         android:usesCleartextTraffic="false">
         <provider android:name=".AIVisualImageProvider" android:authorities="${applicationId}.ai.preview" android:exported="false" android:grantUriPermissions="true"/>
         <activity android:name=".MeasureActivity" android:screenOrientation="portrait" android:exported="false"/>

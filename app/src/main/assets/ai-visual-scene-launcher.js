@@ -39,14 +39,11 @@ function ensureBuildInfo(next){
 function setPlanDiagnostic(){/* Release build: request diagnostics stay internal and never mount user-visible test UI. */}
 function selectedLook(){var s=document.getElementById('aiv-look-preset');if(s&&s.value)return s.value;if(window.LightingAILocalLightSimulation&&typeof window.LightingAILocalLightSimulation.getPreset==='function')return window.LightingAILocalLightSimulation.getPreset();return 'Cinematic';}
 function injectLook(init){if(!init||typeof init.body!=='string')return init;try{var body=JSON.parse(init.body);if(body&&typeof body==='object'&&!Array.isArray(body)){body.look=selectedLook();var copy=Object.assign({},init);copy.body=JSON.stringify(body);return copy;}}catch(e){}return init;}
-function emitPlan(response){
-  if(!response||!response.ok||!document.getElementById(MODULE_ID))return;
-  try{
-    response.clone().json().then(function(data){
-      window.__lightingAIVisualLastPlan=data;
-      try{window.dispatchEvent(new CustomEvent('lightingai-visual-plan-ready',{detail:data}));}catch(e){}
-    }).catch(function(){});
-  }catch(e){}
+// Only the scene module can validate/accept a plan. Raw transport responses
+// and JSON copies are never publication authority; use the existing input revision.
+function emitPlan(plan){
+  try{return typeof window.LightingAIVisualPlanPublish==='function'&&window.LightingAIVisualPlanPublish(plan)===true;}
+  catch(e){return false;}
 }
 function diagnosticPlanRequest(nativeFetch,input,init){
   var started=Date.now(),controller=typeof AbortController!=='undefined'?new AbortController():null,timeoutId=null,requestInit=injectLook(init)||{};
@@ -58,7 +55,8 @@ function diagnosticPlanRequest(nativeFetch,input,init){
     if(timeoutId)clearTimeout(timeoutId);
     var elapsed=Date.now()-started;
     setPlanDiagnostic((isSr()?'Produkcija odgovorila za ':'Production responded in ')+(elapsed/1000).toFixed(1)+' s • HTTP '+response.status+' • '+diagnosticId,!response.ok);
-    emitPlan(response);return response;
+    // The generate handler validates input identity before publishing.
+    return response;
   }).catch(function(error){
     if(timeoutId)clearTimeout(timeoutId);
     var elapsed=Date.now()-started,aborted=error&&String(error.name)==='AbortError';
@@ -134,9 +132,10 @@ function openPlanModule(){
   script.onload=openPlanModule;
   document.body.appendChild(script);
 }
+function ensureVisualDependencies(next){ensureScript('lightingai-ai-visual-draft-script','file:///android_asset/ai-visual-draft.js',function(){return !!window.LightingAIVisualDraft;},function(){ensureScript('lightingai-ai-control-bridge-script','file:///android_asset/ai-control-bridge.js',function(){return !!window.LightingAIAIControlBridge;},next);});}
 function openModule(){
   installPreviewApiRouter();
-  ensureBuildInfo(function(){ensureSimulation(openPlanModule);});
+  ensureVisualDependencies(function(){ensureBuildInfo(function(){ensureSimulation(openPlanModule);});});
 }
 function installEquipmentEntry(){
   var page=document.getElementById('equipment');if(!page)return false;

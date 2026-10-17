@@ -2,6 +2,9 @@ plugins { id 'com.android.application' }
 
 def releaseVersionCode = (project.findProperty('releaseVersionCode') ?: '13') as Integer
 def releaseVersionName = String.valueOf(project.findProperty('releaseVersionName') ?: '2.1')
+if (releaseVersionCode < 1 || releaseVersionCode > 2100000000) {
+    throw new GradleException('versionCode must be between 1 and 2100000000')
+}
 def releaseStoreFile = System.getenv('LIGHTINGAI_KEYSTORE_PATH')
 def releaseStorePassword = System.getenv('LIGHTINGAI_KEYSTORE_PASSWORD')
 def releaseKeyAlias = System.getenv('LIGHTINGAI_KEY_ALIAS')
@@ -15,6 +18,7 @@ android { namespace 'com.lightingai.app'; compileSdk 35
         targetSdk 35
         versionCode releaseVersionCode
         versionName releaseVersionName
+        testInstrumentationRunner (project.findProperty('lightingaiTestRunner') ?: 'com.lightingai.app.ScenePlannerRecoveryInstrumentation')
     }
 
     signingConfigs {
@@ -36,6 +40,13 @@ android { namespace 'com.lightingai.app'; compileSdk 35
         release {
             minifyEnabled false
             if (hasReleaseSigning) signingConfig signingConfigs.release
+        }
+        studio {
+            initWith release
+            applicationIdSuffix '.studio'
+            debuggable false
+            // The owner signs locally. CI must never receive the permanent private key.
+            signingConfig = null
         }
     }
 }

@@ -180,7 +180,14 @@ test('stable-base guard validates future committed content and blocks regression
       'scripts/ci-report-summary.mjs', 'scripts/run-ci-check.mjs', 'backend/project5-stable-base-selftest.js',
       // Include the complete phase-2/3A candidate in the isolated future-commit check.
       'app/src/main/assets/scene-planner-core.js', 'backend/scene-planner-service.js',
+      'backend/scene-planner-photometry.js', 'backend/scene-planner-photometric-selftest.js',
       'backend/scene-planner-revisions-selftest.js', 'docs/SCENE_PLANNER_PHASE3A.md',
+      'docs/STEP114_PRELIGHT_REVIEW.md',
+      'backend/scene-planner-recovery-selftest.js',
+      'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
+      'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md', 'app/build.gradle',
+      'app/src/studio/AndroidManifest.xml', 'backend/studio-release-selftest.js',
+      'scripts/studio-update-identity.mjs', 'docs/STUDIO_LOCAL_SIGNING_PREPARATION.md',
       'backend/scene-planner-temporal.js', 'backend/scene-planner-temporal-selftest.js',
       'backend/scene-planner-video-ingestion.js', 'backend/scene-planner-video-ingestion-selftest.js',
       'backend/scene-planner-video-visual.js', 'backend/scene-planner-video-visual-selftest.js',
@@ -196,7 +203,8 @@ test('stable-base guard validates future committed content and blocks regression
       'backend/scene-planner-video-test-support.js', 'backend/scene-planner-video-phase2-selftest.js',
       'backend/scene-planner-postgres-selftest.js', 'backend/scene-planner-postgres-worker.js',
       'backend/staging-safety-selftest.js', 'backend/package.json', 'backend/package-lock.json',
-      'app/src/main/assets/scene-planner.js', 'app/src/main/java/com/lightingai/app/MainActivity.java',
+      'app/src/main/assets/scene-planner.js', 'app/src/main/assets/scene-planner-draft.js',
+      'app/src/main/java/com/lightingai/app/MainActivity.java',
       'app/src/main/java/com/lightingai/app/ScenePlannerCaptureCleanup.java',
       'app/src/test/java/com/lightingai/app/ScenePlannerCaptureCleanupTest.java',
       'docs/SCENE_PLANNER_VIDEO_PHASE2.md'];
@@ -213,6 +221,8 @@ test('stable-base guard validates future committed content and blocks regression
       const report = JSON.parse(result.stdout);
       assert.equal(report.ok, true);
       for (const file of files) assert.ok(report.changedFiles.includes(file), `Candidate omits ${file}`);
+      assert.ok(report.changedFiles.includes('backend/scene-planner-photometry.js'));
+      assert.ok(report.changedFiles.includes('backend/scene-planner-photometric-selftest.js'));
     });
     await t.test('unknown CI path remains blocked after commit', () => {
       const file = 'scripts/unapproved-ci-change.mjs';

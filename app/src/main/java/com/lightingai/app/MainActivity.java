@@ -608,7 +608,7 @@ public class MainActivity extends Activity {
                 if (pendingCameraUri == null) throw new IllegalStateException("Could not prepare video URI");
             }
             record.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
-            record.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 120);
+            // The camera chooses clip duration; do not force a 120-second cut.
             record.setClipData(ClipData.newRawUri("LightingAI scene video", pendingCameraUri));
             record.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             for (ResolveInfo info : getPackageManager().queryIntentActivities(record, PackageManager.MATCH_DEFAULT_ONLY)) {

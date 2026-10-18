@@ -180,8 +180,11 @@ jobs:
           arch: x86_64
           disable-animations: true
           script: |
-            adb install app/build/outputs/apk/debug/app-debug.apk
-            adb install app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            # Each line runs in a separate shell in android-emulator-runner.
+            # Wait for Package Manager, not only sys.boot_completed; diagnostics contain no app data.
+            timeout --signal=KILL 60s sh -c 'until timeout --signal=KILL 5s adb -s emulator-5554 shell pm path android 2>/dev/null | grep -q "^package:"; do sleep 2; done' || { code=$?; echo "Android emulator check failed (exit=$code)"; timeout --signal=KILL 5s adb -s emulator-5554 get-state || true; timeout --signal=KILL 5s adb -s emulator-5554 shell getprop sys.boot_completed || true; timeout --signal=KILL 5s adb -s emulator-5554 shell df -h /data || true; exit "$code"; }
+            timeout --signal=KILL 120s adb -s emulator-5554 install --no-streaming app/build/outputs/apk/debug/app-debug.apk || { code=$?; echo "Android emulator check failed (exit=$code)"; timeout --signal=KILL 5s adb -s emulator-5554 get-state || true; timeout --signal=KILL 5s adb -s emulator-5554 shell getprop sys.boot_completed || true; timeout --signal=KILL 5s adb -s emulator-5554 shell df -h /data || true; exit "$code"; }
+            timeout --signal=KILL 120s adb -s emulator-5554 install --no-streaming app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk || { code=$?; echo "Android emulator check failed (exit=$code)"; timeout --signal=KILL 5s adb -s emulator-5554 get-state || true; timeout --signal=KILL 5s adb -s emulator-5554 shell getprop sys.boot_completed || true; timeout --signal=KILL 5s adb -s emulator-5554 shell df -h /data || true; exit "$code"; }
             adb shell am instrument -w -e phase prepare com.lightingai.app.review13.test/com.lightingai.app.ScenePlannerRecoveryInstrumentation | tee app/build/recovery-prepare.txt
             grep -Fq 'SCENE_PLANNER_RECOVERY_PASS prepare' app/build/recovery-prepare.txt
             adb shell am force-stop com.lightingai.app.review13
@@ -190,7 +193,7 @@ jobs:
             gradle assembleDebugAndroidTest '-PlightingaiTestRunner=com.lightingai.app.AIVisualDraftInstrumentation' -PreleaseVersionCode=${{ github.run_number }}
             TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"; test -x "$TOOLS/aapt" && "$TOOLS/aapt" dump xmltree app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk AndroidManifest.xml > app/build/ai-visual-draft-test-manifest.txt
             python3 -c 'import pathlib,re; text=pathlib.Path("app/build/ai-visual-draft-test-manifest.txt").read_text(); blocks=re.findall(r"(?ms)^[ \t]*E: instrumentation\b(.*?)(?=^[ \t]*E: |\Z)",text); assert len(blocks)==1,"Expected one instrumentation declaration"; attrs=blocks[0]; assert re.search(r"android:name(?:\([^)]*\))?=\x22com\.lightingai\.app\.AIVisualDraftInstrumentation\x22",attrs),"Wrong instrumentation runner"; assert re.search(r"android:targetPackage(?:\([^)]*\))?=\x22com\.lightingai\.app\.review13\x22",attrs),"Wrong test target package"; print("AI Visual instrumentation manifest verified")'
-            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            timeout --signal=KILL 120s adb -s emulator-5554 install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk || { code=$?; echo "Android emulator check failed (exit=$code)"; timeout --signal=KILL 5s adb -s emulator-5554 get-state || true; timeout --signal=KILL 5s adb -s emulator-5554 shell getprop sys.boot_completed || true; timeout --signal=KILL 5s adb -s emulator-5554 shell df -h /data || true; exit "$code"; }
             adb shell am instrument -w com.lightingai.app.review13.test/com.lightingai.app.AIVisualDraftInstrumentation | tee app/build/ai-visual-draft-native.txt
             grep -Fq 'PASS STEP56 native:' app/build/ai-visual-draft-native.txt
 

@@ -188,6 +188,8 @@ test('stable-base guard validates future committed content and blocks regression
       'docs/STEP114_PRELIGHT_REVIEW.md',
       'backend/scene-planner-recovery-selftest.js',
       'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
+      'app/src/androidTest/java/com/lightingai/app/ScenePlannerResumeInstrumentation.java',
+      'backend/scene-planner-resume-selftest.js',
       'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md', 'app/build.gradle',
       'app/src/studio/AndroidManifest.xml', 'backend/studio-release-selftest.js',
       'scripts/studio-update-identity.mjs', 'docs/STUDIO_LOCAL_SIGNING_PREPARATION.md',
@@ -236,6 +238,18 @@ test('stable-base guard validates future committed content and blocks regression
       assert.notEqual(result.status, 0);
       assert.match(result.stderr, /files changed outside.*scripts\/unapproved-ci-change\.mjs/);
       git('checkout', '--quiet', '--detach', candidate);
+    });
+    await t.test('Issue 416 exceptions do not allow neighboring unapproved test paths', () => {
+      for (const file of ['backend/scene-planner-resume-unapproved-selftest.js',
+        'app/src/androidTest/java/com/lightingai/app/UnapprovedResumeInstrumentation.java']) {
+        fs.writeFileSync(path.join(snapshot, file), '// unauthorized neighboring test path\n');
+        git('add', '--', file);
+        commit('Negative fixture: neighboring unapproved recovery test');
+        const result = guard();
+        assert.notEqual(result.status, 0);
+        assert.ok(result.stderr.includes('files changed outside') && result.stderr.includes(file), result.stderr);
+        git('checkout', '--quiet', '--detach', candidate);
+      }
     });
     await t.test('protected file equality remains blocking even if a candidate admits its path', () => {
       // Simulate an adversarial allowlist expansion in this throwaway fixture only.

@@ -159,7 +159,16 @@ const fakeNativeFetch = async (input, init) => {
     headers: { 'content-type': 'application/json' },
   });
 };
+let planOpenCount = 0;
+const dependencyScripts = [];
+const dependencyNodes = new Map();
+const runtimeStorage = new Map();
+const dependencyAssets = new Map([
+  ['file:///android_asset/ai-visual-draft.js', 'app/src/main/assets/ai-visual-draft.js'],
+  ['file:///android_asset/ai-control-bridge.js', 'app/src/main/assets/ai-control-bridge.js'],
+]);
 const runtimeWindow = {
+  addEventListener: () => {},
   fetch: fakeNativeFetch,
   currentLang: 'sr',
   LightingAIFeatureBuild: { run: 'test', sha: 'runtime', branch: 'feature/ai-visual-scene-plan' },
@@ -168,13 +177,23 @@ const runtimeWindow = {
   LightingAIVisualImageActions: {},
   LightingAIVisualPreviewRefinements: {},
   LightingAIProject5Diagnostics: {},
-  LightingAIVisualScenePlan: { open: () => {} },
+  LightingAIVisualScenePlan: { open: () => { planOpenCount++; } },
 };
 const runtimeDocument = {
   readyState: 'loading',
   addEventListener: () => {},
-  getElementById: () => null,
-  body: { appendChild: () => {} },
+  getElementById: (id) => dependencyNodes.get(id) || null,
+  createElement: (tag) => {
+    assert(tag === 'script', 'routing fixture only supports explicit script dependencies');
+    return { tagName: 'SCRIPT' };
+  },
+  body: { appendChild: (script) => {
+    assert(script.tagName === 'SCRIPT' && dependencyAssets.has(script.src), 'unexpected dependency asset requested');
+    assert(!dependencyNodes.has(script.id), 'dependency script must not be inserted twice');
+    dependencyNodes.set(script.id, script);
+    dependencyScripts.push(script);
+    // Loading is completed explicitly below, after executing the real local asset.
+  } },
 };
 const context = {
   window: runtimeWindow,
@@ -189,9 +208,33 @@ const context = {
   Array,
   setTimeout: () => 0,
   clearTimeout: () => {},
+  setInterval: () => 0,
+  clearInterval: () => {},
+  localStorage: {
+    getItem: (key) => runtimeStorage.get(key) ?? null,
+    setItem: (key, value) => runtimeStorage.set(key, String(value)),
+    removeItem: (key) => runtimeStorage.delete(key),
+  },
 };
-vm.runInNewContext(launcher, context, { filename: 'ai-visual-scene-launcher.js' });
+vm.createContext(context);
+vm.runInContext(launcher, context, { filename: 'ai-visual-scene-launcher.js' });
 runtimeWindow.LightingAIVisualSceneLauncher.open();
+assert(planOpenCount === 0 && dependencyScripts.length === 1, 'plan must wait for draft dependency');
+const draftScript = dependencyScripts[0];
+assert(draftScript.id === 'lightingai-ai-visual-draft-script' && draftScript.src === 'file:///android_asset/ai-visual-draft.js', 'draft loader must request the exact packaged asset');
+vm.runInContext(read(dependencyAssets.get(draftScript.src)), context, { filename: 'ai-visual-draft.js' });
+assert(typeof runtimeWindow.LightingAIVisualDraft?.open === 'function', 'real draft asset must register its API');
+draftScript.onload();
+assert(planOpenCount === 0 && dependencyScripts.length === 2, 'plan must wait for Control bridge dependency');
+const controlScript = dependencyScripts[1];
+assert(controlScript.id === 'lightingai-ai-control-bridge-script' && controlScript.src === 'file:///android_asset/ai-control-bridge.js', 'Control loader must request the exact packaged asset');
+vm.runInContext(read(dependencyAssets.get(controlScript.src)), context, { filename: 'ai-control-bridge.js' });
+assert(typeof runtimeWindow.LightingAIAIControlBridge?.transferLatest === 'function', 'real Control bridge asset must register its API');
+controlScript.onload();
+assert(planOpenCount === 1, 'plan opens only after both real dependencies have loaded');
+runtimeWindow.LightingAIVisualSceneLauncher.open();
+assert(planOpenCount === 2 && dependencyScripts.length === 2, 'ready dependencies must be reused without duplicate scripts');
+assert(calls.length === 0, 'dependency loading must not send any network request');
 
 calls.length = 0;
 await runtimeWindow.fetch('https://example.com/untouched', { method: 'GET' });
@@ -274,6 +317,7 @@ console.log(JSON.stringify({
   ok: true,
   suite: 'LightingAI Project 5 feature safety',
   protected: [
+    'real local draft and Control dependency loading before opening, with ready-state reuse',
     'stable production lighting-plan route',
     'production-first real-photo preview routing',
     'isolated preview fallback only when production is unavailable',

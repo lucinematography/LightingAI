@@ -306,7 +306,7 @@
       '<input type="file" id="sp-video-input" accept="video/*" hidden>'+
       '<input type="file" id="sp-record-input" accept="video/*" capture="environment" hidden>'+
       '<video id="sp-video" class="sp-media" playsinline controls preload="metadata" hidden></video>'+
-      '<div id="sp-video-note" class="sp-note">Do 120 sekundi. AI dobija do 6 vremenski označenih kadrova, ne ceo video.</div></div></div></div>'+
+      '<div id="sp-video-note" class="sp-note">Trajanje prati izvorni snimak. Za sada AI koristi do 6 vremenski označenih kadrova; puna video analiza nije dostupna.</div></div></div></div>'+
       '<div class="sp-card"><h2 class="sp-h">2 / OPIŠI SCENU I ODABERI REŽIM</h2>'+
       '<label>TEKST ILI GLASOVNI OPIS SCENE</label>'+
       '<textarea class="sp-field" id="sp-description" rows="4" placeholder="Primer: Žena ide od ograde do drveta, noć, hladna mesečina, sekirom udara drvo. Kamera prati sa leve strane."></textarea>'+
@@ -552,7 +552,6 @@
     video.load();
     await metadata;
     if(!Number.isFinite(video.duration)||video.duration<=0)throw new Error('Trajanje video snimka nije prepoznato.');
-    if(video.duration>120)throw new Error('Za sada koristi video kraći od 120 sekundi.');
     var duration=video.duration,frames=[],times=[0.04,.20,.40,.60,.80,.96].map(function(f){
       return Math.min(Math.max(0,duration-.08),Math.max(.02,duration*f));
     });

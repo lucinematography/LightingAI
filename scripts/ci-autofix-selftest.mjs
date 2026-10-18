@@ -175,7 +175,10 @@ test('stable-base guard validates future committed content and blocks regression
     execFileSync('git', ['-c', `core.hooksPath=${hooks}`, 'clone', '--quiet', '--no-hardlinks',
       '--no-checkout', '--', root, snapshot], {stdio: 'pipe'});
     git('checkout', '--quiet', '--detach', before.head);
-    const files = ['.github/workflows/build-apk.yml', '.github/workflows/release-apk.yml', '.gitignore',
+    const approvedPackageFiles = sourceGit('diff-tree', '--no-commit-id', '--name-only', '-r',
+      '67a7a836143b9d02e77c14cd1f707758a712a5f5').split('\n');
+    assert.equal(approvedPackageFiles.length, 29, 'Reviewed AI/PDF package must contain exactly 29 paths');
+    const files = [...new Set(['.github/workflows/build-apk.yml', '.github/workflows/release-apk.yml', '.gitignore',
       'docs/CI_AUTOFIX_PHASE1.md', 'scripts/ci-autofix.mjs', 'scripts/ci-autofix-selftest.mjs',
       'scripts/ci-report-summary.mjs', 'scripts/run-ci-check.mjs', 'backend/project5-stable-base-selftest.js',
       // Include the complete phase-2/3A candidate in the isolated future-commit check.
@@ -207,7 +210,7 @@ test('stable-base guard validates future committed content and blocks regression
       'app/src/main/java/com/lightingai/app/MainActivity.java',
       'app/src/main/java/com/lightingai/app/ScenePlannerCaptureCleanup.java',
       'app/src/test/java/com/lightingai/app/ScenePlannerCaptureCleanupTest.java',
-      'docs/SCENE_PLANNER_VIDEO_PHASE2.md'];
+      'docs/SCENE_PLANNER_VIDEO_PHASE2.md', ...approvedPackageFiles])];
     for (const file of files) {
       fs.mkdirSync(path.dirname(path.join(snapshot, file)), {recursive: true});
       fs.copyFileSync(path.join(root, file), path.join(snapshot, file));
@@ -248,6 +251,27 @@ test('stable-base guard validates future committed content and blocks regression
       const result = guard();
       assert.notEqual(result.status, 0);
       assert.match(result.stderr, /build 767 protected file changed unexpectedly: backend\/visual-preview\.js/);
+      git('checkout', '--quiet', '--detach', candidate);
+    });
+    await t.test('reviewed AI preview content rejects any new unapproved modification', () => {
+      const file = 'app/src/main/assets/ai-visual-preview-refinements.js';
+      fs.appendFileSync(path.join(snapshot, file), '\n// unauthorized preview change\n');
+      git('add', '--', file);
+      commit('Negative fixture: reviewed AI preview content');
+      const result = guard();
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, /approved AI\/PDF protected file changed unexpectedly: app\/src\/main\/assets\/ai-visual-preview-refinements\.js/);
+      git('checkout', '--quiet', '--detach', candidate);
+    });
+    await t.test('reviewed Android backup attributes cannot be removed or weakened', () => {
+      const file = 'app/src/main/AndroidManifest.xml';
+      const content = fs.readFileSync(path.join(snapshot, file), 'utf8');
+      fs.writeFileSync(path.join(snapshot, file), content.replace('@xml/private_backup_rules', '@xml/unapproved_backup_rules'));
+      git('add', '--', file);
+      commit('Negative fixture: weakened backup rules');
+      const result = guard();
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, /AndroidManifest reviewed backup rule missing or changed/);
       git('checkout', '--quiet', '--detach', candidate);
     });
     await t.test('unauthorized manifest permission remains blocked after commit', () => {

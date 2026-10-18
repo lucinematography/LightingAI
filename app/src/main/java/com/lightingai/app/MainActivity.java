@@ -61,6 +61,8 @@ public class MainActivity extends Activity {
     private AIVisualDraftStore visualDraftStore() { if(aiVisualDraftStore==null)aiVisualDraftStore=new AIVisualDraftStore(getNoBackupFilesDir());return aiVisualDraftStore; }
     private WebView webView;
     private boolean recoveringWebView;
+    private long plannerFocusGeneration;
+    private long plannerFocusVisualReady;
     private int rendererRecoveryAttempts;
     private TextView rendererRecoveryNotice;
     private FrameLayout rootView;
@@ -288,7 +290,42 @@ public class MainActivity extends Activity {
             "(function(){var p=window.LightingAIScenePlanner;if(p&&p.resume)p.resume();})()", null);
     }
 
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        final long generation = ++plannerFocusGeneration;
+        if (!hasFocus || webView == null) return;
+        final WebView target = webView;
+        // onResume may precede the new window surface. Wait for its focus/frame boundary.
+        target.postOnAnimation(() -> requestPlannerFocusFrame(target, generation, 0));
+    }
+
+    private boolean isPlannerFocusCurrent(WebView target, long generation) {
+        return generation == plannerFocusGeneration && target == webView &&
+            !isFinishing() && !isDestroyed() && !recoveringWebView &&
+            hasWindowFocus() && target.isAttachedToWindow() && target.isShown() &&
+            target.getWidth() > 0 && target.getHeight() > 0;
+    }
+
+    private void requestPlannerFocusFrame(WebView target, long generation, int attempt) {
+        if (!isPlannerFocusCurrent(target, generation) || plannerFocusVisualReady == generation) return;
+        // This acknowledges DOM readiness for a draw, NOT video pixels or display presentation.
+        target.postVisualStateCallback(generation, new WebView.VisualStateCallback() {
+            @Override public void onComplete(long requestId) {
+                if (!isPlannerFocusCurrent(target, generation) || plannerFocusVisualReady == generation) return;
+                plannerFocusVisualReady = generation;
+                rootView.postInvalidateOnAnimation();
+                target.postInvalidateOnAnimation();
+            }
+        });
+        target.postDelayed(() -> {
+            if (!isPlannerFocusCurrent(target, generation) || plannerFocusVisualReady == generation) return;
+            if (attempt == 0) requestPlannerFocusFrame(target, generation, 1);
+            else android.util.Log.w("LightingAIView", "Focus visual-state acknowledgement timed out");
+        }, 1500);
+    }
+
     private void recoverPlannerRenderer(WebView failed) {
+        ++plannerFocusGeneration;
         recoveringWebView = true;
         recoveryOriginTrusted = false;
         rootView.removeView(failed);
@@ -1949,6 +1986,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onPause() {
+        ++plannerFocusGeneration;
         checkpointScenePlanner();
         if (webView != null) webView.onPause();
         stopNativeSunCompass();
@@ -2069,6 +2107,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        ++plannerFocusGeneration;
         releaseScenePlannerCaptures(false);
         cancelBackupPasswordJob(backupPasswordJob);
         if (isFinishing() && pendingVideoCapture && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)

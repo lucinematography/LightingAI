@@ -190,6 +190,7 @@ test('stable-base guard validates future committed content and blocks regression
       'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
       'app/src/androidTest/java/com/lightingai/app/ScenePlannerResumeInstrumentation.java',
       'backend/scene-planner-resume-selftest.js',
+      'backend/scene-planner-focus-selftest.js',
       'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md', 'app/build.gradle',
       'app/src/studio/AndroidManifest.xml', 'backend/studio-release-selftest.js',
       'scripts/studio-update-identity.mjs', 'docs/STUDIO_LOCAL_SIGNING_PREPARATION.md',
@@ -241,6 +242,7 @@ test('stable-base guard validates future committed content and blocks regression
     });
     await t.test('Issue 416 exceptions do not allow neighboring unapproved test paths', () => {
       for (const file of ['backend/scene-planner-resume-unapproved-selftest.js',
+        'backend/scene-planner-focus-unapproved-selftest.js',
         'app/src/androidTest/java/com/lightingai/app/UnapprovedResumeInstrumentation.java']) {
         fs.writeFileSync(path.join(snapshot, file), '// unauthorized neighboring test path\n');
         git('add', '--', file);

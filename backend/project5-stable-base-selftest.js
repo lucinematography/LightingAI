@@ -235,9 +235,10 @@ const exactAllowed = new Set([
   // Exact recovery regression, native CI instrumentation and update-safety report.
   'backend/scene-planner-recovery-selftest.js',
   'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
-  // Issue #416: only the two reviewed offline recovery regression paths.
+  // Issue #416: exact reviewed offline recovery and focus regression paths only.
   'app/src/androidTest/java/com/lightingai/app/ScenePlannerResumeInstrumentation.java',
   'backend/scene-planner-resume-selftest.js',
+  'backend/scene-planner-focus-selftest.js',
   'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md',
   // Studio parallel release: exact identity overlay and public preflight/report paths.
   'app/src/studio/AndroidManifest.xml',

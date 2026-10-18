@@ -85,7 +85,20 @@ await check('actual module save/restore restores inputs and selection without re
 await check('STEP56 immediate input checkpoint does not depend on a timer or pagehide',()=>{
  let writes=0;const ctx={restoringDraft:false,saveVisualDraft(){writes++;}};
  vm.runInNewContext(lines.find(x=>x.startsWith('function queueVisualDraftSave(')),ctx);ctx.queueVisualDraftSave();assert.equal(writes,1);ctx.restoringDraft=true;ctx.queueVisualDraftSave();assert.equal(writes,1);
- const java=read('app/src/main/java/com/lightingai/app/MainActivity.java');assert.ok(java.includes('if(window.LightingAIVisualFlush)window.LightingAIVisualFlush()'));assert.match(java, /onPause\(\)\s*\{\s*checkpointScenePlanner\(\)/);
+ const java=read('app/src/main/java/com/lightingai/app/MainActivity.java');assert.ok(java.includes('if(window.LightingAIVisualFlush)window.LightingAIVisualFlush()'));
+ const pause=java.match(/protected\s+void\s+onPause\(\)\s*\{([\s\S]*?)\n    \}/);assert.ok(pause,'MainActivity onPause body must exist');
+ const requireSafePause=body=>{
+  // Cancel stale focus work, checkpoint while WebView is active, then pause it.
+  assert.match(body,/^\s*\+\+plannerFocusGeneration;\s*checkpointScenePlanner\(\);\s*if\s*\(webView != null\)\s*webView\.onPause\(\);/);
+  assert.match(body,/super\.onPause\(\);\s*$/);
+ };
+ requireSafePause(pause[1]);
+ for(const invalid of [
+  pause[1].replace('checkpointScenePlanner();',''),
+  pause[1].replace('++plannerFocusGeneration;',''),
+  pause[1].replace('++plannerFocusGeneration;','checkpointScenePlanner();').replace(/checkpointScenePlanner\(\);(?=\s*if)/,'++plannerFocusGeneration;'),
+  pause[1].replace('checkpointScenePlanner();','').replace('webView.onPause();','webView.onPause();checkpointScenePlanner();')
+ ])assert.throws(()=>requireSafePause(invalid),assert.AssertionError);
 });
 await check('STEP56 large photo is sent once; text uses only small metadata; failed save remains retryable',()=>{
  let photoWrites=0,metadataWrites=0,fail=false;let saved=null;

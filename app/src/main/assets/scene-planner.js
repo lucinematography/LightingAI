@@ -593,14 +593,16 @@
     }
     if(state.busy||state.videoBusy){status('Sačekaj završetak prethodne obrade.',true);return;}
     if(!/^video\//.test(file.type)&&file.type) {status('Potreban je video snimak.',true);return;}
-    if(file.size>180*1024*1024){status('Video prelazi 180 MB. Skrati snimak i pokušaj ponovo.',true);return;}
+    if(!file.size){status('Video datoteka je prazna.',true);return;}
+    var largeSourceVideo=file.size>180*1024*1024;
     videoFrameSession++;selectedFrameCompare=0;
     state.videoBusy=true;state.frames=[];state.aiPreview='';state.aiStoryboard=[];state.videoFile=file;state.exportedVideo=null;state.aiVideoTaskId=null;
     state.videoDurationSec=null;state.aiVideoPending=null;state.aiVideoCompletedPlan=null;
     if(state.videoUrl){URL.revokeObjectURL(state.videoUrl);state.videoUrl='';}
     state.videoUrl=URL.createObjectURL(file);
     var player=el('sp-video');if(player){player.src=state.videoUrl;player.hidden=false;player.load();}
-    status('Izdvajam ključne kadrove videa na telefonu…');
+    status('Izdvajam ključne kadrove videa na telefonu…'+
+      (largeSourceVideo?' Veliki snimak može zahtevati duže vreme i više prostora na uređaju.':''));
     try{
       var extracted=await videoFrames(state.videoUrl);
       state.frames=extracted.frames;

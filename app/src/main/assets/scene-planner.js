@@ -250,7 +250,7 @@
     };
   }
   function open(){
-    if(el(MODULE))return;
+    if(el(MODULE)){resumeAfterBackground();return;}
     sceneReady=false;
     var wrap=document.createElement('div');wrap.id=MODULE;
     wrap.innerHTML='<style>'+
@@ -474,8 +474,8 @@
         if(!photo||el(MODULE)!==wrap||state.photo)return;
         state.photo=photo;
         var image=el('sp-image');if(image){image.src=photo;image.hidden=false;}
-      }).finally(function(){if(el(MODULE)===wrap){sceneReady=true;renderSceneControls();}});
-      else {sceneReady=true;renderSceneControls();}
+      }).finally(function(){if(el(MODULE)===wrap){sceneReady=true;renderSceneControls();resumeAfterBackground();}});
+      else {sceneReady=true;renderSceneControls();resumeAfterBackground();}
       status('Spremno. Sačuvan plan i nacrt su vraćeni gde je dostupno.');
     });
     restoreVideoReceipt();
@@ -596,6 +596,7 @@
     if(!file.size){status('Video datoteka je prazna.',true);return;}
     var largeSourceVideo=file.size>180*1024*1024;
     videoFrameSession++;selectedFrameCompare=0;
+    if(el(MODULE))el(MODULE).setAttribute('data-sp-video-loaded','1');
     state.videoBusy=true;state.frames=[];state.aiPreview='';state.aiStoryboard=[];state.videoFile=file;state.exportedVideo=null;state.aiVideoTaskId=null;
     state.videoDurationSec=null;state.aiVideoPending=null;state.aiVideoCompletedPlan=null;
     if(state.videoUrl){URL.revokeObjectURL(state.videoUrl);state.videoUrl='';}
@@ -2626,9 +2627,23 @@
     if(window.Android&&typeof window.Android.releaseScenePlannerCaptures==='function')
       window.Android.releaseScenePlannerCaptures(keepLatest===true);
   }
+  function resumeAfterBackground(){
+    var wrap=el(MODULE);
+    if(!wrap){if(draft()&&draft().shouldReopen())open();return false;}
+    // Keep the live DOM, video, selected frame, plan and current scroll unchanged.
+    wrap.hidden=false;wrap.style.visibility='visible';
+    if(wrap.getAttribute('data-sp-video-loaded')==='1'&&!state.videoFile){
+      var note=el('sp-video-note');
+      if(note)note.textContent=locale()==='en'?
+        'The previous video is no longer available. Scene and plan were preserved. Select the original video again; a new video analysis requires a new plan.':
+        'Prethodni video više nije dostupan. Scena i plan su sačuvani. Ponovo izaberi originalni video; nova analiza videa zahteva novi plan.';
+    }
+    return true;
+  }
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)resumeAfterBackground();});
   function closeIfOpen(){if(!el(MODULE))return false;close();return true;}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});
   else load();
-  window.LightingAIScenePlanner={open:open,close:close,closeIfOpen:closeIfOpen,
+  window.LightingAIScenePlanner={open:open,close:close,resume:resumeAfterBackground,closeIfOpen:closeIfOpen,
     onBackupSaved:onBackupSaved,onBackupUnlocked:onBackupUnlocked,onNativeVideoSaved:onNativeVideoSaved,version:'0.3-native-mp4-saf-save'};
 })();

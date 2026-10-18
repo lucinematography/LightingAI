@@ -35,6 +35,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.RenderProcessGoneDetail;
 import android.widget.Toast;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -59,6 +60,9 @@ public class MainActivity extends Activity {
     private AIVisualDraftStore aiVisualDraftStore;
     private AIVisualDraftStore visualDraftStore() { if(aiVisualDraftStore==null)aiVisualDraftStore=new AIVisualDraftStore(getNoBackupFilesDir());return aiVisualDraftStore; }
     private WebView webView;
+    private boolean recoveringWebView;
+    private int rendererRecoveryAttempts;
+    private TextView rendererRecoveryNotice;
     private FrameLayout rootView;
     private View startupSplash;
     private String pendingText = null;
@@ -121,12 +125,6 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
         rootView = new FrameLayout(this);
         rootView.setBackgroundColor(Color.BLACK);
-        webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(13, 15, 18));
-        rootView.addView(webView, new FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        ));
         startupSplash = createStartupSplash();
         rootView.addView(startupSplash, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -142,6 +140,17 @@ public class MainActivity extends Activity {
             sacnLiveEngine.setPriority(sacnPriority.get());
             bleDeviceScanner = new BleDeviceScanner(this);
         }
+        createPlannerWebView(true);
+    }
+
+    @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
+    private void createPlannerWebView(boolean initialLaunch) {
+        webView = new WebView(this);
+        webView.setBackgroundColor(Color.rgb(13, 15, 18));
+        rootView.addView(webView, 0, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -171,10 +180,26 @@ public class MainActivity extends Activity {
                 super.onPageStarted(view, url, favicon);
             }
             @Override public void onPageFinished(WebView view, String url) {
+                if (view != webView) return;
                 super.onPageFinished(view, url);
                 applyNavigationInset();
                 installCatalogView();
                 hideStartupSplashAfterDelay();
+                resumePlannerView();
+                view.postVisualStateCallback(0, new WebView.VisualStateCallback() {
+                    @Override public void onComplete(long requestId) {
+                        if (view != webView) return;
+                        recoveringWebView = false;
+                        if (rendererRecoveryNotice != null) {
+                            rootView.removeView(rendererRecoveryNotice);
+                            rendererRecoveryNotice = null;
+                        }
+                    }
+                });
+            }
+            @Override public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                if (view == webView && !isFinishing() && !isDestroyed()) recoverPlannerRenderer(view);
+                return true;
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
@@ -245,11 +270,53 @@ public class MainActivity extends Activity {
         });
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.addJavascriptInterface(new AIVisualImageBridge(this), "LightingAIImages");
-        webView.postDelayed(
-            () -> webView.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v4"),
-            3350
-        );
+        final WebView created = webView;
+        created.postDelayed(() -> {
+            if (created == webView && !isFinishing() && !isDestroyed())
+                created.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v4");
+        }, initialLaunch ? 3350 : 0);
+        created.requestApplyInsets();
+    }
+
+    private void resumePlannerView() {
+        if (webView == null) return;
+        webView.onResume();
         webView.requestApplyInsets();
+        webView.requestLayout();
+        webView.invalidate();
+        if (recoveryOriginTrusted) webView.evaluateJavascript(
+            "(function(){var p=window.LightingAIScenePlanner;if(p&&p.resume)p.resume();})()", null);
+    }
+
+    private void recoverPlannerRenderer(WebView failed) {
+        recoveringWebView = true;
+        recoveryOriginTrusted = false;
+        rootView.removeView(failed);
+        webView = null;
+        failed.destroy();
+        if (rendererRecoveryNotice == null) {
+            rendererRecoveryNotice = new TextView(this);
+            rendererRecoveryNotice.setBackgroundColor(Color.rgb(13, 15, 18));
+            rendererRecoveryNotice.setTextColor(Color.WHITE);
+            rendererRecoveryNotice.setGravity(Gravity.CENTER);
+            rootView.addView(rendererRecoveryNotice, new FrameLayout.LayoutParams(-1, -1));
+        }
+        rendererRecoveryNotice.setText("Obnavljam prikaz scene… / Restoring scene view…");
+        if (++rendererRecoveryAttempts > 2) {
+            rendererRecoveryNotice.setText("Prikaz nije dostupan. Sačuvani podaci nisu obrisani. Dodirni za ponovni pokušaj. / View unavailable. Saved data was preserved. Tap to retry.");
+            rendererRecoveryNotice.setOnClickListener(v -> {
+                rendererRecoveryAttempts = 0;
+                rendererRecoveryNotice.setOnClickListener(null);
+                createPlannerWebView(false);
+            });
+            return;
+        }
+        createPlannerWebView(false);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        resumePlannerView();
     }
 
     private View createStartupSplash() {
@@ -1883,6 +1950,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() {
         checkpointScenePlanner();
+        if (webView != null) webView.onPause();
         stopNativeSunCompass();
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
@@ -2015,6 +2083,11 @@ public class MainActivity extends Activity {
             try { speechRecognizer.destroy(); } catch (Exception ignored) {}
             speechRecognizer = null;
         }
+        if (webView != null) {
+            rootView.removeView(webView);
+            webView.destroy();
+            webView = null;
+        }
         super.onDestroy();
     }
 
@@ -2024,6 +2097,8 @@ public class MainActivity extends Activity {
     }
 
     @Override public void onBackPressed() {
+        // A dead renderer cannot answer JS Back; do not navigate away during recovery.
+        if (recoveringWebView) return;
         if (webView == null) {
             super.onBackPressed();
             return;

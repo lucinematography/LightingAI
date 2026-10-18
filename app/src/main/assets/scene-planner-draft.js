@@ -403,6 +403,8 @@
     saved.fields=fields;
     saved.open=true;
     saved.scrollTop=Math.max(0,Math.round(overlay.scrollTop||0));
+    // A boolean only: never persist a file, blob URL, path or video bytes.
+    saved.videoSelected=!!(overlay.getAttribute&&overlay.getAttribute('data-sp-video-loaded')==='1');
     var decisions={},seen=false;
     CHECK_IDS.forEach(function(id){
       var f=node(overlay,'sp-prelight-'+id);
@@ -426,6 +428,7 @@
   }
   function restore(overlay,currentRevisionId){
     var saved=read();if(!saved||!overlay)return false;
+    if(overlay.setAttribute)overlay.setAttribute('data-sp-video-loaded',saved.videoSelected===true?'1':'0');
     var fields=saved.fields&&typeof saved.fields==='object'?saved.fields:{};
     FIELD_IDS.forEach(function(id){
       var f=node(overlay,id);

@@ -1,5 +1,7 @@
 import { createRequire } from "node:module";
 import { parseDataImage } from "./visual-preview.js";
+import { retrieveKnowledge } from "./scene-planner-knowledge.js";
+import { getManufacturerPhotometricReferences, buildPhotometricBasis } from "./scene-planner-photometry.js";
 
 const require = createRequire(import.meta.url);
 const core = require("../app/src/main/assets/scene-planner-core.js");
@@ -14,6 +16,9 @@ function parseModelJson(response) {
 
 export function validateScenePlannerRequest(body) {
   const req = core.request(body);
+  if (body?.dimensionsMeasured === true && !req.dimensionsMeasured) {
+    throw Object.assign(new Error("Marked measured room dimensions require valid width and depth (0.5-100m)."), {status:422});
+  }
   if (!req.description) throw Object.assign(new Error("Scene description is required."), {status:400});
   if (!req.scenePhoto && !req.videoFrames.length) {
     throw Object.assign(new Error("Scene photo or video frames are required."), {status:400});
@@ -49,10 +54,37 @@ export function canonicalInventory(req, catalog) {
   };
 }
 
-export function buildScenePlannerPrompt(req) {
+function scenePlannerEvidence(req,catalog) {
+  const query=[req.description,req.look,req.captureLighting,req.dopRequest].filter(Boolean).join(" ").slice(0,1200);
+  const scene=retrieveKnowledge(query,{maxResults:8});
+  if (!getManufacturerPhotometricReferences(req,catalog).length) return scene;
+  // Dedicated physical principles are advisory; they do not validate manufacturer lux.
+  const physical=retrieveKnowledge("pad osvetljenosti udaljenost lux inverse square spot flood",{maxResults:25})
+    .filter(card=>card.id==="PHY-005" || card.id==="EQ-002");
+  const seen=new Set();
+  return [...physical,...scene].filter(card=>{
+    if(seen.has(card.id))return false;
+    seen.add(card.id);return true;
+  }).slice(0,8);
+}
+
+export function buildScenePlannerPrompt(req,catalog=[]) {
   const onlyOwn = req.mode === "own";
+  const evidence=scenePlannerEvidence(req,catalog);
+  const photometrics=getManufacturerPhotometricReferences(req,catalog);
   return [
     "You are a professional cinematography gaffer and lighting designer.",
+    "REFERENCE KNOWLEDGE: The following are curated, paraphrased principles derived from cinematography books, not the full texts. Treat as conditional guidance, not measured evidence or mandatory recipes.",
+    JSON.stringify(evidence.map(card=>({
+      id:card.id,principle:card.principle,application:card.application,validation:card.validation,limitations:card.limitations,
+      references:card.evidence.map(e=>({source:e.source_id,pdfPage:e.pdf_page,printedPage:e.printed_page}))
+    }))),
+    "Use applicable book principles to justify lighting choices; never fabricate a citation, measurement, or universally correct lighting ratio. Where evidence is weak, explain the on-set check.",
+    "For each lighting decision, prefer relevant retrieved book principles and their application, validation and limitations; adapt them to the scene, actual fixture inventory and director of photography intent, never copy a generic recipe.",
+    "If the retrieved book-principles array is empty or does not support a decision, explicitly label the recommendation as a creative hypothesis without book support. Never imply that an absent citation was verified.",
+    "Book principles are not photometric calibration: do not assert exact lux, beam distance, exposure, contrast or fixture output without scene measurements and verified fixture photometrics. Propose practical meter/camera tests and request DoP approval.",
+    "MANUFACTURER-PUBLISHED PHOTOMETRIC REFERENCE, only for verified owned fixture models: " + JSON.stringify(photometrics),
+    "Reference lux is manufacturer-published at listed exact distance, 5600K, full output and spot/flood beam without added modifiers. Use book principles to assess falloff and placement, but never convert these into measured scene lux. Do not interpolate, extrapolate, infer lux from pixels or scale lux linearly with dimmer percent. Ask for physical distance and light-meter readings.",
     "Design a creative but executable light plan for the actual scene and actor blocking.",
     "The photograph and video keyframes are visual references, NOT calibrated depth measurements.",
     "Scene description: " + req.description,
@@ -85,7 +117,7 @@ export function buildScenePlannerPrompt(req) {
     "Camera framing/movement: " + req.shotCamera,
     "Director of Photography new instructions: " + (req.dopRequest||"none"),
     "Camera hard overrides to obey exactly when provided: " + JSON.stringify(req.cameraOverrides),
-    "Previous plan to revise rather than ignore: " + JSON.stringify(req.previousPlan),
+    "Previous plan to revise rather than ignore (exclude server-owned book citations from model context): " + JSON.stringify(req.previousPlan ? (({knowledgeBasis,...plan})=>plan)(req.previousPlan) : null),
     "Return suggested cameraSettings with fps, shutterAngle, aperture, iso, whiteBalanceK, ndStops, focalLengthMm.",
     "Return exposureNotes that identify assumptions and required meter/gray-card tests.",
     "Aperture, ISO and source intensity cannot be physically derived accurately from uncalibrated video alone.",
@@ -118,7 +150,7 @@ export function buildScenePlannerPrompt(req) {
 
 export async function generateScenePlannerPlan(openai, body, catalog) {
   const req = canonicalInventory(validateScenePlannerRequest(body), catalog);
-  const content = [{type:"input_text",text:buildScenePlannerPrompt(req)}];
+  const content = [{type:"input_text",text:buildScenePlannerPrompt(req,catalog)}];
   if (req.scenePhoto) content.push({type:"input_image",image_url:req.scenePhoto});
   for (const frame of req.videoFrames) {
     content.push({type:"input_text",text:"Video keyframe at " + frame.timeSec + " seconds."});
@@ -126,6 +158,19 @@ export async function generateScenePlannerPlan(openai, body, catalog) {
   }
   const response = await openai.responses.create({model:MODEL,input:[{role:"user",content}]});
   const plan = core.sanitizePlan(parseModelJson(response), req, "ai");
+  // Server-owned provenance: never trust model-authored citations or measured claims.
+  const evidence = scenePlannerEvidence(req,catalog);
+  plan.knowledgeBasis = {
+    status:"CURATED_BOOK_PRINCIPLES_NOT_FULL_TEXT_OR_INDEPENDENTLY_PAGE_VERIFIED",
+    cards:evidence.map(card=>({
+      id:card.id,title:card.title,principle:card.principle,application:card.application,
+      validation:card.validation,limitations:card.limitations,references:card.evidence.map(e=>({
+        source:e.source_id,title:e.title,author:e.author,edition:e.edition,pdfPage:e.pdf_page,printedPage:e.printed_page,
+        verification:e.recordVerification
+      }))
+    }))
+  };
+  plan.photometricBasis = buildPhotometricBasis(req,plan,catalog,evidence);
   if (!plan.lights.length && req.mode === "best") {
     throw new Error("AI returned no usable lights for the proposed scene.");
   }

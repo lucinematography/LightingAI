@@ -295,12 +295,14 @@ await test("browser resume and native save behavior",async t=>{
     fetch:async(url,options)=>{calls.push({url,method:options?.method||"GET"});return new Response(JSON.stringify(String(url).includes("/request/")?{taskId:taskId}:{status:"SUCCEEDED",ready:true}),{headers:{"Content-Type":"application/json"}});}
   };
   const taskId=uuid(),requestId=uuid(),uploadId=uuid();
+  const binding={revisionId:"revision-test-1",planHash:"a".repeat(64),lightPlotRevisionId:"plot-test-1"};
   const source=fs.readFileSync(new URL("../app/src/main/assets/scene-planner.js",import.meta.url),"utf8").replace("window.LightingAIScenePlanner={open:open",
     "window.__test={state:state,persist:persistVideoReceipt,restore:restoreVideoReceipt,check:checkAIVideo,start:startAIVideo,download:downloadAIVideo,close:close,blocked:function(){return videoReceiptBlocked;}};window.LightingAIScenePlanner={open:open");
   vm.runInNewContext(source,context);const ui=context.window.__test;
   await t.test("receipt stores identifiers only; token stays out of localStorage",()=>{
     node("sp-video-auth").value=env.SCENE_PLANNER_VIDEO_ACCESS_TOKEN;
-    ui.persist({requestId,uploadId,status:"SUBMITTING",token:env.SCENE_PLANNER_VIDEO_ACCESS_TOKEN,plan:{private:"data"}});
+    assert.throws(()=>ui.persist({requestId,uploadId,status:"SUBMITTING"}),/potvrđenu vezu/,"unbound video receipt must be rejected");
+    ui.persist({requestId,uploadId,status:"SUBMITTING",binding,token:env.SCENE_PLANNER_VIDEO_ACCESS_TOKEN,plan:{private:"data"}});
     const value=[...saved.values()][0];assert.ok(!value.includes(env.SCENE_PLANNER_VIDEO_ACCESS_TOKEN));assert.ok(!value.includes("private"));
   });
   await t.test("reopen reconciles lost response with GET only and blocks paid start",async()=>{
@@ -327,7 +329,19 @@ await test("browser resume and native save behavior",async t=>{
     assert.match(cleanup,/canonical\.getParentFile\(\)\.equals\(folder\)/);assert.match(cleanup,/canonical\.lastModified\(\) < cutoff/);
     assert.match(java,/ScenePlannerCaptureCleanup\.prune/);
     assert.match(java,/scenePlannerCaptureUris\.add\(uri\)/);assert.match(java,/getPackageName\(\) \+ "\.ai\.preview"/);
-    assert.match(java,/onDestroy\(\) \{\s*releaseScenePlannerCaptures\(false\)/);
+    const destroy=java.match(/protected\s+void\s+onDestroy\(\)\s*\{([\s\S]*?)\n    \}/);assert.ok(destroy,"MainActivity onDestroy body must exist");
+    const requireSafeDestroy=body=>{
+      assert.match(body,/^\s*\+\+plannerFocusGeneration;\s*releaseScenePlannerCaptures\(false\);/);
+      assert.ok(body.indexOf("releaseScenePlannerCaptures(false);")<body.indexOf("webView.destroy();"),"Owned captures must be released before destroying WebView");
+      assert.match(body,/super\.onDestroy\(\);\s*$/);
+    };
+    requireSafeDestroy(destroy[1]);
+    for(const invalid of [
+      destroy[1].replace("releaseScenePlannerCaptures(false);",""),
+      destroy[1].replace("++plannerFocusGeneration;",""),
+      destroy[1].replace(/(\+\+plannerFocusGeneration;)(\s*)(releaseScenePlannerCaptures\(false\);)/,"$3$2$1"),
+      destroy[1].replace("releaseScenePlannerCaptures(false);","").replace("webView.destroy();","webView.destroy();releaseScenePlannerCaptures(false);")
+    ])assert.throws(()=>requireSafeDestroy(invalid),assert.AssertionError);
     assert.match(java,/@JavascriptInterface public void releaseScenePlannerCaptures/);
   });
 });

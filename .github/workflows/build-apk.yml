@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "feature/scene-planner-knowledge-k1" ]
   push:
     branches: [ "main", "feature/**", "fix/**", "chore/**" ]
 
@@ -43,6 +43,17 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: npm ci
+
+      - name: Professional AI photo and PDF regression tests
+        working-directory: backend
+        env:
+          OPENAI_API_KEY: ""
+        run: |
+          node lighting-plan-request-selftest.js
+          node lighting-plan-inventory-selftest.js
+          node lighting-plan-knowledge-selftest.js
+          node lighting-plan-launcher-selftest.js
+          npm run test:ai-visual-draft
 
       - name: CI autofix regression tests
         run: node scripts/run-ci-check.mjs ci-autofix
@@ -124,7 +135,93 @@ jobs:
         run: gradle testDebugUnitTest
 
       - name: Build debug APK
-        run: gradle assembleDebug
+        run: gradle assembleDebug -PreleaseVersionCode=${{ github.run_number }}
+
+      - name: Build recovery instrumentation APK
+        run: gradle assembleDebugAndroidTest -PreleaseVersionCode=${{ github.run_number }}
+
+      - name: Build unsigned parallel Studio release and run its unit tests
+        run: gradle assembleStudio testStudioUnitTest lintStudio -PreleaseVersionCode=${{ github.run_number }}
+
+      - name: Verify unsigned Studio identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          APK='app/build/outputs/apk/studio/app-studio-unsigned.apk'
+          test -s "$APK"
+          "$TOOLS/aapt" dump badging "$APK" > app/build/studio-badging.txt
+          head -n 1 app/build/studio-badging.txt > app/build/studio-identity.txt
+          grep -Fq "name='com.lightingai.app.studio'" app/build/studio-identity.txt
+          grep -Fq "versionCode='${{ github.run_number }}'" app/build/studio-identity.txt
+          grep -Fq "application-label:'LightingAI Studio'" app/build/studio-badging.txt
+          if grep -Fq 'application-debuggable' app/build/studio-badging.txt; then exit 1; fi
+          if "$TOOLS/apksigner" verify "$APK" > /dev/null 2>&1; then
+            echo 'Studio must remain unsigned in CI; signing happens on the owner computer.'
+            exit 1
+          fi
+          for asset in scene-planner.js scene-planner-core.js scene-planner-draft.js; do
+            unzip -p "$APK" "assets/$asset" > "app/build/studio-$asset"
+            cmp "app/build/studio-$asset" "app/src/main/assets/$asset"
+          done
+          echo 'Unsigned Studio release: separate identity; owner-controlled local signing required.' >> app/build/studio-identity.txt
+
+      - name: Enable emulator acceleration on disposable CI runner
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Android background and process-death recovery
+        timeout-minutes: 15
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 29
+          arch: x86_64
+          disable-animations: true
+          script: |
+            # Each line runs in a separate shell in android-emulator-runner.
+            # Wait for Package Manager, not only sys.boot_completed; diagnostics contain no app data.
+            timeout --signal=KILL 60s sh -c 'until timeout --signal=KILL 5s adb -s emulator-5554 shell pm path android 2>/dev/null | grep -q "^package:"; do sleep 2; done' || { code=$?; echo "Android emulator check failed (exit=$code)"; timeout --signal=KILL 5s adb -s emulator-5554 get-state || true; timeout --signal=KILL 5s adb -s emulator-5554 shell getprop sys.boot_completed || true; timeout --signal=KILL 5s adb -s emulator-5554 shell df -h /data || true; exit "$code"; }
+            timeout --signal=KILL 120s adb -s emulator-5554 install --no-streaming app/build/outputs/apk/debug/app-debug.apk || { code=$?; echo "Android emulator check failed (exit=$code)"; timeout --signal=KILL 5s adb -s emulator-5554 get-state || true; timeout --signal=KILL 5s adb -s emulator-5554 shell getprop sys.boot_completed || true; timeout --signal=KILL 5s adb -s emulator-5554 shell df -h /data || true; exit "$code"; }
+            timeout --signal=KILL 120s adb -s emulator-5554 install --no-streaming app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk || { code=$?; echo "Android emulator check failed (exit=$code)"; timeout --signal=KILL 5s adb -s emulator-5554 get-state || true; timeout --signal=KILL 5s adb -s emulator-5554 shell getprop sys.boot_completed || true; timeout --signal=KILL 5s adb -s emulator-5554 shell df -h /data || true; exit "$code"; }
+            adb shell am instrument -w -e phase prepare com.lightingai.app.review13.test/com.lightingai.app.ScenePlannerRecoveryInstrumentation | tee app/build/recovery-prepare.txt
+            grep -Fq 'SCENE_PLANNER_RECOVERY_PASS prepare' app/build/recovery-prepare.txt
+            adb shell am force-stop com.lightingai.app.review13
+            adb shell am instrument -w -e phase restore com.lightingai.app.review13.test/com.lightingai.app.ScenePlannerRecoveryInstrumentation | tee app/build/recovery-restore.txt
+            grep -Fq 'SCENE_PLANNER_RECOVERY_PASS restore' app/build/recovery-restore.txt
+            gradle assembleDebugAndroidTest '-PlightingaiTestRunner=com.lightingai.app.AIVisualDraftInstrumentation' -PreleaseVersionCode=${{ github.run_number }}
+            TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"; test -x "$TOOLS/aapt" && "$TOOLS/aapt" dump xmltree app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk AndroidManifest.xml > app/build/ai-visual-draft-test-manifest.txt
+            python3 -c 'import pathlib,re; text=pathlib.Path("app/build/ai-visual-draft-test-manifest.txt").read_text(); blocks=re.findall(r"(?ms)^[ \t]*E: instrumentation\b(.*?)(?=^[ \t]*E: |\Z)",text); assert len(blocks)==1,"Expected one instrumentation declaration"; attrs=blocks[0]; assert re.search(r"android:name(?:\([^)]*\))?=\x22com\.lightingai\.app\.AIVisualDraftInstrumentation\x22",attrs),"Wrong instrumentation runner"; assert re.search(r"android:targetPackage(?:\([^)]*\))?=\x22com\.lightingai\.app\.review13\x22",attrs),"Wrong test target package"; print("AI Visual instrumentation manifest verified")'
+            timeout --signal=KILL 120s adb -s emulator-5554 install --no-streaming -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk || { code=$?; echo "Android emulator check failed (exit=$code)"; timeout --signal=KILL 5s adb -s emulator-5554 get-state || true; timeout --signal=KILL 5s adb -s emulator-5554 shell getprop sys.boot_completed || true; timeout --signal=KILL 5s adb -s emulator-5554 shell df -h /data || true; exit "$code"; }
+            adb shell am instrument -w com.lightingai.app.review13.test/com.lightingai.app.AIVisualDraftInstrumentation | tee app/build/ai-visual-draft-native.txt
+            grep -Fq 'PASS STEP56 native:' app/build/ai-visual-draft-native.txt
+
+      - name: Verify APK signature and update identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+          APK='app/build/outputs/apk/debug/app-debug.apk'
+          "$TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee app/build/apk-identity.txt
+          "$TOOLS/aapt" dump badging "$APK" > app/build/apk-badging.txt
+          head -n 1 app/build/apk-badging.txt > app/build/apk-package.txt
+          cat app/build/apk-package.txt | tee -a app/build/apk-identity.txt
+          grep -Fq "name='com.lightingai.app.review13'" app/build/apk-package.txt
+          grep -Fq "versionCode='${{ github.run_number }}'" app/build/apk-package.txt
+          echo 'Signing unchanged: this CI debug APK is not an update for older differently signed APKs.' | tee -a app/build/apk-identity.txt
+
+      - name: Upload public APK identity and recovery results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: apk-identity-and-recovery-${{ github.run_number }}
+          path: |
+            app/build/apk-identity.txt
+            app/build/recovery-prepare.txt
+            app/build/recovery-restore.txt
+            app/build/ai-visual-draft-native.txt
+          retention-days: 14
 
       - name: Verify packaged Project 5 APK
         shell: bash
@@ -134,6 +231,7 @@ jobs:
           SHORT_SHA="${GITHUB_SHA:0:7}"
           REQUIRED=(
             'assets/ai-visual-scene-launcher.js'
+            'assets/scene-planner-draft.js'
             'assets/ai-visual-scene-plan.js'
             'assets/ai-visual-local-simulation.js'
             'assets/ai-visual-result-polish.js'
@@ -172,6 +270,14 @@ jobs:
         run: |
           set -euo pipefail
           cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/LightingAI-build-${GITHUB_RUN_NUMBER}.apk"
+
+      - name: Upload unsigned Studio release for local signing
+        uses: actions/upload-artifact@v7
+        with:
+          name: LightingAI-Studio-UNSIGNED-${{ github.run_number }}.apk
+          path: app/build/outputs/apk/studio/app-studio-unsigned.apk
+          archive: false
+          retention-days: 14
 
       - name: Upload APK
         uses: actions/upload-artifact@v7

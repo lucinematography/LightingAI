@@ -12,6 +12,7 @@ const PROJECT57_MULTI_BASE = '48f497e26f882b2ff618667832dcb938e4750ba9';
 const PROJECT58_SUN_BASE = '0c13256a49160ba5c48fd3aa92c406f834f7e531';
 const PROJECT59_DMX_BASE = '3d112dd60da64fc66b42e61072ff2f012dfb6995';
 const PROJECT510_QA_BASE = '5bf13f433454c048a7e87cf515e19aa92d8199ba';
+const PROFESSIONAL_AI_PDF_BASE = '67a7a836143b9d02e77c14cd1f707758a712a5f5';
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -33,7 +34,8 @@ for (const [label, sha] of [
   ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE],
   ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE],
   ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE],
-  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE]
+  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE],
+  ['reviewed professional AI/PDF package', PROFESSIONAL_AI_PDF_BASE]
 ]) {
   try { git(['cat-file', '-e', `${sha}^{commit}`]); }
   catch { fail(`${label} commit ${sha} is unavailable; CI checkout must include full history`); }
@@ -57,7 +59,8 @@ for (const [label, sha] of [
   ['Project 5.7 multi-subject main build 746', PROJECT57_MULTI_BASE],
   ['Project 5.8 SUNCE main build 753', PROJECT58_SUN_BASE],
   ['Project 5.9 DMX main build 762', PROJECT59_DMX_BASE],
-  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE]
+  ['Project 5.10 final QA main build 767', PROJECT510_QA_BASE],
+  ['reviewed professional AI/PDF package', PROFESSIONAL_AI_PDF_BASE]
 ]) {
   try { git(['merge-base', '--is-ancestor', sha, 'HEAD']); }
   catch { fail(`feature branch no longer descends from ${label}`); }
@@ -75,6 +78,23 @@ const mainActivityPath = 'app/src/main/java/com/lightingai/app/MainActivity.java
 const imageBridgePath = 'app/src/main/java/com/lightingai/app/AIVisualImageBridge.java';
 const serverPath = 'backend/server.js';
 const exactAllowed = new Set([
+  // Exact reviewed paths from professional AI/PDF commit 67a7a836; no directory exemptions.
+  'app/src/androidTest/java/com/lightingai/app/AIVisualDraftInstrumentation.java',
+  'app/src/main/assets/ai-visual-draft.js',
+  'app/src/main/assets/ai-visual-local-simulation.js',
+  'app/src/main/assets/ai-visual-preview-refinements.js',
+  'app/src/main/assets/ai-visual-result-polish.js',
+  'app/src/main/java/com/lightingai/app/AIVisualDraftStore.java',
+  'app/src/main/res/xml/private_backup_rules.xml',
+  'app/src/main/res/xml/private_data_extraction_rules.xml',
+  'backend/lighting-plan-draft-selftest.mjs',
+  'backend/lighting-plan-inventory-selftest.js',
+  'backend/lighting-plan-inventory.js',
+  'backend/lighting-plan-knowledge-selftest.js',
+  'backend/lighting-plan-knowledge.js',
+  'backend/lighting-plan-launcher-selftest.js',
+  'backend/lighting-plan-request-selftest.js',
+  'backend/lighting-plan-request.js',
   aiPlanPath,
   mainActivityPath,
   imageBridgePath,
@@ -193,12 +213,38 @@ const exactAllowed = new Set([
   'app/src/test/java/com/lightingai/app/SacnProtocolTest.java',
   'backend/project5-stable-base-selftest.js',
   'app/src/main/assets/scene-planner.js',
+  // Shared read-only continuity and exact Shot List revision bindings; no fixture control.
+  'app/src/main/assets/continuity-match-shot.js',
+  'app/src/main/assets/shot-list-planner.js',
+  // Android background recovery: the one reviewed local-only draft module.
+  'app/src/main/assets/scene-planner-draft.js',
   'app/src/main/assets/scene-planner-core.js',
   'backend/scene-planner-service.js',
   'backend/scene-planner-selftest.js',
+  // Reviewed photometric pilot: exact source-reference module and regression test; no controls.
+  'backend/scene-planner-photometry.js',
+  'backend/scene-planner-photometric-selftest.js',
   // Phase 3A: exact offline revision regression and architecture documentation paths.
   'backend/scene-planner-revisions-selftest.js',
   'docs/SCENE_PLANNER_PHASE3A.md',
+  // Step 114: reviewed prelight checklist report; exact path, no broader docs exemption.
+  'docs/STEP114_PRELIGHT_REVIEW.md',
+  // Portable encrypted backups: exact reviewed offline crypto implementation and JUnit tests.
+  'app/src/main/java/com/lightingai/app/SceneBackupCrypto.java',
+  'app/src/test/java/com/lightingai/app/SceneBackupCryptoTest.java',
+  // Exact recovery regression, native CI instrumentation and update-safety report.
+  'backend/scene-planner-recovery-selftest.js',
+  'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
+  // Issue #416: exact reviewed offline recovery and focus regression paths only.
+  'app/src/androidTest/java/com/lightingai/app/ScenePlannerResumeInstrumentation.java',
+  'backend/scene-planner-resume-selftest.js',
+  'backend/scene-planner-focus-selftest.js',
+  'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md',
+  // Studio parallel release: exact identity overlay and public preflight/report paths.
+  'app/src/studio/AndroidManifest.xml',
+  'backend/studio-release-selftest.js',
+  'scripts/studio-update-identity.mjs',
+  'docs/STUDIO_LOCAL_SIGNING_PREPARATION.md',
   // Phase 3B.1: isolated offline temporal model, regressions and architecture only.
   'backend/scene-planner-temporal.js',
   'backend/scene-planner-temporal-selftest.js',
@@ -257,7 +303,6 @@ for (const protectedPath of [
   'app/src/main/assets/scene-measure.js',
   'app/src/main/assets/light-calculator.js',
   'app/src/main/assets/project-backup-export.js',
-  'app/src/main/assets/ai-visual-preview-refinements.js',
   'app/src/main/assets/ai-visual-phone-diagnostics.js',
   'app/src/main/assets/ai-visual-image-actions.js',
   'backend/visual-preview.js'
@@ -267,14 +312,32 @@ for (const protectedPath of [
   if (stable !== current) fail(`build 767 protected file changed unexpectedly: ${protectedPath}`);
 }
 
+// The reviewed stale-preview fix replaces the old build-767 version only for this file.
+// Compare Git blobs: even whitespace changes require a newly reviewed approval.
+const reviewedPreviewPath = 'app/src/main/assets/ai-visual-preview-refinements.js';
+const reviewedPreviewBlob = '9d1997c7398a0e082b2ea93d5f837c6d9db90f5c';
+if (git(['rev-parse', PROFESSIONAL_AI_PDF_BASE + ':' + reviewedPreviewPath]) !== reviewedPreviewBlob ||
+    git(['rev-parse', 'HEAD:' + reviewedPreviewPath]) !== reviewedPreviewBlob) {
+  fail('approved AI/PDF protected file changed unexpectedly: ' + reviewedPreviewPath);
+}
+
 const manifestPath = 'app/src/main/AndroidManifest.xml';
 const stableManifest = git(['show', `${PROJECT510_QA_BASE}:${manifestPath}`]);
 const currentManifest = git(['show', `HEAD:${manifestPath}`]);
-const manifestWithoutBle = currentManifest
+// Only the two exact, reviewed privacy-backup attributes may differ in addition to BLE.
+let manifestWithoutBackup = currentManifest;
+for (const line of [
+  '        android:fullBackupContent="@xml/private_backup_rules"',
+  '        android:dataExtractionRules="@xml/private_data_extraction_rules"'
+]) {
+  if (manifestWithoutBackup.split(line + '\n').length !== 2) fail('AndroidManifest reviewed backup rule missing or changed');
+  manifestWithoutBackup = manifestWithoutBackup.replace(line + '\n', '');
+}
+const manifestWithoutBle = manifestWithoutBackup
   .split('\n')
   .filter((line) => !line.includes('android.permission.BLUETOOTH') && !line.includes('android.hardware.bluetooth_le') && !line.includes('android.permission.RECORD_AUDIO'))
   .join('\n');
-if (manifestWithoutBle !== stableManifest) fail('AndroidManifest changed outside the isolated BLE permission/feature additions');
+if (manifestWithoutBle !== stableManifest) fail('AndroidManifest changed outside the isolated BLE permission/feature additions and exact reviewed backup rules');
 for (const marker of [
   'android.permission.BLUETOOTH" android:maxSdkVersion="30"',
   'android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"',
@@ -682,7 +745,6 @@ for (const marker of [
   'window.LightingAIBleDiscoveryResult',
   'Manifest.permission.BLUETOOTH_SCAN',
   'BLE_PERMISSION = 507',
-  "file:///android_asset/ble-control.js",
   '@JavascriptInterface public String networkDmxDiagnostics()',
   'artNet.put("livePacketsSent", artNetLiveEngine.packetsSent())',
   'sacn.put("livePacketsSent", sacnLiveEngine == null ? 0 : sacnLiveEngine.packetsSent())',
@@ -696,6 +758,17 @@ for (const marker of [
   'out.put("interfaces", NetworkInterfaceInspector.snapshot())'
 ]) {
   if (!mainActivity.includes(marker)) fail(`direct Downloads save marker missing: ${marker}`);
+}
+
+// First-release exception: the BLE implementation must remain committed,
+// but direct fixture-control entry points must stay disabled.
+if (mainActivity.includes('private boolean isDirectLightingControlEnabled() { return false; }')) {
+  git(['cat-file', '-e', 'HEAD:app/src/main/assets/ble-control.js']);
+  if (mainActivity.includes('file:///android_asset/ble-control.js')) {
+    fail('first-release BLE control script must not be loaded');
+  }
+} else if (!mainActivity.includes('file:///android_asset/ble-control.js')) {
+  fail('legacy BLE control script marker missing without first-release guard');
 }
 
 const imageBridge = git(['show', `HEAD:${imageBridgePath}`]);

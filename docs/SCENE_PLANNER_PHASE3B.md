@@ -687,3 +687,932 @@ PostgreSQL preflight tests passed. Syntax/whitespace checks passed for the
 Gradle/adb and a configured disposable PostgreSQL server remain unavailable
 locally; real PostgreSQL-server integration, Android execution, registry audit
 and new GitHub CI were NOT EXECUTED. No media files or secrets were added.
+
+## 3B key/fill measurement interpretation and guarded camera exposure (2026-10-11)
+
+The Scene Planner now compares **only** separately isolated, user-reported incident-lux
+contributions when both fixtures are owned/available with key and fill roles, have
+matching attested on-set distance, V2 metadata, positive lux, identical reported
+meter model and point, camera-axis receptor orientation and times at most 15 minutes
+apart. Meter model is not proof of a unique physical instrument; local times and
+calibration are not independently verified. Revisions remain SHA-256 integrity-checked.
+
+For comparable readings: `ratio=keyLux/fillLux` and signed
+`relativeStops=log2(keyLux/fillLux)`. For instance, 400 vs 100 lx means
+4:1 and **+2 stops in isolated contributions**, not a measured contrast of
+the image. Both zero denominators and incomplete/inconsistent records fail
+closed with `relativeStops=null`. Negative stops mean isolated fill contribution
+is greater; no ratio is presumed universally desirable.
+
+Only relevant curated cards **actually attached to the active plan** (SET-002,
+SET-005 and EXP-001, when present) supply the returned principle, suggested
+application, practical check and limitations. These are conditional, paraphrased
+book principles, not independently verified full books or photometric certificates.
+Check motivation, multiple shadows, blocking and the waveform with the DoP.
+
+`analyzeMeteredExposureContext` reports a nominal settings-only camera EV100 index:
+
+```text
+shutterSeconds = shutterAngle / (360 * fps)
+nominalSettingsEv100 = log2((fNumber^2/shutterSeconds)*(100/ISO)) + NDstops
+```
+
+It depends only on validated f-number, shutter angle, fps, ISO and reported
+ND setting. **It is NOT measured scene EV or calibrated exposure.** Neither
+manufacturer-table lux, imagery nor isolated key/fill lux are used to compute
+the camera setting. The same revision-bound record leaves
+`derivedSceneLux`, `measuredSceneEv100`, `recommendedAperture` and
+`recommendedIso` null, and all scene/camera/meter verification flags false.
+When readings are not comparable the meter results are null even though the
+settings-only index can still be computed. This is a foundation for a *future*
+calibrated workflow requiring identifiable meter and calibration, scene/ambient
+measurements, time provenance, lens transmission/camera EI and gray-card/waveform
+validation—not an automatic correct exposure recommendation.
+
+The existing `test:scene-planner-photometry` suite covers positive/negative/zero
+stop differences, book-card binding, blocked comparisons, camera-only math,
+no fabricated lux or camera settings and tampered revision rejection. No
+fixture-control, paid AI job, publish/release, K0 or K1 changes are involved.
+
+
+### V3 instrument identity and UTC-offset evidence (2026-10-11)
+
+The user can optionally enter a **specific physical light-meter inventory identifier** and
+the **actual local UTC offset** (for example `+02:00`) at each reading. Both fields,
+plus the local measurement time, are mandatory together for protocol V3. A missing
+or malformed identifier or offset is rejected; neither can be inferred from city,
+timezone name, device time, or photograph. Historical V2 readings remain readable
+and keep their original comparability behavior and warning about unverified
+wall-clock times. Comparing a V2 reading with a V3 reading is blocked.
+
+V3 reports compare equal *user-declared* meter identifiers as well as models,
+measurement points, and camera-facing receptor orientations, then calculate
+elapsed minutes from each local time minus its own reported UTC offset. This
+handles the ambiguous wall-clock hour around daylight-saving changes without
+silently treating local times as UTC. The original maximum gap of 15 minutes
+remains unchanged. Invalid offsets and instrument mismatches fail closed; blocked
+comparisons have no numeric ratio or relative stops. Captured UTC offset and ID
+are revision-bound and tamper-evident, but **neither clock accuracy nor meter
+identity/calibration is independently verified**. No scene exposure, calibrated
+EV, lux, aperture or ISO is computed from this comparison.
+
+Regression fixtures cover the DST fall-back hour, 15/16-minute boundary,
+partial/invalid offset records, V2/V3 mismatch, immutable history, tampering,
+and in-app entry/display of V3 provenance. This remains an optional evidence
+upgrade; no physical fixture control, paid AI, publication or K0/K1 change.
+
+
+### Whole-setup on-set incident lux, single measured point (2026-10-11)
+
+The operator can report a **separate real incident-meter observation at one subject
+mark** with the intended owned, available lights switched on **and ambient
+illumination included**. This is independent of isolated fixture key/fill readings
+and of published fixture lux data. The operator must explicitly attest both the
+physical meter observation (receptor facing camera) and the lighting state. The
+mandatory record has lux (0..1,000,000; up to 0.001 precision), meter model and
+physical-device identifier, named subject measurement point, valid local time and
+an explicit per-reading UTC offset. The reading is *user reported* and its
+instrument calibration, actual installed fixture state and correctness are not
+independently verified.
+
+The new `sceneIncidentLuxReading` record is limited to an owned-light plan,
+versioned, immutable within the SHA-256 revision history, and includes a
+deterministic fingerprint of the currently planned available lights plus
+user-attested optics and distances. This fingerprint is a **binding to the plan
+context**, *not* a proof that AI-proposed positions, dimmer percentages and color
+actually matched the set. A new/reconfirmed fixture distance or mounted optic
+invalidates the combined reading **only in the child revision**; the original
+validated revision retains the original reading. Fresh AI-generated plan
+revisions do not inherit this physical observation. Further isolated lamp
+readings do not themselves change the recorded intended all-on setup.
+
+`analyzeMeteredExposureContext` returns
+`sceneIncidentEvidence.userReportedLux` when such a reading exists, with
+its user-declared meter/time provenance and no independent validation. The
+separate `derivedSceneLux`, `measuredSceneEv100`, `recommendedAperture`,
+`recommendedIso` stay `null`; exposure/scene-calibration flags stay
+`false`. A single meter point is **not** the illuminance of the entire image,
+does not establish subject reflectance, waveform IRE, camera EI, transfer
+function, T-stop or an optimal contrast ratio. It is not summed with or
+subtracted from separately isolated fixture readings: the ambient contribution,
+repeatability, interaction, and intervening physical setup changes are unknown.
+
+The UI captures and prints the real observation distinctly from proposed
+camera/fixture values. The offline regression suite rejects forged readings,
+missing confirmation, bad timestamps/offsets, stale fingerprints, tampering
+and use in non-owned plans, while checking historical revision preservation and
+non-calibrated exposure status. No paid AI, direct device control, APK
+installation, release/publish, `main`, K0 or K1 change.
+
+
+### Three-reading scene metering protocol alignment (2026-10-11)
+
+The Scene Planner now separately checks the **metadata compatibility** of three
+user-reported incident-meter readings at the subject mark:
+
+1. Key contribution, fixture isolated (V3 with physical meter ID and UTC offset).
+2. Fill contribution, fixture isolated (also V3).
+3. Full intended owned-light arrangement, all available sources active and ambient
+   present (separate whole-setup incident-meter evidence).
+
+The deterministic `assessSceneMeterAlignment(revision, keyId, fillId)` first verifies
+the immutable revision and the key/fill fixture roles. It then requires all three
+readings, V3 identity/time metadata for both isolated readings, exactly equal
+reported meter models and physical-device identifiers, the same named subject
+measurement point, each receptor facing the camera and an **overall** elapsed
+span of at most 15 minutes across the three user-declared UTC-offset timestamps.
+This is NOT three independent pairwise windows and it correctly handles
+daylight-saving offset transitions. Missing/mismatched evidence fails closed
+with an explicit blocker and null three-reading values. Zero lux is a valid
+record and does not make the session alignment disappear.
+
+The success state is deliberately named
+`ALIGNED_BY_USER_REPORTED_METADATA_ONLY`. It does **not** verify that the
+meter/device was really the same, that the physical lamp levels and modifiers
+matched the plan, that ambient spill was stable or that light contributions
+sum algebraically between different switch states. The report **does not**
+calculate a residual `sceneLux-keyLux-fillLux`, attribute excess lux to
+ambient, infer exposure, derive T-stop, adjust aperture/ISO, assert image
+contrast or request any actual fixture control. Blocked session results expose
+neither a guessed ratio nor inferred key/fill/scene lux values.
+
+`analyzeMeteredExposureContext` now includes this separate, revision-bound
+three-state alignment report alongside its pre-existing scene-lux observation,
+isolated key/fill comparison and nominal settings-only EV100 math. All previous
+scene/camera verification booleans remain false, with aperture/ISO and measured
+scene EV still null. The user-facing camera panel and text report explain a
+matched session, or the exact reason it is blocked, and display the applicable
+curated **EXP-001 / SET-005 / PHY-005** principles attached to that active
+revision, with practical validation steps and limitations rather than invented
+source citations. This is advisory evidence organization, not camera calibration.
+
+Regression cases include daylight-saving crossover, the inclusive 15-minute
+boundary, too-distant readings, instrument/model/point mismatches, receptor
+orientation, V2 compatibility (readable but not eligible for aligned V3 session),
+zero readings, invalid light roles, invalidated physical setup, tamper-evident
+history, no numeric data on a blocked comparison and no fabrication of camera
+or ambient calculations. Neither K0, K1, `main`, direct fixture control,
+paid AI, release/publish nor APK installation is changed.
+
+
+### Human-reported camera gray-card waveform evidence (2026-10-11)
+
+The Scene Planner can now capture an **actual operator-transcribed waveform level**
+from a physical neutral gray card in the same named subject mark used for the
+already stored **whole-scene incident lux** reading. Neither meter reading nor
+camera waveform is acquired by the app. This is an optional workflow available
+only when a SHA-256-bound, owned-fixture whole-scene meter reading already exists.
+It does not require key/fill V3 pair alignment; the waveform is tied to the
+*whole-scene* state, not to isolated lamp contributions.
+
+The operator must explicitly attest: (1) card placement and an observed
+camera/monitor waveform, (2) actual in-camera ISO, aperture, shutter, fps and
+ND matching the current plan, and (3) all planned available lights plus ambient
+remaining on. The record includes an operator-named camera model, shooting/gamma
+profile, actual card identifier, whether the waveform was observed internally
+or on an external monitor, and the operator-declared measurement signal path
+(recording signal, monitoring/display LUT, or unknown). It records the actual
+numeric waveform level in **0..109 IRE, at most one decimal place**, the local
+clock and explicit UTC offset. It must use the **same subject mark** and fall
+within **15 elapsed minutes** of the whole-scene incident meter timestamp.
+The camera setting fingerprint and SHA-256 of the actual whole-scene meter
+reading are bound to the record. This is evidence traceability, not calibration,
+not cryptographic authentication of a human observation, and not proof that
+the camera really matched the AI-proposed plan.
+
+A reference IRE is **never prefilled, recommended, retrieved from a generic
+gray-card table or inferred from the user image**. If the operator wants to
+compare, they must manually enter both their specific reference IRE and its
+named camera/profile/LUT basis, with the waveform signal path known. The only
+comparison is the signed arithmetic difference in **IRE percentage points**;
+it is *not* f-stops, waveform linear scene brightness, luma from image pixels,
+a neutral-card reflectance measurement, a safe target across camera gamma
+curves, confirmation of correct exposure, or a suggested ISO/aperture.
+
+On re-attesting a fixture distance, changing/reconfirming an optic or replacing
+the whole-scene meter reading, the camera gray-card observation is cleared
+**only in the child revision**. The parent measurement survives immutably
+in the revision history. A fresh AI-generated plan never inherits it. An
+isolated key/fill lux rereading does not independently change the whole-scene
+meter/camera configuration.
+
+The camera panel and exported text report label the waveform with its reported
+camera, gamma, source and signal path, any user-specified IRE reference, and
+the precise limitations. Explanations can use only expert cards actually
+attached to the active revision: EXP-001 (metering), EXP-002 (highlights and
+shadows) and EXP-003 (waveform/false-color and profile checks). The cards are
+curated, non-page-verified principles and **not camera-specific manufacturer
+specifications**. `analyzeMeteredExposureContext` returns a separate
+`cameraWaveformEvidence` object with exposure, calibration, signal path and
+gray-card reflectance verification flags still false; its derived exposure
+stops are null. Original scene EV, lens T-stop, recommended aperture/ISO and
+scene-contrast outputs remain null/unverified.
+
+Offline regression checks cover absent meter context; three mandatory
+attestations; zero/109 IRE and invalid decimal/negative/overflow values;
+invalid camera/profile/signal path; missing, spurious or forged reference;
+time/offset and the inclusive 15-minute boundary; immutable revision
+history, tampered waveform/camera/meter fingerprints, setup invalidation;
+book-card provenance; and UI capture and reporting. No K0/K1/main changes,
+paid inference, physical lamp control, release, publish or APK installation.
+
+
+### Camera waveform signal-context V2 and manual IRE reference gate (2026-10-11)
+
+A user-reported gray-card waveform has a new optional **V2 evidence protocol**,
+implemented in the current Scene Planner entry form. Earlier immutable
+protocol V1 histories **remain readable unchanged**, including their
+historical arithmetic IRE comparison; their reference status is explicitly
+`LEGACY_V1_REFERENCE_SIGNAL_CHAIN_INCOMPLETE`. V1 entries never inherit V2
+provenance or gain a claimed profile verification.
+
+V2 requires the operator to document, separately from the **recording profile**,
+the **observed waveform transfer/output label**, and the **signal code range**
+as either `FULL_DATA`, `VIDEO_LEGAL` or `UNKNOWN`. The user separately
+declares whether the waveform is of `RECORDING_SIGNAL`,
+`DISPLAY_LUT_SIGNAL` or `UNKNOWN`, and whether the waveform instrument
+was inside the camera or on an external monitor. On a display-transform
+signal the user may report its exact monitoring LUT/transform identifier;
+for a recording signal the monitoring-transform field must be empty.
+These are human descriptions, NOT inferred EOTFs, a LUT lookup, a validated
+camera manufacturer profile, an automatically calibrated waveform, or an
+in-app image/video analysis.
+
+An operator may record an IRE value **even when the chain is unknown**, but
+V2 will not accept a manual *comparison reference* until all of these hold:
+the user explicitly enters the reference number and its named source, a known
+signal path, a known reported code range, an identified monitoring transform
+if a display LUT signal is being observed, and an explicit declaration that
+the reference applies to **that exact camera, recording profile, waveform
+source, observed transfer, code range, and transform**. This extra
+attestation is recorded as `referenceContextConfirmed=true`. Each V2
+reading stores a deterministic SHA-256 of the exact *declared* signal
+context, including current plan camera-setting fingerprint. A reference
+must bind to that identical hash. Neither SHA-256 nor an operator checkbox
+authenticates a camera or validates manufacturer specifications.
+
+Outputs distinguish `NO_USER_REFERENCE`,
+`V2_USER_ATTESTED_SIGNAL_CONTEXT_NOT_VERIFIED`, and
+`LEGACY_V1_REFERENCE_SIGNAL_CHAIN_INCOMPLETE`. The signed numeric
+difference is **IRE percentage points only**. It is never corrected for
+log encoding, HDR transfer, limited/full code mapping, monitoring LUT,
+camera white balance or card reflectance, and is not interchangeable with
+exposure stops, incident lux, luminance or recommended ISO/aperture.
+Profile-specific reference values are never supplied by AI from book
+paraphrases or from the product's manufacturer lux database.
+
+The live app shows recording-vs-displayed signal provenance, V2 limitations
+and a separate reference-context attestation. Text export includes the
+measured IRE, reference comparison status, user-specified signal context
+and the actionable EXP-001, EXP-002 and EXP-003 principles, practical
+checks and limits **only when attached to the active revision**.
+Independent camera settings, reference standard, monitor signal path,
+transfer curve and gray-card reflectance verification flags remain false.
+
+Regression tests cover archived V1 integrity, V2 recording and display-LUT
+contexts, missing/unknown code range, unknown monitoring transform, invalid
+text, absent attestation, forged/different SHA bindings, no-reference
+observation, revision restoration/invalidation and no fabricated calibrated
+exposure or universal IRE target. No `main`, K0, K1, merging, release,
+installation, paid AI, physical fixture control or safety relaxation.
+
+
+### DoP before-and-after gray-card waveform revision comparison (2026-10-11)
+
+LightingAI now supports a **pure, offline comparison of two separately
+documented on-set gray-card waveform observations** captured in one immutable
+Scene Planner revision chain. The comparison is exposed both in the camera
+panel and the text export, using the **two most recent waveform-bearing
+revisions, only when the active revision has a waveform observation**.
+The comparison identifies both SHA-256-bound revision IDs, so the DoP can
+trace which observations were compared without resetting or overwriting the
+previous take. Historical V1 readings remain readable but are **not eligible**
+for a V2-vs-V2 comparison.
+
+`compareGrayCardWaveformRevisions(history, earlierId, laterId)` first
+verifies the **entire contiguous revision history** with `restoreRevisions`,
+rejects unknown IDs or reversed sequences, and requires camera waveform V2
+in both revisions. It compares only if the user-declared camera model and
+recording profile match, camera-settings fingerprints match, and the declared
+waveform source, recording-vs-display signal path, full/legal code range,
+observed transfer description, monitoring LUT identity (where applicable)
+and exact SHA-256 signal-context binding all match. Unknown code range or
+signal path is **not** comparable. The **same physical gray-card identifier**
+and **same named measurement point** are mandatory, as are distinct
+chronologically ordered timestamps calculated using each UTC offset.
+Elapsed minutes are shown for context, but the window is deliberately
+not used to **assert stable daylight or steady fixture output** between
+separate physical setups.
+
+If all metadata checks pass, the function returns only:
+`beforeIre`, `afterIre` and signed
+`deltaIrePoints = round(afterIre-beforeIre, 1)`.
+The result is explicitly `USER_REPORTED_IRE_LEVEL_DIFFERENCE_ONLY`.
+A second field indicates whether the **planned** rig fingerprint matches,
+but this cannot independently verify actual lamp locations, optical
+attachments, user dimmer levels, ambient consistency, card calibration,
+monitor/camera profile, color workflow or whether any difference is actually
+caused by the lighting change. A reference IRE is **not required nor used**
+for this before/after comparison, and no universal reference is supplied.
+
+Mismatches are `NOT_COMPARABLE` with an explicit machine-readable blocker
+and null before/after IRE and delta. No waveform IRE is converted to lux,
+camera EV, exposure stops, scene contrast, suggested aperture or ISO.
+No paid AI, auto-rig, direct fixture control or preview rendering is
+triggered. The user-visible result advises comparing shadows, waveform,
+lighting motivation and camera angles with the cinematographer. It shows
+practical checks and limitations solely from **EXP-002, EXP-003, SET-007**
+cards *actually attached to the current revision*; the library has not
+independently verified every page of the original source books.
+
+Regressions exercise same-context increased, decreased, and equal
+observations; monitoring LUT changes; unknown signal chain; different
+camera profile, physical card and measuring mark; V1 history; reversed or
+missing revision IDs; non-monotonic time; missing intermediate history;
+tampered SHA-256 records; immutable original observations and absence
+of automatic exposure calculations. K0, K1 and `main` stay unchanged;
+PR #415 remains Draft and no merge/release/publish/APK installation occurs.
+
+
+### Capture provenance: inherited waveform revisions are not new measurements (2026-10-11)
+
+A material safety fix now distinguishes a **new camera/gray-card observation**
+from a later immutable Scene Planner revision that merely carries forward the
+**same existing waveform record**. An isolated key/fill lux update can create
+a child revision with an unchanged gray-card reading, but that new revision
+**does not mean the camera was measured again**. The previous camera-panel
+selection counted every waveform-bearing revision, potentially choosing two
+snapshots of one observation instead of two independent measurements.
+
+The deterministic helper `listGrayCardWaveformCaptures(history)` first
+checks the **full contiguous SHA-256 revision chain**, including each plan's
+meter/waveform evidence validation. It indexes only the revisions where a
+gray-card waveform record appears for the first time or differs from the
+**immediately previous** revision's record. Records carried forward verbatim,
+including a re-entry with exactly the same observation metadata and timestamp,
+are not new observations. The helper returns the IDs of the actual capture
+revisions and the source revision for a currently inherited waveform. It
+does **not** independently prove that an operator really measured a camera,
+and preserves compatibility with archived V1 and V2 evidence.
+
+The previous two-reading comparison remains available for genuine, distinct
+V2 observations, even when subsequent revisions copied forward the last
+waveform unchanged. Its standalone API now explicitly rejects attempts to
+compare either an inherited earlier endpoint or inherited later endpoint:
+`NOT_COMPARABLE / INHERITED_WAVEFORM_NOT_A_NEW_OBSERVATION` with null
+numeric output. Independent differences in camera signal path, profile,
+code range, monitoring LUT, physical card, named mark and chronological
+timestamps continue to fail closed exactly as before.
+
+The DoP camera panel and exported report use the **last two genuine capture
+revision IDs**, not the last two revisions that happen to contain waveform
+data. When the active revision contains an inherited reading, the app
+explicitly identifies the older source revision and warns the operator
+that no new camera observation was recorded. If fewer than two distinct
+waveform observations exist, no before/after comparison is presented.
+This makes a +0 IRE result meaningful only when it corresponds to two
+documented measurements with distinct timestamps and compatible signal
+context, not an unchanged archived record.
+
+The change is an **evidence-provenance safeguard**, not camera metrology or
+an exposure calibration. A record hash means its contents match; it cannot
+authenticate the meter, monitor, original camera signal, card or lighting.
+No IRE-to-stop, lux, camera ISO/aperture or color-transform conversion is
+introduced. Regression tests cover inherited snapshots, identical re-entry,
+true two-capture sequences with intervening and later revisions, empty active
+waveform state, missing history, tampering and the UI selector contract.
+No K0/K1, `main`, paid AI, fixture control, merge, release or APK install.
+
+
+### DoP comparison of two whole-scene incident-lux observations (2026-10-11)
+
+The DoP can now compare **two genuinely distinct on-set incident-lux observations**
+of the **entire intended owned-light arrangement with ambient included**,
+reported at a single named subject mark. The pure offline
+`listSceneIncidentLuxCaptures(history)` helper validates the whole immutable
+SHA-256 revision chain and identifies only revisions where the reported
+whole-scene reading appears for the first time or changes. A later revision
+inheriting an unchanged record, or an exact manual re-entry with the same
+observation and timestamp, is **not** another actual measurement. The app
+labels the true origin of a currently inherited report. The two most recent
+capture events, not the two most recent waveform/lux-bearing *revisions*,
+are selected for comparison in the DoP camera panel and exported report.
+
+`compareSceneIncidentLuxRevisions(history, beforeId, afterId)` requires two
+actual captured readings in the same valid contiguous history, chronological
+revision order and **strictly increasing user-declared UTC-offset-adjusted
+measurement instants**, with at most **15 elapsed minutes** separating the
+observations. It also requires the same declared meter model and physical
+identifier, the same named subject measurement point, receptor orientation,
+and an unchanged whole-setup metering protocol (all planned available
+sources active plus ambient). These are declarations and NOT independent
+instrument identification or laboratory traceability. Different fixture
+counts and planned-position fingerprints are *reported*, not silently
+treated as evidence of physical lamp levels or a known causal lighting
+change. A daylight-saving wall-clock transition is handled using each
+record's explicit UTC offset.
+
+An accepted comparison reports the two actual **user-entered lux values**,
+their signed absolute difference in lux, and the elapsed minutes. If both
+observations are strictly positive, it additionally reports the ratio of
+second-to-first incident illuminance and signed
+`log2(laterLux/earlierLux)` **relative illuminance stops**. This is a
+relative photometric representation of the *reported meter values* only,
+**NOT a camera exposure correction, lens T-stop, scene EV, key/fill ratio,
+image contrast, or automatic ISO/aperture recommendation**. If either
+reading is zero, the absolute signed lux change is valid but the finite
+ratio and stop difference stay `null` with an explicit zero-reading reason.
+Missing, mismatched, stale, tampered, inherited or out-of-window readings
+fail closed as `NOT_COMPARABLE`, returning null lux, ratio and stop fields
+instead of invented numbers.
+
+The comparison emits curated practical guidance only from relevant
+EXP-001, SET-007 and PHY-005 book-principle cards *attached to the current
+validated plan*, including real-world checks and limitations; these
+paraphrases are not a claim that the complete copyrighted books have been
+independently reviewed or that the user's device is calibrated. In all
+outcomes the flags for physical rig, ambient stability, independent
+meter identity/calibration and camera exposure validation remain false.
+The feature makes no paid AI request, performs no physical fixture command,
+does not sum isolated key/fill contributions, and never publishes or installs
+a new APK.
+
+The deterministic regression suite covers positive/negative/equal changes,
+zero denominator, instrument/point mismatches, the inclusive 15-minute
+boundary, DST fall-back, strictly ordered timestamps, changed reported
+setup, immutable history, copied/identical readings, unknown revisions,
+malformed or tampered records, book-card binding and UI provenance notices.
+This change touches only approved Scene Planner files on
+`feature/scene-planner-first-release`; `main`, K0, K1 and Draft PR #415
+are not modified outside that branch.
+
+
+### Offline DoP creative lighting and camera variants (2026-10-11)
+
+The Android Scene Planner now has a **manual DoP variant editor** directly
+beneath the light plan. This closes a practical gap: changing one proposed
+fixture or camera parameter no longer requires sending another prompt to the
+AI server or rebuilding a generic local plan. Users can enter a meaningful
+DoP instruction and edit **explicit planned values** for existing light IDs:
+normalized 2D X/Y position (5..95%), height (0.1..25 m), proposed source-
+to-subject distance (0.1..100 m), output percentage (0..100%), and requested
+color temperature (1000..20000 K). They can independently change camera
+aperture, ISO, FPS, shutter angle, white balance and ND. No UI or core path
+for this feature can buy AI inference, generate a video, send BLE/DMX commands,
+replace an inventory fixture or silently create a new lamp. All edits are
+**creative intention, not a report of physical rig state**.
+
+The new `createDopLightingVariantRevision(parent, report)` operates
+locally on the verified immutable plan, fails closed on unapproved fields,
+out-of-range numbers, exponent/nonfinite input, unknown or duplicate lamp
+IDs, missing explicit consent, empty instruction and no-op edits. Numeric
+input is never clamped to an apparently plausible setting. Explicit catalog
+ranges for Aputure LS 60d (5600 K) and LS 60x (2700–6500 K) reject unsupported
+CCT targets. Other model capabilities and the physical output/dimmer
+behavior are NOT presumed verified. Changing the requested Kelvin, position
+or intensity is not proof that a selected physical fixture can produce it.
+
+Each accepted edit creates a new SHA-256-bound child plan and light plot
+with the same scene identity, stable fixture IDs and preserved parent
+history. `dopLocalVariant` records the last user-confirmed instruction,
+which planned lamps and camera fields changed, provenance
+`DOP_CONFIRMED_PLANNED_EDIT_NOT_PHYSICALLY_VERIFIED`, and explicit false
+flags for measured light, calibrated camera exposure, real fixture control
+and generated AI video. The last DoP variant label survives subsequent
+on-set measurement revisions; it does not falsely report those measurements
+as additional creative changes.
+
+Evidence invalidation is deliberately asymmetric. **Any edit to the
+planned lights** invalidates isolated on-set lux readings, combined scene
+incident lux and gray-card waveform evidence in the **child** plan, since
+they belong to the old rig. Changes to normalized position, estimated
+distance or planned fixture height also remove that lamp's now-stale
+user-attested physical distance; unchanged lamp distances and independently
+attested optical attachments remain. **Camera-only** plan changes preserve
+actual incident/scene lux and measured physical distances but remove the
+gray-card waveform reading bound to the old camera settings. The complete
+original parent remains unmodified and readable. Manufacturer photometric
+references are recalculated only against their **exact documented 100%
+output, optic, Kelvin, beam and measured distance**; the full-output lux
+sample is revoked if the new creative setting no longer matches. An edited
+percentage is never interpolated into a fabricated lux figure.
+
+The UI immediately rerenders the shared 2D light plot, local conceptual
+photo and all parameter cards from the child revision. It discards stale
+AI still previews, storyboard and exported conceptual video instead of
+displaying them as though they reflected the edited rig. It never changes
+an existing paid-video receipt: such receipts remain tied to their original
+revision, and the new editor issues no paid calls. Both the plan export and
+UI explain the last manual DoP request and, if present in the current
+revision's already curated expert base, practical principles/validations
+from PHY-001, PHY-002, PHY-005, SET-005, SET-007, EXP-001,
+EXP-002 and EXP-003. No book card or book page is invented.
+
+The Android plot and photo stay **illustrative**, not a real relighted
+still/video or a metrically reconstructed scene. The revised camera values
+are **unverified proposed camera settings**, not on-set ISO/T-stop
+calibration, and no measured scene EV or lens/sensor exposure is inferred.
+Regression tests cover valid combined and camera-only creative revisions,
+fixed-CCT fixture rejection, invalid range/field/fixture submissions,
+strict no-op rejection, preserved revision history, invalidated old
+meter/waveform data, retained physical optics, stale manufacturer lux
+references, attached book-card provenance, hash tampering, and a UI
+contract without network calls, video payment or physical-light commands.
+The changes are restricted to the Scene Planner feature branch; K0/K1,
+`main`, Draft PR #415, release, APK installation and publication remain
+untouched.
+
+
+### DoP before/after: verified planned-value comparison (2026-10-11)
+
+The offline DoP editor displays the last actual direct parent/child creative
+revision as a numeric before/after list. Existing light IDs, fixture identity
+and their source remain unchanged. Each changed proposed X/Y, height,
+distance, output percentage or Kelvin appears alongside its prior value;
+camera FPS, shutter angle, f-number, ISO, WB and ND appear as planned values.
+Fields previously unknown (null) are displayed as not yet entered, rather
+than causing the comparison to disappear or being treated as measured zero.
+The SHA-256-verified core function compareDopPlannedRevisions(before, after)
+requires direct lineage and exact numeric correspondence with the saved
+changed-field ledger. Later physical-meter revisions inheriting a prior DoP
+label cannot masquerade as new creative edits. Reversed, skipped, tampered,
+and unchanged pairs are rejected rather than fabricating a plan comparison.
+
+All four provenance flags for actual fixture commands, measured light,
+calibrated camera exposure and video relighting are false. No measured lux,
+camera scene EV, equipment capability, rendered frame or clip is claimed.
+Regression coverage checks combined and camera-only edits, immutable
+comparison results, lineage rejection, inherited measurement revisions,
+and the visible UI contract. Only four approved Scene Planner files on
+feature/scene-planner-first-release change. Draft PR #415 remains open;
+main, K0, K1, release, publishing and APK installation are not touched.
+
+
+### Full DoP change history in Android UI, JSON, and text handoff (2026-10-11)
+
+The verified offline creative-edit history now shows **all actual DoP
+parent/child plan changes**, rather than only the last revision's copied
+label. Each entry displays chronological revision sequence/IDs, the precise
+DoP instruction and old/new numeric planned fixture and camera values.
+The most recent entry is expanded by default; older entries are collapsible.
+All relevant original immutable revisions remain intact. The full timeline
+is included in the Android share-text report and in JSON as the optional
+derived `dopPlannedEditHistory` field. Existing export version and revision
+schema are unchanged. Photo/video source bytes are not included.
+
+`listDopPlannedEditEvents(history)` first validates the complete SHA-256
+revision chain, examines actual changes to the six permitted light and six
+camera parameters, and calls the strict existing direct-revision comparison
+only when planned numeric parameters genuinely changed. Measurement, optic
+and camera-signal records may carry an inherited DoP label, but those do NOT
+count as new creative edits. Conversely, two consecutive authentic DoP edits
+with identical wording and changed-field labels but different numeric values
+both count: simple metadata string comparison would have dropped the second.
+Any claimed creative event whose actual values contradict its recorded
+change ledger fails closed. History and all nested comparisons are immutable.
+
+Regression coverage includes two separated creative revisions with an
+intervening real meter entry, repeated identical DoP metadata with different
+values, camera-only edits, no-edit histories, forged/skipped lineage, frozen
+results and the UI/export handoff. All outputs retain explicit false flags
+for real lamp control, lux verification, measured camera exposure and AI
+video relighting. This feature neither requests an AI generation nor
+modifies `main`, K0/K1, releases, or installed Android applications.
+
+
+### Revision-bound sampled-frame DoP lighting cue sheet (2026-10-11)
+
+The Android Scene Planner now prepares a read-only, chronological DoP lighting
+cue sheet for **one to six browser-seek JPEG reference timestamps**. It lists
+the proposed role, light ID, X/Y, fixture, planned intensity/CCT, height and
+distance at each unambiguously time-matched estimated actor-path stage, plus
+the current proposed camera settings. It identifies planned key/ambient
+coverage gaps without claiming that physical lighting is dark or adequate.
+No actor stage is invented if the model lacks a matching timestamp, or if
+more than one stage ambiguously matches a sample. Only plan-provided
+estimated coordinates are displayed. There is no pixel-level temporal
+tracking, mask, rendered preview, true video relighting or exposure solution.
+
+The offline core accepts only ascending finite numeric timestamps (0–120 s,
+at most two decimal places), exactly one `timeSec` key per sample and at most
+six samples. It verifies the revision hash before use and returns a frozen
+receipt with `revisionId`, `planHash`, `lightPlotRevisionId` and explicit false
+flags for original source identity, true frame PTS, actor identification,
+physical lamp state, camera calibration and generated AI video. WebView seeks
+are **approximate**, not the complete decoded video timeline from Phase 3B.2.
+Source images, file paths, video bytes and hashes are not copied into the
+receipt. Full temporal relight continuity is not claimed.
+
+The Scene Planner ties its transient sampled JPEG set to the video session
+used for the last successfully created plan revision. Selecting another
+video or photograph makes cue display explicitly stale until a new plan is
+generated, preventing silent pairing of the old light plot with new footage.
+Manual offline DoP child revisions of the SAME source session immediately
+update the proposed cue values and preserve the previous immutable plan.
+Only a session-matched, revision-validated cue sheet is included in the
+optional JSON export and textual DoP handoff; media bytes are still omitted.
+After reopening the app there are no persisted source frames, so cues must
+be re-established from an imported video and a new plan, never inferred
+from historical JSON alone. Tests cover matched, unmatched and gap stages,
+out-of-order/invalid/oversized samples, immutable results, revised light
+and camera proposals, forged plan hashes, and UI/export session guards.
+This work stays inside four Scene Planner files on its feature branch:
+no `main`, K0/K1, paid AI route, physical fixture control, release, or
+installation change.
+
+
+### Media/plan mismatch gates before paid video and WebM (2026-10-11)
+
+Plan-to-selected-video session binding now gates all media-dependent actions:
+offline preview, storyboard, conceptual WebM export and **paid video start**.
+A newly selected clip or photo cannot silently reuse the earlier revision.
+An in-flight storyboard holds the planning busy lock; paid start and WebM
+export hold the video busy lock through their asynchronous operations, so a
+new selected clip cannot replace source bytes between validation and output.
+Existing unresolved paid-video request receipts and status reconciliation
+remain available and are not discarded or reissued automatically. The source
+byte hash remains unverified; this is only an in-memory mismatch guard.
+Newly computed sampled timecodes that are duplicated/nonmonotonic do not
+silently gain confidence or prevent unrelated plan JSON export. After DoP
+light edits, the movement preview says earlier coverage claims are stale.
+Regression checks enforce source binding before paid start, upload lock,
+storyboard lock, local WebM lock, safe exports and coverage warnings. No paid
+service call was issued during implementation; control, K0/K1, `main`, merge,
+release, installation and publication remain unchanged.
+
+
+### Offline sampled-frame comparison: original / creative look (2026-10-11)
+
+The Android Scene Planner now displays a selectable visual comparison beside
+the revision-bound six-frame DoP cue sheet. A single locally extracted JPEG
+sample is shown twice: unfiltered on the left and with a deterministic CSS
+look filter on the right (Night/Day-for-Night, Moody, or neutral). The six
+reference timecodes remain approximate WebView seek positions, not source
+frame presentation timestamps. Source bytes and decoded pixels are not
+independently attested. Both images are from the same existing in-memory
+sample; no still/video is generated, written to JSON, uploaded, billed or
+exported by this comparison. Strict data:image/jpeg;base64 validation and a
+bounded URI length prevent HTML injection from an arbitrary frame string.
+
+Rendering requires the same in-memory media session and a verified immutable
+lighting-plan revision; selecting new photo/video or restoring old revisions
+blocks the view until a new plan is made. The slider rechecks current plan
+identity, cue index and approximate sample timestamp. If the actor-path
+stage is ambiguous/missing, no source is assigned to the selected frame.
+After a DoP light edit, outdated per-stage coverage is explicitly suppressed.
+The overall planned fixtures, Kelvin, output, positions, distance and camera
+settings are shown as NOT measured per-frame; CSS filter does NOT respond to
+individual light changes, camera exposure or geometry. The view also shows
+at most two already attached expert knowledge cards with validation and
+limitations; it does not invent book page references or lighting readings.
+
+Added guard/regression assertions for same-image use, revision/time matching,
+strict source data URIs, unchanged/no trusted per-frame light claims, no
+media persistence/network calls, and safe Android UI inclusion. The work is
+limited to the existing Scene Planner UI/test/document files on the draft
+branch. Phase 3B.3 real temporal Day-for-Night video relighting remains
+unimplemented and requires separately validated renderer and real footage.
+
+
+### WebView original-frame code-value audit (2026-10-11)
+
+Each of the existing at-most-six original video seek samples can now collect
+one tiny 32x32 canvas observation locally before any creative CSS look. The
+pure offline `summarizeWebViewFrameCodeValues` computes a BT.709-*weighted
+8-bit code* proxy (NOT photometric luma): mean, P10/P90, and fractions of
+pixels in near-black <=16 or near-white >=235 code bins. This is not linear
+scene luminance: source transfer, colorimetry, codec rounding, camera sensor,
+scene lux and real exposure are unverified. If readback is unavailable, its
+sample remains unknown, never filled with invented numbers.
+
+`createOfflineCodeValueAudit` checks a SHA-256-verified immutable plan revision,
+strictly increasing WebView sample times through the existing DoP cue-sheet
+contract, exact bounded scalar schemas and explicit unknown sample states.
+Only the six bounded scalar records and their plan/plot binding can be added
+to the optional `webViewCodeValueAudit` JSON export and textual DoP handoff;
+never export raw canvas RGB buffers, local JPEG bytes, private paths or URLs.
+A delta between two *sampled mean code values* is descriptive only: spaced
+seek frames are not consecutive original PTS samples, so this is NOT evidence
+of flicker, temporally stable lighting or shot continuity. DoP plan changes
+must not mutate the original image statistics. Original full video remains
+on the device; readback uses the already selected local source.
+
+The in-app original/illustrative CSS look comparison now shows source-only
+code values (or an explicit unavailable reason). Missing samples break
+numerical delta continuity. Existing expert book cards, camera/lighting plan,
+paid video locks, and physical on-set measurement provenance are preserved.
+Pure regressions exercise black/white/mid/half-frame results, invalid alpha,
+bad dimensions, missing/forged statistics, timestamp order, immutable output,
+revision tampering and preservation of source measurements across DoP edits.
+Feature is **not** full-frame video analysis, Day-for-Night relighting, motion
+tracking, a color-managed preview, or a verified continuity metric. No AI
+provider, fixture command, app publication, K0/K1 or `main` mutation occurs.
+
+
+### Source-bound all-decoded-frame code continuity audit (2026-10-11)
+
+An offline read-only QC function now summarizes **every adjacent decoded
+presentation-frame pair**, not six widely spaced Android samples. It reuses
+the pre-existing `ingestOriginalVideo` + `analyzeOriginalVideo` bounded H.264
+decoder pipeline and does not call any AI endpoint. Frame source-byte hash,
+YUV pixel hashes, immutable DoP revision, PTS/timebase, and duration continue
+to be verified by that pipeline before provenance is granted. Existing
+max-30-second/max-1800-frame, input-size, time, memory and concurrency
+guards stay in force; originals remain unchanged.
+
+`summarizeDecodedCodeContinuity` is a **pure UNTRUSTED-input** metric grouper.
+It verifies contiguous CFR/VFR presentation timing and re-derives existing
+per-frame comparison fields and single-frame transient heuristics, rejecting
+forged or inconsistent transition records. Adjacent transitions are grouped
+into candidate and unflagged code-value intervals, using original PTS ticks
+without rounding away variable frame durations. The timeline covers all
+adjacent frame transitions. Each interval includes bounded luma/histogram
+summary scalars and explicit false flags for physical or cinematic facts.
+A flagged interval means DoP review is warranted; an unflagged interval does
+NOT prove flicker-free imagery, a correct cut, lighting stability or correct
+Day-for-Night treatment. Motion/camera movement, edits and physical light
+changes are not disentangled. No optical flow, depth, masks or video is made.
+
+`createVerifiedDecodedContinuityAudit(bundle, revision)` uses the existing
+private in-process `verifyVisualAnalysis` trust boundary, then creates an
+immutable content-hashed, original-source/plan/plot/temporal/visual-bound
+diagnostic receipt. Untrusted JSON, synthetic buffers, cloned receipts and
+mismatched source/revisions cannot gain that status. A separate verifier
+checks the trusted instance and parent identities. Reports contain no pixel
+bytes, media paths, links, tokens or newly rendered video. These reports are
+**offline backend diagnostics only**, not yet integrated into Android UI,
+the paid provider route, or an automatic export/publishing pipeline.
+
+Synthetic mandatory tests cover VFR interval boundaries, exact candidate/
+transient interval grouping, quiet frames, immutable outputs, raw-data leaks,
+forged summaries, duplicate/nonmonotonic PTS and rejection of untrusted
+provenance. Optional tests on explicitly selected existing FFmpeg fixtures
+cover an actual decoded illumination jump, one-frame flash-like pattern,
+VFR full-frame coverage, original-byte preservation and wrong source/revision
+rejection. CI without an approved existing FFmpeg binary must report actual
+decoded-frame tests **NOT EXECUTED**; mandatory synthetic tests alone do
+not validate performance on real footage or verify practical visual quality.
+
+
+### Offline Day-for-Night pixel-grade pilot (2026-10-11)
+
+The existing `backend/scene-planner-video-visual.js` now implements a genuine
+bounded transformation of decoded YUV420p pixels rather than merely a CSS
+filter. A source/plan-hash-bound immutable recipe requires a user-specified
+Day for Night look with daytime capture and two strictly validated creative
+controls. One identical luma-code attenuation and chroma-code cooling operation
+is reused on every frame. Original source bytes are never modified.
+
+This is explicitly a **non-color-managed illustrative video pixel grade**,
+not light-field rendering: YUV transfer/range/primaries are unverified;
+fixture positions, physical illumination, optical flow, shadows, masks and
+camera exposure are not simulated. No automatic framewise adjustment is made.
+The isolated pilot does not encode, mux or export MP4, transmit original
+video, invoke any paid provider or enable an Android UI/release feature.
+
+`gradeVerifiedDayForNightFrames` only accepts a trusted local existing
+decoded visual-ingestion bundle and matching immutable DoP recipe. It rechecks
+the chosen local original and every original decoded pixel SHA-256 through
+the existing bounded decoder before streaming ephemeral transformed raw
+frames to a synchronous consumer. Its source/visual/revision-bound receipt
+contains original PTS and duration, original/graded frame hashes and luma-code
+statistics, with all physical and MP4 output claims explicitly false.
+Test coverage includes deterministic pixel transformations, invalid controls
+and buffer formats, unchanged input, recipe trust, and optional real procedural
+H.264 CFR/VFR video decoding, complete frame processing and forged receipt
+rejection. Without a configured existing FFmpeg binary, CI tests only the pure
+code transformations and reports actual decoded processing NOT EXECUTED.
+Next prerequisites: explicit color-managed validation, bounded PTS-preserving
+encoder/muxer and operator-reviewed actual footage, before presenting a real
+Day-for-Night export or suggesting photometric accuracy.
+
+
+The offline YUV pixel-grade pilot is hosted inside the already-tracked
+`backend/scene-planner-video-visual.js`, without modifying the pre-existing
+Project 5 stable-base protection rules or adding a separate backend module.
+
+
+### Day-for-Night all-frame code-consistency quality gate (2026-10-11)
+
+`summarizeDayForNightGradeCodeConsistency` is a pure, explicitly UNTRUSTED
+offline scalar checker for up to 1,800 frames. It validates exact source and
+graded code statistic field schemas (no private pixel arrays or JPEG data),
+contiguous original integer PTS and VFR durations, matching dimensions,
+immutable SHA-256-formatted source/graded pixel hashes and a single requested
+global darkening coefficient. A fixed 8-bit round-to-nearest Y-code LUT must
+produce each output mean within 0.5003 code value of that coefficient times
+the source mean; adjacent changes must agree within 1.0006 code values.
+Violations block the QC report. This is strictly a proof of deterministic
+scalar code consistency, **not** a colorimetry/exposure/scene-light proof.
+
+Absolute graded-frame mean Y changes of 24/255 code units or more are marked
+for DoP review with original PTS ticks; the threshold is an engineering
+review heuristic, not a validated motion, cut or flicker detector. The code
+never calls a flat timeline flicker-free, even when no jumps are flagged.
+`createVerifiedDayForNightGradeQc` requires the in-process original-source
+decoder/visual receipt and the matching trusted grade frame receipt, recipe,
+plan revision and hashes; it references the original continuity audit and
+retains source-side candidate transitions. Reports are immutable, SHA-256
+content-bound, contain no media URLs, raw pixel data, paths or secrets, and
+explicitly deny MP4 export authorization, visual approval and real relighting.
+The paired verifier rejects cloned JSON, wrong original/revision/receipt and
+forged provenance. Only existing Scene Planner video, test and documentation
+files are changed; the Project 5 protective allowlist is untouched.
+
+Mandatory regression tests cover code-gain rounding tolerance, variable-frame
+timing, multiple exposure-like jumps, quiet timelines, mutated scalar and
+PTS fields, fake SHA strings, privacy/pixel-field rejection, immutability and
+untrusted receipt denial. Optional configured-FFmpeg procedural decode tests
+cover real in-process YUV frame grade, fixed-gain QA, source candidate links,
+VFR end time and live receipt verification. The latter remain NOT EXECUTED
+when a suitable explicitly selected decoder is unavailable in CI. The grade
+pilot remains backend-only, with no MP4 file, provider call, on-device action,
+fixture command, merge, APK installation or release.
+
+
+### Fail-closed MP4 frame-timing handoff for graded Day-for-Night (2026-10-11)
+
+The offline video module now provides an **untrusted, unencoded source-timeline
+proposal** and a separately trusted in-process MP4 handoff. Neither function
+runs FFmpeg encoding, creates output files, transmits media nor enables Android
+exports. The exact original zero-origin sample-table PTS and durations (CFR
+or VFR) are represented in integer ticks at the original `1/timescale` clock;
+no average FPS, guesswork, frame dropping or constant-rate approximation is
+permitted. The source and graded raw YUV420p frame SHA-256 values are included
+per frame for later correlation, without raw pixel buffers, private file paths,
+tokens or media URLs. Supported input is deliberately narrow: 2-30 seconds,
+up to 1,800 frames, zero-origin gap-free non-B-frame H.264 at up to 1920x1080,
+even dimensions, PTS=DTS and exact original sample durations. The pure
+proposal is **not** a verified source/decoder receipt.
+
+`createVerifiedDayForNightMp4Handoff` requires the live, in-process verified
+original decoding bundle, immutable DoP revision, private grade recipe, full
+graded-frame receipt and verified grade QC. It cryptographically binds source
+identity, temporal and visual hashes, planned fixture/light-plot revision,
+grade receipt and QC. The result is permanently `BLOCKED_NO_MP4_FILE_AND_
+UNRESOLVED_PROOFS`, with explicit unresolved requirements for source transfer
+and color range, a PTS-aware H.264 encoder/MP4 muxer, re-decoded MP4 frame and
+timestamp validation, and human DoP image approval. If the source has an audio
+track, it additionally blocks silent audio removal pending actual audio
+decoding, sync and preservation verification. Original or graded visual jumps
+add a separate human-review blocker. This is a production-safety prerequisite,
+**not export authorization**; no MP4, physical relighting, calibrated camera
+exposure, audio rendering or color-managed result has been produced.
+
+Tests include mandatory pure CFR/VFR frame schedule preservation, audio policy,
+invalid timebases/durations/dimensions/PTS/DTS, source and graded SHA format,
+privacy-field rejection, immutability, and rejection of forged trust. Optional
+configured-FFmpeg tests use original procedural MP4 source, trusted graded
+frame and QC receipts, exact CFR/VFR mapping and live handoff verification.
+Configured decoder tests must report NOT EXECUTED when FFmpeg is absent;
+the existing main/K0/K1 and fixture-control protections are untouched.
+
+
+### Bounded offline scratch MP4 encode/redecode proof (2026-10-11)
+
+A new **opt-in, non-production-only** diagnostic under the already-approved
+`backend/scene-planner-video-visual.js` exercises an actual MP4 encoder and
+then deletes every temporary output. It never enables Android export, uploads,
+real-life lamp control, a paid provider or a published media URL. It requires
+the live trusted original H.264 ingestion/analysis, immutable DoP plan, exact
+graded-raw-frame receipt, grade QC and blocked MP4 handoff. It rejects all
+audio-bearing input rather than silently stripping the sound; audio decoding
+and AV synchronization remain unimplemented. For safety the experiment is
+limited to 2-6 seconds, at most 60 source frames, maximum 320x180 even-size
+YUV420p and a bounded sample-timebase denominator. Explicit caller opt-in and
+one of two fixed known encoder names are mandatory, with the FFmpeg executable
+revalidated through the existing offline capability check.
+
+**Important last-frame-duration finding:** a naive `setpts` transform plus
+`-fps_mode passthrough` can encode correct PTS but lose the last VFR sample's
+duration and shorten the output movie. The diagnostic therefore writes a
+temporary *one extra copy of the final graded YUV frame* at exact source
+end-PTS tick. It encodes N+1 frames with a bounded integer PTS expression,
+then remuxes using video stream-copy and `-frames:v N` to remove only the
+extra end-of-stream sentinel. Output timing is explicitly `1/original-den`,
+with no average-frame-rate interpolation or B-frame reordering. Both MP4s
+and the bounded raw YUV scratch are created in a new private temp directory,
+and all are removed before a successful probe receipt is returned.
+
+The scratch result is reopened through the existing strict ISO-BMFF parser
+and **redecoded frame by frame**. Every resulting PTS, sample duration, DTS,
+frame count, width, height, clock, and total end tick must exactly equal the
+source. A deliberately *loose diagnostic* bound checks gross Y-code deviations
+introduced by lossy H.264; it is not film quality, color space calibration or
+a reliable subjective threshold. No MP4 is delivered or approved. A private
+immutable receipt records that the encoded files were deleted and explicitly
+marks export, physical relighting, DoP approval, sound validation and actual
+colorimetry as unverified or false. No raw pixels, user file path or source
+URLs are included in that result.
+
+Mandatory pure tests cover the precise source VFR timecodes plus N+1 sentinel,
+test-size and audio rejection, immutable/no-private-path planning, and refused
+implicit use. Optional explicitly configured FFmpeg synthetic CFR/VFR tests
+exercise the real encode + copy-remux + output redetection before reporting a
+successful scratch probe. In CI without the configured FFmpeg binary these
+real encoding tests are NOT EXECUTED, despite the full Android/backend CI
+build passing. A manually validated local procedural FFmpeg sample confirmed
+that the sentinel/remux sequence retains all five frames and the final 300 ms
+sample duration, for a 2.5-second VFR file. This is **not** a user-facing
+Day-for-Night video export; color management, audio preservation and real
+filmed footage review remain prerequisites.

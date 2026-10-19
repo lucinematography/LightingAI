@@ -35,6 +35,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.RenderProcessGoneDetail;
 import android.widget.Toast;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -42,6 +43,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.util.Base64;
+import android.util.AtomicFile;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.io.OutputStream;
@@ -54,7 +56,15 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class MainActivity extends Activity {
+    private volatile boolean recoveryOriginTrusted = false;
+    private AIVisualDraftStore aiVisualDraftStore;
+    private AIVisualDraftStore visualDraftStore() { if(aiVisualDraftStore==null)aiVisualDraftStore=new AIVisualDraftStore(getNoBackupFilesDir());return aiVisualDraftStore; }
     private WebView webView;
+    private boolean recoveringWebView;
+    private long plannerFocusGeneration;
+    private long plannerFocusVisualReady;
+    private int rendererRecoveryAttempts;
+    private TextView rendererRecoveryNotice;
     private FrameLayout rootView;
     private View startupSplash;
     private String pendingText = null;
@@ -84,6 +94,8 @@ public class MainActivity extends Activity {
     private final AtomicLong sacnDirectLastAtMs = new AtomicLong(0);
     private volatile String artNetDirectLastError = "";
     private volatile String sacnDirectLastError = "";
+    // First release: retain transport implementations, but reject every JS control entry point.
+    private boolean isDirectLightingControlEnabled() { return false; }
     private final ArtNetLiveEngine artNetLiveEngine = new ArtNetLiveEngine();
     private byte[] sacnCid;
     private SacnLiveEngine sacnLiveEngine;
@@ -100,6 +112,11 @@ public class MainActivity extends Activity {
     private static final int BLE_PERMISSION = 507;
     private static final int AUDIO_PERMISSION = 508;
     private static final int SAVE_AI_SCENE_MP4 = 509;
+    private static final int SAVE_SCENE_BACKUP = 510;
+    private String pendingSceneBackupText = null;
+    private String pendingSceneBackupRequest = null;
+    private volatile BackupPasswordJob backupPasswordJob;
+    private android.app.AlertDialog backupPasswordDialog;
     private static final long MAX_AI_MP4_BYTES = 140L * 1024L * 1024L;
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
@@ -110,12 +127,6 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(13, 15, 18));
         rootView = new FrameLayout(this);
         rootView.setBackgroundColor(Color.BLACK);
-        webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(13, 15, 18));
-        rootView.addView(webView, new FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        ));
         startupSplash = createStartupSplash();
         rootView.addView(startupSplash, new FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
@@ -124,10 +135,24 @@ public class MainActivity extends Activity {
         setContentView(rootView);
         nativeSunLocation = new NativeSunLocation(this);
         nativeSunCompass = new NativeSunCompass(this);
-        sacnCid = loadOrCreateSacnCid();
-        sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
-        sacnLiveEngine.setPriority(sacnPriority.get());
-        bleDeviceScanner = new BleDeviceScanner(this);
+        // Do not initialize fixture-control transports in the first release.
+        if (isDirectLightingControlEnabled()) {
+            sacnCid = loadOrCreateSacnCid();
+            sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
+            sacnLiveEngine.setPriority(sacnPriority.get());
+            bleDeviceScanner = new BleDeviceScanner(this);
+        }
+        createPlannerWebView(true);
+    }
+
+    @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
+    private void createPlannerWebView(boolean initialLaunch) {
+        webView = new WebView(this);
+        webView.setBackgroundColor(Color.rgb(13, 15, 18));
+        rootView.addView(webView, 0, new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ));
         webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int bottomPx = Math.max(0, insets.getSystemWindowInsetBottom());
             int topPx = Math.max(0, insets.getSystemWindowInsetTop());
@@ -151,11 +176,32 @@ public class MainActivity extends Activity {
         webView.clearCache(true);
         webView.clearHistory();
         webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                recoveryOriginTrusted = "file:///android_asset/index.html".equals(url) ||
+                    (url != null && url.startsWith("file:///android_asset/index.html?"));
+                super.onPageStarted(view, url, favicon);
+            }
             @Override public void onPageFinished(WebView view, String url) {
+                if (view != webView) return;
                 super.onPageFinished(view, url);
                 applyNavigationInset();
                 installCatalogView();
                 hideStartupSplashAfterDelay();
+                resumePlannerView();
+                view.postVisualStateCallback(0, new WebView.VisualStateCallback() {
+                    @Override public void onComplete(long requestId) {
+                        if (view != webView) return;
+                        recoveringWebView = false;
+                        if (rendererRecoveryNotice != null) {
+                            rootView.removeView(rendererRecoveryNotice);
+                            rendererRecoveryNotice = null;
+                        }
+                    }
+                });
+            }
+            @Override public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                if (view == webView && !isFinishing() && !isDestroyed()) recoverPlannerRenderer(view);
+                return true;
             }
         });
         webView.setWebChromeClient(new WebChromeClient() {
@@ -207,16 +253,107 @@ public class MainActivity extends Activity {
                     }
                     return pendingVideoCapture ? openVideoForWebView() : openCameraForWebView();
                 }
+                if (fileChooserParams != null && fileChooserParams.getAcceptTypes() != null) {
+                    for (String accept : fileChooserParams.getAcceptTypes()) {
+                        if (accept != null && (accept.contains("application/json") || accept.contains(".json"))) {
+                            try {
+                                Intent document = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                                document.addCategory(Intent.CATEGORY_OPENABLE); document.setType("application/json");
+                                document.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                                document.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                startActivityForResult(document, CHOOSE_IMAGE);
+                                return true;
+                            } catch (RuntimeException error) { finishFileChooser(null); return false; }
+                        }
+                    }
+                }
                 return openGalleryForWebView(fileChooserParams);
             }
         });
         webView.addJavascriptInterface(new AndroidBridge(), "Android");
         webView.addJavascriptInterface(new AIVisualImageBridge(this), "LightingAIImages");
-        webView.postDelayed(
-            () -> webView.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v4"),
-            3350
-        );
+        final WebView created = webView;
+        created.postDelayed(() -> {
+            if (created == webView && !isFinishing() && !isDestroyed())
+                created.loadUrl("file:///android_asset/index.html?rev=lightai-native-splash-v4");
+        }, initialLaunch ? 3350 : 0);
+        created.requestApplyInsets();
+    }
+
+    private void resumePlannerView() {
+        if (webView == null) return;
+        webView.onResume();
         webView.requestApplyInsets();
+        webView.requestLayout();
+        webView.invalidate();
+        if (recoveryOriginTrusted) webView.evaluateJavascript(
+            "(function(){var p=window.LightingAIScenePlanner;if(p&&p.resume)p.resume();})()", null);
+    }
+
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        final long generation = ++plannerFocusGeneration;
+        if (!hasFocus || webView == null) return;
+        final WebView target = webView;
+        // onResume may precede the new window surface. Wait for its focus/frame boundary.
+        target.postOnAnimation(() -> requestPlannerFocusFrame(target, generation, 0));
+    }
+
+    private boolean isPlannerFocusCurrent(WebView target, long generation) {
+        return generation == plannerFocusGeneration && target == webView &&
+            !isFinishing() && !isDestroyed() && !recoveringWebView &&
+            hasWindowFocus() && target.isAttachedToWindow() && target.isShown() &&
+            target.getWidth() > 0 && target.getHeight() > 0;
+    }
+
+    private void requestPlannerFocusFrame(WebView target, long generation, int attempt) {
+        if (!isPlannerFocusCurrent(target, generation) || plannerFocusVisualReady == generation) return;
+        // This acknowledges DOM readiness for a draw, NOT video pixels or display presentation.
+        target.postVisualStateCallback(generation, new WebView.VisualStateCallback() {
+            @Override public void onComplete(long requestId) {
+                if (!isPlannerFocusCurrent(target, generation) || plannerFocusVisualReady == generation) return;
+                plannerFocusVisualReady = generation;
+                rootView.postInvalidateOnAnimation();
+                target.postInvalidateOnAnimation();
+            }
+        });
+        target.postDelayed(() -> {
+            if (!isPlannerFocusCurrent(target, generation) || plannerFocusVisualReady == generation) return;
+            if (attempt == 0) requestPlannerFocusFrame(target, generation, 1);
+            else android.util.Log.w("LightingAIView", "Focus visual-state acknowledgement timed out");
+        }, 1500);
+    }
+
+    private void recoverPlannerRenderer(WebView failed) {
+        ++plannerFocusGeneration;
+        recoveringWebView = true;
+        recoveryOriginTrusted = false;
+        rootView.removeView(failed);
+        webView = null;
+        failed.destroy();
+        if (rendererRecoveryNotice == null) {
+            rendererRecoveryNotice = new TextView(this);
+            rendererRecoveryNotice.setBackgroundColor(Color.rgb(13, 15, 18));
+            rendererRecoveryNotice.setTextColor(Color.WHITE);
+            rendererRecoveryNotice.setGravity(Gravity.CENTER);
+            rootView.addView(rendererRecoveryNotice, new FrameLayout.LayoutParams(-1, -1));
+        }
+        rendererRecoveryNotice.setText("Obnavljam prikaz scene… / Restoring scene view…");
+        if (++rendererRecoveryAttempts > 2) {
+            rendererRecoveryNotice.setText("Prikaz nije dostupan. Sačuvani podaci nisu obrisani. Dodirni za ponovni pokušaj. / View unavailable. Saved data was preserved. Tap to retry.");
+            rendererRecoveryNotice.setOnClickListener(v -> {
+                rendererRecoveryAttempts = 0;
+                rendererRecoveryNotice.setOnClickListener(null);
+                createPlannerWebView(false);
+            });
+            return;
+        }
+        createPlannerWebView(false);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        resumePlannerView();
     }
 
     private View createStartupSplash() {
@@ -575,7 +712,7 @@ public class MainActivity extends Activity {
                 if (pendingCameraUri == null) throw new IllegalStateException("Could not prepare video URI");
             }
             record.putExtra(MediaStore.EXTRA_OUTPUT, pendingCameraUri);
-            record.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 120);
+            // The camera chooses clip duration; do not force a 120-second cut.
             record.setClipData(ClipData.newRawUri("LightingAI scene video", pendingCameraUri));
             record.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             for (ResolveInfo info : getPackageManager().queryIntentActivities(record, PackageManager.MATCH_DEFAULT_ONLY)) {
@@ -663,8 +800,8 @@ public class MainActivity extends Activity {
             "if(!document.getElementById('lightingai-set-sketch-camera-fov-script')){var f=document.createElement('script');f.id='lightingai-set-sketch-camera-fov-script';f.src='file:///android_asset/set-sketch-camera-fov.js';document.body.appendChild(f);}" +
             "if(!document.getElementById('lightingai-device-capabilities-script')){var d=document.createElement('script');d.id='lightingai-device-capabilities-script';d.src='file:///android_asset/device-capabilities.js';document.body.appendChild(d);}" +
             "if(!document.getElementById('lightingai-sun-native-bridge-script')){var n=document.createElement('script');n.id='lightingai-sun-native-bridge-script';n.src='file:///android_asset/sun-native-bridge.js';document.body.appendChild(n);}" +
-            "if(!document.getElementById('lightingai-artnet-control-script')){var a=document.createElement('script');a.id='lightingai-artnet-control-script';a.src='file:///android_asset/artnet-control.js';document.body.appendChild(a);}" +
-            "if(!document.getElementById('lightingai-ble-control-script')){var b=document.createElement('script');b.id='lightingai-ble-control-script';b.src='file:///android_asset/ble-control.js';document.body.appendChild(b);}if(!document.getElementById('lightingai-control-dashboard-script')){var h=document.createElement('script');h.id='lightingai-control-dashboard-script';h.src='file:///android_asset/control-dashboard.js';document.body.appendChild(h);}if(!document.getElementById('lightingai-ai-control-bridge-script')){var j=document.createElement('script');j.id='lightingai-ai-control-bridge-script';j.src='file:///android_asset/ai-control-bridge.js';document.body.appendChild(j);}if(!document.getElementById('lightingai-dmx-patch-script')){var x1=document.createElement('script');x1.id='lightingai-dmx-patch-script';x1.src='file:///android_asset/dmx-patch-planner.js';document.body.appendChild(x1);}if(!document.getElementById('lightingai-dmx-export-script')){var x2=document.createElement('script');x2.id='lightingai-dmx-export-script';x2.src='file:///android_asset/dmx-export.js';document.body.appendChild(x2);}if(!document.getElementById('lightingai-dof-script')){var x3=document.createElement('script');x3.id='lightingai-dof-script';x3.src='file:///android_asset/dof-planner.js';document.body.appendChild(x3);}if(!document.getElementById('lightingai-flicker-script')){var x4=document.createElement('script');x4.id='lightingai-flicker-script';x4.src='file:///android_asset/flicker-shutter-planner.js';document.body.appendChild(x4);}if(!document.getElementById('lightingai-continuity-script')){var x5=document.createElement('script');x5.id='lightingai-continuity-script';x5.src='file:///android_asset/continuity-match-shot.js';document.body.appendChild(x5);}if(!document.getElementById('lightingai-shot-list-script')){var x6=document.createElement('script');x6.id='lightingai-shot-list-script';x6.src='file:///android_asset/shot-list-planner.js';document.body.appendChild(x6);}if(!document.getElementById('lightingai-shot-list-export-script')){var x7=document.createElement('script');x7.id='lightingai-shot-list-export-script';x7.src='file:///android_asset/shot-list-export.js';document.body.appendChild(x7);}if(!document.getElementById('lightingai-cue-script')){var x8=document.createElement('script');x8.id='lightingai-cue-script';x8.src='file:///android_asset/lighting-cue-planner.js';document.body.appendChild(x8);}if(!document.getElementById('lightingai-cue-export-script')){var x9=document.createElement('script');x9.id='lightingai-cue-export-script';x9.src='file:///android_asset/lighting-cue-export.js';document.body.appendChild(x9);}if(!document.getElementById('lightingai-beam-report-script')){var x10=document.createElement('script');x10.id='lightingai-beam-report-script';x10.src='file:///android_asset/beam-coverage-report.js';document.body.appendChild(x10);}if(!document.getElementById('lightingai-camera-snapshots-script')){var x11=document.createElement('script');x11.id='lightingai-camera-snapshots-script';x11.src='file:///android_asset/camera-setup-snapshots.js';document.body.appendChild(x11);}if(!document.getElementById('lightingai-camera-report-script')){var x12=document.createElement('script');x12.id='lightingai-camera-report-script';x12.src='file:///android_asset/camera-setup-report.js';document.body.appendChild(x12);}if(!document.getElementById('lightingai-ratio-script')){var x13=document.createElement('script');x13.id='lightingai-ratio-script';x13.src='file:///android_asset/lighting-ratio.js';document.body.appendChild(x13);}if(!document.getElementById('lightingai-shot-setup-report-script')){var x14=document.createElement('script');x14.id='lightingai-shot-setup-report-script';x14.src='file:///android_asset/shot-setup-report.js';document.body.appendChild(x14);}if(!document.getElementById('lightingai-backup-script')){var x15=document.createElement('script');x15.id='lightingai-backup-script';x15.src='file:///android_asset/project-backup-export.js';document.body.appendChild(x15);}" +
+            "/* Direct fixture control scripts disabled in first release. */" +
+            "if(!document.getElementById('lightingai-dmx-patch-script')){var x1=document.createElement('script');x1.id='lightingai-dmx-patch-script';x1.src='file:///android_asset/dmx-patch-planner.js';document.body.appendChild(x1);}if(!document.getElementById('lightingai-dmx-export-script')){var x2=document.createElement('script');x2.id='lightingai-dmx-export-script';x2.src='file:///android_asset/dmx-export.js';document.body.appendChild(x2);}if(!document.getElementById('lightingai-dof-script')){var x3=document.createElement('script');x3.id='lightingai-dof-script';x3.src='file:///android_asset/dof-planner.js';document.body.appendChild(x3);}if(!document.getElementById('lightingai-flicker-script')){var x4=document.createElement('script');x4.id='lightingai-flicker-script';x4.src='file:///android_asset/flicker-shutter-planner.js';document.body.appendChild(x4);}if(!document.getElementById('lightingai-continuity-script')){var x5=document.createElement('script');x5.id='lightingai-continuity-script';x5.src='file:///android_asset/continuity-match-shot.js';document.body.appendChild(x5);}if(!document.getElementById('lightingai-shot-list-script')){var x6=document.createElement('script');x6.id='lightingai-shot-list-script';x6.src='file:///android_asset/shot-list-planner.js';document.body.appendChild(x6);}if(!document.getElementById('lightingai-shot-list-export-script')){var x7=document.createElement('script');x7.id='lightingai-shot-list-export-script';x7.src='file:///android_asset/shot-list-export.js';document.body.appendChild(x7);}if(!document.getElementById('lightingai-cue-script')){var x8=document.createElement('script');x8.id='lightingai-cue-script';x8.src='file:///android_asset/lighting-cue-planner.js';document.body.appendChild(x8);}if(!document.getElementById('lightingai-cue-export-script')){var x9=document.createElement('script');x9.id='lightingai-cue-export-script';x9.src='file:///android_asset/lighting-cue-export.js';document.body.appendChild(x9);}if(!document.getElementById('lightingai-beam-report-script')){var x10=document.createElement('script');x10.id='lightingai-beam-report-script';x10.src='file:///android_asset/beam-coverage-report.js';document.body.appendChild(x10);}if(!document.getElementById('lightingai-camera-snapshots-script')){var x11=document.createElement('script');x11.id='lightingai-camera-snapshots-script';x11.src='file:///android_asset/camera-setup-snapshots.js';document.body.appendChild(x11);}if(!document.getElementById('lightingai-camera-report-script')){var x12=document.createElement('script');x12.id='lightingai-camera-report-script';x12.src='file:///android_asset/camera-setup-report.js';document.body.appendChild(x12);}if(!document.getElementById('lightingai-ratio-script')){var x13=document.createElement('script');x13.id='lightingai-ratio-script';x13.src='file:///android_asset/lighting-ratio.js';document.body.appendChild(x13);}if(!document.getElementById('lightingai-shot-setup-report-script')){var x14=document.createElement('script');x14.id='lightingai-shot-setup-report-script';x14.src='file:///android_asset/shot-setup-report.js';document.body.appendChild(x14);}if(!document.getElementById('lightingai-backup-script')){var x15=document.createElement('script');x15.id='lightingai-backup-script';x15.src='file:///android_asset/project-backup-export.js';document.body.appendChild(x15);}" +
             "})();", null);
     }
 
@@ -675,6 +812,183 @@ public class MainActivity extends Activity {
         intent.setType(filename != null && filename.toLowerCase(java.util.Locale.US).endsWith(".json") ? "application/json" : "text/plain");
         intent.putExtra(Intent.EXTRA_TITLE, filename);
         startActivityForResult(intent, CREATE_FILE);
+    }
+
+
+    private static final class BackupPasswordJob {
+        final String request;
+        final boolean encrypt;
+        final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
+        volatile Thread worker;
+        boolean submitted;
+        BackupPasswordJob(String request, boolean encrypt) { this.request = request; this.encrypt = encrypt; }
+    }
+
+    private static byte[] encryptedBackupData(String text) throws org.json.JSONException {
+        JSONObject envelope = new JSONObject(text);
+        if (envelope.length() != 3 || !"LightingAI.EncryptedSceneBackup".equals(envelope.getString("format")) ||
+            !Integer.valueOf(1).equals(envelope.get("version")))
+            throw new IllegalArgumentException("Unsupported encrypted backup");
+        return java.util.Base64.getDecoder().decode(envelope.getString("data"));
+    }
+
+    private synchronized boolean beginBackupPasswordJob(String request, String text, boolean encrypt) {
+        if (request == null || !request.matches("^backup-[a-z0-9-]{1,80}$") || backupPasswordJob != null ||
+            pendingSceneBackupRequest != null) return false;
+        BackupPasswordJob job = new BackupPasswordJob(request, encrypt);
+        backupPasswordJob = job;
+        runOnUiThread(() -> showBackupPasswordDialog(job, text));
+        return true;
+    }
+
+    private android.widget.EditText backupPasswordField(String hint) {
+        android.widget.EditText field = new android.widget.EditText(this);
+        field.setHint(hint);
+        field.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        field.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);
+        field.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+        field.setSaveEnabled(false); field.setSaveFromParentEnabled(false); field.setFreezesText(false);
+        field.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(1024)});
+        return field;
+    }
+
+    private static char[] backupPasswordChars(android.widget.EditText field) {
+        android.text.Editable value = field.getText();
+        char[] chars = new char[value.length()]; value.getChars(0, value.length(), chars, 0);
+        return chars;
+    }
+
+    private void showBackupPasswordDialog(BackupPasswordJob job, String text) {
+        if (job.cancelled.get() || isFinishing() || isDestroyed()) { cancelBackupPasswordJob(job); return; }
+        android.widget.LinearLayout content = new android.widget.LinearLayout(this);
+        content.setOrientation(android.widget.LinearLayout.VERTICAL); content.setPadding(32, 12, 32, 12);
+        android.widget.TextView note = new android.widget.TextView(this);
+        note.setText(job.encrypt ?
+            "Unesi posebnu lozinku od najmanje 12 znakova, najbolje dugu frazu. Sačuvaj je odvojeno: bez nje kopija ne može da se otvori ni na drugom telefonu. Lozinku ne čuvamo." :
+            "Unesi lozinku ove kopije. Tek posle provere autentičnosti prikazaćemo pregled; scena se još ne uvozi.");
+        android.widget.EditText password = backupPasswordField("Lozinka kopije");
+        android.widget.EditText repeat = job.encrypt ? backupPasswordField("Ponovi lozinku") : null;
+        content.addView(note); content.addView(password); if (repeat != null) content.addView(repeat);
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
+            .setTitle(job.encrypt ? "ŠIFRUJ KOPIJU SCENE" : "OTKLJUČAJ KOPIJU SCENE")
+            .setView(content).setPositiveButton(job.encrypt ? "ŠIFRUJ I SAČUVAJ" : "OTKLJUČAJ ZA PREGLED", null)
+            .setNegativeButton("OTKAŽI", (d, which) -> cancelBackupPasswordJob(job)).create();
+        backupPasswordDialog = dialog;
+        dialog.setOnDismissListener(d -> {
+            password.getText().clear(); if (repeat != null) repeat.getText().clear();
+            if (backupPasswordDialog == dialog) backupPasswordDialog = null;
+            if (!job.submitted) cancelBackupPasswordJob(job);
+        });
+        dialog.setOnShowListener(d -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+                dialog.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            }
+            password.requestFocus();
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                char[] chars = backupPasswordChars(password);
+                char[] confirmation = repeat == null ? null : backupPasswordChars(repeat);
+                boolean valid = chars.length >= (job.encrypt ? 12 : 1) &&
+                    (confirmation == null || java.util.Arrays.equals(chars, confirmation));
+                if (confirmation != null) java.util.Arrays.fill(confirmation, '\0');
+                if (!valid) {
+                    java.util.Arrays.fill(chars, '\0');
+                    password.setError(job.encrypt ? "Najmanje 12 znakova; oba unosa moraju biti ista." : "Unesi lozinku.");
+                    return;
+                }
+                job.submitted = true;
+                password.getText().clear(); if (repeat != null) repeat.getText().clear();
+                dialog.dismiss();
+                Thread worker = new Thread(() -> processPasswordBackup(job, text, chars), "LightingAI-BackupCrypto");
+                job.worker = worker; worker.start();
+            });
+        });
+        dialog.show();
+    }
+
+    private synchronized void finishBackupPasswordJob(BackupPasswordJob job) {
+        if (backupPasswordJob == job) backupPasswordJob = null;
+    }
+
+    private void cancelBackupPasswordJob(BackupPasswordJob job) {
+        if (job == null || job.cancelled.getAndSet(true)) return;
+        if (job.worker != null) job.worker.interrupt();
+        if (backupPasswordDialog != null) backupPasswordDialog.dismiss();
+        if (job.worker == null) finishBackupPasswordJob(job);
+        if (job.encrypt) notifySceneBackupSaved(job.request, false);
+        else notifySceneBackupUnlocked(job, "", "cancelled");
+    }
+
+    private void processPasswordBackup(BackupPasswordJob job, String text, char[] password) {
+        byte[] plain = null;
+        try {
+            if (job.cancelled.get()) return;
+            if (job.encrypt) {
+                plain = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                byte[] encrypted = SceneBackupCrypto.encrypt(plain, password);
+                if (job.cancelled.get()) return;
+                String envelope = new JSONObject().put("format", "LightingAI.EncryptedSceneBackup")
+                    .put("version", 1).put("data", java.util.Base64.getEncoder().encodeToString(encrypted)).toString();
+                if (job.cancelled.get()) return;
+                saveEncryptedSceneBackup(job, envelope);
+            } else {
+                plain = SceneBackupCrypto.decrypt(encryptedBackupData(text), password);
+                if (!job.cancelled.get()) notifySceneBackupUnlocked(job,
+                    new String(plain, java.nio.charset.StandardCharsets.UTF_8), "ok");
+            }
+        } catch (java.security.GeneralSecurityException | org.json.JSONException | RuntimeException error) {
+            // Deliberately do not log exceptions, content, credentials or provider messages.
+            if (!job.cancelled.get()) {
+                if (job.encrypt) notifySceneBackupSaved(job.request, false);
+                else notifySceneBackupUnlocked(job, "", "error");
+            }
+        } finally {
+            java.util.Arrays.fill(password, '\0');
+            if (plain != null) java.util.Arrays.fill(plain, (byte) 0);
+            finishBackupPasswordJob(job);
+        }
+    }
+
+    private void saveEncryptedSceneBackup(BackupPasswordJob job, String envelope) {
+        String filename = "LightingAI_SceneBackup_" + System.currentTimeMillis() + ".encrypted.json";
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (job.cancelled.get()) return;
+            boolean saved = saveTextDirectlyToDownloads(filename, envelope);
+            if (!job.cancelled.get()) notifySceneBackupSaved(job.request, saved);
+        } else {
+            runOnUiThread(() -> {
+                if (job.cancelled.get()) return;
+                if (pendingSceneBackupText != null) { notifySceneBackupSaved(job.request, false); return; }
+                pendingSceneBackupText = envelope; pendingSceneBackupRequest = job.request;
+                try {
+                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE); intent.setType("application/json");
+                    intent.putExtra(Intent.EXTRA_TITLE, filename); intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                    startActivityForResult(intent, SAVE_SCENE_BACKUP);
+                } catch (RuntimeException error) {
+                    pendingSceneBackupText = null; pendingSceneBackupRequest = null;
+                    notifySceneBackupSaved(job.request, false);
+                }
+            });
+        }
+    }
+
+    private void notifySceneBackupUnlocked(BackupPasswordJob job, String text, String status) {
+        if (webView == null || !recoveryOriginTrusted) return;
+        webView.post(() -> {
+            if (recoveryOriginTrusted && !(job.cancelled.get() && "ok".equals(status))) webView.evaluateJavascript(
+                "window.LightingAIScenePlanner&&LightingAIScenePlanner.onBackupUnlocked(" +
+                JSONObject.quote(job.request) + "," + JSONObject.quote(text) + "," + JSONObject.quote(status) + ");", null);
+        });
+    }
+
+    private void notifySceneBackupSaved(String request, boolean success) {
+        if (webView == null || !recoveryOriginTrusted) return;
+        webView.post(() -> {
+            if (recoveryOriginTrusted) webView.evaluateJavascript(
+                "window.LightingAIScenePlanner&&window.LightingAIScenePlanner.onBackupSaved(" +
+                JSONObject.quote(request) + "," + success + ");", null);
+        });
     }
 
     private boolean saveTextDirectlyToDownloads(String filename, String text) {
@@ -1045,7 +1359,286 @@ public class MainActivity extends Activity {
         }, "LightingAI-scene-planner-mp4-save").start();
     }
 
+    private synchronized boolean writeRecoveryFile(String name, String data, int maxBytes) {
+        if (data == null || data.length() > maxBytes) return false;
+        byte[] bytes = data.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (bytes.length > maxBytes) return false;
+        AtomicFile file = new AtomicFile(new java.io.File(getFilesDir(), name));
+        java.io.FileOutputStream output = null;
+        try {
+            output = file.startWrite();
+            output.write(bytes);
+            output.getFD().sync();
+            file.finishWrite(output);
+            return true;
+        } catch (java.io.IOException error) {
+            if (output != null) file.failWrite(output);
+            return false;
+        }
+    }
+
+    private synchronized String readRecoveryFile(String name, int maxBytes) {
+        AtomicFile file = new AtomicFile(new java.io.File(getFilesDir(), name));
+        try (InputStream input = file.openRead(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192]; int count, total = 0;
+            while ((count = input.read(buffer)) != -1) {
+                total += count; if (total > maxBytes) return "";
+                output.write(buffer, 0, count);
+            }
+            return output.toString(java.nio.charset.StandardCharsets.UTF_8.name());
+        } catch (java.io.IOException error) { return ""; }
+    }
+
+    private boolean validSceneWorkspace(String data) {
+            try {
+                if (data == null || data.length() > 8 * 1024 * 1024) return false;
+                JSONObject snapshot = new JSONObject(data);
+                if (snapshot.length() != 3 || snapshot.getInt("version") != 1 || snapshot.getLong("checkpoint") < 0) return false;
+                JSONObject values = snapshot.getJSONObject("values");
+                java.util.Iterator<String> keys = values.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    if (!key.equals("lighting_scene_planner_draft_v1") &&
+                        !key.equals("lighting_scene_planner_revisions_v1") &&
+                        !key.equals("lighting_scene_planner_prelight_reviews_v1") &&
+                        !key.equals("lighting_scene_planner_last_v1")) return false;
+                    if (!(values.get(key) instanceof String)) return false;
+                }
+                return true;
+            } catch (org.json.JSONException error) { return false; }
+        }
+    private boolean validScenePhoto(String data) {
+            try {
+                if (data == null || data.length() > 12100000) return false;
+                JSONObject record = new JSONObject(data);
+                String value = record.getString("value");
+                if (record.length() != 3 || record.getInt("version") != 2 || record.getLong("sequence") < 0 || value.length() > 12000000 ||
+                    !value.matches("^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=\\r\\n]+$")) return false;
+                return true;
+            } catch (org.json.JSONException error) { return false; }
+        }
+
+    private boolean readableBackupPhoto(String value) {
+            if (!recoveryOriginTrusted || value == null || value.length() > 12000000 ||
+                !value.matches("^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=\\r\\n]+$")) return false;
+            try {
+                byte[] bytes = android.util.Base64.decode(value.substring(value.indexOf(',') + 1), android.util.Base64.DEFAULT);
+                android.graphics.BitmapFactory.Options options = new android.graphics.BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+                return options.outWidth > 0 && options.outHeight > 0 && options.outWidth <= 8192 &&
+                    options.outHeight <= 8192 && 1L * options.outWidth * options.outHeight <= 16000000 &&
+                    ("image/png".equals(options.outMimeType) || "image/jpeg".equals(options.outMimeType) ||
+                     "image/webp".equals(options.outMimeType));
+            } catch (IllegalArgumentException error) { return false; }
+        }
+
+    private boolean validBackupPhotoRecord(String data) {
+        try { return readableBackupPhoto(new JSONObject(data).getString("value")); }
+        catch (org.json.JSONException error) { return false; }
+    }
+
+    private String sceneFile(String scene, String kind) {
+        if (scene == null || !scene.matches("^s-[a-z0-9]{8,64}$") ||
+            (!"workspace".equals(kind) && !"photo".equals(kind))) return null;
+        return "scene-planner-" + scene + "-" + kind + "-v1.json";
+    }
+    private String readSceneFile(String name, int maxBytes) {
+        String value = readRecoveryFile(name, maxBytes);
+        if (value.isEmpty() && (new java.io.File(getFilesDir(), name).exists() ||
+            new java.io.File(getFilesDir(), name + ".bak").exists())) return "!unreadable";
+        return value;
+    }
+    private boolean registeredScene(String id) {
+        try {
+            org.json.JSONArray scenes = new JSONObject(readRecoveryFile("scene-planner-scenes-v1.json", 65536)).getJSONArray("scenes");
+            for (int i = 0; i < scenes.length(); i++) if (id.equals(scenes.getJSONObject(i).getString("id"))) return true;
+        } catch (org.json.JSONException ignored) { }
+        return false;
+    }
+
     public class AndroidBridge {
+        @JavascriptInterface public String sceneBackupSha256(String text) {
+            if (!recoveryOriginTrusted || text == null || text.length() > 24 * 1024 * 1024) return "";
+            try {
+                byte[] bytes = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                if (bytes.length > 24 * 1024 * 1024) return "";
+                byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(bytes);
+                StringBuilder hex = new StringBuilder(64);
+                for (byte value : digest) hex.append(String.format(java.util.Locale.ROOT, "%02x", value & 255));
+                return hex.toString();
+            } catch (java.security.NoSuchAlgorithmException error) { return ""; }
+        }
+        @JavascriptInterface public boolean validateScenePlannerBackupPhoto(String value) {
+            return readableBackupPhoto(value);
+        }
+
+        private final ThreadLocal<String> pendingImportedVisual=new ThreadLocal<>();
+        @JavascriptInterface public String importScenePlannerBackupWithVisual(String name,String workspace,String photo,String expectedIndex,String visual) {
+            if(!recoveryOriginTrusted||visual==null||visual.length()>12200000)return "";
+            try {if(!validAIVisualDraft(new JSONObject(visual),true))return "";
+                pendingImportedVisual.set(visual);
+                return importScenePlannerBackup(name,workspace,photo,expectedIndex);
+            }catch(org.json.JSONException error){return "";}finally{pendingImportedVisual.remove();}
+        }
+        @JavascriptInterface public String importScenePlannerBackup(String name, String workspace, String photo, String expectedIndex) {
+            if (!recoveryOriginTrusted || name == null || name.trim().isEmpty() || name.length() > 80 ||
+                !validSceneWorkspace(workspace) || photo == null || (!photo.isEmpty() && (!validScenePhoto(photo) || !validBackupPhotoRecord(photo))) ||
+                expectedIndex == null || expectedIndex.length() > 65536) return "";
+            synchronized (MainActivity.this) {
+                String workspaceFile = null, photoFile = null, importedId = null;
+                boolean published = false;
+                try {
+                    String current = readSceneFile("scene-planner-scenes-v1.json", 65536);
+                    JSONObject index = new JSONObject(expectedIndex);
+                    org.json.JSONArray entries = index.getJSONArray("scenes");
+                    if (current.isEmpty()) {
+                        if (entries.length() != 1 || !"legacy".equals(entries.getJSONObject(0).getString("id")) ||
+                            !"legacy".equals(index.getString("activeId"))) return "";
+                    } else if (!current.equals(expectedIndex)) return "";
+                    if (entries.length() >= 100) return "";
+                    String id = "s-" + UUID.randomUUID().toString().replace("-", "");
+                    importedId=id;
+                    workspaceFile = sceneFile(id, "workspace"); photoFile = sceneFile(id, "photo");
+                    for (String file : new String[]{workspaceFile, photoFile}) {
+                        if (new java.io.File(getFilesDir(), file).exists() ||
+                            new java.io.File(getFilesDir(), file + ".bak").exists() ||
+                            new java.io.File(getFilesDir(), file + ".new").exists()) {
+                            workspaceFile = null; photoFile = null; return "";
+                        }
+                    }
+                    // Publish metadata only after BOTH new files have durable writes.
+                    if (!writeRecoveryFile(workspaceFile, workspace, 8 * 1024 * 1024) ||
+                        (!photo.isEmpty() && !writeRecoveryFile(photoFile, photo, 12100000))) return "";
+                    entries.put(new JSONObject().put("id", id).put("name", name));
+                    String pendingVisual=pendingImportedVisual.get();
+                    if(pendingVisual!=null&&!visualDraftStore().save(id,new JSONObject(pendingVisual)))return "";
+                    if (!saveScenePlannerSceneIndex(index.toString())) return "";
+                    published = true;
+                    return id;
+                } catch (org.json.JSONException | RuntimeException error) { return ""; }
+                finally {
+                    // Only unregistered files created by this failed import are removed.
+                    if (!published && workspaceFile != null) new AtomicFile(new java.io.File(getFilesDir(), workspaceFile)).delete();
+                    if (!published && photoFile != null) new AtomicFile(new java.io.File(getFilesDir(), photoFile)).delete();
+                    if(!published&&importedId!=null)visualDraftStore().discardNewScene(importedId);
+                }
+            }
+        }
+        @JavascriptInterface public boolean exportScenePlannerBackup(String request, String text) {
+            if (!recoveryOriginTrusted || text == null || text.length() > SceneBackupCrypto.MAX_PLAIN_BYTES ||
+                text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > SceneBackupCrypto.MAX_PLAIN_BYTES) return false;
+            return beginBackupPasswordJob(request, text, true);
+        }
+        @JavascriptInterface public boolean unlockScenePlannerBackup(String request, String text) {
+            if (!recoveryOriginTrusted || text == null || text.length() > SceneBackupCrypto.MAX_FILE_BYTES ||
+                text.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > SceneBackupCrypto.MAX_FILE_BYTES) return false;
+            try { encryptedBackupData(text); }
+            catch (org.json.JSONException | IllegalArgumentException error) { return false; }
+            return beginBackupPasswordJob(request, text, false);
+        }
+        @JavascriptInterface public void cancelSceneBackupOperation() {
+            if (!recoveryOriginTrusted) return;
+            runOnUiThread(() -> cancelBackupPasswordJob(backupPasswordJob));
+        }
+
+        @JavascriptInterface public String loadScenePlannerSceneIndex() {
+            if (!recoveryOriginTrusted) return "";
+            return readSceneFile("scene-planner-scenes-v1.json", 65536);
+        }
+        @JavascriptInterface public boolean saveScenePlannerSceneIndex(String data) {
+            if (!recoveryOriginTrusted || data == null || data.length() > 65536) return false;
+            try {
+                JSONObject index = new JSONObject(data);
+                if (index.length() != 3 || index.getInt("version") != 1) return false;
+                org.json.JSONArray scenes = index.getJSONArray("scenes");
+                if (scenes.length() < 1 || scenes.length() > 100) return false;
+                java.util.HashSet<String> ids = new java.util.HashSet<>();
+                for (int i = 0; i < scenes.length(); i++) {
+                    JSONObject scene = scenes.getJSONObject(i);
+                    String id = scene.getString("id"), name = scene.getString("name");
+                    if (scene.length() != 2 || !("legacy".equals(id) || id.matches("^s-[a-z0-9]{8,64}$")) ||
+                        !ids.add(id) || name.trim().isEmpty() || name.length() > 80) return false;
+                }
+                if (!ids.contains("legacy") || !ids.contains(index.getString("activeId"))) return false;
+                String previous = readSceneFile("scene-planner-scenes-v1.json", 65536);
+                if (!previous.isEmpty()) {
+                    org.json.JSONArray old = new JSONObject(previous).getJSONArray("scenes");
+                    for (int i = 0; i < old.length(); i++) if (!ids.contains(old.getJSONObject(i).getString("id"))) return false;
+                }
+                return writeRecoveryFile("scene-planner-scenes-v1.json", data, 65536);
+            } catch (org.json.JSONException error) { return false; }
+        }
+        @JavascriptInterface public String loadScenePlannerSceneData(String scene, String kind) {
+            String name = sceneFile(scene, kind);
+            if (!recoveryOriginTrusted || name == null || !registeredScene(scene)) return "";
+            return readSceneFile(name, "photo".equals(kind) ? 12100000 : 8 * 1024 * 1024);
+        }
+        @JavascriptInterface public boolean saveScenePlannerSceneData(String scene, String kind, String data) {
+            String name = sceneFile(scene, kind);
+            if (!recoveryOriginTrusted || name == null || !registeredScene(scene) ||
+                !("photo".equals(kind) ? validScenePhoto(data) : validSceneWorkspace(data))) return false;
+            return writeRecoveryFile(name, data, "photo".equals(kind) ? 12100000 : 8 * 1024 * 1024);
+        }
+        // One private atomic record per scene; never WebView storage or a copy of the Planner photo.
+        private String aiVisualDraftFile(String scene) {
+            if (!recoveryOriginTrusted || scene == null ||
+                !("legacy".equals(scene) || (scene.matches("^s-[a-z0-9]{8,64}$") && registeredScene(scene)))) return null;
+            return "ai-visual-draft-" + scene + "-v1.json";
+        }
+        @JavascriptInterface public String loadAIVisualDraft(String scene) {
+            String file = aiVisualDraftFile(scene);
+            if(file==null)return ""; synchronized(MainActivity.this){ return visualDraftStore().load(scene,readSceneFile(file,12200000)); }
+        }
+        @JavascriptInterface public boolean saveAIVisualDraft(String scene, String data) {
+            String file = aiVisualDraftFile(scene);
+            if (file == null || data == null || data.length() > 12200000) return false;
+            try { JSONObject x=new JSONObject(data);if(!validAIVisualDraft(x,true))return false;
+                synchronized(MainActivity.this){return visualDraftStore().save(scene,x);}
+            } catch (org.json.JSONException error) { return false; }
+        }
+        private boolean validAIVisualDraft(JSONObject x, boolean withPhoto) {
+            try {
+                if (x.length() != (withPhoto ? 6 : 5) || x.getInt("version") != 1 ||
+                    !(x.get("description") instanceof String) || x.getString("description").length() > 20000 ||
+                    !(x.get("dpRequest") instanceof String) || x.getString("dpRequest").length() > 20000 ||
+                    (withPhoto && !(x.get("photo") instanceof String))) return false;
+                String photo = withPhoto ? x.getString("photo") : "";
+                if (!photo.isEmpty() && !readableBackupPhoto(photo)) return false;
+                org.json.JSONArray ids = x.getJSONArray("selectedIds");
+                if (ids.length() > 1000) return false;
+                for (int i = 0; i < ids.length(); i++)
+                    if (!(ids.get(i) instanceof String) || ids.getString(i).isEmpty() || ids.getString(i).length() > 200) return false;
+                JSONObject settings = x.getJSONObject("settings");
+                if (settings.length() != 4 || !(settings.get("look") instanceof String) || settings.getString("look").length() > 80) return false;
+                for (String key : new String[]{"useMeasurements", "useSun", "useDmx"})
+                    if (!(settings.get(key) instanceof Boolean)) return false;
+                return true;
+            } catch(org.json.JSONException error) { return false; }
+        }
+        @JavascriptInterface public boolean saveAIVisualDraftMetadata(String scene,String data) {
+            if(aiVisualDraftFile(scene)==null||data==null||data.length()>1200000)return false;
+            try {JSONObject x=new JSONObject(data);if(!validAIVisualDraft(x,false))return false;
+                synchronized(MainActivity.this){return visualDraftStore().saveMetadata(scene,x);}
+            }catch(org.json.JSONException error){return false;}
+        }
+
+        @JavascriptInterface public boolean saveScenePlannerWorkspace(String data) {
+            return recoveryOriginTrusted && validSceneWorkspace(data) &&
+                writeRecoveryFile("scene-planner-workspace-v1.json", data, 8 * 1024 * 1024);
+        }
+        @JavascriptInterface public String loadScenePlannerWorkspace() {
+            if (!recoveryOriginTrusted) return "";
+            return readRecoveryFile("scene-planner-workspace-v1.json", 8 * 1024 * 1024);
+        }
+        @JavascriptInterface public boolean saveScenePlannerPhoto(String data) {
+            return recoveryOriginTrusted && validScenePhoto(data) &&
+                writeRecoveryFile("scene-planner-photo-v2.json", data, 12100000);
+        }
+        @JavascriptInterface public String loadScenePlannerPhoto() {
+            if (!recoveryOriginTrusted) return "";
+            return readRecoveryFile("scene-planner-photo-v2.json", 12100000);
+        }
         @JavascriptInterface public void releaseScenePlannerCaptures(boolean keepLatest) {
             runOnUiThread(() -> MainActivity.this.releaseScenePlannerCaptures(keepLatest));
         }
@@ -1127,10 +1720,12 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public boolean hasBlePermission() {
+            if (!isDirectLightingControlEnabled()) return false;
             return MainActivity.this.hasBlePermission();
         }
 
         @JavascriptInterface public void bleDiscover(String requestId, int timeoutMs) {
+            if (!isDirectLightingControlEnabled()) return;
             runOnUiThread(() -> MainActivity.this.startBleDiscovery(requestId, timeoutMs));
         }
 
@@ -1173,6 +1768,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void sacnSetPriority(int priority) {
+            if (!isDirectLightingControlEnabled()) return;
             int value = SacnSender.normalizePriority(priority);
             sacnPriority.set(value);
             if (sacnLiveEngine == null) sacnLiveEngine = new SacnLiveEngine(sacnCid, "LightingAI");
@@ -1180,6 +1776,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void sacnSendDmx(String requestId, int universe, String channelsJson) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
             final String raw = channelsJson == null ? "[]" : channelsJson;
@@ -1207,6 +1804,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void sacnSetLiveDmx(String requestId, int universe, String channelsJson) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             final int u = Math.max(SacnSender.MIN_UNIVERSE, Math.min(SacnSender.MAX_UNIVERSE, universe));
             final String raw = channelsJson == null ? "[]" : channelsJson;
@@ -1230,16 +1828,19 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void sacnStopLive(String requestId) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
             notifyArtNetResult(id, true, "");
         }
 
         @JavascriptInterface public int sacnLiveFrameCount() {
+            if (!isDirectLightingControlEnabled()) return 0;
             return sacnLiveEngine == null ? 0 : sacnLiveEngine.activeFrameCount();
         }
 
         @JavascriptInterface public void artNetDiscover(String requestId, int timeoutMs) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             new Thread(() -> {
                 JSONArray result = new JSONArray();
@@ -1260,6 +1861,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void artNetSendDmx(String requestId, String targetIp, int universe, String channelsJson) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             final String ip = targetIp == null ? "" : targetIp;
             final int u = Math.max(1, universe);
@@ -1288,6 +1890,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void artNetSetLiveDmx(String requestId, String targetIp, int universe, String channelsJson) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             final String ip = targetIp == null ? "" : targetIp;
             final int u = Math.max(1, universe);
@@ -1310,12 +1913,14 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void artNetStopLive(String requestId) {
+            if (!isDirectLightingControlEnabled()) return;
             final String id = requestId == null ? "" : requestId;
             artNetLiveEngine.stopAll();
             notifyArtNetResult(id, true, "");
         }
 
         @JavascriptInterface public int artNetLiveFrameCount() {
+            if (!isDirectLightingControlEnabled()) return 0;
             return artNetLiveEngine.activeFrameCount();
         }
     }
@@ -1364,7 +1969,26 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void checkpointScenePlanner() {
+        if (webView != null) webView.evaluateJavascript(
+            "(function(){var d=window.LightingAIScenePlannerDraft;if(d)d.flush();if(window.LightingAIVisualFlush)window.LightingAIVisualFlush();})()", null);
+    }
+
+    @Override protected void onSaveInstanceState(Bundle outState) {
+        checkpointScenePlanner();
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override protected void onStop() {
+        cancelBackupPasswordJob(backupPasswordJob);
+        checkpointScenePlanner();
+        super.onStop();
+    }
+
     @Override protected void onPause() {
+        ++plannerFocusGeneration;
+        checkpointScenePlanner();
+        if (webView != null) webView.onPause();
         stopNativeSunCompass();
         artNetLiveEngine.stopAll();
         if (sacnLiveEngine != null) sacnLiveEngine.stopAll();
@@ -1374,6 +1998,25 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SAVE_SCENE_BACKUP) {
+            String text = pendingSceneBackupText, request = pendingSceneBackupRequest;
+            pendingSceneBackupText = null; pendingSceneBackupRequest = null;
+            Uri uri = resultCode == RESULT_OK && data != null ? data.getData() : null;
+            if (text == null || request == null || uri == null) {
+                if (request != null) notifySceneBackupSaved(request, false);
+            } else {
+                new Thread(() -> {
+                    boolean saved = false;
+                    try (OutputStream out = getContentResolver().openOutputStream(uri, "w")) {
+                        if (out != null) { out.write(text.getBytes(java.nio.charset.StandardCharsets.UTF_8)); out.flush(); saved = true; }
+                    } catch (Exception ignored) { saved = false; }
+                    if (!saved) { try { getContentResolver().delete(uri, null, null); } catch (Exception ignored) { } }
+                    notifySceneBackupSaved(request, saved);
+                }, "LightingAI-SceneBackupSave").start();
+            }
+            return;
+        }
 
         if (requestCode == SAVE_AI_SCENE_MP4) {
             String taskId = pendingAiMp4TaskId;
@@ -1464,7 +2107,9 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        ++plannerFocusGeneration;
         releaseScenePlannerCaptures(false);
+        cancelBackupPasswordJob(backupPasswordJob);
         if (isFinishing() && pendingVideoCapture && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
             deletePendingCameraUri();
         pendingAiMp4AccessToken = null;
@@ -1477,6 +2122,11 @@ public class MainActivity extends Activity {
             try { speechRecognizer.destroy(); } catch (Exception ignored) {}
             speechRecognizer = null;
         }
+        if (webView != null) {
+            rootView.removeView(webView);
+            webView.destroy();
+            webView = null;
+        }
         super.onDestroy();
     }
 
@@ -1486,6 +2136,8 @@ public class MainActivity extends Activity {
     }
 
     @Override public void onBackPressed() {
+        // A dead renderer cannot answer JS Back; do not navigate away during recovery.
+        if (recoveringWebView) return;
         if (webView == null) {
             super.onBackPressed();
             return;

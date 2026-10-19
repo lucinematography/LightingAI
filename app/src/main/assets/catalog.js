@@ -105,4 +105,22 @@ Promise.all([
 });
 if(!document.getElementById('lightingai-ai-visual-launcher-script')){var av=document.createElement('script');av.id='lightingai-ai-visual-launcher-script';av.src='file:///android_asset/ai-visual-scene-launcher.js';document.body.appendChild(av);}
 })();
-if(!document.getElementById('lightingai-scene-planner-script')){var sp=document.createElement('script');sp.id='lightingai-scene-planner-script';sp.src='file:///android_asset/scene-planner.js';document.body.appendChild(sp);}
+if(!document.getElementById('lightingai-scene-planner-script')){
+  var draftScript=document.createElement('script');
+  draftScript.id='lightingai-scene-planner-draft-script';
+  draftScript.src='file:///android_asset/scene-planner-draft.js';
+  function startPlanner(){
+    var sp=document.createElement('script');
+    sp.id='lightingai-scene-planner-script';
+    sp.src='file:///android_asset/scene-planner.js';
+    sp.onload=function(){
+      var recovery=window.LightingAIScenePlannerDraft;
+      if(recovery&&recovery.shouldReopen()&&window.LightingAIScenePlanner)
+        window.LightingAIScenePlanner.open();
+    };
+    document.body.appendChild(sp);
+  }
+  draftScript.onload=startPlanner;
+  draftScript.onerror=startPlanner;
+  document.body.appendChild(draftScript);
+}

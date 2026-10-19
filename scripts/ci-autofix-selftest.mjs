@@ -175,12 +175,25 @@ test('stable-base guard validates future committed content and blocks regression
     execFileSync('git', ['-c', `core.hooksPath=${hooks}`, 'clone', '--quiet', '--no-hardlinks',
       '--no-checkout', '--', root, snapshot], {stdio: 'pipe'});
     git('checkout', '--quiet', '--detach', before.head);
-    const files = ['.github/workflows/build-apk.yml', '.github/workflows/release-apk.yml', '.gitignore',
+    const approvedPackageFiles = sourceGit('diff-tree', '--no-commit-id', '--name-only', '-r',
+      '67a7a836143b9d02e77c14cd1f707758a712a5f5').split('\n');
+    assert.equal(approvedPackageFiles.length, 29, 'Reviewed AI/PDF package must contain exactly 29 paths');
+    const files = [...new Set(['.github/workflows/build-apk.yml', '.github/workflows/release-apk.yml', '.gitignore',
       'docs/CI_AUTOFIX_PHASE1.md', 'scripts/ci-autofix.mjs', 'scripts/ci-autofix-selftest.mjs',
       'scripts/ci-report-summary.mjs', 'scripts/run-ci-check.mjs', 'backend/project5-stable-base-selftest.js',
       // Include the complete phase-2/3A candidate in the isolated future-commit check.
       'app/src/main/assets/scene-planner-core.js', 'backend/scene-planner-service.js',
+      'backend/scene-planner-photometry.js', 'backend/scene-planner-photometric-selftest.js',
       'backend/scene-planner-revisions-selftest.js', 'docs/SCENE_PLANNER_PHASE3A.md',
+      'docs/STEP114_PRELIGHT_REVIEW.md',
+      'backend/scene-planner-recovery-selftest.js',
+      'app/src/androidTest/java/com/lightingai/app/ScenePlannerRecoveryInstrumentation.java',
+      'app/src/androidTest/java/com/lightingai/app/ScenePlannerResumeInstrumentation.java',
+      'backend/scene-planner-resume-selftest.js',
+      'backend/scene-planner-focus-selftest.js',
+      'docs/SCENE_PLANNER_RECOVERY_AND_UPDATES.md', 'app/build.gradle',
+      'app/src/studio/AndroidManifest.xml', 'backend/studio-release-selftest.js',
+      'scripts/studio-update-identity.mjs', 'docs/STUDIO_LOCAL_SIGNING_PREPARATION.md',
       'backend/scene-planner-temporal.js', 'backend/scene-planner-temporal-selftest.js',
       'backend/scene-planner-video-ingestion.js', 'backend/scene-planner-video-ingestion-selftest.js',
       'backend/scene-planner-video-visual.js', 'backend/scene-planner-video-visual-selftest.js',
@@ -196,10 +209,11 @@ test('stable-base guard validates future committed content and blocks regression
       'backend/scene-planner-video-test-support.js', 'backend/scene-planner-video-phase2-selftest.js',
       'backend/scene-planner-postgres-selftest.js', 'backend/scene-planner-postgres-worker.js',
       'backend/staging-safety-selftest.js', 'backend/package.json', 'backend/package-lock.json',
-      'app/src/main/assets/scene-planner.js', 'app/src/main/java/com/lightingai/app/MainActivity.java',
+      'app/src/main/assets/scene-planner.js', 'app/src/main/assets/scene-planner-draft.js',
+      'app/src/main/java/com/lightingai/app/MainActivity.java',
       'app/src/main/java/com/lightingai/app/ScenePlannerCaptureCleanup.java',
       'app/src/test/java/com/lightingai/app/ScenePlannerCaptureCleanupTest.java',
-      'docs/SCENE_PLANNER_VIDEO_PHASE2.md'];
+      'docs/SCENE_PLANNER_VIDEO_PHASE2.md', ...approvedPackageFiles])];
     for (const file of files) {
       fs.mkdirSync(path.dirname(path.join(snapshot, file)), {recursive: true});
       fs.copyFileSync(path.join(root, file), path.join(snapshot, file));
@@ -213,6 +227,8 @@ test('stable-base guard validates future committed content and blocks regression
       const report = JSON.parse(result.stdout);
       assert.equal(report.ok, true);
       for (const file of files) assert.ok(report.changedFiles.includes(file), `Candidate omits ${file}`);
+      assert.ok(report.changedFiles.includes('backend/scene-planner-photometry.js'));
+      assert.ok(report.changedFiles.includes('backend/scene-planner-photometric-selftest.js'));
     });
     await t.test('unknown CI path remains blocked after commit', () => {
       const file = 'scripts/unapproved-ci-change.mjs';
@@ -223,6 +239,19 @@ test('stable-base guard validates future committed content and blocks regression
       assert.notEqual(result.status, 0);
       assert.match(result.stderr, /files changed outside.*scripts\/unapproved-ci-change\.mjs/);
       git('checkout', '--quiet', '--detach', candidate);
+    });
+    await t.test('Issue 416 exceptions do not allow neighboring unapproved test paths', () => {
+      for (const file of ['backend/scene-planner-resume-unapproved-selftest.js',
+        'backend/scene-planner-focus-unapproved-selftest.js',
+        'app/src/androidTest/java/com/lightingai/app/UnapprovedResumeInstrumentation.java']) {
+        fs.writeFileSync(path.join(snapshot, file), '// unauthorized neighboring test path\n');
+        git('add', '--', file);
+        commit('Negative fixture: neighboring unapproved recovery test');
+        const result = guard();
+        assert.notEqual(result.status, 0);
+        assert.ok(result.stderr.includes('files changed outside') && result.stderr.includes(file), result.stderr);
+        git('checkout', '--quiet', '--detach', candidate);
+      }
     });
     await t.test('protected file equality remains blocking even if a candidate admits its path', () => {
       // Simulate an adversarial allowlist expansion in this throwaway fixture only.
@@ -238,6 +267,27 @@ test('stable-base guard validates future committed content and blocks regression
       const result = guard();
       assert.notEqual(result.status, 0);
       assert.match(result.stderr, /build 767 protected file changed unexpectedly: backend\/visual-preview\.js/);
+      git('checkout', '--quiet', '--detach', candidate);
+    });
+    await t.test('reviewed AI preview content rejects any new unapproved modification', () => {
+      const file = 'app/src/main/assets/ai-visual-preview-refinements.js';
+      fs.appendFileSync(path.join(snapshot, file), '\n// unauthorized preview change\n');
+      git('add', '--', file);
+      commit('Negative fixture: reviewed AI preview content');
+      const result = guard();
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, /approved AI\/PDF protected file changed unexpectedly: app\/src\/main\/assets\/ai-visual-preview-refinements\.js/);
+      git('checkout', '--quiet', '--detach', candidate);
+    });
+    await t.test('reviewed Android backup attributes cannot be removed or weakened', () => {
+      const file = 'app/src/main/AndroidManifest.xml';
+      const content = fs.readFileSync(path.join(snapshot, file), 'utf8');
+      fs.writeFileSync(path.join(snapshot, file), content.replace('@xml/private_backup_rules', '@xml/unapproved_backup_rules'));
+      git('add', '--', file);
+      commit('Negative fixture: weakened backup rules');
+      const result = guard();
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, /AndroidManifest reviewed backup rule missing or changed/);
       git('checkout', '--quiet', '--detach', candidate);
     });
     await t.test('unauthorized manifest permission remains blocked after commit', () => {

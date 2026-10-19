@@ -329,7 +329,19 @@ await test("browser resume and native save behavior",async t=>{
     assert.match(cleanup,/canonical\.getParentFile\(\)\.equals\(folder\)/);assert.match(cleanup,/canonical\.lastModified\(\) < cutoff/);
     assert.match(java,/ScenePlannerCaptureCleanup\.prune/);
     assert.match(java,/scenePlannerCaptureUris\.add\(uri\)/);assert.match(java,/getPackageName\(\) \+ "\.ai\.preview"/);
-    assert.match(java,/onDestroy\(\) \{\s*releaseScenePlannerCaptures\(false\)/);
+    const destroy=java.match(/protected\s+void\s+onDestroy\(\)\s*\{([\s\S]*?)\n    \}/);assert.ok(destroy,"MainActivity onDestroy body must exist");
+    const requireSafeDestroy=body=>{
+      assert.match(body,/^\s*\+\+plannerFocusGeneration;\s*releaseScenePlannerCaptures\(false\);/);
+      assert.ok(body.indexOf("releaseScenePlannerCaptures(false);")<body.indexOf("webView.destroy();"),"Owned captures must be released before destroying WebView");
+      assert.match(body,/super\.onDestroy\(\);\s*$/);
+    };
+    requireSafeDestroy(destroy[1]);
+    for(const invalid of [
+      destroy[1].replace("releaseScenePlannerCaptures(false);",""),
+      destroy[1].replace("++plannerFocusGeneration;",""),
+      destroy[1].replace(/(\+\+plannerFocusGeneration;)(\s*)(releaseScenePlannerCaptures\(false\);)/,"$3$2$1"),
+      destroy[1].replace("releaseScenePlannerCaptures(false);","").replace("webView.destroy();","webView.destroy();releaseScenePlannerCaptures(false);")
+    ])assert.throws(()=>requireSafeDestroy(invalid),assert.AssertionError);
     assert.match(java,/@JavascriptInterface public void releaseScenePlannerCaptures/);
   });
 });
